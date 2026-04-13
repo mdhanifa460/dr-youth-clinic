@@ -1,26 +1,188 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* ===== DR Youth Clinic – PREMIUM LUXURY THEME ===== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary: #1A365D;
+  --secondary: #3182CE;
+  --tertiary: #63B3ED;
+  --natural: #F0F7FF;
+
+  --background: #F6FAFF;
+  --surface: #f6faff;
+  --surface-soft: #edf4fc;
+  --surface-container: #e8eff7;
+
+
+  --text-primary: #1A365D;
+  --text-secondary: #3182CE;
+
+  --border-soft: #e5e7eb;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  scroll-behavior: smooth;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Fix section hidden under navbar */
+section {
+  scroll-margin-top: 100px;
 }
 
+/* ===== GLOBAL ===== */
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-headline);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 48px;
+}
+
+h2 {
+  font-size: 32px;
+}
+
+p {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+}
+
+/* ===== BACKGROUNDS ===== */
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.bg-primary-hover:hover {
+  background-color: var(--primary-hover);
+}
+
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.bg-surface-soft {
+  background-color: var(--surface-soft);
+}
+
+.bg-surface-muted {
+  background-color: var(--surface-muted);
+}
+
+/* ===== TEXT ===== */
+.text-primary {
+  color: var(--primary);
+}
+
+.text-gold {
+  color: var(--gold);
+}
+
+.text-main {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  background: linear-gradient(135deg, #1A365D, #002045);
+  color: white;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(30, 42, 68, 0.15);
+}
+
+.btn-gold {
+  background-color: var(--gold);
+  color: white;
+  border-radius: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+}
+
+.btn-gold:hover {
+  background-color: #b89655;
+  box-shadow: 0 10px 20px rgba(201, 169, 110, 0.2);
+}
+
+/* ===== CARDS ===== */
+.card-premium {
+  background: white;
+  border-radius: 24px;
+  border: 1px solid var(--border-soft);
+  transition: all 0.4s ease;
+  padding: 24px;
+}
+
+.card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== TYPOGRAPHY IMPROVEMENT ===== */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 48px;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 32px;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* ===== PREMIUM GOLD TEXT ===== */
+.gold-gradient {
+  background: linear-gradient(135deg, #C9A96E, #E5D3A3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.clinical-gradient {
+  background: linear-gradient(135deg, #002045 0%, #1A365D 100%);
+}
+
+/* ===== SECTION SPACING ===== */
+.section-padding {
+  padding: 100px 0;
+  /* increased spacing = premium */
 }
