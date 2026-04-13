@@ -2,7 +2,10 @@
 import Image from "next/image";
 import { BadgeCheck } from "lucide-react";
 
-export default function Hero() {
+export default function Hero({ city = "" }: { city?: string }) {
+  const cityName = city
+  ? "in " + city.charAt(0).toUpperCase() + city.slice(1)
+  : "You Can Trust";
   return (
     <section id="home" className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden">
 
@@ -34,12 +37,12 @@ export default function Hero() {
           <h1 className="text-5xl md:text-6xl font-headline font-extrabold text-primary leading-tight">
             Advanced Skin & <br />
             Aesthetic Care <br />
-            <span className="text-secondary">You Can Trust</span>
+            <span className="text-secondary"> {cityName} </span>
           </h1>
 
           {/* DESCRIPTION */}
           <p className="text-gray-800 text-lg leading-relaxed max-w-lg font-body font-semibold">
-            Personalized treatments for skin, hair, and laser care using modern dermatological techniques.
+            Personalized treatments in {city || "your city"} for skin, hair, and laser care.
           </p>
 
           {/* BUTTONS */}

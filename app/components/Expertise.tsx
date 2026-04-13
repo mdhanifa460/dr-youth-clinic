@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { FlaskConical, ShieldCheck, UserCheck } from "lucide-react";
 
-export default function Expertise() {
+export default function Expertise({ city = "" }: { city?: string }) {
   return (
     <section id="expertise" className="py-24 px-8 overflow-hidden">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-20 items-center">

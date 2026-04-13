@@ -1,7 +1,7 @@
 "use client";
 import { Phone } from "lucide-react";
 
-export default function CTA() {
+export default function CTA({ city = "" }: { city?: string }) {
   return (
     <section id="contact" className="px-6 md:px-10 mb-24">
       <div className="max-w-7xl mx-auto bg-primary rounded-[40px] p-12 md:p-20 text-center relative overflow-hidden">

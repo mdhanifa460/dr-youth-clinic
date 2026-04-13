@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Stethoscope } from "lucide-react";
 
-export default function Services() {
+export default function Services({ city = "" }: { city?: string }) {
   return (
     <section id="services" className="py-24 px-6 md:px-10 bg-background">
       <div className="max-w-7xl mx-auto">

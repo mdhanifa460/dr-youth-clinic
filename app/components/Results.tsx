@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export default function Results() {
+export default function Results({ city = "" }: { city?: string }) {
   return (
   <section id="results" className="py-32 px-8 bg-surface-soft">
 <div className="max-w-7xl mx-auto">
