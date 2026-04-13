@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const [active, setActive] = useState("home");
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const sections = ["home", "services", "results", "locations", "expertise", "contact"];
+    const sections = ["home", "services", "results", "expertise", "contact"];
 
     const handleScroll = () => {
       const scrollY = window.scrollY + 120;
@@ -24,8 +25,15 @@ export default function Navbar() {
       }
     };
 
+    const handleClickOutside = () => setOpen(false);
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("click", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("click", handleClickOutside);
+    };
   }, []);
 
   return (
@@ -47,11 +55,12 @@ export default function Navbar() {
 
         {/* NAV LINKS */}
         <nav className="hidden md:flex items-center gap-10">
+
+          {/* NORMAL LINKS */}
           {[
             { name: "Home", id: "home" },
             { name: "Services", id: "services" },
             { name: "Results", id: "results" },
-            { name: "Locations", id: "locations" },
             { name: "About", id: "expertise" },
             { name: "Contact", id: "contact" },
           ].map((item, i) => (
@@ -67,6 +76,47 @@ export default function Navbar() {
               {item.name}
             </a>
           ))}
+
+          {/* 🔥 LOCATIONS DROPDOWN */}
+          <div className="relative">
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(!open);
+              }}
+              className="text-[15px] font-body font-bold text-gray-600 cursor-pointer hover:text-secondary"
+            >
+              Locations
+            </div>
+
+            {open && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-xl p-4 z-[999]"
+              >
+                <div className="flex flex-col gap-2 min-w-[160px]">
+
+                  <a href="/chennai" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                    Chennai
+                  </a>
+
+                  <a href="/bangalore" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                    Bangalore
+                  </a>
+
+                  <a href="/coimbatore" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                    Coimbatore
+                  </a>
+
+                  <a href="/kochi" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                    Kochi
+                  </a>
+
+                </div>
+              </div>
+            )}
+          </div>
+
         </nav>
 
         {/* CTA BUTTON */}
