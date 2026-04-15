@@ -5,6 +5,7 @@ import Results from "./components/Results";
 import Expertise from "./components/Expertise";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
+import LocationsSection from "./components/LocationsSection";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <Hero />
       <Services />
       <Results />
+      <LocationsSection />
       <Expertise />
       <CTA />
       <Footer />
