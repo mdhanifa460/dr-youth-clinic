@@ -6,6 +6,11 @@ import Expertise from "./components/Expertise";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 import LocationsSection from "./components/LocationsSection";
+import TestimonialsSection from "./components/TestimonialsSection";
+import ConsultationCTA from "./components/ConsultationCTA";
+
+
+
 
 export default function Home() {
   return (
@@ -14,9 +19,10 @@ export default function Home() {
       <Hero />
       <Services />
       <Results />
-      <LocationsSection />
+      <LocationsSection showAll/>
       <Expertise />
-      <CTA />
+      <TestimonialsSection />
+      <ConsultationCTA/>
       <Footer />
     </main>
   );

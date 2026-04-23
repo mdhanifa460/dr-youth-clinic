@@ -1,33 +1,64 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
-const locations = [
+type Props = {
+  activeCity?: string;
+  showAll?: boolean;
+};
+
+type Location = {
+  name: string;
+  label: string;
+  address: string;
+  image?: string;
+  flagship?: boolean;
+};
+
+const locations: Location[] = [
   {
-    name: "Chennai",
-    image: "/images/hero-clinical.jpeg",
+    name: "chennai",
+    label: "Chennai",
     address: "Nungambakkam, Chennai",
+    image: "/images/chennai.jpg",
+    flagship: true,
   },
   {
-    name: "Bangalore",
-    image: "/images/hero-bg.png",
+    name: "bangalore",
+    label: "Bangalore",
     address: "Indiranagar, Bangalore",
+    image: "/images/bangalore.jpg",
   },
   {
-    name: "Kochi",
-    image: "/images/hero-bg.png",
+    name: "kochi",
+    label: "Kochi",
     address: "Kakkanad, Kochi",
+    image: "/images/kochi.jpg",
   },
   {
-    name: "Coimbatore",
-    image: "/images/hero-bg.png",
+    name: "coimbatore",
+    label: "Coimbatore",
     address: "Peelamedu, Coimbatore",
+    image: "/images/coimbatore.jpg",
   },
 ];
 
-export default function LocationsSection() {
+export default function LocationsSection({
+  activeCity,
+  showAll = false,
+}: Props) {
+
+  // ✅ clean and stable logic
+  const highlightCity = activeCity || "chennai";
+
+  // ✅ filter for location page
+  const filteredLocations = showAll
+    ? locations
+    : locations.filter((loc) => loc.name !== highlightCity);
+
   return (
     <section id="locations" className="py-24 px-6 md:px-10 bg-surface-container-low">
-
       <div className="max-w-7xl mx-auto space-y-12">
 
         {/* TITLE */}
@@ -41,44 +72,104 @@ export default function LocationsSection() {
         </div>
 
         {/* GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
 
-          {locations.map((loc, i) => (
-            <Link
-              key={i}
-              href={`/${loc.name.toLowerCase()}`}
-              className="group bg-white rounded-2xl overflow-hidden shadow hover:shadow-xl transition"
-            >
+          {filteredLocations.map((city) => {
+            const isActive = showAll && city.name === highlightCity;
 
-              {/* IMAGE */}
-              <div className="h-40 overflow-hidden">
-                <Image
-                  src={loc.image}
-                  alt={loc.name}
-                  width={400}
-                  height={200}
-                  className="w-full h-full object-cover group-hover:scale-105 transition"
-                />
-              </div>
+            // 🔥 BIG CARD (HOME ONLY)
+            if (isActive) {
+              return (
+                <Link
+                  key={city.name}
+                  href={`/${city.name}`}
+                  className="lg:col-span-7 group bg-white rounded-2xl overflow-hidden shadow hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                >
+                  <div className="flex flex-col md:flex-row">
 
-              {/* CONTENT */}
-              <div className="p-4 space-y-2">
-                <h3 className="text-xl font-bold text-primary">
-                  {loc.name}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {loc.address}
-                </p>
+                    {/* TEXT */}
+                    <div className="p-6 space-y-4 flex-1">
+                      {city.flagship && (
+                        <span className="text-xs text-secondary font-bold uppercase">
+                          Flagship Center
+                        </span>
+                      )}
+
+                      <h3 className="text-2xl font-bold text-primary">
+                        {city.label}
+                      </h3>
+
+                      <p className="text-gray-600">
+                        {city.address}
+                      </p>
+
+                      <span className="text-secondary font-semibold">
+                        Book Appointment →
+                      </span>
+                    </div>
+
+                    {/* IMAGE */}
+                    <div className="h-48 md:h-auto md:w-1/2 overflow-hidden">
+                      <Image
+                        src={city.image || "/images/default-clinic.jpg"}
+                        alt={city.label}
+                        width={500}
+                        height={400}
+                        sizes="(max-width: 768px) 100vw, 500px"
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-300"
+                      />
+                    </div>
+
+                  </div>
+                </Link>
+              );
+            }
+
+            // 🔹 NORMAL CARD
+            return (
+              <Link
+                key={city.name}
+                href={`/${city.name}`}
+                className="lg:col-span-5 bg-white p-6 rounded-2xl shadow hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-primary">
+                      {city.label}
+                    </h3>
+
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                      Clinic
+                    </span>
+                  </div>
+
+                  <p className="text-gray-600 mt-2">
+                    {city.address}
+                  </p>
+
+                  <div className="w-full h-[1px] bg-gray-100 my-4"></div>
+                </div>
 
                 <span className="text-secondary font-semibold text-sm">
-                  View Clinic →
+                  View →
                 </span>
-              </div>
-
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
 
         </div>
+
+        {/* VIEW ALL (HOME ONLY) */}
+        {showAll && (
+          <div className="text-center pt-6">
+            <Link
+              href="/locations"
+              className="text-secondary font-semibold hover:underline"
+            >
+              View All Locations →
+            </Link>
+          </div>
+        )}
 
       </div>
     </section>

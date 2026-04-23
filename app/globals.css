@@ -186,3 +186,30 @@ p {
   padding: 100px 0;
   /* increased spacing = premium */
 }
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid transparent;
+  outline: none;
+  transition: 0.2s;
+}
+
+.input:focus {
+  border: 1px solid #0b2545;
+  background: #fff;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0b2545;
+}
+
+.error {
+  color: #e11d48;
+  font-size: 12px;
+  margin-top: 4px;
+}

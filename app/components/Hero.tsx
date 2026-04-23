@@ -47,9 +47,11 @@ export default function Hero({ city = "" }: { city?: string }) {
 
           {/* BUTTONS */}
           <div className="flex flex-wrap gap-4 pt-4">
-            <button className="bg-primary text-white px-8 py-4 rounded-xl font-semibold shadow-[0_10px_25px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 hover:shadow-lg transition">
-              Book Appointment
-            </button>
+            <a href="#booking">
+              <button className="bg-primary text-white px-8 py-4 rounded-xl font-semibold shadow-[0_10px_25px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 hover:shadow-lg transition">
+                Book Appointment
+              </button>
+            </a>
 
             <button className="bg-white border border-gray-300 text-primary px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition">
               View Results

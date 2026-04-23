@@ -1,0 +1,35 @@
+export const resultsData = [
+  {
+    id: 1,
+    category: "skin",
+    title: "Advanced Acne Scar Resurfacing",
+    duration: "12 Weeks",
+    before: "/images/placeholder.jpg",
+    after: "/images/placeholder.jpg",
+    featured: true,
+  },
+  {
+    id: 2,
+    category: "skin",
+    title: "Pigmentation Treatment",
+    duration: "8 Weeks",
+    before: "/images/placeholder.jpg",
+    after: "/images/placeholder.jpg",
+  },
+  {
+    id: 3,
+    category: "hair",
+    title: "Hair Transplant",
+    duration: "6 Months",
+    before: "/images/placeholder.jpg",
+    after: "/images/placeholder.jpg",
+  },
+  {
+    id: 4,
+    category: "laser",
+    title: "Laser Skin Tightening",
+    duration: "10 Weeks",
+    before: "/images/placeholder.jpg",
+    after: "/images/placeholder.jpg",
+  },
+];
