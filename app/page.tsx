@@ -15,7 +15,7 @@ import ConsultationCTA from "./components/ConsultationCTA";
 export default function Home() {
   return (
     <main>
-      <Navbar />
+    
       <Hero />
       <Services />
       <Results />
@@ -23,7 +23,7 @@ export default function Home() {
       <Expertise />
       <TestimonialsSection />
       <ConsultationCTA/>
-      <Footer />
+      
     </main>
   );
 }
