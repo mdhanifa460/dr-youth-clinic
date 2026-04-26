@@ -36,16 +36,14 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-[#f6faff]">
 
-        {/* HEADER */}
-        <Navbar />
+      
 
         {/* 🟢 MAIN CONTENT (IMPORTANT) */}
         <main className="flex-1">
           {children}
         </main>
 
-        {/* FOOTER */}
-        <Footer />
+
 
       </body>
     </html>

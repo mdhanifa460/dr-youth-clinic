@@ -1,10 +1,10 @@
-import Hero from "../components/Hero";
-import Services from "../components/Services";
-import Results from "../components/Results";
-import Expertise from "../components/Expertise";
-import CTA from "../components/CTA";
-import LocationsSection from "../components/LocationsSection";
-import { locations, LocationType } from "../data/locations";
+import Hero from "@/app/components/Hero";
+import Services from "@/app/components/Services";
+import Results from "@/app/components/Results";
+import Expertise from "@/app/components/Expertise";
+import CTA from "@/app/components/CTA";
+import LocationsSection from "@/app/components/LocationsSection";
+import { locations, LocationType } from "@/app/data/locations";
 
 
 export async function generateMetadata({ params }: any) {
