@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "admin:reset": "tsx scripts/reset-admin.ts"
   },
   "dependencies": {
     "@google/genai": "1.29.0",

@@ -6,7 +6,7 @@ export const testimonials = [
     rating: 5,
     review:
       "Amazing results! My skin improved drastically within weeks. The doctors are very professional.",
-    image: "/images/placeholder.jpg",
+    image: "/images/hero-clinical.jpeg",
   },
   {
     id: 2,
@@ -15,7 +15,7 @@ export const testimonials = [
     rating: 5,
     review:
       "Hair transplant results are natural and exceeded expectations. Highly recommended!",
-    image: "/images/placeholder.jpg",
+    image: "/images/hero-clinical.jpeg",
   },
   {
     id: 3,
@@ -24,6 +24,6 @@ export const testimonials = [
     rating: 5,
     review:
       "Very clean clinic and friendly staff. My pigmentation treatment worked really well.",
-    image: "/images/placeholder.jpg",
+    image: "/images/hero-clinical.jpeg",
   },
 ];

@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     const booking = await Booking.create({
       bookingId,
       name,
+      phone: formattedPhone,
       formattedPhone,
       service,
       location,

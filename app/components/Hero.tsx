@@ -25,7 +25,7 @@ export default function Hero({ city = "" }: { city?: string }) {
       <div className="max-w-7xl mx-auto px-6 md:px-10 w-full grid md:grid-cols-2 gap-12 items-center">
 
         {/* LEFT */}
-        <div className="space-y-8" max-w-xl>
+        <div className="max-w-xl space-y-8">
 
           {/* BADGE */}
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-tertiary text-primary text-sm font-semibold tracking-wide">

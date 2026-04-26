@@ -21,26 +21,26 @@ const locations: Location[] = [
     name: "chennai",
     label: "Chennai",
     address: "Nungambakkam, Chennai",
-    image: "/images/chennai.jpg",
+    image: "/images/hero-clinical.jpeg",
     flagship: true,
   },
   {
     name: "bangalore",
     label: "Bangalore",
     address: "Indiranagar, Bangalore",
-    image: "/images/bangalore.jpg",
+    image: "/images/hero-clinical.jpeg",
   },
   {
     name: "kochi",
     label: "Kochi",
     address: "Kakkanad, Kochi",
-    image: "/images/kochi.jpg",
+    image: "/images/hero-clinical.jpeg",
   },
   {
     name: "coimbatore",
     label: "Coimbatore",
     address: "Peelamedu, Coimbatore",
-    image: "/images/coimbatore.jpg",
+    image: "/images/hero-clinical.jpeg",
   },
 ];
 

@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      "dryouthclinic.co.in",
-      "images.unsplash.com",
-      "lh3.googleusercontent.com",
-      "storage.googleapis.com",
-      "picsum.photos",
+    remotePatterns: [
+      { protocol: "https", hostname: "dryouthclinic.co.in" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "storage.googleapis.com" },
+      { protocol: "https", hostname: "picsum.photos" },
     ],
   },
 };

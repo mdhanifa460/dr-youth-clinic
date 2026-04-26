@@ -4,8 +4,10 @@ import mongoose from "mongoose";
 
 const BookingSchema = new mongoose.Schema(
   {
+    bookingId: String,
     name: String,
     phone: String,
+    formattedPhone: String,
     service: String,
     location: String,
     date: String,

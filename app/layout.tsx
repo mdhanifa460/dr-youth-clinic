@@ -1,17 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
-
-// 👇 your fonts (correct)
-const inter = Inter({
-  variable: "--font-body",
-  subsets: ["latin"],
-});
-
-const manrope = Manrope({
-  variable: "--font-headline",
-  subsets: ["latin"],
-});
 
 // 👇 improve metadata (better for SEO)
 export const metadata: Metadata = {
@@ -22,10 +10,6 @@ export const metadata: Metadata = {
   description:
     "Premium dermatology and hair treatment clinic. Book consultations online.",
 };
-
-// 👇 import layout components
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
 
 export default function RootLayout({
   children,

@@ -1,84 +1,115 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+
+type BookingStatus = "new" | "confirmed" | "done";
+
+type Booking = {
+  _id: string;
+  name?: string;
+  phone?: string;
+  service?: string;
+  location?: string;
+  date?: string;
+  time?: string;
+  concern?: string;
+  status?: BookingStatus;
+};
+
+const statuses: BookingStatus[] = ["new", "confirmed", "done"];
+
+const getErrorMessage = (fallback: string, body: unknown) => {
+  if (body && typeof body === "object" && "message" in body) {
+    const message = (body as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return fallback;
+};
+
+const escapeCSVCell = (value: unknown) => {
+  const text = String(value ?? "");
+  const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+
+  return /[",\n\r]/.test(safeText)
+    ? `"${safeText.replace(/"/g, '""')}"`
+    : safeText;
+};
 
 export default function BookingsPage() {
-  const [all, setAll] = useState<any[]>([]);
+  const [all, setAll] = useState<Booking[]>([]);
   const [q, setQ] = useState("");
   const [service, setService] = useState("");
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("");
   const [date, setDate] = useState("");
+  const [error, setError] = useState("");
 
   const [page, setPage] = useState(1);
-  const perPage = 6;
+  const [totalPages, setTotalPages] = useState(1);
 
-  const [selected, setSelected] = useState<any>(null);
-  const [form, setForm] = useState<any>({});
+  const [selected, setSelected] = useState<Booking | null>(null);
+  const [form, setForm] = useState<Booking>({ _id: "" });
+
+  // 🔄 FETCH DATA (updated)
+  const fetchData = async () => {
+    try {
+      const res = await fetch(
+        `/api/admin/bookings?page=${page}&limit=6&status=${status}&search=${q}&date=${date}&service=${service}&location=${location}`
+      );
+
+      const body = await res.json();
+
+      if (!res.ok) {
+        throw new Error(getErrorMessage("Could not load bookings", body));
+      }
+
+      setAll(Array.isArray(body.data) ? body.data : []);
+      setTotalPages(body.totalPages || 1);
+      setError("");
+    } catch (err) {
+      setError((err as Error).message || "Could not load bookings");
+    }
+  };
 
   // 🔄 AUTO REFRESH
   useEffect(() => {
-    const fetchData = () => {
-      fetch("/api/admin/bookings")
-        .then(res => res.json())
-        .then(setAll);
-    };
-
     fetchData();
-    const interval = setInterval(fetchData, 5000);
-
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [page, status, q, date, service, location]);
 
-  // 🔍 FILTER
-  const filtered = useMemo(() => {
-    return all.filter(b => {
-      const matchQ =
-        !q ||
-        b.name?.toLowerCase().includes(q.toLowerCase()) ||
-        b.phone?.includes(q);
-
-      return (
-        matchQ &&
-        (!service || b.service === service) &&
-        (!location || b.location === location) &&
-        (!status || (b.status || "new") === status) &&
-        (!date || b.date === date)
-      );
-    });
-  }, [all, q, service, location, status, date]);
-
+  // 🔄 RESET PAGE ON FILTER CHANGE
   useEffect(() => {
     setPage(1);
   }, [q, service, location, status, date]);
 
-  // 📄 PAGINATION
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice(
-    (page - 1) * perPage,
-    page * perPage
-  );
-
   // 🔄 STATUS UPDATE
-  const updateStatus = async (id: string, status: string) => {
-    await fetch("/api/admin/update-status", {
+  const updateStatus = async (id: string, nextStatus: BookingStatus) => {
+    const res = await fetch("/api/admin/update-status", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id, status }),
+      body: JSON.stringify({ id, status: nextStatus }),
     });
 
+    const body = await res.json();
+
+    if (!res.ok) {
+      setError(getErrorMessage("Could not update status", body));
+      return;
+    }
+
     setAll(prev =>
-      prev.map(b => (b._id === id ? { ...b, status } : b))
+      prev.map(b => (b._id === id ? { ...b, status: nextStatus } : b))
     );
   };
 
-  // 📤 EXPORT
+  // 📤 EXPORT CSV (uses current page data)
   const exportCSV = () => {
     const rows = [
       ["Name", "Phone", "Service", "Location", "Date", "Time", "Status"],
-      ...filtered.map(b => [
+      ...all.map(b => [
         b.name,
         b.phone,
         b.service,
@@ -91,7 +122,7 @@ export default function BookingsPage() {
 
     const csv =
       "data:text/csv;charset=utf-8," +
-      rows.map(r => r.join(",")).join("\n");
+      rows.map(r => r.map(escapeCSVCell).join(",")).join("\n");
 
     const link = document.createElement("a");
     link.href = encodeURI(csv);
@@ -114,6 +145,12 @@ export default function BookingsPage() {
         </button>
       </div>
 
+      {error && (
+        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+
       {/* FILTER */}
       <div className="bg-white p-4 rounded-xl shadow grid md:grid-cols-5 gap-3">
         <input
@@ -123,18 +160,18 @@ export default function BookingsPage() {
           className="border px-3 py-2 rounded"
         />
 
-        <select value={service} onChange={e => setService(e.target.value)} className="border px-3 py-2 rounded">
+        <select aria-label="Service" value={service} onChange={e => setService(e.target.value)} className="border px-3 py-2 rounded">
           <option value="">Service</option>
           <option>Skin</option>
           <option>Hair</option>
         </select>
 
-        <select value={location} onChange={e => setLocation(e.target.value)} className="border px-3 py-2 rounded">
+        <select aria-label="Location" value={location} onChange={e => setLocation(e.target.value)} className="border px-3 py-2 rounded">
           <option value="">Location</option>
           <option>Chennai</option>
         </select>
 
-        <select value={status} onChange={e => setStatus(e.target.value)} className="border px-3 py-2 rounded">
+        <select aria-label="Status" value={status} onChange={e => setStatus(e.target.value)} className="border px-3 py-2 rounded">
           <option value="">Status</option>
           <option value="new">New</option>
           <option value="confirmed">Confirmed</option>
@@ -149,14 +186,19 @@ export default function BookingsPage() {
         />
       </div>
 
+      {/* COUNT */}
+      <p className="text-sm text-gray-500">
+        Showing {all.length} records
+      </p>
+
       {/* CARDS */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paginated.map(b => (
+        {all.map(b => (
           <div
             key={b._id}
             onClick={() => {
               setSelected(b);
-              setForm(b);
+              setForm({ ...b });
             }}
             className="bg-white rounded-xl shadow p-5 cursor-pointer"
           >
@@ -166,16 +208,17 @@ export default function BookingsPage() {
             <p>{b.date}</p>
 
             <select
+              aria-label="Update status"
               value={b.status || "new"}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) =>
-                updateStatus(b._id, e.target.value)
+                updateStatus(b._id, e.target.value as BookingStatus)
               }
               className="border mt-2 w-full"
             >
-              <option value="new">New</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="done">Done</option>
+              {statuses.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
             </select>
           </div>
         ))}
@@ -199,22 +242,24 @@ export default function BookingsPage() {
       {/* MODAL */}
       {selected && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-
           <div className="bg-white p-6 rounded-xl w-[400px] space-y-3">
 
             <h2 className="font-bold text-lg">Edit Booking</h2>
 
-            <input value={form.name || ""} onChange={e => setForm({ ...form, name: e.target.value })} className="border w-full p-2" />
+            <input  value={form.name || ""} onChange={e => setForm({ ...form, name: e.target.value })} className="border w-full p-2" />
             <input value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} className="border w-full p-2" />
             <input value={form.service || ""} onChange={e => setForm({ ...form, service: e.target.value })} className="border w-full p-2" />
+            <input value={form.location || ""} onChange={e => setForm({ ...form, location: e.target.value })} className="border w-full p-2" />
 
             <input type="date" value={form.date || ""} onChange={e => setForm({ ...form, date: e.target.value })} className="border w-full p-2" />
             <input type="time" value={form.time || ""} onChange={e => setForm({ ...form, time: e.target.value })} className="border w-full p-2" />
 
-            <select value={form.status || "new"} onChange={e => setForm({ ...form, status: e.target.value })} className="border w-full p-2">
-              <option value="new">New</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="done">Done</option>
+            <select value={form.status || "new"} onChange={e => setForm({ ...form, status: e.target.value as BookingStatus })} className="border w-full p-2">
+              {statuses.map(value => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
             </select>
 
             <div className="flex justify-between">
@@ -222,15 +267,22 @@ export default function BookingsPage() {
 
               <button
                 onClick={async () => {
-                  await fetch("/api/admin/update-booking", {
+                  const res = await fetch("/api/admin/update-booking", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(form),
                   });
 
+                  const body = await res.json();
+
+                  if (!res.ok) {
+                    setError(getErrorMessage("Could not save booking", body));
+                    return;
+                  }
+
                   setAll(prev =>
                     prev.map(b =>
-                      b._id === form._id ? form : b
+                      b._id === form._id ? body.booking : b
                     )
                   );
 
