@@ -49,7 +49,7 @@ export default function ConsultationForm({ step, setStep }: any) {
       const data = await res.json();
 
       if (data.success) {
-        setBookingId(data.bookingId ?? data.booking?._id ?? "");
+        setBookingId(data.bookingId ?? data.booking?.bookingId ?? data.booking?._id ?? "");
         setSuccess(true);
       }
     } catch {
