@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { connectDB } from "../../lib/mongodb";
 import Booking from "../../models/Booking";
-
-
-const bookingId = "DR-" + Date.now();
 
 export async function GET() {
     return NextResponse.json({ message: "API working ✅" });
@@ -12,6 +10,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const bookingId = `DR-${randomUUID().slice(0, 8).toUpperCase()}`;
     const body = await req.json();
 
     const { name, phone, service, location, date, time, concern } = body;
@@ -90,6 +89,7 @@ See you soon ✨`,
 
     return NextResponse.json({
       success: true,
+      bookingId,
       booking,
     });
 
