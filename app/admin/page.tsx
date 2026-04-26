@@ -18,6 +18,7 @@ type Booking = {
 
 const statuses: BookingStatus[] = ["new", "confirmed", "done"];
 
+
 const getErrorMessage = (fallback: string, body: unknown) => {
   if (body && typeof body === "object" && "message" in body) {
     const message = (body as { message?: unknown }).message;
@@ -43,16 +44,17 @@ export default function BookingsPage() {
   const [status, setStatus] = useState("");
   const [date, setDate] = useState("");
   const [error, setError] = useState("");
-
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   const [selected, setSelected] = useState<Booking | null>(null);
   const [form, setForm] = useState<Booking>({ _id: "" });
 
-  // 🔄 FETCH DATA (updated)
+  // 🔄 FETCH DATA
   const fetchData = async () => {
     try {
+      setLoading(true);
       const res = await fetch(
         `/api/admin/bookings?page=${page}&limit=6&status=${status}&search=${q}&date=${date}&service=${service}&location=${location}`
       );
@@ -68,17 +70,17 @@ export default function BookingsPage() {
       setError("");
     } catch (err) {
       setError((err as Error).message || "Could not load bookings");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔄 AUTO REFRESH
+  // ✅ UPDATED: NO INTERVAL
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
   }, [page, status, q, date, service, location]);
 
-  // 🔄 RESET PAGE ON FILTER CHANGE
+  // 🔄 RESET PAGE
   useEffect(() => {
     setPage(1);
   }, [q, service, location, status, date]);
@@ -105,7 +107,7 @@ export default function BookingsPage() {
     );
   };
 
-  // 📤 EXPORT CSV (uses current page data)
+  // 📤 EXPORT CSV
   const exportCSV = () => {
     const rows = [
       ["Name", "Phone", "Service", "Location", "Date", "Time", "Status"],
@@ -134,21 +136,38 @@ export default function BookingsPage() {
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div className="flex justify-between">
-        <h1 className="text-2xl font-bold">Bookings</h1>
+    <div className="flex justify-between items-center">
+  <h1 className="text-2xl font-bold">Bookings</h1>
 
-        <button
-          onClick={exportCSV}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          Export CSV
-        </button>
-      </div>
+  <div className="flex gap-2">
+    <button
+      onClick={fetchData}
+      className="bg-blue-600 text-white px-4 py-2 rounded"
+    >
+      Refresh
+    </button>
+
+    <button
+      onClick={exportCSV}
+      className="bg-green-600 text-white px-4 py-2 rounded"
+    >
+      Export CSV
+    </button>
+  </div>
+</div>
 
       {error && (
         <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
           {error}
         </p>
+      )}
+
+
+      {/* LOADING */}
+      {loading && (
+        <div className="text-center text-blue-600">
+          Loading bookings...
+        </div>
       )}
 
       {/* FILTER */}
@@ -230,23 +249,21 @@ export default function BookingsPage() {
           <button
             key={i}
             onClick={() => setPage(i + 1)}
-            className={`px-3 py-1 ${
-              page === i + 1 ? "bg-black text-white" : "bg-gray-200"
-            }`}
+            className={`px-3 py-1 ${page === i + 1 ? "bg-black text-white" : "bg-gray-200"
+              }`}
           >
             {i + 1}
           </button>
         ))}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL remains unchanged */}
       {selected && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
           <div className="bg-white p-6 rounded-xl w-[400px] space-y-3">
-
             <h2 className="font-bold text-lg">Edit Booking</h2>
 
-            <input  value={form.name || ""} onChange={e => setForm({ ...form, name: e.target.value })} className="border w-full p-2" />
+            <input value={form.name || ""} onChange={e => setForm({ ...form, name: e.target.value })} className="border w-full p-2" />
             <input value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} className="border w-full p-2" />
             <input value={form.service || ""} onChange={e => setForm({ ...form, service: e.target.value })} className="border w-full p-2" />
             <input value={form.location || ""} onChange={e => setForm({ ...form, location: e.target.value })} className="border w-full p-2" />
@@ -256,9 +273,7 @@ export default function BookingsPage() {
 
             <select value={form.status || "new"} onChange={e => setForm({ ...form, status: e.target.value as BookingStatus })} className="border w-full p-2">
               {statuses.map(value => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
+                <option key={value} value={value}>{value}</option>
               ))}
             </select>
 
