@@ -5,59 +5,54 @@ import Expertise from "@/app/components/Expertise";
 import CTA from "@/app/components/CTA";
 import LocationsSection from "@/app/components/LocationsSection";
 import { locations, LocationType } from "@/app/data/locations";
+import { LocalBusinessSchema } from "@/app/components/SchemaMarkup";
+import { Metadata } from "next";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://dryouthclinic.co.in";
 
-export async function generateMetadata({ params }: any) {
+export async function generateStaticParams() {
+  return Object.keys(locations).map((location) => ({
+    location,
+  }));
+}
+
+export async function generateMetadata({ params }: { params: { location: string } }): Promise<Metadata> {
   const city = params.location;
   const cityName = city.charAt(0).toUpperCase() + city.slice(1);
-
+  const locationData = locations[city];
 
   return {
-    title: `Best Skin Clinic in ${cityName} | DR Youth Clinic`,
-    description: `Top dermatology clinic in ${cityName} offering advanced skin, hair, and laser treatments. Book your consultation today.`,
-    keywords: [
-      `skin clinic in ${cityName}`,
-      `dermatologist in ${cityName}`,
-      `hair treatment ${cityName}`,
-      `laser clinic ${cityName}`,
-    ],
+    title: `Best Dermatology & Skin Clinic in ${cityName} | DR Youth Clinic`,
+    description: `Premium skin, hair, and laser treatments in ${cityName}. Expert dermatologists offering advanced aesthetic solutions. Book your free consultation today.`,
+    alternates: {
+      canonical: `${SITE_URL}/${city}`,
+    },
     openGraph: {
-      title: `Best Skin Clinic in ${cityName}`,
+      title: `Best Skin Clinic in ${cityName} | DR Youth Clinic`,
       description: `Advanced dermatology treatments in ${cityName}`,
-      url: `https://dr-youth-clinic.vercel.app/${city}`,
+      url: `${SITE_URL}/${city}`,
       siteName: "DR Youth Clinic",
       type: "website",
+      locale: "en_IN",
     },
   };
 }
 
-export default function LocationPage({ params }: any) {
+export default function LocationPage({ params }: { params: { location: string } }) {
   const city = params.location;
   const cityName = city.charAt(0).toUpperCase() + city.slice(1);
-  const cityData: LocationType | undefined = locations[params.location];
 
   return (
-    <main>
-
-      {/* HERO */}
-      <Hero city={cityName} />
-
-      {/* LOCATION INFO */}
-       <LocationsSection activeCity={params.location} />
-
-      {/* SERVICES */}
-      <Services city={cityName} />
-
-      {/* RESULTS */}
-      <Results city={cityName} />
-
-      {/* EXPERTISE */}
-      <Expertise city={cityName} />
-
-      {/* CTA */}
-      <CTA city={cityName} />
-
-    </main>
+    <>
+      <LocalBusinessSchema location={city} city={cityName} />
+      <main>
+        <Hero city={cityName} />
+        <LocationsSection activeCity={params.location} />
+        <Services city={cityName} />
+        <Results city={cityName} />
+        <Expertise city={cityName} />
+        <CTA city={cityName} />
+      </main>
+    </>
   );
-
 }

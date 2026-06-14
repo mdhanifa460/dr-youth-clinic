@@ -8,7 +8,7 @@ export default function BookingPage() {
   const [step, setStep] = useState(1);
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-16">
+    <main className="max-w-7xl mx-auto px-6 py-16 min-h-screen">
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
 
@@ -16,7 +16,7 @@ export default function BookingPage() {
           <Sidebar step={step} />
         </aside>
 
-        <section className="lg:col-span-8 bg-white rounded-3xl p-10 shadow">
+        <section className="lg:col-span-8 bg-white rounded-3xl p-10 shadow-lg">
           <ConsultationForm step={step} setStep={setStep} />
         </section>
 

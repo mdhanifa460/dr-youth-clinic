@@ -1,5 +1,6 @@
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import { OrganizationSchema, FAQSchema } from "@/app/components/SchemaMarkup";
 
 export default function PublicLayout({
   children,
@@ -8,6 +9,8 @@ export default function PublicLayout({
 }) {
   return (
     <>
+      <OrganizationSchema />
+      <FAQSchema />
       <Navbar />
       {children}
       <Footer />

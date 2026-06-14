@@ -2,10 +2,13 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [active, setActive] = useState("home");
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const currentLocation = pathname.split("/")[1] || "";
 
   useEffect(() => {
     const sections = ["home", "services", "results", "expertise", "contact"];
@@ -37,22 +40,24 @@ export default function Navbar() {
     };
   }, []);
 
+  const homeLink = currentLocation && !["book", "admin"].includes(currentLocation) ? `/${currentLocation}` : "/";
+
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-neutral">
 
       <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
 
         {/* LOGO */}
-        <div className="flex items-center">
+        <Link href="/" className="flex items-center">
           <Image
             src="https://dryouthclinic.co.in/images/new-img/logo.png"
-            alt="DR Youth Clinic"
+            alt="DR Youth Clinic - Premium Dermatology"
             width={160}
             height={60}
             className="object-contain"
             priority
           />
-        </div>
+        </Link>
 
         {/* NAV LINKS */}
         <nav className="hidden md:flex items-center gap-10">
@@ -67,7 +72,7 @@ export default function Navbar() {
           ].map((item, i) => (
             <a
               key={i}
-              href={`#${item.id}`}
+              href={`${homeLink}#${item.id}`}
               className={`text-[15px] font-body font-bold transition-all duration-300 ${
                 active === item.id
                   ? "text-primary border-b-2 border-primary pb-1"
@@ -87,7 +92,7 @@ export default function Navbar() {
               }}
               className="text-[15px] font-body font-bold text-gray-600 cursor-pointer hover:text-secondary"
             >
-              Locations
+              Locations ▼
             </div>
 
             {open && (
@@ -96,23 +101,18 @@ export default function Navbar() {
                 className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-xl p-4 z-[999]"
               >
                 <div className="flex flex-col gap-2 min-w-[160px]">
-
-                  <a href="/chennai" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                  <Link href="/chennai" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded text-gray-700 font-semibold">
                     Chennai
-                  </a>
-
-                  <a href="/bangalore" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                  </Link>
+                  <Link href="/bangalore" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded text-gray-700 font-semibold">
                     Bangalore
-                  </a>
-
-                  <a href="/coimbatore" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                  </Link>
+                  <Link href="/coimbatore" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded text-gray-700 font-semibold">
                     Coimbatore
-                  </a>
-
-                  <a href="/kochi" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded">
+                  </Link>
+                  <Link href="/kochi" onClick={() => setOpen(false)} className="hover:bg-gray-100 px-2 py-1 rounded text-gray-700 font-semibold">
                     Kochi
-                  </a>
-
+                  </Link>
                 </div>
               </div>
             )}
