@@ -65,14 +65,14 @@ export default function Navbar() {
           {/* NORMAL LINKS */}
           {[
             { name: "Home", id: "home" },
-            { name: "Services", id: "services" },
+            { name: "Services", href: "/services" },
             { name: "Results", id: "results" },
             { name: "About", id: "expertise" },
             { name: "Contact", id: "contact" },
           ].map((item, i) => (
             <a
               key={i}
-              href={`${homeLink}#${item.id}`}
+              href={item.href || `${homeLink}#${item.id}`}
               className={`text-[15px] font-body font-bold transition-all duration-300 ${
                 active === item.id
                   ? "text-primary border-b-2 border-primary pb-1"
