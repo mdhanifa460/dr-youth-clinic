@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type BookingStatus = "new" | "confirmed" | "done";
+import Link from "next/link";
 
 type Booking = {
   _id: string;
@@ -11,307 +10,264 @@ type Booking = {
   service?: string;
   location?: string;
   date?: string;
-  time?: string;
-  concern?: string;
-  status?: BookingStatus;
+  status?: string;
 };
 
-const statuses: BookingStatus[] = ["new", "confirmed", "done"];
-
-
-const getErrorMessage = (fallback: string, body: unknown) => {
-  if (body && typeof body === "object" && "message" in body) {
-    const message = (body as { message?: unknown }).message;
-    if (typeof message === "string") return message;
-  }
-  return fallback;
+type Review = {
+  _id: string;
+  authorName?: string;
+  rating?: number;
+  reviewText?: string;
+  source?: string;
+  isVisible?: boolean;
+  createdAt?: string;
 };
 
-const escapeCSVCell = (value: unknown) => {
-  const text = String(value ?? "");
-  const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
-
-  return /[",\n\r]/.test(safeText)
-    ? `"${safeText.replace(/"/g, '""')}"`
-    : safeText;
+type Stats = {
+  todayBookings: number;
+  pendingLeads: number;
+  totalBookings: number;
+  newReviews: number;
+  services: number;
+  locations: number;
 };
 
-export default function BookingsPage() {
-  const [all, setAll] = useState<Booking[]>([]);
-  const [q, setQ] = useState("");
-  const [service, setService] = useState("");
-  const [location, setLocation] = useState("");
-  const [status, setStatus] = useState("");
-  const [date, setDate] = useState("");
+type DashboardData = {
+  stats: Stats;
+  recentBookings: Booking[];
+  recentReviews: Review[];
+};
+
+// ─── Skeleton primitives ──────────────────────────────────────────────────────
+function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded bg-gray-200 ${className}`} />;
+}
+
+// ─── Stat cards ───────────────────────────────────────────────────────────────
+const STAT_CONFIG = [
+  { key: "todayBookings",  label: "Today's Bookings", icon: "📅", href: "/admin/bookings",          color: "bg-blue-50   border-blue-200",   val: "text-blue-700"   },
+  { key: "pendingLeads",   label: "Pending Leads",    icon: "⏳", href: "/admin/bookings?status=new", color: "bg-amber-50  border-amber-200",  val: "text-amber-700"  },
+  { key: "totalBookings",  label: "Total Bookings",   icon: "📋", href: "/admin/bookings",          color: "bg-indigo-50 border-indigo-200",  val: "text-indigo-700" },
+  { key: "newReviews",     label: "New Reviews (7d)", icon: "⭐", href: "/admin/reviews",           color: "bg-yellow-50 border-yellow-200",  val: "text-yellow-700" },
+  { key: "services",       label: "Active Services",  icon: "🩺", href: "/admin/services",          color: "bg-green-50  border-green-200",   val: "text-green-700"  },
+  { key: "locations",      label: "Locations",        icon: "📍", href: "/admin/locations",         color: "bg-rose-50   border-rose-200",    val: "text-rose-700"   },
+] as const;
+
+function StatCards({ stats, loading }: { stats: Stats | null; loading: boolean }) {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {STAT_CONFIG.map((c) => (
+        <Link key={c.key} href={c.href}>
+          <div className={`rounded-xl border p-5 transition hover:shadow-md cursor-pointer ${c.color}`}>
+            <span className="text-2xl">{c.icon}</span>
+            <div className="mt-3">
+              {loading ? (
+                <Skeleton className="h-9 w-14 mb-1" />
+              ) : (
+                <p className={`text-3xl font-bold ${c.val}`}>{stats?.[c.key] ?? "—"}</p>
+              )}
+              <p className="text-sm font-medium text-gray-600 mt-1">{c.label}</p>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+const STATUS_STYLES: Record<string, string> = {
+  new:       "bg-blue-100 text-blue-700",
+  confirmed: "bg-green-100 text-green-700",
+  done:      "bg-gray-100 text-gray-600",
+};
+
+function StatusBadge({ status = "new" }: { status?: string }) {
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600"}`}>
+      {status}
+    </span>
+  );
+}
+
+// ─── Recent bookings table ────────────────────────────────────────────────────
+function RecentBookings({ bookings, loading }: { bookings: Booking[]; loading: boolean }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 className="text-base font-semibold text-gray-900">Recent Bookings</h2>
+        <Link href="/admin/bookings" className="text-xs font-medium text-[#0B2545] hover:underline">
+          View all →
+        </Link>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+            <tr>
+              <th className="px-6 py-3 text-left">Patient</th>
+              <th className="px-6 py-3 text-left">Service</th>
+              <th className="px-6 py-3 text-left">Location</th>
+              <th className="px-6 py-3 text-left">Date</th>
+              <th className="px-6 py-3 text-left">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-3"><Skeleton className="h-4 w-28" /></td>
+                    <td className="px-6 py-3"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-6 py-3"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-6 py-3"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-6 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                  </tr>
+                ))
+              : bookings.length === 0
+              ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400 text-sm">
+                      No bookings yet
+                    </td>
+                  </tr>
+                )
+              : bookings.map((b) => (
+                  <tr key={b._id} className="hover:bg-gray-50 transition">
+                    <td className="px-6 py-3 font-medium text-gray-900">{b.name || "—"}</td>
+                    <td className="px-6 py-3 text-gray-600">{b.service || "—"}</td>
+                    <td className="px-6 py-3 text-gray-600 capitalize">{b.location || "—"}</td>
+                    <td className="px-6 py-3 text-gray-600">{b.date || "—"}</td>
+                    <td className="px-6 py-3"><StatusBadge status={b.status} /></td>
+                  </tr>
+                ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Recent reviews ───────────────────────────────────────────────────────────
+function Stars({ rating = 0 }: { rating?: number }) {
+  return (
+    <span className="text-yellow-400 text-sm">
+      {"★".repeat(Math.min(rating, 5))}{"☆".repeat(Math.max(0, 5 - rating))}
+    </span>
+  );
+}
+
+function RecentReviews({ reviews, loading }: { reviews: Review[]; loading: boolean }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 className="text-base font-semibold text-gray-900">Recent Reviews</h2>
+        <Link href="/admin/reviews" className="text-xs font-medium text-[#0B2545] hover:underline">
+          View all →
+        </Link>
+      </div>
+
+      <div className="divide-y divide-gray-100">
+        {loading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="px-6 py-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))
+          : reviews.length === 0
+          ? (
+              <p className="px-6 py-8 text-center text-sm text-gray-400">No reviews yet</p>
+            )
+          : reviews.map((r) => (
+              <div key={r._id} className="px-6 py-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 text-sm">{r.authorName || "Anonymous"}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.isVisible ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                    {r.isVisible ? "Visible" : "Hidden"}
+                  </span>
+                </div>
+                <Stars rating={r.rating} />
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{r.reviewText || "—"}</p>
+              </div>
+            ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Quick actions ────────────────────────────────────────────────────────────
+const ACTIONS = [
+  { label: "View Bookings",  href: "/admin/bookings",     primary: true  },
+  { label: "Add Service",    href: "/admin/services/new", primary: false },
+  { label: "Manage Reviews", href: "/admin/reviews",      primary: false },
+  { label: "Edit Homepage",  href: "/admin/homepage",     primary: false },
+];
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+export default function AdminDashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const [selected, setSelected] = useState<Booking | null>(null);
-  const [form, setForm] = useState<Booking>({ _id: "" });
-
-  // 🔄 FETCH DATA
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `/api/admin/bookings?page=${page}&limit=6&status=${status}&search=${q}&date=${date}&service=${service}&location=${location}`
-      );
-
-      const body = await res.json();
-
-      if (!res.ok) {
-        throw new Error(getErrorMessage("Could not load bookings", body));
-      }
-
-      setAll(Array.isArray(body.data) ? body.data : []);
-      setTotalPages(body.totalPages || 1);
-      setError("");
-    } catch (err) {
-      setError((err as Error).message || "Could not load bookings");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ UPDATED: NO INTERVAL
   useEffect(() => {
-    fetchData();
-  }, [page, status, q, date, service, location]);
+    fetch("/api/admin/dashboard")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load");
+        return r.json();
+      })
+      .then(setData)
+      .catch(() => setError("Could not load dashboard. Please refresh."))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // 🔄 RESET PAGE
-  useEffect(() => {
-    setPage(1);
-  }, [q, service, location, status, date]);
-
-  // 🔄 STATUS UPDATE
-  const updateStatus = async (id: string, nextStatus: BookingStatus) => {
-    const res = await fetch("/api/admin/update-status", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id, status: nextStatus }),
-    });
-
-    const body = await res.json();
-
-    if (!res.ok) {
-      setError(getErrorMessage("Could not update status", body));
-      return;
-    }
-
-    setAll(prev =>
-      prev.map(b => (b._id === id ? { ...b, status: nextStatus } : b))
-    );
-  };
-
-  // 📤 EXPORT CSV
-  const exportCSV = () => {
-    const rows = [
-      ["Name", "Phone", "Service", "Location", "Date", "Time", "Status"],
-      ...all.map(b => [
-        b.name,
-        b.phone,
-        b.service,
-        b.location,
-        b.date,
-        b.time,
-        b.status || "new",
-      ]),
-    ];
-
-    const csv =
-      "data:text/csv;charset=utf-8," +
-      rows.map(r => r.map(escapeCSVCell).join(",")).join("\n");
-
-    const link = document.createElement("a");
-    link.href = encodeURI(csv);
-    link.download = "bookings.csv";
-    link.click();
-  };
+  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className="space-y-6">
 
-      {/* HEADER */}
-    <div className="flex justify-between items-center">
-  <h1 className="text-2xl font-bold">Bookings</h1>
-
-  <div className="flex gap-2">
-    <button
-      onClick={fetchData}
-      className="bg-blue-600 text-white px-4 py-2 rounded"
-    >
-      Refresh
-    </button>
-
-    <button
-      onClick={exportCSV}
-      className="bg-green-600 text-white px-4 py-2 rounded"
-    >
-      Export CSV
-    </button>
-  </div>
-</div>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{today}</p>
+        </div>
+        <div className="flex gap-2">
+          {ACTIONS.map((a) => (
+            <Link key={a.href} href={a.href}>
+              <button className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                a.primary
+                  ? "bg-[#0B2545] text-white hover:bg-[#12345c]"
+                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}>
+                {a.label}
+              </button>
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {error && (
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+        <p className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       )}
 
+      {/* Stats */}
+      <StatCards stats={data?.stats ?? null} loading={loading} />
 
-      {/* LOADING */}
-      {loading && (
-        <div className="text-center text-blue-600">
-          Loading bookings...
+      {/* Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <RecentBookings bookings={data?.recentBookings ?? []} loading={loading} />
         </div>
-      )}
-
-      {/* FILTER */}
-      <div className="bg-white p-4 rounded-xl shadow grid md:grid-cols-5 gap-3">
-        <input
-          placeholder="Search"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          className="border px-3 py-2 rounded"
-        />
-
-        <select aria-label="Service" value={service} onChange={e => setService(e.target.value)} className="border px-3 py-2 rounded">
-          <option value="">Service</option>
-          <option>Skin</option>
-          <option>Hair</option>
-        </select>
-
-        <select aria-label="Location" value={location} onChange={e => setLocation(e.target.value)} className="border px-3 py-2 rounded">
-          <option value="">Location</option>
-          <option>Chennai</option>
-        </select>
-
-        <select aria-label="Status" value={status} onChange={e => setStatus(e.target.value)} className="border px-3 py-2 rounded">
-          <option value="">Status</option>
-          <option value="new">New</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="done">Done</option>
-        </select>
-
-        <input
-          type="date"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          className="border px-3 py-2 rounded"
-        />
-      </div>
-
-      {/* COUNT */}
-      <p className="text-sm text-gray-500">
-        Showing {all.length} records
-      </p>
-
-      {/* CARDS */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {all.map(b => (
-          <div
-            key={b._id}
-            onClick={() => {
-              setSelected(b);
-              setForm({ ...b });
-            }}
-            className="bg-white rounded-xl shadow p-5 cursor-pointer"
-          >
-            <h2 className="font-bold">{b.name}</h2>
-            <p>{b.phone}</p>
-            <p>{b.service}</p>
-            <p>{b.date}</p>
-
-            <select
-              aria-label="Update status"
-              value={b.status || "new"}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) =>
-                updateStatus(b._id, e.target.value as BookingStatus)
-              }
-              className="border mt-2 w-full"
-            >
-              {statuses.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-        ))}
-      </div>
-
-      {/* PAGINATION */}
-      <div className="flex gap-2">
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => setPage(i + 1)}
-            className={`px-3 py-1 ${page === i + 1 ? "bg-black text-white" : "bg-gray-200"
-              }`}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
-
-      {/* MODAL remains unchanged */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-xl w-[400px] space-y-3">
-            <h2 className="font-bold text-lg">Edit Booking</h2>
-
-            <input value={form.name || ""} onChange={e => setForm({ ...form, name: e.target.value })} className="border w-full p-2" />
-            <input value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} className="border w-full p-2" />
-            <input value={form.service || ""} onChange={e => setForm({ ...form, service: e.target.value })} className="border w-full p-2" />
-            <input value={form.location || ""} onChange={e => setForm({ ...form, location: e.target.value })} className="border w-full p-2" />
-
-            <input type="date" value={form.date || ""} onChange={e => setForm({ ...form, date: e.target.value })} className="border w-full p-2" />
-            <input type="time" value={form.time || ""} onChange={e => setForm({ ...form, time: e.target.value })} className="border w-full p-2" />
-
-            <select value={form.status || "new"} onChange={e => setForm({ ...form, status: e.target.value as BookingStatus })} className="border w-full p-2">
-              {statuses.map(value => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
-
-            <div className="flex justify-between">
-              <button onClick={() => setSelected(null)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-
-              <button
-                onClick={async () => {
-                  const res = await fetch("/api/admin/update-booking", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(form),
-                  });
-
-                  const body = await res.json();
-
-                  if (!res.ok) {
-                    setError(getErrorMessage("Could not save booking", body));
-                    return;
-                  }
-
-                  setAll(prev =>
-                    prev.map(b =>
-                      b._id === form._id ? body.booking : b
-                    )
-                  );
-
-                  setSelected(null);
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-            </div>
-
-          </div>
+        <div>
+          <RecentReviews reviews={data?.recentReviews ?? []} loading={loading} />
         </div>
-      )}
+      </div>
 
     </div>
   );
