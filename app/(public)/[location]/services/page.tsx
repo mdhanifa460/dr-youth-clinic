@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dryouthclinic.co.in';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 interface PageProps {
   params: { location: string };
@@ -58,12 +58,12 @@ export default async function ServicesPage({ params }: PageProps) {
   return (
     <main className="bg-white">
       {/* HERO SECTION */}
-      <section className="relative py-16 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+      <section className="relative py-16 bg-primary text-white">
         <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl font-headline font-extrabold mb-4">
             Our Services in {cityName}
           </h1>
-          <p className="text-lg text-blue-100 max-w-2xl">
+          <p className="text-lg text-white/80 max-w-2xl">
             Discover our comprehensive range of dermatological, hair, and laser
             treatments designed to enhance your natural beauty.
           </p>
@@ -135,14 +135,14 @@ export default async function ServicesPage({ params }: PageProps) {
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+      <section className="bg-primary text-white py-16">
         <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-3xl font-bold mb-4">Ready to Transform?</h2>
-          <p className="text-lg text-blue-100 mb-8">
+          <h2 className="text-3xl font-headline font-extrabold mb-4">Ready to Transform?</h2>
+          <p className="text-lg text-white/80 mb-8">
             Schedule your consultation with our expert dermatologists today
           </p>
           <Link href="/book">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-lg font-bold hover:bg-blue-50 transition">
+            <button className="bg-white text-primary px-8 py-4 rounded-xl font-bold hover:bg-opacity-90 transition">
               Book Appointment
             </button>
           </Link>
@@ -186,7 +186,7 @@ function ServiceCard({ service }: { service: any }) {
 
         {/* PRICING */}
         <div className="flex justify-between items-center mb-4 py-4 border-t">
-          <span className="font-bold text-2xl text-blue-600">
+          <span className="font-bold text-2xl text-secondary">
             {service.currency} {service.price}
           </span>
           <span className="text-sm text-gray-500">
@@ -195,9 +195,9 @@ function ServiceCard({ service }: { service: any }) {
         </div>
 
         {/* CTA */}
-        <Link href="/book">
-          <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
-            Learn More
+        <Link href={`/${service.location}/services/${service.urlSlug}`}>
+          <button className="w-full bg-primary text-white py-3 rounded-xl font-semibold hover:bg-opacity-90 transition">
+            View Details
           </button>
         </Link>
       </div>

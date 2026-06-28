@@ -1,6 +1,7 @@
 import { locations } from "@/app/data/locations";
+import { CLOUDINARY_LOGO_URL } from "@/app/lib/legacyImageUrls";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://dryouthclinic.co.in";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 export function OrganizationSchema() {
   const schema = {
@@ -8,7 +9,7 @@ export function OrganizationSchema() {
     "@type": "MedicalBusiness",
     name: "DR Youth Clinic",
     url: SITE_URL,
-    logo: `${SITE_URL}/images/new-img/logo.png`,
+    logo: CLOUDINARY_LOGO_URL,
     description: "Premium dermatology and aesthetic treatment clinic",
     sameAs: [
       "https://www.facebook.com/dryouthclinic",
@@ -51,7 +52,7 @@ export function LocalBusinessSchema({ location, city }: { location: string; city
       addressCountry: "IN",
     },
     telephone: locationData.phone,
-    image: `${SITE_URL}/images/new-img/logo.png`,
+    image: CLOUDINARY_LOGO_URL,
     description: `Premium dermatology clinic in ${city} offering advanced skin, hair, and laser treatments`,
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",

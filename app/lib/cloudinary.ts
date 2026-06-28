@@ -2,85 +2,82 @@ import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export interface UploadResponse {
-  public_id: string;
-  secure_url: string;
-  url: string;
-  width: number;
-  height: number;
-  format: string;
+  public_id:     string;
+  secure_url:    string;
+  url:           string;
+  width:         number;
+  height:        number;
+  format:        string;
   resource_type: string;
+  size:          number;
 }
 
 export async function uploadImage(
   file: string,
-  folder: string = 'dr-youth-clinic/services'
+  folder: string = 'dr-youth-clinic/services',
+  options: Record<string, any> = {}
 ): Promise<UploadResponse> {
-  try {
-    const result = await cloudinary.uploader.upload(file, {
-      folder,
-      resource_type: 'auto',
-      quality: 'auto',
-      transformation: [
-        { quality: 'auto', fetch_format: 'auto' },
-      ],
-    });
-
-    return {
-      public_id: result.public_id,
-      secure_url: result.secure_url,
-      url: result.url,
-      width: result.width,
-      height: result.height,
-      format: result.format,
-      resource_type: result.resource_type,
-    };
-  } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    throw new Error('Failed to upload image');
+  if (!file || typeof file !== 'string') {
+    throw new Error('Invalid file: must be a valid base64 string or file path');
   }
+
+  const result = await cloudinary.uploader.upload(file, {
+    folder,
+    resource_type: 'auto',
+    quality: 'auto',
+    fetch_format: 'auto',
+    flags: 'progressive',
+    transformation: [{ quality: 'auto', fetch_format: 'auto', dpr: 'auto' }],
+    ...options,
+  }).catch((err) => {
+    if (err.message?.includes('Authentication failed')) {
+      throw new Error('Cloudinary authentication failed. Verify your API credentials.');
+    }
+    if (err.message?.includes('File size')) {
+      throw new Error('File size exceeds maximum limit (5MB).');
+    }
+    throw new Error(err.message || 'Failed to upload image to Cloudinary');
+  });
+
+  return {
+    public_id:     result.public_id,
+    secure_url:    result.secure_url,
+    url:           result.url,
+    width:         result.width,
+    height:        result.height,
+    format:        result.format,
+    resource_type: result.resource_type,
+    size:          result.bytes,
+  };
 }
 
 export async function deleteImage(publicId: string): Promise<boolean> {
-  try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    return result.result === 'ok';
-  } catch (error) {
-    console.error('Cloudinary delete error:', error);
-    throw new Error('Failed to delete image');
-  }
+  if (!publicId) throw new Error('Public ID is required for deletion');
+  const result = await cloudinary.uploader.destroy(publicId);
+  return result.result === 'ok';
 }
 
 export function getOptimizedImageUrl(
   publicId: string,
-  options: {
-    width?: number;
-    height?: number;
-    quality?: string;
-    crop?: string;
-  } = {}
+  options: { width?: number; height?: number; quality?: string; crop?: string } = {}
 ): string {
-  const {
-    width = 1000,
-    height = 1000,
-    quality = 'auto',
-    crop = 'auto',
-  } = options;
-
-  return cloudinary.url(publicId, {
-    width,
-    height,
-    quality,
-    crop,
-    fetch_format: 'auto',
-    secure: true,
-  });
+  if (!publicId) throw new Error('Public ID is required');
+  const { width = 1000, height = 1000, quality = 'auto', crop = 'auto' } = options;
+  return cloudinary.url(publicId, { width, height, quality, crop, fetch_format: 'auto', secure: true, dpr: 'auto' });
 }
 
-export function getBeforeAfterUrl(beforeId: string, afterId: string): string {
-  return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/fetch/e_blur:300/u_${afterId}/l_${beforeId},c_scale,w_0.5,x_-0.5/co_white,l_text:Montserrat_30_bold:Before%20%26%20After,x_0,y_-20/${beforeId}`;
+export async function verifyCloudinaryConnection() {
+  try {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    if (!cloudName) return { connected: false, message: 'Cloudinary cloud name not configured' };
+    await cloudinary.api.resources({ max_results: 1 });
+    return { connected: true, message: 'Connected to Cloudinary', cloudName };
+  } catch (err: any) {
+    return { connected: false, message: `Failed to connect: ${err.message}` };
+  }
 }

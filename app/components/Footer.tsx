@@ -1,92 +1,196 @@
-"use client";
+import { unstable_cache } from "next/cache";
 import Image from "next/image";
-import { Globe, Share2, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaYoutube,
+  FaWhatsapp,
+  FaTwitter,
+} from "react-icons/fa";
+import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
+import { connectDB } from "@/app/lib/mongodb";
+import { HomepageSection } from "@/app/models/HomepageSection";
+import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
 
-export default function Footer() {
+const SOCIAL_ICONS: Record<string, React.ReactNode> = {
+  facebook: <FaFacebookF size={13} />,
+  instagram: <FaInstagram size={13} />,
+  youtube: <FaYoutube size={13} />,
+  whatsapp: <FaWhatsapp size={13} />,
+  twitter: <FaTwitter size={13} />,
+};
+
+const getFooterData = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const section = (await HomepageSection.findOne({
+        sectionKey: "footer",
+      }).lean()) as any;
+      return section?.data ?? HOMEPAGE_DEFAULTS.footer.data;
+    } catch {
+      return HOMEPAGE_DEFAULTS.footer.data;
+    }
+  },
+  ["footer-data"],
+  { revalidate: 300, tags: ["homepage-layout"] }
+);
+
+export default async function Footer() {
+  const data = await getFooterData();
+
+  const {
+    tagline = "",
+    quickLinks = [],
+    procedures = [],
+    patientCare = [],
+    contact = {},
+    copyright = "© 2024 DR Youth Clinic. All Rights Reserved.",
+    socialLinks = [],
+  } = data;
+
   return (
-    <footer className="bg-primary text-white mt-24">
+    <footer className="bg-[#0B2560] text-white">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10">
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-10 px-6 md:px-10 py-16 max-w-7xl mx-auto">
+          {/* COL 1 — BRAND */}
+          <div className="md:col-span-1 space-y-5">
+            <Link href="/" className="inline-block">
+              <Image
+                src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`}
+                alt="DR Youth Clinic"
+                width={130}
+                height={44}
+                className="object-contain brightness-0 invert"
+              />
+            </Link>
+            <p className="text-white/60 text-sm leading-relaxed">{tagline}</p>
+            {socialLinks.length > 0 && (
+              <div className="flex items-center gap-2 pt-1">
+                {socialLinks.map((s: any, i: number) => (
+                  <a
+                    key={i}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#F5A623] hover:text-[#0B2560] transition"
+                  >
+                    {SOCIAL_ICONS[s.platform] ?? s.platform}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* LOGO */}
-        <div className="space-y-6">
+          {/* COL 2 — QUICK LINKS */}
+          <div>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">Quick Links</h4>
+            <ul className="space-y-3">
+              {quickLinks.map((l: any, i: number) => (
+                <li key={i}>
+                  <Link
+                    href={l.href}
+                    className="text-white/60 text-sm hover:text-white transition"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* COL 3 — OUR PROCEDURES */}
+          <div>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">Our Procedures</h4>
+            <ul className="space-y-3">
+              {procedures.map((p: any, i: number) => (
+                <li key={i}>
+                  <Link
+                    href={p.href}
+                    className="text-white/60 text-sm hover:text-white transition"
+                  >
+                    {p.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* COL 4 — PATIENT CARE */}
+          <div>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">Patient Care</h4>
+            <ul className="space-y-3">
+              {patientCare.map((p: any, i: number) => (
+                <li key={i}>
+                  <Link
+                    href={p.href}
+                    className="text-white/60 text-sm hover:text-white transition"
+                  >
+                    {p.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* COL 5 — CONTACT */}
+          <div>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">Contact Us</h4>
+            <ul className="space-y-4">
+              {contact.address && (
+                <li className="flex gap-2.5 text-white/60 text-sm leading-relaxed">
+                  <MdLocationOn
+                    className="text-[#F5A623] shrink-0 mt-0.5"
+                    size={16}
+                  />
+                  <span>{contact.address}</span>
+                </li>
+              )}
+              {contact.phone && (
+                <li>
+                  <a
+                    href={`tel:${contact.phone.replace(/\s/g, "")}`}
+                    className="flex gap-2.5 text-white/60 text-sm hover:text-white transition"
+                  >
+                    <MdPhone className="text-[#F5A623] shrink-0 mt-0.5" size={16} />
+                    {contact.phone}
+                  </a>
+                </li>
+              )}
+              {contact.email && (
+                <li>
+                  <a
+                    href={`mailto:${contact.email}`}
+                    className="flex gap-2.5 text-white/60 text-sm hover:text-white transition"
+                  >
+                    <MdEmail className="text-[#F5A623] shrink-0 mt-0.5" size={16} />
+                    {contact.email}
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {/* BOTTOM BAR */}
+        <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Image
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzQalUPAosSCDd9BhS1cazDLHuaysjEnaTr4M_bvJ0uab3zsZp6bWN59xBrD5uBDw7pjehWnjO90Z4Bq1qy4J07nXSEUo7QNtYWuEuI4UcprjPmveNCrXIsLxszXBKjCIY0wXaVJee4i32OMhmsUWy5rfXjnNzkB-4nJ0sB74QGixAffrZN_esPPKHnbFRwnQ2dyEZCiPxl3qiBZ_-QoZfsPatjtoyX1I6HdTiToZr0urPJVcFGxPQc28K__-Ih2I3ANr_fREv21M"
-              alt="DR Youth Clinic"
-              width={36}
-              height={36}
-              className="object-contain invert"
-            />
-            <span className="text-lg font-bold font-headline">
-              DR Youth Clinic
-            </span>
-          </div>
-
-          <p className="text-white/70 leading-relaxed text-sm">
-            Setting the benchmark for premium dermatological care and medical aesthetics since 2004.
-          </p>
-        </div>
-
-        {/* LOCATIONS */}
-        <div className="space-y-6">
-          <h4 className="font-headline font-bold text-lg">Our Locations</h4>
-          <ul className="space-y-3 text-white/70">
-            {["Chennai", "Bangalore", "Kochi", "Coimbatore"].map((city) => (
-              <li key={city}>
-                <a href="#" className="hover:text-white transition">
-                  {city}
-                </a>
-              </li>
+            {socialLinks.map((s: any, i: number) => (
+              <a
+                key={i}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/40 hover:text-white transition"
+              >
+                {SOCIAL_ICONS[s.platform] ?? s.platform}
+              </a>
             ))}
-          </ul>
-        </div>
-
-        {/* LINKS */}
-        <div className="space-y-6">
-          <h4 className="font-headline font-bold text-lg">Quick Links</h4>
-          <ul className="space-y-3 text-white/70">
-            <li><a href="#" className="hover:text-white">Clinical Services</a></li>
-            <li><a href="#" className="hover:text-white">Patient Results</a></li>
-            <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-            <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-          </ul>
-        </div>
-
-        {/* NEWSLETTER */}
-        <div className="space-y-6">
-          <h4 className="font-headline font-bold text-lg">Newsletter</h4>
-          <p className="text-white/70 text-sm">
-            Subscribe for skin health tips and exclusive updates.
-          </p>
-
-          <div className="flex gap-2">
-            <input
-              type="email"
-              placeholder="Your email"
-              className="bg-white/10 rounded-lg px-4 py-2 text-white placeholder:text-white/50 w-full focus:outline-none focus:ring-2 focus:ring-secondary"
-            />
-            <button className="bg-secondary px-4 py-2 rounded-lg font-semibold hover:bg-secondary/80 transition">
-              Join
-            </button>
           </div>
+          <p className="text-white/40 text-xs">{copyright}</p>
         </div>
-
-      </div>
-
-      {/* BOTTOM */}
-      <div className="border-t border-white/10 py-6 px-6 md:px-10 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-
-        <p className="text-white/60 text-sm">
-          © 2024 DR Youth Clinic. All rights reserved.
-        </p>
-
-        <div className="flex gap-5 text-white/70">
-          <Globe className="hover:text-white cursor-pointer" />
-          <Share2 className="hover:text-white cursor-pointer" />
-          <ShieldCheck className="hover:text-white cursor-pointer" />
-        </div>
-
       </div>
     </footer>
   );

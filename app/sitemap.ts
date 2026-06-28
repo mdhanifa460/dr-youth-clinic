@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { locations } from '@/app/data/locations';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dryouthclinic.co.in';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const locationUrls = Object.keys(locations).map((location) => ({

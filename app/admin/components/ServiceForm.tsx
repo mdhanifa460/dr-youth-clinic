@@ -36,26 +36,29 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
   const [success, setSuccess] = useState(false);
 
   const [form, setForm] = useState<FormData>(
-    initialData || {
-      name: "",
-      location: "",
-      category: "",
-      price: 0,
-      duration: 45,
-      currency: "INR",
-
-      metaTitle: "",
-      metaDescription: "",
-      keywords: "",
-
-      narrative: "",
-      benefits: [],
-
-      heroImage: null,
-      beforeAfterImages: [],
-
-      status: "draft",
-    }
+    initialData
+      ? {
+          ...initialData,
+          keywords: Array.isArray(initialData.keywords)
+            ? initialData.keywords.join(", ")
+            : initialData.keywords ?? "",
+        }
+      : {
+          name: "",
+          location: "",
+          category: "",
+          price: 0,
+          duration: 45,
+          currency: "INR",
+          metaTitle: "",
+          metaDescription: "",
+          keywords: "",
+          narrative: "",
+          benefits: [],
+          heroImage: null,
+          beforeAfterImages: [],
+          status: "draft",
+        }
   );
 
   const updateForm = (data: Partial<FormData>) => {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Service } from '@/app/models/Service';
 import { connectDB } from '@/app/lib/mongodb';
 import { deleteImage } from '@/app/lib/cloudinary';
+import { Service } from '@/app/models/Service';
+import type { IService } from '@/app/models/Service';
 
 export async function GET(
   req: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
   try {
     await connectDB();
 
-    const service = await Service.findById(params.id);
+    const service: IService | null = await Service.findById(params.id);
 
     if (!service) {
       return NextResponse.json(
@@ -37,10 +38,14 @@ export async function PUT(
     await connectDB();
 
     const body = await req.json();
-    const service = await Service.findByIdAndUpdate(params.id, body, {
-      new: true,
-      runValidators: true,
-    });
+    const service: IService | null = await Service.findByIdAndUpdate(
+      params.id,
+      body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!service) {
       return NextResponse.json(
@@ -79,7 +84,7 @@ export async function DELETE(
   try {
     await connectDB();
 
-    const service = await Service.findById(params.id);
+    const service: IService | null = await Service.findById(params.id);
 
     if (!service) {
       return NextResponse.json(

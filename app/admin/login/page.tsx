@@ -1,11 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 
-const logoSrc = "https://dryouthclinic.co.in/images/new-img/logo.png";
+const logoSrc = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
+
+const getSafeRedirectPath = () => {
+  const next = new URLSearchParams(window.location.search).get("next");
+
+  if (!next || !next.startsWith("/admin") || next.startsWith("/admin/login")) {
+    return "/admin";
+  }
+
+  return next;
+};
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -14,10 +23,21 @@ export default function AdminLogin() {
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [redirectTo, setRedirectTo] = useState("/admin");
 
-  const router = useRouter();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextPath = getSafeRedirectPath();
 
-  const handleLogin = async () => {
+    setRedirectTo(nextPath);
+
+    if (params.get("error")) {
+      setError("Invalid email or password");
+    }
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
     setError("");
 
@@ -28,20 +48,19 @@ export default function AdminLogin() {
         body: JSON.stringify({ email, password, remember }),
       });
 
-      if (!res.ok) {
-        setError("Invalid email or password");
-        return;
-      }
+      const data = await res.json();
 
-      const next = new URLSearchParams(window.location.search).get("next");
-      router.push(next || "/admin");
-      router.refresh();
+      if (data.success) {
+        window.location.href = redirectTo;
+      } else {
+        setError(data.message || "Invalid email or password");
+        setLoading(false);
+      }
     } catch {
-      setError("Login failed. Please try again.");
-    } finally {
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     }
-  };
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f8fbff] text-[#0B2545]">
@@ -86,7 +105,10 @@ export default function AdminLogin() {
         <div className="mt-9 w-full max-w-[390px] rounded-[22px] border border-white bg-white/95 p-8 shadow-[0_24px_70px_rgba(11,37,69,0.09)]">
           <div className="mx-auto -mt-8 mb-7 h-1 w-full max-w-[324px] rounded-full bg-[#1A365D]" />
 
-          <div className="space-y-5 text-left">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5 text-left"
+          >
             <label className="block">
               <span className="text-xs font-bold text-[#0B2545]">
                 Email or Username
@@ -94,6 +116,7 @@ export default function AdminLogin() {
               <div className="mt-2 flex h-12 items-center gap-3 rounded-xl bg-[#e9eff6] px-4 text-[#8290a0]">
                 <Mail className="h-4 w-4 shrink-0" />
                 <input
+                  name="email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -119,6 +142,7 @@ export default function AdminLogin() {
               <div className="mt-2 flex h-12 items-center gap-3 rounded-xl bg-[#e9eff6] px-4 text-[#8290a0]">
                 <Lock className="h-4 w-4 shrink-0" />
                 <input
+                  name="password"
                   type={show ? "text" : "password"}
                   placeholder="••••••••••••"
                   value={password}
@@ -126,11 +150,6 @@ export default function AdminLogin() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     setError("");
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleLogin();
-                    }
                   }}
                   className="h-full w-full bg-transparent text-sm text-[#0B2545] outline-none placeholder:text-[#8a96a5]"
                 />
@@ -147,6 +166,7 @@ export default function AdminLogin() {
 
             <label className="flex items-center gap-3 text-xs font-medium text-[#3f4d5c]">
               <input
+                name="remember"
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
@@ -162,15 +182,14 @@ export default function AdminLogin() {
             )}
 
             <button
-              type="button"
-              onClick={handleLogin}
+              type="submit"
               disabled={loading}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0B2545] text-sm font-bold text-white shadow-[0_14px_28px_rgba(11,37,69,0.24)] transition hover:bg-[#12345c] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <ShieldCheck className="h-4 w-4" />
               {loading ? "Signing in..." : "Secure Login"}
             </button>
-          </div>
+          </form>
         </div>
 
         <p className="mt-5 text-center text-xs text-[#5b6675]">

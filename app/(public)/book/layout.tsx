@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://dryouthclinic.co.in";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 export const metadata: Metadata = {
   title: "Book Appointment | DR Youth Clinic",
