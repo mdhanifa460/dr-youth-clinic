@@ -13,14 +13,14 @@ export default function FAQAccordion({ data }: { data: any }) {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 grid md:grid-cols-[1fr_2fr] gap-12 items-start">
+    <section className="py-12 md:py-16 lg:py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 grid md:grid-cols-[1fr_2fr] gap-8 md:gap-12 items-start">
         {/* LEFT */}
         <div>
-          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560]">
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight">
             {headline}
           </h2>
-          <a href={viewAllHref} className="mt-4 inline-flex items-center gap-1 text-[#3B82C4] font-semibold text-sm hover:text-[#0B2560] transition">
+          <a href={viewAllHref} className="mt-4 min-h-11 inline-flex items-center gap-1 text-[#3B82C4] font-semibold text-sm hover:text-[#0B2560] transition">
             {viewAllText} →
           </a>
         </div>
@@ -30,10 +30,10 @@ export default function FAQAccordion({ data }: { data: any }) {
           {faqs.map((faq: any, i: number) => (
             <div
               key={i}
-              className="border border-gray-200 rounded-xl overflow-hidden"
+              className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm transition-all duration-300 hover:border-[#0B2560]/20 hover:shadow-[0_10px_28px_rgba(11,37,96,0.06)]"
             >
               <button
-                className="w-full flex items-center justify-between px-5 py-4 text-left"
+                className="min-h-14 w-full flex items-center justify-between px-4 sm:px-5 py-4 text-left"
                 onClick={() => setOpen(open === i ? null : i)}
               >
                 <span className="font-semibold text-[#0B2560] text-sm pr-4">{faq.question}</span>

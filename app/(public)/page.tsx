@@ -19,13 +19,48 @@ import BlogInsights from '@/app/components/homepage/BlogInsights';
 
 export const revalidate = 300;
 
+type SectionOrderItem = {
+  key: string;
+  visible: boolean;
+  order: number;
+};
+
+const PUBLIC_SECTION_ORDER = [
+  'hero',
+  'stats',
+  'consultation_form',
+  'cta_strip',
+  'before_after',
+  'services',
+  'doctors',
+  'locations',
+  'testimonials',
+  'faq',
+  'blog',
+];
+
+const PUBLIC_SECTION_RANK = new Map(
+  PUBLIC_SECTION_ORDER.map((key, index) => [key, index])
+);
+
+function sortPublicSections(sections: SectionOrderItem[]) {
+  return [...sections].sort((a, b) => {
+    const rankA = PUBLIC_SECTION_RANK.get(a.key) ?? 1000 + a.order;
+    const rankB = PUBLIC_SECTION_RANK.get(b.key) ?? 1000 + b.order;
+
+    return rankA - rankB || a.order - b.order;
+  });
+}
+
 const DEFAULT_SECTIONS = {
   sectionData: Object.fromEntries(
     Object.entries(HOMEPAGE_DEFAULTS).map(([k, v]) => [k, v.data])
   ),
-  sectionOrder: Object.entries(HOMEPAGE_DEFAULTS)
-    .filter(([k]) => !['topbar', 'header', 'footer'].includes(k))
-    .map(([k, v]) => ({ key: k, visible: v.visible, order: v.order })),
+  sectionOrder: sortPublicSections(
+    Object.entries(HOMEPAGE_DEFAULTS)
+      .filter(([k]) => !['topbar', 'header', 'footer'].includes(k))
+      .map(([k, v]) => ({ key: k, visible: v.visible, order: v.order }))
+  ),
 };
 
 // Bump cache key whenever the normalizer logic changes to avoid serving stale data.
@@ -93,9 +128,10 @@ const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
 
 export default async function Home() {
   const { sectionData, sectionOrder } = await getCachedSections();
+  const publicSectionOrder = sortPublicSections(sectionOrder);
 
   // Only fetch reviews when the testimonials section is enabled
-  const testimonialsConfig = sectionOrder.find((s) => s.key === 'testimonials' && s.visible);
+  const testimonialsConfig = publicSectionOrder.find((s) => s.key === 'testimonials' && s.visible);
   const td = sectionData['testimonials'] ?? {};
   const initialReviews = testimonialsConfig
     ? await getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
@@ -110,7 +146,7 @@ export default async function Home() {
 
   return (
     <main>
-      {sectionOrder
+      {publicSectionOrder
         .filter((s) => s.visible)
         .map((s) => {
           const Component = SECTION_COMPONENTS[s.key];

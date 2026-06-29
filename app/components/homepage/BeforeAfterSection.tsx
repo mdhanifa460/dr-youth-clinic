@@ -1,99 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import SliderCard from '@/app/components/SliderCard';
 
-// ── Single drag-reveal slider card ──────────────────────────────────────────
-function SliderCard({ pair }: { pair: any }) {
-  const [pos, setPos] = useState(50); // 0–100, % of "before" visible
-  const hasImages = !!(pair.before?.url && pair.after?.url);
+const FALLBACK_PAIRS = [
+  { title: 'Acne Therapy & Scar Solution', description: 'Treatments that smooth, clarify & restore natural skin texture.', category: 'Skin Care' },
+  { title: 'Hairfall & Scalp Restoration', description: 'Targeted care for stronger, healthier hair & nourished roots.', category: 'Hair' },
+  { title: 'Laser Skin Brightening', description: 'Advanced laser therapy for pigmentation, spots & uneven tone.', category: 'Laser' },
+];
 
-  return (
-    <div className="rounded-[2rem] overflow-hidden bg-white shadow-[0_4px_40px_rgba(11,37,96,0.07)] border border-[#EBE8E3]">
-
-      {/* ── SLIDER IMAGE AREA ── */}
-      <div className="relative overflow-hidden select-none" style={{ height: 280 }}>
-        {hasImages ? (
-          <>
-            {/* AFTER — base layer, always full width */}
-            <Image
-              src={pair.after.url}
-              alt="After"
-              fill
-              className="object-cover"
-              draggable={false}
-            />
-
-            {/* BEFORE — same size, clipped by clip-path so it sits correctly */}
-            <Image
-              src={pair.before.url}
-              alt="Before"
-              fill
-              className="object-cover"
-              style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
-              draggable={false}
-            />
-
-            {/* DIVIDER LINE */}
-            <div
-              className="absolute inset-y-0 pointer-events-none"
-              style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}
-            >
-              <div className="w-[1.5px] h-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.7)]" />
-
-              {/* HANDLE */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white border border-[#E5E7EB] shadow-[0_4px_20px_rgba(11,37,96,0.18)] flex items-center justify-center cursor-ew-resize">
-                <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
-                  <path d="M1 5H15M1 5L4 2M1 5L4 8M15 5L12 2M15 5L12 8" stroke="#0B2560" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-
-            {/* LABELS */}
-            <span className="pointer-events-none absolute top-4 left-4 bg-white/80 backdrop-blur-md text-[#0B2560] text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full border border-[#EBE8E3] shadow-sm">
-              Before
-            </span>
-            <span className="pointer-events-none absolute top-4 right-4 bg-[#F5A623]/90 backdrop-blur-md text-white text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full shadow-sm">
-              After
-            </span>
-
-            {/* Range input overlay — drives the drag */}
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={pos}
-              onChange={(e) => setPos(Number(e.target.value))}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-10"
-              style={{ margin: 0 }}
-            />
-          </>
-        ) : (
-          /* Placeholder */
-          <div className="h-full flex flex-col items-center justify-center bg-[#F5F3F0] gap-3">
-            <div className="relative h-full w-full flex">
-              <div className="flex-1 bg-gradient-to-br from-[#F0EDE8] to-[#E8E4DE] flex items-center justify-center">
-                <span className="text-xs font-semibold text-[#0B2560]/30 tracking-widest uppercase">Before</span>
-              </div>
-              <div className="w-[1.5px] bg-[#0B2560]/10 self-stretch" />
-              <div className="flex-1 bg-gradient-to-br from-[#EBF3FF] to-[#DDE9FF] flex items-center justify-center">
-                <span className="text-xs font-semibold text-[#3B82C4]/50 tracking-widest uppercase">After</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── TEXT ── */}
-      <div className="px-7 py-6">
-        <h3 className="font-bold text-[#0B2560] text-base">{pair.title}</h3>
-        <p className="text-gray-400 text-sm mt-1.5 leading-relaxed">{pair.description}</p>
-      </div>
-    </div>
-  );
-}
-
-// ── Main section ─────────────────────────────────────────────────────────────
 export default function BeforeAfterSection({ data }: { data: any }) {
   const {
     headline = 'Real Results, Real Confidence',
@@ -101,46 +18,55 @@ export default function BeforeAfterSection({ data }: { data: any }) {
     pairs = [],
   } = data || {};
 
-  const displayPairs = pairs.length > 0 ? pairs : [
-    { title: 'Acne Therapy & Scar Solution', description: 'Treatments that smooth, clarify & restore natural skin texture.' },
-    { title: 'Hairfall & Scalp Restoration', description: 'Targeted care for stronger, healthier hair & nourished roots.' },
-  ];
+  const displayPairs = (pairs.length > 0 ? pairs : FALLBACK_PAIRS).slice(0, 6);
+  const total = displayPairs.length;
+
+  const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const prev = useCallback(() => setIdx((i) => (i - 1 + total) % total), [total]);
+  const next = useCallback(() => setIdx((i) => (i + 1) % total), [total]);
+
+  // Auto-advance every 4s, pause on hover/touch
+  useEffect(() => {
+    if (paused) return;
+    intervalRef.current = setInterval(next, 4000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [paused, next]);
 
   return (
-    <section id="results" className="py-28 bg-[#F5F1EC] relative overflow-hidden">
+    <section id="results" className="py-12 md:py-16 lg:py-20 bg-[#F5F1EC] relative overflow-hidden">
 
-      {/* subtle warm ambient */}
+      {/* Ambient blobs */}
       <div className="pointer-events-none absolute top-0 left-0 w-[400px] h-[400px] rounded-full bg-[#F5A623]/5 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-0 right-0 w-[360px] h-[360px] rounded-full bg-[#0B2560]/4 blur-[100px]" />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-10 relative">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 relative">
 
-        {/* ── HEADER ── */}
-        <div className="grid md:grid-cols-2 gap-10 items-end mb-14">
+        {/* HEADER */}
+        <div className="grid md:grid-cols-2 gap-6 items-end mb-8 md:mb-10">
           <div>
-            <div className="flex items-center gap-2.5 mb-5">
+            <div className="flex items-center gap-2.5 mb-4">
               <div className="w-6 h-[2px] bg-[#F5A623]" />
-              <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">
-                Patient Results
-              </span>
+              <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
             </div>
-            <h2 className="text-4xl md:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
+            <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
               {headline}
             </h2>
-            <p className="text-[#6B7280] mt-5 text-sm leading-relaxed max-w-sm">
-              {subheadline}
-            </p>
+            <p className="text-[#6B7280] mt-4 text-sm leading-relaxed max-w-sm">{subheadline}</p>
           </div>
 
-          {/* STATS */}
-          <div className="flex items-center gap-8 flex-wrap md:justify-end">
+          {/* Stats */}
+          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-wrap md:justify-end">
             {[
               { value: '98%', label: 'Patient satisfaction' },
               { value: '10K+', label: 'Treatments done' },
               { value: '22+', label: 'Years of care' },
             ].map((s, i) => (
-              <div key={i} className="text-center">
-                <p className="text-3xl font-headline font-extrabold text-[#0B2560]">{s.value}</p>
+              <div key={i} className="text-center rounded-2xl bg-white/55 px-3 py-2.5 shadow-sm ring-1 ring-[#EBE8E3]/70 md:bg-transparent md:p-0 md:shadow-none md:ring-0">
+                <p className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] leading-none">{s.value}</p>
                 <p className="text-[#9CA3AF] text-xs mt-1 font-medium">{s.label}</p>
               </div>
             ))}
@@ -148,7 +74,7 @@ export default function BeforeAfterSection({ data }: { data: any }) {
         </div>
 
         {/* DRAG HINT */}
-        <div className="mb-8">
+        <div className="mb-5 md:mb-6">
           <span className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#EBE8E3] rounded-full px-4 py-2 text-xs text-[#9CA3AF] font-medium shadow-sm">
             <svg width="15" height="10" viewBox="0 0 15 10" fill="none">
               <path d="M1 5H14M1 5L3.5 2.5M1 5L3.5 7.5M14 5L11.5 2.5M14 5L11.5 7.5" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -157,27 +83,85 @@ export default function BeforeAfterSection({ data }: { data: any }) {
           </span>
         </div>
 
-        {/* SLIDER CARDS */}
-        <div className={`grid gap-5 ${displayPairs.length === 1 ? 'max-w-xl' : 'sm:grid-cols-2'}`}>
-          {displayPairs.map((pair: any, i: number) => (
-            <SliderCard key={i} pair={pair} />
-          ))}
+        {/* PAGER — one card at a time, auto-scrolls */}
+        <div
+          className="relative"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onTouchStart={(e) => { setPaused(true); touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            const diff = (touchStartX.current ?? 0) - e.changedTouches[0].clientX;
+            if (diff > 40) next();
+            else if (diff < -40) prev();
+            touchStartX.current = null;
+            setPaused(false);
+          }}
+        >
+          {/* Card — max width on desktop, full width on mobile */}
+          <div className="max-w-xl mx-auto md:max-w-2xl">
+            <SliderCard pair={displayPairs[idx]} />
+          </div>
+
+          {/* Side arrows — only on desktop */}
+          <button
+            onClick={prev}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-11 h-11 rounded-full bg-white shadow-md items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100 z-10"
+            aria-label="Previous result"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={next}
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-11 h-11 rounded-full bg-white shadow-md items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100 z-10"
+            aria-label="Next result"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
 
-        {/* CATEGORY PILLS */}
-        <div className="flex flex-wrap gap-2.5 mt-10">
-          {['All Results', 'Skin Care', 'Hair Restoration', 'Laser Treatments', 'Acne & Scars'].map((tag, i) => (
-            <button
-              key={i}
-              className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition ${
-                i === 0
-                  ? 'bg-[#0B2560] text-white shadow-[0_4px_14px_rgba(11,37,96,0.2)]'
-                  : 'bg-white text-[#9CA3AF] border border-[#EBE8E3] hover:border-[#0B2560]/30 hover:text-[#0B2560] hover:bg-[#f5f8ff]'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
+        {/* DOT INDICATORS + mobile arrows */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={prev}
+            className="md:hidden w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] border border-gray-100"
+            aria-label="Previous result"
+          >
+            <ChevronLeft size={15} />
+          </button>
+
+          <div className="flex gap-1">
+            {displayPairs.map((_: any, i: number) => (
+              <button
+                key={i}
+                onClick={() => { setIdx(i); setPaused(true); setTimeout(() => setPaused(false), 6000); }}
+                className="h-11 min-w-8 rounded-full flex items-center justify-center"
+                aria-label={`Show result ${i + 1}`}
+              >
+                <span className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-7 bg-[#0B2560]' : 'w-2 bg-[#0B2560]/20'}`} />
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={next}
+            className="md:hidden w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] border border-gray-100"
+            aria-label="Next result"
+          >
+            <ChevronRight size={15} />
+          </button>
+        </div>
+
+        {/* CTA to details page */}
+        <div className="flex justify-center mt-10 pt-8 border-t border-[#EBE8E3]">
+          <Link
+            href="/results"
+            className="min-h-12 flex items-center gap-3 bg-[#0B2560] text-white px-6 sm:px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#12345c] transition-all duration-300 shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(11,37,96,0.3)]"
+          >
+            View All Patient Results
+            <span className="w-6 h-6 rounded-full bg-[#F5A623] flex items-center justify-center shrink-0">
+              <ChevronRight size={14} />
+            </span>
+          </Link>
         </div>
 
       </div>

@@ -42,7 +42,8 @@ async function main() {
   const { hash, salt, iterations } = hashPassword(ADMIN_PASSWORD!);
   const email = ADMIN_EMAIL.toLowerCase().trim();
 
-  await AdminUser.findOneAndUpdate(
+  const AdminUserModel = AdminUser as mongoose.Model<mongoose.AnyObject>;
+  await AdminUserModel.findOneAndUpdate(
     { email },
     {
       email,

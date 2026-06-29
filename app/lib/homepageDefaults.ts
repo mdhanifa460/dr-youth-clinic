@@ -98,7 +98,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
   },
   services: {
     label: 'Services Cards',
-    order: 6,
+    order: 8,
     visible: true,
     data: {
       headline: 'Clinical-Level Beauty Services',
@@ -164,7 +164,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
   },
   doctors: {
     label: 'Doctors Section',
-    order: 8,
+    order: 9,
     visible: true,
     data: {
       headline: 'Meet Our Expert Doctors',
@@ -206,7 +206,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
   },
   locations: {
     label: 'Locations',
-    order: 9,
+    order: 10,
     visible: true,
     data: {
       headline: 'Our Locations',
@@ -224,7 +224,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
   },
   cta_strip: {
     label: '3-Column CTA Strip',
-    order: 10,
+    order: 6,
     visible: true,
     data: {
       rewards: {

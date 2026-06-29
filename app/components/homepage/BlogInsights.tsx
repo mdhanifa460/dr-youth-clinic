@@ -11,21 +11,21 @@ export default function BlogInsights({ data }: { data: any }) {
   if (posts.length === 0) return null;
 
   return (
-    <section id="blog" className="py-20 bg-[#f6faff]">
-      <div className="max-w-7xl mx-auto px-6 md:px-10">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560]">
+    <section id="blog" className="py-12 md:py-16 lg:py-20 bg-[#f6faff]">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="text-center mb-8 md:mb-10">
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight">
             {headline}
           </h2>
-          <p className="text-gray-500 mt-2 text-sm">{subheadline}</p>
+          <p className="text-gray-500 mt-2 text-sm leading-relaxed">{subheadline}</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {posts.slice(0, 3).map((post: any, i: number) => (
-            <Link key={i} href={post.href || '#'} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group">
-              <div className="relative h-44 bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]">
+            <Link key={i} href={post.href || '#'} className="bg-white rounded-3xl overflow-hidden shadow-sm ring-1 ring-[#e8eff7] hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(11,37,96,0.1)] transition-all duration-300 group">
+              <div className="relative aspect-[16/10] bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] overflow-hidden">
                 {post.image?.url ? (
-                  <Image src={post.image.url} alt={post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition duration-500" />
+                  <Image src={post.image.url} alt={post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover md:group-hover:scale-105 transition duration-500" />
                 ) : (
                   <div className="h-full flex items-center justify-center">
                     <span className="text-5xl">📝</span>
@@ -37,7 +37,7 @@ export default function BlogInsights({ data }: { data: any }) {
                   </span>
                 )}
               </div>
-              <div className="p-5">
+              <div className="p-5 md:p-6">
                 <h3 className="font-bold text-[#0B2560] text-base leading-snug group-hover:text-[#3B82C4] transition">
                   {post.title}
                 </h3>

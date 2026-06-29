@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
 import { FaGoogle, FaPlay } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
@@ -32,10 +32,10 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
   const initials = review.authorName?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 
   return (
-    <div className="bg-white rounded-2xl p-7 shadow-[0_4px_24px_rgba(11,37,96,0.07)] flex flex-col gap-4 h-full border border-gray-100">
+    <div className="bg-white rounded-3xl p-5 md:p-7 shadow-[0_8px_28px_rgba(11,37,96,0.07)] flex flex-col gap-4 h-full border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_38px_rgba(11,37,96,0.11)]">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         {showSourceBadges && (
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide px-2.5 py-1 rounded-full"
+          <span className="inline-flex min-h-7 items-center gap-1.5 text-[11px] font-bold tracking-wide px-2.5 py-1 rounded-full"
             style={{ background: src.bg, color: src.color }}>
             <SrcIcon size={10} />
             {src.label}
@@ -46,12 +46,12 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
 
       {review.source === 'video' && review.videoUrl && (
         <a href={review.videoUrl} target="_blank" rel="noopener noreferrer"
-          className="relative rounded-xl overflow-hidden aspect-video bg-gray-100 flex items-center justify-center group">
+          className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100 flex items-center justify-center group">
           {review.videoThumbnail
             ? <img src={review.videoThumbnail} alt="video" className="w-full h-full object-cover" />
             : <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a]" />}
           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition" />
-          <div className="relative z-10 w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+          <div className="relative z-10 w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-105 transition">
             <FaPlay className="text-[#0B2560] ml-1" size={16} />
           </div>
         </a>
@@ -88,7 +88,7 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
 
 function Skeleton() {
   return (
-    <div className="bg-white rounded-2xl p-7 border border-gray-100 animate-pulse space-y-4">
+    <div className="bg-white rounded-3xl p-5 md:p-7 border border-gray-100 animate-pulse space-y-4">
       <div className="flex gap-2">
         <div className="h-5 w-20 rounded-full bg-gray-200" />
         <div className="h-5 w-24 rounded-full bg-gray-200" />
@@ -128,6 +128,7 @@ export default function TestimonialsSlider({ data }: { data: any }) {
   const [reviews, setReviews] = useState<any[]>(_reviews ?? []);
   const [loading, setLoading] = useState(!_reviews);
   const [idx, setIdx] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     // Skip fetch if the server already supplied reviews
@@ -151,44 +152,64 @@ export default function TestimonialsSlider({ data }: { data: any }) {
   if (!loading && reviews.length === 0) return null;
 
   return (
-    <section id="testimonials" className="py-20 bg-[#f6faff]">
-      <div className="max-w-7xl mx-auto px-6 md:px-10">
+    <section id="testimonials" className="py-12 md:py-16 lg:py-20 bg-[#f6faff]">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
 
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 md:mb-12">
           <p className="text-[#F5A623] font-bold text-xs tracking-[0.2em] uppercase mb-3">Patient Reviews</p>
-          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>
-          <p className="text-gray-500 mt-3 text-sm">{subheadline}</p>
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight">{headline}</h2>
+          <p className="text-gray-500 mt-3 text-sm leading-relaxed">{subheadline}</p>
         </div>
 
         {layout === 'slider' && (
           loading ? (
             <div className="max-w-2xl mx-auto"><Skeleton /></div>
           ) : (
-            <div className="relative max-w-2xl mx-auto">
-              <button onClick={prev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-5 md:-translate-x-12 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white transition z-10 border border-gray-100">
-                <ChevronLeft size={18} />
-              </button>
+            <div className="max-w-2xl mx-auto">
+              {/* Swipeable card area */}
+              <div
+                onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  if (touchStartX.current === null) return;
+                  const diff = touchStartX.current - e.changedTouches[0].clientX;
+                  if (diff > 40) next();
+                  else if (diff < -40) prev();
+                  touchStartX.current = null;
+                }}
+              >
+                <ReviewCard review={reviews[idx]} showSourceBadges={showSourceBadges} showDate={showDate} />
+              </div>
 
-              <ReviewCard review={reviews[idx]} showSourceBadges={showSourceBadges} showDate={showDate} />
+              {/* Nav row: arrows + dots together */}
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <button onClick={prev}
+                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:-translate-y-0.5 transition-all duration-300 border border-gray-100 shrink-0"
+                  aria-label="Previous review">
+                  <ChevronLeft size={16} />
+                </button>
 
-              <button onClick={next}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-5 md:translate-x-12 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white transition z-10 border border-gray-100">
-                <ChevronRight size={18} />
-              </button>
+                <div className="flex gap-1">
+                  {reviews.map((_, i) => (
+                    <button key={i} onClick={() => setIdx(i)}
+                      className="h-11 min-w-8 rounded-full flex items-center justify-center"
+                      aria-label={`Show review ${i + 1}`}>
+                      <span className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-6 bg-[#0B2560]' : 'w-2 bg-gray-300'}`} />
+                    </button>
+                  ))}
+                </div>
 
-              <div className="flex justify-center gap-2 mt-6">
-                {reviews.map((_, i) => (
-                  <button key={i} onClick={() => setIdx(i)}
-                    className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-6 bg-[#0B2560]' : 'w-2 bg-gray-300'}`} />
-                ))}
+                <button onClick={next}
+                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:-translate-y-0.5 transition-all duration-300 border border-gray-100 shrink-0"
+                  aria-label="Next review">
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           )
         )}
 
         {layout === 'grid' && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {loading
               ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} />)
               : reviews.map((r, i) => (

@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import TopBar from "@/app/components/homepage/TopBar";
+import MobileStickyBar from "@/app/components/MobileStickyBar";
 import { OrganizationSchema, FAQSchema } from "@/app/components/SchemaMarkup";
 import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
@@ -31,14 +32,17 @@ export default async function PublicLayout({
 }) {
   const { data, visible } = await getTopBarSection();
 
+  const whatsappLink = data?.socialLinks?.find((s: any) => s.platform === "whatsapp")?.url;
+
   return (
     <>
       <OrganizationSchema />
       <FAQSchema />
       {visible && <TopBar data={data} />}
       <Navbar />
-      {children}
+      <div className="pb-[72px] md:pb-0">{children}</div>
       <Footer />
+      <MobileStickyBar phone={data?.phone} whatsappUrl={whatsappLink} />
     </>
   );
 }

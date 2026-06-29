@@ -10,50 +10,118 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   whatsapp: <FaWhatsapp size={14} />,
 };
 
+const PLATFORM_COLOR: Record<string, string> = {
+  whatsapp: '#25D366',
+  instagram: '#E1306C',
+  facebook: '#1877F2',
+  youtube: '#FF0000',
+};
+
+const MOBILE_SOCIAL: Array<{
+  platform: string;
+  icon: React.ReactNode;
+  color: string;
+  fallback?: string;
+}> = [
+  {
+    platform: 'whatsapp',
+    icon: <FaWhatsapp size={15} />,
+    color: '#25D366',
+    fallback: process.env.CLINIC_PHONE ? `https://wa.me/${process.env.CLINIC_PHONE}` : undefined,
+  },
+  { platform: 'instagram', icon: <FaInstagram size={15} />, color: '#E1306C' },
+  { platform: 'facebook',  icon: <FaFacebookF size={14} />, color: '#1877F2' },
+  { platform: 'youtube',   icon: <FaYoutube size={15} />,   color: '#FF0000' },
+];
+
 export default function TopBar({ data }: { data: any }) {
   const { phone, email, badge, socialLinks = [] } = data || {};
 
+  const mobileSocials = MOBILE_SOCIAL.map((item) => ({
+    ...item,
+    url: socialLinks.find((s: any) => s.platform === item.platform)?.url || item.fallback,
+  })).filter((item) => item.url);
+
   return (
-    <div className="bg-[#0B2560] text-white text-xs py-2 px-4 md:px-10">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-4 flex-wrap">
-          {phone && (
-            <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
-              <MdPhone size={13} />
-              <span>{phone}</span>
-            </a>
+    <>
+      {/* ── MOBILE: Call + social icon buttons ── */}
+      {phone && (
+        <div className="md:hidden flex items-stretch bg-[#0B2560] text-white text-[11px] font-semibold">
+
+          {/* Left: tap-to-call (takes most of the width) */}
+          <a
+            href={`tel:${phone.replace(/\s/g, '')}`}
+            className="flex flex-1 items-center justify-center gap-1.5 py-2.5 hover:bg-white/10 active:bg-white/20 transition"
+          >
+            <MdPhone size={14} className="shrink-0" />
+            <span>{phone}</span>
+          </a>
+
+          {/* Divider */}
+          {mobileSocials.length > 0 && (
+            <span className="w-px bg-white/20 self-stretch" />
           )}
-          {email && (
-            <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
-              <MdEmail size={13} />
-              <span>{email}</span>
+
+          {/* Right: social icon buttons */}
+          {mobileSocials.map((item) => (
+            <a
+              key={item.platform}
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={item.platform}
+              style={{ color: item.color }}
+              className="flex w-11 items-center justify-center hover:bg-white/10 active:bg-white/20 transition"
+            >
+              {item.icon}
             </a>
-          )}
-          {badge && (
-            <span className="flex items-center gap-1 text-[#F5A623] font-semibold">
-              <AiFillStar size={12} />
-              {badge}
-            </span>
+          ))}
+        </div>
+      )}
+
+      {/* ── DESKTOP: full info bar (unchanged) ── */}
+      <div className="hidden md:block bg-[#0B2560] text-white text-xs py-2 px-4 md:px-10">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-4 flex-wrap">
+            {phone && (
+              <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
+                <MdPhone size={13} />
+                <span>{phone}</span>
+              </a>
+            )}
+            {email && (
+              <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
+                <MdEmail size={13} />
+                <span>{email}</span>
+              </a>
+            )}
+            {badge && (
+              <span className="flex items-center gap-1 text-[#F5A623] font-semibold">
+                <AiFillStar size={12} />
+                {badge}
+              </span>
+            )}
+          </div>
+
+          {socialLinks.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-white/60">Follow Us:</span>
+              {socialLinks.map((s: any, i: number) => (
+                <a
+                  key={i}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={PLATFORM_COLOR[s.platform] ? { color: PLATFORM_COLOR[s.platform] } : undefined}
+                  className={PLATFORM_COLOR[s.platform] ? 'transition opacity-90 hover:opacity-100' : 'hover:text-[#F5A623] transition'}
+                >
+                  {ICON_MAP[s.platform] ?? s.platform}
+                </a>
+              ))}
+            </div>
           )}
         </div>
-
-        {socialLinks.length > 0 && (
-          <div className="flex items-center gap-3">
-            <span className="text-white/60">Follow Us:</span>
-            {socialLinks.map((s: any, i: number) => (
-              <a
-                key={i}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-[#F5A623] transition"
-              >
-                {ICON_MAP[s.platform] ?? s.platform}
-              </a>
-            ))}
-          </div>
-        )}
       </div>
-    </div>
+    </>
   );
 }

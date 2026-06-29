@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MdPhone, MdMenu, MdClose } from "react-icons/md";
+import { MdPhone, MdMenu, MdClose, MdPhotoLibrary } from "react-icons/md";
 
 export default function Navbar() {
   const [active, setActive] = useState("home");
@@ -59,9 +59,45 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 border-b border-gray-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 flex items-center justify-between gap-6">
 
-        {/* LOGO */}
+      {/* ── MOBILE ROW: [hamburger] [logo center] [photo icon] ── */}
+      <div className="md:hidden flex items-center justify-between px-4 py-3">
+
+        {/* Left: hamburger */}
+        <button
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-[#0B2560] hover:bg-[#f6faff] transition"
+          onClick={(e) => { e.stopPropagation(); setMobileOpen(!mobileOpen); }}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+        >
+          {mobileOpen ? <MdClose size={24} /> : <MdMenu size={24} />}
+        </button>
+
+        {/* Center: logo */}
+        <Link href={homeLink} className="flex items-center">
+          <Image
+            src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`}
+            alt="DR Youth Clinic"
+            width={130}
+            height={44}
+            className="object-contain"
+            priority
+          />
+        </Link>
+
+        {/* Right: results / gallery icon */}
+        <a
+          href={`${homeLink}#results`}
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-[#0B2560] hover:bg-[#f6faff] transition"
+          aria-label="View results"
+        >
+          <MdPhotoLibrary size={22} />
+        </a>
+      </div>
+
+      {/* ── DESKTOP ROW: [logo] [nav] [phone + CTA] (unchanged) ── */}
+      <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 lg:px-8 py-4 gap-4 lg:gap-6">
+
+        {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
           <Image
             src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`}
@@ -73,8 +109,8 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center gap-7">
+        {/* Nav */}
+        <nav className="flex items-center gap-7">
           {navItems.map((item, i) => {
             const isActive = active === item.id;
             return (
@@ -82,13 +118,10 @@ export default function Navbar() {
                 key={i}
                 href={`${homeLink}#${item.id}`}
                 className={`relative text-[14px] font-semibold transition-all duration-200 ${
-                  isActive
-                    ? "text-[#0B2560]"
-                    : "text-gray-600 hover:text-[#0B2560]"
+                  isActive ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
                 }`}
               >
                 {item.name}
-                {/* Animated underline */}
                 <span
                   className={`absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full transition-all duration-300 ${
                     isActive ? "w-full" : "w-0"
@@ -98,7 +131,7 @@ export default function Navbar() {
             );
           })}
 
-          {/* LOCATIONS DROPDOWN */}
+          {/* Locations dropdown */}
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setLocationOpen(!locationOpen); }}
@@ -110,7 +143,6 @@ export default function Navbar() {
             >
               Locations
               <span className={`text-xs transition-transform duration-200 ${locationOpen ? "rotate-180" : ""}`}>▼</span>
-              {/* Underline when on a city page */}
               {["chennai", "bangalore", "coimbatore", "kochi"].includes(currentLocation) && (
                 <span className="absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full w-full" />
               )}
@@ -139,36 +171,29 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* RIGHT — Phone + CTA */}
-        <div className="hidden md:flex items-center gap-3 shrink-0">
+        {/* Phone + CTA */}
+        <div className="flex items-center gap-3 shrink-0">
           <a
             href="tel:18008909669"
-            className="flex items-center gap-1.5 border border-gray-200 text-[#0B2560] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition"
+            className="min-h-11 flex items-center gap-1.5 border border-gray-200 text-[#0B2560] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition"
           >
             <MdPhone size={15} />
             1800 890 9669
           </a>
-          <Link href="/book">
-            <button className="bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-[0_6px_20px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-lg transition">
-              Consult Online
-            </button>
+          <Link
+            href="/book"
+            className="min-h-11 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-[0_6px_20px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-lg transition flex items-center justify-center"
+          >
+            Consult Online
           </Link>
         </div>
-
-        {/* MOBILE HAMBURGER */}
-        <button
-          className="md:hidden p-2 text-[#0B2560]"
-          onClick={(e) => { e.stopPropagation(); setMobileOpen(!mobileOpen); }}
-        >
-          {mobileOpen ? <MdClose size={24} /> : <MdMenu size={24} />}
-        </button>
       </div>
 
       {/* MOBILE MENU */}
       {mobileOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="md:hidden bg-white border-t border-gray-100 px-6 py-4 space-y-1"
+          className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1"
         >
           {navItems.map((item, i) => {
             const isActive = active === item.id;
@@ -177,7 +202,7 @@ export default function Navbar() {
                 key={i}
                 href={`${homeLink}#${item.id}`}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition ${
+                className={`min-h-11 flex items-center gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition ${
                   isActive
                     ? "bg-[#f6faff] text-[#0B2560]"
                     : "text-gray-700 hover:text-[#0B2560] hover:bg-[#f6faff]"
@@ -197,7 +222,7 @@ export default function Navbar() {
                 key={city}
                 href={`/${city.toLowerCase()}`}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-2 text-sm font-medium py-2 px-3 rounded-xl transition ${
+                className={`min-h-11 flex items-center gap-2 text-sm font-medium py-2 px-3 rounded-xl transition ${
                   currentLocation === city.toLowerCase()
                     ? "bg-[#f6faff] text-[#0B2560] font-bold"
                     : "text-gray-600 hover:text-[#0B2560] hover:bg-[#f6faff]"
@@ -210,13 +235,15 @@ export default function Navbar() {
 
           {/* CTA buttons */}
           <div className="pt-3 flex flex-col gap-2">
-            <a href="tel:18008909669" className="flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-2.5 rounded-xl text-sm font-semibold">
+            <a href="tel:18008909669" className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">
               <MdPhone size={15} /> 1800 890 9669
             </a>
-            <Link href="/book" onClick={() => setMobileOpen(false)}>
-              <button className="w-full bg-[#0B2560] text-white py-2.5 rounded-xl font-semibold text-sm">
-                Consult Online
-              </button>
+            <Link
+              href="/book"
+              onClick={() => setMobileOpen(false)}
+              className="min-h-12 w-full bg-[#0B2560] text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center"
+            >
+              Consult Online
             </Link>
           </div>
         </div>
