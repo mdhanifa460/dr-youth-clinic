@@ -5,6 +5,12 @@ const nextConfig = {
   // adds hundreds of KB to the server bundle unnecessarily.
   experimental: {
     serverComponentsExternalPackages: ['mongoose', 'cloudinary'],
+    // Admin pages are always dynamic — never serve stale segments from the
+    // client-side router cache. Public pages still get the 300s default.
+    staleTimes: {
+      dynamic: 0,
+      static: 300,
+    },
   },
 
   images: {
@@ -47,6 +53,35 @@ const nextConfig = {
     {
       source: '/images/:path*',
       headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+    },
+    // Admin pages — never cache HTML; browser must always re-fetch from server.
+    // This prevents stale HTML referencing old JS chunk hashes after a rebuild.
+    {
+      source: '/admin/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+        { key: 'Pragma',        value: 'no-cache' },
+      ],
+    },
+    // Admin API responses — never cache; always fresh data
+    {
+      source: '/api/admin/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+        { key: 'Pragma',        value: 'no-cache' },
+      ],
+    },
+    // Public HTML pages — ETag-validate on every browser request (max-age=0),
+    // so browsers never serve stale HTML with outdated JS chunk hashes.
+    // CDN edge caches the rendered page for 5 min (s-maxage=300, matching ISR
+    // revalidate) and can serve stale for 10 min while revalidating in background.
+    // This is the same strategy used by Vercel, Stripe docs, and next.js.org:
+    // browser always revalidates cheaply (304 if unchanged), CDN absorbs load.
+    {
+      source: '/((?!_next|api|admin|favicon\\.ico|images|fonts).*)',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' },
+      ],
     },
     // Public API responses — CDN-cacheable for 60s, serve stale for up to 5min
     {

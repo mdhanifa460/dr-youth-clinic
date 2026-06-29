@@ -157,14 +157,14 @@ const ServiceSchema = new Schema<IService>(
   }
 );
 
-// Auto-generate internal code
-ServiceSchema.pre('save', async function (next: any) {
+// Auto-generate fields before save.
+// Mongoose 6+: async hooks resolve via the returned Promise — do NOT call next().
+ServiceSchema.pre('save', async function () {
   if (!this.internalCode) {
     const count = await mongoose.model('Service').countDocuments();
     this.internalCode = `SRV-${String(count + 1).padStart(3, '0')}`;
   }
 
-  // Auto-generate URL slug from name
   if (!this.urlSlug && this.name) {
     this.urlSlug = this.name
       .toLowerCase()
@@ -172,15 +172,10 @@ ServiceSchema.pre('save', async function (next: any) {
       .replace(/^-|-$/g, '');
   }
 
-  next();
-});
-
-// Auto-generate meta title if not provided
-ServiceSchema.pre('save', function (next: any) {
   if (!this.metaTitle && this.name) {
-    this.metaTitle = `${this.name} in ${this.location.charAt(0).toUpperCase() + this.location.slice(1)} | DR Youth Clinic`;
+    const city = this.location.charAt(0).toUpperCase() + this.location.slice(1);
+    this.metaTitle = `${this.name} in ${city} | DR Youth Clinic`;
   }
-  return next();
 });
 
 export const Service = mongoose.models.Service || mongoose.model('Service', ServiceSchema);

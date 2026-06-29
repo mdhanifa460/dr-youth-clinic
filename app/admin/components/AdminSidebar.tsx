@@ -34,6 +34,7 @@ export default function AdminSidebar() {
         {item("/admin/homepage", "🏠 Homepage")}
         {item("/admin/locations", "📍 Locations")}
         {item("/admin/reviews", "⭐ Reviews")}
+        {item("/admin/seo", "🔍 SEO")}
         {item("/admin/settings", "⚙ Settings")}
       </nav>
 

@@ -25,15 +25,16 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [redirectTo, setRedirectTo] = useState("/admin");
 
+  const [idleNotice, setIdleNotice] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const nextPath = getSafeRedirectPath();
 
     setRedirectTo(nextPath);
 
-    if (params.get("error")) {
-      setError("Invalid email or password");
-    }
+    if (params.get("reason") === "idle") setIdleNotice(true);
+    if (params.get("error")) setError("Invalid email or password");
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -174,6 +175,12 @@ export default function AdminLogin() {
               />
               Keep me logged in
             </label>
+
+            {idleNotice && (
+              <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-700">
+                ⏱ You were logged out due to inactivity. Please sign in again.
+              </p>
+            )}
 
             {error && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">

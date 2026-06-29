@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import CacheGuard from "@/app/components/CacheGuard";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>
       <body className="min-h-screen flex flex-col bg-[#f6faff]">
+        <CacheGuard />
         <main className="flex-1">
           {children}
         </main>

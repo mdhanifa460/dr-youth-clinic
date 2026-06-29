@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         user: session.user,
       });
 
-  setAdminSessionCookie(res, session.cookieValue, session.maxAge);
+  setAdminSessionCookie(res, session.cookieValue, session.maxAge, !!remember);
 
   return res;
 }

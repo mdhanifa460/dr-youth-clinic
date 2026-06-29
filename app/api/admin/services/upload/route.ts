@@ -10,7 +10,11 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const folder = (formData.get('folder') as string) || 'dr-youth-clinic/services';
+    const rawFolder = (formData.get('folder') as string) || 'dr-youth-clinic/services';
+
+    // Only allow uploads into known dr-youth-clinic sub-folders
+    const FOLDER_PATTERN = /^dr-youth-clinic\/(services|doctors|gallery|hero|blogs|locations|results)(\/[a-z0-9-]+)*$/;
+    const folder = FOLDER_PATTERN.test(rawFolder) ? rawFolder : 'dr-youth-clinic/services';
 
     // ============ VALIDATION ============
     if (!file) {

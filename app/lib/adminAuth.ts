@@ -204,13 +204,16 @@ export function unauthorized() {
 export function setAdminSessionCookie(
   res: NextResponse,
   value: string,
-  maxAge: number
+  maxAge: number,
+  remember = false
 ) {
   res.cookies.set(ADMIN_SESSION_COOKIE, value, {
     httpOnly: true,
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
-    maxAge,
+    // No maxAge when not remembering → becomes a session cookie,
+    // which the browser deletes automatically when it closes.
+    ...(remember ? { maxAge } : {}),
     path: "/",
   });
 }

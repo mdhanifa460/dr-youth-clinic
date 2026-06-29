@@ -13,6 +13,7 @@ interface ImageUploadProps {
   preview?: boolean;
   maxSize?: number;
   accept?: string;
+  folder?: string;
 }
 
 export default function ImageUpload({
@@ -21,6 +22,7 @@ export default function ImageUpload({
   preview = true,
   maxSize = 5, // MB
   accept = "image/*",
+  folder = "dr-youth-clinic/services",
 }: ImageUploadProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -75,7 +77,7 @@ export default function ImageUpload({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("folder", "dr-youth-clinic/services");
+      formData.append("folder", folder);
 
       // Simulate progress
       const progressInterval = setInterval(() => {

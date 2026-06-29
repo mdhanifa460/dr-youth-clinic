@@ -48,7 +48,7 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
         <a href={review.videoUrl} target="_blank" rel="noopener noreferrer"
           className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100 flex items-center justify-center group">
           {review.videoThumbnail
-            ? <img src={review.videoThumbnail} alt="video" className="w-full h-full object-cover" />
+            ? <img src={review.videoThumbnail} alt="video" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             : <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a]" />}
           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition" />
           <div className="relative z-10 w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-105 transition">
@@ -65,7 +65,7 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
 
       <div className="flex items-center gap-3 pt-2 border-t border-gray-50">
         {review.authorAvatar
-          ? <img src={review.authorAvatar} alt={review.authorName} className="w-9 h-9 rounded-full object-cover shrink-0" />
+          ? <img src={review.authorAvatar} alt={review.authorName} className="w-9 h-9 rounded-full object-cover shrink-0" loading="lazy" decoding="async" />
           : <div className="w-9 h-9 rounded-full bg-[#0B2560] flex items-center justify-center shrink-0">
               <span className="text-white text-xs font-bold">{initials}</span>
             </div>}

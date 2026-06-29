@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
@@ -18,6 +19,48 @@ import FAQAccordion from '@/app/components/homepage/FAQAccordion';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
 
 export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    await connectDB();
+    const { PageSeo } = await import('@/app/models/PageSeo');
+    const seo = await PageSeo.findOne({ pageKey: 'home' }).lean() as any;
+    if (seo?.metaTitle) {
+      return {
+        title: seo.metaTitle,
+        description: seo.metaDescription || undefined,
+        keywords: Array.isArray(seo.keywords) ? seo.keywords : [],
+        openGraph: {
+          title: seo.metaTitle,
+          description: seo.metaDescription || '',
+          url: 'https://dryouthclinic.com',
+          siteName: 'DR Youth Clinic',
+          type: 'website',
+          locale: 'en_IN',
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: seo.metaTitle,
+          description: seo.metaDescription || '',
+        },
+      };
+    }
+  } catch {
+    // fall through to static defaults
+  }
+  return {
+    title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
+    description: 'Trusted by 25,000+ patients across India. Expert dermatology, hair restoration & aesthetic treatments.',
+    openGraph: {
+      title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
+      description: 'Trusted by 25,000+ patients across India.',
+      url: 'https://dryouthclinic.com',
+      siteName: 'DR Youth Clinic',
+      type: 'website',
+      locale: 'en_IN',
+    },
+  };
+}
 
 type SectionOrderItem = {
   key: string;

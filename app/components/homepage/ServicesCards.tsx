@@ -25,7 +25,7 @@ function getImageSrc(src: unknown, fallback: string) {
     : fallback;
 }
 
-export default function ServicesCards({ data }: { data: any }) {
+export default function ServicesCards({ data, location = 'chennai' }: { data: any; location?: string }) {
   const {
     headline = 'Clinical-Level Beauty Services',
     subheadline = 'Experience medical precision meets aesthetic artistry across our core specializations.',
@@ -51,7 +51,7 @@ export default function ServicesCards({ data }: { data: any }) {
             </p>
           </div>
           <Link
-            href="/services"
+            href={`/${location}/services`}
             className="min-h-11 text-secondary font-semibold flex items-center gap-2 hover:gap-3 transition-all shrink-0 whitespace-nowrap"
           >
             Explore All Services →
