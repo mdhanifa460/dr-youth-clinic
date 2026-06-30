@@ -4,6 +4,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review } from '@/app/models/Review';
 import { PageSeo } from '@/app/models/PageSeo';
+import { LocationContent } from '@/app/models/LocationContent';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
 
@@ -30,6 +31,22 @@ const getHomeSeo = unstable_cache(
   },
   ['home-seo'],
   { revalidate: 300, tags: ['page-seo'] }
+);
+
+const getCachedLocationEmbeds = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await LocationContent.find({
+        location: { $in: ['chennai', 'bangalore', 'coimbatore', 'kochi'] },
+      }).lean() as any[];
+      return Object.fromEntries(
+        docs.map((d) => [d.location, { googleMapsUrl: d.googleMapsUrl || '', mapEmbedUrl: d.mapEmbedUrl || '' }])
+      );
+    } catch { return {}; }
+  },
+  ['location-embeds-v1'],
+  { revalidate: 300, tags: ['location-content'] }
 );
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -186,16 +203,17 @@ export default async function Home() {
   const testimonialsConfig = publicSectionOrder.find((s) => s.key === 'testimonials' && s.visible);
   const td = sectionData['testimonials'] ?? {};
 
-  // Fetch reviews in parallel with the render (non-blocking if not needed)
-  const initialReviews = testimonialsConfig
-    ? await getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
-    : [];
+  const [initialReviews, locationEmbeds] = await Promise.all([
+    testimonialsConfig
+      ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
+      : Promise.resolve([]),
+    getCachedLocationEmbeds(),
+  ]);
 
-  // Pass server-fetched reviews into the section data — slider uses them directly,
-  // no client-side fetch needed.
   const enriched = {
     ...sectionData,
     testimonials: { ...td, _reviews: initialReviews },
+    locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds },
   };
 
   return (

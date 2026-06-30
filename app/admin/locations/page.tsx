@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Upload, Trash2, Plus, Loader, CheckCircle, Eye, EyeOff,
-  GripVertical, ChevronDown, X, ImageIcon, MapPin, ExternalLink,
+  GripVertical, ImageIcon, MapPin, ExternalLink,
 } from 'lucide-react';
 import Image from 'next/image';
 import { CLOUD_FOLDERS } from '@/app/lib/cloudinary-url';
@@ -419,18 +419,24 @@ export default function LocationsAdminPage() {
               {/* Embed URL */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Map Embed URL <span className="font-normal text-gray-400">(shown as an embedded map preview)</span>
+                  Map Embed <span className="font-normal text-gray-400">(paste the full &lt;iframe&gt; code or just the URL)</span>
                 </label>
-                <input
+                <textarea
+                  rows={3}
                   value={data.mapEmbedUrl}
-                  onChange={(e) => setData((d: any) => ({ ...d, mapEmbedUrl: e.target.value }))}
-                  placeholder="https://www.google.com/maps/embed?pb=..."
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                  onChange={(e) => {
+                    const raw = e.target.value.trim();
+                    // If the user pastes full <iframe> HTML, extract the src URL automatically
+                    const srcMatch = raw.match(/src=["']([^"']+)["']/);
+                    setData((d: any) => ({ ...d, mapEmbedUrl: srcMatch ? srcMatch[1] : raw }));
+                  }}
+                  placeholder={'Paste the <iframe> embed code from Google Maps, or just the src URL'}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] resize-none font-mono"
                 />
-                <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
-                  In Google Maps: Share → <em>Embed a map</em> → copy only the <code className="bg-gray-100 px-1 rounded">src="..."</code> URL.
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  Google Maps → Share → <em>Embed a map</em> → copy the entire &lt;iframe&gt; code and paste here.
                 </p>
-                {data.mapEmbedUrl && (
+                {data.mapEmbedUrl && data.mapEmbedUrl.startsWith('http') && (
                   <div className="mt-3 rounded-xl overflow-hidden border border-gray-100 h-40">
                     <iframe
                       src={data.mapEmbedUrl}
