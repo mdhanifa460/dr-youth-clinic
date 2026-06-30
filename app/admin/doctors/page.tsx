@@ -292,7 +292,7 @@ export default function DoctorsAdminPage() {
           {pageMode ? (
             <PageContentPanel />
           ) : formOpen ? (
-            <DoctorForm doctor={selected} onSaved={onSaved} onDeleted={onDeleted} onCancel={closeForm} />
+            <DoctorForm key={selected?._id ?? 'new'} doctor={selected} onSaved={onSaved} onDeleted={onDeleted} onCancel={closeForm} />
           ) : (
             <EmptyPanel onNew={openNew} />
           )}
