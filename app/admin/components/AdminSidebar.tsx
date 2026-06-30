@@ -33,6 +33,7 @@ export default function AdminSidebar() {
         {item("/admin", "📊 Dashboard")}
         {item("/admin/bookings", "📅 Bookings")}
         {item("/admin/services", "🩺 Services")}
+        {item("/admin/doctors", "👨‍⚕️ Doctors")}
         {item("/admin/homepage", "🏠 Homepage")}
         {item("/admin/locations", "📍 Locations")}
         {item("/admin/reviews", "⭐ Reviews")}
