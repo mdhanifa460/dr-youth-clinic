@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, CheckCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-react';
+import { locations } from '@/app/data/locations';
 
 const SERVICES = [
   { id: 'Skin', icon: '✨', label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
@@ -12,10 +13,10 @@ const SERVICES = [
 ];
 
 const LOCATIONS = [
-  { id: 'Chennai', label: 'Chennai', address: 'Anna Nagar, Chennai' },
-  { id: 'Bangalore', label: 'Bangalore', address: 'Indiranagar, Bangalore' },
-  { id: 'Kochi', label: 'Kochi', address: 'MG Road, Kochi' },
-  { id: 'Coimbatore', label: 'Coimbatore', address: 'RS Puram, Coimbatore' },
+  { id: 'Chennai',    label: 'Chennai',    address: locations.chennai.address    },
+  { id: 'Bangalore',  label: 'Bangalore',  address: locations.bangalore.address  },
+  { id: 'Kochi',      label: 'Kochi',      address: locations.kochi.address      },
+  { id: 'Coimbatore', label: 'Coimbatore', address: locations.coimbatore.address },
 ];
 
 const TIME_SLOTS = [

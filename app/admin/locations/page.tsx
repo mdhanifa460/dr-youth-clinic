@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { CLOUD_FOLDERS } from '@/app/lib/cloudinary-url';
+import { locations } from '@/app/data/locations';
 
 const CITIES = [
   { key: 'chennai',    label: 'Chennai' },
@@ -241,19 +242,29 @@ export default function LocationsAdminPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/locations/${city}`);
+      const res  = await fetch(`/api/admin/locations/${city}`);
       const json = await res.json();
-      if (json.success && json.data) {
-        setData({
-          heroImage:        json.data.heroImage        || { publicId: '', url: '' },
-          googleMapsUrl:    json.data.googleMapsUrl    || '',
-          mapEmbedUrl:      json.data.mapEmbedUrl      || '',
-          clinicInfo:       json.data.clinicInfo       || EMPTY_CLINIC_INFO,
-          beforeAfterPairs: json.data.beforeAfterPairs || [],
-          galleryImages:    json.data.galleryImages    || [],
-          localDoctors:     json.data.localDoctors     || [],
-        });
-      }
+      const loc  = locations[city];                       // static fallback
+      const db   = json.success ? json.data : null;
+      const dci  = db?.clinicInfo;
+
+      setData({
+        heroImage:        db?.heroImage        || { publicId: '', url: '' },
+        googleMapsUrl:    db?.googleMapsUrl    || loc?.map  || '',
+        mapEmbedUrl:      db?.mapEmbedUrl      || loc?.map  || '',
+        clinicInfo: {
+          address:      dci?.address      || loc?.address      || '',
+          phone:        dci?.phone        || loc?.phone        || '',
+          hours:        dci?.hours?.length ? dci.hours : (loc?.hours ?? EMPTY_CLINIC_INFO.hours),
+          rating:       dci?.rating       ?? loc?.rating       ?? 0,
+          reviewCount:  dci?.reviewCount  ?? loc?.reviewCount  ?? 0,
+          serviceCount: dci?.serviceCount ?? loc?.serviceCount ?? 0,
+          doctorCount:  dci?.doctorCount  ?? loc?.doctorCount  ?? 0,
+        },
+        beforeAfterPairs: db?.beforeAfterPairs || [],
+        galleryImages:    db?.galleryImages    || [],
+        localDoctors:     db?.localDoctors     || [],
+      });
     } catch {}
     setLoading(false);
   }, [city]);

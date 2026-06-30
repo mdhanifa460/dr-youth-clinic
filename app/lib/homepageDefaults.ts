@@ -1,4 +1,5 @@
 import { CLOUDINARY_LOGO_URL } from './legacyImageUrls';
+import { locations } from '@/app/data/locations';
 
 export interface SectionDefault {
   label: string;
@@ -215,10 +216,10 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       viewAllText: 'View all clinics',
       featuredCity: {
         name: 'Chennai',
-        address: 'No. 42, 4th Cross St, T. Nagar, Chennai - 600017',
-        hours: 'Mon - Sat: 10:00 AM - 7:00 PM',
-        phone: '1800 890 9669',
-        directionsHref: '#',
+        address: locations.chennai.address,
+        hours: locations.chennai.hours[0]?.day + ': ' + locations.chennai.hours[0]?.hours,
+        phone: locations.chennai.phone,
+        directionsHref: locations.chennai.map,
       },
     },
   },
@@ -383,8 +384,8 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         { label: 'Terms & Conditions', href: '#' },
       ],
       contact: {
-        address: 'DR Youth Clinic, 123, Wellness Street, New Delhi - 110001, India',
-        phone: '1800 890 9669',
+        address: locations.chennai.address,
+        phone: locations.chennai.phone,
         email: 'info@dryouthclinic.com',
       },
       copyright: '© 2024 DR Youth Clinic. All Rights Reserved.',
