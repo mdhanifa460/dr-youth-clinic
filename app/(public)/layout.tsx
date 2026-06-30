@@ -8,20 +8,31 @@ import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
 
-const getTopBarSection = unstable_cache(
+// Single query for both topbar + footer — avoids two round-trips per page
+const getLayoutSections = unstable_cache(
   async () => {
     try {
       await connectDB();
-      const section = await HomepageSection.findOne({ sectionKey: "topbar" }).lean() as any;
+      const sections = await HomepageSection.find({
+        sectionKey: { $in: ["topbar", "footer"] },
+      }).lean() as any[];
+
+      const byKey = Object.fromEntries(sections.map((s) => [s.sectionKey, s]));
       return {
-        data: section?.data ?? HOMEPAGE_DEFAULTS.topbar.data,
-        visible: section?.visible ?? true,
+        topbar: {
+          data: byKey.topbar?.data ?? HOMEPAGE_DEFAULTS.topbar.data,
+          visible: byKey.topbar?.visible ?? true,
+        },
+        footer: byKey.footer?.data ?? HOMEPAGE_DEFAULTS.footer.data,
       };
     } catch {
-      return { data: HOMEPAGE_DEFAULTS.topbar.data, visible: true };
+      return {
+        topbar: { data: HOMEPAGE_DEFAULTS.topbar.data, visible: true },
+        footer: HOMEPAGE_DEFAULTS.footer.data,
+      };
     }
   },
-  ["topbar-section"],
+  ["layout-sections-v2"],
   { revalidate: 300, tags: ["homepage-layout"] }
 );
 
@@ -30,19 +41,21 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data, visible } = await getTopBarSection();
+  const { topbar, footer } = await getLayoutSections();
 
-  const whatsappLink = data?.socialLinks?.find((s: any) => s.platform === "whatsapp")?.url;
+  const whatsappLink = topbar.data?.socialLinks?.find(
+    (s: any) => s.platform === "whatsapp"
+  )?.url;
 
   return (
     <>
       <OrganizationSchema />
       <FAQSchema />
-      {visible && <TopBar data={data} />}
+      {topbar.visible && <TopBar data={topbar.data} />}
       <Navbar />
       <div className="pb-[72px] md:pb-0">{children}</div>
-      <Footer />
-      <MobileStickyBar phone={data?.phone} whatsappUrl={whatsappLink} />
+      <Footer data={footer} />
+      <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
     </>
   );
 }

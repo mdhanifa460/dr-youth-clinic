@@ -5,6 +5,8 @@ const nextConfig = {
   // adds hundreds of KB to the server bundle unnecessarily.
   experimental: {
     serverComponentsExternalPackages: ['mongoose', 'cloudinary'],
+    // Runs instrumentation.ts on server start — warms MongoDB before first request.
+    instrumentationHook: true,
     // Admin pages are always dynamic — never serve stale segments from the
     // client-side router cache. Public pages still get the 300s default.
     staleTimes: {

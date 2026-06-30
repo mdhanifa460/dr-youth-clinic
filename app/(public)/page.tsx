@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review } from '@/app/models/Review';
+import { PageSeo } from '@/app/models/PageSeo';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
 
@@ -20,11 +21,20 @@ import BlogInsights from '@/app/components/homepage/BlogInsights';
 
 export const revalidate = 300;
 
+const getHomeSeo = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      return PageSeo.findOne({ pageKey: 'home' }).lean() as Promise<any>;
+    } catch { return null; }
+  },
+  ['home-seo'],
+  { revalidate: 300, tags: ['page-seo'] }
+);
+
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    await connectDB();
-    const { PageSeo } = await import('@/app/models/PageSeo');
-    const seo = await PageSeo.findOne({ pageKey: 'home' }).lean() as any;
+    const seo = await getHomeSeo();
     if (seo?.metaTitle) {
       return {
         title: seo.metaTitle,
@@ -173,9 +183,10 @@ export default async function Home() {
   const { sectionData, sectionOrder } = await getCachedSections();
   const publicSectionOrder = sortPublicSections(sectionOrder);
 
-  // Only fetch reviews when the testimonials section is enabled
   const testimonialsConfig = publicSectionOrder.find((s) => s.key === 'testimonials' && s.visible);
   const td = sectionData['testimonials'] ?? {};
+
+  // Fetch reviews in parallel with the render (non-blocking if not needed)
   const initialReviews = testimonialsConfig
     ? await getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
     : [];

@@ -13,11 +13,13 @@ export default function AdminSidebar() {
     router.refresh();
   };
 
-  const item = (href: string, label: string) => (
+  const item = (href: string, label: string, exact = true) => (
     <Link
       href={href}
       className={`block px-3 py-2 rounded ${
-        path === href ? "bg-white text-[#0B2545] font-semibold" : "hover:bg-white/10"
+        (exact ? path === href : path.startsWith(href))
+          ? "bg-white text-[#0B2545] font-semibold"
+          : "hover:bg-white/10"
       }`}
     >
       {label}
@@ -35,7 +37,7 @@ export default function AdminSidebar() {
         {item("/admin/locations", "📍 Locations")}
         {item("/admin/reviews", "⭐ Reviews")}
         {item("/admin/seo", "🔍 SEO")}
-        {item("/admin/settings", "⚙ Settings")}
+        {item("/admin/settings", "⚙ Settings", false)}
       </nav>
 
       <button

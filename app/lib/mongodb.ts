@@ -15,11 +15,13 @@ export async function connectDB(): Promise<typeof mongoose> {
     cached.promise = mongoose
       .connect(MONGODB_URI, {
         dbName: 'clinicDB',
-        bufferCommands: false,       // fail immediately if not connected — no silent queuing
-        serverSelectionTimeoutMS: 5000,
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 10000, // Atlas free tier can take up to 8s to select server
         socketTimeoutMS: 45000,
+        connectTimeoutMS: 10000,
         maxPoolSize: 10,
-        minPoolSize: 0,              // don't hold idle connections in serverless
+        minPoolSize: 2,              // keep 2 connections alive — avoids reconnect cost on warm server
+        heartbeatFrequencyMS: 10000, // ping every 10s to keep connections from going idle
       })
       .catch((err) => {
         cached.promise = null;       // reset so the next request retries

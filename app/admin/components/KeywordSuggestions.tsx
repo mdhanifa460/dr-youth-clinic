@@ -11,77 +11,6 @@ interface Props {
   onChange: (v: string) => void;
 }
 
-// ── Static keyword banks (instant, zero cost) ────────────────────────────────
-const CATEGORY_BANKS: Record<string, string[]> = {
-  Skin: [
-    "skin brightening", "acne treatment", "pigmentation treatment",
-    "anti aging skin care", "skin rejuvenation", "glowing skin",
-    "dark spot removal", "chemical peel", "dermatologist consultation",
-    "skin hydration", "skin whitening treatment", "face treatment",
-  ],
-  Hair: [
-    "hair loss treatment", "hair regrowth", "PRP therapy",
-    "GFC hair treatment", "hair transplant", "alopecia treatment",
-    "scalp treatment", "hair thinning solution", "FUE transplant",
-    "DHI hair transplant", "hair fall control", "platelet rich plasma hair",
-  ],
-  Laser: [
-    "laser hair removal", "laser skin resurfacing", "Q-switched laser",
-    "fractional laser", "IPL treatment", "CO2 laser treatment",
-    "laser pigmentation removal", "acne scar laser", "laser toning",
-  ],
-  Other: [
-    "aesthetic treatment", "cosmetic procedure", "non-surgical treatment",
-    "botox treatment", "dermal fillers", "mesotherapy",
-    "PRP treatment", "body contouring", "medical aesthetics",
-  ],
-};
-
-type StaticGroup = {
-  label: string;
-  icon: string;
-  bg: string; border: string; text: string;
-  selBg: string; selText: string;
-  keywords: string[];
-};
-
-function buildStaticGroups(name: string, category: string, location: string): StaticGroup[] {
-  if (!name.trim() || !location) return [];
-
-  const city  = location.charAt(0).toUpperCase() + location.slice(1);
-  const short = name.trim().split(/\s+/).slice(0, 3).join(" ").toLowerCase();
-  const cat   = category.toLowerCase();
-
-  return [
-    {
-      label: "Local Intent", icon: "📍",
-      bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700",
-      selBg: "bg-blue-600", selText: "text-white",
-      keywords: [
-        `${short} in ${city}`, `best ${short} ${city}`,
-        `${short} clinic ${city}`, `${short} near me`,
-        `${short} ${city} price`, `best ${cat} clinic ${city}`,
-      ],
-    },
-    {
-      label: "Search Intent", icon: "🔍",
-      bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700",
-      selBg: "bg-violet-600", selText: "text-white",
-      keywords: [
-        `${short} benefits`, `${short} results`,
-        `how much does ${short} cost`, `${short} before after`,
-        `${short} side effects`, `${short} recovery time`,
-      ],
-    },
-    {
-      label: "Category Terms", icon: "📋",
-      bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700",
-      selBg: "bg-emerald-600", selText: "text-white",
-      keywords: CATEGORY_BANKS[category] ?? [],
-    },
-  ].filter((g) => g.keywords.length > 0);
-}
-
 // ── AI result groups ──────────────────────────────────────────────────────────
 type AiKeywords = { seo: string[]; geo: string[]; aeo: string[] };
 
@@ -126,11 +55,6 @@ export default function KeywordSuggestions({ serviceName, category, location, ke
   const [aiKws, setAiKws]         = useState<AiKeywords | null>(null);
   const [aiStatus, setAiStatus]   = useState<AiStatus>("idle");
   const [fromCache, setFromCache] = useState(false);
-
-  const staticGroups = useMemo(
-    () => buildStaticGroups(serviceName, category, location),
-    [serviceName, category, location]
-  );
 
   const current    = useMemo(() => parseKws(keywords), [keywords]);
   const selectedSet = useMemo(() => new Set(current), [current]);
@@ -194,45 +118,10 @@ export default function KeywordSuggestions({ serviceName, category, location, ke
     }
   }
 
-  if (staticGroups.length === 0) return null;
+  if (!serviceName?.trim()) return null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-[#fafbff] overflow-hidden text-sm">
-
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white">
-        <div className="flex items-center gap-2">
-          <span className="text-gray-700 font-bold">Suggested Keywords</span>
-          <span className="text-[11px] text-gray-400 hidden sm:inline">
-            click to add · click again to remove
-          </span>
-        </div>
-        {current.length > 0 && (
-          <span className="text-[11px] font-bold bg-blue-600 text-white px-2.5 py-0.5 rounded-full">
-            {current.length} added
-          </span>
-        )}
-      </div>
-
-      {/* ── Static groups ───────────────────────────────────────────────── */}
-      {staticGroups.map((g) => (
-        <div key={g.label} className="px-5 py-4 border-b border-gray-100">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2.5">
-            {g.icon} {g.label}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {g.keywords.map((kw) => {
-              const sel = selectedSet.has(kw.toLowerCase());
-              return (
-                <Pill key={kw} label={kw} selected={sel}
-                  bg={g.bg} text={g.text} border={g.border}
-                  selBg={g.selBg} selText={g.selText}
-                  onClick={() => toggle(kw)} />
-              );
-            })}
-          </div>
-        </div>
-      ))}
 
       {/* ── AI section ──────────────────────────────────────────────────── */}
       <div className="px-5 py-4">
@@ -244,12 +133,19 @@ export default function KeywordSuggestions({ serviceName, category, location, ke
               Gemini · competitor-aware · grouped by SEO / GEO / AEO
             </span>
           </div>
-          {fromCache && aiStatus === "done" && (
-            <span className="text-[10px] text-gray-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-              cached · no cost
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {fromCache && aiStatus === "done" && (
+              <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                cached · no cost
+              </span>
+            )}
+            {current.length > 0 && (
+              <span className="text-[11px] font-bold bg-blue-600 text-white px-2.5 py-0.5 rounded-full">
+                {current.length} added
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ── Idle state ── */}

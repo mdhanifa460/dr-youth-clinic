@@ -38,7 +38,7 @@ Return ONLY valid JSON, no explanation, no markdown:
 Rules: all lowercase, no duplicates, specific not generic, commercially relevant.`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -53,7 +53,11 @@ Rules: all lowercase, no duplicates, specific not generic, commercially relevant
     }
   );
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    console.error('[Gemini] API error', res.status, errText.slice(0, 300));
+    return null;
+  }
 
   const json = await res.json();
   const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text;

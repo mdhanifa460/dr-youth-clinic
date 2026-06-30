@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -9,8 +8,6 @@ import {
   FaTwitter,
 } from "react-icons/fa";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
-import { connectDB } from "@/app/lib/mongodb";
-import { HomepageSection } from "@/app/models/HomepageSection";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
@@ -21,24 +18,9 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
   twitter: <FaTwitter size={13} />,
 };
 
-const getFooterData = unstable_cache(
-  async () => {
-    try {
-      await connectDB();
-      const section = (await HomepageSection.findOne({
-        sectionKey: "footer",
-      }).lean()) as any;
-      return section?.data ?? HOMEPAGE_DEFAULTS.footer.data;
-    } catch {
-      return HOMEPAGE_DEFAULTS.footer.data;
-    }
-  },
-  ["footer-data"],
-  { revalidate: 300, tags: ["homepage-layout"] }
-);
-
-export default async function Footer() {
-  const data = await getFooterData();
+// Data is fetched once in PublicLayout and passed down — no DB call here
+export default async function Footer({ data }: { data?: any }) {
+  const resolvedData = data ?? HOMEPAGE_DEFAULTS.footer.data;
 
   const {
     tagline = "",
@@ -48,7 +30,7 @@ export default async function Footer() {
     contact = {},
     copyright = "© 2024 DR Youth Clinic. All Rights Reserved.",
     socialLinks = [],
-  } = data;
+  } = resolvedData;
 
   return (
     <footer className="bg-[#0B2560] text-white">
