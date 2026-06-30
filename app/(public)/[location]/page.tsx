@@ -43,16 +43,17 @@ export async function generateMetadata({ params }: { params: { location: string 
 async function getLocationContent(city: string) {
   try {
     await connectDB();
-    const doc = await LocationContent.findOne({ location: city }).lean();
+    const doc = await LocationContent.findOne({ location: city }).lean() as any;
     if (!doc) return null;
     return {
-      heroImage: doc.heroImage,
-      googleMapsUrl: (doc as any).googleMapsUrl || '',
-      mapEmbedUrl: (doc as any).mapEmbedUrl || '',
-      beforeAfterPairs: doc.beforeAfterPairs.filter((p) => p.isVisible),
-      galleryImages: doc.galleryImages
-        .filter((g) => g.isVisible)
-        .sort((a, b) => a.displayOrder - b.displayOrder),
+      heroImage:        doc.heroImage,
+      googleMapsUrl:    doc.googleMapsUrl || '',
+      mapEmbedUrl:      doc.mapEmbedUrl   || '',
+      clinicInfo:       doc.clinicInfo    || null,
+      beforeAfterPairs: doc.beforeAfterPairs.filter((p: any) => p.isVisible),
+      galleryImages:    doc.galleryImages
+        .filter((g: any) => g.isVisible)
+        .sort((a: any, b: any) => a.displayOrder - b.displayOrder),
     };
   } catch {
     return null;
@@ -84,9 +85,20 @@ export default async function LocationPage({ params }: { params: { location: str
 
   const [content] = await Promise.all([getLocationContent(cityKey)]);
   const otherCities = Object.entries(locations).filter(([k]) => k !== cityKey);
-  const hasHero = !!(content?.heroImage?.url);
-  const hasPairs = (content?.beforeAfterPairs?.length ?? 0) > 0;
-  const hasGallery = (content?.galleryImages?.length ?? 0) > 0;
+  const hasHero    = !!(content?.heroImage?.url);
+  const hasPairs   = (content?.beforeAfterPairs?.length ?? 0) > 0;
+  const hasGallery = (content?.galleryImages?.length ?? 0)    > 0;
+
+  // DB clinicInfo takes priority over static locations.ts data
+  const ci          = content?.clinicInfo;
+  const address     = ci?.address     || loc.address;
+  const phone       = ci?.phone       || loc.phone;
+  const hours       = ci?.hours?.length ? ci.hours : loc.hours;
+  const rating      = ci?.rating      || 0;
+  const reviewCount = ci?.reviewCount || 0;
+  const mapEmbedUrl = content?.mapEmbedUrl   || loc.map;
+  const directionsUrl = content?.googleMapsUrl ||
+    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
 
   return (
     <>
@@ -120,7 +132,7 @@ export default async function LocationPage({ params }: { params: { location: str
                     Book Consultation
                   </button>
                 </Link>
-                <a href={`tel:${loc.phone}`}>
+                <a href={`tel:${phone}`}>
                   <button className="border border-primary text-primary px-8 py-3.5 rounded-xl font-semibold hover:bg-primary/5 transition">
                     <span className="flex items-center gap-2">
                       <Phone size={15} /> Call Clinic
@@ -168,16 +180,16 @@ export default async function LocationPage({ params }: { params: { location: str
 
                 <div className="flex gap-3 text-gray-700 text-sm">
                   <MapPin className="text-secondary shrink-0 mt-0.5" size={17} />
-                  <span>{loc.address}</span>
+                  <span>{address}</span>
                 </div>
 
-                <a href={`tel:${loc.phone}`} className="flex gap-3 text-gray-700 text-sm hover:text-primary transition">
+                <a href={`tel:${phone}`} className="flex gap-3 text-gray-700 text-sm hover:text-primary transition">
                   <Phone className="text-secondary shrink-0 mt-0.5" size={17} />
-                  {loc.phone}
+                  {phone}
                 </a>
 
                 <div className="border-t border-gray-100 pt-4 space-y-2.5">
-                  {loc.hours.map((h, i) => (
+                  {hours.map((h, i) => (
                     <div key={i} className="flex gap-3 text-sm">
                       <Clock className="text-secondary shrink-0 mt-0.5" size={15} />
                       <span>
@@ -190,7 +202,7 @@ export default async function LocationPage({ params }: { params: { location: str
 
                 <div className="rounded-2xl overflow-hidden border border-gray-100 h-[180px]">
                   <iframe
-                    src={content?.mapEmbedUrl || loc.map}
+                    src={mapEmbedUrl}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -202,10 +214,7 @@ export default async function LocationPage({ params }: { params: { location: str
                 </div>
 
                 <a
-                  href={
-                    content?.googleMapsUrl ||
-                    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc.address)}`
-                  }
+                  href={directionsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-opacity-90 transition"
@@ -401,11 +410,11 @@ export default async function LocationPage({ params }: { params: { location: str
                   </button>
                 </Link>
                 <a
-                  href={`tel:${loc.phone}`}
+                  href={`tel:${phone}`}
                   className="flex items-center gap-2 justify-center text-white font-semibold text-lg hover:opacity-80 transition"
                 >
                   <Phone size={18} />
-                  {loc.phone}
+                  {phone}
                 </a>
               </div>
             </div>

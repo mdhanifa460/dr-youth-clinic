@@ -219,10 +219,17 @@ function GalleryItem({
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function LocationsAdminPage() {
   const [city, setCity] = useState('chennai');
+  const EMPTY_CLINIC_INFO = {
+    address: '', phone: '',
+    hours: [{ day: 'Monday - Saturday', hours: '' }, { day: 'Sunday', hours: 'Closed' }],
+    rating: 0, reviewCount: 0, serviceCount: 0, doctorCount: 0,
+  };
+
   const [data, setData] = useState<any>({
     heroImage: { publicId: '', url: '' },
     googleMapsUrl: '',
     mapEmbedUrl: '',
+    clinicInfo: EMPTY_CLINIC_INFO,
     beforeAfterPairs: [],
     galleryImages: [],
     localDoctors: [],
@@ -241,6 +248,7 @@ export default function LocationsAdminPage() {
           heroImage:        json.data.heroImage        || { publicId: '', url: '' },
           googleMapsUrl:    json.data.googleMapsUrl    || '',
           mapEmbedUrl:      json.data.mapEmbedUrl      || '',
+          clinicInfo:       json.data.clinicInfo       || EMPTY_CLINIC_INFO,
           beforeAfterPairs: json.data.beforeAfterPairs || [],
           galleryImages:    json.data.galleryImages    || [],
           localDoctors:     json.data.localDoctors     || [],
@@ -354,6 +362,138 @@ export default function LocationsAdminPage() {
         </div>
       ) : (
         <div className="space-y-10">
+
+          {/* ── CLINIC INFO ────────────────────────────────────── */}
+          <section>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-base font-bold text-[#0B2560]">Clinic Info — {cityLabel}</h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              This data powers the public location page and the homepage Locations section.
+            </p>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
+
+              {/* Address */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Address</label>
+                <textarea
+                  rows={2}
+                  value={data.clinicInfo.address}
+                  onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, address: e.target.value } }))}
+                  placeholder="Full clinic address..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:border-[#0B2560]"
+                />
+              </div>
+
+              {/* Phone + stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Phone</label>
+                    <input
+                      value={data.clinicInfo.phone}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, phone: e.target.value } }))}
+                      placeholder="+91 98765 43210"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Google Rating <span className="font-normal text-gray-400">(e.g. 4.9)</span></label>
+                    <input
+                      type="number" step="0.1" min="0" max="5"
+                      value={data.clinicInfo.rating || ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, rating: parseFloat(e.target.value) || 0 } }))}
+                      placeholder="4.9"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Review Count</label>
+                    <input
+                      type="number" min="0"
+                      value={data.clinicInfo.reviewCount || ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, reviewCount: parseInt(e.target.value) || 0 } }))}
+                      placeholder="412"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Services Count</label>
+                    <input
+                      type="number" min="0"
+                      value={data.clinicInfo.serviceCount || ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, serviceCount: parseInt(e.target.value) || 0 } }))}
+                      placeholder="25"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Doctors Count</label>
+                    <input
+                      type="number" min="0"
+                      value={data.clinicInfo.doctorCount || ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, doctorCount: parseInt(e.target.value) || 0 } }))}
+                      placeholder="6"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hours */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-gray-700">Clinic Hours</label>
+                  <button
+                    type="button"
+                    onClick={() => setData((d: any) => ({
+                      ...d,
+                      clinicInfo: { ...d.clinicInfo, hours: [...d.clinicInfo.hours, { day: '', hours: '' }] }
+                    }))}
+                    className="flex items-center gap-1 text-xs text-[#0B2560] font-semibold hover:underline"
+                  >
+                    <Plus size={11} /> Add row
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {(data.clinicInfo.hours || []).map((h: any, i: number) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        value={h.day}
+                        onChange={(e) => {
+                          const hrs = [...data.clinicInfo.hours];
+                          hrs[i] = { ...hrs[i], day: e.target.value };
+                          setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, hours: hrs } }));
+                        }}
+                        placeholder="Monday - Saturday"
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]"
+                      />
+                      <input
+                        value={h.hours}
+                        onChange={(e) => {
+                          const hrs = [...data.clinicInfo.hours];
+                          hrs[i] = { ...hrs[i], hours: e.target.value };
+                          setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, hours: hrs } }));
+                        }}
+                        placeholder="9:00 AM - 7:00 PM"
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const hrs = data.clinicInfo.hours.filter((_: any, idx: number) => idx !== i);
+                          setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, hours: hrs } }));
+                        }}
+                        className="text-gray-300 hover:text-red-500 transition shrink-0"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* ── HERO IMAGE ─────────────────────────────────────── */}
           <section>

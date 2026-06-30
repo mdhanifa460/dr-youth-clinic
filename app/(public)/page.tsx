@@ -45,6 +45,7 @@ const getCachedLocationEmbeds = unstable_cache(
           googleMapsUrl:  (d as any).googleMapsUrl  || '',
           mapEmbedUrl:    (d as any).mapEmbedUrl    || '',
           heroImageUrl:   (d as any).heroImage?.url || '',
+          clinicInfo:     (d as any).clinicInfo     || null,
         }])
       );
     } catch { return {}; }

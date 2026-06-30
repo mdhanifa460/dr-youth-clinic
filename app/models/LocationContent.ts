@@ -27,11 +27,27 @@ export interface ILocationDoctor {
   isVisible: boolean;
 }
 
+export interface IClinicHour {
+  day: string;
+  hours: string;
+}
+
+export interface IClinicInfo {
+  address: string;
+  phone: string;
+  hours: IClinicHour[];
+  rating: number;
+  reviewCount: number;
+  serviceCount: number;
+  doctorCount: number;
+}
+
 export interface ILocationContent extends Document {
   location: string;                      // city key: 'chennai' | 'bangalore' | etc.
   heroImage: { publicId: string; url: string };
-  googleMapsUrl?: string;                // directions link — https://maps.app.goo.gl/... or full URL
-  mapEmbedUrl?: string;                  // <iframe> embed URL from Google Maps
+  googleMapsUrl?: string;
+  mapEmbedUrl?: string;
+  clinicInfo?: IClinicInfo;
   beforeAfterPairs: IBeforeAfterPair[];
   galleryImages: IGalleryImage[];
   localDoctors: ILocationDoctor[];
@@ -66,12 +82,31 @@ const LocalDoctorSchema = new Schema<ILocationDoctor>({
   isVisible:  { type: Boolean, default: true },
 }, { _id: true });
 
+const ClinicHourSchema = new Schema<IClinicHour>(
+  { day: { type: String, default: '' }, hours: { type: String, default: '' } },
+  { _id: false }
+);
+
+const ClinicInfoSchema = new Schema<IClinicInfo>(
+  {
+    address:      { type: String, default: '' },
+    phone:        { type: String, default: '' },
+    hours:        { type: [ClinicHourSchema], default: [] },
+    rating:       { type: Number, default: 0 },
+    reviewCount:  { type: Number, default: 0 },
+    serviceCount: { type: Number, default: 0 },
+    doctorCount:  { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const LocationContentSchema = new Schema<ILocationContent>(
   {
     location:       { type: String, required: true, unique: true, lowercase: true, trim: true },
     heroImage:      { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
     googleMapsUrl:  { type: String, default: '' },
     mapEmbedUrl:    { type: String, default: '' },
+    clinicInfo:     { type: ClinicInfoSchema, default: () => ({}) },
     beforeAfterPairs: { type: [BeforeAfterSchema], default: [] },
     galleryImages:    { type: [GalleryImageSchema], default: [] },
     localDoctors:     { type: [LocalDoctorSchema], default: [] },

@@ -73,13 +73,23 @@ export default function HomepageLocations({ data }: { data: any }) {
 
   const [activeKey, setActiveKey] = useState<string>(toCityKey(cities[0] || 'Chennai'));
 
-  const loc         = locations[activeKey];
-  const embed       = _embeds[activeKey] ?? {};
-  const embedUrl    = embed.mapEmbedUrl    || loc?.map || '';
+  const loc          = locations[activeKey];
+  const embed        = _embeds[activeKey] ?? {};
+  const ci           = embed.clinicInfo;
+
+  const address      = ci?.address      || loc?.address      || '';
+  const phone        = ci?.phone        || loc?.phone        || '';
+  const hours        = ci?.hours?.length ? ci.hours : (loc?.hours ?? []);
+  const rating       = ci?.rating       || loc?.rating       || 0;
+  const reviewCount  = ci?.reviewCount  || loc?.reviewCount  || 0;
+  const serviceCount = ci?.serviceCount || loc?.serviceCount || 0;
+  const doctorCount  = ci?.doctorCount  || loc?.doctorCount  || 0;
+
+  const embedUrl     = embed.mapEmbedUrl || loc?.map || '';
   const directionsUrl = embed.googleMapsUrl ||
-    (loc ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc.address)}` : '#');
-  const heroImg     = embed.heroImageUrl   || '';
-  const openStatus  = loc ? getOpenStatus(loc.hours) : { isOpen: false, text: 'Closed' };
+    (address ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}` : '#');
+  const heroImg      = embed.heroImageUrl || '';
+  const openStatus   = getOpenStatus(hours);
 
   const STATS = [
     { value: String(cities.length || 4),     label: 'Clinics Across India', icon: MapPin },
@@ -117,7 +127,12 @@ export default function HomepageLocations({ data }: { data: any }) {
                 const key    = toCityKey(city);
                 const cloc   = locations[key];
                 const cembed = _embeds[key] ?? {};
-                const status = cloc ? getOpenStatus(cloc.hours) : { isOpen: false, text: 'Closed' };
+                const cci    = cembed.clinicInfo;
+                const chours = cci?.hours?.length ? cci.hours : (cloc?.hours ?? []);
+                const status = getOpenStatus(chours);
+                const crating = cci?.rating || cloc?.rating || 0;
+                const csvc    = cci?.serviceCount || cloc?.serviceCount || 0;
+                const cdoc    = cci?.doctorCount  || cloc?.doctorCount  || 0;
                 const active = activeKey === key;
 
                 return (
@@ -153,7 +168,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                       </div>
                       <div className="flex items-center gap-1.5 mb-1">
                         <Star size={10} className="text-[#F5A623] fill-[#F5A623]" />
-                        <span className="text-xs text-gray-600 font-semibold">{cloc?.rating ?? '4.9'}</span>
+                        <span className="text-xs text-gray-600 font-semibold">{crating > 0 ? crating : '—'}</span>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                           status.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                         }`}>
@@ -161,7 +176,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                         </span>
                       </div>
                       <p className="text-[10px] text-gray-400">
-                        {cloc?.serviceCount ?? '—'}+ Services &nbsp;·&nbsp; {cloc?.doctorCount ?? '—'} Doctors
+                        {csvc > 0 ? `${csvc}+` : '—'} Services &nbsp;·&nbsp; {cdoc > 0 ? cdoc : '—'} Doctors
                       </p>
                     </div>
 
@@ -204,12 +219,12 @@ export default function HomepageLocations({ data }: { data: any }) {
           </div>
 
           {/* ── RIGHT: detail card ── */}
-          {loc && (
+          {(loc || address) && (
             <div className="bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] overflow-hidden flex flex-col">
               {/* Hero image */}
               <div className="relative h-44 w-full shrink-0">
                 {heroImg ? (
-                  <Image src={heroImg} alt={`DR Youth Clinic ${loc.name}`} fill className="object-cover" />
+                  <Image src={heroImg} alt={`DR Youth Clinic ${loc?.name ?? activeKey}`} fill className="object-cover" />
                 ) : (
                   <div className={`w-full h-full bg-gradient-to-br ${CITY_GRADIENTS[activeKey] || 'from-blue-500 to-indigo-700'} flex items-center justify-center`}>
                     <p className="text-white font-bold text-xl tracking-wide">DR Youth Clinic</p>
@@ -217,7 +232,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 <span className="absolute bottom-3 left-4 text-white text-xs font-bold bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
-                  {loc.name}
+                  {loc?.name ?? activeKey}
                 </span>
               </div>
 
@@ -225,38 +240,48 @@ export default function HomepageLocations({ data }: { data: any }) {
                 {/* Title + rating */}
                 <div>
                   <h3 className="font-bold text-[#0B2560] text-base leading-tight mb-1">
-                    DR Youth Clinic — {loc.name}
+                    DR Youth Clinic — {loc?.name ?? activeKey}
                   </h3>
-                  <div className="flex items-center gap-1.5">
-                    <Star size={13} className="text-[#F5A623] fill-[#F5A623]" />
-                    <span className="font-bold text-sm text-gray-800">{loc.rating}</span>
-                    <span className="text-xs text-gray-400">({loc.reviewCount} Google reviews)</span>
-                  </div>
+                  {rating > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <Star size={13} className="text-[#F5A623] fill-[#F5A623]" />
+                      <span className="font-bold text-sm text-gray-800">{rating}</span>
+                      {reviewCount > 0 && <span className="text-xs text-gray-400">({reviewCount} Google reviews)</span>}
+                    </div>
+                  )}
                 </div>
 
                 {/* Info rows */}
                 <div className="space-y-2.5 text-sm">
-                  <div className="flex gap-2.5 text-gray-600">
-                    <MapPin size={14} className="text-[#F5A623] shrink-0 mt-0.5" />
-                    <span className="leading-snug">{loc.address}</span>
-                  </div>
-                  <div className="flex gap-2.5 text-gray-600 items-center">
-                    <Clock size={14} className="text-[#F5A623] shrink-0" />
-                    <span>{loc.hours[0].hours}</span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                      openStatus.isOpen ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'
-                    }`}>
-                      {openStatus.text}
-                    </span>
-                  </div>
-                  <div className="flex gap-2.5 text-gray-600 items-center">
-                    <Users size={14} className="text-[#F5A623] shrink-0" />
-                    <span>{loc.doctorCount} Doctors</span>
-                  </div>
-                  <div className="flex gap-2.5 text-gray-600 items-center">
-                    <Stethoscope size={14} className="text-[#F5A623] shrink-0" />
-                    <span>{loc.serviceCount}+ Treatments Available</span>
-                  </div>
+                  {address && (
+                    <div className="flex gap-2.5 text-gray-600">
+                      <MapPin size={14} className="text-[#F5A623] shrink-0 mt-0.5" />
+                      <span className="leading-snug">{address}</span>
+                    </div>
+                  )}
+                  {hours[0] && (
+                    <div className="flex gap-2.5 text-gray-600 items-center">
+                      <Clock size={14} className="text-[#F5A623] shrink-0" />
+                      <span>{hours[0].hours}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        openStatus.isOpen ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'
+                      }`}>
+                        {openStatus.text}
+                      </span>
+                    </div>
+                  )}
+                  {doctorCount > 0 && (
+                    <div className="flex gap-2.5 text-gray-600 items-center">
+                      <Users size={14} className="text-[#F5A623] shrink-0" />
+                      <span>{doctorCount} Doctors</span>
+                    </div>
+                  )}
+                  {serviceCount > 0 && (
+                    <div className="flex gap-2.5 text-gray-600 items-center">
+                      <Stethoscope size={14} className="text-[#F5A623] shrink-0" />
+                      <span>{serviceCount}+ Treatments Available</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* CTAs */}
@@ -271,7 +296,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                       <Navigation size={12} /> Get Directions
                     </a>
                     <a
-                      href={`tel:${loc.phone.replace(/\s/g, '')}`}
+                      href={phone ? `tel:${phone.replace(/\s/g, '')}` : '#'}
                       className="flex items-center justify-center gap-1.5 border border-[#0B2560] text-[#0B2560] text-xs font-bold py-2.5 rounded-xl hover:bg-[#f6faff] transition"
                     >
                       <Phone size={12} /> Call Now

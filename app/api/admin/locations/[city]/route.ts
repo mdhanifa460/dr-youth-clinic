@@ -37,6 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: { city: string
     if (body.heroImage !== undefined)        update.heroImage = body.heroImage;
     if (body.googleMapsUrl !== undefined)    update.googleMapsUrl = body.googleMapsUrl;
     if (body.mapEmbedUrl !== undefined)      update.mapEmbedUrl = body.mapEmbedUrl;
+    if (body.clinicInfo !== undefined)       update.clinicInfo = body.clinicInfo;
     if (body.beforeAfterPairs !== undefined) update.beforeAfterPairs = body.beforeAfterPairs;
     if (body.galleryImages !== undefined)    update.galleryImages = body.galleryImages;
     if (body.localDoctors !== undefined)     update.localDoctors = body.localDoctors;
