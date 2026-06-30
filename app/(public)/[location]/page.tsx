@@ -47,6 +47,8 @@ async function getLocationContent(city: string) {
     if (!doc) return null;
     return {
       heroImage: doc.heroImage,
+      googleMapsUrl: (doc as any).googleMapsUrl || '',
+      mapEmbedUrl: (doc as any).mapEmbedUrl || '',
       beforeAfterPairs: doc.beforeAfterPairs.filter((p) => p.isVisible),
       galleryImages: doc.galleryImages
         .filter((g) => g.isVisible)
@@ -188,7 +190,7 @@ export default async function LocationPage({ params }: { params: { location: str
 
                 <div className="rounded-2xl overflow-hidden border border-gray-100 h-[180px]">
                   <iframe
-                    src={loc.map}
+                    src={content?.mapEmbedUrl || loc.map}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -200,7 +202,10 @@ export default async function LocationPage({ params }: { params: { location: str
                 </div>
 
                 <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc.address)}`}
+                  href={
+                    content?.googleMapsUrl ||
+                    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc.address)}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-opacity-90 transition"

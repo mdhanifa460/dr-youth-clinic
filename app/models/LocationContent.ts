@@ -30,6 +30,8 @@ export interface ILocationDoctor {
 export interface ILocationContent extends Document {
   location: string;                      // city key: 'chennai' | 'bangalore' | etc.
   heroImage: { publicId: string; url: string };
+  googleMapsUrl?: string;                // directions link — https://maps.app.goo.gl/... or full URL
+  mapEmbedUrl?: string;                  // <iframe> embed URL from Google Maps
   beforeAfterPairs: IBeforeAfterPair[];
   galleryImages: IGalleryImage[];
   localDoctors: ILocationDoctor[];
@@ -68,6 +70,8 @@ const LocationContentSchema = new Schema<ILocationContent>(
   {
     location:       { type: String, required: true, unique: true, lowercase: true, trim: true },
     heroImage:      { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
+    googleMapsUrl:  { type: String, default: '' },
+    mapEmbedUrl:    { type: String, default: '' },
     beforeAfterPairs: { type: [BeforeAfterSchema], default: [] },
     galleryImages:    { type: [GalleryImageSchema], default: [] },
     localDoctors:     { type: [LocalDoctorSchema], default: [] },

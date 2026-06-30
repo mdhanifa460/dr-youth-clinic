@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Upload, Trash2, Plus, Loader, CheckCircle, Eye, EyeOff,
-  GripVertical, ChevronDown, X, ImageIcon,
+  GripVertical, ChevronDown, X, ImageIcon, MapPin, ExternalLink,
 } from 'lucide-react';
 import Image from 'next/image';
 import { CLOUD_FOLDERS } from '@/app/lib/cloudinary-url';
@@ -221,6 +221,8 @@ export default function LocationsAdminPage() {
   const [city, setCity] = useState('chennai');
   const [data, setData] = useState<any>({
     heroImage: { publicId: '', url: '' },
+    googleMapsUrl: '',
+    mapEmbedUrl: '',
     beforeAfterPairs: [],
     galleryImages: [],
     localDoctors: [],
@@ -237,6 +239,8 @@ export default function LocationsAdminPage() {
       if (json.success && json.data) {
         setData({
           heroImage:        json.data.heroImage        || { publicId: '', url: '' },
+          googleMapsUrl:    json.data.googleMapsUrl    || '',
+          mapEmbedUrl:      json.data.mapEmbedUrl      || '',
           beforeAfterPairs: json.data.beforeAfterPairs || [],
           galleryImages:    json.data.galleryImages    || [],
           localDoctors:     json.data.localDoctors     || [],
@@ -368,6 +372,78 @@ export default function LocationsAdminPage() {
                 folder={CLOUD_FOLDERS.locationPhotos(city)}
                 aspect="16/9"
               />
+            </div>
+          </section>
+
+          {/* ── GOOGLE MAPS ────────────────────────────────────── */}
+          <section>
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin size={16} className="text-[#0B2560]" />
+              <h2 className="text-base font-bold text-[#0B2560]">
+                Google Maps — {cityLabel}
+              </h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              Both fields are optional — the public site falls back to address search automatically.
+            </p>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
+
+              {/* Directions link */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Directions Link <span className="font-normal text-gray-400">(shown on "Get Directions" button)</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    value={data.googleMapsUrl}
+                    onChange={(e) => setData((d: any) => ({ ...d, googleMapsUrl: e.target.value }))}
+                    placeholder="https://maps.app.goo.gl/... or https://www.google.com/maps/dir/..."
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                  />
+                  {data.googleMapsUrl && (
+                    <a
+                      href={data.googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-3 py-2.5 border border-gray-200 rounded-xl text-xs text-gray-500 hover:text-[#0B2560] hover:border-[#0B2560] transition"
+                    >
+                      <ExternalLink size={13} /> Test
+                    </a>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+                  In Google Maps: search your clinic → Share → <em>Copy link</em>. Or right-click pin → Directions → copy the URL.
+                </p>
+              </div>
+
+              {/* Embed URL */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Map Embed URL <span className="font-normal text-gray-400">(shown as an embedded map preview)</span>
+                </label>
+                <input
+                  value={data.mapEmbedUrl}
+                  onChange={(e) => setData((d: any) => ({ ...d, mapEmbedUrl: e.target.value }))}
+                  placeholder="https://www.google.com/maps/embed?pb=..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                />
+                <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+                  In Google Maps: Share → <em>Embed a map</em> → copy only the <code className="bg-gray-100 px-1 rounded">src="..."</code> URL.
+                </p>
+                {data.mapEmbedUrl && (
+                  <div className="mt-3 rounded-xl overflow-hidden border border-gray-100 h-40">
+                    <iframe
+                      src={data.mapEmbedUrl}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      title="Map preview"
+                    />
+                  </div>
+                )}
+              </div>
+
             </div>
           </section>
 
