@@ -102,7 +102,14 @@ export default async function LocationPage({ params }: { params: { location: str
 
   return (
     <>
-      <LocalBusinessSchema location={cityKey} city={loc.name} />
+      <LocalBusinessSchema
+        location={cityKey}
+        city={loc.name}
+        address={address}
+        phone={phone}
+        rating={ci?.rating || loc.rating}
+        reviewCount={ci?.reviewCount || loc.reviewCount}
+      />
       <main>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}

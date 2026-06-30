@@ -35,34 +35,62 @@ export function OrganizationSchema() {
   );
 }
 
-export function LocalBusinessSchema({ location, city }: { location: string; city: string }) {
-  const locationData = locations[location];
+interface LocalBusinessProps {
+  location: string;
+  city: string;
+  // DB-sourced overrides — fall back to locations.ts if omitted
+  address?: string;
+  phone?: string;
+  rating?: number;
+  reviewCount?: number;
+}
 
+export function LocalBusinessSchema({ location, city, address, phone, rating, reviewCount }: LocalBusinessProps) {
+  const locationData = locations[location];
   if (!locationData) return null;
 
-  const schema = {
+  const effectiveAddress  = address      || locationData.address;
+  const effectivePhone    = phone        || locationData.phone;
+  const effectiveRating   = rating       ?? locationData.rating;
+  const effectiveReviews  = reviewCount  ?? locationData.reviewCount;
+
+  const schema: Record<string, any> = {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
     name: `DR Youth Clinic - ${city}`,
     url: `${SITE_URL}/${location}`,
     address: {
       "@type": "PostalAddress",
-      streetAddress: locationData.address,
+      streetAddress: effectiveAddress,
+      addressLocality: city,
       addressRegion: city,
       addressCountry: "IN",
     },
-    telephone: locationData.phone,
+    telephone: effectivePhone,
     image: CLOUDINARY_LOGO_URL,
     description: `Premium dermatology clinic in ${city} offering advanced skin, hair, and laser treatments`,
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-      opens: "09:00",
-      closes: "19:00",
-    },
     priceRange: "$$",
     medicalSpecialty: ["Dermatology", "Cosmetology", "Laser Surgery"],
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        opens: "09:00",
+        closes: "19:00",
+      },
+    ],
   };
+
+  // AggregateRating unlocks star display in Google search results
+  if (effectiveRating > 0 && effectiveReviews > 0) {
+    schema.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: effectiveRating.toFixed(1),
+      reviewCount: effectiveReviews,
+      bestRating: "5",
+      worstRating: "1",
+    };
+  }
 
   return (
     <script
