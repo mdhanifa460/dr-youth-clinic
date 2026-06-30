@@ -41,7 +41,11 @@ const getCachedLocationEmbeds = unstable_cache(
         location: { $in: ['chennai', 'bangalore', 'coimbatore', 'kochi'] },
       }).lean() as any[];
       return Object.fromEntries(
-        docs.map((d) => [d.location, { googleMapsUrl: d.googleMapsUrl || '', mapEmbedUrl: d.mapEmbedUrl || '' }])
+        docs.map((d) => [d.location, {
+          googleMapsUrl:  (d as any).googleMapsUrl  || '',
+          mapEmbedUrl:    (d as any).mapEmbedUrl    || '',
+          heroImageUrl:   (d as any).heroImage?.url || '',
+        }])
       );
     } catch { return {}; }
   },
