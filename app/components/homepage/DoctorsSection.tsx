@@ -23,9 +23,15 @@ export default function DoctorsSection({ data }: { data: any }) {
             </h2>
             <p className="text-gray-500 mt-2 text-sm leading-relaxed max-w-lg">{subheadline}</p>
           </div>
-          <Link href={viewAllHref} className="min-h-11 text-[#3B82C4] font-semibold text-sm whitespace-nowrap hover:text-[#0B2560] transition hidden md:flex items-center">
-            {viewAllText} →
-          </Link>
+          {/* Desktop: text link in header row */}
+          {viewAllHref && viewAllHref !== '#' && (
+            <Link
+              href={viewAllHref}
+              className="hidden md:inline-flex items-center gap-1.5 border border-[#0B2560] text-[#0B2560] hover:bg-[#0B2560] hover:text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+            >
+              {viewAllText} →
+            </Link>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
@@ -72,6 +78,18 @@ export default function DoctorsSection({ data }: { data: any }) {
             );
           })}
         </div>
+
+        {/* Mobile: full-width button below the grid */}
+        {viewAllHref && viewAllHref !== '#' && (
+          <div className="mt-8 flex justify-center md:hidden">
+            <Link
+              href={viewAllHref}
+              className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-[#0d2d73] transition-all shadow-lg shadow-[#0B2560]/20"
+            >
+              {viewAllText} →
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
