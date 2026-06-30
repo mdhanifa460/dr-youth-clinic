@@ -19,7 +19,9 @@ export interface IService extends Document {
   idealFor?: string[];
   sessionsRequired?: string;
   recoveryTime?: string;
+  technology?: string;
   treatmentSteps?: Array<{ title: string; description: string }>;
+  myths?: Array<{ myth: string; fact: string }>;
   faq?: Array<{ question: string; answer: string }>;
   benefits: Array<{
     icon: string;
@@ -108,7 +110,9 @@ const ServiceSchema = new Schema<IService>(
     idealFor: [String],
     sessionsRequired: { type: String, default: '' },
     recoveryTime: { type: String, default: '' },
+    technology: { type: String, default: '' },
     treatmentSteps: [{ title: String, description: String }],
+    myths: [{ myth: String, fact: String }],
     faq: [{ question: String, answer: String }],
     benefits: [
       {

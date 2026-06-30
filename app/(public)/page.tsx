@@ -39,7 +39,7 @@ const getCachedLocationEmbeds = unstable_cache(
       await connectDB();
       const docs = await LocationContent.find({
         location: { $in: ['chennai', 'bangalore', 'coimbatore', 'kochi'] },
-      }).lean() as any[];
+      } as any).lean() as any[];
       return Object.fromEntries(
         docs.map((d) => [d.location, {
           googleMapsUrl:  (d as any).googleMapsUrl  || '',

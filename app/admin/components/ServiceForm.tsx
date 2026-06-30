@@ -16,6 +16,7 @@ interface FormData {
   currency: string;
   sessionsRequired: string;
   recoveryTime: string;
+  technology: string;
   metaTitle: string;
   metaDescription: string;
   keywords: string;
@@ -23,6 +24,7 @@ interface FormData {
   idealFor: string[];
   benefits: Array<{ icon: string; title: string; description: string }>;
   treatmentSteps: Array<{ title: string; description: string }>;
+  myths: Array<{ myth: string; fact: string }>;
   faq: Array<{ question: string; answer: string }>;
   heroImage: { url: string; publicId: string } | null;
   beforeAfterImages: Array<{ before: any; after: any }>;
@@ -69,9 +71,11 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             : initialData.keywords ?? "",
           idealFor: initialData.idealFor ?? [],
           treatmentSteps: initialData.treatmentSteps ?? [],
+          myths: initialData.myths ?? [],
           faq: initialData.faq ?? [],
           sessionsRequired: initialData.sessionsRequired ?? "",
           recoveryTime: initialData.recoveryTime ?? "",
+          technology: initialData.technology ?? "",
         }
       : {
           name: "",
@@ -86,9 +90,11 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           metaDescription: "",
           keywords: "",
           narrative: "",
+          technology: "",
           idealFor: [],
           benefits: [],
           treatmentSteps: [],
+          myths: [],
           faq: [],
           heroImage: null,
           beforeAfterImages: [],
@@ -468,6 +474,13 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             <ImageUpload onUpload={(data) => updateForm({ heroImage: data })} label="Service Hero Image (1200×800px recommended)" folder={`dr-youth-clinic/services/${form.location || "general"}`} />
           </div>
 
+          {/* Technology */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Technology / What Powers This Treatment</label>
+            <textarea value={form.technology} onChange={(e) => updateForm({ technology: e.target.value })} placeholder="e.g., FDA-cleared Nd:YAG 1064nm laser with integrated cooling — targets melanin without damaging surrounding tissue…" rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm leading-relaxed" />
+            <p className="text-xs text-gray-400 mt-1">Shown as a dedicated "Technology" section on the service page — builds credibility.</p>
+          </div>
+
           {/* Ideal For */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Ideal For</label>
@@ -556,6 +569,56 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               className="mt-3 w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition text-sm font-medium flex items-center justify-center gap-2"
             >
               <Plus size={15} /> Add Step
+            </button>
+          </div>
+
+          {/* Myths vs Facts */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-base font-semibold text-gray-800">Myths vs. Facts</label>
+              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-lg font-medium">🔥 High engagement</span>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Patients often have misconceptions — clear them here. This section dramatically increases time-on-page and trust.</p>
+
+            <div className="space-y-3">
+              {form.myths.map((item, idx) => (
+                <div key={idx} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-2">
+                  <div className="flex gap-2">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        value={item.myth}
+                        onChange={(e) => {
+                          const updated = [...form.myths];
+                          updated[idx] = { ...updated[idx], myth: e.target.value };
+                          updateForm({ myths: updated });
+                        }}
+                        placeholder='Myth: e.g., "Laser treatments are painful and risky"'
+                        className="w-full px-3 py-2 border border-red-100 bg-red-50/30 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+                      />
+                      <input
+                        value={item.fact}
+                        onChange={(e) => {
+                          const updated = [...form.myths];
+                          updated[idx] = { ...updated[idx], fact: e.target.value };
+                          updateForm({ myths: updated });
+                        }}
+                        placeholder='Fact: e.g., "Our laser uses integrated cooling — most patients describe it as mild warmth"'
+                        className="w-full px-3 py-2 border border-green-100 bg-green-50/30 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+                      />
+                    </div>
+                    <button onClick={() => updateForm({ myths: form.myths.filter((_, i) => i !== idx) })} className="text-gray-300 hover:text-red-400 transition self-start mt-1">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => updateForm({ myths: [...form.myths, { myth: "", fact: "" }] })}
+              className="mt-3 w-full py-3 border-2 border-dashed border-orange-200 text-orange-600 rounded-xl hover:bg-orange-50 transition text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Plus size={15} /> Add Myth vs. Fact
             </button>
           </div>
 

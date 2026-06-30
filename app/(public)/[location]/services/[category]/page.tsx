@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Clock, IndianRupee } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, IndianRupee, Zap } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { locations } from '@/app/data/locations';
@@ -274,6 +274,66 @@ export default async function CategoryPage({ params }: PageProps) {
                 />
               ))}
             </div>
+
+            {/* Treatment Comparison Center */}
+            {services.length >= 2 && (
+              <div className="mt-16">
+                <div className="text-center mb-6">
+                  <p className="text-[#3B82C4] text-xs font-bold uppercase tracking-widest mb-1">Treatment Comparison Center</p>
+                  <h3 className="text-2xl font-headline font-bold text-[#0B2560]">Compare {meta.label} Treatments</h3>
+                  <p className="text-gray-400 text-sm mt-1">Side-by-side overview to help you find the right fit</p>
+                </div>
+
+                {/* Comparison table — horizontal scroll on mobile */}
+                <div className="overflow-x-auto -mx-2 px-2">
+                  <table className="w-full min-w-[540px] border-collapse rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                    <thead>
+                      <tr className="bg-[#0B2560] text-white text-xs">
+                        <th className="py-3 px-4 text-left font-semibold text-white/50 uppercase tracking-wider w-28">Attribute</th>
+                        {services.slice(0, 4).map((s: any) => (
+                          <th key={String(s._id)} className="py-3 px-4 text-left font-bold">{s.name}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 text-sm">
+                      {[
+                        { label: 'Price from', getValue: (s: any) => `₹${(s.price ?? 0).toLocaleString('en-IN')}` },
+                        { label: 'Duration', getValue: (s: any) => `${s.duration} min` },
+                        { label: 'Sessions', getValue: (s: any) => s.sessionsRequired || '—' },
+                        { label: 'Recovery', getValue: (s: any) => s.recoveryTime || 'Minimal' },
+                        { label: 'Ideal for', getValue: (s: any) => s.idealFor?.slice(0, 2).join(', ') || '—' },
+                      ].map((row, ri) => (
+                        <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-[#f6faff]'}>
+                          <td className="py-3 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{row.label}</td>
+                          {services.slice(0, 4).map((s: any) => (
+                            <td key={String(s._id)} className="py-3 px-4 text-gray-700 font-medium">{row.getValue(s)}</td>
+                          ))}
+                        </tr>
+                      ))}
+                      <tr className="bg-[#f6faff]">
+                        <td className="py-3 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Book</td>
+                        {services.slice(0, 4).map((s: any) => (
+                          <td key={String(s._id)} className="py-3 px-4">
+                            <Link
+                              href={`/${params.location}/services/${catSlug}/${s.urlSlug}`}
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[#0B2560] hover:text-[#3B82C4] transition"
+                            >
+                              View <ArrowRight size={11} />
+                            </Link>
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="text-center mt-6">
+                  <Link href="/book" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg">
+                    Get a Personalised Recommendation <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            )}
           </>
         )}
       </section>
@@ -319,6 +379,8 @@ function ServiceCard({
   location: string;
   category: string;
 }) {
+  const hasIdealFor = svc.idealFor?.length > 0;
+
   return (
     <Link
       href={`/${location}/services/${category}/${svc.urlSlug}`}
@@ -339,7 +401,7 @@ function ServiceCard({
             <span className="text-6xl opacity-20">✨</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
         {/* price pill */}
         <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm text-[#0B2560] px-3 py-1.5 rounded-full shadow-sm">
@@ -355,9 +417,25 @@ function ServiceCard({
 
       {/* CONTENT */}
       <div className="flex flex-col flex-1 p-5">
-        <h3 className="font-headline font-bold text-[#0B2560] text-lg leading-snug mb-2 group-hover:text-[#3b82f6] transition-colors">
+        <h3 className="font-headline font-bold text-[#0B2560] text-lg leading-snug mb-1.5 group-hover:text-[#3b82f6] transition-colors">
           {svc.name}
         </h3>
+
+        {/* Sessions + Recovery quick facts */}
+        {(svc.sessionsRequired || svc.recoveryTime) && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {svc.sessionsRequired && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-blue-50 text-[#0B2560] px-2 py-1 rounded-full">
+                <Zap size={9} className="text-[#3B82C4]" /> {svc.sessionsRequired}
+              </span>
+            )}
+            {svc.recoveryTime && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                <CheckCircle size={9} /> {svc.recoveryTime}
+              </span>
+            )}
+          </div>
+        )}
 
         {svc.metaDescription && (
           <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-3">
@@ -365,12 +443,23 @@ function ServiceCard({
           </p>
         )}
 
+        {/* idealFor tags */}
+        {hasIdealFor && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {svc.idealFor.slice(0, 3).map((tag: string, i: number) => (
+              <span key={i} className="text-[10px] bg-[#f6faff] border border-blue-50 text-gray-500 px-2 py-0.5 rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* key benefits */}
         {svc.benefits?.length > 0 && (
           <ul className="space-y-1.5 mb-4">
             {svc.benefits.slice(0, 2).map((b: any, i: number) => (
               <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-base leading-none">{b.icon}</span>
+                <span className="text-base leading-none shrink-0">{b.icon}</span>
                 <span className="truncate">{b.title}</span>
               </li>
             ))}
@@ -379,9 +468,9 @@ function ServiceCard({
 
         {/* CTA row */}
         <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
-          <span className="text-xs text-gray-400 font-medium">View details</span>
+          <span className="text-xs text-[#0B2560] font-semibold group-hover:text-[#3b82f6] transition-colors">View Treatment</span>
           <ArrowRight
-            size={16}
+            size={15}
             className="text-[#0B2560] group-hover:translate-x-1 group-hover:text-[#3b82f6] transition-all"
           />
         </div>

@@ -15,7 +15,7 @@ const getLayoutSections = unstable_cache(
       await connectDB();
       const sections = await HomepageSection.find({
         sectionKey: { $in: ["topbar", "footer"] },
-      }).lean() as any[];
+      } as any).lean() as any[];
 
       const byKey = Object.fromEntries(sections.map((s) => [s.sectionKey, s]));
       return {
