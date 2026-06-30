@@ -11,6 +11,8 @@ export default function DoctorsSection({ data }: { data: any }) {
     doctors = [],
   } = data || {};
 
+  if (doctors.length === 0) return null;
+
   return (
     <section id="expertise" className="py-12 md:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">

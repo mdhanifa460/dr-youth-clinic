@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { cookies } from 'next/headers';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review } from '@/app/models/Review';
@@ -189,10 +190,13 @@ const getCachedReviews = unstable_cache(
 );
 
 const getCachedDoctors = unstable_cache(
-  async () => {
+  async (location: string) => {
     try {
       await connectDB();
-      const docs = await Doctor.find({ active: true } as any)
+      const filter = location
+        ? { location: { $in: [location, 'all'] }, active: true }
+        : { active: true };
+      const docs = await Doctor.find(filter as any)
         .sort({ order: 1, createdAt: -1 })
         .lean();
       return JSON.parse(JSON.stringify(docs));
@@ -200,7 +204,7 @@ const getCachedDoctors = unstable_cache(
       return [];
     }
   },
-  ['homepage-doctors-v1'],
+  ['homepage-doctors-v2'],
   { revalidate: 300, tags: ['doctors'] }
 );
 
@@ -225,12 +229,14 @@ export default async function Home() {
   const testimonialsConfig = publicSectionOrder.find((s) => s.key === 'testimonials' && s.visible);
   const td = sectionData['testimonials'] ?? {};
 
+  const preferredLocation = cookies().get('preferred_location')?.value || '';
+
   const [initialReviews, locationEmbeds, liveDoctors] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
     getCachedLocationEmbeds(),
-    getCachedDoctors(),
+    getCachedDoctors(preferredLocation),
   ]);
 
   const enriched = {
@@ -239,7 +245,7 @@ export default async function Home() {
     locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds },
     doctors: {
       ...(sectionData['doctors'] ?? {}),
-      doctors: liveDoctors.length > 0 ? liveDoctors : (sectionData['doctors']?.doctors ?? []),
+      doctors: liveDoctors,
     },
   };
 

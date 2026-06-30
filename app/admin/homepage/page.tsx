@@ -364,40 +364,18 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
             <TextField label="View All Text" value={d.viewAllText} onChange={(v) => set('viewAllText', v)} />
             <TextField label="View All Link" value={d.viewAllHref} onChange={(v) => set('viewAllHref', v)} />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-gray-600 mb-3">Doctors</p>
-            {(d.doctors || []).map((doc: any, i: number) => (
-              <div key={i} className="border border-gray-200 rounded-xl p-4 mb-3">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-bold text-gray-500">Doctor {i + 1}</span>
-                  <button type="button" onClick={() => removeArrItem('doctors', i)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
-                </div>
-                <div className="space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <input type="text" placeholder="Name" value={doc.name}
-                      onChange={(e) => setArr('doctors', i, 'name', e.target.value)}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                    <input type="text" placeholder="Role / Specialization" value={doc.role}
-                      onChange={(e) => setArr('doctors', i, 'role', e.target.value)}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <input type="text" placeholder="Experience (e.g. 12+ Years)" value={doc.experience}
-                      onChange={(e) => setArr('doctors', i, 'experience', e.target.value)}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                    <input type="url" placeholder="LinkedIn URL" value={doc.linkedIn}
-                      onChange={(e) => setArr('doctors', i, 'linkedIn', e.target.value)}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                  </div>
-                  <ImgField label="Doctor Photo" value={doc.photo}
-                    onChange={(v) => { const next = JSON.parse(JSON.stringify(d)); next.doctors[i].photo = v; onChange(next); }} />
-                </div>
-              </div>
-            ))}
-            <button type="button" onClick={() => addArrItem('doctors', { name: '', role: '', experience: '', linkedIn: '#', photo: { url: '', publicId: '' } })}
-              className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
-              <Plus size={12} /> Add doctor
-            </button>
+          <div className="rounded-xl border border-blue-100 bg-[#f6faff] p-4 flex items-start gap-3">
+            <span className="text-lg shrink-0">👨‍⚕️</span>
+            <div>
+              <p className="text-xs font-bold text-[#0B2560] mb-1">Doctor profiles are managed separately</p>
+              <p className="text-xs text-gray-500 mb-2">
+                Individual doctor records (photo, bio, specializations, location) are now controlled from the
+                dedicated Doctors page. They are automatically shown here filtered by the visitor's location.
+              </p>
+              <a href="/admin/doctors" className="text-xs font-semibold text-[#3B82C4] hover:underline">
+                Go to Admin → Doctors →
+              </a>
+            </div>
           </div>
         </div>
       );
