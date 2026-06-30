@@ -16,6 +16,11 @@ export interface IService extends Document {
 
   // Content
   narrative: string;
+  idealFor?: string[];
+  sessionsRequired?: string;
+  recoveryTime?: string;
+  treatmentSteps?: Array<{ title: string; description: string }>;
+  faq?: Array<{ question: string; answer: string }>;
   benefits: Array<{
     icon: string;
     title: string;
@@ -98,8 +103,13 @@ const ServiceSchema = new Schema<IService>(
     // Content
     narrative: {
       type: String,
-      maxlength: 2000,
+      maxlength: 5000,
     },
+    idealFor: [String],
+    sessionsRequired: { type: String, default: '' },
+    recoveryTime: { type: String, default: '' },
+    treatmentSteps: [{ title: String, description: String }],
+    faq: [{ question: String, answer: String }],
     benefits: [
       {
         icon: String,
