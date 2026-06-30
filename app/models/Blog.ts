@@ -20,7 +20,7 @@ export interface IBlog extends Document {
 
 const BlogSchema = new Schema<IBlog>({
   title:       { type: String, required: [true, 'Title is required'], trim: true },
-  slug:        { type: String, required: [true, 'Slug is required'], unique: true, trim: true, lowercase: true },
+  slug:        { type: String, required: [true, 'Slug is required'], trim: true, lowercase: true },
   excerpt:     { type: String, maxlength: 300 },
   body:        { type: String, default: '' },
   coverImage:  { url: { type: String, default: '' }, publicId: { type: String, default: '' } },

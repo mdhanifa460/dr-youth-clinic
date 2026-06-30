@@ -4,6 +4,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { getAdminSession } from '@/app/lib/adminAuth';
 
+export const dynamic = 'force-dynamic';
+
 const SECTION_KEY = 'doctors_page';
 
 export async function GET() {

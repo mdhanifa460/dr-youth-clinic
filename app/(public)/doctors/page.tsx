@@ -7,6 +7,8 @@ import { Doctor } from '@/app/models/Doctor';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import DoctorsGrid from './DoctorsGrid';
 
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: 'Our Expert Doctors | DR Youth Clinic',
   description: 'Meet the specialist team at DR Youth Clinic — expert dermatologists, trichologists and aesthetic physicians across Chennai, Bangalore, Coimbatore and Kochi.',
