@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review } from '@/app/models/Review';
+import { Doctor } from '@/app/models/Doctor';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
@@ -187,6 +188,22 @@ const getCachedReviews = unstable_cache(
   { revalidate: 60, tags: ['reviews'] }
 );
 
+const getCachedDoctors = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await Doctor.find({ active: true } as any)
+        .sort({ order: 1, createdAt: -1 })
+        .lean();
+      return JSON.parse(JSON.stringify(docs));
+    } catch {
+      return [];
+    }
+  },
+  ['homepage-doctors-v1'],
+  { revalidate: 300, tags: ['doctors'] }
+);
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   hero: HeroSection,
   stats: StatsBar,
@@ -208,17 +225,22 @@ export default async function Home() {
   const testimonialsConfig = publicSectionOrder.find((s) => s.key === 'testimonials' && s.visible);
   const td = sectionData['testimonials'] ?? {};
 
-  const [initialReviews, locationEmbeds] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
     getCachedLocationEmbeds(),
+    getCachedDoctors(),
   ]);
 
   const enriched = {
     ...sectionData,
     testimonials: { ...td, _reviews: initialReviews },
     locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds },
+    doctors: {
+      ...(sectionData['doctors'] ?? {}),
+      doctors: liveDoctors.length > 0 ? liveDoctors : (sectionData['doctors']?.doctors ?? []),
+    },
   };
 
   return (

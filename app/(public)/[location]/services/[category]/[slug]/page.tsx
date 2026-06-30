@@ -737,7 +737,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {doctors.map((doc: any) => (
-                  <div key={String(doc._id)} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-start gap-4">
+                  <Link key={String(doc._id)} href={`/doctors/${doc._id}`} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                     <div className="shrink-0">
                       {doc.photo?.url ? (
                         <div className="relative w-16 h-16 rounded-2xl overflow-hidden">
@@ -763,7 +763,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
