@@ -18,8 +18,8 @@ export default function Sidebar({ step }: { step: number }) {
   return (
     <div className="space-y-5">
 
-      {/* Step tracker */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+      {/* Step tracker — desktop only; mobile already shows progress at the top of the form card */}
+      <div className="hidden lg:block bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-5">Your Progress</p>
         <div className="space-y-1">
           {STEPS.map((s, i) => {
