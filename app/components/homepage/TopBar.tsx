@@ -103,10 +103,10 @@ export default function TopBar({ data }: { data: any }) {
             )}
           </div>
 
-          {socialLinks.length > 0 && (
+          {socialLinks.filter((s: any) => s.url).length > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-white/60">Follow Us:</span>
-              {socialLinks.map((s: any, i: number) => (
+              {socialLinks.filter((s: any) => s.url).map((s: any, i: number) => (
                 <a
                   key={i}
                   href={s.url}
