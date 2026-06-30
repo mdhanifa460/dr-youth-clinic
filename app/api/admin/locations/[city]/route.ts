@@ -12,8 +12,8 @@ export async function GET(_: NextRequest, { params }: { params: { city: string }
     if (!VALID_CITIES.has(city)) return NextResponse.json({ success: false, message: 'Invalid city' }, { status: 400 });
 
     // findOneAndUpdate with upsert so admin always gets a doc even on first visit
-    const doc = await LocationContent.findOneAndUpdate(
-      { location: city } as any,
+    const doc = await (LocationContent as any).findOneAndUpdate(
+      { location: city },
       { $setOnInsert: { location: city } },
       { upsert: true, new: true }
     ).lean();
@@ -42,8 +42,8 @@ export async function PUT(req: NextRequest, { params }: { params: { city: string
     if (body.galleryImages !== undefined)    update.galleryImages = body.galleryImages;
     if (body.localDoctors !== undefined)     update.localDoctors = body.localDoctors;
 
-    const doc = await LocationContent.findOneAndUpdate(
-      { location: city } as any,
+    const doc = await (LocationContent as any).findOneAndUpdate(
+      { location: city },
       { $set: update },
       { upsert: true, new: true }
     ).lean();

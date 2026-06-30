@@ -32,8 +32,8 @@ export async function PUT(
     const body = await req.json();
     const { metaTitle, metaDescription, keywords, canonicalUrl } = body;
 
-    const entry = await PageSeo.findOneAndUpdate(
-      { pageKey: params.key } as any,
+    const entry = await (PageSeo as any).findOneAndUpdate(
+      { pageKey: params.key },
       {
         pageKey: params.key,
         pageLabel: PAGE_LABELS[params.key] || params.key,

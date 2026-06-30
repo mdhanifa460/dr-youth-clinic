@@ -7,7 +7,7 @@ import { getAdminSession } from '@/app/lib/adminAuth';
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectDB();
-    const doctor = await Doctor.findById(params.id).lean();
+    const doctor = await (Doctor as any).findById(params.id).lean();
     if (!doctor) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: doctor });
   } catch {
@@ -22,7 +22,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     await connectDB();
     const body = await req.json();
-    const doctor = await Doctor.findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const doctor = await (Doctor as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
     if (!doctor) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: doctor });
   } catch (error: any) {
@@ -40,10 +40,10 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
 
   try {
     await connectDB();
-    const doctor = await Doctor.findById(params.id);
+    const doctor = await (Doctor as any).findById(params.id);
     if (!doctor) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     if (doctor.photo?.publicId) await deleteImage(doctor.photo.publicId).catch(console.error);
-    await Doctor.findByIdAndDelete(params.id);
+    await (Doctor as any).findByIdAndDelete(params.id);
     return NextResponse.json({ success: true, message: 'Doctor deleted' });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to delete doctor' }, { status: 500 });

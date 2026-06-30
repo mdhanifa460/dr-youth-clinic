@@ -45,8 +45,8 @@ export async function POST() {
       // Use author_url + timestamp as stable unique ID (Google doesn't expose a review ID)
       const sourceId = `${gr.author_url ?? gr.author_name}_${gr.time}`;
 
-      const result = await Review.findOneAndUpdate(
-        { source: 'google', sourceId } as any,
+      const result = await (Review as any).findOneAndUpdate(
+        { source: 'google', sourceId },
         {
           $set: {
             authorName: gr.author_name,

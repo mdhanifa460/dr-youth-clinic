@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (Object.keys(patch).length === 0) {
       return NextResponse.json({ success: false, message: 'No valid fields' }, { status: 400 });
     }
-    const review = await Review.findByIdAndUpdate(params.id, { $set: patch }, { new: true }).lean();
+    const review = await (Review as any).findByIdAndUpdate(params.id, { $set: patch }, { new: true }).lean();
     if (!review) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     revalidateTag('reviews');
     return NextResponse.json({ success: true, review });
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     // Remove undefined keys
     Object.keys(update).forEach((k) => update[k] === undefined && delete update[k]);
 
-    const review = await Review.findByIdAndUpdate(
+    const review = await (Review as any).findByIdAndUpdate(
       params.id,
       { $set: update },
       { new: true }
@@ -68,7 +68,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectDB();
-    const deleted = await Review.findByIdAndDelete(params.id);
+    const deleted = await (Review as any).findByIdAndDelete(params.id);
     if (!deleted) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     revalidateTag('reviews');
     return NextResponse.json({ success: true });

@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       status: status || "new",
     };
 
-    const booking = await BookingModel.findById(_id);
+    const booking = await (BookingModel as any).findById(_id);
 
     if (!booking) {
       return NextResponse.json(

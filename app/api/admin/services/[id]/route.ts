@@ -11,7 +11,7 @@ export async function GET(
   try {
     await connectDB();
 
-    const service: IService | null = await Service.findById(params.id);
+    const service: IService | null = await (Service as any).findById(params.id);
 
     if (!service) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function PUT(
     await connectDB();
 
     const body = await req.json();
-    const service: IService | null = await Service.findByIdAndUpdate(
+    const service: IService | null = await (Service as any).findByIdAndUpdate(
       params.id,
       body,
       {
@@ -84,7 +84,7 @@ export async function DELETE(
   try {
     await connectDB();
 
-    const service: IService | null = await Service.findById(params.id);
+    const service: IService | null = await (Service as any).findById(params.id);
 
     if (!service) {
       return NextResponse.json(
@@ -109,7 +109,7 @@ export async function DELETE(
       }
     }
 
-    await Service.findByIdAndDelete(params.id);
+    await (Service as any).findByIdAndDelete(params.id);
 
     return NextResponse.json({
       success: true,

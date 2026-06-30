@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     await connectDB();
 
-    const booking = await BookingModel.findById(id);
+    const booking = await (BookingModel as any).findById(id);
 
     if (!booking) {
       return NextResponse.json(
