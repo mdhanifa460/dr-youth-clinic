@@ -170,8 +170,8 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       headline: 'Meet Our Expert Doctors',
       subheadline:
         'Experienced professionals dedicated to delivering natural, safe & long-lasting results.',
-      viewAllText: 'View all results',
-      viewAllHref: '#',
+      viewAllText: 'Meet Our Team',
+      viewAllHref: '/doctors',
       doctors: [
         {
           name: 'Dr. Anitha R',
