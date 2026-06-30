@@ -25,14 +25,14 @@ export async function GET() {
     recentBookings,
     recentReviews,
   ] = await Promise.all([
-    Booking.countDocuments({ date: today }),
-    Booking.countDocuments({ status: 'new' }),
-    Booking.countDocuments({}),
-    Review.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
-    Service.countDocuments({ status: 'active' }),
-    Booking.find().sort({ createdAt: -1 }).limit(5)
+    Booking.countDocuments({ date: today } as any),
+    Booking.countDocuments({ status: 'new' } as any),
+    Booking.countDocuments({} as any),
+    Review.countDocuments({ createdAt: { $gte: sevenDaysAgo } } as any),
+    Service.countDocuments({ status: 'active' } as any),
+    Booking.find({} as any).sort({ createdAt: -1 }).limit(5)
       .select('name phone service location date status createdAt').lean(),
-    Review.find().sort({ createdAt: -1 }).limit(4)
+    Review.find({} as any).sort({ createdAt: -1 }).limit(4)
       .select('authorName rating reviewText source isVisible createdAt').lean(),
   ]);
 

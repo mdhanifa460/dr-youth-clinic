@@ -43,7 +43,7 @@ const PAGE_DEFAULTS = [
 export async function GET() {
   try {
     await connectDB();
-    const dbEntries = await PageSeo.find().lean();
+    const dbEntries = await PageSeo.find({} as any).lean();
     const dbMap = new Map(dbEntries.map((e: any) => [e.pageKey, e]));
 
     const result = PAGE_DEFAULTS.map((def) => ({

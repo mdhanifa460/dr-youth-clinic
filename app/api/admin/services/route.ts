@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     if (location) query.location = location.toLowerCase();
     if (status) query.status = status;
 
-    const services = await Service.find(query).sort({ createdAt: -1 });
+    const services = await Service.find(query as any).sort({ createdAt: -1 });
 
     return NextResponse.json({ success: true, data: services });
   } catch (error) {

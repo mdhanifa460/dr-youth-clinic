@@ -11,7 +11,7 @@ export async function GET() {
   try {
     await connectDB();
 
-    let sections = await HomepageSection.find({}).sort({ order: 1 }).lean();
+    let sections = await HomepageSection.find({} as any).sort({ order: 1 }).lean();
 
     if (sections.length === 0) {
       const defaults = Object.entries(HOMEPAGE_DEFAULTS).map(([key, val]) => ({
@@ -21,8 +21,8 @@ export async function GET() {
         visible: val.visible,
         data: val.data,
       }));
-      await HomepageSection.insertMany(defaults, { ordered: false }).catch(() => {});
-      sections = await HomepageSection.find({}).sort({ order: 1 }).lean();
+      await HomepageSection.insertMany(defaults as any, { ordered: false }).catch(() => {});
+      sections = await HomepageSection.find({} as any).sort({ order: 1 }).lean();
     }
 
     return NextResponse.json({
@@ -61,7 +61,7 @@ export async function PUT(req: NextRequest) {
       },
     }));
 
-    await HomepageSection.bulkWrite(ops);
+    await (HomepageSection as any).bulkWrite(ops);
     revalidateTag('homepage-layout');
 
     return NextResponse.json({ success: true, message: 'Homepage saved successfully' });

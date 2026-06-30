@@ -68,7 +68,7 @@ export const Settings =
 
 // Singleton helper — always returns the one settings doc, creates it if missing
 export async function getSettings(): Promise<ISettings> {
-  let doc = await Settings.findOne().lean() as ISettings | null;
+  let doc = await Settings.findOne({} as any).lean() as ISettings | null;
   if (!doc) {
     doc = await Settings.create({}) as ISettings;
   }

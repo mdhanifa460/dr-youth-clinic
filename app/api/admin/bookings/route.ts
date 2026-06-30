@@ -34,13 +34,13 @@ query.$or = [
 }
 
 // 📦 Fetch paginated data
-const bookings = await Booking.find(query)
+const bookings = await Booking.find(query as any)
 .sort({ createdAt: -1 })
 .skip((page - 1) * limit)
 .limit(limit);
 
 // 🔢 Count total
-const total = await Booking.countDocuments(query);
+const total = await Booking.countDocuments(query as any);
 
 return NextResponse.json({
 data: bookings,

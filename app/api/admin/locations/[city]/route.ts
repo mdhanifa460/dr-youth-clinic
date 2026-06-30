@@ -13,7 +13,7 @@ export async function GET(_: NextRequest, { params }: { params: { city: string }
 
     // findOneAndUpdate with upsert so admin always gets a doc even on first visit
     const doc = await LocationContent.findOneAndUpdate(
-      { location: city },
+      { location: city } as any,
       { $setOnInsert: { location: city } },
       { upsert: true, new: true }
     ).lean();
@@ -43,7 +43,7 @@ export async function PUT(req: NextRequest, { params }: { params: { city: string
     if (body.localDoctors !== undefined)     update.localDoctors = body.localDoctors;
 
     const doc = await LocationContent.findOneAndUpdate(
-      { location: city },
+      { location: city } as any,
       { $set: update },
       { upsert: true, new: true }
     ).lean();

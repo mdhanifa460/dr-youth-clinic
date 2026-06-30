@@ -20,11 +20,11 @@ export async function PUT(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
-    const existing = await Settings.findOne();
+    const existing = await Settings.findOne({} as any);
 
     let updated;
     if (existing) {
-      updated = await Settings.findByIdAndUpdate(existing._id, { $set: body }, { new: true, runValidators: true });
+      updated = await (Settings as any).findByIdAndUpdate(existing._id, { $set: body }, { new: true, runValidators: true });
     } else {
       updated = await Settings.create(body);
     }

@@ -8,12 +8,12 @@ export async function GET() {
     await connectDB();
 
     // Auto-seed the 4 default categories if none exist
-    const count = await Category.countDocuments();
+    const count = await Category.countDocuments({} as any);
     if (count === 0) {
-      await Category.insertMany(DEFAULT_CATEGORIES);
+      await Category.insertMany(DEFAULT_CATEGORIES as any);
     }
 
-    const categories = await Category.find().sort({ order: 1 }).lean();
+    const categories = await Category.find({} as any).sort({ order: 1 }).lean();
     return NextResponse.json({ success: true, data: categories });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to fetch categories' }, { status: 500 });

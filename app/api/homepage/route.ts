@@ -10,7 +10,7 @@ export async function GET() {
   try {
     await connectDB();
 
-    const sections = await HomepageSection.find({}).sort({ order: 1 }).lean();
+    const sections = await HomepageSection.find({} as any).sort({ order: 1 }).lean();
 
     if (sections.length === 0) {
       // Seed defaults on first access
@@ -21,7 +21,7 @@ export async function GET() {
         visible: val.visible,
         data: val.data,
       }));
-      await HomepageSection.insertMany(defaults, { ordered: false }).catch(() => {});
+      await HomepageSection.insertMany(defaults as any, { ordered: false }).catch(() => {});
       return NextResponse.json({
         success: true,
         sections: normalizeLegacyImageUrls(defaults),

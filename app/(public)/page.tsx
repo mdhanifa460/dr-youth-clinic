@@ -143,7 +143,7 @@ const getCachedSections = unstable_cache(
   async () => {
     try {
       await connectDB();
-      const raw = await HomepageSection.find({}).sort({ order: 1 }).lean() as any[];
+      const raw = await HomepageSection.find({} as any).sort({ order: 1 }).lean() as any[];
 
       if (raw.length === 0) return DEFAULT_SECTIONS;
 
