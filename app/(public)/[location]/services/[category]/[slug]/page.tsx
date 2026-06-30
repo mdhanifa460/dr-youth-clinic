@@ -361,6 +361,34 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           </div>
         </section>
 
+        {/* ── MOBILE QUICK-BOOK STRIP — sidebar booking card sits below ~10 content
+             sections on mobile, so surface price + CTA early too ── */}
+        <section className="lg:hidden bg-white border-b border-gray-50">
+          <div className="max-w-7xl mx-auto px-6 py-5">
+            <div className="rounded-3xl border border-gray-100 shadow-lg overflow-hidden">
+              <div className="bg-[#0B2560] px-5 py-4 text-white flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Starting Price</p>
+                  <p className="text-2xl font-extrabold">₹{svc.price.toLocaleString('en-IN')}</p>
+                </div>
+                {svc.recoveryTime && (
+                  <span className="text-xs bg-white/10 px-3 py-1.5 rounded-full shrink-0">{svc.recoveryTime} recovery</span>
+                )}
+              </div>
+              <div className="p-4 flex gap-2.5">
+                <Link href="/book" className="flex-1">
+                  <button className="w-full bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+                    <Calendar size={14} /> Book Consultation
+                  </button>
+                </Link>
+                <a href={`tel:${loc.phone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] px-4 rounded-2xl font-semibold text-sm shrink-0">
+                  <Phone size={14} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── MAIN CONTENT GRID ── */}
         <section className="max-w-7xl mx-auto px-6 md:px-10 py-14 grid lg:grid-cols-3 gap-12">
 
