@@ -26,7 +26,7 @@ const getHomeSeo = unstable_cache(
   async () => {
     try {
       await connectDB();
-      return PageSeo.findOne({ pageKey: 'home' }).lean() as Promise<any>;
+      return PageSeo.findOne({ pageKey: 'home' } as any).lean() as Promise<any>;
     } catch { return null; }
   },
   ['home-seo'],
@@ -174,7 +174,7 @@ const getCachedReviews = unstable_cache(
       if (source) filter.source = source;
       if (location) filter.location = location;
       if (service) filter.services = service;
-      const docs = await Review.find(filter)
+      const docs = await Review.find(filter as any)
         .sort({ isFeatured: -1, displayOrder: 1, createdAt: -1 })
         .limit(Math.min(count, 50))
         .lean();

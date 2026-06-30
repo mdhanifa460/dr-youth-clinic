@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
         urlSlug: suggestion,
         location,
         ...(excludeId ? { _id: { $ne: excludeId } } : {}),
-      })
+      } as any)
         .select('_id')
         .lean()
     ) {

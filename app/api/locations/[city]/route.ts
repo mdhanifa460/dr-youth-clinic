@@ -8,7 +8,7 @@ export async function GET(_: NextRequest, { params }: { params: { city: string }
     await connectDB();
     const city = params.city.toLowerCase();
 
-    const doc = await LocationContent.findOne({ location: city }).lean();
+    const doc = await LocationContent.findOne({ location: city } as any).lean();
 
     if (!doc) {
       return NextResponse.json({ success: true, data: null });

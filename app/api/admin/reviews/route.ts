@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const location = searchParams.get('location');
     if (location && location !== 'all') filter.location = String(location);
 
-    const reviews = await Review.find(filter)
+    const reviews = await Review.find(filter as any)
       .sort({ isFeatured: -1, createdAt: -1 })
       .lean();
 

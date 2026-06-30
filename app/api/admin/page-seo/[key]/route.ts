@@ -16,7 +16,7 @@ export async function GET(
 ) {
   try {
     await connectDB();
-    const entry = await PageSeo.findOne({ pageKey: params.key }).lean();
+    const entry = await PageSeo.findOne({ pageKey: params.key } as any).lean();
     return NextResponse.json({ success: true, data: entry });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to fetch' }, { status: 500 });
@@ -33,7 +33,7 @@ export async function PUT(
     const { metaTitle, metaDescription, keywords, canonicalUrl } = body;
 
     const entry = await PageSeo.findOneAndUpdate(
-      { pageKey: params.key },
+      { pageKey: params.key } as any,
       {
         pageKey: params.key,
         pageLabel: PAGE_LABELS[params.key] || params.key,
