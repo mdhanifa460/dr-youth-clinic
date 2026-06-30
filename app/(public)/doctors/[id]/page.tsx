@@ -60,7 +60,11 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                   </span>
                 )}
                 <span className="flex items-center gap-1 text-xs bg-white/10 text-white px-3 py-1 rounded-full capitalize">
-                  <MapPin size={11} /> {LOCATION_LABELS[doctor.location] || doctor.location}
+                  <MapPin size={11} /> {
+                    doctor.locations?.includes('all')
+                      ? 'All Clinics'
+                      : doctor.locations?.map((l: string) => LOCATION_LABELS[l] || l).join(', ') || ''
+                  }
                 </span>
               </div>
             </div>

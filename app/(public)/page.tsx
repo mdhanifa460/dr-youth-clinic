@@ -195,7 +195,7 @@ const getCachedDoctors = unstable_cache(
     try {
       await connectDB();
       const filter = location
-        ? { location: { $in: [location, 'all'] }, active: true }
+        ? { locations: { $in: [location, 'all'] }, active: true }
         : { active: true };
       const docs = await Doctor.find(filter as any)
         .sort({ order: 1, createdAt: -1 })

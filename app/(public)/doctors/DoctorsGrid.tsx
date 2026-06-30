@@ -20,7 +20,9 @@ const FILTER_TABS = [
 
 function DoctorCard({ doc }: { doc: any }) {
   const expLabel = doc.experience > 0 ? `${doc.experience}+ yrs exp.` : null;
-  const locationLabel = LOCATION_LABELS[doc.location] || doc.location;
+  const locationLabel = doc.locations?.includes('all')
+    ? 'All Clinics'
+    : (doc.locations?.map((l: string) => LOCATION_LABELS[l] || l).join(', ') || '');
 
   return (
     <div className="group bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300">
@@ -101,11 +103,11 @@ export default function DoctorsGrid({ doctors }: { doctors: any[] }) {
   const [activeFilter, setActiveFilter] = useState('');
 
   const filtered = activeFilter
-    ? doctors.filter((d) => d.location === activeFilter || d.location === 'all')
+    ? doctors.filter((d) => d.locations?.includes(activeFilter) || d.locations?.includes('all'))
     : doctors;
 
   const availableLocations = Array.from(new Set(
-    doctors.flatMap((d) => d.location === 'all' ? [] as string[] : [d.location as string])
+    doctors.flatMap((d) => d.locations?.includes('all') ? [] as string[] : (d.locations || []) as string[])
   ));
 
   const visibleTabs = FILTER_TABS.filter(

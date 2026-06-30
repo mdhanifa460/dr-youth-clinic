@@ -1,14 +1,28 @@
 import type { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
 import { Calendar, Users, MapPin, Award } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
+import { HomepageSection } from '@/app/models/HomepageSection';
 import DoctorsGrid from './DoctorsGrid';
 
 export const metadata: Metadata = {
   title: 'Our Expert Doctors | DR Youth Clinic',
   description: 'Meet the specialist team at DR Youth Clinic — expert dermatologists, trichologists and aesthetic physicians across Chennai, Bangalore, Coimbatore and Kochi.',
 };
+
+const getCachedPageContent = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const s = await HomepageSection.findOne({ sectionKey: 'doctors_page' } as any).lean() as any;
+      return (s?.data as Record<string, string>) || {};
+    } catch { return {}; }
+  },
+  ['doctors-page-content'],
+  { revalidate: 300, tags: ['doctors-page'] }
+);
 
 async function getAllDoctors() {
   try {
@@ -23,14 +37,16 @@ async function getAllDoctors() {
 }
 
 export default async function DoctorsPage() {
-  const doctors = await getAllDoctors();
+  const [doctors, pc] = await Promise.all([getAllDoctors(), getCachedPageContent()]);
 
   const avgExp = doctors.length
     ? Math.round(doctors.reduce((s: number, d: any) => s + (d.experience || 0), 0) / doctors.length)
     : 0;
 
   const locationCount = Array.from(new Set(
-    doctors.flatMap((d: any) => d.location === 'all' ? [] as string[] : [d.location as string])
+    doctors.flatMap((d: any) =>
+      d.locations?.includes('all') ? [] as string[] : (d.locations || []) as string[]
+    )
   )).length;
 
   const STATS = [
@@ -38,6 +54,18 @@ export default async function DoctorsPage() {
     { icon: MapPin, label: 'Clinics', value: `${locationCount || 4}` },
     { icon: Award, label: 'Avg. Experience', value: `${avgExp || 8}+ yrs` },
   ];
+
+  const heroHeading   = pc.heroHeading   || 'Meet Our Expert Specialist Team';
+  const heroSubheading = pc.heroSubheading || 'Board-certified dermatologists, trichologists and aesthetic physicians committed to delivering safe, natural and lasting results.';
+  const gridHeading   = pc.gridHeading   || 'Trusted by 25,000+ Patients';
+  const gridSubheading = pc.gridSubheading || 'Filter by clinic location below';
+  const ctaHeading    = pc.ctaHeading    || 'Consult a Specialist Today';
+  const ctaBody       = pc.ctaBody       || 'Book a free initial consultation — zero commitment, just an honest assessment of your concerns.';
+
+  // Split heading at last space for gold highlight on last word
+  const headingWords = heroHeading.trim().split(' ');
+  const headingMain  = headingWords.slice(0, -1).join(' ');
+  const headingGold  = headingWords.at(-1) || '';
 
   return (
     <main>
@@ -52,11 +80,11 @@ export default async function DoctorsPage() {
             DR Youth Clinic
           </p>
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold text-white leading-tight max-w-2xl">
-            Meet Our Expert<br />
-            <span className="text-[#F5A623]">Specialist Team</span>
+            {headingMain}<br />
+            <span className="text-[#F5A623]">{headingGold}</span>
           </h1>
           <p className="text-white/60 mt-4 max-w-lg text-sm md:text-base leading-relaxed">
-            Board-certified dermatologists, trichologists and aesthetic physicians committed to delivering safe, natural and lasting results.
+            {heroSubheading}
           </p>
 
           {/* Stats row */}
@@ -93,9 +121,9 @@ export default async function DoctorsPage() {
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3B82C4] mb-2">Our Specialists</p>
               <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">
-                Trusted by 25,000+ Patients
+                {gridHeading}
               </h2>
-              <p className="text-gray-500 text-sm mt-1">Filter by clinic location below</p>
+              <p className="text-gray-500 text-sm mt-1">{gridSubheading}</p>
             </div>
           </div>
 
@@ -115,10 +143,10 @@ export default async function DoctorsPage() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
-            Consult a Specialist Today
+            {ctaHeading}
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
-            Book a free initial consultation — zero commitment, just an honest assessment of your concerns.
+            {ctaBody}
           </p>
           <Link
             href="/book"
