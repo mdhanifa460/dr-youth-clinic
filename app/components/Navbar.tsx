@@ -48,13 +48,15 @@ export default function Navbar() {
       ? `/${currentLocation}`
       : "/";
 
+  const isHomepage = !currentLocation || ["book"].includes(currentLocation);
+
   const navItems = [
-    { name: "Home",     id: "home"      },
-    { name: "Services", id: "services"  },
-    { name: "About Us", id: "expertise" },
-    { name: "Results",  id: "results"   },
-    { name: "Blog",     id: "blog"      },
-    { name: "Contact",  id: "contact"   },
+    { name: "Home",     id: "home",      href: null },
+    { name: "Services", id: "services",  href: null },
+    { name: "Doctors",  id: "expertise", href: "/doctors" },
+    { name: "Results",  id: "results",   href: "/results" },
+    { name: "Blog",     id: "blog",      href: "/blog" },
+    { name: "Contact",  id: "contact",   href: null },
   ];
 
   return (
@@ -113,10 +115,12 @@ export default function Navbar() {
         <nav className="flex items-center gap-7">
           {navItems.map((item, i) => {
             const isActive = active === item.id;
+            // Use standalone page link when on a non-homepage route and a page link exists
+            const dest = (!isHomepage && item.href) ? item.href : `${homeLink}#${item.id}`;
             return (
               <a
                 key={i}
-                href={`${homeLink}#${item.id}`}
+                href={dest}
                 className={`relative text-[14px] font-semibold transition-all duration-200 ${
                   isActive ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
                 }`}
@@ -197,10 +201,11 @@ export default function Navbar() {
         >
           {navItems.map((item, i) => {
             const isActive = active === item.id;
+            const dest = (!isHomepage && item.href) ? item.href : `${homeLink}#${item.id}`;
             return (
               <a
                 key={i}
-                href={`${homeLink}#${item.id}`}
+                href={dest}
                 onClick={() => setMobileOpen(false)}
                 className={`min-h-11 flex items-center gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition ${
                   isActive
