@@ -200,35 +200,35 @@ export default function HeroSection({ data }: { data: any }) {
         </div>
       </div>
 
-      {/* Prev arrow */}
+      {/* Prev arrow — hidden on mobile to avoid overlap with content */}
       <button
         onClick={prev}
         aria-label="Previous slide"
-        className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 shadow-md flex items-center justify-center text-[#0B2560] hover:bg-white hover:scale-105 transition-all duration-200 z-10"
+        className="hidden sm:flex absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 shadow-md items-center justify-center text-[#0B2560] hover:bg-white hover:scale-105 transition-all duration-200 z-10"
       >
         <ChevronLeft size={20} />
       </button>
 
-      {/* Next arrow */}
+      {/* Next arrow — hidden on mobile */}
       <button
         onClick={next}
         aria-label="Next slide"
-        className="absolute right-3 md:right-5 top-1/2 -translate-y-1/2 w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 shadow-md flex items-center justify-center text-[#0B2560] hover:bg-white hover:scale-105 transition-all duration-200 z-10"
+        className="hidden sm:flex absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 shadow-md items-center justify-center text-[#0B2560] hover:bg-white hover:scale-105 transition-all duration-200 z-10"
       >
         <ChevronRight size={20} />
       </button>
 
       {/* Dot indicators */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-10">
         {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
             aria-label={`Go to slide ${i + 1}`}
-            className={`rounded-full transition-all duration-400 ${
+            className={`rounded-full transition-all duration-300 touch-manipulation ${
               i === current
-                ? 'w-7 h-2.5 bg-[#0B2560]'
-                : 'w-2.5 h-2.5 bg-[#0B2560]/30 hover:bg-[#0B2560]/60'
+                ? 'w-8 h-3 bg-[#0B2560]'
+                : 'w-3 h-3 bg-[#0B2560]/30 hover:bg-[#0B2560]/60'
             }`}
           />
         ))}

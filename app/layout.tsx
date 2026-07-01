@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
+import { getAdsConfig } from "@/app/lib/adsConfig";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -41,7 +43,10 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const adsConfig = await getAdsConfig();
+  const showAds = adsConfig.enabled && !adsConfig.testMode && adsConfig.publisherId;
+
   return (
     <html lang="en">
       <head>
@@ -62,6 +67,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>
       <body className="min-h-screen flex flex-col bg-[#f6faff]">
+        {showAds && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsConfig.publisherId}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
         <CacheGuard />
         <main className="flex-1">
           {children}

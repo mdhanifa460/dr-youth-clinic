@@ -22,6 +22,7 @@ import CTAStrip from '@/app/components/homepage/CTAStrip';
 import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
 import FAQAccordion from '@/app/components/homepage/FAQAccordion';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
+import AdSlot from '@/app/components/AdSlot';
 
 export const revalidate = 300;
 
@@ -279,7 +280,14 @@ export default async function Home() {
         .map((s) => {
           const Component = SECTION_COMPONENTS[s.key];
           if (!Component) return null;
-          return <Component key={s.key} data={enriched[s.key]} />;
+          return (
+            <div key={s.key}>
+              <Component data={enriched[s.key]} />
+              {s.key === 'stats' && (
+                <AdSlot slotKey="home_mid" className="py-4 bg-[#f6faff]" />
+              )}
+            </div>
+          );
         })}
     </main>
   );

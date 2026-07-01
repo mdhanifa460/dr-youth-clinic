@@ -53,7 +53,7 @@ export default async function PublicLayout({
       <FAQSchema />
       {topbar.visible && <TopBar data={topbar.data} />}
       <Navbar />
-      <div className="pb-[72px] md:pb-0">{children}</div>
+      <div className="pb-[72px] lg:pb-0">{children}</div>
       <Footer data={footer} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
     </>

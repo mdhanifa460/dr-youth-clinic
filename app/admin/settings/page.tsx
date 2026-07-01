@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink } from "lucide-react";
+import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone } from "lucide-react";
 
 const SECTIONS = [
   {
@@ -42,6 +42,16 @@ const SECTIONS = [
     title: "Public Display",
     desc: "Control what visitors see on service cards — toggle price visibility, duration badges, before/after gallery, and the number of related services shown.",
     tags: ["Cards", "Before/After", "Related"],
+    stub: false,
+  },
+  {
+    href: "/admin/settings/ads",
+    icon: Megaphone,
+    color: "bg-rose-50 text-rose-600",
+    border: "border-rose-100 hover:border-rose-300",
+    title: "Google Ads",
+    desc: "Configure Google AdSense — set your Publisher ID, manage individual ad slot positions, toggle test mode, and enable or disable ads globally.",
+    tags: ["AdSense", "Ad slots", "Test mode"],
     stub: false,
   },
 ];

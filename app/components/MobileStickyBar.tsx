@@ -14,7 +14,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
   const waHref = whatsappUrl || (phone ? `https://wa.me/${phone.replace(/[^0-9]/g, "")}` : "#");
 
   return (
-    <div className="md:hidden fixed bottom-0 inset-x-0 z-50 flex items-stretch border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.18)]"
+    <div className="lg:hidden fixed bottom-0 inset-x-0 z-50 flex items-stretch border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.18)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {/* WhatsApp */}
