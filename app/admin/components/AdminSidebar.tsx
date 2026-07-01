@@ -36,6 +36,7 @@ export default function AdminSidebar() {
         {item("/admin/doctors", "👨‍⚕️ Doctors")}
         {item("/admin/homepage", "🏠 Homepage")}
         {item("/admin/locations", "📍 Locations")}
+        {item("/admin/offers", "🏷️ Offers")}
         {item("/admin/reviews", "⭐ Reviews")}
         {item("/admin/blog", "✍️ Blog Posts")}
         {item("/admin/seo", "🔍 SEO")}

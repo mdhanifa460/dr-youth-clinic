@@ -47,6 +47,20 @@ const EXTRA_SLIDES: Omit<Slide, 'image'>[] = [
     ],
     accentBg: 'from-[#f0f4ff] to-[#e2eaf8]',
   },
+  {
+    badge: 'EXCLUSIVE LIMITED-TIME DEALS',
+    headline: 'Premium Treatments\nAt Special',
+    highlightText: 'Prices',
+    description: 'Save up to 50% on skin, hair & laser packages — handpicked deals for a limited time only.',
+    ctaPrimary: { text: 'View All Offers', href: '/offers' },
+    ctaSecondary: { text: 'Book Consultation', href: '/book' },
+    trustBadges: [
+      { icon: '🏷️', text: 'Up to 50% Off' },
+      { icon: '🎁', text: 'Exclusive Packages' },
+      { icon: '⏰', text: 'Limited Time Only' },
+    ],
+    accentBg: 'from-[#fffbeb] to-[#fef3c7]',
+  },
 ];
 
 export default function HeroSection({ data }: { data: any }) {

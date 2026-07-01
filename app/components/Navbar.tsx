@@ -56,6 +56,7 @@ export default function Navbar() {
     { name: "Doctors",  id: "expertise", href: "/doctors" },
     { name: "Results",  id: "results",   href: "/results" },
     { name: "Blog",     id: "blog",      href: "/blog" },
+    { name: "Offers",   id: "offers",    href: "/offers" },
     { name: "Contact",  id: "contact",   href: null },
   ];
 
