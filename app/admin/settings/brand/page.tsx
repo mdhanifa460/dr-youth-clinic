@@ -31,22 +31,6 @@ const SOCIAL_FIELDS: { key: keyof BrandSettings; label: string; placeholder: str
   { key: "googleBusiness", label: "Google Business", placeholder: "Google Business Profile URL", icon: "🔍" },
 ];
 
-// Toggle is unused on this page but kept for parity with other settings pages
-function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      className={`relative inline-flex shrink-0 items-center rounded-full transition-colors ${on ? "bg-[#0B2560]" : "bg-gray-200"}`}
-      style={{ width: 44, height: 24 }}
-    >
-      <span
-        className="inline-block bg-white rounded-full shadow transition-transform"
-        style={{ width: 18, height: 18, transform: on ? "translateX(22px)" : "translateX(3px)" }}
-      />
-    </button>
-  );
-}
 
 export default function BrandSettingsPage() {
   const [form, setForm] = useState<BrandSettings>(DEFAULTS);
