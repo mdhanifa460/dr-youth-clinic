@@ -28,6 +28,45 @@ export interface ISettings extends Document {
     showBeforeAfterOnPublic: boolean;
     relatedServicesCount: number;
   };
+  brand: {
+    tagline: string;
+    primaryColor: string;
+    instagram: string;
+    facebook: string;
+    youtube: string;
+    googleBusiness: string;
+    whatsappCta: string;
+  };
+  analytics: {
+    ga4Id: string;
+    metaPixelId: string;
+    gtmId: string;
+    clarityId: string;
+    hotjarId: string;
+  };
+  whatsapp: {
+    bookingConfirmation: string;
+    appointmentReminder: string;
+    postTreatmentFollowup: string;
+    reviewRequest: string;
+    reEngagement: string;
+  };
+  content: {
+    blogPostsPerPage: number;
+    defaultAuthorName: string;
+    beforeAfterWatermark: string;
+    testimonialMinRating: number;
+    testimonialsRotateMs: number;
+    schemaType: string;
+  };
+  promotions: {
+    referralEnabled: boolean;
+    referralReward: number;
+    promoCode: string;
+    promoDiscount: number;
+    birthdayCampaign: boolean;
+    birthdayDiscount: number;
+  };
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -58,6 +97,45 @@ const SettingsSchema = new Schema<ISettings>(
       showDurationOnCards:     { type: Boolean, default: true },
       showBeforeAfterOnPublic: { type: Boolean, default: true },
       relatedServicesCount:    { type: Number,  default: 3 },
+    },
+    brand: {
+      tagline:        { type: String, default: "Your Skin's Best Friend" },
+      primaryColor:   { type: String, default: '#0B2560' },
+      instagram:      { type: String, default: '' },
+      facebook:       { type: String, default: '' },
+      youtube:        { type: String, default: '' },
+      googleBusiness: { type: String, default: '' },
+      whatsappCta:    { type: String, default: '' },
+    },
+    analytics: {
+      ga4Id:       { type: String, default: '' },
+      metaPixelId: { type: String, default: '' },
+      gtmId:       { type: String, default: '' },
+      clarityId:   { type: String, default: '' },
+      hotjarId:    { type: String, default: '' },
+    },
+    whatsapp: {
+      bookingConfirmation:   { type: String, default: "Hello {{name}}! 🌟 Your appointment at DR Youth Clinic has been requested.\n\n📅 Treatment: {{service}}\n📍 Location: {{location}}\n\nOur team will call you within 2 hours to confirm your slot.\n\n— DR Youth Clinic ✨" },
+      appointmentReminder:   { type: String, default: "Hi {{name}}! 👋 Reminder — your appointment is tomorrow at DR Youth Clinic.\n\n📅 Treatment: {{service}}\n📍 Location: {{location}}\n\nPlease arrive 10 minutes early.\n\n— DR Youth Clinic ✨" },
+      postTreatmentFollowup: { type: String, default: "Hi {{name}}! 😊 We hope your {{service}} session went well!\n\nHow are you feeling? Share any concerns — our team is here for you.\n\n💧 Remember your post-care routine.\n\n— DR Youth Clinic ✨" },
+      reviewRequest:         { type: String, default: "Hi {{name}}! ⭐ Thank you for visiting DR Youth Clinic!\n\nCould you spare 2 minutes to leave us a Google review?\n\n👉 {{googleReviewLink}}\n\nThank you! — DR Youth Clinic ✨" },
+      reEngagement:          { type: String, default: "Hi {{name}}! 💫 We miss you at DR Youth Clinic!\n\nYour skin deserves consistent care. 🎁 Reply COMEBACK for your exclusive loyalty discount.\n\n— DR Youth Clinic ✨" },
+    },
+    content: {
+      blogPostsPerPage:     { type: Number, default: 9 },
+      defaultAuthorName:    { type: String, default: 'DR Youth Clinic' },
+      beforeAfterWatermark: { type: String, default: 'DR Youth Clinic' },
+      testimonialMinRating: { type: Number, default: 4 },
+      testimonialsRotateMs: { type: Number, default: 4000 },
+      schemaType:           { type: String, default: 'MedicalClinic' },
+    },
+    promotions: {
+      referralEnabled:  { type: Boolean, default: false },
+      referralReward:   { type: Number,  default: 500 },
+      promoCode:        { type: String,  default: '' },
+      promoDiscount:    { type: Number,  default: 10 },
+      birthdayCampaign: { type: Boolean, default: false },
+      birthdayDiscount: { type: Number,  default: 20 },
     },
   },
   { timestamps: true }
