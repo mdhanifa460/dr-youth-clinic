@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Plus, Trash2, Upload, CheckCircle, Loader } from 'lucide-react';
+import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Plus, Trash2, Upload, CheckCircle, Loader, Images } from 'lucide-react';
+import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 
 // ─── Types ────────────────────────────────────────────────
 interface Section {
@@ -18,26 +19,38 @@ function ImgField({
   label,
   value,
   onChange,
+  folder = 'dr-youth-clinic/homepage',
 }: {
   label: string;
   value: { url: string; publicId: string };
   onChange: (v: { url: string; publicId: string }) => void;
+  folder?: string;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+  const [galleryOpen, setGallery]   = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const upload = async (file: File) => {
+    const oldPublicId = value?.publicId;
     setError('');
     setLoading(true);
     try {
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('folder', 'dr-youth-clinic/homepage');
-      const res = await fetch('/api/admin/services/upload', { method: 'POST', body: fd });
+      fd.append('folder', folder);
+      const res  = await fetch('/api/admin/services/upload', { method: 'POST', body: fd });
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
       onChange({ url: json.data.secure_url, publicId: json.data.public_id });
+      // Delete the replaced image from Cloudinary (fire-and-forget)
+      if (oldPublicId) {
+        fetch('/api/admin/media', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publicId: oldPublicId }),
+        }).catch(() => {});
+      }
     } catch (e: any) {
       setError(e.message || 'Upload failed');
     } finally {
@@ -48,10 +61,9 @@ function ImgField({
   return (
     <div>
       <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         {value?.url ? (
           <div className="relative w-20 h-16 rounded-lg overflow-hidden border border-gray-200 shrink-0">
-            {/* Plain img — admin previews don't need optimization and must work with any origin URL */}
             <img src={value.url} alt="preview" className="w-full h-full object-cover" />
           </div>
         ) : (
@@ -59,24 +71,37 @@ function ImgField({
             <span className="text-gray-300 text-2xl">🖼️</span>
           </div>
         )}
-        <div>
-          <input ref={inputRef} type="file" accept="image/*" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
-          <button type="button" onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-1.5 text-xs bg-[#0B2560] text-white px-3 py-1.5 rounded-lg hover:bg-[#0d2d73] transition"
-            disabled={loading}>
-            {loading ? <Loader size={12} className="animate-spin" /> : <Upload size={12} />}
-            {loading ? 'Uploading…' : 'Upload'}
-          </button>
+        <div className="space-y-1.5">
+          <div className="flex gap-1.5">
+            <input ref={inputRef} type="file" accept="image/*" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
+            <button type="button" onClick={() => inputRef.current?.click()}
+              className="flex items-center gap-1.5 text-xs bg-[#0B2560] text-white px-3 py-1.5 rounded-lg hover:bg-[#0d2d73] transition"
+              disabled={loading}>
+              {loading ? <Loader size={12} className="animate-spin" /> : <Upload size={12} />}
+              {loading ? 'Uploading…' : 'Upload'}
+            </button>
+            <button type="button" onClick={() => setGallery(true)}
+              className="flex items-center gap-1.5 text-xs border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition">
+              <Images size={12} className="text-[#0B2560]" />
+              Gallery
+            </button>
+          </div>
           {value?.url && (
             <button type="button" onClick={() => onChange({ url: '', publicId: '' })}
-              className="mt-1 text-xs text-red-500 hover:underline block">
+              className="text-xs text-red-500 hover:underline block">
               Remove
             </button>
           )}
-          {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+          {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
       </div>
+      <MediaGalleryModal
+        isOpen={galleryOpen}
+        onClose={() => setGallery(false)}
+        onSelect={(img) => { onChange(img); setGallery(false); }}
+        defaultFolder={folder}
+      />
     </div>
   );
 }
@@ -117,6 +142,234 @@ function StringListField({ label, value, onChange }: {
           <Plus size={12} /> Add item
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── Hero multi-slide editor ──────────────────────────────
+const HERO_ACCENT_PRESETS = [
+  { label: 'Blue',   value: 'from-[#f6faff] to-[#e8eff7]' },
+  { label: 'Sky',    value: 'from-[#eef6ff] to-[#dcedfb]' },
+  { label: 'Indigo', value: 'from-[#f0f4ff] to-[#e2eaf8]' },
+  { label: 'Amber',  value: 'from-[#fffbeb] to-[#fef3c7]' },
+  { label: 'Mint',   value: 'from-[#f0fdf4] to-[#dcfce7]' },
+  { label: 'Rose',   value: 'from-[#fff1f2] to-[#ffe4e6]' },
+];
+
+function HeroSlidesEditor({ d, onChange }: { d: any; onChange: (data: any) => void }) {
+  const slides: any[] = d.slides || [];
+  const [openIdx, setOpenIdx] = useState<number | null>(slides.length > 0 ? 0 : null);
+
+  const setSlide = (idx: number, path: string, value: any) => {
+    const next = JSON.parse(JSON.stringify(d));
+    if (!next.slides) next.slides = [];
+    const keys = path.split('.');
+    let cur: any = next.slides[idx];
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!cur[keys[i]]) cur[keys[i]] = {};
+      cur = cur[keys[i]];
+    }
+    cur[keys[keys.length - 1]] = value;
+    onChange(next);
+  };
+
+  const addSlide = () => {
+    const next = JSON.parse(JSON.stringify(d));
+    if (!next.slides) next.slides = [];
+    next.slides.push({
+      badge: '', headline: '', highlightText: '', description: '',
+      ctaPrimary: { text: 'Book Consultation', href: '/book' },
+      ctaSecondary: { text: 'Our Services', href: '#services' },
+      image: { url: '', publicId: '' },
+      trustBadges: [{ icon: '✅', text: '' }],
+      accentBg: HERO_ACCENT_PRESETS[0].value,
+    });
+    setOpenIdx(next.slides.length - 1);
+    onChange(next);
+  };
+
+  const removeSlide = (idx: number) => {
+    const next = JSON.parse(JSON.stringify(d));
+    next.slides.splice(idx, 1);
+    setOpenIdx(next.slides.length === 0 ? null : idx > 0 ? idx - 1 : 0);
+    onChange(next);
+  };
+
+  const moveSlide = (idx: number, dir: -1 | 1) => {
+    const next = JSON.parse(JSON.stringify(d));
+    const target = idx + dir;
+    if (target < 0 || target >= next.slides.length) return;
+    [next.slides[idx], next.slides[target]] = [next.slides[target], next.slides[idx]];
+    setOpenIdx(target);
+    onChange(next);
+  };
+
+  const importFromFlat = () => {
+    const next = JSON.parse(JSON.stringify(d));
+    next.slides = [{
+      badge: d.badge || '',
+      headline: d.headline || '',
+      highlightText: d.highlightText || '',
+      description: d.description || '',
+      ctaPrimary: d.ctaPrimary || { text: 'Book Consultation', href: '/book' },
+      ctaSecondary: d.ctaSecondary || { text: 'Our Services', href: '#services' },
+      image: d.image || { url: '', publicId: '' },
+      trustBadges: d.trustBadges || [],
+      accentBg: HERO_ACCENT_PRESETS[0].value,
+    }];
+    setOpenIdx(0);
+    onChange(next);
+  };
+
+  const hasFlatData = !!(d.badge || d.headline || d.image?.url);
+
+  if (slides.length === 0) {
+    return (
+      <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+        <p className="text-3xl mb-2">🖼️</p>
+        <p className="text-sm font-semibold text-gray-500 mb-1">No banner slides configured</p>
+        <p className="text-xs text-gray-400 mb-4">Add slides to build a multi-banner carousel</p>
+        <div className="flex gap-2 justify-center flex-wrap">
+          {hasFlatData && (
+            <button type="button" onClick={importFromFlat}
+              className="text-xs font-semibold text-[#0B2560] border border-[#0B2560] px-4 py-2 rounded-lg hover:bg-[#0B2560]/5 transition">
+              Import existing data as Slide 1
+            </button>
+          )}
+          <button type="button" onClick={addSlide}
+            className="text-xs font-semibold bg-[#0B2560] text-white px-4 py-2 rounded-lg hover:bg-[#0d2d73] transition flex items-center gap-1.5">
+            <Plus size={13} /> Add First Slide
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {slides.map((slide, idx) => (
+        <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden">
+          {/* Header row */}
+          <div
+            className={`flex items-center gap-3 px-4 py-3 cursor-pointer select-none transition-colors ${openIdx === idx ? 'bg-[#f0f4ff]' : 'bg-gray-50/60 hover:bg-gray-100/60'}`}
+            onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
+          >
+            {slide.image?.url ? (
+              <img src={slide.image.url} alt="" className="w-10 h-8 rounded object-cover shrink-0 border border-gray-200" />
+            ) : (
+              <div className="w-10 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-300 shrink-0 text-sm border border-gray-200">🖼️</div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[#0B2560]">Slide {idx + 1}</p>
+              <p className="text-xs text-gray-400 truncate">{slide.badge || slide.headline || 'Untitled slide'}</p>
+            </div>
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <button type="button" onClick={() => moveSlide(idx, -1)} disabled={idx === 0} title="Move up"
+                className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 disabled:opacity-30 transition">
+                <ChevronUp size={13} />
+              </button>
+              <button type="button" onClick={() => moveSlide(idx, 1)} disabled={idx === slides.length - 1} title="Move down"
+                className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 disabled:opacity-30 transition">
+                <ChevronDown size={13} />
+              </button>
+              <button type="button" onClick={() => removeSlide(idx)} title="Delete slide"
+                className="w-7 h-7 flex items-center justify-center rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition">
+                <Trash2 size={13} />
+              </button>
+            </div>
+            <div className="w-4 text-gray-400 shrink-0">
+              {openIdx === idx ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </div>
+          </div>
+
+          {/* Expanded form */}
+          {openIdx === idx && (
+            <div className="px-4 pb-5 pt-4 space-y-4 border-t border-gray-100">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <TextField label="Badge Text" value={slide.badge} onChange={(v) => setSlide(idx, 'badge', v)} />
+                <TextField label="Highlight Text" value={slide.highlightText} onChange={(v) => setSlide(idx, 'highlightText', v)} />
+              </div>
+              <TextField label="Headline (use \\n for line break)" value={slide.headline} onChange={(v) => setSlide(idx, 'headline', v)} multiline />
+              <TextField label="Description" value={slide.description} onChange={(v) => setSlide(idx, 'description', v)} multiline />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <TextField label="Primary CTA Text" value={slide.ctaPrimary?.text} onChange={(v) => setSlide(idx, 'ctaPrimary.text', v)} />
+                <TextField label="Primary CTA Link" value={slide.ctaPrimary?.href} onChange={(v) => setSlide(idx, 'ctaPrimary.href', v)} />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <TextField label="Secondary CTA Text" value={slide.ctaSecondary?.text} onChange={(v) => setSlide(idx, 'ctaSecondary.text', v)} />
+                <TextField label="Secondary CTA Link" value={slide.ctaSecondary?.href} onChange={(v) => setSlide(idx, 'ctaSecondary.href', v)} />
+              </div>
+
+              {/* Background theme */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">Background Theme</label>
+                <div className="flex flex-wrap gap-2">
+                  {HERO_ACCENT_PRESETS.map((p) => (
+                    <button key={p.value} type="button"
+                      onClick={() => setSlide(idx, 'accentBg', p.value)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                        (slide.accentBg || HERO_ACCENT_PRESETS[0].value) === p.value
+                          ? 'border-[#0B2560] bg-[#0B2560] text-white'
+                          : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-400'
+                      }`}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Trust badges */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">Trust Badges</label>
+                <div className="space-y-2">
+                  {(slide.trustBadges || []).map((b: any, bi: number) => (
+                    <div key={bi} className="flex gap-2 items-center">
+                      <input type="text" placeholder="Icon" value={b.icon || ''}
+                        onChange={(e) => {
+                          const next = JSON.parse(JSON.stringify(d));
+                          next.slides[idx].trustBadges[bi].icon = e.target.value;
+                          onChange(next);
+                        }}
+                        className="w-16 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:border-[#0B2560]" />
+                      <input type="text" placeholder="Text" value={b.text || ''}
+                        onChange={(e) => {
+                          const next = JSON.parse(JSON.stringify(d));
+                          next.slides[idx].trustBadges[bi].text = e.target.value;
+                          onChange(next);
+                        }}
+                        className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#0B2560]" />
+                      <button type="button" onClick={() => {
+                        const next = JSON.parse(JSON.stringify(d));
+                        next.slides[idx].trustBadges.splice(bi, 1);
+                        onChange(next);
+                      }} className="text-red-400 hover:text-red-600 shrink-0"><Trash2 size={13} /></button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => {
+                    const next = JSON.parse(JSON.stringify(d));
+                    if (!next.slides[idx].trustBadges) next.slides[idx].trustBadges = [];
+                    next.slides[idx].trustBadges.push({ icon: '✅', text: '' });
+                    onChange(next);
+                  }} className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
+                    <Plus size={12} /> Add badge
+                  </button>
+                </div>
+              </div>
+
+              <ImgField
+                label="Slide Image"
+                value={slide.image || { url: '', publicId: '' }}
+                onChange={(v) => setSlide(idx, 'image', v)}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+
+      <button type="button" onClick={addSlide}
+        className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-[#0B2560] hover:border-[#0B2560]/40 hover:bg-[#f6faff] transition flex items-center justify-center gap-1.5">
+        <Plus size={13} /> Add New Slide
+      </button>
     </div>
   );
 }
@@ -204,25 +457,7 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
       );
 
     case 'hero':
-      return (
-        <div className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <TextField label="Badge Text" value={d.badge} onChange={(v) => set('badge', v)} />
-            <TextField label="Highlight Text" value={d.highlightText} onChange={(v) => set('highlightText', v)} />
-          </div>
-          <TextField label="Headline (use \\n for line break)" value={d.headline} onChange={(v) => set('headline', v)} multiline />
-          <TextField label="Description" value={d.description} onChange={(v) => set('description', v)} multiline />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <TextField label="Primary CTA Text" value={d.ctaPrimary?.text} onChange={(v) => set('ctaPrimary.text', v)} />
-            <TextField label="Primary CTA Link" value={d.ctaPrimary?.href} onChange={(v) => set('ctaPrimary.href', v)} />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <TextField label="Secondary CTA Text" value={d.ctaSecondary?.text} onChange={(v) => set('ctaSecondary.text', v)} />
-            <TextField label="Secondary CTA Link" value={d.ctaSecondary?.href} onChange={(v) => set('ctaSecondary.href', v)} />
-          </div>
-          <ImgField label="Hero Image" value={d.image} onChange={(v) => set('image', v)} />
-        </div>
-      );
+      return <HeroSlidesEditor d={d} onChange={onChange} />;
 
     case 'stats':
       return (

@@ -63,28 +63,52 @@ const EXTRA_SLIDES: Omit<Slide, 'image'>[] = [
   },
 ];
 
-export default function HeroSection({ data }: { data: any }) {
-  const adminSlide: Slide = {
-    badge: data?.badge || 'ADVANCED AESTHETIC CLINIC',
-    headline: data?.headline || 'Advanced Skin &\nAesthetic Care',
-    highlightText: data?.highlightText || 'You Can Trust',
-    description: data?.description || 'Personalised treatments, advanced technology & real results.',
-    ctaPrimary: data?.ctaPrimary || { text: 'Book Consultation', href: '/book' },
-    ctaSecondary: data?.ctaSecondary || { text: 'Our Services', href: '#services' },
-    image: data?.image?.url ? data.image : { url: '/images/hero-clinical.jpeg' },
-    trustBadges: data?.trustBadges || [
-      { icon: '👨‍⚕️', text: 'Expert Doctors & Surgeons' },
-      { icon: '🔬', text: 'Advanced Technology' },
-      { icon: '💊', text: 'Personalised Care for Every Patient' },
-    ],
-    accentBg: 'from-[#f6faff] to-[#e8eff7]',
-  };
+// Listed here so Tailwind includes these gradient classes in the bundle
+const ACCENT_OPTIONS = [
+  'from-[#f6faff] to-[#e8eff7]',
+  'from-[#eef6ff] to-[#dcedfb]',
+  'from-[#f0f4ff] to-[#e2eaf8]',
+  'from-[#fffbeb] to-[#fef3c7]',
+  'from-[#f0fdf4] to-[#dcfce7]',
+  'from-[#fff1f2] to-[#ffe4e6]',
+];
 
-  const slides: Slide[] = [
-    adminSlide,
-    { ...EXTRA_SLIDES[0], image: adminSlide.image },
-    { ...EXTRA_SLIDES[1], image: adminSlide.image },
-  ];
+export default function HeroSection({ data }: { data: any }) {
+  const slides: Slide[] = (() => {
+    if (data?.slides?.length > 0) {
+      return (data.slides as any[]).map((s) => ({
+        badge: s.badge || 'ADVANCED AESTHETIC CLINIC',
+        headline: s.headline || 'Advanced Skin &\nAesthetic Care',
+        highlightText: s.highlightText || 'You Can Trust',
+        description: s.description || 'Personalised treatments, advanced technology & real results.',
+        ctaPrimary: s.ctaPrimary || { text: 'Book Consultation', href: '/book' },
+        ctaSecondary: s.ctaSecondary || { text: 'Our Services', href: '#services' },
+        image: s.image?.url ? s.image : { url: '/images/hero-clinical.jpeg' },
+        trustBadges: s.trustBadges || [],
+        accentBg: s.accentBg || ACCENT_OPTIONS[0],
+      }));
+    }
+    const adminSlide: Slide = {
+      badge: data?.badge || 'ADVANCED AESTHETIC CLINIC',
+      headline: data?.headline || 'Advanced Skin &\nAesthetic Care',
+      highlightText: data?.highlightText || 'You Can Trust',
+      description: data?.description || 'Personalised treatments, advanced technology & real results.',
+      ctaPrimary: data?.ctaPrimary || { text: 'Book Consultation', href: '/book' },
+      ctaSecondary: data?.ctaSecondary || { text: 'Our Services', href: '#services' },
+      image: data?.image?.url ? data.image : { url: '/images/hero-clinical.jpeg' },
+      trustBadges: data?.trustBadges || [
+        { icon: '👨‍⚕️', text: 'Expert Doctors & Surgeons' },
+        { icon: '🔬', text: 'Advanced Technology' },
+        { icon: '💊', text: 'Personalised Care for Every Patient' },
+      ],
+      accentBg: 'from-[#f6faff] to-[#e8eff7]',
+    };
+    return [
+      adminSlide,
+      { ...EXTRA_SLIDES[0], image: adminSlide.image },
+      { ...EXTRA_SLIDES[1], image: adminSlide.image },
+    ];
+  })();
 
   const [current, setCurrent] = useState(0);
   const [visible, setVisible] = useState(true);

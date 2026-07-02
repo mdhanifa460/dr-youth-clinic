@@ -31,6 +31,8 @@ export default function AdminSidebar() {
       <h1 className="text-xl font-bold tracking-normal">DR Youth Admin</h1>
       <nav className="space-y-2">
         {item("/admin", "📊 Dashboard")}
+        {item("/admin/intelligence", "🧠 AI Intelligence", false)}
+        <div className="border-t border-white/10 my-1" />
         {item("/admin/bookings", "📅 Bookings")}
         {item("/admin/services", "🩺 Services")}
         {item("/admin/doctors", "👨‍⚕️ Doctors")}
