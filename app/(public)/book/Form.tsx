@@ -37,7 +37,34 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
     service: '', location: '', date: '', time: '',
   });
 
+  const [promoCode, setPromoCode] = useState('');
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [promoStatus, setPromoStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoMessage, setPromoMessage] = useState('');
+
   const set = (key: string, val: string) => { setForm(f => ({ ...f, [key]: val })); setError(''); };
+
+  const applyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoStatus('checking');
+    try {
+      const res = await fetch(`/api/promo?code=${encodeURIComponent(promoCode.trim())}`);
+      const data = await res.json();
+      if (data.valid) {
+        setPromoStatus('valid');
+        setPromoDiscount(data.discountPercent);
+        setPromoMessage(data.message);
+      } else {
+        setPromoStatus('invalid');
+        setPromoDiscount(0);
+        setPromoMessage(data.message || 'Invalid promo code');
+      }
+    } catch {
+      setPromoStatus('invalid');
+      setPromoMessage('Could not validate code');
+    }
+  };
 
   const validate = (s: number) => {
     if (s === 1) {
@@ -64,7 +91,11 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       const res = await fetch('/api/booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, phone: form.phone }),
+        body: JSON.stringify({
+          ...form,
+          phone: form.phone,
+          ...(promoStatus === 'valid' ? { promoCode: promoCode.trim().toUpperCase(), promoDiscount } : {}),
+        }),
       });
       const data = await res.json();
       if (data.success) { setBookingId(data.bookingId); setSuccess(true); }
@@ -241,6 +272,46 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
               </div>
             </div>
 
+            {/* Promo code */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setPromoOpen(o => !o)}
+                className="text-xs text-[#3B82C4] font-semibold hover:text-[#0B2560] transition flex items-center gap-1"
+              >
+                {promoOpen ? '▲' : '▼'} Have a promo code?
+              </button>
+              {promoOpen && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoStatus('idle'); }}
+                    placeholder="Enter code"
+                    className={`${inputCls} flex-1 font-mono`}
+                  />
+                  <button
+                    type="button"
+                    onClick={applyPromo}
+                    disabled={promoStatus === 'checking' || !promoCode.trim()}
+                    className="px-4 py-3 bg-[#0B2560] text-white rounded-2xl text-sm font-semibold disabled:opacity-50 transition hover:bg-[#0d2d72] whitespace-nowrap"
+                  >
+                    {promoStatus === 'checking' ? '…' : 'Apply'}
+                  </button>
+                </div>
+              )}
+              {promoStatus === 'valid' && (
+                <div className="mt-2 flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2 rounded-xl">
+                  ✓ {promoMessage}
+                </div>
+              )}
+              {promoStatus === 'invalid' && (
+                <div className="mt-2 flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 text-xs px-3 py-2 rounded-xl">
+                  ✗ {promoMessage}
+                </div>
+              )}
+            </div>
+
             {/* Summary */}
             {form.date && form.time && (
               <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-5">
@@ -253,6 +324,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
                     ['Location', form.location],
                     ['Date', form.date],
                     ['Time', form.time],
+                    ...(promoStatus === 'valid' ? [['Promo', `${promoCode} (${promoDiscount}% off)`]] : []),
                   ].map(([label, val]) => (
                     <div key={label}>
                       <span className="text-gray-400 text-xs">{label}</span>

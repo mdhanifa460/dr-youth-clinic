@@ -177,6 +177,12 @@ export default function Navbar() {
 
         {/* Phone + CTA */}
         <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/skin-quiz"
+            className="hidden xl:flex min-h-10 items-center gap-1.5 border border-[#F5A623] text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/10 transition whitespace-nowrap"
+          >
+            ✨ Skin Quiz
+          </Link>
           <a
             href="tel:18008909669"
             className="hidden xl:flex min-h-10 items-center gap-1.5 border border-gray-200 text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition"
@@ -240,6 +246,13 @@ export default function Navbar() {
 
           {/* CTA buttons */}
           <div className="pt-3 flex flex-col gap-2">
+            <Link
+              href="/skin-quiz"
+              onClick={() => setMobileOpen(false)}
+              className="min-h-12 w-full bg-[#F5A623]/10 border border-[#F5A623] text-[#0B2560] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
+            >
+              ✨ Free Skin Quiz — Find Your Treatment
+            </Link>
             <a href="tel:18008909669" className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">
               <MdPhone size={15} /> 1800 890 9669
             </a>

@@ -157,21 +157,31 @@ export default async function Footer({ data }: { data?: any }) {
         </div>
 
         {/* BOTTOM BAR */}
-        <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {socialLinks.map((s: any, i: number) => (
-              <a
-                key={i}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/40 hover:text-white transition"
-              >
-                {SOCIAL_ICONS[s.platform] ?? s.platform}
-              </a>
-            ))}
+        <div className="mt-12 pt-6 border-t border-white/10 space-y-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {socialLinks.map((s: any, i: number) => (
+                <a
+                  key={i}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/40 hover:text-white transition"
+                >
+                  {SOCIAL_ICONS[s.platform] ?? s.platform}
+                </a>
+              ))}
+            </div>
+            <p className="text-white/40 text-xs">{copyright}</p>
           </div>
-          <p className="text-white/40 text-xs">{copyright}</p>
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2">
+            <Link href="/about" className="text-white/35 text-xs hover:text-white/70 transition">About Us</Link>
+            <Link href="/skin-quiz" className="text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium">✨ Free Skin Quiz</Link>
+            <Link href="/privacy-policy" className="text-white/35 text-xs hover:text-white/70 transition">Privacy Policy</Link>
+            <Link href="/terms" className="text-white/35 text-xs hover:text-white/70 transition">Terms of Service</Link>
+            <Link href="/blog" className="text-white/35 text-xs hover:text-white/70 transition">Blog</Link>
+            <Link href="/offers" className="text-white/35 text-xs hover:text-white/70 transition">Offers</Link>
+          </div>
         </div>
       </div>
     </footer>

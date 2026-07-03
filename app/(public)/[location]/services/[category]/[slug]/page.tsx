@@ -15,6 +15,9 @@ import { locations } from '@/app/data/locations';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
 import CostEstimator from '@/app/components/CostEstimator';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
+import EMICalculator from '@/app/components/EMICalculator';
+import SocialProofBar from '@/app/components/SocialProofBar';
+import TreatmentJourney from '@/app/components/TreatmentJourney';
 
 export const revalidate = 300;
 
@@ -389,6 +392,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           </div>
         </section>
 
+        {/* ── SOCIAL PROOF BAR ── */}
+        <SocialProofBar serviceName={svc.name} location={cityName} />
+
         {/* ── MAIN CONTENT GRID ── */}
         <section className="max-w-7xl mx-auto px-6 md:px-10 py-14 grid lg:grid-cols-3 gap-12">
 
@@ -566,6 +572,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
             )}
 
+            {/* Treatment Session Journey */}
+            <TreatmentJourney sessions={svc.sessions || 6} treatmentName={svc.name} />
+
             {/* Patient Reviews */}
             {hasReviews && (
               <div>
@@ -723,6 +732,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 sessionsRequired={svc.sessionsRequired}
                 serviceName={svc.name}
               />
+
+              {/* EMI Calculator */}
+              <EMICalculator price={svc.price || 5000} />
             </div>
           </aside>
         </section>
