@@ -263,13 +263,17 @@ export default function BlogAdminPage() {
   };
 
   const savePost = async (data: any) => {
-    if (data._id) {
-      await fetch(`/api/admin/blog/${data._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    } else {
-      await fetch('/api/admin/blog', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    try {
+      if (data._id) {
+        await fetch(`/api/admin/blog/${data._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      } else {
+        await fetch('/api/admin/blog', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      }
+      setModal(null);
+      fetchPosts();
+    } catch {
+      alert('Save failed — please check your connection and try again');
     }
-    setModal(null);
-    fetchPosts();
   };
 
   return (

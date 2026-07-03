@@ -81,6 +81,7 @@ export default function CategoriesSettingsPage() {
     if (!form.label.trim()) { setError("Label is required."); return; }
     if (!form.slug.trim()) { setError("Slug is required."); return; }
     setSaving(true); setError("");
+    try {
     const url = editId ? `/api/admin/categories/${editId}` : "/api/admin/categories";
     const method = editId ? "PUT" : "POST";
     const res = await fetch(url, {
@@ -88,12 +89,16 @@ export default function CategoriesSettingsPage() {
       body: JSON.stringify(form),
     });
     const data = await res.json();
-    setSaving(false);
     if (!data.success) { setError(data.message || "Save failed"); return; }
     setSuccess(editId ? "Category updated" : "Category added");
     setTimeout(() => setSuccess(""), 3000);
     closeModal();
     fetchCategories();
+    } catch {
+      setError("Network error — please try again");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

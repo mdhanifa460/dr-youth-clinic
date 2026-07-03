@@ -83,16 +83,21 @@ export default function FreeLabelsSettingsPage() {
 
   async function save() {
     setSaving(true); setError(""); setSuccess(false);
-    const res = await fetch("/api/admin/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ freeLabels: form }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (!data.success) { setError(data.message || "Save failed"); return; }
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ freeLabels: form }),
+      });
+      const data = await res.json();
+      if (!data.success) { setError(data.message || "Save failed"); return; }
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch {
+      setError("Network error — please try again");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) return (
