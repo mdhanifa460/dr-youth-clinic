@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Upload, Trash2, Plus, Loader, CheckCircle, Eye, EyeOff,
-  GripVertical, ImageIcon, MapPin, ExternalLink,
+  GripVertical, ImageIcon, MapPin, ExternalLink, Images,
 } from 'lucide-react';
 import Image from 'next/image';
 import { CLOUD_FOLDERS } from '@/app/lib/cloudinary-url';
 import { locations } from '@/app/data/locations';
+import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 
 const CITIES = [
   { key: 'chennai',    label: 'Chennai' },
@@ -40,6 +41,7 @@ function ImgUpload({
   const ref = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [galleryOpen, setGalleryOpen] = useState(false);
 
   const upload = async (file: File) => {
     setErr('');
@@ -90,7 +92,19 @@ function ImgUpload({
         <input ref={ref} type="file" accept="image/*" className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
       </div>
+      <div className="flex items-center gap-2 mt-1.5">
+        <button type="button" onClick={(e) => { e.stopPropagation(); setGalleryOpen(true); }}
+          className="flex items-center gap-1 text-xs border border-gray-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-50 transition">
+          <Images size={11} className="text-[#0B2560]" /> Choose from Media Library
+        </button>
+      </div>
       {err && <p className="text-xs text-red-500 mt-1">{err}</p>}
+      <MediaGalleryModal
+        isOpen={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        onSelect={(img) => { onChange(img); setGalleryOpen(false); }}
+        defaultFolder={folder}
+      />
     </div>
   );
 }
