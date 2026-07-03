@@ -4,16 +4,18 @@ import { useState } from 'react';
 import { Star, Shield, Users, BadgeCheck } from 'lucide-react';
 import Sidebar from './Sidebar';
 import ConsultationForm from './Form';
-
-const TRUST = [
-  { icon: Star, label: '4.9★ Rating', sub: '25,000+ happy patients' },
-  { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
-  { icon: Users, label: 'Expert Doctors', sub: '10+ years experience' },
-  { icon: BadgeCheck, label: 'Free Consult', sub: 'No commitment needed' },
-];
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 export default function BookingPage() {
+  const { consultationCta, consultationBadge, consultationSub } = useSiteConfig();
   const [step, setStep] = useState(1);
+
+  const TRUST = [
+    { icon: Star, label: '4.9★ Rating', sub: '25,000+ happy patients' },
+    { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
+    { icon: Users, label: 'Expert Doctors', sub: '10+ years experience' },
+    { icon: BadgeCheck, label: consultationBadge, sub: 'No commitment needed' },
+  ];
 
   return (
     <main className="min-h-screen bg-[#f6faff]">
@@ -25,9 +27,9 @@ export default function BookingPage() {
           <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-[#F5A623]/[0.05] -translate-x-1/3" />
         </div>
         <div className="max-w-7xl mx-auto relative">
-          <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Free · No Commitment</p>
+          <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">{consultationSub}</p>
           <h1 className="text-3xl md:text-4xl font-headline font-extrabold mb-2 leading-tight">
-            Book Your Free Consultation
+            {consultationCta}
           </h1>
           <p className="text-white/60 text-sm max-w-md">
             Speak with an expert dermatologist and get a personalised treatment plan — at no cost.

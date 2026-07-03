@@ -7,6 +7,8 @@ import { OrganizationSchema, FAQSchema } from "@/app/components/SchemaMarkup";
 import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
+import { getSiteConfig } from "@/app/lib/siteConfig";
+import { SiteConfigProvider } from "@/app/components/SiteConfigContext";
 
 // Single query for both topbar + footer — avoids two round-trips per page
 const getLayoutSections = unstable_cache(
@@ -41,21 +43,24 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { topbar, footer } = await getLayoutSections();
+  const [{ topbar, footer }, siteConfig] = await Promise.all([
+    getLayoutSections(),
+    getSiteConfig(),
+  ]);
 
   const whatsappLink = topbar.data?.socialLinks?.find(
     (s: any) => s.platform === "whatsapp"
   )?.url;
 
   return (
-    <>
+    <SiteConfigProvider initial={siteConfig}>
       <OrganizationSchema />
       <FAQSchema />
       {topbar.visible && <TopBar data={topbar.data} />}
       <Navbar />
       <div className="pb-[72px] lg:pb-0">{children}</div>
-      <Footer data={footer} />
+      <Footer data={footer} siteConfig={siteConfig} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
-    </>
+    </SiteConfigProvider>
   );
 }

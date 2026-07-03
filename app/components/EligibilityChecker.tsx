@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle, XCircle, ChevronRight, RotateCcw } from 'lucide-react';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 interface Props {
   serviceName: string;
@@ -19,6 +20,7 @@ const BASE_QUESTIONS = [
 type Answer = 'yes' | 'no' | null;
 
 export default function EligibilityChecker({ serviceName, idealFor }: Props) {
+  const { consultationCta, consultationBadge } = useSiteConfig();
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
@@ -93,7 +95,7 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
             </div>
             <h4 className="font-bold text-[#0B2560] text-lg">You Look Like a Great Candidate!</h4>
             <p className="text-gray-500 text-sm leading-relaxed">
-              Based on your answers, {serviceName} may be suitable for you. Book a free consultation for a professional assessment.
+              Based on your answers, {serviceName} may be suitable for you. {consultationCta} for a professional assessment.
             </p>
             {idealFor.length > 0 && (
               <div className="text-left bg-[#f6faff] rounded-2xl p-4 mt-2">
@@ -125,7 +127,7 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
             </p>
             <div className="flex gap-2 pt-2">
               <a href="/book" className="flex-1 flex items-center justify-center gap-1.5 bg-[#F5A623] text-[#0B2560] py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
-                Free Consultation <ChevronRight size={13} />
+                {consultationBadge} <ChevronRight size={13} />
               </a>
               <button onClick={reset} className="flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-100 text-gray-400 hover:bg-gray-50 transition">
                 <RotateCcw size={14} />

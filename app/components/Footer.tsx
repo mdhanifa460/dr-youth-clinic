@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
+import type { SiteConfig } from "@/app/lib/siteConfig";
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
   facebook: <FaFacebookF size={13} />,
@@ -19,7 +20,7 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
 };
 
 // Data is fetched once in PublicLayout and passed down — no DB call here
-export default async function Footer({ data }: { data?: any }) {
+export default async function Footer({ data, siteConfig }: { data?: any; siteConfig?: SiteConfig }) {
   const resolvedData = data ?? HOMEPAGE_DEFAULTS.footer.data;
 
   const {
@@ -176,7 +177,7 @@ export default async function Footer({ data }: { data?: any }) {
           </div>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2">
             <Link href="/about" className="text-white/35 text-xs hover:text-white/70 transition">About Us</Link>
-            <Link href="/skin-quiz" className="text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium">✨ Free Skin Quiz</Link>
+            <Link href="/skin-quiz" className="text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium">✨ {siteConfig?.skinQuizLabel ?? 'Free Skin Quiz'}</Link>
             <Link href="/privacy-policy" className="text-white/35 text-xs hover:text-white/70 transition">Privacy Policy</Link>
             <Link href="/terms" className="text-white/35 text-xs hover:text-white/70 transition">Terms of Service</Link>
             <Link href="/blog" className="text-white/35 text-xs hover:text-white/70 transition">Blog</Link>

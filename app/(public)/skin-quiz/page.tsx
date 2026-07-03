@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSiteConfig } from "@/app/components/SiteConfigContext";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -268,12 +269,13 @@ function CheckIcon() {
 }
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
+  const { skinQuizFree, consultationBadge } = useSiteConfig();
   return (
     <div className="flex flex-col items-center text-center py-6 md:py-10">
       {/* Badge */}
       <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
         <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] inline-block" />
-        Free · No Commitment · 60 Seconds
+        {skinQuizFree ? 'Free · No Commitment · 60 Seconds' : 'No Commitment · 60 Seconds'}
       </span>
 
       {/* Headline */}
@@ -283,7 +285,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       </h1>
 
       <p className="text-gray-500 text-base md:text-lg max-w-md mb-10 leading-relaxed">
-        Answer 5 quick questions. Get a personalised treatment plan from DR Youth's experts — free, in 60 seconds.
+        Answer 5 quick questions. Get a personalised treatment plan from DR Youth's experts{skinQuizFree ? ' — free,' : ','} in 60 seconds.
       </p>
 
       {/* Trust badges */}
@@ -291,7 +293,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         {[
           { icon: "🏆", text: "Based on 50,000+", sub: "patient outcomes" },
           { icon: "🔬", text: "Evidence-based", sub: "matching algorithm" },
-          { icon: "🎁", text: "Free consultation", sub: "included with results" },
+          { icon: "🎁", text: `${consultationBadge}`, sub: "included with results" },
         ].map((badge) => (
           <div
             key={badge.text}
@@ -542,6 +544,7 @@ function TreatmentCard({
   concern: string;
   rank: number;
 }) {
+  const { consultationCta } = useSiteConfig();
   const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}&concern=${encodeURIComponent(concern)}`;
 
   return (
@@ -610,7 +613,7 @@ function TreatmentCard({
           className="block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200
             bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
         >
-          Book Free Consultation
+          {consultationCta}
         </Link>
       </div>
     </div>

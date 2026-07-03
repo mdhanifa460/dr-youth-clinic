@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MdPhone, MdMenu, MdClose, MdPhotoLibrary } from "react-icons/md";
+import { useSiteConfig } from "@/app/components/SiteConfigContext";
 
 export default function Navbar() {
+  const siteConfig = useSiteConfig();
   const [active, setActive] = useState("home");
   const [locationOpen, setLocationOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -181,7 +183,7 @@ export default function Navbar() {
             href="/skin-quiz"
             className="hidden xl:flex min-h-10 items-center gap-1.5 border border-[#F5A623] text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/10 transition whitespace-nowrap"
           >
-            ✨ Skin Quiz
+            {siteConfig.skinQuizNav}
           </Link>
           <a
             href="tel:18008909669"
@@ -251,7 +253,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="min-h-12 w-full bg-[#F5A623]/10 border border-[#F5A623] text-[#0B2560] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
             >
-              ✨ Free Skin Quiz — Find Your Treatment
+              {siteConfig.skinQuizNav} — Find Your Treatment
             </Link>
             <a href="tel:18008909669" className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">
               <MdPhone size={15} /> 1800 890 9669

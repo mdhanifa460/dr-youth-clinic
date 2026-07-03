@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift } from "lucide-react";
+import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft } from "lucide-react";
 
 const GROUPS = [
   {
@@ -52,6 +52,15 @@ const GROUPS = [
         title: "Promotions & Referral",
         desc: "Enable the patient referral programme, set a live promo code with discount percentage, and run birthday campaigns.",
         tags: ["Referral", "Promo code", "Birthday"],
+      },
+      {
+        href: "/admin/settings/free-labels",
+        icon: ToggleLeft,
+        color: "bg-teal-50 text-teal-600",
+        border: "border-teal-100 hover:border-teal-300",
+        title: "Free Label Controls",
+        desc: "Toggle whether CTAs say \"Free Consultation\" or \"Consultation\" and \"Free Skin Quiz\" or \"Skin Quiz\" — one switch, all pages site-wide.",
+        tags: ["Free CTA", "Consultation", "Skin Quiz"],
       },
     ],
   },

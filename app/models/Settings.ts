@@ -67,6 +67,10 @@ export interface ISettings extends Document {
     birthdayCampaign: boolean;
     birthdayDiscount: number;
   };
+  freeLabels: {
+    consultationFree: boolean;
+    skinQuizFree: boolean;
+  };
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -136,6 +140,10 @@ const SettingsSchema = new Schema<ISettings>(
       promoDiscount:    { type: Number,  default: 10 },
       birthdayCampaign: { type: Boolean, default: false },
       birthdayDiscount: { type: Number,  default: 20 },
+    },
+    freeLabels: {
+      consultationFree: { type: Boolean, default: true },
+      skinQuizFree:     { type: Boolean, default: true },
     },
   },
   { timestamps: true }

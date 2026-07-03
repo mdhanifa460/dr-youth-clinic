@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const metadata: Metadata = {
   title: 'About Us | DR Youth Clinic',
@@ -53,7 +54,8 @@ const AWARDS = [
   { icon: '👨‍⚕️', label: 'IADVL Member', sub: 'Indian Assoc. of Dermatologists' },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const { consultationCta } = await getSiteConfig();
   return (
     <main>
       {/* ── HERO ── */}
@@ -196,7 +198,7 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
-            Book Your Free Consultation
+            {consultationCta}
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
             Speak with one of our specialists — no commitment, no pressure. Just honest advice tailored to you.
@@ -205,7 +207,7 @@ export default function AboutPage() {
             href="/book"
             className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg"
           >
-            Book Free Consultation →
+            {consultationCta} →
           </Link>
         </div>
       </section>
