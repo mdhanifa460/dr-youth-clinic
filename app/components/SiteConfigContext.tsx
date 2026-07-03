@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { type SiteConfig, SITE_CONFIG_DEFAULTS } from "@/app/lib/siteConfig";
+import { type SiteConfig, SITE_CONFIG_DEFAULTS } from "@/app/lib/siteConfigTypes";
 
 const SiteConfigContext = createContext<SiteConfig>(SITE_CONFIG_DEFAULTS);
 
