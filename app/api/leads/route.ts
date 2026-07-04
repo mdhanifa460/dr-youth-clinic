@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import mongoose from 'mongoose';
+import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 
 const LeadSchema = new mongoose.Schema(
   {
@@ -14,10 +15,19 @@ const LeadSchema = new mongoose.Schema(
 
 const Lead = mongoose.models.Lead || mongoose.model('Lead', LeadSchema);
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(req: NextRequest) {
+  // 5 leads per hour per IP
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`leads:${ip}`, 5, 60 * 60 * 1000);
+  if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
+
   try {
     const { email, source, answers, recommendations } = await req.json();
-    if (!email) return NextResponse.json({ success: false, message: 'Email required' }, { status: 400 });
+    if (!email || typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
+      return NextResponse.json({ success: false, message: 'Valid email is required' }, { status: 400 });
+    }
 
     await connectDB();
     await Lead.create({ email, source, answers, recommendations });

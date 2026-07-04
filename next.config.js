@@ -36,11 +36,31 @@ const nextConfig = {
     {
       source: '/:path*',
       headers: [
-        { key: 'X-Content-Type-Options',            value: 'nosniff' },
-        { key: 'X-Frame-Options',                   value: 'SAMEORIGIN' },
-        { key: 'X-XSS-Protection',                  value: '1; mode=block' },
-        { key: 'Referrer-Policy',                   value: 'strict-origin-when-cross-origin' },
-        { key: 'Permissions-Policy',                value: 'camera=(), microphone=(), geolocation=()' },
+        { key: 'X-Content-Type-Options',  value: 'nosniff' },
+        { key: 'X-Frame-Options',         value: 'SAMEORIGIN' },
+        { key: 'X-XSS-Protection',        value: '1; mode=block' },
+        { key: 'Referrer-Policy',         value: 'strict-origin-when-cross-origin' },
+        { key: 'Permissions-Policy',      value: 'camera=(), microphone=(), geolocation=()' },
+        // HSTS — enforce HTTPS for 2 years, include subdomains
+        { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        // CSP — allow known analytics/tracking origins; unsafe-inline required by Next.js inline scripts
+        {
+          key: 'Content-Security-Policy',
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com",
+            "font-src 'self' data:",
+            "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
+            "media-src 'self' https://res.cloudinary.com",
+            "frame-src https://www.google.com https://maps.google.com",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "upgrade-insecure-requests",
+          ].join('; '),
+        },
       ],
     },
     // Static assets — immutable, 1 year

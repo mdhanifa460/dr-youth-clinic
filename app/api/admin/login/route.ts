@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { loginAdmin, setAdminSessionCookie } from "@/app/lib/adminAuth";
+import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,11 @@ function getSafeRedirectPath(value: FormDataEntryValue | unknown) {
 }
 
 export async function POST(req: Request) {
+  // 5 attempts per 15 minutes per IP — brute-force protection
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
+  if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
+
   const fromForm = isFormRequest(req);
   const body = fromForm
     ? await req.formData()
@@ -66,8 +72,6 @@ export async function POST(req: Request) {
         303
       );
     }
-
-    console.log("SESSION:", session);
 
     return NextResponse.json(
       { success: false, message: "Invalid email or password" },

@@ -1,27 +1,36 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../lib/mongodb";
 import Booking from "../../models/Booking";
+import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
 }
 
 export async function POST(req: Request) {
+  // 3 bookings per hour per IP — prevent spam
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`booking:${ip}`, 3, 60 * 60 * 1000);
+  if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
+
   try {
     const body = await req.json();
-
-    console.log("📥 RECEIVED IN API:", body);
-
     const { name, phone, service, location, date, time, concern, promoCode, promoDiscount } = body;
 
+    // Input validation
+    if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
+      return NextResponse.json({ success: false, message: "Valid name is required" }, { status: 400 });
+    }
+    if (!phone || typeof phone !== 'string') {
+      return NextResponse.json({ success: false, message: "Phone number is required" }, { status: 400 });
+    }
+    if (!date || !time) {
+      return NextResponse.json({ success: false, message: "Date and time are required" }, { status: 400 });
+    }
 
     const formattedPhone = formatPhone(phone);
-
-    if (!name || !formattedPhone || !date || !time) {
-      return NextResponse.json(
-        { success: false, message: "Missing fields" },
-        { status: 400 }
-      );
+    if (!formattedPhone || formattedPhone.length < 10) {
+      return NextResponse.json({ success: false, message: "Invalid phone number" }, { status: 400 });
     }
 
     await connectDB();
