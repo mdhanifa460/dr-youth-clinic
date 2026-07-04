@@ -43,6 +43,7 @@ export interface ISettings extends Document {
     gtmId: string;
     clarityId: string;
     hotjarId: string;
+    searchConsoleId: string;
   };
   whatsapp: {
     bookingConfirmation: string;
@@ -112,11 +113,12 @@ const SettingsSchema = new Schema<ISettings>(
       whatsappCta:    { type: String, default: '' },
     },
     analytics: {
-      ga4Id:       { type: String, default: '' },
-      metaPixelId: { type: String, default: '' },
-      gtmId:       { type: String, default: '' },
-      clarityId:   { type: String, default: '' },
-      hotjarId:    { type: String, default: '' },
+      ga4Id:           { type: String, default: '' },
+      metaPixelId:     { type: String, default: '' },
+      gtmId:           { type: String, default: '' },
+      clarityId:       { type: String, default: '' },
+      hotjarId:        { type: String, default: '' },
+      searchConsoleId: { type: String, default: '' },
     },
     whatsapp: {
       bookingConfirmation:   { type: String, default: "Hello {{name}}! 🌟 Your appointment at DR Youth Clinic has been requested.\n\n📅 Treatment: {{service}}\n📍 Location: {{location}}\n\nOur team will call you within 2 hours to confirm your slot.\n\n— DR Youth Clinic ✨" },
