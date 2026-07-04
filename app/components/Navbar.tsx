@@ -45,12 +45,11 @@ export default function Navbar() {
     };
   }, []);
 
-  const homeLink =
-    currentLocation && !["book", "admin"].includes(currentLocation)
-      ? `/${currentLocation}`
-      : "/";
+  const CITY_SLUGS = ["chennai", "bangalore", "coimbatore", "kochi"];
 
-  const isHomepage = !currentLocation || ["book"].includes(currentLocation);
+  const homeLink = CITY_SLUGS.includes(currentLocation) ? `/${currentLocation}` : "/";
+
+  const isHomepage = !currentLocation || CITY_SLUGS.includes(currentLocation);
 
   const navItems = [
     { name: "Home",     id: "home",      href: null },
