@@ -13,6 +13,8 @@ const BookingSchema = new mongoose.Schema(
     date: String,
     time: String,
     concern: String,
+    promoCode: String,
+    promoDiscount: Number,
     status: {
       type: String,
       default: "new",

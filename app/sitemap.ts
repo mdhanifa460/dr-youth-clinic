@@ -5,7 +5,10 @@ import { Doctor } from '@/app/models/Doctor';
 
 export const dynamic = 'force-dynamic';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
+if (!SITE_URL) {
+  console.error('[sitemap] NEXT_PUBLIC_SITE_URL is not set — sitemap URLs will be relative and ignored by Google. Set this env var in Vercel dashboard.');
+}
 const LOCATIONS = ['chennai', 'bangalore', 'kochi', 'coimbatore'] as const;
 const SERVICE_CATEGORIES = ['skin', 'hair', 'laser'] as const;
 

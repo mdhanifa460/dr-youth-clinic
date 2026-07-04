@@ -20,7 +20,8 @@ const EMI_OPTIONS = [
 
 export default function EMICalculator({ price }: Props) {
   const [open, setOpen] = useState(false);
-  const safeMin = Math.min(3000, price);
+  const showSlider = price > 3000;
+  const safeMin = showSlider ? 3000 : price;
   const [selected, setSelected] = useState(price);
 
   return (
@@ -50,31 +51,33 @@ export default function EMICalculator({ price }: Props) {
       {/* Expandable body */}
       {open && (
         <div className="p-6 space-y-5">
-          {/* Budget slider */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-[#0B2560] uppercase tracking-wider">
-                Adjust Price
-              </label>
-              <span className="flex items-center gap-0.5 text-xl font-extrabold text-[#0B2560]">
-                <IndianRupee size={14} />
-                {fmt(selected)}
-              </span>
+          {/* Budget slider — only shown when price > ₹3,000 */}
+          {showSlider && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-[#0B2560] uppercase tracking-wider">
+                  Adjust Price
+                </label>
+                <span className="flex items-center gap-0.5 text-xl font-extrabold text-[#0B2560]">
+                  <IndianRupee size={14} />
+                  {fmt(selected)}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={safeMin}
+                max={price}
+                step={500}
+                value={selected}
+                onChange={(e) => setSelected(Number(e.target.value))}
+                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#0B2560] bg-gray-100"
+              />
+              <div className="flex justify-between text-[10px] text-gray-300 mt-1">
+                <span>₹{fmt(safeMin)}</span>
+                <span>₹{fmt(price)}</span>
+              </div>
             </div>
-            <input
-              type="range"
-              min={safeMin}
-              max={price}
-              step={500}
-              value={selected}
-              onChange={(e) => setSelected(Number(e.target.value))}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#0B2560] bg-gray-100"
-            />
-            <div className="flex justify-between text-[10px] text-gray-300 mt-1">
-              <span>₹{fmt(safeMin)}</span>
-              <span>₹{fmt(price)}</span>
-            </div>
-          </div>
+          )}
 
           {/* EMI breakdown grid */}
           <div className="grid grid-cols-2 gap-3">

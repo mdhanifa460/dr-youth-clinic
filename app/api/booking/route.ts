@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
     console.log("📥 RECEIVED IN API:", body);
 
-    const { name, phone, service, location, date, time, concern } = body;
+    const { name, phone, service, location, date, time, concern, promoCode, promoDiscount } = body;
 
 
     const formattedPhone = formatPhone(phone);
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       date,
       time,
       concern,
+      ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
       createdAt: new Date(),
     });
 
@@ -67,7 +68,7 @@ Service: ${service}
 Location: ${location}
 Date: ${date}
 Time: ${time}
-Concern: ${concern || "N/A"}`,
+Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscount}% off)` : ""}`,
         },
       }),
     });

@@ -10,8 +10,9 @@ export default async function SocialProofBar({ serviceName, location }: Props) {
   try {
     await connectDB();
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const escapedName = serviceName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const count = await Booking.countDocuments({
-      service: { $regex: serviceName, $options: 'i' },
+      service: { $regex: escapedName, $options: 'i' },
       createdAt: { $gte: thirtyDaysAgo },
     });
 

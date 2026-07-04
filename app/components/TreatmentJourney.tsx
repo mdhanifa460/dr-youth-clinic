@@ -3,34 +3,43 @@ interface Props {
   treatmentName: string;
 }
 
-const PHASES = [
-  {
-    number: 1,
-    sessions: 'Session 1–2',
-    label: 'Initial Assessment',
-    desc: 'Doctor evaluates your skin, personalised protocol designed for your unique concern.',
-  },
-  {
-    number: 2,
-    sessions: 'Session 3–4',
-    label: 'Active Treatment',
-    desc: 'Core sessions targeting your concern with calibrated intensity and precision.',
-  },
-  {
-    number: 3,
-    sessions: 'Session 5–6',
-    label: 'Visible Results',
-    desc: 'Significant improvement becomes visible. Progress is documented and tracked.',
-  },
-  {
-    number: 4,
-    sessions: 'Post-treatment',
-    label: 'Maintenance Plan',
-    desc: 'Monthly sessions to sustain your results and prevent regression long-term.',
-  },
-];
+function buildPhases(sessions: number) {
+  const s = Math.max(4, sessions);
+  const p1 = Math.max(1, Math.round(s * 0.25));
+  const p2 = Math.max(p1 + 1, Math.round(s * 0.5));
+  const p3 = s;
+
+  return [
+    {
+      number: 1,
+      sessions: `Session 1–${p1}`,
+      label: 'Initial Assessment',
+      desc: 'Doctor evaluates your skin, personalised protocol designed for your unique concern.',
+    },
+    {
+      number: 2,
+      sessions: `Session ${p1 + 1}–${p2}`,
+      label: 'Active Treatment',
+      desc: 'Core sessions targeting your concern with calibrated intensity and precision.',
+    },
+    {
+      number: 3,
+      sessions: `Session ${p2 + 1}–${p3}`,
+      label: 'Visible Results',
+      desc: 'Significant improvement becomes visible. Progress is documented and tracked.',
+    },
+    {
+      number: 4,
+      sessions: 'Post-treatment',
+      label: 'Maintenance Plan',
+      desc: 'Monthly sessions to sustain your results and prevent regression long-term.',
+    },
+  ];
+}
 
 export default function TreatmentJourney({ sessions, treatmentName }: Props) {
+  const phases = buildPhases(sessions);
+
   return (
     <div>
       <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">
@@ -43,13 +52,10 @@ export default function TreatmentJourney({ sessions, treatmentName }: Props) {
 
       {/* ── Desktop: horizontal timeline ── */}
       <div className="hidden sm:block relative">
-        {/* Dashed gold connecting line */}
         <div className="absolute top-7 left-[12.5%] right-[12.5%] h-0 border-t-2 border-dashed border-[#F5A623]/50 pointer-events-none" />
-
         <div className="grid grid-cols-4 gap-6 relative">
-          {PHASES.map((phase) => (
+          {phases.map((phase) => (
             <div key={phase.number} className="flex flex-col items-center text-center">
-              {/* Circular node */}
               <div className="relative z-10 w-14 h-14 rounded-full bg-[#0B2560] text-white flex flex-col items-center justify-center shadow-lg ring-4 ring-white mb-4 shrink-0">
                 <span className="text-[9px] font-bold text-[#F5A623] uppercase tracking-wide leading-none">
                   Phase
@@ -68,20 +74,16 @@ export default function TreatmentJourney({ sessions, treatmentName }: Props) {
 
       {/* ── Mobile: vertical stack ── */}
       <div className="sm:hidden relative">
-        {/* Dashed gold vertical line */}
         <div className="absolute left-7 top-7 bottom-7 w-0 border-l-2 border-dashed border-[#F5A623]/50 pointer-events-none" />
-
         <div className="space-y-5">
-          {PHASES.map((phase) => (
+          {phases.map((phase) => (
             <div key={phase.number} className="flex gap-4 relative">
-              {/* Circular node */}
               <div className="shrink-0 z-10 w-14 h-14 rounded-full bg-[#0B2560] text-white flex flex-col items-center justify-center shadow-lg ring-4 ring-white">
                 <span className="text-[9px] font-bold text-[#F5A623] uppercase leading-none">
                   Phase
                 </span>
                 <span className="text-lg font-extrabold leading-none">{phase.number}</span>
               </div>
-              {/* Card */}
               <div className="flex-1 bg-[#f6faff] rounded-2xl p-4 border border-blue-50 self-center">
                 <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wider">
                   {phase.sessions}

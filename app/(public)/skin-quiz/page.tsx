@@ -792,9 +792,20 @@ export default function SkinQuizPage() {
     }
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Send plan to:", email, "for answers:", answers);
+    try {
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          source: 'skin-quiz',
+          answers,
+          recommendations: recommendations.map((r) => r.name),
+        }),
+      });
+    } catch {}
     setEmailSent(true);
   };
 
