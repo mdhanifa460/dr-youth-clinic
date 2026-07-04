@@ -3,7 +3,7 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import TopBar from "@/app/components/homepage/TopBar";
 import MobileStickyBar from "@/app/components/MobileStickyBar";
-import { OrganizationSchema, FAQSchema } from "@/app/components/SchemaMarkup";
+import { OrganizationSchema } from "@/app/components/SchemaMarkup";
 import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
@@ -55,7 +55,6 @@ export default async function PublicLayout({
   return (
     <SiteConfigProvider initial={siteConfig}>
       <OrganizationSchema />
-      <FAQSchema />
       {topbar.visible && <TopBar data={topbar.data} />}
       <Navbar />
       <div className="pb-[72px] lg:pb-0">{children}</div>
