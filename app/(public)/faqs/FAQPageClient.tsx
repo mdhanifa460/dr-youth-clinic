@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Search, ChevronDown, ChevronUp, MessageCircle, Calendar, Phone } from 'lucide-react';
 
@@ -19,6 +19,16 @@ export default function FAQPageClient({ categories }: { categories: FAQCategory[
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [openIndex, setOpenIndex] = useState<string | null>(null);
+  const faqListRef = useRef<HTMLDivElement>(null);
+
+  function jumpToCategory(cat: string) {
+    setActiveCategory(cat);
+    setSearch('');
+    setOpenIndex(null);
+    setTimeout(() => {
+      faqListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
 
   const allItems = useMemo(
     () => categories.flatMap((c) => c.items.map((item) => ({ ...item, category: c.category, icon: c.icon }))),
@@ -89,7 +99,7 @@ export default function FAQPageClient({ categories }: { categories: FAQCategory[
         </div>
       </section>
 
-      <div className="max-w-5xl mx-auto px-4 md:px-6 py-10">
+      <div ref={faqListRef} className="max-w-5xl mx-auto px-4 md:px-6 py-10 scroll-mt-4">
         {/* ── Category Tabs ── */}
         {!search && (
           <div className="flex flex-wrap gap-2 mb-8">
@@ -98,7 +108,7 @@ export default function FAQPageClient({ categories }: { categories: FAQCategory[
               return (
                 <button
                   key={tab}
-                  onClick={() => setActiveCategory(tab)}
+                  onClick={() => { setActiveCategory(tab); setOpenIndex(null); }}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     activeCategory === tab
                       ? 'bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/20'
@@ -269,15 +279,23 @@ export default function FAQPageClient({ categories }: { categories: FAQCategory[
 
         {/* ── Quick topic links ── */}
         <div className="mt-10 border border-gray-100 rounded-2xl p-6 bg-gray-50">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Browse by topic</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Browse by topic</p>
+          <p className="text-[11px] text-gray-400 mb-4">Click a topic to jump straight to those questions</p>
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
               <button
                 key={cat.category}
-                onClick={() => { setActiveCategory(cat.category); setSearch(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="flex items-center gap-1.5 text-xs font-semibold text-[#0B2560] bg-white border border-gray-200 px-3 py-1.5 rounded-full hover:border-[#0B2560] hover:shadow-sm transition"
+                onClick={() => jumpToCategory(cat.category)}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+                  activeCategory === cat.category
+                    ? 'bg-[#0B2560] text-white border-[#0B2560]'
+                    : 'text-[#0B2560] bg-white border-gray-200 hover:border-[#0B2560] hover:shadow-sm'
+                }`}
               >
                 <span>{cat.icon}</span> {cat.category}
+                <span className={`text-[9px] font-bold ${activeCategory === cat.category ? 'text-white/60' : 'text-gray-400'}`}>
+                  {cat.items.length}
+                </span>
               </button>
             ))}
           </div>
