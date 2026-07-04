@@ -75,6 +75,9 @@ function DataSkeleton() {
   );
 }
 
+type Period = 'Today' | '7 Days' | '30 Days' | 'Quarter';
+const PERIODS: Period[] = ['Today', '7 Days', '30 Days', 'Quarter'];
+
 export default function IntelligenceDashboard() {
   const [active, setActive]   = useState('overview');
   const [data, setData]       = useState<any>(null);
@@ -82,6 +85,7 @@ export default function IntelligenceDashboard() {
   const [error, setError]     = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30 Days');
 
   const fetchData = async () => {
     setLoading(true);
@@ -181,10 +185,27 @@ export default function IntelligenceDashboard() {
             <p className="text-xs font-bold text-[#0B2560] truncate">
               {activeNav?.icon} {activeNav?.label}
             </p>
-            <p className="text-[10px] text-gray-400 hidden sm:block">DR Youth Clinic · AI Business Intelligence</p>
+            <p className="text-[10px] text-gray-400 hidden sm:block">DR Youth Clinic · Business Intelligence · Shopify-grade insights</p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Period selector */}
+            <div className="hidden sm:flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
+              {PERIODS.map(p => (
+                <button
+                  key={p}
+                  onClick={() => setSelectedPeriod(p)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                    selectedPeriod === p
+                      ? 'bg-white text-[#0B2560] shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
             {criticalCount > 0 && (
               <button onClick={() => setActive('alerts')}
                 className="flex items-center gap-1 bg-red-50 text-red-700 text-[11px] font-bold px-2.5 py-1.5 rounded-xl border border-red-200 hover:bg-red-100 transition">
@@ -213,7 +234,7 @@ export default function IntelligenceDashboard() {
               </button>
             </div>
           ) : (
-            <ActiveSection data={data} />
+            <ActiveSection data={{ ...data, selectedPeriod }} />
           )}
         </div>
       </main>

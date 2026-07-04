@@ -229,3 +229,127 @@ export const fmtINR = (n: number) => {
   if (n >= 1e3) return `₹${(n / 1e3).toFixed(0)}K`;
   return `₹${n}`;
 };
+
+// ── DeltaStatCard ─────────────────────────────────────────────────────────────
+export function DeltaStatCard({
+  label, value, delta, deltaLabel, trend, icon, narrative,
+}: {
+  label: string;
+  value: string | number;
+  delta?: string;
+  deltaLabel?: string;
+  trend: 'up' | 'down' | 'neutral';
+  icon?: string;
+  narrative?: string;
+}) {
+  const deltaBg =
+    trend === 'up'   ? 'bg-emerald-50 text-emerald-700' :
+    trend === 'down' ? 'bg-red-50 text-red-700' :
+    'bg-gray-100 text-gray-500';
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow-sm ring-1 ring-gray-100 flex flex-col gap-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          {icon && <span className="text-lg mb-1 block">{icon}</span>}
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider truncate">{label}</p>
+          <p className="text-2xl font-extrabold text-gray-900 mt-0.5 truncate">{value}</p>
+        </div>
+        {delta && (
+          <div className="flex flex-col items-end gap-0.5 shrink-0">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${deltaBg}`}>{delta}</span>
+            {deltaLabel && <span className="text-[10px] text-gray-400 whitespace-nowrap">{deltaLabel}</span>}
+          </div>
+        )}
+      </div>
+      {narrative && (
+        <p className="text-[11px] text-gray-400 leading-snug border-t border-gray-50 pt-2">{narrative}</p>
+      )}
+    </div>
+  );
+}
+
+// ── InsightBanner ──────────────────────────────────────────────────────────────
+export function InsightBanner({
+  headline, sub, trend,
+}: {
+  headline: string;
+  sub?: string;
+  trend: 'up' | 'down' | 'neutral';
+}) {
+  const borderColor =
+    trend === 'up'   ? 'border-l-emerald-500' :
+    trend === 'down' ? 'border-l-red-500' :
+    'border-l-gray-300';
+  const headlineColor =
+    trend === 'up'   ? 'text-emerald-800' :
+    trend === 'down' ? 'text-red-800' :
+    'text-gray-800';
+  return (
+    <div className={`border-l-4 pl-4 py-1 mb-4 ${borderColor}`}>
+      <p className={`text-sm font-bold ${headlineColor}`}>{headline}</p>
+      {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+// ── ActionCard ────────────────────────────────────────────────────────────────
+export function ActionCard({
+  title, detail, href, impact, urgency,
+}: {
+  title: string;
+  detail: string;
+  href: string;
+  impact?: string;
+  urgency: 'now' | 'today' | 'this-week';
+}) {
+  const urgencyMap = {
+    'now':       { label: 'Do now',     cls: 'bg-red-100 text-red-700' },
+    'today':     { label: 'Today',      cls: 'bg-amber-100 text-amber-700' },
+    'this-week': { label: 'This week',  cls: 'bg-blue-100 text-blue-700' },
+  };
+  const u = urgencyMap[urgency];
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm ring-1 ring-gray-100 flex items-start gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${u.cls}`}>{u.label}</span>
+          {impact && (
+            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">{impact}</span>
+          )}
+        </div>
+        <p className="text-sm font-bold text-gray-900">{title}</p>
+        <p className="text-xs text-gray-500 mt-0.5 leading-snug">{detail}</p>
+      </div>
+      <a
+        href={href}
+        className="shrink-0 w-8 h-8 rounded-lg bg-gray-50 hover:bg-[#0B2560] hover:text-white flex items-center justify-center text-gray-500 transition-colors text-sm font-bold"
+      >
+        →
+      </a>
+    </div>
+  );
+}
+
+// ── NarrativeInsight ──────────────────────────────────────────────────────────
+export function NarrativeInsight({
+  icon, what, significance,
+}: {
+  icon: string;
+  what: string;
+  significance: 'positive' | 'negative' | 'neutral';
+}) {
+  const borderColor =
+    significance === 'positive' ? 'border-l-emerald-500' :
+    significance === 'negative' ? 'border-l-red-500' :
+    'border-l-gray-300';
+  const iconBg =
+    significance === 'positive' ? 'bg-emerald-50' :
+    significance === 'negative' ? 'bg-red-50' :
+    'bg-gray-50';
+  return (
+    <div className={`border-l-4 pl-3 py-2 flex items-start gap-3 ${borderColor}`}>
+      <span className={`text-base shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${iconBg}`}>{icon}</span>
+      <p className="text-sm text-gray-700 leading-snug flex-1">{what}</p>
+    </div>
+  );
+}
