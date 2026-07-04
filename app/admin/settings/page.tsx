@@ -40,9 +40,9 @@ const GROUPS = [
         icon: Megaphone,
         color: "bg-amber-50 text-amber-600",
         border: "border-amber-100 hover:border-amber-300",
-        title: "Google Ads",
-        desc: "Configure Google AdSense — set your Publisher ID, manage ad slot positions, toggle test mode, and enable or disable ads globally.",
-        tags: ["AdSense", "Ad slots", "Test mode"],
+        title: "Marketing Stack",
+        desc: "Your professional marketing toolkit — Google Ads for paid acquisition, Meta Ads for social campaigns, and how to set up each tool for maximum ROI.",
+        tags: ["Google Ads", "Meta Ads", "ROI"],
       },
       {
         href: "/admin/settings/promotions",

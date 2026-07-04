@@ -7,6 +7,7 @@ export type AnalyticsConfig = {
   gtmId: string;
   clarityId: string;
   hotjarId: string;
+  searchConsoleId: string;
 };
 
 export async function getAnalyticsConfig(): Promise<AnalyticsConfig> {
@@ -14,13 +15,14 @@ export async function getAnalyticsConfig(): Promise<AnalyticsConfig> {
     await connectDB();
     const settings = await getSettings();
     return {
-      ga4Id:       settings.analytics?.ga4Id       || '',
-      metaPixelId: settings.analytics?.metaPixelId || '',
-      gtmId:       settings.analytics?.gtmId       || '',
-      clarityId:   settings.analytics?.clarityId   || '',
-      hotjarId:    settings.analytics?.hotjarId     || '',
+      ga4Id:           settings.analytics?.ga4Id           || '',
+      metaPixelId:     settings.analytics?.metaPixelId     || '',
+      gtmId:           settings.analytics?.gtmId           || '',
+      clarityId:       settings.analytics?.clarityId       || '',
+      hotjarId:        settings.analytics?.hotjarId        || '',
+      searchConsoleId: settings.analytics?.searchConsoleId || '',
     };
   } catch {
-    return { ga4Id: '', metaPixelId: '', gtmId: '', clarityId: '', hotjarId: '' };
+    return { ga4Id: '', metaPixelId: '', gtmId: '', clarityId: '', hotjarId: '', searchConsoleId: '' };
   }
 }

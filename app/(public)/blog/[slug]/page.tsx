@@ -8,7 +8,6 @@ import { Blog } from '@/app/models/Blog';
 import { markdownToHtml, extractHeadings } from '@/app/lib/blogMarkdown';
 import ReadingProgress from './ReadingProgress';
 import ArticleSidebar from './ArticleSidebar';
-import AdSlot from '@/app/components/AdSlot';
 
 async function getPost(slug: string) {
   try {
@@ -117,9 +116,6 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
             </div>
           </div>
         </section>
-
-        {/* ── AD SLOT: before article body ── */}
-        <AdSlot slotKey="blog_inline" className="py-6 bg-[#f6faff]" />
 
         {/* ── ARTICLE BODY ── */}
         <section className="bg-white py-14 md:py-20">

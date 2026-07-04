@@ -6,7 +6,6 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Offer } from '@/app/models/Offer';
 import OffersClient from './OffersClient';
 import { discountPct } from './OfferCard';
-import AdSlot from '@/app/components/AdSlot';
 
 export const revalidate = 60;
 
@@ -97,9 +96,6 @@ export default async function OffersPage() {
           </div>
         </div>
       </section>
-
-      {/* ── OFFERS GRID ── */}
-      <AdSlot slotKey="offers_top" className="py-6 bg-white border-b border-gray-100" />
 
       <section id="offers" className="bg-[#f6faff] py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-6">

@@ -10,6 +10,7 @@ type AnalyticsSettings = {
   gtmId: string;
   clarityId: string;
   hotjarId: string;
+  searchConsoleId: string;
 };
 
 const DEFAULTS: AnalyticsSettings = {
@@ -18,6 +19,7 @@ const DEFAULTS: AnalyticsSettings = {
   gtmId: "",
   clarityId: "",
   hotjarId: "",
+  searchConsoleId: "",
 };
 
 function StatusBadge({ active }: { active: boolean }) {
@@ -275,6 +277,43 @@ export default function AnalyticsSettingsPage() {
             </div>
             <p className="text-[11px] text-gray-400">
               Optional — overlaps with Clarity. Use one or the other.
+            </p>
+          </div>
+        </div>
+
+        {/* Google Search Console */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
+          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-[#0B2560] text-sm">Google Search Console</h2>
+              <p className="text-gray-400 text-xs mt-0.5">Verify site ownership to monitor SEO rankings and indexing.</p>
+            </div>
+            <StatusBadge active={!!form.searchConsoleId} />
+          </div>
+          <div className="mx-6 mt-4 flex items-start gap-2.5 bg-green-50 border border-green-100 px-4 py-3 rounded-xl">
+            <svg width="14" height="14" viewBox="0 0 15 15" fill="none" className="shrink-0 mt-0.5">
+              <circle cx="7.5" cy="7.5" r="6.5" stroke="#16a34a" strokeWidth="1.2"/>
+              <path d="M4.5 7.5l2 2 4-4" stroke="#16a34a" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <p className="text-[11px] text-green-700 leading-relaxed">
+              Tip: If your GA4 is already configured, Google Search Console can verify ownership automatically — no code needed. Paste the HTML tag verification code here only if using the manual method.
+            </p>
+          </div>
+          <div className="px-6 py-5 space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                Verification Code <span className="font-normal text-gray-400">(HTML tag method)</span>
+              </label>
+              <input
+                type="text"
+                value={form.searchConsoleId}
+                onChange={(e) => set("searchConsoleId", e.target.value)}
+                placeholder="abc123XYZ_ExampleVerificationCode"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
+              />
+            </div>
+            <p className="text-[11px] text-gray-400 leading-relaxed">
+              In Search Console → Settings → Ownership verification → HTML tag — copy only the <code className="bg-gray-100 px-1 rounded">content="…"</code> value, not the full tag.
             </p>
           </div>
         </div>

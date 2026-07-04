@@ -23,8 +23,6 @@ import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
 import FAQAccordion from '@/app/components/homepage/FAQAccordion';
 import { FAQSchema } from '@/app/components/SchemaMarkup';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
-import AdSlot from '@/app/components/AdSlot';
-
 export const revalidate = 300;
 
 const getHomeSeo = unstable_cache(
@@ -287,9 +285,6 @@ export default async function Home() {
           return (
             <div key={s.key}>
               <Component data={enriched[s.key]} />
-              {s.key === 'stats' && (
-                <AdSlot slotKey="home_mid" className="py-4 bg-[#f6faff]" />
-              )}
             </div>
           );
         })}

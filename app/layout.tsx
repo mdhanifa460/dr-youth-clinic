@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
-import { getAdsConfig } from "@/app/lib/adsConfig";
 import { getAnalyticsConfig } from "@/app/lib/analyticsConfig";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
@@ -45,8 +44,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [adsConfig, analytics] = await Promise.all([getAdsConfig(), getAnalyticsConfig()]);
-  const showAds = adsConfig.enabled && !adsConfig.testMode && adsConfig.publisherId;
+  const analytics = await getAnalyticsConfig();
 
   return (
     <html lang="en">
@@ -69,6 +67,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
         {analytics.ga4Id && (
           <link rel="preconnect" href="https://www.google-analytics.com" />
+        )}
+        {analytics.searchConsoleId && (
+          <meta name="google-site-verification" content={analytics.searchConsoleId} />
         )}
       </head>
       <body className="min-h-screen flex flex-col bg-[#f6faff]">
@@ -126,16 +127,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             r=o.createElement('script');r.async=1;r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
             a.appendChild(r);})(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
           `}</Script>
-        )}
-
-        {/* Google AdSense */}
-        {showAds && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsConfig.publisherId}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
         )}
 
         <CacheGuard />
