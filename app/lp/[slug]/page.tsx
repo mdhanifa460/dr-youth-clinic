@@ -12,49 +12,64 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
 
 interface Props {
   params: { slug: string };
+  searchParams: { preview?: string };
 }
 
-async function getLP(slug: string) {
+async function getLP(slug: string, previewMode = false) {
+  await connectDB();
+  const query = previewMode
+    ? { slug }
+    : { slug, status: 'published' };
+  const lp = await (LandingPage as any).findOne(query).lean() as any;
+  return lp ? JSON.parse(JSON.stringify(lp)) : null;
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const isPreview = searchParams?.preview === '1';
   try {
-    await connectDB();
-    const lp = await (LandingPage as any).findOne({ slug, status: 'published' }).lean() as any;
-    return lp ? JSON.parse(JSON.stringify(lp)) : null;
+    const lp = await getLP(params.slug, isPreview);
+    if (!lp) return { title: 'Not Found' };
+
+    const seo = lp.seo ?? {};
+    return {
+      title: seo.title || lp.title || 'DR Youth Clinic',
+      description: seo.description || 'Expert skin, hair, and laser treatments at DR Youth Clinic.',
+      keywords: seo.keywords || undefined,
+      openGraph: seo.ogImage
+        ? {
+            title: seo.title || lp.title,
+            description: seo.description,
+            images: [{ url: seo.ogImage, width: 1200, height: 630, alt: seo.title || lp.title }],
+          }
+        : undefined,
+      alternates: { canonical: `${SITE_URL}/lp/${params.slug}` },
+      robots: { index: false, follow: false },
+    };
   } catch {
-    return null;
+    return { title: 'DR Youth Clinic' };
   }
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const lp = await getLP(params.slug);
-  if (!lp) return { title: 'Not Found' };
-
-  const seo = lp.seo ?? {};
-
-  return {
-    title: seo.title || lp.title || 'DR Youth Clinic',
-    description: seo.description || 'Expert skin, hair, and laser treatments at DR Youth Clinic.',
-    keywords: seo.keywords || undefined,
-    openGraph: seo.ogImage
-      ? {
-          title: seo.title || lp.title,
-          description: seo.description,
-          images: [{ url: seo.ogImage, width: 1200, height: 630, alt: seo.title || lp.title }],
-        }
-      : undefined,
-    alternates: { canonical: `${SITE_URL}/lp/${params.slug}` },
-    robots: { index: false, follow: false }, // LP pages excluded from indexing by default
-  };
 }
 
 export const dynamic = 'force-dynamic';
 
-export default async function LandingPagePublic({ params }: Props) {
-  const lp = await getLP(params.slug);
+export default async function LandingPagePublic({ params, searchParams }: Props) {
+  const isPreview = searchParams?.preview === '1';
+
+  let lp: any = null;
+  try {
+    lp = await getLP(params.slug, isPreview);
+  } catch (err) {
+    console.error('[LP page] DB error for slug:', params.slug, err);
+    notFound();
+  }
+
   if (!lp) notFound();
 
-  // Increment visitor count via public endpoint (non-blocking, no auth needed)
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  fetch(`${baseUrl}/api/lp/${params.slug}/visit`, { method: 'POST' }).catch(() => {});
+  // Increment visitor count (published only — don't count preview visits)
+  if (!isPreview && lp.status === 'published') {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    fetch(`${baseUrl}/api/lp/${params.slug}/visit`, { method: 'POST' }).catch(() => {});
+  }
 
   const tracking = lp.tracking ?? {};
   const heroSection = lp.sections?.find((s: any) => s.type === 'hero');
@@ -62,8 +77,15 @@ export default async function LandingPagePublic({ params }: Props) {
 
   return (
     <>
-      {/* LP-specific tracking scripts */}
-      {tracking.gtmId && (
+      {/* Draft preview banner */}
+      {isPreview && lp.status !== 'published' && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-950 text-xs font-bold text-center py-2 px-4">
+          ⚠️ PREVIEW — This page is in <span className="uppercase">{lp.status}</span> mode and not publicly visible
+        </div>
+      )}
+
+      {/* LP-specific tracking scripts (skip in preview) */}
+      {!isPreview && tracking.gtmId && (
         <Script id={`lp-gtm-${lp._id}`} strategy="afterInteractive">{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
           var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
@@ -72,7 +94,7 @@ export default async function LandingPagePublic({ params }: Props) {
         `}</Script>
       )}
 
-      {tracking.metaPixelId && (
+      {!isPreview && tracking.metaPixelId && (
         <Script id={`lp-pixel-${lp._id}`} strategy="afterInteractive">{`
           !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
           n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -83,7 +105,7 @@ export default async function LandingPagePublic({ params }: Props) {
         `}</Script>
       )}
 
-      {tracking.googleAdsId && (
+      {!isPreview && tracking.googleAdsId && (
         <>
           <Script
             async
@@ -99,8 +121,7 @@ export default async function LandingPagePublic({ params }: Props) {
         </>
       )}
 
-      <div className="min-h-screen bg-white">
-        {/* Minimal sticky header — transparent over hero, solid white on scroll */}
+      <div className={`min-h-screen bg-white ${isPreview && lp.status !== 'published' ? 'pt-8' : ''}`}>
         <LpHeader
           phone={heroData.phone}
           whatsapp={heroData.whatsapp}
@@ -109,22 +130,23 @@ export default async function LandingPagePublic({ params }: Props) {
 
         <LpRenderer
           sections={lp.sections ?? []}
-          form={lp.form ?? { fields: [], submitText: 'Book Free Consultation', successMessage: "Thank you! We'll call you within 2 hours." }}
+          form={lp.form ?? {
+            fields: [],
+            submitText: 'Book Free Consultation',
+            successMessage: "Thank you! We'll call you within 2 hours.",
+          }}
           slug={params.slug}
           variant="A"
         />
 
-        {/* LP footer with brand colors */}
         <LpFooter phone={heroData.phone} whatsapp={heroData.whatsapp} />
 
-        {/* Mobile sticky bottom bar */}
         <StickyCta
           phone={heroData.phone}
           whatsapp={heroData.whatsapp}
           ctaText={heroData.ctaPrimary?.text || 'Book Free Consultation'}
         />
 
-        {/* Mobile bottom spacing for sticky bar */}
         <div className="h-16 lg:hidden" />
       </div>
     </>

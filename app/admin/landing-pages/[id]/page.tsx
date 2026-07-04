@@ -1135,7 +1135,7 @@ export default function LandingPageBuilder() {
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Save failed' : '.'}
           </span>
 
-          <a href={`/lp/${lp.slug}`} target="_blank" rel="noopener noreferrer">
+          <a href={`/lp/${lp.slug}${lp.status !== 'published' ? '?preview=1' : ''}`} target="_blank" rel="noopener noreferrer">
             <button className="flex items-center gap-1.5 text-xs font-semibold text-[#3B82C4] hover:underline">
               <ExternalLink size={13} /> {lp.status === 'published' ? 'View Live' : 'Preview'}
             </button>

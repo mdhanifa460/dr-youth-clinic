@@ -181,18 +181,16 @@ export default function LandingPagesAdminPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      {page.status === 'published' && (
-                        <a
-                          href={`/lp/${page.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Preview live page"
-                        >
-                          <button className="p-2 text-[#3B82C4] hover:bg-[#3B82C4]/10 rounded-lg transition">
-                            <ExternalLink size={16} />
-                          </button>
-                        </a>
-                      )}
+                      <a
+                        href={`/lp/${page.slug}${page.status !== 'published' ? '?preview=1' : ''}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={page.status === 'published' ? 'View live page' : 'Preview draft'}
+                      >
+                        <button className="p-2 text-[#3B82C4] hover:bg-[#3B82C4]/10 rounded-lg transition">
+                          <ExternalLink size={16} />
+                        </button>
+                      </a>
                       <Link href={`/admin/landing-pages/${page._id}`}>
                         <button className="p-2 text-[#0B2560] hover:bg-[#0B2560]/10 rounded-lg transition">
                           <Edit size={16} />
