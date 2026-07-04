@@ -70,7 +70,7 @@ export default function HeroSection({ data }: { data: HeroData }) {
           className="absolute inset-0"
           style={{
             background: backgroundImage
-              ? `linear-gradient(135deg, ${overlayColor}f2 0%, ${overlayColor}b5 55%, ${overlayColor}75 100%)`
+              ? `linear-gradient(100deg, ${overlayColor}d9 0%, ${overlayColor}99 50%, ${overlayColor}55 100%)`
               : `linear-gradient(135deg, #0B2560 0%, #1a3a7a 50%, #3B82C4 100%)`,
           }}
         />
@@ -80,7 +80,7 @@ export default function HeroSection({ data }: { data: HeroData }) {
 
         <div className="relative z-10 w-full max-w-6xl mx-auto px-5 pt-24 pb-16 md:pt-28 md:pb-24">
           <div className="max-w-2xl">
-            <div className={`inline-flex items-center gap-2 bg-white/10 border border-white/25 text-white text-xs font-bold px-4 py-2 rounded-full mb-4 backdrop-blur-sm ${mounted ? 'hero-chip' : 'opacity-0'}`}>
+            <div className={`inline-flex items-center gap-2 bg-white/10 border border-white/25 text-white text-xs font-bold px-4 py-2 rounded-full mb-4 ${mounted ? 'hero-chip' : 'opacity-0'}`}>
               <span className="green-dot w-2 h-2 rounded-full bg-green-400 inline-block" />
               Accepting New Patients
             </div>
