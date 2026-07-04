@@ -6,9 +6,12 @@ export default function FAQAccordion({ data }: { data: any }) {
   const {
     headline = 'Frequently Asked Questions',
     viewAllText = 'View all FAQs',
-    viewAllHref = '#',
+    viewAllHref: rawHref = '#',
     faqs = [],
   } = data || {};
+
+  // Fallback to /faqs if the CMS value was never updated from the old '#' placeholder
+  const viewAllHref = !rawHref || rawHref === '#' ? '/faqs' : rawHref;
 
   const [open, setOpen] = useState<number | null>(0);
 
