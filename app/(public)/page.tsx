@@ -21,6 +21,7 @@ import HomepageLocations from '@/app/components/homepage/HomepageLocations';
 import CTAStrip from '@/app/components/homepage/CTAStrip';
 import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
 import FAQAccordion from '@/app/components/homepage/FAQAccordion';
+import { FAQSchema } from '@/app/components/SchemaMarkup';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
 import AdSlot from '@/app/components/AdSlot';
 
@@ -273,8 +274,11 @@ export default async function Home() {
     },
   };
 
+  const faqItems: { question: string; answer: string }[] = enriched['faq']?.faqs ?? [];
+
   return (
     <main>
+      <FAQSchema faqs={faqItems} />
       {publicSectionOrder
         .filter((s) => s.visible)
         .map((s) => {

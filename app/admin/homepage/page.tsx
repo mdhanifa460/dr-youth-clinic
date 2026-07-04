@@ -803,6 +803,42 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
               <Plus size={12} /> Add FAQ
             </button>
           </div>
+
+          {/* ── FAQ keyword suggestions ── */}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <p className="text-xs font-bold text-[#0B2560] mb-1">
+              Schema Markup Suggestions
+            </p>
+            <p className="text-[10px] text-gray-500 mb-3 leading-relaxed">
+              Google shows these Q&amp;As directly in search results as rich snippets — click any question to add it, then fill in your answer.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                'What treatments does DR Youth Clinic offer?',
+                'How many sessions will I need?',
+                'Is the treatment painful?',
+                'How much does laser hair removal cost?',
+                'Are treatments safe for all skin types?',
+                'How long do results last?',
+                'Do you offer a free consultation?',
+                'What is the recovery time after treatment?',
+                'Can I book an appointment online?',
+                'Is PRP treatment effective for hair loss?',
+                'What skin conditions do you treat?',
+                'Are your doctors certified dermatologists?',
+              ].filter((q) => !(d.faqs || []).some((f: any) => f.question === q))
+                .map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => addArrItem('faqs', { question: q, answer: '' })}
+                    className="text-[10px] bg-white border border-blue-200 text-[#0B2560] px-2.5 py-1 rounded-full hover:bg-[#0B2560] hover:text-white hover:border-[#0B2560] transition"
+                  >
+                    + {q}
+                  </button>
+                ))}
+            </div>
+          </div>
         </div>
       );
 

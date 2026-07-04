@@ -100,36 +100,25 @@ export function LocalBusinessSchema({ location, city, address, phone, rating, re
   );
 }
 
-export function FAQSchema() {
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export function FAQSchema({ faqs }: { faqs: FAQItem[] }) {
+  if (!faqs || faqs.length === 0) return null;
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "What treatments does DR Youth Clinic offer?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "We offer dermatology, hair treatments, laser treatments, and aesthetic procedures performed by expert dermatologists.",
-        },
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
       },
-      {
-        "@type": "Question",
-        name: "How can I book a consultation?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "You can book online through our website, call us directly, or visit our clinic in person.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Are results guaranteed?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Results vary by individual and treatment. Our doctors will discuss expected outcomes during your consultation.",
-        },
-      },
-    ],
+    })),
   };
 
   return (
