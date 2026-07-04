@@ -4,6 +4,8 @@ import Script from 'next/script';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
 import LpRenderer from '@/app/components/lp/LpRenderer';
+import LpHeader from '@/app/components/lp/LpHeader';
+import LpFooter from '@/app/components/lp/LpFooter';
 import StickyCta from '@/app/components/lp/StickyCta';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
@@ -98,6 +100,13 @@ export default async function LandingPagePublic({ params }: Props) {
       )}
 
       <div className="min-h-screen bg-white">
+        {/* Minimal sticky header — transparent over hero, solid white on scroll */}
+        <LpHeader
+          phone={heroData.phone}
+          whatsapp={heroData.whatsapp}
+          ctaText={heroData.ctaPrimary?.text || 'Book Free Slot'}
+        />
+
         <LpRenderer
           sections={lp.sections ?? []}
           form={lp.form ?? { fields: [], submitText: 'Book Free Consultation', successMessage: "Thank you! We'll call you within 2 hours." }}
@@ -105,6 +114,10 @@ export default async function LandingPagePublic({ params }: Props) {
           variant="A"
         />
 
+        {/* LP footer with brand colors */}
+        <LpFooter phone={heroData.phone} whatsapp={heroData.whatsapp} />
+
+        {/* Mobile sticky bottom bar */}
         <StickyCta
           phone={heroData.phone}
           whatsapp={heroData.whatsapp}

@@ -78,7 +78,7 @@ export default function HeroSection({ data }: { data: HeroData }) {
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-[#F5A623]/[0.08] translate-y-1/3 pointer-events-none" />
         <div className="absolute top-1/2 left-0 w-[260px] h-[260px] rounded-full bg-[#3B82C4]/10 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-5 py-16 md:py-24">
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-5 pt-24 pb-16 md:pt-28 md:pb-24">
           <div className="max-w-2xl">
             <div className={`inline-flex items-center gap-2 bg-white/10 border border-white/25 text-white text-xs font-bold px-4 py-2 rounded-full mb-4 backdrop-blur-sm ${mounted ? 'hero-chip' : 'opacity-0'}`}>
               <span className="green-dot w-2 h-2 rounded-full bg-green-400 inline-block" />
