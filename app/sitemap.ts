@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
+import { Blog } from '@/app/models/Blog';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,18 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   },
   {
     url: `${SITE_URL}/blog`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  },
+  {
+    url: `${SITE_URL}/faqs`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  },
+  {
+    url: `${SITE_URL}/results`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.7,
@@ -94,13 +107,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     await connectDB();
 
-    const services = await Service.find({ status: 'active' } as any)
-      .select('urlSlug location category updatedAt')
-      .lean() as any[];
-
-    // Fetch doctors to expose individual profile pages if needed in future
-    // (imported now so the model is registered and available for later use)
-    void Doctor;
+    const [services, doctors, blogPosts] = await Promise.all([
+      Service.find({ status: 'active' } as any)
+        .select('urlSlug location category updatedAt')
+        .lean() as Promise<any[]>,
+      Doctor.find({ active: true } as any)
+        .select('_id updatedAt')
+        .lean() as Promise<any[]>,
+      Blog.find({ active: true } as any)
+        .select('slug updatedAt')
+        .lean() as Promise<any[]>,
+    ]);
 
     const serviceUrls: MetadataRoute.Sitemap = services
       .filter((s) => s.location && s.category && s.urlSlug)
@@ -111,9 +128,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }));
 
-    return [...STATIC_ROUTES, ...serviceUrls];
+    const doctorUrls: MetadataRoute.Sitemap = doctors.map((d) => ({
+      url: `${SITE_URL}/doctors/${d._id}`,
+      lastModified: d.updatedAt ? new Date(d.updatedAt) : new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    }));
+
+    const blogUrls: MetadataRoute.Sitemap = blogPosts
+      .filter((p) => p.slug)
+      .map((p) => ({
+        url: `${SITE_URL}/blog/${p.slug}`,
+        lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      }));
+
+    return [...STATIC_ROUTES, ...serviceUrls, ...doctorUrls, ...blogUrls];
   } catch {
-    // DB unavailable (e.g. during static generation) — return static routes only
     return STATIC_ROUTES;
   }
 }

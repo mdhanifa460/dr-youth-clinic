@@ -147,7 +147,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
           <Link href="/" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
             Back to Home
           </Link>
-          <Link href="/services" className="inline-flex items-center gap-2 border border-gray-200 text-[#0B2560] px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">
+          <Link href={`/${form.location?.toLowerCase() || 'chennai'}/services`} className="inline-flex items-center gap-2 border border-gray-200 text-[#0B2560] px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">
             Explore Treatments
           </Link>
         </div>

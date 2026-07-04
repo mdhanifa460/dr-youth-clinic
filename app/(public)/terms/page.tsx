@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
   title: 'Terms of Service | DR Youth Clinic',
   description:
     'Terms and conditions governing appointments, treatments, payments and content at DR Youth Clinic — serving Chennai, Bangalore, Kochi and Coimbatore.',
+  alternates: { canonical: `${SITE_URL}/terms` },
 };
 
 const LAST_UPDATED = 'January 2025';

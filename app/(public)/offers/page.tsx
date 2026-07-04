@@ -9,9 +9,11 @@ import { discountPct } from './OfferCard';
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
   title: 'Exclusive Offers & Packages | DR Youth Clinic',
   description: 'Limited-time deals on skin care, hair restoration and laser treatments at DR Youth Clinic. Save up to 50% on premium aesthetic packages across Chennai, Bangalore, Kochi and Coimbatore.',
+  alternates: { canonical: `${SITE_URL}/offers` },
 };
 
 const getOffers = unstable_cache(

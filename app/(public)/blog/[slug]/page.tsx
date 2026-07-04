@@ -35,14 +35,18 @@ async function getRelatedPosts(slug: string, category: string) {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getPost(params.slug);
   if (!post) return { title: 'Post Not Found | DR Youth Clinic' };
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
   return {
     title: `${post.title} | DR Youth Clinic Blog`,
     description: post.excerpt || post.title,
+    alternates: { canonical: `${SITE_URL}/blog/${params.slug}` },
     openGraph: {
       title: post.title,
       description: post.excerpt || '',
       images: post.coverImage?.url ? [post.coverImage.url] : [],
       type: 'article',
+      publishedTime: post.publishedAt,
+      authors: [post.author || 'DR Youth Clinic'],
     },
   };
 }
@@ -64,8 +68,27 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
     ? new Date(post.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt || post.title,
+    image: post.coverImage?.url || '',
+    author: { '@type': 'Person', name: post.author || 'DR Youth Clinic' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'DR Youth Clinic',
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
+    },
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt || post.publishedAt,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/blog/${post.slug}` },
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <ReadingProgress />
 
       <main>

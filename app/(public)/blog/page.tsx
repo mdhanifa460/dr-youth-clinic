@@ -5,9 +5,11 @@ import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
   title: 'Blog & Insights | DR Youth Clinic',
   description: 'Expert skin care, hair restoration and aesthetic medicine tips from the DR Youth Clinic specialist team.',
+  alternates: { canonical: `${SITE_URL}/blog` },
 };
 
 async function getPosts() {

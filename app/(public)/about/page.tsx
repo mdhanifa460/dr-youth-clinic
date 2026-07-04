@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
   title: 'About Us | DR Youth Clinic',
   description:
     'Learn about DR Youth Clinic — South India\'s most trusted aesthetic medicine practice with 15+ years of experience, 50,000+ patients treated across Chennai, Bangalore, Kochi and Coimbatore.',
+  alternates: { canonical: `${SITE_URL}/about` },
 };
 
 const STATS = [
