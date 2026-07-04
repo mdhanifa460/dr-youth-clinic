@@ -24,7 +24,7 @@ updates:
       - dependency-name: react-dom
         update-types: [version-update:semver-major]
 
-  # GitHub Actions — keep workflow actions up to date
+  # GitHub Actions — batch all updates into one PR
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -32,3 +32,7 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
+    open-pull-requests-limit: 1
+    groups:
+      github-actions:
+        patterns: ["*"]
