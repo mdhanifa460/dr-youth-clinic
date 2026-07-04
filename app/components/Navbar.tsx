@@ -117,7 +117,7 @@ export default function Navbar() {
         <nav className="flex items-center gap-4 xl:gap-6">
           {navItems.map((item, i) => {
             const isActive = active === item.id;
-            const dest = (!isHomepage && item.href) ? item.href : `${homeLink}#${item.id}`;
+            const dest = item.href ? item.href : `${homeLink}#${item.id}`;
             return (
               <a
                 key={i}
@@ -208,7 +208,7 @@ export default function Navbar() {
         >
           {navItems.map((item, i) => {
             const isActive = active === item.id;
-            const dest = (!isHomepage && item.href) ? item.href : `${homeLink}#${item.id}`;
+            const dest = item.href ? item.href : `${homeLink}#${item.id}`;
             return (
               <a
                 key={i}
