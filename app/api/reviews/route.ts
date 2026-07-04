@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
     const count = Math.min(Number(searchParams.get('count') || 6), 50);
 
-    const reviews = await Review.find(filter)
+    const reviews = await Review.find(filter as any)
       .sort({ isFeatured: -1, displayOrder: 1, createdAt: -1 })
       .limit(count)
       .lean();

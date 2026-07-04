@@ -13,7 +13,7 @@ export async function POST(
     const body = await req.json();
     const { name, phone, email, fields, variant } = body;
 
-    const lp = await LandingPage.findOne({ slug: params.slug, status: 'published' }).lean() as any;
+    const lp = await (LandingPage as any).findOne({ slug: params.slug, status: 'published' }).lean() as any;
 
     if (!lp) {
       return NextResponse.json(
@@ -42,7 +42,7 @@ export async function POST(
       analyticsUpdate.$inc['abTest.variantB.leads'] = 1;
     }
 
-    await LandingPage.findByIdAndUpdate(lp._id, analyticsUpdate);
+    await (LandingPage as any).findByIdAndUpdate(lp._id, analyticsUpdate);
 
     // WhatsApp notification if configured
     if (lp.form?.whatsappNotify) {

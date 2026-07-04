@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const pages = await LandingPage.find({})
+    const pages = await (LandingPage as any).find({})
       .sort({ createdAt: -1 })
       .select('title slug status template analytics createdAt updatedAt')
       .lean();
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const baseSlug = body.slug ? toSlug(body.slug) : toSlug(body.title || 'landing-page');
     let slug = baseSlug;
     let counter = 1;
-    while (await LandingPage.findOne({ slug }).select('_id').lean()) {
+    while (await (LandingPage as any).findOne({ slug }).select('_id').lean()) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }

@@ -15,7 +15,7 @@ interface Props {
 async function getLP(slug: string) {
   try {
     await connectDB();
-    const lp = await LandingPage.findOne({ slug, status: 'published' }).lean() as any;
+    const lp = await (LandingPage as any).findOne({ slug, status: 'published' }).lean() as any;
     return lp ? JSON.parse(JSON.stringify(lp)) : null;
   } catch {
     return null;

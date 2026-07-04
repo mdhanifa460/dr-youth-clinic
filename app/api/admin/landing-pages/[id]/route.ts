@@ -39,7 +39,7 @@ export async function PUT(
 
     // Prevent slug conflicts when slug changes
     if (body.slug) {
-      const existing = await LandingPage.findOne({
+      const existing = await (LandingPage as any).findOne({
         slug: body.slug,
         _id: { $ne: params.id },
       }).select('_id').lean();

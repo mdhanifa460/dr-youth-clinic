@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 async function getPairs() {
   try {
     await connectDB();
-    const section = await HomepageSection.findOne({ sectionKey: 'before_after' }).lean() as any;
+    const section = await HomepageSection.findOne({ sectionKey: 'before_after' } as any).lean() as any;
     const data = section?.data ?? HOMEPAGE_DEFAULTS.before_after?.data ?? {};
     return {
       pairs: data.pairs ?? [],

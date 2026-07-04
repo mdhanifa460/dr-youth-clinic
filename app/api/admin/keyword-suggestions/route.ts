@@ -114,7 +114,7 @@ export async function POST(req: Request) {
   const cacheKey = makeCacheKey(serviceName, category, location);
 
   // ── 1. Check MongoDB cache first — if hit, zero Gemini cost ──────────────
-  const cached = await KeywordCache.findOne({ cacheKey }).lean() as any;
+  const cached = await KeywordCache.findOne({ cacheKey } as any).lean() as any;
   if (cached) {
     return NextResponse.json({
       success: true,
