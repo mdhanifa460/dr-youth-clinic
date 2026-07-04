@@ -42,6 +42,7 @@ export default function AdminSidebar() {
         {item("/admin/reviews", "⭐ Reviews")}
         {item("/admin/blog", "✍️ Blog Posts")}
         {item("/admin/seo", "🔍 SEO")}
+        {item("/admin/landing-pages", "🚀 Landing Pages", false)}
         {item("/admin/settings", "⚙ Settings", false)}
       </nav>
 

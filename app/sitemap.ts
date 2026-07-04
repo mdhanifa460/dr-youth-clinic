@@ -3,6 +3,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Blog } from '@/app/models/Blog';
+import { LandingPage } from '@/app/models/LandingPage';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,7 +108,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     await connectDB();
 
-    const [services, doctors, blogPosts] = await Promise.all([
+    const [services, doctors, blogPosts, landingPages] = await Promise.all([
       Service.find({ status: 'active' } as any)
         .select('urlSlug location category updatedAt')
         .lean() as Promise<any[]>,
@@ -115,6 +116,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .select('_id updatedAt')
         .lean() as Promise<any[]>,
       Blog.find({ active: true } as any)
+        .select('slug updatedAt')
+        .lean() as Promise<any[]>,
+      LandingPage.find({ status: 'published' } as any)
         .select('slug updatedAt')
         .lean() as Promise<any[]>,
     ]);
@@ -144,7 +148,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }));
 
-    return [...STATIC_ROUTES, ...serviceUrls, ...doctorUrls, ...blogUrls];
+    const landingPageUrls: MetadataRoute.Sitemap = landingPages
+      .filter((lp) => lp.slug)
+      .map((lp) => ({
+        url: `${SITE_URL}/lp/${lp.slug}`,
+        lastModified: lp.updatedAt ? new Date(lp.updatedAt) : new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }));
+
+    return [...STATIC_ROUTES, ...serviceUrls, ...doctorUrls, ...blogUrls, ...landingPageUrls];
   } catch {
     return STATIC_ROUTES;
   }
