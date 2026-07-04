@@ -94,8 +94,36 @@ const SECTION_DEFAULTS: Record<string, any> = {
     headline: 'Frequently Asked Questions',
     items: [{ q: 'Is this treatment safe?', a: 'Yes, all treatments are performed by certified dermatologists.' }],
   },
+  comparison: {
+    headline: 'Why DR Youth Clinic?', badge: 'The Smart Choice',
+    usLabel: 'DR Youth Clinic', othersLabel: 'Other Clinics',
+    rows: [
+      { label: 'Certified Dermatologist', us: true, others: false },
+      { label: 'FDA-Approved Equipment', us: true, others: false },
+      { label: 'Personalised Protocol', us: true, others: false },
+      { label: 'Free Consultation', us: true, others: false },
+      { label: 'Post-Treatment Support', us: true, others: false },
+    ],
+    ctaText: 'Book Free Consultation',
+  },
+  guarantee: {
+    headline: 'Our Promise to You',
+    subtext: 'We stand behind every treatment. Your satisfaction and safety are non-negotiable.',
+    cards: [
+      { icon: '🏆', title: 'Results Guarantee', desc: 'Visible improvement in your first 3 sessions or we re-treat at no cost.' },
+      { icon: '🔬', title: '100% Safe & Sterile', desc: 'FDA-cleared equipment, sterile protocols, internationally trained doctors.' },
+      { icon: '⭐', title: 'Expert Care Only', desc: 'Treated only by certified MD Dermatologists — never trainees.' },
+    ],
+    seals: ['NABH Certified', 'ISO 9001:2015', 'FDA Cleared', 'IADVL Member'],
+  },
   cta: { headline: 'Ready to Transform?', subtext: 'Book your free consultation today.', ctaPrimary: 'Book Free Consultation', phone: '1800 890 9669', whatsapp: '' },
-  form: { headline: 'Book Your Free Consultation', subtext: "Fill in your details and we'll call you within 2 hours." },
+  form: {
+    headline: 'Book Your Free Consultation',
+    subtext: "Fill in your details and we'll call you within 2 hours.",
+    urgencyPoints: ['Expert certified dermatologists only', 'Results visible from first session', 'Zero-cost EMI · flexible payment plans'],
+    slotsLeft: 5,
+    phone: '1800 890 9669',
+  },
 };
 
 const SECTION_LABELS: Record<string, { label: string; icon: string }> = {
@@ -110,6 +138,8 @@ const SECTION_LABELS: Record<string, { label: string; icon: string }> = {
   reviews: { label: 'Patient Reviews', icon: '💬' },
   'offer-banner': { label: 'Offer Banner', icon: '🔥' },
   faq: { label: 'FAQ Accordion', icon: '❓' },
+  comparison: { label: 'Comparison Table', icon: '⚖️' },
+  guarantee: { label: 'Our Guarantee', icon: '🏆' },
   cta: { label: 'CTA Section', icon: '📣' },
   form: { label: 'Lead Form', icon: '📝' },
 };
@@ -586,11 +616,95 @@ function SectionEditor({
         <div className="space-y-4">
           <FieldInput label="Form Headline" value={d.headline} onChange={(v) => set('headline', v)} />
           <FieldInput label="Form Subtext" value={d.subtext} onChange={(v) => set('subtext', v)} type="textarea" />
+          <StringArrayEditor label="Urgency Points (left panel)" items={d.urgencyPoints || []} onChange={(v) => set('urgencyPoints', v)} />
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Slots Left (0 = hidden)" value={d.slotsLeft ?? ''} onChange={(v) => set('slotsLeft', v ? Number(v) : 0)} type="number" />
+            <FieldInput label="Phone (left panel)" value={d.phone} onChange={(v) => set('phone', v)} />
+          </div>
           <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Form fields are configured in the &quot;Form&quot; tab in the sidebar.
           </p>
         </div>
       );
+
+    case 'comparison': {
+      const rows = d.rows || [];
+      return (
+        <div className="space-y-4">
+          <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Badge Text" value={d.badge} onChange={(v) => set('badge', v)} />
+            <FieldInput label="CTA Text" value={d.ctaText} onChange={(v) => set('ctaText', v)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Your Label" value={d.usLabel} onChange={(v) => set('usLabel', v)} />
+            <FieldInput label="Others Label" value={d.othersLabel} onChange={(v) => set('othersLabel', v)} />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Comparison Rows</label>
+              <button type="button" onClick={() => set('rows', [...rows, { label: '', us: true, others: false }])}
+                className="text-[10px] text-[#0B2560] font-bold flex items-center gap-0.5 hover:underline">
+                <Plus size={10} /> Add Row
+              </button>
+            </div>
+            <div className="space-y-2">
+              {rows.map((row: any, i: number) => (
+                <div key={i} className="flex gap-2 items-center bg-gray-50 rounded-xl px-3 py-2">
+                  <input value={row.label || ''} onChange={(e) => { const n=[...rows]; n[i]={...n[i],label:e.target.value}; set('rows',n); }}
+                    placeholder="Feature label" className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none" />
+                  <label className="flex items-center gap-1 text-[10px] font-semibold text-green-700">
+                    <input type="checkbox" checked={row.us !== false} onChange={(e) => { const n=[...rows]; n[i]={...n[i],us:e.target.checked}; set('rows',n); }} className="rounded" />Us
+                  </label>
+                  <label className="flex items-center gap-1 text-[10px] font-semibold text-gray-500">
+                    <input type="checkbox" checked={!!row.others} onChange={(e) => { const n=[...rows]; n[i]={...n[i],others:e.target.checked}; set('rows',n); }} className="rounded" />Others
+                  </label>
+                  <button type="button" onClick={() => set('rows', rows.filter((_: any, idx: number) => idx !== i))} className="text-gray-300 hover:text-red-500"><X size={12} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case 'guarantee': {
+      const cards = d.cards || [];
+      return (
+        <div className="space-y-4">
+          <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtext" value={d.subtext} onChange={(v) => set('subtext', v)} type="textarea" />
+          <StringArrayEditor label="Trust Seals" items={d.seals || []} onChange={(v) => set('seals', v)} />
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Guarantee Cards</label>
+              <button type="button" onClick={() => set('cards', [...cards, { icon: '✓', title: '', desc: '' }])}
+                className="text-[10px] text-[#0B2560] font-bold flex items-center gap-0.5 hover:underline">
+                <Plus size={10} /> Add
+              </button>
+            </div>
+            <div className="space-y-3">
+              {cards.map((card: any, i: number) => (
+                <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-gray-500">Card {i + 1}</span>
+                    <button type="button" onClick={() => set('cards', cards.filter((_: any, idx: number) => idx !== i))} className="text-gray-300 hover:text-red-500"><X size={12} /></button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input value={card.icon || ''} onChange={(e) => { const n=[...cards]; n[i]={...n[i],icon:e.target.value}; set('cards',n); }}
+                      placeholder="Emoji" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                    <input value={card.title || ''} onChange={(e) => { const n=[...cards]; n[i]={...n[i],title:e.target.value}; set('cards',n); }}
+                      placeholder="Title" className="col-span-2 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                  </div>
+                  <textarea value={card.desc || ''} onChange={(e) => { const n=[...cards]; n[i]={...n[i],desc:e.target.value}; set('cards',n); }}
+                    placeholder="Description" rows={2} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none resize-none" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     default:
       return (
@@ -602,7 +716,7 @@ function SectionEditor({
 // ─── Section card ─────────────────────────────────────────────────────────────
 
 function SectionCard({
-  section, index, total, onToggleVisible, onMoveUp, onMoveDown, onDelete, onDataChange, openGallery,
+  section, index, total, onToggleVisible, onMoveUp, onMoveDown, onDelete, onDuplicate, onDataChange, openGallery,
 }: {
   section: Section;
   index: number;
@@ -611,6 +725,7 @@ function SectionCard({
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   onDataChange: (data: Record<string, any>) => void;
   openGallery: (cb: (url: string) => void) => void;
 }) {
@@ -640,6 +755,10 @@ function SectionCard({
             <button onClick={onMoveDown} disabled={index === total - 1}
               className="p-1.5 text-gray-400 hover:text-[#0B2560] hover:bg-gray-100 rounded-lg transition disabled:opacity-30">
               <ChevronDown size={14} />
+            </button>
+            <button onClick={onDuplicate} title="Duplicate section"
+              className="p-1.5 text-gray-400 hover:text-[#3B82C4] hover:bg-[#3B82C4]/10 rounded-lg transition text-xs">
+              ⧉
             </button>
             <button onClick={() => setExpanded((e) => !e)}
               className={`p-1.5 rounded-lg transition text-xs font-semibold px-2.5 ${expanded ? 'bg-[#0B2560] text-white' : 'text-[#0B2560] hover:bg-[#0B2560]/10'}`}>
@@ -932,6 +1051,16 @@ export default function LandingPageBuilder() {
     updateLp((prev) => ({ ...prev, sections: prev.sections.filter((_, i) => i !== idx) }));
   };
 
+  const duplicateSection = (idx: number) => {
+    updateLp((prev) => {
+      const sections = [...prev.sections];
+      const src = sections[idx];
+      const copy = { ...src, id: `${src.type}-${Date.now()}`, data: { ...src.data } };
+      sections.splice(idx + 1, 0, copy);
+      return { ...prev, sections };
+    });
+  };
+
   const moveSection = (idx: number, dir: -1 | 1) => {
     updateLp((prev) => {
       const sections = [...prev.sections];
@@ -1006,13 +1135,11 @@ export default function LandingPageBuilder() {
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Save failed' : '.'}
           </span>
 
-          {lp.status === 'published' && (
-            <a href={`/lp/${lp.slug}`} target="_blank" rel="noopener noreferrer">
-              <button className="flex items-center gap-1.5 text-xs font-semibold text-[#3B82C4] hover:underline">
-                <ExternalLink size={13} /> Preview
-              </button>
-            </a>
-          )}
+          <a href={`/lp/${lp.slug}`} target="_blank" rel="noopener noreferrer">
+            <button className="flex items-center gap-1.5 text-xs font-semibold text-[#3B82C4] hover:underline">
+              <ExternalLink size={13} /> {lp.status === 'published' ? 'View Live' : 'Preview'}
+            </button>
+          </a>
 
           <button onClick={togglePublish} disabled={saving}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm disabled:opacity-60 ${
@@ -1186,6 +1313,7 @@ export default function LandingPageBuilder() {
                 onMoveUp={() => moveSection(idx, -1)}
                 onMoveDown={() => moveSection(idx, 1)}
                 onDelete={() => deleteSection(idx)}
+                onDuplicate={() => duplicateSection(idx)}
                 onDataChange={(data) => updateSectionData(idx, data)}
                 openGallery={openGallery}
               />

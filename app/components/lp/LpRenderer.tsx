@@ -13,6 +13,8 @@ import OfferBannerSection from './sections/OfferBannerSection';
 import FaqSection from './sections/FaqSection';
 import CtaSection from './sections/CtaSection';
 import FormSection from './sections/FormSection';
+import ComparisonSection from './sections/ComparisonSection';
+import GuaranteeSection from './sections/GuaranteeSection';
 
 interface LpSection {
   id: string;
@@ -68,6 +70,10 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
       return <OfferBannerSection key={section.id} data={section.data} />;
     case 'faq':
       return <FaqSection key={section.id} data={section.data} />;
+    case 'comparison':
+      return <ComparisonSection key={section.id} data={section.data} />;
+    case 'guarantee':
+      return <GuaranteeSection key={section.id} data={section.data} />;
     case 'cta':
       return <CtaSection key={section.id} data={section.data} />;
     case 'form':

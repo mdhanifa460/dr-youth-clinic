@@ -16,8 +16,16 @@ interface ProcessData {
 
 const STEP_ICONS = [Stethoscope, ClipboardList, Zap, Star] as const;
 
+const DEFAULT_STEPS: ProcessStep[] = [
+  { number: 1, title: 'Free Consultation', description: 'Book your slot and get a personalised skin analysis at zero cost.' },
+  { number: 2, title: 'Treatment Plan', description: 'Receive a customised protocol designed for your specific concern.' },
+  { number: 3, title: 'Expert Treatment', description: 'All treatments performed by certified dermatologists only.' },
+  { number: 4, title: 'See Results', description: 'Visible improvement within the first few sessions, guaranteed.' },
+];
+
 export default function ProcessSection({ data }: { data: ProcessData }) {
   const { headline = 'Your Treatment Journey', steps = [] } = data;
+  const stepsToShow = steps.length ? steps : DEFAULT_STEPS;
   const sectionRef = useRef<HTMLElement>(null);
   const [started, setStarted] = useState(false);
 
@@ -31,8 +39,6 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-
-  if (!steps.length) return null;
 
   return (
     <>
@@ -53,7 +59,6 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
           {/* Desktop: horizontal steps with animated line */}
           <div className="hidden md:block">
             <div className="relative">
-              {/* Animated connector line */}
               <div className="absolute top-10 left-16 right-16 h-0.5 bg-gray-100 overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#F5A623] to-[#3B82C4] transition-all duration-[1500ms] ease-out"
@@ -63,9 +68,9 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
 
               <div
                 className="grid gap-4"
-                style={{ gridTemplateColumns: `repeat(${Math.min(steps.length, 4)}, 1fr)` }}
+                style={{ gridTemplateColumns: `repeat(${Math.min(stepsToShow.length, 4)}, 1fr)` }}
               >
-                {steps.map((step, i) => {
+                {stepsToShow.map((step, i) => {
                   const Icon = STEP_ICONS[i % STEP_ICONS.length];
                   return (
                     <div
@@ -95,7 +100,7 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
 
           {/* Mobile: vertical timeline */}
           <div className="md:hidden space-y-0">
-            {steps.map((step, i) => {
+            {stepsToShow.map((step, i) => {
               const Icon = STEP_ICONS[i % STEP_ICONS.length];
               return (
                 <div key={i} className="flex gap-4 items-start">
@@ -106,7 +111,7 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
                     >
                       <Icon className="text-white" size={18} />
                     </div>
-                    {i < steps.length - 1 && (
+                    {i < stepsToShow.length - 1 && (
                       <div className="w-0.5 flex-1 bg-gradient-to-b from-[#F5A623] to-[#3B82C4] mt-2 mb-2 min-h-8" />
                     )}
                   </div>
