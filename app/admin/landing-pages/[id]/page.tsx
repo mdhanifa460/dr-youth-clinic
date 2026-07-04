@@ -1005,9 +1005,12 @@ export default function LandingPageBuilder() {
     setSaveStatus('saving');
     saveTimer.current = setTimeout(async () => {
       try {
+        // Never let auto-save touch `status` — only togglePublish does that.
+        // Prevents a race where stale React state reverts a published LP to draft.
+        const { status: _omit, ...safePayload } = updated;
         const res = await fetch(`/api/admin/landing-pages/${id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated),
+          body: JSON.stringify(safePayload),
         });
         const data = await res.json();
         if (data.success) { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), 2000); }
