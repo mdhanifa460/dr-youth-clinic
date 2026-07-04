@@ -14,6 +14,134 @@ interface Section {
   data: Record<string, any>;
 }
 
+// ─── Dynamic FAQ keyword suggestions ──────────────────────
+const STATIC_FAQ_SUGGESTIONS: Record<string, string[]> = {
+  General: [
+    'What treatments does DR Youth Clinic offer?',
+    'Are your doctors certified dermatologists?',
+    'Do you offer a free consultation?',
+    'Can I book an appointment online?',
+    'How do I choose the right treatment for me?',
+  ],
+  'Skin Treatments': [
+    'What skin conditions do you treat?',
+    'How many sessions of HydraFacial do I need?',
+    'Is chemical peel safe for sensitive skin?',
+    'What is the best treatment for pigmentation?',
+    'How long does acne scar treatment take?',
+  ],
+  'Hair Treatments': [
+    'Is PRP treatment effective for hair loss?',
+    'How many sessions of GFC therapy do I need?',
+    'What causes hair loss in women?',
+    'Is hair transplant permanent?',
+    'What is the difference between PRP and GFC?',
+  ],
+  Laser: [
+    'How many laser hair removal sessions will I need?',
+    'Is laser treatment safe for dark skin?',
+    'Does laser hair removal hurt?',
+    'What areas can be treated with laser?',
+    'How long do laser hair removal results last?',
+  ],
+  'Pricing & EMI': [
+    'How much does laser hair removal cost?',
+    'Do you offer EMI or instalment payment options?',
+    'Are treatment prices all-inclusive?',
+    'Does insurance cover skin treatments?',
+  ],
+  Safety: [
+    'Are treatments safe for all skin types?',
+    'Is the treatment painful?',
+    'What is the recovery time after treatment?',
+    'How long do results last?',
+    'Are there any side effects?',
+  ],
+};
+
+function FAQSuggestions({
+  existing,
+  onAdd,
+}: {
+  existing: { question: string }[];
+  onAdd: (question: string) => void;
+}) {
+  const [services, setServices] = useState<{ name: string; category: string }[]>([]);
+  const [activeTab, setActiveTab] = useState('General');
+
+  useEffect(() => {
+    fetch('/api/admin/services?limit=50')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setServices(data.data.map((s: any) => ({ name: s.name, category: s.category })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const existingQuestions = new Set(existing.map((f) => f.question));
+
+  // Build service-specific suggestions
+  const serviceQuestions: string[] = services.flatMap((svc) => [
+    `How many sessions does ${svc.name} require?`,
+    `Is ${svc.name} safe for sensitive skin?`,
+    `How long do results from ${svc.name} last?`,
+  ]);
+
+  const allSuggestions: Record<string, string[]> = {
+    ...STATIC_FAQ_SUGGESTIONS,
+    ...(serviceQuestions.length > 0 ? { 'By Treatment': serviceQuestions } : {}),
+  };
+
+  const tabs = Object.keys(allSuggestions);
+  const current = allSuggestions[activeTab] ?? [];
+  const available = current.filter((q) => !existingQuestions.has(q));
+
+  return (
+    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+      <p className="text-xs font-bold text-[#0B2560] mb-0.5">Schema Markup Suggestions</p>
+      <p className="text-[10px] text-gray-500 mb-3 leading-relaxed">
+        Google shows these Q&amp;As as rich snippets in search results. Click any question to add it, then fill in your answer.
+      </p>
+      {/* Category tabs */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`text-[10px] px-2.5 py-1 rounded-full font-semibold transition ${
+              activeTab === tab
+                ? 'bg-[#0B2560] text-white'
+                : 'bg-white border border-blue-200 text-[#0B2560] hover:bg-blue-100'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      {/* Question chips */}
+      {available.length === 0 ? (
+        <p className="text-[10px] text-gray-400 italic">All suggestions in this category already added.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {available.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => onAdd(q)}
+              className="text-[10px] bg-white border border-blue-200 text-[#0B2560] px-2.5 py-1 rounded-full hover:bg-[#0B2560] hover:text-white hover:border-[#0B2560] transition text-left"
+            >
+              + {q}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Tiny image upload widget ─────────────────────────────
 function ImgField({
   label,
@@ -804,41 +932,11 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
             </button>
           </div>
 
-          {/* ── FAQ keyword suggestions ── */}
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-            <p className="text-xs font-bold text-[#0B2560] mb-1">
-              Schema Markup Suggestions
-            </p>
-            <p className="text-[10px] text-gray-500 mb-3 leading-relaxed">
-              Google shows these Q&amp;As directly in search results as rich snippets — click any question to add it, then fill in your answer.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                'What treatments does DR Youth Clinic offer?',
-                'How many sessions will I need?',
-                'Is the treatment painful?',
-                'How much does laser hair removal cost?',
-                'Are treatments safe for all skin types?',
-                'How long do results last?',
-                'Do you offer a free consultation?',
-                'What is the recovery time after treatment?',
-                'Can I book an appointment online?',
-                'Is PRP treatment effective for hair loss?',
-                'What skin conditions do you treat?',
-                'Are your doctors certified dermatologists?',
-              ].filter((q) => !(d.faqs || []).some((f: any) => f.question === q))
-                .map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => addArrItem('faqs', { question: q, answer: '' })}
-                    className="text-[10px] bg-white border border-blue-200 text-[#0B2560] px-2.5 py-1 rounded-full hover:bg-[#0B2560] hover:text-white hover:border-[#0B2560] transition"
-                  >
-                    + {q}
-                  </button>
-                ))}
-            </div>
-          </div>
+          {/* ── FAQ keyword suggestions (dynamic) ── */}
+          <FAQSuggestions
+            existing={d.faqs || []}
+            onAdd={(q) => addArrItem('faqs', { question: q, answer: '' })}
+          />
         </div>
       );
 

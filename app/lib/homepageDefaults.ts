@@ -283,7 +283,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     data: {
       headline: 'Frequently Asked Questions',
       viewAllText: 'View all FAQs',
-      viewAllHref: '#',
+      viewAllHref: '/faqs',
       faqs: [
         {
           question: 'What causes hair loss?',
