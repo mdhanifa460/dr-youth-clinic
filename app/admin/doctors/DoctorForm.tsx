@@ -47,11 +47,16 @@ export default function DoctorForm({
   const toggleLocation = (loc: string) => {
     setForm((f) => {
       const locs: string[] = f.locations || [];
-      if (loc === 'all') return { ...f, locations: ['all'] };
+      if (loc === 'all') {
+        // Toggle All Clinics on/off — when turned off, individual ones become selectable
+        return { ...f, locations: locs.includes('all') ? [] : ['all'] };
+      }
       const filtered = locs.filter((l) => l !== 'all');
       return {
         ...f,
-        locations: filtered.includes(loc) ? filtered.filter((l) => l !== loc) : [...filtered, loc],
+        locations: filtered.includes(loc)
+          ? filtered.filter((l) => l !== loc)
+          : [...filtered, loc],
       };
     });
   };
@@ -213,7 +218,7 @@ export default function DoctorForm({
             })}
           </div>
           <p className="text-[10px] text-gray-400 mt-1.5">
-            "All Clinics" overrides individual selections. Uncheck to assign specific clinics.
+            Uncheck "All Clinics" first, then select specific branches.
           </p>
         </div>
 
