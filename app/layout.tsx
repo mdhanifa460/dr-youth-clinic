@@ -7,6 +7,7 @@ import { getAnalyticsConfig } from "@/app/lib/analyticsConfig";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL || 'https://dr-youth-clinic.vercel.app'),
   title: {
     default: "DR Youth Clinic - Dermatology & Skin Treatment",
     template: "%s | DR Youth Clinic",
