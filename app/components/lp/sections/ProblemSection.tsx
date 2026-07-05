@@ -1,56 +1,86 @@
-const PROBLEM_ICONS = ['😔', '😞', '😟', '😣', '😩', '😰', '🤕', '💔', '😢', '😱'];
+'use client';
+
+import { motion } from 'framer-motion';
+import { TrendingDown, Scissors, Waves, Sprout } from 'lucide-react';
+
+type ProblemInput = string | { icon?: string; title?: string; desc?: string };
 
 interface ProblemData {
   headline?: string;
-  problems?: string[];
+  subtitle?: string;
+  problems?: ProblemInput[];
 }
 
-export default function ProblemSection({ data }: { data: ProblemData }) {
-  const { headline = 'Are You Experiencing Any of These?', problems = [] } = data;
+const ICONS = [TrendingDown, Scissors, Waves, Sprout] as const;
 
-  if (!problems.length) return null;
+const DEFAULT_DESCRIPTIONS: Record<string, string> = {
+  'hair fall': 'Excessive daily hair shedding that leaves you worried about thinning.',
+  'thinning hair': 'Gradually reducing hair density and visible scalp show-through.',
+  'receding hairline': 'A hairline moving backward, reshaping your forehead over time.',
+  'post hair transplant': 'Support and strengthen growth after a transplant procedure.',
+};
+
+function normalize(p: ProblemInput, i: number): { icon: string | null; title: string; desc: string } {
+  if (typeof p === 'string') {
+    return { icon: null, title: p, desc: DEFAULT_DESCRIPTIONS[p.toLowerCase()] || 'Our PRP protocol is designed to address this concern effectively.' };
+  }
+  return {
+    icon: p.icon || null,
+    title: p.title || '',
+    desc: p.desc || DEFAULT_DESCRIPTIONS[(p.title || '').toLowerCase()] || 'Our PRP protocol is designed to address this concern effectively.',
+  };
+}
+
+const DEFAULT_PROBLEMS: ProblemInput[] = ['Hair Fall', 'Thinning Hair', 'Receding Hairline', 'Post Hair Transplant'];
+
+export default function ProblemSection({ data }: { data: ProblemData }) {
+  const {
+    headline = 'Who is PRP Treatment for?',
+    subtitle = 'PRP therapy is ideal for anyone experiencing early to moderate hair loss.',
+    problems = DEFAULT_PROBLEMS,
+  } = data;
+
+  const cards = (problems.length ? problems : DEFAULT_PROBLEMS).map(normalize);
 
   return (
-    <section className="py-14 md:py-20 bg-gradient-to-br from-[#0B2560] to-[#1a3a7a] relative overflow-hidden">
-      {/* Dot pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.04]"
-        style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '28px 28px' }}
-      />
+    <section className="bg-white py-14 md:py-20">
+      <div className="max-w-5xl mx-auto px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">Is This You?</p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
+        </motion.div>
 
-      <div className="relative max-w-4xl mx-auto px-5">
-        <div className="text-center mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Recognise These?</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-white">{headline}</h2>
-          <p className="text-white/55 mt-3 text-sm">
-            You&rsquo;re not alone — thousands of our patients felt the same way
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {problems.map((problem, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 bg-white/10 border border-white/20 backdrop-blur-sm rounded-2xl px-4 py-3.5 hover:bg-white/15 transition-colors"
-            >
-              <span className="text-xl shrink-0">{PROBLEM_ICONS[i % PROBLEM_ICONS.length]}</span>
-              <span className="text-sm font-semibold text-white leading-snug">{problem}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-10 bg-white/10 border border-white/20 backdrop-blur-sm rounded-3xl p-6 md:p-8 text-center">
-          <p className="text-xl md:text-2xl font-bold text-white mb-2">
-            You&rsquo;re not alone.
-          </p>
-          <p className="text-white/65 text-sm max-w-lg mx-auto leading-relaxed">
-            Over 25,000 patients have trusted DR Youth Clinic to solve these exact problems.
-            Our expert team will find the right solution for you.
-          </p>
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <span className="text-[#F5A623] text-lg">★★★★★</span>
-            <span className="text-white text-sm font-semibold">4.9/5 · 25,000+ patients helped</span>
-          </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+          {cards.map((card, i) => {
+            const Icon = ICONS[i % ICONS.length];
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.5, delay: i * 0.1, ease: 'easeOut' }}
+                className="group bg-[#f6faff] border border-gray-100 rounded-2xl p-5 md:p-6 hover:border-[#F5A623] hover:shadow-lg transition-all duration-300"
+              >
+                <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 group-hover:bg-[#F5A623] group-hover:border-[#F5A623] flex items-center justify-center mb-4 transition-colors duration-300">
+                  {card.icon ? (
+                    <span className="text-xl">{card.icon}</span>
+                  ) : (
+                    <Icon size={22} className="text-[#3B82C4] group-hover:text-white transition-colors duration-300" />
+                  )}
+                </div>
+                <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{card.title}</h3>
+                <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{card.desc}</p>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

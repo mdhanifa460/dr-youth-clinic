@@ -15,6 +15,8 @@ import CtaSection from './sections/CtaSection';
 import FormSection from './sections/FormSection';
 import ComparisonSection from './sections/ComparisonSection';
 import GuaranteeSection from './sections/GuaranteeSection';
+import HairTimelineSection from './sections/HairTimelineSection';
+import LocationSection from './sections/LocationSection';
 
 interface LpSection {
   id: string;
@@ -49,7 +51,7 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
 
   switch (section.type) {
     case 'hero':
-      return <HeroSection key={section.id} data={section.data} />;
+      return <HeroSection key={section.id} data={section.data} slug={slug} />;
     case 'trust-bar':
       return <TrustBarSection key={section.id} data={section.data} />;
     case 'problem':
@@ -66,6 +68,10 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
       return <DoctorSection key={section.id} data={section.data} />;
     case 'reviews':
       return <ReviewsSection key={section.id} data={section.data} />;
+    case 'hair-timeline':
+      return <HairTimelineSection key={section.id} data={section.data} />;
+    case 'location':
+      return <LocationSection key={section.id} data={section.data} />;
     case 'offer-banner':
       return <OfferBannerSection key={section.id} data={section.data} />;
     case 'faq':

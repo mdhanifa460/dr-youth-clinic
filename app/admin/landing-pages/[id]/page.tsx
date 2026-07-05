@@ -85,6 +85,21 @@ const SECTION_DEFAULTS: Record<string, any> = {
     experience: '15 Years', bio: 'Expert dermatologist.', specialties: ['Skin', 'Hair', 'Laser'],
   },
   reviews: { headline: 'What Our Patients Say', reviews: [] },
+  'hair-timeline': {
+    headline: 'What to Expect After PRP Treatment',
+    milestones: [
+      { period: 'Week 1', title: 'Shedding Slows', desc: 'Hair fall reduces significantly after first session' },
+      { period: 'Month 1', title: 'New Growth Begins', desc: 'Fine new hair strands start appearing' },
+      { period: 'Month 3', title: 'Visible Improvement', desc: 'Noticeable density and thickness increase' },
+      { period: 'Month 6', title: 'Full Results', desc: 'Complete hair restoration with natural appearance' },
+    ],
+  },
+  location: {
+    headline: 'Trusted by Patients Across Chennai',
+    city: 'Chennai',
+    branches: ['Anna Nagar', 'T. Nagar', 'OMR', 'Velachery'],
+    image: '',
+  },
   'offer-banner': {
     badge: '🔥 Limited Time', headline: 'Book Your Free Consultation Today',
     subtext: 'Only 10 slots remaining this week', expiry: '', emiAvailable: true,
@@ -136,6 +151,8 @@ const SECTION_LABELS: Record<string, { label: string; icon: string }> = {
   process: { label: 'Process Timeline', icon: '📋' },
   doctor: { label: 'Doctor Profile', icon: '👨‍⚕️' },
   reviews: { label: 'Patient Reviews', icon: '💬' },
+  'hair-timeline': { label: 'Hair Growth Timeline', icon: '📈' },
+  location: { label: 'Branch Locations', icon: '📍' },
   'offer-banner': { label: 'Offer Banner', icon: '🔥' },
   faq: { label: 'FAQ Accordion', icon: '❓' },
   comparison: { label: 'Comparison Table', icon: '⚖️' },
@@ -289,9 +306,30 @@ function SectionEditor({
     case 'hero':
       return (
         <div className="space-y-4">
-          <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} placeholder="Main headline" />
-          <FieldInput label="Sub-headline" value={d.subheadline} onChange={(v) => set('subheadline', v)} type="textarea" placeholder="Supporting text" />
-          <FieldInput label="Badge text" value={d.badge} onChange={(v) => set('badge', v)} placeholder="e.g. 🎯 Special Offer" />
+          <FieldInput label="Badge text" value={d.badge} onChange={(v) => set('badge', v)} placeholder="e.g. Advanced Hair Restoration" />
+          <FieldInput label="Headline (plain part)" value={d.headline} onChange={(v) => set('headline', v)} placeholder="Main headline text" />
+          <FieldInput label="Headline Accent (gold)" value={d.headlineAccent} onChange={(v) => set('headlineAccent', v)} placeholder="e.g. PRP Treatment" />
+          <FieldInput label="Description" value={d.description || d.subheadline} onChange={(v) => set('description', v)} type="textarea" placeholder="Supporting paragraph" />
+          <StringArrayEditor label="Feature Checkmarks" items={d.features || []} onChange={(v) => set('features', v)} />
+          <div className="grid grid-cols-3 gap-3">
+            <FieldInput label="Patient Count" value={d.patientCount} onChange={(v) => set('patientCount', v)} placeholder="25,000+" />
+            <FieldInput label="Rating" value={d.rating} onChange={(v) => set('rating', v)} placeholder="4.9" />
+            <FieldInput label="Years Experience" value={d.yearsExperience} onChange={(v) => set('yearsExperience', v)} placeholder="20+" />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div
+              onClick={() => set('showInlineForm', !d.showInlineForm)}
+              className="rounded-full transition-colors shrink-0"
+              style={{ width: '40px', height: '22px', background: d.showInlineForm !== false ? '#0B2560' : '#d1d5db' }}
+            >
+              <div
+                className="bg-white rounded-full shadow transition-transform"
+                style={{ width: '18px', height: '18px', margin: '2px', transform: d.showInlineForm !== false ? 'translateX(18px)' : 'translateX(0)' }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-gray-600">Show inline booking form</span>
+          </label>
+          <StringArrayEditor label="Concern Dropdown Options" items={d.concern_options || []} onChange={(v) => set('concern_options', v)} />
           <div className="grid grid-cols-2 gap-3">
             <FieldInput label="CTA Button Text" value={d.ctaPrimary?.text} onChange={(v) => set('ctaPrimary', { ...d.ctaPrimary, text: v })} />
             <FieldInput label="CTA Link" value={d.ctaPrimary?.href} onChange={(v) => set('ctaPrimary', { ...d.ctaPrimary, href: v })} />
@@ -309,15 +347,48 @@ function SectionEditor({
         </div>
       );
 
-    case 'trust-bar':
+    case 'trust-bar': {
+      const stats = d.stats || [];
+      const ICON_OPTIONS = ['users', 'clock', 'activity', 'star', 'stethoscope'];
       return (
-        <div className="grid grid-cols-2 gap-4">
-          <FieldInput label="Rating (e.g. 4.9)" value={d.rating} onChange={(v) => set('rating', v)} type="number" />
-          <FieldInput label="Patients (e.g. 25,000+)" value={d.patients} onChange={(v) => set('patients', v)} />
-          <FieldInput label="Years (e.g. 20+)" value={d.years} onChange={(v) => set('years', v)} />
-          <FieldInput label="Google Rating" value={d.googleRating} onChange={(v) => set('googleRating', v)} />
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Stats</label>
+              <button type="button" onClick={() => set('stats', [...stats, { icon: 'star', value: '', label: '' }])}
+                className="text-[10px] text-[#0B2560] font-bold flex items-center gap-0.5 hover:underline">
+                <Plus size={10} /> Add
+              </button>
+            </div>
+            <div className="space-y-3">
+              {stats.map((stat: any, i: number) => (
+                <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">Stat {i + 1}</span>
+                    <button type="button" onClick={() => set('stats', stats.filter((_: any, idx: number) => idx !== i))}
+                      className="text-gray-300 hover:text-red-500"><X size={13} /></button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <select value={stat.icon || 'star'}
+                      onChange={(e) => { const n=[...stats]; n[i]={...n[i],icon:e.target.value}; set('stats',n); }}
+                      className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none">
+                      {ICON_OPTIONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                    </select>
+                    <input value={stat.value || ''} onChange={(e) => { const n=[...stats]; n[i]={...n[i],value:e.target.value}; set('stats',n); }}
+                      placeholder="Value" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none" />
+                    <input value={stat.label || ''} onChange={(e) => { const n=[...stats]; n[i]={...n[i],label:e.target.value}; set('stats',n); }}
+                      placeholder="Label" className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+            Icons: users, clock, activity, star, stethoscope
+          </p>
         </div>
       );
+    }
 
     case 'problem':
       return (
@@ -602,12 +673,13 @@ function SectionEditor({
       return (
         <div className="space-y-4">
           <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
-          <FieldInput label="Subtext" value={d.subtext} onChange={(v) => set('subtext', v)} />
+          <FieldInput label="Subtext" value={d.subtext} onChange={(v) => set('subtext', v)} type="textarea" />
           <FieldInput label="CTA Button Text" value={d.ctaPrimary} onChange={(v) => set('ctaPrimary', v)} />
           <div className="grid grid-cols-2 gap-3">
             <FieldInput label="Phone" value={d.phone} onChange={(v) => set('phone', v)} />
             <FieldInput label="WhatsApp" value={d.whatsapp} onChange={(v) => set('whatsapp', v)} placeholder="91XXXXXXXXXX" />
           </div>
+          <StringArrayEditor label="Trust Badges" items={d.badges || []} onChange={(v) => set('badges', v)} />
         </div>
       );
 
@@ -705,6 +777,59 @@ function SectionEditor({
         </div>
       );
     }
+
+    case 'hair-timeline': {
+      const milestones = d.milestones || [];
+      return (
+        <div className="space-y-4">
+          <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} placeholder="Your hair growth journey, week by week." />
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Milestones</label>
+              <button type="button" onClick={() => set('milestones', [...milestones, { period: '', title: '', desc: '' }])}
+                className="text-[10px] text-[#0B2560] font-bold flex items-center gap-0.5 hover:underline">
+                <Plus size={10} /> Add
+              </button>
+            </div>
+            <div className="space-y-3">
+              {milestones.map((m: any, i: number) => (
+                <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">Milestone {i + 1}</span>
+                    <button type="button" onClick={() => set('milestones', milestones.filter((_: any, idx: number) => idx !== i))}
+                      className="text-gray-300 hover:text-red-500"><X size={13} /></button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input value={m.period || ''} onChange={(e) => { const n=[...milestones]; n[i]={...n[i],period:e.target.value}; set('milestones',n); }}
+                      placeholder="Period" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                    <input value={m.title || ''} onChange={(e) => { const n=[...milestones]; n[i]={...n[i],title:e.target.value}; set('milestones',n); }}
+                      placeholder="Title" className="col-span-2 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                  </div>
+                  <input value={m.desc || ''} onChange={(e) => { const n=[...milestones]; n[i]={...n[i],desc:e.target.value}; set('milestones',n); }}
+                    placeholder="Description" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case 'location':
+      return (
+        <div className="space-y-4">
+          <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="City" value={d.city} onChange={(v) => set('city', v)} placeholder="e.g. Chennai" />
+          <StringArrayEditor label="Branches" items={d.branches || []} onChange={(v) => set('branches', v)} />
+          <ImagePicker
+            label="Clinic Interior Image"
+            value={d.image || ''}
+            onChange={(v) => set('image', v)}
+            openGallery={openGallery}
+          />
+        </div>
+      );
 
     default:
       return (

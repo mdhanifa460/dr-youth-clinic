@@ -1,5 +1,8 @@
 'use client';
 
+import { motion } from 'framer-motion';
+import { CheckCircle, Quote, CalendarCheck } from 'lucide-react';
+
 interface DoctorData {
   photo?: string;
   name?: string;
@@ -7,6 +10,8 @@ interface DoctorData {
   experience?: string;
   bio?: string;
   specialties?: string[];
+  achievements?: string[];
+  quote?: string;
 }
 
 export default function DoctorSection({ data }: { data: DoctorData }) {
@@ -14,116 +19,159 @@ export default function DoctorSection({ data }: { data: DoctorData }) {
     photo,
     name = 'Dr. Expert',
     qualification = 'MBBS, MD Dermatology',
-    experience = '15 Years',
-    bio = 'Expert dermatologist specialising in skin and hair treatments.',
-    specialties = [],
+    experience = '20 Years',
+    bio = 'Expert dermatologist specialising in advanced hair restoration.',
+    achievements,
+    quote,
   } = data;
 
-  const credentials = qualification.split(',').map((q) => q.trim()).filter(Boolean);
+  const bullets =
+    achievements && achievements.length
+      ? achievements
+      : [`${experience} Experience`, 'Expert in Hair Restoration', '5000+ Successful Treatments'];
+
+  const testimonial =
+    quote || 'PRP therapy is a breakthrough in natural hair restoration — safe, effective, and completely non-surgical.';
+
+  const shortName = name.split(' ').slice(0, 2).join(' ');
+
+  const rightItem = {
+    hidden: { opacity: 0, y: 16 },
+    show: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, delay: i * 0.1, ease: 'easeOut' as const },
+    }),
+  };
 
   return (
-    <section className="bg-[#0B2560] py-14 md:py-24 relative overflow-hidden">
-      {/* Subtle gradient accents */}
+    <section className="bg-[#0B2560] py-14 md:py-20 relative overflow-hidden">
       <div
         className="absolute inset-0 opacity-10 pointer-events-none"
         style={{
           backgroundImage:
-            'radial-gradient(ellipse at 20% 50%, #F5A623 0, transparent 45%), radial-gradient(ellipse at 80% 50%, #3B82C4 0, transparent 45%)',
+            'radial-gradient(ellipse at 15% 50%, #F5A623 0, transparent 45%), radial-gradient(ellipse at 85% 50%, #3B82C4 0, transparent 45%)',
         }}
       />
 
-      <div className="relative max-w-5xl mx-auto px-5">
-        <div className="text-center mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Your Doctor</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-white">Expert Care, Personal Attention</h2>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-6 md:p-10">
-          <div className="flex flex-col md:flex-row gap-10 items-center">
-            {/* Photo + credentials */}
-            <div className="shrink-0 flex flex-col items-center gap-5">
-              <div className="relative">
-                {photo ? (
-                  <div className="w-44 h-44 md:w-56 md:h-56 rounded-full overflow-hidden border-4 border-[#F5A623] shadow-2xl shadow-[#F5A623]/20">
-                    <img src={photo} alt={name} className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-44 h-44 md:w-56 md:h-56 rounded-full bg-gradient-to-br from-[#3B82C4] to-[#0B2560] flex items-center justify-center border-4 border-[#F5A623] shadow-2xl shadow-[#F5A623]/20">
-                    <span className="text-7xl">👨‍⚕️</span>
-                  </div>
-                )}
-                {/* Outer glow ring */}
-                <div className="absolute inset-0 rounded-full border-2 border-[#F5A623]/40 scale-110 pointer-events-none" />
-              </div>
-
-              {/* Credential badge chips */}
-              <div className="flex flex-wrap gap-2 justify-center max-w-[240px]">
-                {credentials.map((cred, i) => (
-                  <span
-                    key={i}
-                    className="bg-[#F5A623]/20 border border-[#F5A623]/40 text-[#F5A623] text-xs font-bold px-3 py-1 rounded-full"
-                  >
-                    {cred}
-                  </span>
-                ))}
-                <span className="bg-white/15 border border-white/30 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  {experience} Exp.
-                </span>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 text-center md:text-left">
-              <h3 className="text-2xl md:text-4xl font-extrabold text-white">{name}</h3>
-              <p className="text-[#F5A623] font-semibold mt-1 text-sm md:text-base">{qualification}</p>
-
-              {/* Achievement tiles */}
-              <div className="flex flex-wrap gap-3 mt-5 justify-center md:justify-start">
-                {[
-                  { val: '500+', lbl: 'Procedures' },
-                  { val: '4.9★', lbl: 'Patient Rating' },
-                  { val: '✦ Published', lbl: 'Researcher' },
-                ].map(({ val, lbl }) => (
-                  <div key={lbl} className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-center min-w-[80px]">
-                    <p className="text-white font-extrabold text-sm">{val}</p>
-                    <p className="text-white/55 text-[10px] mt-0.5">{lbl}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bio */}
-              <p className="text-white/70 mt-5 text-sm md:text-base leading-relaxed">{bio}</p>
-
-              {/* Pull quote */}
-              <div className="mt-5 border-l-4 border-[#F5A623] pl-4">
-                <p className="text-white/80 italic text-sm leading-relaxed">
-                  &ldquo;Every patient deserves to feel confident in their own skin. That&rsquo;s why I practice.&rdquo;
-                </p>
-                <p className="text-[#F5A623] text-xs font-bold mt-1.5">— {name}</p>
-              </div>
-
-              {/* Specialties */}
-              {specialties.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-5 justify-center md:justify-start">
-                  {specialties.map((s, i) => (
-                    <span
-                      key={i}
-                      className="bg-white/10 border border-white/20 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-xl"
-                    >
-                      {s}
-                    </span>
-                  ))}
+      <div className="relative max-w-6xl mx-auto px-5">
+        <div className="grid md:grid-cols-[2fr_3fr] gap-10 md:gap-12 items-center">
+          {/* Left: photo */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="flex flex-col items-center"
+          >
+            <div className="relative">
+              {photo ? (
+                <div className="w-56 h-64 md:w-72 md:h-80 rounded-3xl overflow-hidden border-4 border-[#F5A623]/60 shadow-2xl">
+                  <img src={photo} alt={name} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-56 h-64 md:w-72 md:h-80 rounded-3xl bg-gradient-to-br from-[#3B82C4] to-[#0B2560] flex items-center justify-center border-4 border-[#F5A623]/60 shadow-2xl">
+                  <span className="text-8xl">👨‍⚕️</span>
                 </div>
               )}
-
-              {/* CTA */}
-              <button
-                onClick={() => document.getElementById('lp-form')?.scrollIntoView({ behavior: 'smooth' })}
-                className="mt-6 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-7 py-3.5 rounded-2xl text-sm shadow-xl shadow-[#F5A623]/20 hover:-translate-y-0.5 transition-all duration-200"
-              >
-                Book with {name.split(' ').slice(0, 2).join(' ')}
-              </button>
+              {/* credential ribbon */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#F5A623] text-[#0B2560] text-xs font-extrabold px-5 py-2 rounded-full shadow-lg whitespace-nowrap">
+                {experience} Experience
+              </div>
             </div>
+            {/* signature watermark */}
+            <p className="mt-9 text-white/40 text-xl font-signature italic" style={{ fontFamily: 'cursive' }}>
+              {name}
+            </p>
+          </motion.div>
+
+          {/* Right: content */}
+          <div>
+            <motion.p
+              custom={0}
+              variants={rightItem}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-80px' }}
+              className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3"
+            >
+              Meet Our Expert
+            </motion.p>
+
+            <motion.h2
+              custom={1}
+              variants={rightItem}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-80px' }}
+              className="text-3xl md:text-4xl font-extrabold text-white"
+            >
+              {name}
+            </motion.h2>
+
+            <motion.p
+              custom={2}
+              variants={rightItem}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-80px' }}
+              className="text-[#F5A623] font-semibold mt-1.5 text-sm md:text-base"
+            >
+              {qualification}
+            </motion.p>
+
+            <motion.p
+              custom={3}
+              variants={rightItem}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-80px' }}
+              className="text-white/70 mt-4 text-sm md:text-base leading-relaxed"
+            >
+              {bio}
+            </motion.p>
+
+            <motion.ul
+              custom={4}
+              variants={rightItem}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-80px' }}
+              className="mt-5 space-y-2.5"
+            >
+              {bullets.map((b, i) => (
+                <li key={i} className="flex items-center gap-2.5 text-sm text-white/90">
+                  <CheckCircle size={16} className="text-[#F5A623] shrink-0" />
+                  {b}
+                </li>
+              ))}
+            </motion.ul>
+
+            <motion.div
+              custom={5}
+              variants={rightItem}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-80px' }}
+              className="mt-6 bg-[#F5A623]/15 border border-[#F5A623]/30 rounded-2xl p-5"
+            >
+              <Quote size={20} className="text-[#F5A623] mb-2" />
+              <p className="text-white/90 italic text-sm md:text-base leading-relaxed">{testimonial}</p>
+              <p className="text-[#F5A623] text-xs font-bold mt-2.5">— {name}</p>
+            </motion.div>
+
+            <motion.button
+              custom={6}
+              variants={rightItem}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-80px' }}
+              onClick={() => document.getElementById('lp-form')?.scrollIntoView({ behavior: 'smooth' })}
+              className="mt-6 flex items-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-7 py-3.5 rounded-2xl text-sm shadow-xl shadow-[#F5A623]/20 hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <CalendarCheck size={18} />
+              Book Appointment with {shortName}
+            </motion.button>
           </div>
         </div>
       </div>
