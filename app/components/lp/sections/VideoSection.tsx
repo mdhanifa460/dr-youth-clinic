@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, X } from 'lucide-react';
 
@@ -27,6 +27,13 @@ export default function VideoSection({ data }: { data: VideoData }) {
 
   const [open, setOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Play imperatively so the browser doesn't block audio via autoplay policy
+  useEffect(() => {
+    if (open && videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [open]);
 
   if (!videoUrl) return null;
 
@@ -159,7 +166,6 @@ export default function VideoSection({ data }: { data: VideoData }) {
                 ref={videoRef}
                 src={videoUrl}
                 controls
-                autoPlay
                 playsInline
                 className="w-full rounded-2xl"
               />
