@@ -28,7 +28,16 @@ export default function VideoSection({ data }: { data: VideoData }) {
   const [open, setOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Play imperatively so the browser doesn't block audio via autoplay policy
+  // Scroll lock — prevents iOS Safari from scrolling behind the modal
+  useEffect(() => {
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [open]);
+
+  // Imperative play — keeps audio unmuted (autoPlay attr loses gesture context after React re-render)
   useEffect(() => {
     if (open && videoRef.current) {
       videoRef.current.play().catch(() => {});
@@ -38,31 +47,34 @@ export default function VideoSection({ data }: { data: VideoData }) {
   if (!videoUrl) return null;
 
   const closeModal = () => {
-    setOpen(false);
     videoRef.current?.pause();
+    setOpen(false);
   };
 
+  // ── Ambient autoplay loop mode ────────────────────────────────────────────
   if (autoplayMuted) {
     return (
-      <section className="bg-[#0B2560] py-14 md:py-20">
+      <section className="bg-[#0B2560] py-12 md:py-20">
         <div className="max-w-5xl mx-auto px-5">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-10"
+            className="text-center mb-8 md:mb-10"
           >
             <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">{badge}</p>
             <h2 className="text-2xl md:text-4xl font-extrabold text-white">{headline}</h2>
-            {subtitle && <p className="text-white/60 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>}
+            {subtitle && (
+              <p className="text-white/60 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
+            )}
           </motion.div>
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
-            className="rounded-3xl overflow-hidden shadow-2xl ring-1 ring-[#F5A623]/20"
+            className="rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl ring-1 ring-[#F5A623]/20"
           >
             <video
               src={videoUrl}
@@ -73,34 +85,41 @@ export default function VideoSection({ data }: { data: VideoData }) {
               className="w-full"
             />
           </motion.div>
-          {caption && <p className="text-center text-xs text-white/40 mt-4">{caption}</p>}
+          {caption && (
+            <p className="text-center text-xs text-white/40 mt-4">{caption}</p>
+          )}
         </div>
       </section>
     );
   }
 
+  // ── Click-to-play mode ────────────────────────────────────────────────────
   return (
-    <section className="bg-white py-14 md:py-20">
+    <section className="bg-white py-12 md:py-20">
       <div className="max-w-5xl mx-auto px-5">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-8 md:mb-10"
         >
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">{badge}</p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
-          {subtitle && <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
+          )}
         </motion.div>
 
+        {/* Thumbnail */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
           onClick={() => setOpen(true)}
-          className="relative cursor-pointer group rounded-3xl overflow-hidden shadow-2xl"
+          className="relative cursor-pointer rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl active:opacity-90 transition-opacity touch-manipulation"
           style={{
             background: thumbnailUrl
               ? undefined
@@ -117,27 +136,41 @@ export default function VideoSection({ data }: { data: VideoData }) {
             <div className="w-full aspect-video" />
           )}
 
-          <div className="absolute inset-0 bg-[#0B2560]/40 group-hover:bg-[#0B2560]/55 transition-colors duration-300" />
+          {/* Overlay — always visible (hover doesn't work on touch) */}
+          <div className="absolute inset-0 bg-[#0B2560]/45" />
 
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+          {/* Play button + label */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-20 h-20 rounded-full bg-[#F5A623] shadow-2xl shadow-[#F5A623]/40 flex items-center justify-center"
+              whileTap={{ scale: 0.9 }}
+              className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#F5A623] shadow-2xl shadow-[#F5A623]/50 flex items-center justify-center"
             >
-              <Play size={32} className="text-[#0B2560] ml-1.5" fill="currentColor" />
+              <Play
+                size={28}
+                className="text-[#0B2560] ml-1.5 md:hidden"
+                fill="currentColor"
+              />
+              <Play
+                size={36}
+                className="text-[#0B2560] ml-1.5 hidden md:block"
+                fill="currentColor"
+              />
             </motion.div>
-            <span className="text-white/80 text-sm font-semibold">Tap to watch</span>
+            <span className="text-white text-sm font-semibold tracking-wide">Tap to watch</span>
           </div>
 
-          <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+          {/* Duration badge */}
+          <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 bg-black/65 text-white text-xs font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm">
             0:10
           </div>
         </motion.div>
 
-        {caption && <p className="text-center text-xs text-gray-400 mt-4">{caption}</p>}
+        {caption && (
+          <p className="text-center text-xs text-gray-400 mt-3 md:mt-4">{caption}</p>
+        )}
       </div>
 
+      {/* Modal — full-screen on mobile, centred card on desktop */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -145,29 +178,34 @@ export default function VideoSection({ data }: { data: VideoData }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 md:bg-black/90 md:p-6"
             onClick={closeModal}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="relative w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl"
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="relative w-full md:max-w-4xl md:rounded-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close button — large touch target, safe area aware */}
               <button
                 onClick={closeModal}
-                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 transition flex items-center justify-center text-white"
+                aria-label="Close video"
+                className="absolute top-3 right-3 z-10 w-11 h-11 rounded-full bg-black/70 hover:bg-black/90 transition flex items-center justify-center text-white touch-manipulation"
+                style={{ top: 'max(12px, env(safe-area-inset-top))' }}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
+
               <video
                 ref={videoRef}
                 src={videoUrl}
                 controls
                 playsInline
-                className="w-full rounded-2xl"
+                className="w-full md:rounded-2xl block"
+                style={{ maxHeight: '100dvh' }}
               />
             </motion.div>
           </motion.div>
