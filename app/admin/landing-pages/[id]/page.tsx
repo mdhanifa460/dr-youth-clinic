@@ -633,7 +633,10 @@ function SectionEditor({
             <FieldInput label="Doctor Name" value={d.name} onChange={(v) => set('name', v)} />
             <FieldInput label="Qualification" value={d.qualification} onChange={(v) => set('qualification', v)} />
           </div>
-          <FieldInput label="Experience (e.g. 15 Years)" value={d.experience} onChange={(v) => set('experience', v)} />
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Experience (e.g. 15 Years)" value={d.experience} onChange={(v) => set('experience', v)} />
+            <FieldInput label="Location / Branch" value={d.location} onChange={(v) => set('location', v)} placeholder="e.g. Anna Nagar" />
+          </div>
           <FieldInput label="Bio" value={d.bio} onChange={(v) => set('bio', v)} type="textarea" />
           <StringArrayEditor label="Specialties" items={d.specialties || []} onChange={(v) => set('specialties', v)} />
         </div>

@@ -28,13 +28,18 @@ export default function VideoSection({ data }: { data: VideoData }) {
   const [open, setOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Scroll lock — prevents iOS Safari from scrolling behind the modal
+  // Scroll lock + Escape key close
   useEffect(() => {
-    if (open) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = prev; };
-    }
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKey);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Imperative play — keeps audio unmuted (autoPlay attr loses gesture context after React re-render)
@@ -119,7 +124,11 @@ export default function VideoSection({ data }: { data: VideoData }) {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, delay: 0.15 }}
           onClick={() => setOpen(true)}
-          className="relative cursor-pointer rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl active:opacity-90 transition-opacity touch-manipulation"
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOpen(true)}
+          role="button"
+          tabIndex={0}
+          aria-label={`Play video: ${headline}`}
+          className="relative cursor-pointer rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl active:opacity-90 transition-opacity touch-manipulation focus:outline-none focus-visible:ring-4 focus-visible:ring-[#F5A623]"
           style={{
             background: thumbnailUrl
               ? undefined
@@ -180,6 +189,9 @@ export default function VideoSection({ data }: { data: VideoData }) {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 md:bg-black/90 md:p-6"
             onClick={closeModal}
+            role="dialog"
+            aria-modal="true"
+            aria-label={headline}
           >
             <motion.div
               initial={{ y: 40, opacity: 0 }}
@@ -206,6 +218,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
                 playsInline
                 className="w-full md:rounded-2xl block"
                 style={{ maxHeight: '100dvh' }}
+                aria-label={headline}
               />
             </motion.div>
           </motion.div>

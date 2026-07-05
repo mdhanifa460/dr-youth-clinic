@@ -70,16 +70,16 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot' }
             </a>
           )}
 
-          {/* WhatsApp icon — mobile only */}
+          {/* WhatsApp — icon only, all screen sizes */}
           {waLink && (
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className={`sm:hidden p-2 rounded-xl transition-colors ${
+              className={`p-2 rounded-xl transition-colors touch-manipulation ${
                 scrolled ? 'text-[#0B2560]' : 'text-white'
               }`}
-              aria-label="WhatsApp"
+              aria-label="Chat on WhatsApp"
             >
               {/* WhatsApp SVG icon */}
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -91,7 +91,8 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot' }
           {/* Book CTA */}
           <button
             onClick={scrollToForm}
-            className="flex items-center gap-1.5 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold text-xs md:text-sm px-4 py-2.5 rounded-xl shadow-lg hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap"
+            aria-label={ctaText}
+            className="flex items-center gap-1.5 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold text-xs md:text-sm px-4 py-2.5 rounded-xl shadow-lg hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap touch-manipulation"
           >
             {ctaText}
           </button>
