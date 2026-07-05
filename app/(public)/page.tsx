@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review } from '@/app/models/Review';
@@ -249,6 +249,10 @@ export default async function Home() {
 
   const preferredLocation = cookies().get('preferred_location')?.value || '';
 
+  // Vercel injects x-vercel-ip-city on every request — no external API needed
+  const rawCity = headers().get('x-vercel-ip-city') || '';
+  const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
+
   const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
@@ -261,7 +265,7 @@ export default async function Home() {
   const enriched = {
     ...sectionData,
     testimonials: { ...td, _reviews: initialReviews },
-    locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds },
+    locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds, _detectedCity: detectedCity },
     doctors: {
       ...(sectionData['doctors'] ?? {}),
       doctors: liveDoctors,

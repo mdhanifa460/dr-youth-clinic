@@ -65,13 +65,21 @@ const CITY_GRADIENTS: Record<string, string> = {
 
 export default function HomepageLocations({ data }: { data: any }) {
   const {
-    headline    = 'Our Locations',
-    subheadline = 'Advanced skin & hair care treatments. Expert doctors. Multiple locations to serve you better.',
-    cities      = [],
-    _embeds     = {},
+    headline      = 'Our Locations',
+    subheadline   = 'Advanced skin & hair care treatments. Expert doctors. Multiple locations to serve you better.',
+    cities        = [],
+    _embeds       = {},
+    _detectedCity = '',
   } = data || {};
 
-  const [activeKey, setActiveKey] = useState<string>(toCityKey(cities[0] || 'Chennai'));
+  // Auto-select the user's city if we have a clinic there, else fall back to first city
+  const availableKeys = (cities as string[]).map(toCityKey);
+  const detectedKey = toCityKey(_detectedCity);
+  const initialKey = availableKeys.includes(detectedKey)
+    ? detectedKey
+    : toCityKey(cities[0] || 'Chennai');
+
+  const [activeKey, setActiveKey] = useState<string>(initialKey);
 
   const loc          = locations[activeKey];
   const embed        = _embeds[activeKey] ?? {};
