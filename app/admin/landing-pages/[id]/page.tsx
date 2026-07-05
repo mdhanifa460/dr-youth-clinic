@@ -131,6 +131,15 @@ const SECTION_DEFAULTS: Record<string, any> = {
     ],
     seals: ['NABH Certified', 'ISO 9001:2015', 'FDA Cleared', 'IADVL Member'],
   },
+  'video-explainer': {
+    headline: 'See How GFC PRP Works',
+    subtitle: 'Watch our 10-second treatment overview — the process is simpler than you think.',
+    badge: 'Treatment Overview',
+    videoUrl: '',
+    thumbnailUrl: '',
+    autoplayMuted: false,
+    caption: 'Actual in-clinic treatment footage',
+  },
   cta: { headline: 'Ready to Transform?', subtext: 'Book your free consultation today.', ctaPrimary: 'Book Free Consultation', phone: '1800 890 9669', whatsapp: '' },
   form: {
     headline: 'Book Your Free Consultation',
@@ -153,6 +162,7 @@ const SECTION_LABELS: Record<string, { label: string; icon: string }> = {
   reviews: { label: 'Patient Reviews', icon: '💬' },
   'hair-timeline': { label: 'Hair Growth Timeline', icon: '📈' },
   location: { label: 'Branch Locations', icon: '📍' },
+  'video-explainer': { label: 'Video Explainer', icon: '🎬' },
   'offer-banner': { label: 'Offer Banner', icon: '🔥' },
   faq: { label: 'FAQ Accordion', icon: '❓' },
   comparison: { label: 'Comparison Table', icon: '⚖️' },
@@ -285,6 +295,89 @@ function ImagePicker({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Or paste URL directly..."
         className="w-full mt-2 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 text-gray-500 placeholder-gray-300"
+      />
+    </div>
+  );
+}
+
+// ─── Video uploader ───────────────────────────────────────────────────────────
+
+function VideoUploader({
+  label, value, onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    setUploading(true);
+    setProgress('Uploading…');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/admin/services/upload-video', { method: 'POST', body: form });
+      const json = await res.json();
+      if (json.success) {
+        onChange(json.data.secure_url);
+        setProgress('');
+      } else {
+        setProgress(json.message || 'Upload failed');
+      }
+    } catch {
+      setProgress('Network error — try again');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">{label}</label>
+      {value && (
+        <div className="mb-2 rounded-xl overflow-hidden border border-gray-100 bg-gray-900">
+          <video src={value} className="w-full" style={{ height: '80px', objectFit: 'cover' }} muted />
+        </div>
+      )}
+      <div className="flex gap-2 items-center">
+        <span className="flex-1 text-xs text-gray-400 truncate min-w-0">
+          {value || 'No video uploaded'}
+        </span>
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          className="shrink-0 flex items-center gap-1.5 bg-[#0B2560] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[#1a3a7a] transition whitespace-nowrap disabled:opacity-50"
+        >
+          🎬 Upload
+        </button>
+        {value && (
+          <button type="button" onClick={() => onChange('')} className="shrink-0 text-gray-400 hover:text-red-500 transition p-0.5">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+      {progress && (
+        <p className={`text-xs mt-1.5 ${progress.includes('failed') || progress.includes('error') ? 'text-red-500' : 'text-[#3B82C4]'}`}>
+          {progress}
+        </p>
+      )}
+      <input
+        type="text"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Or paste Cloudinary/direct video URL…"
+        className="w-full mt-2 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 text-gray-500 placeholder-gray-300"
+      />
+      <input
+        ref={inputRef}
+        type="file"
+        accept="video/mp4,video/webm,video/quicktime"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
       />
     </div>
   );
@@ -828,6 +921,43 @@ function SectionEditor({
             onChange={(v) => set('image', v)}
             openGallery={openGallery}
           />
+        </div>
+      );
+
+    case 'video-explainer':
+      return (
+        <div className="space-y-4">
+          <FieldInput label="Badge" value={d.badge} onChange={(v) => set('badge', v)} placeholder="Treatment Overview" />
+          <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} type="textarea" placeholder="Supporting text below the headline" />
+          <VideoUploader
+            label="Video File"
+            value={d.videoUrl || ''}
+            onChange={(v) => set('videoUrl', v)}
+          />
+          <ImagePicker
+            label="Thumbnail Image (shown before play)"
+            value={d.thumbnailUrl || ''}
+            onChange={(v) => set('thumbnailUrl', v)}
+            openGallery={openGallery}
+          />
+          <FieldInput label="Caption (below video)" value={d.caption} onChange={(v) => set('caption', v)} placeholder="e.g. Actual in-clinic treatment footage" />
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div
+              onClick={() => set('autoplayMuted', !d.autoplayMuted)}
+              className="rounded-full transition-colors shrink-0"
+              style={{ width: '40px', height: '22px', background: d.autoplayMuted ? '#0B2560' : '#d1d5db' }}
+            >
+              <div
+                className="bg-white rounded-full shadow transition-transform"
+                style={{ width: '18px', height: '18px', margin: '2px', transform: d.autoplayMuted ? 'translateX(18px)' : 'translateX(0)' }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-gray-600">Autoplay muted loop (ambient mode)</span>
+          </label>
+          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+            Default: thumbnail + click-to-play with sound. Ambient mode: loops silently, no click needed.
+          </p>
         </div>
       );
 

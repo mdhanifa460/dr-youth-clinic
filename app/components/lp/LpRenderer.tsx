@@ -17,6 +17,7 @@ import ComparisonSection from './sections/ComparisonSection';
 import GuaranteeSection from './sections/GuaranteeSection';
 import HairTimelineSection from './sections/HairTimelineSection';
 import LocationSection from './sections/LocationSection';
+import VideoSection from './sections/VideoSection';
 
 interface LpSection {
   id: string;
@@ -82,6 +83,8 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
       return <GuaranteeSection key={section.id} data={section.data} />;
     case 'cta':
       return <CtaSection key={section.id} data={section.data} />;
+    case 'video-explainer':
+      return <VideoSection key={section.id} data={section.data} />;
     case 'form':
       return (
         <FormSection
