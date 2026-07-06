@@ -17,6 +17,10 @@ export interface SiteConfig {
   publicWhatsApp: string;
   /** Public-facing email from Settings */
   publicEmail: string;
+  /** Social URLs from Settings → Brand (used as fallback when homepage section links are '#') */
+  instagramUrl: string;
+  facebookUrl:  string;
+  youtubeUrl:   string;
 }
 
 export const SITE_CONFIG_DEFAULTS: SiteConfig = {
@@ -30,4 +34,7 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   publicPhone: '',
   publicWhatsApp: '',
   publicEmail: '',
+  instagramUrl: '',
+  facebookUrl:  '',
+  youtubeUrl:   '',
 };

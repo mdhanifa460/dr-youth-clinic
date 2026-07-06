@@ -3,7 +3,18 @@ import { CLOUDINARY_LOGO_URL } from "@/app/lib/legacyImageUrls";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-export function OrganizationSchema({ phone }: { phone?: string }) {
+export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUrl }: {
+  phone?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  youtubeUrl?: string;
+}) {
+  const sameAs = [
+    facebookUrl  || "https://www.facebook.com/dryouthclinic",
+    instagramUrl || "https://www.instagram.com/dryouthclinic",
+    youtubeUrl   || "https://www.youtube.com/@dryouthclinic",
+  ].filter(Boolean);
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
@@ -11,11 +22,7 @@ export function OrganizationSchema({ phone }: { phone?: string }) {
     url: SITE_URL,
     logo: CLOUDINARY_LOGO_URL,
     description: "Premium dermatology and aesthetic treatment clinic",
-    sameAs: [
-      "https://www.facebook.com/dryouthclinic",
-      "https://www.instagram.com/dryouthclinic",
-      "https://www.youtube.com/@dryouthclinic",
-    ],
+    sameAs,
     ...(phone ? {
       contactPoint: {
         "@type": "ContactPoint",

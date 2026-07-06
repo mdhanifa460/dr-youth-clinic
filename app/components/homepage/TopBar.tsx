@@ -1,6 +1,7 @@
 import { FaFacebookF, FaInstagram, FaYoutube, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 import { MdPhone, MdEmail } from 'react-icons/md';
 import { AiFillStar } from 'react-icons/ai';
+import type { SiteConfig } from '@/app/lib/siteConfig';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   facebook: <FaFacebookF size={14} />,
@@ -34,12 +35,24 @@ const MOBILE_SOCIAL: Array<{
   { platform: 'youtube',   icon: <FaYoutube size={15} />,   color: '#FF0000' },
 ];
 
-export default function TopBar({ data }: { data: any }) {
+export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: SiteConfig }) {
   const { phone, email, badge, socialLinks = [] } = data || {};
+
+  const BRAND_FALLBACK: Record<string, string> = {
+    instagram: siteConfig?.instagramUrl || '',
+    facebook:  siteConfig?.facebookUrl  || '',
+    youtube:   siteConfig?.youtubeUrl   || '',
+  };
+
+  // Merge brand URLs as fallback when homepage editor link is '#' or empty
+  const resolvedSocialLinks: { platform: string; url: string }[] = socialLinks.map((s: any) => ({
+    ...s,
+    url: (!s.url || s.url === '#') ? (BRAND_FALLBACK[s.platform] || '') : s.url,
+  })).filter((s: any) => s.url);
 
   const mobileSocials = MOBILE_SOCIAL.map((item) => ({
     ...item,
-    url: socialLinks.find((s: any) => s.platform === item.platform)?.url || item.fallback,
+    url: resolvedSocialLinks.find((s) => s.platform === item.platform)?.url || item.fallback,
   })).filter((item) => item.url);
 
   return (
@@ -103,10 +116,10 @@ export default function TopBar({ data }: { data: any }) {
             )}
           </div>
 
-          {socialLinks.filter((s: any) => s.url).length > 0 && (
+          {resolvedSocialLinks.length > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-white/60">Follow Us:</span>
-              {socialLinks.filter((s: any) => s.url).map((s: any, i: number) => (
+              {resolvedSocialLinks.map((s, i) => (
                 <a
                   key={i}
                   href={s.url}

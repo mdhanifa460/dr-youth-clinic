@@ -23,6 +23,9 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       publicPhone:    settings.contact?.publicPhone    || '',
       publicWhatsApp: settings.contact?.publicWhatsApp || '',
       publicEmail:    settings.contact?.publicEmail    || '',
+      instagramUrl:   settings.brand?.instagram || '',
+      facebookUrl:    settings.brand?.facebook  || '',
+      youtubeUrl:     settings.brand?.youtube   || '',
     };
   } catch {
     return SITE_CONFIG_DEFAULTS;

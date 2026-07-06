@@ -33,6 +33,17 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
     socialLinks = [],
   } = resolvedData;
 
+  // Merge brand URLs from Settings as fallback when homepage editor link is '#' or empty
+  const BRAND_FALLBACK: Record<string, string> = {
+    instagram: siteConfig?.instagramUrl || '',
+    facebook:  siteConfig?.facebookUrl  || '',
+    youtube:   siteConfig?.youtubeUrl   || '',
+  };
+  const resolvedSocialLinks = socialLinks.map((s: any) => ({
+    ...s,
+    url: (!s.url || s.url === '#') ? (BRAND_FALLBACK[s.platform] || '#') : s.url,
+  })).filter((s: any) => s.url && s.url !== '#');
+
   return (
     <footer className="bg-[#0B2560] text-white">
       <div className="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-10">
@@ -50,9 +61,9 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
               />
             </Link>
             <p className="text-white/60 text-sm leading-relaxed">{tagline}</p>
-            {socialLinks.length > 0 && (
+            {resolvedSocialLinks.length > 0 && (
               <div className="flex items-center gap-2 pt-1">
-                {socialLinks.map((s: any, i: number) => (
+                {resolvedSocialLinks.map((s: any, i: number) => (
                   <a
                     key={i}
                     href={s.url}
@@ -161,7 +172,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
         <div className="mt-12 pt-6 border-t border-white/10 space-y-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              {socialLinks.map((s: any, i: number) => (
+              {resolvedSocialLinks.map((s: any, i: number) => (
                 <a
                   key={i}
                   href={s.url}

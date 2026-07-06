@@ -54,8 +54,13 @@ export default async function PublicLayout({
 
   return (
     <SiteConfigProvider initial={siteConfig}>
-      <OrganizationSchema phone={siteConfig.publicPhone || undefined} />
-      {topbar.visible && <TopBar data={topbar.data} />}
+      <OrganizationSchema
+        phone={siteConfig.publicPhone || undefined}
+        instagramUrl={siteConfig.instagramUrl || undefined}
+        facebookUrl={siteConfig.facebookUrl   || undefined}
+        youtubeUrl={siteConfig.youtubeUrl     || undefined}
+      />
+      {topbar.visible && <TopBar data={topbar.data} siteConfig={siteConfig} />}
       <Navbar />
       <div className="pb-[72px] lg:pb-0">{children}</div>
       <Footer data={footer} siteConfig={siteConfig} />
