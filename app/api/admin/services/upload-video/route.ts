@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/app/lib/cloudinary';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
 
 export async function POST(req: NextRequest) {
+  const denied = await requirePermission('services', 'full');
+  if (denied) return denied;
+
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;

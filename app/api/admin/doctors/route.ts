@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
-import { getAdminSession } from '@/app/lib/adminAuth';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET() {
+  const denied = await requirePermission('doctors', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const doctors = await Doctor.find({} as any).sort({ order: 1, createdAt: -1 }).lean();
@@ -14,8 +17,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorised' }, { status: 401 });
+  const denied = await requirePermission('doctors', 'full');
+  if (denied) return denied;
 
   try {
     await connectDB();

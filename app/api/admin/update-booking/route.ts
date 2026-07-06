@@ -1,5 +1,5 @@
 import { connectDB } from "@/app/lib/mongodb";
-import { requireAdminSession, unauthorized } from "@/app/lib/adminAuth";
+import { requirePermission } from "@/app/lib/adminAuth";
 import Booking from "@/app/models/Booking";
 import { NextResponse } from "next/server";
 
@@ -21,9 +21,10 @@ const BookingModel = Booking as {
 };
 
 export async function POST(req: Request) {
+  const denied = await requirePermission('bookings', 'full');
+  if (denied) return denied;
+
   try {
-    const session = await requireAdminSession();
-    if (!session) return unauthorized();
 
     const body = await req.json();
     const { _id, name, phone, service, location, date, time, concern, status } =

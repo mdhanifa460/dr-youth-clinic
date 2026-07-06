@@ -3,11 +3,15 @@ import { connectDB } from '@/app/lib/mongodb';
 import { deleteImage } from '@/app/lib/cloudinary';
 import { Service } from '@/app/models/Service';
 import type { IService } from '@/app/models/Service';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const denied = await requirePermission('services', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
 
@@ -34,6 +38,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const denied = await requirePermission('services', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
 
@@ -81,6 +88,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const denied = await requirePermission('services', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
 

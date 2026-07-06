@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -10,6 +11,9 @@ cloudinary.config({
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const denied = await requirePermission('services', 'view');
+  if (denied) return denied;
+
   try {
     const folder = req.nextUrl.searchParams.get('folder') ?? 'dr-youth-clinic';
     const result = await cloudinary.api.resources({
@@ -37,6 +41,9 @@ export async function GET(req: NextRequest) {
 const ALLOWED_PREFIX = 'dr-youth-clinic/';
 
 export async function DELETE(req: NextRequest) {
+  const denied = await requirePermission('services', 'full');
+  if (denied) return denied;
+
   try {
     const { publicId } = await req.json();
     if (!publicId) {

@@ -4,6 +4,7 @@ import Booking from '@/app/models/Booking';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,9 @@ function pd(d: any): Date {
 }
 
 export async function GET() {
+  const denied = await requirePermission('intelligence', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
 

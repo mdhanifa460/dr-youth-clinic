@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const denied = await requirePermission('intelligence', 'full');
+  if (denied) return denied;
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ success: false, message: 'ANTHROPIC_API_KEY not set' }, { status: 501 });

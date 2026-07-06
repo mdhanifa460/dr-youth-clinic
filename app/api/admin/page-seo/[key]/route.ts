@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { PageSeo } from '@/app/models/PageSeo';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 const PAGE_LABELS: Record<string, string> = {
   home: 'Homepage',
@@ -14,6 +15,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { key: string } }
 ) {
+  const denied = await requirePermission('seo', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const entry = await PageSeo.findOne({ pageKey: params.key } as any).lean();
@@ -27,6 +31,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { key: string } }
 ) {
+  const denied = await requirePermission('seo', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const body = await req.json();

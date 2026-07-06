@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Review } from '@/app/models/Review';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET(req: NextRequest) {
+  const denied = await requirePermission('reviews', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const { searchParams } = req.nextUrl;
@@ -25,6 +29,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const denied = await requirePermission('reviews', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const body = await req.json();

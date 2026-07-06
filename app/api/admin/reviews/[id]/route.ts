@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Review } from '@/app/models/Review';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 const PATCH_ALLOWED = [
   'isVisible', 'isFeatured', 'showOnHomepage', 'displayOrder',
@@ -10,6 +11,9 @@ const PATCH_ALLOWED = [
 ] as const;
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const denied = await requirePermission('reviews', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const body = await req.json();
@@ -31,6 +35,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const denied = await requirePermission('reviews', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const body = await req.json();
@@ -66,6 +73,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+  const denied = await requirePermission('reviews', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const deleted = await (Review as any).findByIdAndDelete(params.id);

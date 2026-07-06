@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET(req: NextRequest) {
+  const denied = await requirePermission('services', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);

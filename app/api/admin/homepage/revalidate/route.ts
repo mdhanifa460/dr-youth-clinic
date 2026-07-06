@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function POST() {
+  const denied = await requirePermission('homepage', 'full');
+  if (denied) return denied;
+
   try {
     // Clear unstable_cache entries for TopBar + Footer (both tagged 'homepage-layout')
     revalidateTag('homepage-layout');

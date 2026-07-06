@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Service } from '@/app/models/Service';
 import { connectDB } from '@/app/lib/mongodb';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET(req: NextRequest) {
+  const denied = await requirePermission('services', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
 
@@ -27,6 +31,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const denied = await requirePermission('services', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { PageSeo } from '@/app/models/PageSeo';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 const PAGE_DEFAULTS = [
   {
@@ -41,6 +42,9 @@ const PAGE_DEFAULTS = [
 ];
 
 export async function GET() {
+  const denied = await requirePermission('seo', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const dbEntries = await PageSeo.find({} as any).lean();

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 type AiType = 'headline' | 'cta' | 'faq' | 'seo' | 'benefits' | 'problem';
 
@@ -31,6 +32,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const denied = await requirePermission('landing-pages', 'full');
+  if (denied) return denied;
+
   try {
     const { type, context } = await req.json() as { type: AiType; context: string };
 

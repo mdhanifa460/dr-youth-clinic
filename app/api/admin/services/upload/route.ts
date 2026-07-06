@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/app/lib/cloudinary';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export async function POST(req: NextRequest) {
+  const denied = await requirePermission('services', 'full');
+  if (denied) return denied;
+
   try {
     console.log('🔄 Image upload request received');
 

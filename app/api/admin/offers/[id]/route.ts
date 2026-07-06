@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Offer } from '@/app/models/Offer';
-import { getAdminSession } from '@/app/lib/adminAuth';
+import { requirePermission } from '@/app/lib/adminAuth';
 import { revalidateTag } from 'next/cache';
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorised' }, { status: 401 });
+  const denied = await requirePermission('offers', 'full');
+  if (denied) return denied;
 
   try {
     await connectDB();
@@ -25,8 +25,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorised' }, { status: 401 });
+  const denied = await requirePermission('offers', 'full');
+  if (denied) return denied;
 
   try {
     await connectDB();

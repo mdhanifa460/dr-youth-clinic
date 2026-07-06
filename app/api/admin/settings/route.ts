@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Settings, getSettings } from '@/app/models/Settings';
-import { getAdminSession } from '@/app/lib/adminAuth';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET() {
+  const denied = await requirePermission('settings', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const settings = await getSettings();
@@ -14,8 +17,8 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorised' }, { status: 401 });
+  const denied = await requirePermission('settings', 'full');
+  if (denied) return denied;
 
   try {
     await connectDB();

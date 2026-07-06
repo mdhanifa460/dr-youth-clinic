@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 function toSlug(text: string): string {
   return text
@@ -10,6 +11,9 @@ function toSlug(text: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  const denied = await requirePermission('landing-pages', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
 
@@ -29,6 +33,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const denied = await requirePermission('landing-pages', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
 

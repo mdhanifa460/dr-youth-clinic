@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Review } from '@/app/models/Review';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function POST() {
+  const denied = await requirePermission('reviews', 'full');
+  if (denied) return denied;
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   const placeId = process.env.GOOGLE_PLACE_ID;
 

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Offer } from '@/app/models/Offer';
-import { getAdminSession } from '@/app/lib/adminAuth';
+import { requirePermission } from '@/app/lib/adminAuth';
 import { revalidateTag } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const denied = await requirePermission('offers', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const offers = await (Offer as any).find({}).sort({ order: 1, createdAt: -1 }).lean();
@@ -17,8 +20,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorised' }, { status: 401 });
+  const denied = await requirePermission('offers', 'full');
+  if (denied) return denied;
 
   try {
     await connectDB();

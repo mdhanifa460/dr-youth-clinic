@@ -1,13 +1,13 @@
 import { connectDB } from "../../../lib/mongodb";
-import { requireAdminSession, unauthorized } from "@/app/lib/adminAuth";
+import { requirePermission } from "@/app/lib/adminAuth";
 import Booking from "../../../models/Booking";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-const session = await requireAdminSession();
-if (!session) return unauthorized();
+const denied = await requirePermission('bookings', 'view');
+if (denied) return denied;
 
 await connectDB();
 

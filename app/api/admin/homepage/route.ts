@@ -4,10 +4,14 @@ import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const denied = await requirePermission('homepage', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
 
@@ -35,6 +39,9 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  const denied = await requirePermission('homepage', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
 

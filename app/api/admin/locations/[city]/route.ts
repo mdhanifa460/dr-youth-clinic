@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 const VALID_CITIES = new Set(['chennai', 'bangalore', 'coimbatore', 'kochi']);
 
 // GET — fetch content for one city (creates empty doc if it doesn't exist yet)
 export async function GET(_: NextRequest, { params }: { params: { city: string } }) {
+  const denied = await requirePermission('locations', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const city = params.city.toLowerCase();
@@ -26,6 +30,9 @@ export async function GET(_: NextRequest, { params }: { params: { city: string }
 
 // PUT — full replace of location content
 export async function PUT(req: NextRequest, { params }: { params: { city: string } }) {
+  const denied = await requirePermission('locations', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const city = params.city.toLowerCase();

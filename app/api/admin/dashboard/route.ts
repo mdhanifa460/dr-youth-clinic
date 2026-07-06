@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminSession, unauthorized } from '@/app/lib/adminAuth';
+import { requirePermission } from '@/app/lib/adminAuth';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import { Review } from '@/app/models/Review';
@@ -8,8 +8,8 @@ import { Service } from '@/app/models/Service';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const session = await requireAdminSession();
-  if (!session) return unauthorized();
+  const denied = await requirePermission('dashboard', 'view');
+  if (denied) return denied;
 
   await connectDB();
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAdminSession } from '@/app/lib/adminAuth';
+import { requirePermission } from '@/app/lib/adminAuth';
 import { connectDB } from '@/app/lib/mongodb';
 import { KeywordCache } from '@/app/models/KeywordCache';
 
@@ -85,11 +85,8 @@ Rules: all lowercase, no duplicates, specific not generic, commercially relevant
 
 // ── POST /api/admin/keyword-suggestions ─────────────────────────────────────
 export async function POST(req: Request) {
-  // Admin-only
-  const session = await getAdminSession();
-  if (!session) {
-    return NextResponse.json({ success: false, message: 'Unauthorised' }, { status: 401 });
-  }
+  const denied = await requirePermission('seo', 'view');
+  if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
   const { serviceName, category, location } = body;

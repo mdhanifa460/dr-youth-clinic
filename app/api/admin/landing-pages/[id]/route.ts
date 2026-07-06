@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const denied = await requirePermission('landing-pages', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
 
@@ -32,6 +36,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const denied = await requirePermission('landing-pages', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
 
@@ -92,6 +99,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const denied = await requirePermission('landing-pages', 'full');
+  if (denied) return denied;
+
   try {
     await connectDB();
 

@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
-import { getAdminSession } from '@/app/lib/adminAuth';
+import { requirePermission } from '@/app/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 const SECTION_KEY = 'doctors_page';
 
 export async function GET() {
+  const denied = await requirePermission('doctors', 'view');
+  if (denied) return denied;
+
   try {
     await connectDB();
     const s = await HomepageSection.findOne({ sectionKey: SECTION_KEY } as any).lean() as any;
@@ -19,8 +22,8 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ success: false, message: 'Unauthorised' }, { status: 401 });
+  const denied = await requirePermission('doctors', 'full');
+  if (denied) return denied;
 
   try {
     await connectDB();
