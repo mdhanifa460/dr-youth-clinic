@@ -258,7 +258,7 @@ export default async function Home() {
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
     getCachedLocationEmbeds(),
-    getCachedDoctors(preferredLocation),
+    getCachedDoctors(''), // fetch all — client filters by detected location
     getCachedBlogPosts(),
   ]);
 
@@ -269,6 +269,7 @@ export default async function Home() {
     doctors: {
       ...(sectionData['doctors'] ?? {}),
       doctors: liveDoctors,
+      _detectedCity: detectedCity,
     },
     blog: {
       ...(sectionData['blog'] ?? {}),

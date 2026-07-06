@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
   MapPin, Clock, Phone, Star, ChevronRight,
-  Users, Stethoscope, Navigation, CalendarCheck, LayoutGrid,
+  Users, Stethoscope, Navigation, CalendarCheck, LayoutGrid, LocateFixed,
 } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 
@@ -17,6 +17,36 @@ const CITY_KEY: Record<string, string> = {
   Kochi: 'kochi',
 };
 const toCityKey = (city: string) => CITY_KEY[city] ?? city.toLowerCase();
+
+// Approximate city-centre coordinates for each clinic key
+const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+  chennai:    { lat: 13.0827, lng: 80.2707 },
+  bangalore:  { lat: 12.9716, lng: 77.5946 },
+  coimbatore: { lat: 11.0168, lng: 76.9558 },
+  kochi:      { lat:  9.9312, lng: 76.2673 },
+};
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function nearestCityKey(lat: number, lng: number, available: string[]): string {
+  let best = available[0];
+  let bestDist = Infinity;
+  for (const key of available) {
+    const c = CITY_COORDS[key];
+    if (!c) continue;
+    const d = haversineKm(lat, lng, c.lat, c.lng);
+    if (d < bestDist) { bestDist = d; best = key; }
+  }
+  return best;
+}
 
 // ── Open/closed calculator (IST) ─────────────────────────────────────────────
 function getOpenStatus(hours: { day: string; hours: string }[]): { isOpen: boolean; text: string } {
@@ -72,7 +102,6 @@ export default function HomepageLocations({ data }: { data: any }) {
     _detectedCity = '',
   } = data || {};
 
-  // Auto-select the user's city if we have a clinic there, else fall back to first city
   const availableKeys = (cities as string[]).map(toCityKey);
   const detectedKey = toCityKey(_detectedCity);
   const initialKey = availableKeys.includes(detectedKey)
@@ -80,6 +109,22 @@ export default function HomepageLocations({ data }: { data: any }) {
     : toCityKey(cities[0] || 'Chennai');
 
   const [activeKey, setActiveKey] = useState<string>(initialKey);
+  const [autoDetected, setAutoDetected] = useState(availableKeys.includes(detectedKey));
+
+  // Browser geolocation — overrides server-detected city if granted
+  useEffect(() => {
+    if (!navigator?.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const nearest = nearestCityKey(coords.latitude, coords.longitude, availableKeys);
+        setActiveKey(nearest);
+        setAutoDetected(true);
+      },
+      () => { /* denied or unavailable — keep server-detected default */ },
+      { timeout: 6000, maximumAge: 300_000 },
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loc          = locations[activeKey];
   const embed        = _embeds[activeKey] ?? {};
@@ -127,8 +172,13 @@ export default function HomepageLocations({ data }: { data: any }) {
 
           {/* ── LEFT: city list ── */}
           <div className="bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] overflow-hidden flex flex-col">
-            <div className="px-5 py-4 border-b border-gray-50">
+            <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between gap-2">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select a location</p>
+              {autoDetected && (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-[#0B2560] bg-[#e8f0fe] px-2 py-0.5 rounded-full shrink-0">
+                  <LocateFixed size={9} /> Near you
+                </span>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
               {cities.map((city: string, i: number) => {
