@@ -157,8 +157,12 @@ export async function loginAdmin({
     ipAddress,
   });
 
-  user.lastLoginAt = new Date();
-  await user.save();
+  // Migrate legacy role value 'admin' → 'super_admin' so the new enum passes validation
+  const roleUpdate: Record<string, any> = { lastLoginAt: new Date() };
+  if (!user.role || user.role === "admin") {
+    roleUpdate.role = "super_admin";
+  }
+  await (AdminUser as any).findByIdAndUpdate(user._id, { $set: roleUpdate }, { runValidators: false });
 
   return {
     cookieValue: createSessionCookieValue(sessionId),
@@ -166,7 +170,7 @@ export async function loginAdmin({
     user: {
       email: user.email,
       name: user.name || "Clinic Admin",
-      role: user.role || "admin",
+      role: (!user.role || user.role === "admin") ? "super_admin" : user.role,
     },
   };
 }
