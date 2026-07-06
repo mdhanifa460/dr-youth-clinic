@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ALL_ROLES } from "@/app/lib/permissions";
 
 const AdminUserSchema = new mongoose.Schema(
   {
@@ -15,7 +16,8 @@ const AdminUserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      default: "admin",
+      enum: ALL_ROLES,
+      default: "clinic_owner",
     },
     passwordHash: {
       type: String,
@@ -29,7 +31,21 @@ const AdminUserSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    phone: {
+      type: String,
+      default: "",
+    },
+    avatar: {
+      type: String,
+      default: "",
+    },
+    assignedClinics: {
+      type: [String],
+      default: ["all"],
+    },
     lastLoginAt: Date,
+    lastLoginIp: String,
+    lastLoginDevice: String,
     isActive: {
       type: Boolean,
       default: true,

@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAdminSession } from "@/app/lib/adminAuth";
+import { getAdminUser } from "@/app/lib/adminAuth";
 import AdminSidebar from "./components/AdminSidebar";
 import IdleWatcher from "./components/IdleWatcher";
 
@@ -8,21 +8,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const pathname = headers().get("x-pathname") ?? "";
   const isLoginPage = pathname === "/admin/login";
 
-  if (!isLoginPage) {
-    const session = await getAdminSession();
-    if (!session) {
-      redirect("/admin/login");
-    }
-  }
-
   if (isLoginPage) {
     return <>{children}</>;
+  }
+
+  const user = await getAdminUser();
+  if (!user) {
+    redirect("/admin/login");
   }
 
   return (
     <div className="flex min-h-screen bg-gray-100">
       <IdleWatcher />
-      <AdminSidebar />
+      <AdminSidebar user={user} />
       <main className="flex-1 p-6">{children}</main>
     </div>
   );

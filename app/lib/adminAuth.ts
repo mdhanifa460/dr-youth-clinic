@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
 import AdminSession from "../models/AdminSession";
 import AdminUser from "../models/AdminUser";
+import { type AdminRole, type AdminModule, type AccessLevel, canAccess } from "./permissions";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 8;
@@ -226,4 +227,48 @@ export function clearAdminSessionCookie(res: NextResponse) {
     maxAge: 0,
     path: "/",
   });
+}
+
+export type AdminUserPublic = {
+  _id: string;
+  email: string;
+  name: string;
+  role: AdminRole;
+  assignedClinics: string[];
+};
+
+export async function getAdminUser(): Promise<AdminUserPublic | null> {
+  const session = await getAdminSession();
+  if (!session?.adminUserId) return null;
+  try {
+    await connectDB();
+    const user = await (AdminUser as any).findById(session.adminUserId)
+      .select("email name role assignedClinics isActive")
+      .lean();
+    if (!user || !user.isActive) return null;
+    return {
+      _id: String(user._id),
+      email: user.email,
+      name: user.name || "Admin",
+      role: user.role as AdminRole,
+      assignedClinics: user.assignedClinics ?? ["all"],
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function requirePermission(
+  module: AdminModule,
+  minLevel: AccessLevel = "view"
+): Promise<NextResponse | null> {
+  const user = await getAdminUser();
+  if (!user) return unauthorized();
+  if (!canAccess(user.role, module, minLevel)) {
+    return NextResponse.json(
+      { error: "Forbidden: insufficient permissions" },
+      { status: 403 }
+    );
+  }
+  return null;
 }
