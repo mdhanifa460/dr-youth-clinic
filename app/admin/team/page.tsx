@@ -53,7 +53,7 @@ export default function TeamPage() {
 
   function openEdit(m: TeamMember) {
     setEditing(m);
-    setForm({ name: m.name, email: m.email, role: m.role, password: "", assignedClinics: m.assignedClinics });
+    setForm({ name: m.name, email: m.email, role: m.role, password: "", assignedClinics: m.assignedClinics ?? ["all"] });
     setError("");
     setShowModal(true);
   }
@@ -133,7 +133,7 @@ export default function TeamPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500 capitalize">
-                    {m.assignedClinics.join(", ")}
+                    {(m.assignedClinics ?? ["all"]).join(", ")}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${m.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
