@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft } from "lucide-react";
+import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone } from "lucide-react";
 
 const GROUPS = [
   {
@@ -83,6 +83,15 @@ const GROUPS = [
     label: "Operations",
     color: "text-gray-500",
     items: [
+      {
+        href: "/admin/settings/contact",
+        icon: Phone,
+        color: "bg-sky-50 text-sky-600",
+        border: "border-sky-100 hover:border-sky-300",
+        title: "Contact & Privacy",
+        desc: "Set the public phone, WhatsApp, and email shown across the site. Control which admin roles can view unmasked patient phone numbers.",
+        tags: ["Public phone", "WhatsApp", "Phone masking"],
+      },
       {
         href: "/admin/settings/booking",
         icon: CalendarCog,

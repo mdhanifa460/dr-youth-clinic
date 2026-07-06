@@ -8,9 +8,12 @@ import IdleWatcher from "./components/IdleWatcher";
 // Maps URL prefix → required module (longest prefix wins)
 const MODULE_MAP: [string, AdminModule][] = [
   ["/admin/intelligence",  "intelligence"],
-  ["/admin/bookings",      "bookings"],
-  ["/admin/update-booking","bookings"],
-  ["/admin/update-status", "bookings"],
+  ["/admin/appointments",        "bookings"],
+  ["/admin/doctor-availability", "bookings"],
+  ["/admin/bookings",            "bookings"],
+  ["/admin/update-booking",      "bookings"],
+  ["/admin/update-status",       "bookings"],
+  ["/admin/leads",               "leads"],
   ["/admin/services",      "services"],
   ["/admin/doctors",       "doctors"],
   ["/admin/homepage",      "homepage"],
@@ -21,6 +24,7 @@ const MODULE_MAP: [string, AdminModule][] = [
   ["/admin/seo",           "seo"],
   ["/admin/landing-pages", "landing-pages"],
   ["/admin/quiz",          "services"],
+  ["/admin/cloudinary-test", "settings"],
   ["/admin/settings",      "settings"],
   ["/admin/team",          "team"],
   ["/admin/profile",       "dashboard"],

@@ -72,6 +72,14 @@ export interface ISettings extends Document {
     consultationFree: boolean;
     skinQuizFree: boolean;
   };
+  contact: {
+    publicPhone: string;
+    publicWhatsApp: string;
+    publicEmail: string;
+  };
+  contactPrivacy: {
+    showPatientPhoneRoles: string[];
+  };
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -146,6 +154,17 @@ const SettingsSchema = new Schema<ISettings>(
     freeLabels: {
       consultationFree: { type: Boolean, default: true },
       skinQuizFree:     { type: Boolean, default: true },
+    },
+    contact: {
+      publicPhone:    { type: String, default: '' },
+      publicWhatsApp: { type: String, default: '' },
+      publicEmail:    { type: String, default: '' },
+    },
+    contactPrivacy: {
+      showPatientPhoneRoles: {
+        type: [String],
+        default: ['super_admin', 'clinic_owner', 'receptionist', 'customer_support'],
+      },
     },
   },
   { timestamps: true }

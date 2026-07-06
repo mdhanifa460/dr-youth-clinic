@@ -8,6 +8,8 @@ import { useSiteConfig } from "@/app/components/SiteConfigContext";
 
 export default function Navbar() {
   const siteConfig = useSiteConfig();
+  const phone     = siteConfig.publicPhone    || "1800 890 9669";
+  const phoneHref = `tel:${phone.replace(/\s+/g, "")}`;
   const [active, setActive] = useState("home");
   const [locationOpen, setLocationOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -184,13 +186,15 @@ export default function Navbar() {
           >
             {siteConfig.skinQuizNav}
           </Link>
-          <a
-            href="tel:18008909669"
-            className="hidden xl:flex min-h-10 items-center gap-1.5 border border-gray-200 text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition"
-          >
-            <MdPhone size={15} />
-            1800 890 9669
-          </a>
+          {phone && (
+            <a
+              href={phoneHref}
+              className="hidden xl:flex min-h-10 items-center gap-1.5 border border-gray-200 text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition"
+            >
+              <MdPhone size={15} />
+              {phone}
+            </a>
+          )}
           <Link
             href="/book"
             className="min-h-10 bg-[#0B2560] text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-[0_6px_20px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-lg transition flex items-center justify-center whitespace-nowrap"
@@ -254,9 +258,11 @@ export default function Navbar() {
             >
               {siteConfig.skinQuizNav} — Find Your Treatment
             </Link>
-            <a href="tel:18008909669" className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">
-              <MdPhone size={15} /> 1800 890 9669
-            </a>
+            {phone && (
+              <a href={phoneHref} className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">
+                <MdPhone size={15} /> {phone}
+              </a>
+            )}
             <Link
               href="/book"
               onClick={() => setMobileOpen(false)}

@@ -5,7 +5,10 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const allowedStatuses = new Set(["new", "confirmed", "done"]);
+const allowedStatuses = new Set([
+  "new","contacted","follow_up","confirmed","arrived","completed","no_show","cancelled",
+  "done", // legacy — kept for backward compat
+]);
 const BookingModel = Booking as {
   findById: (id: string) => Promise<{
     status: string;

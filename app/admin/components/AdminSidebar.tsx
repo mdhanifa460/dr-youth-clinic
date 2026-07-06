@@ -15,7 +15,10 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "📊 Dashboard", module: "dashboard", exact: true },
   { href: "/admin/intelligence", label: "🧠 AI Intelligence", module: "intelligence" },
-  { href: "/admin/bookings", label: "📅 Bookings", module: "bookings" },
+  { href: "/admin/appointments", label: "🗓️ Appointments", module: "bookings" },
+  { href: "/admin/bookings", label: "📋 Booking Leads", module: "bookings" },
+  { href: "/admin/doctor-availability", label: "🚫 Dr. Availability", module: "bookings" },
+  { href: "/admin/leads", label: "🎯 Lead Export", module: "leads" },
   { href: "/admin/services", label: "🩺 Services", module: "services" },
   { href: "/admin/doctors", label: "👨‍⚕️ Doctors", module: "doctors" },
   { href: "/admin/homepage", label: "🏠 Homepage", module: "homepage" },
@@ -25,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/blog", label: "✍️ Blog Posts", module: "blog" },
   { href: "/admin/seo", label: "🔍 SEO", module: "seo" },
   { href: "/admin/landing-pages", label: "🚀 Landing Pages", module: "landing-pages" },
-  { href: "/admin/quiz", label: "🧴 Skin Quiz", module: "services" },
+  { href: "/admin/quiz", label: "🧴 Quiz", module: "services" },
   { href: "/admin/team", label: "👥 Team", module: "team" },
   { href: "/admin/settings", label: "⚙ Settings", module: "settings" },
 ];

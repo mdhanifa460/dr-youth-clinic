@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Search, ChevronDown, ChevronUp, MessageCircle, Calendar, Phone } from 'lucide-react';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 interface FAQItem {
   question: string;
@@ -16,10 +17,13 @@ interface FAQCategory {
 }
 
 export default function FAQPageClient({ categories }: { categories: FAQCategory[] }) {
+  const { publicPhone, publicWhatsApp } = useSiteConfig();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [openIndex, setOpenIndex] = useState<string | null>(null);
   const faqListRef = useRef<HTMLDivElement>(null);
+  const waHref   = publicWhatsApp ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}` : null;
+  const telHref  = publicPhone    ? `tel:${publicPhone.replace(/\s+/g, '')}`              : null;
 
   function jumpToCategory(cat: string) {
     setActiveCategory(cat);
@@ -258,22 +262,26 @@ export default function FAQPageClient({ categories }: { categories: FAQCategory[
               <Calendar size={16} />
               Book Free Consultation
             </Link>
-            <a
-              href="https://wa.me/919876543210"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-white/20 transition border border-white/20"
-            >
-              <MessageCircle size={16} />
-              WhatsApp Us
-            </a>
-            <a
-              href="tel:+919876543210"
-              className="flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-white/20 transition border border-white/20"
-            >
-              <Phone size={16} />
-              Call Now
-            </a>
+            {waHref && (
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-white/20 transition border border-white/20"
+              >
+                <MessageCircle size={16} />
+                WhatsApp Us
+              </a>
+            )}
+            {telHref && (
+              <a
+                href={telHref}
+                className="flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-white/20 transition border border-white/20"
+              >
+                <Phone size={16} />
+                Call Now
+              </a>
+            )}
           </div>
         </div>
 

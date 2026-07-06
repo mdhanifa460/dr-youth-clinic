@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, phone, service, location, date, time, concern, promoCode, promoDiscount } = body;
+    const { name, phone, email, service, location, date, time, concern, promoCode, promoDiscount, source } = body;
 
     // Input validation
     if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
@@ -35,21 +35,26 @@ export async function POST(req: Request) {
 
     await connectDB();
 
-    // ✅ Generate bookingId per request
     const bookingId = "DR-" + Date.now();
+
+    // Detect if this phone has booked before
+    const previousBookings = await (Booking as any).countDocuments({ phone: formattedPhone });
+    const isReturnVisit = previousBookings > 0;
 
     const booking = await Booking.create({
       bookingId,
       name,
       phone: formattedPhone,
       formattedPhone,
+      email: email || "",
       service,
       location,
       date,
       time,
       concern,
+      source: source || "website",
+      isReturnVisit,
       ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
-      createdAt: new Date(),
     });
 
     const API_URL = `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`;

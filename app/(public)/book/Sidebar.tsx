@@ -1,4 +1,6 @@
+'use client';
 import { CheckCircle, Clock, MapPin, Phone } from 'lucide-react';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 const STEPS = [
   { n: 1, label: 'Your Details', desc: 'Name, phone & concern' },
@@ -7,14 +9,10 @@ const STEPS = [
   { n: 4, label: 'Schedule', desc: 'Date & time slot' },
 ];
 
-const CLINICS = [
-  { city: 'Chennai', phone: '+91 98765 43210' },
-  { city: 'Bangalore', phone: '+91 98765 43210' },
-  { city: 'Kochi', phone: '+91 98765 43210' },
-  { city: 'Coimbatore', phone: '+91 98765 43210' },
-];
+const CITIES = ['Chennai', 'Bangalore', 'Kochi', 'Coimbatore'];
 
 export default function Sidebar({ step }: { step: number }) {
+  const { publicPhone } = useSiteConfig();
   return (
     <div className="space-y-5">
 
@@ -77,18 +75,20 @@ export default function Sidebar({ step }: { step: number }) {
           <Clock size={13} className="text-gray-300" />
           <span>Sunday: By Appointment</span>
         </div>
-        <div className="mt-4 pt-4 border-t border-gray-50 space-y-2">
-          {CLINICS.map((c) => (
-            <div key={c.city} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 text-gray-500">
-                <MapPin size={10} className="text-[#3B82C4]" /> {c.city}
+        {publicPhone && (
+          <div className="mt-4 pt-4 border-t border-gray-50 space-y-2">
+            {CITIES.map((city) => (
+              <div key={city} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-gray-500">
+                  <MapPin size={10} className="text-[#3B82C4]" /> {city}
+                </div>
+                <a href={`tel:${publicPhone.replace(/\s+/g, '')}`} className="flex items-center gap-1 text-[#0B2560] font-semibold hover:text-[#3B82C4] transition">
+                  <Phone size={10} /> {publicPhone}
+                </a>
               </div>
-              <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-[#0B2560] font-semibold hover:text-[#3B82C4] transition">
-                <Phone size={10} /> {c.phone}
-              </a>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

@@ -54,7 +54,7 @@ export default async function PublicLayout({
 
   return (
     <SiteConfigProvider initial={siteConfig}>
-      <OrganizationSchema />
+      <OrganizationSchema phone={siteConfig.publicPhone || undefined} />
       {topbar.visible && <TopBar data={topbar.data} />}
       <Navbar />
       <div className="pb-[72px] lg:pb-0">{children}</div>

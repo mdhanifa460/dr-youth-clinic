@@ -18,8 +18,11 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       consultationBadge: consultationFree ? 'Free Consult' : 'Consultation',
       consultationSub: consultationFree ? 'Free · No Commitment' : 'No Commitment',
       skinQuizFree,
-      skinQuizNav: skinQuizFree ? '✨ Free Skin Quiz' : '✨ Skin Quiz',
-      skinQuizLabel: skinQuizFree ? 'Free Skin Quiz' : 'Skin Quiz',
+      skinQuizNav: skinQuizFree ? '✨ Free Quiz' : '✨ Quiz',
+      skinQuizLabel: skinQuizFree ? 'Free Quiz' : 'Quiz',
+      publicPhone:    settings.contact?.publicPhone    || '',
+      publicWhatsApp: settings.contact?.publicWhatsApp || '',
+      publicEmail:    settings.contact?.publicEmail    || '',
     };
   } catch {
     return SITE_CONFIG_DEFAULTS;

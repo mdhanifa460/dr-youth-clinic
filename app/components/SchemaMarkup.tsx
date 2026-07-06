@@ -3,7 +3,7 @@ import { CLOUDINARY_LOGO_URL } from "@/app/lib/legacyImageUrls";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-export function OrganizationSchema() {
+export function OrganizationSchema({ phone }: { phone?: string }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
@@ -16,11 +16,13 @@ export function OrganizationSchema() {
       "https://www.instagram.com/dryouthclinic",
       "https://www.youtube.com/@dryouthclinic",
     ],
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "Customer Service",
-      telephone: "+91-9876543210",
-    },
+    ...(phone ? {
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "Customer Service",
+        telephone: phone,
+      },
+    } : {}),
     areaServed: Object.values(locations).map((loc) => ({
       "@type": "City",
       name: loc.name,

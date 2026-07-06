@@ -43,6 +43,11 @@ const AdminUserSchema = new mongoose.Schema(
       type: [String],
       default: ["all"],
     },
+    // Link to Doctor profile (set when role='doctor' to scope their appointment view)
+    linkedDoctorId: {
+      type: String,
+      default: null,
+    },
     lastLoginAt: Date,
     lastLoginIp: String,
     lastLoginDevice: String,

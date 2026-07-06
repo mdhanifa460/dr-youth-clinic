@@ -428,7 +428,7 @@ export default function QuizAdminPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Skin Quiz</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Quiz</h1>
           <p className="text-sm text-gray-500 mt-1">
             Edit quiz questions, options, and treatment recommendations. Changes go live instantly.
           </p>
