@@ -216,3 +216,13 @@ p {
   font-size: 12px;
   margin-top: 4px;
 }
+
+/* ===== MOBILE STICKY BAR — safe-area aware bottom offset ===== */
+.mobile-sticky-offset {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 1024px) {
+  .mobile-sticky-offset {
+    padding-bottom: 0;
+  }
+}

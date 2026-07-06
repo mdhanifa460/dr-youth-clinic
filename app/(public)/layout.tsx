@@ -62,7 +62,7 @@ export default async function PublicLayout({
       />
       {topbar.visible && <TopBar data={topbar.data} siteConfig={siteConfig} />}
       <Navbar />
-      <div className="pb-[72px] lg:pb-0">{children}</div>
+      <div className="mobile-sticky-offset lg:pb-0">{children}</div>
       <Footer data={footer} siteConfig={siteConfig} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
     </SiteConfigProvider>
