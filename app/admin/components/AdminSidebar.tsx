@@ -75,13 +75,21 @@ export default function AdminSidebar({ user }: { user: AdminUserPublic }) {
         })}
       </nav>
 
-      <div className="mt-6 border-t border-white/10 pt-4 space-y-3">
-        <div>
-          <p className="text-sm font-semibold truncate">{user.name}</p>
-          <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[role]}`}>
-            {ROLE_LABELS[role]}
-          </span>
-        </div>
+      <div className="mt-6 border-t border-white/10 pt-4 space-y-2">
+        <Link
+          href="/admin/profile"
+          className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition ${
+            path === "/admin/profile" ? "bg-white text-[#0B2545] font-semibold" : "hover:bg-white/10"
+          }`}
+        >
+          <span className="text-base">👤</span>
+          <div className="min-w-0">
+            <p className="font-semibold truncate leading-tight">{user.name}</p>
+            <span className={`inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${ROLE_COLORS[role]}`}>
+              {ROLE_LABELS[role]}
+            </span>
+          </div>
+        </Link>
         <button
           type="button"
           onClick={logout}

@@ -1,4 +1,5 @@
 import { createHash, createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from "crypto";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
@@ -60,15 +61,12 @@ export function hashPassword(password: string, salt = randomBytes(16).toString("
 }
 
 function verifyPassword(password: string, user: AdminUserDocument) {
-  const candidate = pbkdf2Sync(
-    password,
-    user.passwordSalt,
-    user.passwordIterations,
-    64,
-    "sha512"
-  );
-  const stored = Buffer.from(user.passwordHash, "hex");
+  return checkPassword(password, user.passwordHash, user.passwordSalt, user.passwordIterations);
+}
 
+export function checkPassword(password: string, hash: string, salt: string, iterations: number): boolean {
+  const candidate = pbkdf2Sync(password, salt, iterations, 64, "sha512");
+  const stored = Buffer.from(hash, "hex");
   return stored.length === candidate.length && timingSafeEqual(stored, candidate);
 }
 
@@ -241,7 +239,7 @@ export type AdminUserPublic = {
   assignedClinics: string[];
 };
 
-export async function getAdminUser(): Promise<AdminUserPublic | null> {
+export const getAdminUser = cache(async (): Promise<AdminUserPublic | null> => {
   const session = await getAdminSession();
   if (!session?.adminUserId) return null;
   try {
@@ -260,7 +258,7 @@ export async function getAdminUser(): Promise<AdminUserPublic | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function requirePermission(
   module: AdminModule,

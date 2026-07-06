@@ -71,13 +71,19 @@ function OptionsEditor({
   showDesc?: boolean;
 }) {
   const update = (i: number, field: keyof Option, val: string) => {
-    const next = options.map((o, idx) => idx === i ? { ...o, [field]: val } : o);
+    const next = options.map((o, idx) => {
+      if (idx !== i) return o;
+      // Keep id in sync with label for new options (id starts empty)
+      if (field === "label" && !o.id) return { ...o, label: val, id: val };
+      return { ...o, [field]: val };
+    });
     onChange(next);
   };
 
   const remove = (i: number) => onChange(options.filter((_, idx) => idx !== i));
 
-  const add = () => onChange([...options, { id: `option_${Date.now()}`, emoji: "", label: "", desc: "" }]);
+  // New options start with empty id — it gets set when label is typed
+  const add = () => onChange([...options, { id: "", emoji: "", label: "", desc: "" }]);
 
   return (
     <div className="space-y-2">
@@ -91,6 +97,9 @@ function OptionsEditor({
           />
           <div className="flex-1 space-y-1.5">
             <Input value={opt.label} onChange={(v) => update(i, "label", v)} placeholder="Option label" />
+            {opt.id && (
+              <p className="text-[10px] text-gray-400 px-1">ID: <span className="font-mono">{opt.id}</span> (stable — do not rename)</p>
+            )}
             {showDesc && (
               <Input value={opt.desc} onChange={(v) => update(i, "desc", v)} placeholder="Short description (optional)" />
             )}
@@ -269,6 +278,63 @@ function ConcernTreatmentPanel({
         </button>
       )}
     </div>
+  );
+}
+
+// ─── Generate All button ──────────────────────────────────────────────────────
+
+function GenerateAllButton({
+  concerns,
+  onUpdate,
+}: {
+  concerns: string[];
+  onUpdate: (concernId: string, treatments: Treatment[]) => void;
+}) {
+  const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [progress, setProgress] = useState(0);
+
+  const run = async () => {
+    if (!confirm(`Generate AI treatments for all ${concerns.length} concerns? This will replace existing treatments.`)) return;
+    setState("running");
+    setProgress(0);
+    let errors = 0;
+    for (let i = 0; i < concerns.length; i++) {
+      try {
+        const res = await fetch("/api/admin/quiz/ai-suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ concernId: concerns[i] }),
+        });
+        const data = await res.json();
+        if (data.success) onUpdate(concerns[i], data.data);
+        else errors++;
+      } catch {
+        errors++;
+      }
+      setProgress(i + 1);
+    }
+    setState(errors === 0 ? "done" : "error");
+    setTimeout(() => setState("idle"), 4000);
+  };
+
+  const label =
+    state === "running" ? `Generating ${progress}/${concerns.length}…` :
+    state === "done"    ? "✓ All generated" :
+    state === "error"   ? "⚠ Some failed" :
+    "✨ Generate All";
+
+  return (
+    <button
+      onClick={run}
+      disabled={state === "running"}
+      className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition ${
+        state === "done"  ? "bg-green-600 text-white" :
+        state === "error" ? "bg-red-500 text-white" :
+        "bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -491,9 +557,20 @@ export default function QuizAdminPage() {
       {/* ── Treatment Map tab ── */}
       {tab === "treatments" && (
         <div className="space-y-4">
-          <p className="text-sm text-gray-500 bg-purple-50 border border-purple-100 rounded-xl px-4 py-3">
-            <strong>💡 AI Suggest</strong> — click the purple button on any concern to let AI generate 3 evidence-based treatment recommendations. You can edit them before saving.
-          </p>
+          <div className="flex items-start justify-between gap-4 bg-purple-50 border border-purple-100 rounded-xl px-4 py-3">
+            <p className="text-sm text-gray-500">
+              <strong>💡 AI Suggest</strong> — click the purple button on any concern to generate 3 evidence-based treatment recommendations, or use <strong>Generate All</strong> to populate every concern at once.
+            </p>
+            <GenerateAllButton
+              concerns={config.treatmentMap.map((e) => e.concernId)}
+              onUpdate={(concernId, treatments) =>
+                updateTreatmentMap(concernId, {
+                  concernId,
+                  treatments,
+                })
+              }
+            />
+          </div>
 
           {config.treatmentMap.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">

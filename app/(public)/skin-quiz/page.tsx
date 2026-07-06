@@ -752,6 +752,7 @@ function ResultsScreen({
 
 export default function SkinQuizPage() {
   const [quizConfig, setQuizConfig] = useState<QuizConfigData>(DEFAULT_QUIZ_CONFIG as unknown as QuizConfigData);
+  const [configReady, setConfigReady] = useState(false);
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(true);
   const [analysing, setAnalysing] = useState(false);
@@ -770,7 +771,8 @@ export default function SkinQuizPage() {
     fetch("/api/quiz-config")
       .then((r) => r.json())
       .then((d) => { if (d.success && d.data) setQuizConfig(d.data); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setConfigReady(true));
   }, []);
 
   // Auto-transition from analysing → results after 2s
@@ -891,8 +893,14 @@ export default function SkinQuizPage() {
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
         }`}
       >
-        {/* Step 0 — Intro */}
-        {step === 0 && (
+        {/* Step 0 — Intro (wait for config to avoid flash) */}
+        {step === 0 && !configReady && (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="w-10 h-10 rounded-full border-4 border-[#0B2560]/20 border-t-[#0B2560] animate-spin" />
+            <p className="text-sm text-gray-400">Loading your personalised quiz…</p>
+          </div>
+        )}
+        {step === 0 && configReady && (
           <IntroScreen onStart={() => transition(() => setStep(1))} />
         )}
 
