@@ -25,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/blog", label: "✍️ Blog Posts", module: "blog" },
   { href: "/admin/seo", label: "🔍 SEO", module: "seo" },
   { href: "/admin/landing-pages", label: "🚀 Landing Pages", module: "landing-pages" },
+  { href: "/admin/quiz", label: "🧴 Skin Quiz", module: "services" },
   { href: "/admin/team", label: "👥 Team", module: "team" },
   { href: "/admin/settings", label: "⚙ Settings", module: "settings" },
 ];

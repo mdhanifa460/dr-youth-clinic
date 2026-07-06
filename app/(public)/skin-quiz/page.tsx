@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
+import { DEFAULT_QUIZ_CONFIG, type QuizConfigData } from "@/app/lib/quizDefaults";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,7 +24,9 @@ type Treatment = {
   icon: string;
 };
 
-// ─── Quiz Data ────────────────────────────────────────────────────────────────
+type QuizOption = { id: string; emoji: string; label: string; desc: string };
+
+// ─── Quiz Data (fallback — overridden by DB fetch) ────────────────────────────
 
 const CONCERNS = [
   { id: "Acne & Breakouts", emoji: "🔴", label: "Acne & Breakouts" },
@@ -335,13 +338,15 @@ function SelectionCheck({ selected }: { selected: boolean }) {
 function ConcernStep({
   answers,
   setAnswers,
+  concerns,
 }: {
   answers: Answers;
   setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
+  concerns: QuizOption[];
 }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {CONCERNS.map((c) => {
+      {concerns.map((c) => {
         const selected = answers.concern === c.id;
         return (
           <button
@@ -373,13 +378,15 @@ function ConcernStep({
 function SkinTypeStep({
   answers,
   setAnswers,
+  skinTypes,
 }: {
   answers: Answers;
   setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
+  skinTypes: QuizOption[];
 }) {
   return (
     <div className="flex flex-col gap-3">
-      {SKIN_TYPES.map((s) => {
+      {skinTypes.map((s) => {
         const selected = answers.skinType === s.id;
         return (
           <button
@@ -410,13 +417,15 @@ function SkinTypeStep({
 function ExperienceStep({
   answers,
   setAnswers,
+  experiences,
 }: {
   answers: Answers;
   setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
+  experiences: QuizOption[];
 }) {
   return (
     <div className="flex flex-col gap-3">
-      {EXPERIENCES.map((e) => {
+      {experiences.map((e) => {
         const selected = answers.experience === e.id;
         return (
           <button
@@ -445,13 +454,15 @@ function ExperienceStep({
 function BudgetStep({
   answers,
   setAnswers,
+  budgets,
 }: {
   answers: Answers;
   setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
+  budgets: string[];
 }) {
   return (
     <div className="flex flex-wrap gap-3">
-      {BUDGETS.map((b) => {
+      {budgets.map((b) => {
         const selected = answers.budget === b;
         return (
           <button
@@ -476,13 +487,15 @@ function BudgetStep({
 function TimelineStep({
   answers,
   setAnswers,
+  timelines,
 }: {
   answers: Answers;
   setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
+  timelines: QuizOption[];
 }) {
   return (
     <div className="flex flex-col sm:flex-row gap-3">
-      {TIMELINES.map((t) => {
+      {timelines.map((t) => {
         const selected = answers.timeline === t.id;
         return (
           <button
@@ -738,6 +751,7 @@ function ResultsScreen({
 // ─── Main Quiz Page ───────────────────────────────────────────────────────────
 
 export default function SkinQuizPage() {
+  const [quizConfig, setQuizConfig] = useState<QuizConfigData>(DEFAULT_QUIZ_CONFIG as unknown as QuizConfigData);
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(true);
   const [analysing, setAnalysing] = useState(false);
@@ -751,6 +765,13 @@ export default function SkinQuizPage() {
   });
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/quiz-config")
+      .then((r) => r.json())
+      .then((d) => { if (d.success && d.data) setQuizConfig(d.data); })
+      .catch(() => {});
+  }, []);
 
   // Auto-transition from analysing → results after 2s
   useEffect(() => {
@@ -818,7 +839,9 @@ export default function SkinQuizPage() {
     transition(() => setStep(0));
   };
 
-  const recommendations = answers.concern ? (RECOMMENDATIONS[answers.concern] ?? []) : [];
+  const recommendations = answers.concern
+    ? (quizConfig.treatmentMap.find((e) => e.concernId === answers.concern)?.treatments ?? [])
+    : [];
 
   // Progress: 0 on intro, 100 on results, proportional in between
   const progressPct =
@@ -893,17 +916,19 @@ export default function SkinQuizPage() {
                 ))}
               </div>
               <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
-                {STEP_META[step].title}
+                {quizConfig.stepMeta.find((s) => s.step === step)?.title ?? ""}
               </h2>
-              <p className="text-gray-500 text-sm md:text-base">{STEP_META[step].subtitle}</p>
+              <p className="text-gray-500 text-sm md:text-base">
+                {quizConfig.stepMeta.find((s) => s.step === step)?.subtitle ?? ""}
+              </p>
             </div>
 
             {/* Step content */}
-            {step === 1 && <ConcernStep answers={answers} setAnswers={setAnswers} />}
-            {step === 2 && <SkinTypeStep answers={answers} setAnswers={setAnswers} />}
-            {step === 3 && <ExperienceStep answers={answers} setAnswers={setAnswers} />}
-            {step === 4 && <BudgetStep answers={answers} setAnswers={setAnswers} />}
-            {step === 5 && <TimelineStep answers={answers} setAnswers={setAnswers} />}
+            {step === 1 && <ConcernStep answers={answers} setAnswers={setAnswers} concerns={quizConfig.concerns} />}
+            {step === 2 && <SkinTypeStep answers={answers} setAnswers={setAnswers} skinTypes={quizConfig.skinTypes} />}
+            {step === 3 && <ExperienceStep answers={answers} setAnswers={setAnswers} experiences={quizConfig.experiences} />}
+            {step === 4 && <BudgetStep answers={answers} setAnswers={setAnswers} budgets={quizConfig.budgets} />}
+            {step === 5 && <TimelineStep answers={answers} setAnswers={setAnswers} timelines={quizConfig.timelines} />}
 
             {/* Navigation */}
             <div className="mt-8 flex items-center justify-between">
