@@ -6,7 +6,7 @@ import NotificationQueue from "@/app/models/NotificationQueue";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requirePermission("bookings", "view");
+  const denied = await requirePermission("bookings", "full");
   if (denied) return denied;
 
   await connectDB();
