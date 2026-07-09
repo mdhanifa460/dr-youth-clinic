@@ -13,6 +13,13 @@ const PAGE_FIELDS = [
   { key: 'ctaBody',        label: 'Bottom CTA Body',      hint: 'Paragraph in the CTA strip', rows: 2 },
 ];
 
+const DETAIL_PAGE_FIELDS = [
+  { key: 'detailSidebarHeading', label: 'Sidebar Heading',      hint: 'Sticky booking card on doctor detail page', rows: 1 },
+  { key: 'detailSidebarBody',    label: 'Sidebar Body',         hint: 'Use {firstName} to insert the doctor\'s first name', rows: 2 },
+  { key: 'detailCtaHeading',     label: 'Bottom CTA Heading',   hint: 'Use {firstName} to insert the doctor\'s first name', rows: 1 },
+  { key: 'detailCtaBody',        label: 'Bottom CTA Body',      hint: 'Paragraph in the CTA strip on doctor detail page', rows: 2 },
+];
+
 const PAGE_DEFAULTS: Record<string, string> = {
   heroHeading:    'Meet Our Expert Specialist Team',
   heroSubheading: 'Board-certified dermatologists, trichologists and aesthetic physicians committed to delivering safe, natural and lasting results.',
@@ -20,6 +27,10 @@ const PAGE_DEFAULTS: Record<string, string> = {
   gridSubheading: 'Filter by clinic location below',
   ctaHeading:     'Consult a Specialist Today',
   ctaBody:        'Book a free initial consultation — zero commitment, just an honest assessment of your concerns.',
+  detailSidebarHeading: 'Book a Consultation',
+  detailSidebarBody:    'Schedule a free initial consultation with {firstName} — zero commitment, just an honest expert assessment.',
+  detailCtaHeading:     'Consult {firstName} Today',
+  detailCtaBody:        'Book a free initial consultation — get an expert opinion on your skin, hair or aesthetic concerns.',
 };
 
 function PageContentPanel() {
@@ -63,7 +74,7 @@ function PageContentPanel() {
       <div className="px-6 py-4 border-b border-gray-100 shrink-0">
         <h2 className="font-bold text-[#0B2560] text-sm">Meet Our Doctors — Page Content</h2>
         <p className="text-xs text-gray-400 mt-0.5">
-          Controls text shown on <a href="/doctors" target="_blank" rel="noopener noreferrer" className="text-[#3B82C4] hover:underline">/doctors</a> public page
+          Controls text shown on <a href="/doctors" target="_blank" rel="noopener noreferrer" className="text-[#3B82C4] hover:underline">/doctors</a> and individual doctor pages
         </p>
       </div>
 
@@ -83,6 +94,25 @@ function PageContentPanel() {
             <p className="text-[10px] text-gray-400 mt-1">{hint}</p>
           </div>
         ))}
+
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs font-bold text-[#0B2560] mb-4">Doctor Detail Page</p>
+          <div className="space-y-5">
+            {DETAIL_PAGE_FIELDS.map(({ key, label, hint, rows }) => (
+              <div key={key}>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
+                {rows > 1 ? (
+                  <textarea rows={rows} value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none" />
+                ) : (
+                  <input value={form[key] || ''} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                )}
+                <p className="text-[10px] text-gray-400 mt-1">{hint}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Live preview hint */}
         <div className="rounded-xl bg-[#f0f5ff] border border-blue-50 px-4 py-3">

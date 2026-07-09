@@ -1,14 +1,30 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Calendar, MapPin, Award, ArrowLeft, GraduationCap, Languages, Stethoscope } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
+import { HomepageSection } from '@/app/models/HomepageSection';
+
+export const revalidate = 300;
 
 const LOCATION_LABELS: Record<string, string> = {
   chennai: 'Chennai', bangalore: 'Bangalore', coimbatore: 'Coimbatore', kochi: 'Kochi', all: 'All Clinics',
 };
+
+const getCachedPageContent = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const s = await HomepageSection.findOne({ sectionKey: 'doctors_page' } as any).lean() as any;
+      return (s?.data as Record<string, string>) || {};
+    } catch { return {}; }
+  },
+  ['doctors-page-content'],
+  { revalidate: 300, tags: ['doctors-page'] }
+);
 
 async function getDoctor(id: string) {
   try {
@@ -33,7 +49,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function DoctorDetailPage({ params }: { params: { id: string } }) {
-  const doctor = await getDoctor(params.id);
+  const [doctor, pc] = await Promise.all([getDoctor(params.id), getCachedPageContent()]);
   if (!doctor) notFound();
 
   const locationLabel = doctor.locations?.includes('all')
@@ -41,6 +57,16 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
     : doctor.locations?.map((l: string) => LOCATION_LABELS[l] || l).join(', ') || '';
 
   const firstName = doctor.name?.split(' ').find((w: string) => w.toLowerCase() !== 'dr') || doctor.name?.split(' ')[0] || '';
+
+  // Admin-editable copy for this page, with the current hardcoded text as fallback defaults
+  const sidebarHeading  = pc.detailSidebarHeading || 'Book a Consultation';
+  const sidebarBodyTpl  = pc.detailSidebarBody    || 'Schedule a free initial consultation with {firstName} — zero commitment, just an honest expert assessment.';
+  const ctaHeadingTpl   = pc.detailCtaHeading      || 'Consult {firstName} Today';
+  const ctaBody         = pc.detailCtaBody         || 'Book a free initial consultation — get an expert opinion on your skin, hair or aesthetic concerns.';
+
+  const withFirstName = (tpl: string) => tpl.replace(/\{firstName\}/g, firstName);
+  const sidebarBody = withFirstName(sidebarBodyTpl);
+  const ctaHeading  = withFirstName(ctaHeadingTpl);
 
   return (
     <main className="bg-white">
@@ -55,9 +81,15 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
 
           <div className="flex flex-col sm:flex-row items-start gap-6 md:gap-8">
             {/* Photo */}
-            <div className="relative w-28 h-28 md:w-40 md:h-40 rounded-3xl overflow-hidden bg-white/10 shrink-0 ring-2 ring-white/10">
+            <div className="relative w-28 sm:w-32 md:w-44 lg:w-48 aspect-[4/5] rounded-3xl overflow-hidden bg-white/10 shrink-0 ring-2 ring-white/10">
               {doctor.photo?.url ? (
-                <Image src={doctor.photo.url} alt={doctor.name} fill sizes="160px" className="object-cover object-top" />
+                <Image
+                  src={doctor.photo.url}
+                  alt={doctor.name}
+                  fill
+                  sizes="(min-width: 1024px) 192px, (min-width: 768px) 176px, (min-width: 640px) 128px, 112px"
+                  className="object-cover object-top"
+                />
               ) : (
                 <div className="h-full flex items-center justify-center text-5xl opacity-60">👨‍⚕️</div>
               )}
@@ -176,9 +208,9 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
         {/* RIGHT — sticky CTA */}
         <div className="space-y-4">
           <div className="bg-[#f6faff] border border-blue-50 rounded-3xl p-6 space-y-4 md:sticky md:top-6">
-            <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Book a Consultation</p>
+            <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{sidebarHeading}</p>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Schedule a free initial consultation with {firstName} — zero commitment, just an honest expert assessment.
+              {sidebarBody}
             </p>
             <Link href="/book"
               className="flex items-center justify-center gap-2 bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm hover:bg-[#0d2d73] hover:-translate-y-0.5 transition-all shadow-md shadow-[#0B2560]/20">
@@ -227,10 +259,10 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
-            Consult {firstName} Today
+            {ctaHeading}
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
-            Book a free initial consultation — get an expert opinion on your skin, hair or aesthetic concerns.
+            {ctaBody}
           </p>
           <Link href="/book"
             className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
