@@ -21,12 +21,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const settings = await getSettings();
   const allowedPhoneRoles: string[] = settings.contactPrivacy?.showPatientPhoneRoles
     ?? ["super_admin", "clinic_owner", "receptionist", "customer_support"];
+  const phoneMaskEnabled = settings.contactPrivacy?.phoneMaskEnabled ?? true;
 
   return NextResponse.json({
     success: true,
     data: {
       ...booking,
-      phone: maskPhone(booking.phone || "", user.role, allowedPhoneRoles),
+      phone: maskPhone(booking.phone || "", user.role, allowedPhoneRoles, phoneMaskEnabled),
     },
   });
 }

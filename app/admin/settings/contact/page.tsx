@@ -3,17 +3,26 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save, Phone, Mail, MessageCircle, Shield } from "lucide-react";
+import { ALL_ROLES as ADMIN_ROLES, ROLE_LABELS } from "@/app/lib/permissions";
 
-const ALL_ROLES: { key: string; label: string; desc: string }[] = [
-  { key: "super_admin",       label: "Super Admin",        desc: "Full platform access" },
-  { key: "clinic_owner",      label: "Clinic Owner",       desc: "Manages own clinic(s)" },
-  { key: "clinic_manager",    label: "Clinic Manager",     desc: "Branch-level management" },
-  { key: "receptionist",      label: "Receptionist",       desc: "Front desk, bookings" },
-  { key: "doctor",            label: "Doctor",             desc: "Sees own appointments" },
-  { key: "customer_support",  label: "Customer Support",   desc: "Patient queries" },
-  { key: "marketing_manager", label: "Marketing Manager",  desc: "Leads & campaigns" },
-  { key: "content_editor",    label: "Content Editor",     desc: "Blog & content only" },
-];
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  super_admin:       "Full platform access",
+  clinic_owner:      "Manages own clinic(s)",
+  marketing_manager: "Leads & campaigns",
+  doctor:            "Sees own appointments",
+  receptionist:      "Front desk, bookings",
+  content_editor:    "Blog & content only",
+  finance_manager:   "Pricing & payments",
+  customer_support:  "Patient queries",
+};
+
+// Real, current admin roles only (previously included a "clinic_manager" role that
+// doesn't exist in app/lib/permissions.ts and could never actually match a logged-in user).
+const ALL_ROLES = ADMIN_ROLES.map((key) => ({
+  key,
+  label: ROLE_LABELS[key].replace(/^\S+\s/, ''), // strip the emoji prefix used elsewhere
+  desc: ROLE_DESCRIPTIONS[key] ?? '',
+}));
 
 type ContactForm = {
   publicPhone:    string;
@@ -30,6 +39,9 @@ const CONTACT_DEFAULTS: ContactForm = {
 export default function ContactSettingsPage() {
   const [contact,      setContact]      = useState<ContactForm>(CONTACT_DEFAULTS);
   const [phoneRoles,   setPhoneRoles]   = useState<string[]>(["super_admin", "clinic_owner", "receptionist", "customer_support"]);
+  const [maskEnabled,  setMaskEnabled]  = useState(true);
+  const [maskSaving,   setMaskSaving]   = useState(false);
+  const [maskError,    setMaskError]    = useState("");
   const [loading,      setLoading]      = useState(true);
   const [saving,       setSaving]       = useState(false);
   const [success,      setSuccess]      = useState(false);
@@ -44,6 +56,9 @@ export default function ContactSettingsPage() {
           if (d.data?.contactPrivacy?.showPatientPhoneRoles) {
             setPhoneRoles(d.data.contactPrivacy.showPatientPhoneRoles);
           }
+          if (typeof d.data?.contactPrivacy?.phoneMaskEnabled === "boolean") {
+            setMaskEnabled(d.data.contactPrivacy.phoneMaskEnabled);
+          }
         }
         setLoading(false);
       })
@@ -54,6 +69,33 @@ export default function ContactSettingsPage() {
     setPhoneRoles((prev) =>
       prev.includes(key) ? prev.filter((r) => r !== key) : [...prev, key]
     );
+  }
+
+  // Saves independently of the page's main Save button — editable by super_admin
+  // and clinic_owner, a narrower carve-out than the full Settings permission that
+  // gates the rest of this page (see app/api/admin/settings/phone-mask/route.ts).
+  async function toggleMaskEnabled() {
+    const next = !maskEnabled;
+    setMaskEnabled(next);
+    setMaskSaving(true);
+    setMaskError("");
+    try {
+      const res = await fetch("/api/admin/settings/phone-mask", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setMaskEnabled(!next);
+        setMaskError(data.message || "Failed to save");
+      }
+    } catch {
+      setMaskEnabled(!next);
+      setMaskError("Network error — please try again");
+    } finally {
+      setMaskSaving(false);
+    }
   }
 
   async function save() {
@@ -178,15 +220,30 @@ export default function ContactSettingsPage() {
         {/* Patient Phone Visibility */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-50">
-            <div className="flex items-center gap-2">
-              <Shield size={14} className="text-[#0B2560]" />
-              <h2 className="font-bold text-[#0B2560] text-sm">Patient Phone Visibility</h2>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-[#0B2560]" />
+                <h2 className="font-bold text-[#0B2560] text-sm">Patient Phone Visibility</h2>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                <span className="text-xs font-semibold text-gray-500">
+                  {maskSaving ? "Saving…" : maskEnabled ? "Masking On" : "Masking Off"}
+                </span>
+                <div className="relative" onClick={toggleMaskEnabled}>
+                  <div className={`w-10 h-6 rounded-full transition-colors ${maskEnabled ? "bg-[#0B2560]" : "bg-gray-200"}`} />
+                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${maskEnabled ? "translate-x-4" : ""}`} />
+                </div>
+              </label>
             </div>
             <p className="text-gray-400 text-xs mt-0.5">
-              Roles not checked here will see a masked number (e.g. +91•••••10) in Leads, Appointments, and Bookings.
+              Master switch for phone masking in Leads, Appointments, and Bookings — editable by Super Admin and Clinic Owner.
+              {!maskEnabled && " Currently off: everyone sees full, unmasked numbers regardless of the roles below."}
             </p>
+            {maskError && (
+              <p className="text-red-600 text-xs mt-1.5 flex items-center gap-1"><AlertCircle size={11} /> {maskError}</p>
+            )}
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className={`divide-y divide-gray-50 transition-opacity ${maskEnabled ? "" : "opacity-40 pointer-events-none"}`}>
             {ALL_ROLES.map(({ key, label, desc }) => {
               const checked = phoneRoles.includes(key);
               return (

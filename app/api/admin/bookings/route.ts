@@ -66,10 +66,11 @@ export async function GET(req: NextRequest) {
 
   const allowedPhoneRoles: string[] = settings.contactPrivacy?.showPatientPhoneRoles
     ?? ["super_admin", "clinic_owner", "receptionist", "customer_support"];
+  const phoneMaskEnabled = settings.contactPrivacy?.phoneMaskEnabled ?? true;
 
   const data = rawData.map((b: any) => ({
     ...b,
-    phone: maskPhone(b.phone || "", user.role, allowedPhoneRoles),
+    phone: maskPhone(b.phone || "", user.role, allowedPhoneRoles, phoneMaskEnabled),
   }));
 
   return NextResponse.json({
