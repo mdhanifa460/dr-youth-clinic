@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Calendar, Tag, CheckCircle } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Offer } from '@/app/models/Offer';
+import { getSiteConfig } from '@/app/lib/siteConfig';
+import { locations } from '@/app/data/locations';
 import OffersClient from './OffersClient';
 import { discountPct } from './OfferCard';
 
@@ -33,12 +35,13 @@ const getOffers = unstable_cache(
 
 // ── Page ────────────────────────────────────────────────────────────────────
 export default async function OffersPage() {
-  const offers = await getOffers();
+  const [offers, siteConfig] = await Promise.all([getOffers(), getSiteConfig()]);
   const activeOffers = offers.filter((o: any) => !o.validUntil || new Date(o.validUntil) >= new Date());
   const maxSave = offers.reduce((max: number, o: any) => {
     const pct = discountPct(o.originalPrice, o.discountedPrice);
     return pct > max ? pct : max;
   }, 0);
+  const cityCount = Object.keys(locations).length;
 
   const TERMS = [
     'All offers are valid for a limited period and subject to availability.',
@@ -67,7 +70,7 @@ export default async function OffersPage() {
             <span className="text-[#F5A623]">Packages</span>
           </h1>
           <p className="text-white/60 max-w-xl text-sm md:text-base leading-relaxed mb-8">
-            Premium skin, hair & laser treatments at unbeatable prices — trusted by 25,000+ patients across 4 cities. Book before they expire.
+            Premium skin, hair & laser treatments at unbeatable prices — trusted by {siteConfig.patientsCount} patients across {cityCount} cities. Book before they expire.
           </p>
 
           {/* Stats row */}
@@ -75,8 +78,8 @@ export default async function OffersPage() {
             {[
               { icon: '🏷️', label: 'Active Offers', value: `${activeOffers.length}+` },
               { icon: '💰', label: 'Max Savings', value: maxSave > 0 ? `${maxSave}%` : 'Up to 50%' },
-              { icon: '🏥', label: 'Clinics', value: '4 Cities' },
-              { icon: '⭐', label: 'Patient Rating', value: '4.9/5' },
+              { icon: '🏥', label: 'Clinics', value: `${cityCount} Cities` },
+              { icon: '⭐', label: 'Patient Rating', value: `${siteConfig.ratingValue}/5` },
             ].map(s => (
               <div key={s.label} className="flex items-center gap-3">
                 <span className="text-2xl">{s.icon}</span>

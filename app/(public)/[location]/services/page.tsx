@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
+import { LocationContent } from '@/app/models/LocationContent';
 import { locations } from '@/app/data/locations';
 
 export const revalidate = 300;
@@ -97,6 +98,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+async function getClinicPhone(location: string, fallback: string) {
+  try {
+    await connectDB();
+    const doc = await LocationContent.findOne({ location: location.toLowerCase() }).lean() as any;
+    return doc?.clinicInfo?.phone || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 async function getCategoryData(location: string) {
   try {
     await connectDB();
@@ -124,6 +135,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
   if (!loc) notFound();
 
   const { counts, previews, total } = await getCategoryData(params.location);
+  const phone = await getClinicPhone(params.location, loc.phone);
 
   return (
     <main className="bg-white min-h-screen">
@@ -287,10 +299,10 @@ export default async function ServicesHubPage({ params }: PageProps) {
               <ArrowRight size={16} />
             </Link>
             <a
-              href={`tel:${loc.phone}`}
+              href={`tel:${phone}`}
               className="inline-flex items-center gap-2 border border-white/25 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition"
             >
-              Call {loc.phone}
+              Call {phone}
             </a>
           </div>
         </div>

@@ -147,6 +147,12 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       headline: 'Real Results, Real Confidence',
       subheadline:
         'Visible improvements that our patients are thrilled about. See the difference.',
+      stats: [
+        { value: '98%', label: 'Patient satisfaction' },
+        { value: '10K+', label: 'Treatments done' },
+        { value: '22+', label: 'Years of care' },
+        { value: '4', label: 'Clinic locations' },
+      ],
       pairs: [
         {
           title: 'Acne Therapy & Scar Solution',
@@ -360,6 +366,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     data: {
       tagline:
         'Advanced skin & aesthetic care with clinical expertise and personalised treatments.',
+      quickLinksHeading: 'Quick Links',
       quickLinks: [
         { label: 'Home', href: '/' },
         { label: 'About Us', href: '#' },
@@ -368,6 +375,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         { label: 'Blog', href: '#' },
         { label: 'Contact Us', href: '#' },
       ],
+      proceduresHeading: 'Our Procedures',
       procedures: [
         { label: 'Hair Transplant', href: '#' },
         { label: 'PRP Therapy', href: '#' },
@@ -376,6 +384,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         { label: 'Laser & Skin Treatments', href: '#' },
         { label: 'View All Procedures', href: '#' },
       ],
+      patientCareHeading: 'Patient Care',
       patientCare: [
         { label: 'Book Appointment', href: '/book' },
         { label: 'FAQs', href: '#' },
@@ -383,6 +392,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         { label: 'Privacy Policy', href: '#' },
         { label: 'Terms & Conditions', href: '#' },
       ],
+      contactHeading: 'Contact Us',
       contact: {
         address: locations.chennai.address,
         phone: locations.chennai.phone,

@@ -16,7 +16,7 @@ const FALLBACK_PAIRS = [
 
 const CATEGORIES = ['All', 'Skin Care', 'Hair', 'Laser', 'Acne & Scars'];
 
-const STATS = [
+const FALLBACK_STATS = [
   { value: '98%', label: 'Patient satisfaction' },
   { value: '10K+', label: 'Treatments done' },
   { value: '22+', label: 'Years of care' },
@@ -27,10 +27,12 @@ interface Props {
   pairs: any[];
   headline: string;
   subheadline: string;
+  stats?: { value: string; label: string }[];
 }
 
-export default function ResultsClient({ pairs, headline, subheadline }: Props) {
+export default function ResultsClient({ pairs, headline, subheadline, stats }: Props) {
   const allPairs = pairs.length > 0 ? pairs : FALLBACK_PAIRS;
+  const STATS = stats && stats.length > 0 ? stats : FALLBACK_STATS;
   const [activeCategory, setActiveCategory] = useState('All');
 
   const filtered = activeCategory === 'All'

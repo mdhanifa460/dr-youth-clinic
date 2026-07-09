@@ -7,13 +7,13 @@ import ConsultationForm from './Form';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 export default function BookingPage() {
-  const { consultationCta, consultationBadge, consultationSub } = useSiteConfig();
+  const { consultationCta, consultationBadge, consultationSub, ratingValue, patientsCount, yearsExperience } = useSiteConfig();
   const [step, setStep] = useState(1);
 
   const TRUST = [
-    { icon: Star, label: '4.9★ Rating', sub: '25,000+ happy patients' },
+    { icon: Star, label: `${ratingValue}★ Rating`, sub: `${patientsCount} happy patients` },
     { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
-    { icon: Users, label: 'Expert Doctors', sub: '10+ years experience' },
+    { icon: Users, label: 'Expert Doctors', sub: `${yearsExperience} years experience` },
     { icon: BadgeCheck, label: consultationBadge, sub: 'No commitment needed' },
   ];
 

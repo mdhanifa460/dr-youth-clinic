@@ -25,9 +25,13 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
   const {
     tagline = "",
+    quickLinksHeading = "Quick Links",
     quickLinks = [],
+    proceduresHeading = "Our Procedures",
     procedures = [],
+    patientCareHeading = "Patient Care",
     patientCare = [],
+    contactHeading = "Contact Us",
     contact = {},
     copyright = "© 2024 DR Youth Clinic. All Rights Reserved.",
     socialLinks = [],
@@ -80,7 +84,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
           {/* COL 2 — QUICK LINKS */}
           <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">Quick Links</h4>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">{quickLinksHeading}</h4>
             <ul className="space-y-3">
               {quickLinks.map((l: any, i: number) => (
                 <li key={i}>
@@ -97,7 +101,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
           {/* COL 3 — OUR PROCEDURES */}
           <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">Our Procedures</h4>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">{proceduresHeading}</h4>
             <ul className="space-y-3">
               {procedures.map((p: any, i: number) => (
                 <li key={i}>
@@ -114,7 +118,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
           {/* COL 4 — PATIENT CARE */}
           <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">Patient Care</h4>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">{patientCareHeading}</h4>
             <ul className="space-y-3">
               {patientCare.map((p: any, i: number) => (
                 <li key={i}>
@@ -131,7 +135,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
           {/* COL 5 — CONTACT */}
           <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">Contact Us</h4>
+            <h4 className="text-sm font-bold mb-5 tracking-wide">{contactHeading}</h4>
             <ul className="space-y-4">
               {contact.address && (
                 <li className="flex gap-2.5 text-white/60 text-sm leading-relaxed">

@@ -22,13 +22,14 @@ async function getPairs() {
       pairs: data.pairs ?? [],
       headline: data.headline ?? 'Real Results, Real Confidence',
       subheadline: data.subheadline ?? 'Visible improvements that our patients are thrilled about.',
+      stats: data.stats ?? HOMEPAGE_DEFAULTS.before_after?.data?.stats ?? [],
     };
   } catch {
-    return { pairs: [], headline: 'Real Results, Real Confidence', subheadline: '' };
+    return { pairs: [], headline: 'Real Results, Real Confidence', subheadline: '', stats: [] };
   }
 }
 
 export default async function ResultsPage() {
-  const { pairs, headline, subheadline } = await getPairs();
-  return <ResultsClient pairs={pairs} headline={headline} subheadline={subheadline} />;
+  const { pairs, headline, subheadline, stats } = await getPairs();
+  return <ResultsClient pairs={pairs} headline={headline} subheadline={subheadline} stats={stats} />;
 }

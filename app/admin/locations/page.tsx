@@ -238,6 +238,7 @@ export default function LocationsAdminPage() {
     address: '', phone: '',
     hours: [{ day: 'Monday - Saturday', hours: '' }, { day: 'Sunday', hours: 'Closed' }],
     rating: 0, reviewCount: 0, serviceCount: 0, doctorCount: 0,
+    description: '', specialties: [] as string[], whyUs: [] as { icon: string; title: string; desc: string }[],
   };
 
   const [data, setData] = useState<any>({
@@ -249,6 +250,13 @@ export default function LocationsAdminPage() {
     galleryImages: [],
     localDoctors: [],
   });
+  const WHY_US_ICONS = [
+    { key: 'flask', label: 'Flask — Research' },
+    { key: 'shield', label: 'Shield — Safety' },
+    { key: 'user', label: 'User — Personalised Care' },
+    { key: 'stethoscope', label: 'Stethoscope' },
+    { key: 'badge', label: 'Badge Check' },
+  ];
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -274,6 +282,9 @@ export default function LocationsAdminPage() {
           reviewCount:  dci?.reviewCount  ?? loc?.reviewCount  ?? 0,
           serviceCount: dci?.serviceCount ?? loc?.serviceCount ?? 0,
           doctorCount:  dci?.doctorCount  ?? loc?.doctorCount  ?? 0,
+          description:  dci?.description  || loc?.description  || '',
+          specialties:  dci?.specialties?.length ? dci.specialties : (loc?.specialties ?? []),
+          whyUs:        dci?.whyUs?.length ? dci.whyUs : [],
         },
         beforeAfterPairs: db?.beforeAfterPairs || [],
         galleryImages:    db?.galleryImages    || [],
@@ -343,6 +354,44 @@ export default function LocationsAdminPage() {
 
   const removeGallery = (i: number) =>
     setData((d: any) => ({ ...d, galleryImages: d.galleryImages.filter((_: any, idx: number) => idx !== i) }));
+
+  const addSpecialty = () =>
+    setData((d: any) => ({
+      ...d,
+      clinicInfo: { ...d.clinicInfo, specialties: [...(d.clinicInfo.specialties || []), ''] },
+    }));
+
+  const updateSpecialty = (i: number, v: string) =>
+    setData((d: any) => {
+      const arr = [...(d.clinicInfo.specialties || [])];
+      arr[i] = v;
+      return { ...d, clinicInfo: { ...d.clinicInfo, specialties: arr } };
+    });
+
+  const removeSpecialty = (i: number) =>
+    setData((d: any) => ({
+      ...d,
+      clinicInfo: { ...d.clinicInfo, specialties: (d.clinicInfo.specialties || []).filter((_: any, idx: number) => idx !== i) },
+    }));
+
+  const addWhyUs = () =>
+    setData((d: any) => ({
+      ...d,
+      clinicInfo: { ...d.clinicInfo, whyUs: [...(d.clinicInfo.whyUs || []), { icon: 'flask', title: '', desc: '' }] },
+    }));
+
+  const updateWhyUs = (i: number, v: any) =>
+    setData((d: any) => {
+      const arr = [...(d.clinicInfo.whyUs || [])];
+      arr[i] = v;
+      return { ...d, clinicInfo: { ...d.clinicInfo, whyUs: arr } };
+    });
+
+  const removeWhyUs = (i: number) =>
+    setData((d: any) => ({
+      ...d,
+      clinicInfo: { ...d.clinicInfo, whyUs: (d.clinicInfo.whyUs || []).filter((_: any, idx: number) => idx !== i) },
+    }));
 
   const cityLabel = CITIES.find((c) => c.key === city)?.label ?? city;
 
@@ -517,7 +566,127 @@ export default function LocationsAdminPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Description <span className="font-normal text-gray-400">(marketing copy shown under the page headline)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={data.clinicInfo.description}
+                  onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, description: e.target.value } }))}
+                  placeholder="A short paragraph introducing this clinic location..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:border-[#0B2560]"
+                />
+              </div>
+
+              {/* Specialties */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-gray-700">
+                    Specialties <span className="font-normal text-gray-400">(shown as chips in the Services section)</span>
+                  </label>
+                  <button type="button" onClick={addSpecialty}
+                    className="flex items-center gap-1 text-xs text-[#0B2560] font-semibold hover:underline">
+                    <Plus size={11} /> Add specialty
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {(data.clinicInfo.specialties || []).map((sp: string, i: number) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        value={sp}
+                        onChange={(e) => updateSpecialty(i, e.target.value)}
+                        placeholder="e.g. Advanced Laser Treatments"
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]"
+                      />
+                      <button type="button" onClick={() => removeSpecialty(i)}
+                        className="text-gray-300 hover:text-red-500 transition shrink-0">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {(data.clinicInfo.specialties || []).length === 0 && (
+                    <p className="text-xs text-gray-400">No specialties added yet — the default site copy will be used.</p>
+                  )}
+                </div>
+              </div>
             </div>
+          </section>
+
+          {/* ── WHY CHOOSE US ──────────────────────────────────── */}
+          <section>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-base font-bold text-[#0B2560]">
+                Why Choose Us — {cityLabel}
+              </h2>
+              <button onClick={addWhyUs}
+                className="flex items-center gap-1.5 text-xs bg-[#0B2560] text-white px-3 py-1.5 rounded-lg font-semibold hover:bg-[#0d2d73] transition">
+                <Plus size={13} /> Add Card
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              The 3 cards shown in the "Why Choose DR Youth Clinic?" section. Leave empty to use the default site copy.
+            </p>
+            {(data.clinicInfo.whyUs || []).length === 0 ? (
+              <div className="border-2 border-dashed border-gray-200 rounded-2xl py-12 text-center">
+                <p className="text-gray-400 text-sm mb-3">No custom cards yet for {cityLabel} — default copy is shown</p>
+                <button onClick={addWhyUs}
+                  className="text-[#0B2560] text-sm font-semibold hover:underline flex items-center gap-1 mx-auto">
+                  <Plus size={14} /> Add first card
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {data.clinicInfo.whyUs.map((item: any, i: number) => (
+                  <div key={i} className="border border-gray-100 rounded-2xl p-5 space-y-3 bg-white">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-400">Card {i + 1}</span>
+                      <button type="button" onClick={() => removeWhyUs(i)}
+                        className="text-gray-300 hover:text-red-500 transition">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Icon</label>
+                        <select
+                          value={item.icon}
+                          onChange={(e) => updateWhyUs(i, { ...item, icon: e.target.value })}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]"
+                        >
+                          {WHY_US_ICONS.map((opt) => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Title</label>
+                        <input
+                          value={item.title}
+                          onChange={(e) => updateWhyUs(i, { ...item, title: e.target.value })}
+                          placeholder="e.g. Evidence-Based Protocols"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+                      <textarea
+                        rows={2}
+                        value={item.desc}
+                        onChange={(e) => updateWhyUs(i, { ...item, desc: e.target.value })}
+                        placeholder="Brief supporting description..."
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-[#0B2560]"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button onClick={addWhyUs}
+                  className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline mt-2">
+                  <Plus size={12} /> Add another card
+                </button>
+              </div>
+            )}
           </section>
 
           {/* ── HERO IMAGE ─────────────────────────────────────── */}

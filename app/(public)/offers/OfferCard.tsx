@@ -113,6 +113,9 @@ export function OfferCard({ offer }: { offer: any }) {
           >
             <Calendar size={14} /> Book This Offer
           </Link>
+          {offer.terms && (
+            <p className="text-[10px] text-gray-400 leading-relaxed mt-3">*{offer.terms}</p>
+          )}
         </div>
       </div>
     </div>

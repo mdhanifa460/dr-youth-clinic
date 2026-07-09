@@ -14,6 +14,19 @@ interface Section {
   data: Record<string, any>;
 }
 
+// ─── FAQ categories ────────────────────────────────────────
+// Mirrors the category groupings on the public /faqs page (app/(public)/faqs/page.tsx
+// STATIC_FAQS) so an admin-authored FAQ lands in the matching section there.
+const FAQ_CATEGORIES = [
+  'General',
+  'Skin Treatments',
+  'Hair Treatments',
+  'Laser Treatments',
+  'Pricing & EMI',
+  'Safety & Results',
+  'Booking',
+];
+
 // ─── Dynamic FAQ keyword suggestions ──────────────────────
 const STATIC_FAQ_SUGGESTIONS: Record<string, string[]> = {
   General: [
@@ -715,6 +728,26 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
               <Plus size={12} /> Add pair
             </button>
           </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-3">Stats Row (shown under the headline)</p>
+            <div className="space-y-3">
+              {(d.stats || []).map((s: any, i: number) => (
+                <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-center">
+                  <input type="text" placeholder="Value (e.g. 98%)" value={s.value}
+                    onChange={(e) => setArr('stats', i, 'value', e.target.value)}
+                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                  <input type="text" placeholder="Label" value={s.label}
+                    onChange={(e) => setArr('stats', i, 'label', e.target.value)}
+                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                  <button type="button" onClick={() => removeArrItem('stats', i)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => addArrItem('stats', { value: '', label: '' })}
+                className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline mt-1">
+                <Plus size={12} /> Add stat
+              </button>
+            </div>
+          </div>
         </div>
       );
 
@@ -923,10 +956,20 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                   <textarea rows={3} placeholder="Answer" value={faq.answer}
                     onChange={(e) => setArr('faqs', i, 'answer', e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                  <select value={faq.category || 'General'}
+                    onChange={(e) => setArr('faqs', i, 'category', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white">
+                    {FAQ_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-gray-400">
+                    Category determines which section this FAQ appears under on the /faqs page. &ldquo;General&rdquo; also shows on the homepage FAQ block.
+                  </p>
                 </div>
               </div>
             ))}
-            <button type="button" onClick={() => addArrItem('faqs', { question: '', answer: '' })}
+            <button type="button" onClick={() => addArrItem('faqs', { question: '', answer: '', category: 'General' })}
               className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
               <Plus size={12} /> Add FAQ
             </button>
@@ -935,7 +978,7 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
           {/* ── FAQ keyword suggestions (dynamic) ── */}
           <FAQSuggestions
             existing={d.faqs || []}
-            onAdd={(q) => addArrItem('faqs', { question: q, answer: '' })}
+            onAdd={(q) => addArrItem('faqs', { question: q, answer: '', category: 'General' })}
           />
         </div>
       );
@@ -997,6 +1040,12 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
           </p>
           <TextField label="Tagline" value={d.tagline} onChange={(v) => set('tagline', v)} multiline />
           <TextField label="Copyright Text" value={d.copyright} onChange={(v) => set('copyright', v)} />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <TextField label="Column Heading — Quick Links" value={d.quickLinksHeading} onChange={(v) => set('quickLinksHeading', v)} />
+            <TextField label="Column Heading — Procedures" value={d.proceduresHeading} onChange={(v) => set('proceduresHeading', v)} />
+            <TextField label="Column Heading — Patient Care" value={d.patientCareHeading} onChange={(v) => set('patientCareHeading', v)} />
+            <TextField label="Column Heading — Contact" value={d.contactHeading} onChange={(v) => set('contactHeading', v)} />
+          </div>
           <div className="grid sm:grid-cols-3 gap-4">
             <TextField label="Contact Address" value={d.contact?.address} onChange={(v) => set('contact.address', v)} multiline />
             <TextField label="Contact Phone" value={d.contact?.phone} onChange={(v) => set('contact.phone', v)} />

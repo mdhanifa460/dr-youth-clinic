@@ -32,6 +32,12 @@ export interface IClinicHour {
   hours: string;
 }
 
+export interface IWhyUsItem {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
 export interface IClinicInfo {
   address: string;
   phone: string;
@@ -40,6 +46,9 @@ export interface IClinicInfo {
   reviewCount: number;
   serviceCount: number;
   doctorCount: number;
+  description: string;
+  specialties: string[];
+  whyUs: IWhyUsItem[];
 }
 
 export interface ILocationContent extends Document {
@@ -87,6 +96,15 @@ const ClinicHourSchema = new Schema<IClinicHour>(
   { _id: false }
 );
 
+const WhyUsItemSchema = new Schema<IWhyUsItem>(
+  {
+    icon:  { type: String, default: '' },
+    title: { type: String, default: '' },
+    desc:  { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 const ClinicInfoSchema = new Schema<IClinicInfo>(
   {
     address:      { type: String, default: '' },
@@ -96,6 +114,9 @@ const ClinicInfoSchema = new Schema<IClinicInfo>(
     reviewCount:  { type: Number, default: 0 },
     serviceCount: { type: Number, default: 0 },
     doctorCount:  { type: Number, default: 0 },
+    description:  { type: String, default: '' },
+    specialties:  { type: [String], default: [] },
+    whyUs:        { type: [WhyUsItemSchema], default: [] },
   },
   { _id: false }
 );

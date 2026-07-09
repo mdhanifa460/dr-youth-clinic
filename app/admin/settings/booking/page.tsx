@@ -13,6 +13,8 @@ type BookingSettings = {
   whatsappNotify: boolean;
   clinicWhatsapp: string;
   consultationDuration: number;
+  consultationFee: number;
+  emiBankPartners: string;
 };
 
 const DEFAULTS: BookingSettings = {
@@ -24,6 +26,8 @@ const DEFAULTS: BookingSettings = {
   whatsappNotify: true,
   clinicWhatsapp: "",
   consultationDuration: 30,
+  consultationFee: 500,
+  emiBankPartners: "HDFC, ICICI, Axis Bank",
 };
 
 const PATIENT_FIELDS: { key: keyof BookingSettings; label: string; desc: string; badge?: string }[] = [
@@ -170,6 +174,32 @@ export default function BookingSettingsPage() {
                 value={form.consultationDuration}
                 onChange={(e) => set("consultationDuration", +e.target.value)}
                 className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm text-center focus:outline-none focus:border-[#0B2560]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Pricing & EMI */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-50">
+            <h2 className="font-bold text-[#0B2560] text-sm">Pricing & EMI</h2>
+            <p className="text-gray-400 text-xs mt-0.5">Used by the cost estimator and EMI calculator across the site.</p>
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Consultation Fee (₹)</label>
+              <input type="number" min={0}
+                value={form.consultationFee}
+                onChange={(e) => set("consultationFee", +e.target.value)}
+                className="w-32 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">EMI Bank Partners</label>
+              <input type="text"
+                value={form.emiBankPartners}
+                onChange={(e) => set("emiBankPartners", e.target.value)}
+                placeholder="HDFC, ICICI, Axis Bank"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] focus:ring-1 focus:ring-[#0B2560]/20" />
+              <p className="text-[11px] text-gray-400 mt-1">Comma-separated — shown wherever EMI options are mentioned.</p>
             </div>
           </div>
         </div>

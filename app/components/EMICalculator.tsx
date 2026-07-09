@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { IndianRupee, ChevronDown } from 'lucide-react';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 interface Props {
   price: number;
@@ -19,6 +20,7 @@ const EMI_OPTIONS = [
 ];
 
 export default function EMICalculator({ price }: Props) {
+  const siteConfig = useSiteConfig();
   const [open, setOpen] = useState(false);
   const showSlider = price > 3000;
   const safeMin = showSlider ? 3000 : price;
@@ -103,7 +105,7 @@ export default function EMICalculator({ price }: Props) {
             <span className="text-base shrink-0">🏦</span>
             <p className="text-xs font-semibold text-[#0B2560] leading-relaxed">
               0% interest available with{' '}
-              <span className="font-bold">HDFC, ICICI, Axis Bank</span> credit cards
+              <span className="font-bold">{siteConfig.emiBankPartners}</span> credit cards
             </p>
           </div>
 

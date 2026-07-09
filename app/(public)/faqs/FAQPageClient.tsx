@@ -16,7 +16,19 @@ interface FAQCategory {
   items: FAQItem[];
 }
 
-export default function FAQPageClient({ categories }: { categories: FAQCategory[] }) {
+interface HeroStats {
+  questionsValue: string;
+  patientsValue: string;
+  ratingValue: string;
+}
+
+export default function FAQPageClient({
+  categories,
+  heroStats,
+}: {
+  categories: FAQCategory[];
+  heroStats?: HeroStats;
+}) {
   const { publicPhone, publicWhatsApp } = useSiteConfig();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -87,12 +99,13 @@ export default function FAQPageClient({ categories }: { categories: FAQCategory[
             />
           </div>
 
-          {/* Stats strip */}
+          {/* Stats strip — question count is derived from real data; patient count
+              and rating are reused from the admin-editable homepage Stats Bar. */}
           <div className="mt-10 grid grid-cols-3 gap-4 max-w-md mx-auto">
             {[
-              { value: '200+', label: 'Questions answered' },
-              { value: '50K+', label: 'Patients helped' },
-              { value: '4.9★', label: 'Patient satisfaction' },
+              { value: heroStats?.questionsValue || '200+', label: 'Questions answered' },
+              { value: heroStats?.patientsValue || '25K+', label: 'Patients helped' },
+              { value: heroStats?.ratingValue || '4.9★', label: 'Patient satisfaction' },
             ].map((s) => (
               <div key={s.label} className="bg-white/10 rounded-2xl py-3 px-2">
                 <p className="text-xl font-extrabold text-[#F5A623]">{s.value}</p>

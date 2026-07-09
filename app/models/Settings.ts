@@ -21,6 +21,8 @@ export interface ISettings extends Document {
     whatsappNotify: boolean;
     clinicWhatsapp: string;
     consultationDuration: number;
+    consultationFee: number;
+    emiBankPartners: string;
   };
   display: {
     showPriceOnCards: boolean;
@@ -78,6 +80,7 @@ export interface ISettings extends Document {
     publicEmail: string;
   };
   contactPrivacy: {
+    phoneMaskEnabled: boolean;
     showPatientPhoneRoles: string[];
   };
 }
@@ -104,6 +107,8 @@ const SettingsSchema = new Schema<ISettings>(
       whatsappNotify:          { type: Boolean, default: true },
       clinicWhatsapp:          { type: String,  default: '' },
       consultationDuration:    { type: Number,  default: 30 },
+      consultationFee:         { type: Number,  default: 500 },
+      emiBankPartners:         { type: String,  default: 'HDFC, ICICI, Axis Bank' },
     },
     display: {
       showPriceOnCards:        { type: Boolean, default: true },
@@ -161,6 +166,7 @@ const SettingsSchema = new Schema<ISettings>(
       publicEmail:    { type: String, default: '' },
     },
     contactPrivacy: {
+      phoneMaskEnabled: { type: Boolean, default: true },
       showPatientPhoneRoles: {
         type: [String],
         default: ['super_admin', 'clinic_owner', 'receptionist', 'customer_support'],

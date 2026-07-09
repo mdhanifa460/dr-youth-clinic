@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { IndianRupee, ChevronRight } from 'lucide-react';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 interface Props {
   basePrice: number;
@@ -16,11 +17,12 @@ function parseSessionCount(sessionsRequired?: string): number {
 }
 
 export default function CostEstimator({ basePrice, sessionsRequired, serviceName }: Props) {
+  const siteConfig = useSiteConfig();
   const defaultSessions = parseSessionCount(sessionsRequired);
   const [sessions, setSessions] = useState(defaultSessions);
   const [includeConsult, setIncludeConsult] = useState(false);
 
-  const consultFee = 500;
+  const consultFee = siteConfig.consultationFee;
   const subtotal = basePrice * sessions;
   const total = subtotal + (includeConsult ? consultFee : 0);
 

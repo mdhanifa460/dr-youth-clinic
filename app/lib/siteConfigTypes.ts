@@ -21,6 +21,16 @@ export interface SiteConfig {
   instagramUrl: string;
   facebookUrl:  string;
   youtubeUrl:   string;
+  /** Consultation fee in ₹, shown by CostEstimator (Settings → Booking) */
+  consultationFee: number;
+  /** Comma-separated EMI bank partner names (Settings → Booking) */
+  emiBankPartners: string;
+  /** Google/patient rating (e.g. "4.7"), sourced from the homepage Stats Bar section */
+  ratingValue: string;
+  /** Happy-patients count (e.g. "25K+"), sourced from the homepage Stats Bar section */
+  patientsCount: string;
+  /** Years of experience/excellence (e.g. "22+"), sourced from the homepage Stats Bar section */
+  yearsExperience: string;
 }
 
 export const SITE_CONFIG_DEFAULTS: SiteConfig = {
@@ -37,4 +47,9 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   instagramUrl: '',
   facebookUrl:  '',
   youtubeUrl:   '',
+  consultationFee: 500,
+  emiBankPartners: 'HDFC, ICICI, Axis Bank',
+  ratingValue: '4.9',
+  patientsCount: '25K+',
+  yearsExperience: '22+',
 };

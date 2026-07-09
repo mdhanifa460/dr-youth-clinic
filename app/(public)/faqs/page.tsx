@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: 'Frequently Asked Questions | DR Youth Clinic',
     description:
       'Answers to your questions about dermatology, laser, hair and skin treatments in Chennai, Bangalore, Kochi and Coimbatore.',
-    url: 'https://dryouthclinic.com/faqs',
+    url: `${SITE_URL}/faqs`,
     siteName: 'DR Youth Clinic',
     type: 'website',
   },
@@ -26,7 +26,7 @@ const getCmsFaqs = unstable_cache(
     try {
       await connectDB();
       const section = await HomepageSection.findOne({ sectionKey: 'faq' } as any).lean() as any;
-      return (section?.data?.faqs ?? []) as { question: string; answer: string }[];
+      return (section?.data?.faqs ?? []) as { question: string; answer: string; category?: string }[];
     } catch {
       return [];
     }
@@ -35,7 +35,28 @@ const getCmsFaqs = unstable_cache(
   { revalidate: 300, tags: ['homepage-layout'] }
 );
 
-// ─── Static categorized FAQs ──────────────────────────────
+// Admin-editable "Stats Bar" section (HomepageSection sectionKey: 'stats') — reused here
+// so the FAQ hero doesn't need its own brand-new CMS fields for patient count / rating.
+const getStatsData = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const section = await HomepageSection.findOne({ sectionKey: 'stats' } as any).lean() as any;
+      return (section?.data?.stats ?? []) as { value: string; label: string }[];
+    } catch {
+      return [];
+    }
+  },
+  ['cms-stats-for-faqs'],
+  { revalidate: 300, tags: ['homepage-layout'] }
+);
+
+// ─── Default categorized FAQs ─────────────────────────────
+// These are fallback/seed content only. Each category below is merged with any
+// CMS-authored FAQs (HomepageSection sectionKey: 'faq') whose `category` field
+// matches — CMS entries take priority/are merged in, so admins can add, and
+// eventually fully replace, these defaults from app/admin/homepage (FAQ section)
+// without a code change or migration script.
 const STATIC_FAQS: { category: string; icon: string; items: { question: string; answer: string }[] }[] = [
   {
     category: 'General',
@@ -247,22 +268,35 @@ const STATIC_FAQS: { category: string; icon: string; items: { question: string; 
 ];
 
 export default async function FAQPage() {
-  const cmsFaqs = await getCmsFaqs();
+  const [cmsFaqs, statsData] = await Promise.all([getCmsFaqs(), getStatsData()]);
 
-  // Merge CMS FAQs into the "General" category if not already present
+  // Merge CMS FAQs (filtered by category, defaulting to 'General') into each
+  // hardcoded default category. CMS items are de-duped against the defaults by
+  // question text and take priority (listed first).
   const allFaqs = STATIC_FAQS.map((cat) => {
-    if (cat.category !== 'General') return cat;
     const existingQuestions = new Set(cat.items.map((i) => i.question));
-    const newItems = cmsFaqs.filter((f) => !existingQuestions.has(f.question));
+    const newItems = cmsFaqs.filter(
+      (f) => (f.category || 'General') === cat.category && !existingQuestions.has(f.question)
+    );
     return { ...cat, items: [...newItems, ...cat.items] };
   });
 
   const allFlatFaqs = allFaqs.flatMap((c) => c.items);
 
+  // Reuse the existing admin-editable "Stats Bar" (homepage) values for the hero
+  // strip instead of inventing new CMS fields for just these two stats.
+  const patientsStat = statsData.find((s) => /patient/i.test(s.label))?.value;
+  const ratingStat = statsData.find((s) => /rating/i.test(s.label))?.value;
+  const heroStats = {
+    questionsValue: `${Math.max(allFlatFaqs.length, 1)}+`,
+    patientsValue: patientsStat || '25K+',
+    ratingValue: ratingStat ? `${ratingStat.replace(/\/5$/, '')}★` : '4.9★',
+  };
+
   return (
     <>
       <FAQSchema faqs={allFlatFaqs.slice(0, 20)} />
-      <FAQPageClient categories={allFaqs} />
+      <FAQPageClient categories={allFaqs} heroStats={heroStats} />
     </>
   );
 }
