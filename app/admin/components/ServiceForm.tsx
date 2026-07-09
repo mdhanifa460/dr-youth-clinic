@@ -22,6 +22,7 @@ interface FormData {
   metaDescription: string;
   keywords: string;
   narrative: string;
+  heroDescription: string;
   idealFor: string[];
   benefits: Array<{ icon: string; title: string; description: string }>;
   treatmentSteps: Array<{ title: string; description: string }>;
@@ -84,6 +85,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           recoveryTime: initialData.recoveryTime ?? "",
           technology: initialData.technology ?? "",
           anaesthesia: initialData.anaesthesia ?? "",
+          heroDescription: initialData.heroDescription ?? "",
         }
       : {
           name: "",
@@ -98,6 +100,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           metaDescription: "",
           keywords: "",
           narrative: "",
+          heroDescription: "",
           technology: "",
           anaesthesia: "",
           idealFor: [],
@@ -433,6 +436,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               Meta Description * <span className="text-gray-400 font-normal">{form.metaDescription.length}/160</span>
             </label>
             <textarea value={form.metaDescription} onChange={(e) => updateForm({ metaDescription: e.target.value })} placeholder="Describe what users will see in Google search results…" maxLength={160} rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            <p className="text-xs text-gray-400 mt-1">Only appears in Google search results — not shown on the page itself. Use Hero Description (Step 3) for the on-page pitch.</p>
           </div>
 
           <div className="space-y-3">
@@ -477,6 +481,14 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
       {step === 3 && (
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-8">
           <h2 className="text-2xl font-bold text-[#0B2560]">Content & Media</h2>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Hero Description <span className="text-gray-400 font-normal">{form.heroDescription.length}/220</span>
+            </label>
+            <textarea value={form.heroDescription} onChange={(e) => updateForm({ heroDescription: e.target.value })} placeholder="A short, compelling pitch shown prominently at the top of the page — write for patients, not search engines." maxLength={220} rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm leading-relaxed" />
+            <p className="text-xs text-gray-400 mt-1">Shown directly under the page title. Leave blank to temporarily fall back to Meta Description.</p>
+          </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">

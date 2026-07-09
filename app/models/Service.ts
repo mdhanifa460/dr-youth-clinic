@@ -16,6 +16,7 @@ export interface IService extends Document {
 
   // Content
   narrative: string;
+  heroDescription?: string;
   idealFor?: string[];
   sessionsRequired?: string;
   recoveryTime?: string;
@@ -110,6 +111,10 @@ const ServiceSchema = new Schema<IService>(
     narrative: {
       type: String,
       maxlength: 5000,
+    },
+    heroDescription: {
+      type: String,
+      maxlength: 220,
     },
     idealFor: [String],
     sessionsRequired: { type: String, default: '' },

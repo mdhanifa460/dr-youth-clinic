@@ -437,9 +437,9 @@ function ServiceCard({
           </div>
         )}
 
-        {svc.metaDescription && (
+        {(svc.heroDescription || svc.metaDescription) && (
           <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-3">
-            {svc.metaDescription}
+            {svc.heroDescription || svc.metaDescription}
           </p>
         )}
 
