@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Phone, CalendarCheck, CheckCircle } from 'lucide-react';
+import { Phone, CalendarCheck, CheckCircle, MessageCircle } from 'lucide-react';
 
 interface CtaData {
   headline?: string;
@@ -20,6 +20,7 @@ export default function CtaSection({ data }: { data: CtaData }) {
     subtext = 'Book your free consultation today and take the first step toward healthier hair.',
     ctaPrimary = 'Book Free Consultation',
     phone,
+    whatsapp,
     badges = DEFAULT_BADGES,
   } = data;
 
@@ -65,6 +66,14 @@ export default function CtaSection({ data }: { data: CtaData }) {
                 <button className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold px-7 py-4 rounded-2xl text-base backdrop-blur-sm hover:-translate-y-0.5 transition-all duration-200">
                   <Phone size={17} />
                   Call Now
+                </button>
+              </a>
+            )}
+            {whatsapp && (
+              <a href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                <button className="w-full flex items-center justify-center gap-2 bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-white font-bold px-7 py-4 rounded-2xl text-base backdrop-blur-sm hover:-translate-y-0.5 transition-all duration-200">
+                  <MessageCircle size={17} />
+                  WhatsApp Us
                 </button>
               </a>
             )}

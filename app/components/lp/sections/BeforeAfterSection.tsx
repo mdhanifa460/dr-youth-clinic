@@ -10,6 +10,7 @@ interface BeforeAfterPair {
 
 interface BeforeAfterData {
   headline?: string;
+  disclaimer?: string;
   pairs?: BeforeAfterPair[];
 }
 
@@ -93,7 +94,11 @@ function SliderPair({ pair }: { pair: BeforeAfterPair }) {
 }
 
 export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) {
-  const { headline = 'Real Results', pairs = [] } = data;
+  const {
+    headline = 'Real Results',
+    disclaimer = 'Individual results may vary. Photos are from actual DR Youth Clinic patients.',
+    pairs = [],
+  } = data;
   const [activePairIdx, setActivePairIdx] = useState(0);
   const activePairs = pairs.filter((p) => p.before?.url && p.after?.url);
 
@@ -135,9 +140,9 @@ export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) 
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-8">
-          *Individual results may vary. Photos are from actual DR Youth Clinic patients.
-        </p>
+        {disclaimer && (
+          <p className="text-center text-xs text-gray-400 mt-8">*{disclaimer}</p>
+        )}
       </div>
     </section>
   );

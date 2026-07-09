@@ -9,9 +9,11 @@ interface DoctorData {
   qualification?: string;
   experience?: string;
   bio?: string;
+  location?: string;
   specialties?: string[];
   achievements?: string[];
   quote?: string;
+  ctaText?: string;
 }
 
 export default function DoctorSection({ data }: { data: DoctorData }) {
@@ -21,8 +23,11 @@ export default function DoctorSection({ data }: { data: DoctorData }) {
     qualification = 'MBBS, MD Dermatology',
     experience = '20 Years',
     bio = 'Expert dermatologist specialising in advanced hair restoration.',
+    location,
+    specialties,
     achievements,
     quote,
+    ctaText,
   } = data;
 
   const bullets =
@@ -120,6 +125,36 @@ export default function DoctorSection({ data }: { data: DoctorData }) {
               {qualification}
             </motion.p>
 
+            {location && (
+              <motion.p
+                custom={2.5}
+                variants={rightItem}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-80px' }}
+                className="text-white/50 text-xs md:text-sm mt-1"
+              >
+                📍 {location}
+              </motion.p>
+            )}
+
+            {specialties && specialties.length > 0 && (
+              <motion.div
+                custom={2.7}
+                variants={rightItem}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-80px' }}
+                className="flex flex-wrap gap-2 mt-3"
+              >
+                {specialties.map((sp, i) => (
+                  <span key={i} className="text-[11px] font-semibold text-white/90 bg-white/10 border border-white/15 px-3 py-1 rounded-full">
+                    {sp}
+                  </span>
+                ))}
+              </motion.div>
+            )}
+
             <motion.p
               custom={3}
               variants={rightItem}
@@ -170,7 +205,7 @@ export default function DoctorSection({ data }: { data: DoctorData }) {
               className="mt-6 flex items-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-7 py-3.5 rounded-2xl text-sm shadow-xl shadow-[#F5A623]/20 hover:-translate-y-0.5 transition-all duration-200"
             >
               <CalendarCheck size={18} />
-              Book Appointment with {shortName}
+              {ctaText || `Book Appointment with ${shortName}`}
             </motion.button>
           </div>
         </div>

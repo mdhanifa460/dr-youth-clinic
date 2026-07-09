@@ -4,12 +4,15 @@ import { Phone, MapPin, Mail } from 'lucide-react';
 interface LpFooterProps {
   phone?: string;
   whatsapp?: string;
+  city?: string;
+  branches?: string[];
 }
 
-export default function LpFooter({ phone, whatsapp }: LpFooterProps) {
+export default function LpFooter({ phone, whatsapp, city, branches }: LpFooterProps) {
   const waLink = whatsapp
     ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Hi, I'd like to book a free consultation`
     : null;
+  const locationLabel = branches?.length ? branches.join(' · ') : city;
 
   return (
     <footer className="bg-[#0B2560] text-white">
@@ -48,9 +51,11 @@ export default function LpFooter({ phone, whatsapp }: LpFooterProps) {
                 WhatsApp
               </a>
             )}
-            <span className="flex items-center gap-1.5 text-white/50 text-xs">
-              <MapPin size={12} /> Chennai · Bangalore · Coimbatore · Kochi
-            </span>
+            {locationLabel && (
+              <span className="flex items-center gap-1.5 text-white/50 text-xs">
+                <MapPin size={12} /> {locationLabel}
+              </span>
+            )}
           </div>
         </div>
 

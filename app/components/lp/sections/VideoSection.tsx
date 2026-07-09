@@ -26,7 +26,23 @@ export default function VideoSection({ data }: { data: VideoData }) {
   } = data;
 
   const [open, setOpen] = useState(false);
+  const [durationLabel, setDurationLabel] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Read the real video duration from its metadata instead of a hardcoded badge
+  useEffect(() => {
+    if (!videoUrl) { setDurationLabel(null); return; }
+    const probe = document.createElement('video');
+    probe.preload = 'metadata';
+    probe.src = videoUrl;
+    probe.onloadedmetadata = () => {
+      const total = Math.round(probe.duration);
+      if (isFinite(total) && total > 0) {
+        setDurationLabel(`${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`);
+      }
+    };
+    return () => { probe.src = ''; };
+  }, [videoUrl]);
 
   // Scroll lock + Escape key close
   useEffect(() => {
@@ -169,9 +185,11 @@ export default function VideoSection({ data }: { data: VideoData }) {
           </div>
 
           {/* Duration badge */}
-          <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 bg-black/65 text-white text-xs font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm">
-            0:10
-          </div>
+          {durationLabel && (
+            <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 bg-black/65 text-white text-xs font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm">
+              {durationLabel}
+            </div>
+          )}
         </motion.div>
 
         {caption && (

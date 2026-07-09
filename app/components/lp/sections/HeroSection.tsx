@@ -22,6 +22,10 @@ interface HeroData {
   yearsExperience?: string;
   showInlineForm?: boolean;
   concern_options?: string[];
+  formHeadline?: string;
+  formUrgencyText?: string;
+  successMessage?: string;
+  showTeamAvatars?: boolean;
 }
 
 const DEFAULT_FEATURES = ['FDA Approved', '100% Natural', 'No Surgery No Scars', 'Minimal Downtime'];
@@ -53,6 +57,10 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
     yearsExperience = '20+',
     showInlineForm = true,
     concern_options = DEFAULT_CONCERNS,
+    formHeadline = 'Book Your Free Consultation',
+    formUrgencyText = 'Limited slots this week!',
+    successMessage = "✓ We'll call you within 2 hours!",
+    showTeamAvatars = false,
   } = data;
 
   const bgStyle = backgroundImage
@@ -182,7 +190,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                   className="flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-[#F5A623]/30 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto"
                 >
                   <CalendarCheck size={18} />
-                  Book Free Consultation
+                  {ctaPrimary?.text || 'Book Free Consultation'}
                 </button>
               )}
               {phone && (
@@ -204,17 +212,19 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
               viewport={{ once: true, margin: '-80px' }}
               className="flex items-center gap-3 mt-8"
             >
-              <div className="flex -space-x-2.5">
-                {['#3B82C4', '#F5A623', '#0B2560', '#1a3a7a'].map((c, i) => (
-                  <span
-                    key={i}
-                    className="w-8 h-8 rounded-full border-2 border-white/80 flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: c }}
-                  >
-                    {['A', 'R', 'S', 'K'][i]}
-                  </span>
-                ))}
-              </div>
+              {showTeamAvatars && (
+                <div className="flex -space-x-2.5">
+                  {['#3B82C4', '#F5A623', '#0B2560', '#1a3a7a'].map((c, i) => (
+                    <span
+                      key={i}
+                      className="w-8 h-8 rounded-full border-2 border-white/80 flex items-center justify-center text-[10px] font-bold text-white"
+                      style={{ background: c }}
+                    >
+                      {['A', 'R', 'S', 'K'][i]}
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-sm text-white/85 font-semibold">
                 {patientCount} Happy Patients
                 <span className="text-white/40 mx-1.5">·</span>
@@ -247,18 +257,20 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                     <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
                       <CheckCircle size={34} className="text-green-500" />
                     </div>
-                    <p className="text-lg font-extrabold text-[#0B2560]">✓ We&apos;ll call you within 2 hours!</p>
+                    <p className="text-lg font-extrabold text-[#0B2560]">{successMessage}</p>
                     <p className="text-sm text-gray-500 mt-2">Our team will reach out shortly to confirm your slot.</p>
                   </div>
                 ) : (
                   <>
                     <h3 className="text-xl md:text-2xl font-extrabold text-[#0B2560] leading-tight">
-                      Book Your Free Consultation
+                      {formHeadline}
                     </h3>
-                    <div className="inline-flex items-center gap-1.5 mt-2.5 bg-[#F5A623]/15 text-[#c47f10] text-xs font-bold px-3 py-1.5 rounded-full">
-                      <span className="w-2 h-2 bg-[#F5A623] rounded-full animate-pulse" />
-                      Limited slots this week!
-                    </div>
+                    {formUrgencyText && (
+                      <div className="inline-flex items-center gap-1.5 mt-2.5 bg-[#F5A623]/15 text-[#c47f10] text-xs font-bold px-3 py-1.5 rounded-full">
+                        <span className="w-2 h-2 bg-[#F5A623] rounded-full animate-pulse" />
+                        {formUrgencyText}
+                      </div>
+                    )}
 
                     {error && (
                       <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 mt-4">

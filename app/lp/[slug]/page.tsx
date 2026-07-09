@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 import LpRenderer from '@/app/components/lp/LpRenderer';
 import LpHeader from '@/app/components/lp/LpHeader';
 import LpFooter from '@/app/components/lp/LpFooter';
@@ -71,9 +72,14 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
     fetch(`${baseUrl}/api/lp/${params.slug}/visit`, { method: 'POST' }).catch(() => {});
   }
 
+  const siteConfig = await getSiteConfig();
   const tracking = lp.tracking ?? {};
   const heroSection = lp.sections?.find((s: any) => s.type === 'hero');
   const heroData = heroSection?.data ?? {};
+  const locationSection = lp.sections?.find((s: any) => s.type === 'location');
+  const locationData = locationSection?.data ?? {};
+  const phone = heroData.phone || siteConfig.publicPhone;
+  const whatsapp = heroData.whatsapp || siteConfig.publicWhatsApp;
 
   return (
     <>
@@ -123,8 +129,8 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
 
       <div className={`min-h-screen bg-white ${isPreview && lp.status !== 'published' ? 'pt-8' : ''}`}>
         <LpHeader
-          phone={heroData.phone}
-          whatsapp={heroData.whatsapp}
+          phone={phone}
+          whatsapp={whatsapp}
           ctaText={heroData.ctaPrimary?.text || 'Book Free Slot'}
         />
 
@@ -139,11 +145,11 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
           variant="A"
         />
 
-        <LpFooter phone={heroData.phone} whatsapp={heroData.whatsapp} />
+        <LpFooter phone={phone} whatsapp={whatsapp} city={locationData.city} branches={locationData.branches} />
 
         <StickyCta
-          phone={heroData.phone}
-          whatsapp={heroData.whatsapp}
+          phone={phone}
+          whatsapp={whatsapp}
           ctaText={heroData.ctaPrimary?.text || 'Book Free Consultation'}
         />
 

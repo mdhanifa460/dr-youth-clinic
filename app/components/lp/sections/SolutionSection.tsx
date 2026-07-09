@@ -2,6 +2,7 @@ interface SolutionData {
   headline?: string;
   description?: string;
   image?: string;
+  imageBadge?: string;
   highlights?: string[];
 }
 
@@ -10,6 +11,7 @@ export default function SolutionSection({ data }: { data: SolutionData }) {
     headline = 'Why Our Treatment Works',
     description = 'Our clinically proven protocols deliver real results.',
     image,
+    imageBadge = 'Clinically Proven',
     highlights = [],
   } = data;
 
@@ -29,9 +31,11 @@ export default function SolutionSection({ data }: { data: SolutionData }) {
               </div>
             )}
             {/* Badge overlay */}
-            <div className="absolute -bottom-4 -right-4 bg-[#F5A623] text-[#0B2560] font-extrabold text-sm px-5 py-3 rounded-2xl shadow-xl">
-              Clinically Proven
-            </div>
+            {imageBadge && (
+              <div className="absolute -bottom-4 -right-4 bg-[#F5A623] text-[#0B2560] font-extrabold text-sm px-5 py-3 rounded-2xl shadow-xl">
+                {imageBadge}
+              </div>
+            )}
           </div>
 
           {/* Content */}

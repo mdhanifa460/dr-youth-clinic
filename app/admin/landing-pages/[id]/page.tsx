@@ -9,6 +9,7 @@ import {
   ExternalLink, Rocket, Save, X, Check,
 } from 'lucide-react';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
+import SeoAiAssistant from '@/app/admin/components/SeoAiAssistant';
 import OfferBannerSection from '@/app/components/lp/sections/OfferBannerSection';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -53,6 +54,10 @@ const SECTION_DEFAULTS: Record<string, any> = {
     phone: '1800 890 9669',
     whatsapp: '',
     backgroundImage: '',
+    formHeadline: 'Book Your Free Consultation',
+    formUrgencyText: 'Limited slots this week!',
+    successMessage: "✓ We'll call you within 2 hours!",
+    showTeamAvatars: false,
   },
   'trust-bar': { rating: 4.9, patients: '25,000+', years: '20+', googleRating: '4.9' },
   problem: { headline: 'Are You Experiencing...', problems: ['Hair Fall', 'Thinning Hair', 'Receding Hairline'] },
@@ -60,6 +65,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
     headline: 'Why Our Treatment Works',
     description: 'Our clinically proven protocols deliver real results.',
     image: '',
+    imageBadge: 'Clinically Proven',
     highlights: ['FDA Approved', 'Expert Doctors', 'No Surgery Required'],
   },
   benefits: {
@@ -70,7 +76,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
       { icon: '✓', title: 'Minimal Downtime', desc: 'Back to routine same day' },
     ],
   },
-  'before-after': { headline: 'Real Results', pairs: [] },
+  'before-after': { headline: 'Real Results', disclaimer: 'Individual results may vary. Photos are from actual DR Youth Clinic patients.', pairs: [] },
   process: {
     headline: 'Your Treatment Journey',
     steps: [
@@ -103,7 +109,8 @@ const SECTION_DEFAULTS: Record<string, any> = {
   'offer-banner': {
     badge: '🔥 Limited Time', headline: 'Book Your Free Consultation Today',
     subtext: 'Only 10 slots remaining this week', expiry: '', emiAvailable: true,
-    ctaText: 'Claim Your Free Slot', animationStyle: 'glow', slotsLeft: 0,
+    emiText: 'EMI options available · Zero-cost EMI on 3 / 6 months',
+    ctaText: 'Claim Your Free Slot', animationStyle: 'glow', slotsLeft: 0, totalSlots: 20,
   },
   faq: {
     headline: 'Frequently Asked Questions',
@@ -422,7 +429,25 @@ function SectionEditor({
             </div>
             <span className="text-xs font-semibold text-gray-600">Show inline booking form</span>
           </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div
+              onClick={() => set('showTeamAvatars', !d.showTeamAvatars)}
+              className="rounded-full transition-colors shrink-0"
+              style={{ width: '40px', height: '22px', background: d.showTeamAvatars ? '#0B2560' : '#d1d5db' }}
+            >
+              <div
+                className="bg-white rounded-full shadow transition-transform"
+                style={{ width: '18px', height: '18px', margin: '2px', transform: d.showTeamAvatars ? 'translateX(18px)' : 'translateX(0)' }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-gray-600">Show decorative team avatar row</span>
+          </label>
           <StringArrayEditor label="Concern Dropdown Options" items={d.concern_options || []} onChange={(v) => set('concern_options', v)} />
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Form Headline" value={d.formHeadline} onChange={(v) => set('formHeadline', v)} placeholder="Book Your Free Consultation" />
+            <FieldInput label="Form Urgency Text" value={d.formUrgencyText} onChange={(v) => set('formUrgencyText', v)} placeholder="Limited slots this week!" />
+          </div>
+          <FieldInput label="Form Success Message" value={d.successMessage} onChange={(v) => set('successMessage', v)} placeholder="We'll call you within 2 hours!" />
           <div className="grid grid-cols-2 gap-3">
             <FieldInput label="CTA Button Text" value={d.ctaPrimary?.text} onChange={(v) => set('ctaPrimary', { ...d.ctaPrimary, text: v })} />
             <FieldInput label="CTA Link" value={d.ctaPrimary?.href} onChange={(v) => set('ctaPrimary', { ...d.ctaPrimary, href: v })} />
@@ -487,6 +512,7 @@ function SectionEditor({
       return (
         <div className="space-y-4">
           <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} />
           <StringArrayEditor label="Problem Items" items={d.problems || []} onChange={(v) => set('problems', v)} />
         </div>
       );
@@ -502,6 +528,7 @@ function SectionEditor({
             onChange={(v) => set('image', v)}
             openGallery={openGallery}
           />
+          <FieldInput label="Image Badge Overlay" value={d.imageBadge} onChange={(v) => set('imageBadge', v)} placeholder="Clinically Proven" />
           <StringArrayEditor label="Highlights" items={d.highlights || []} onChange={(v) => set('highlights', v)} />
         </div>
       );
@@ -511,6 +538,7 @@ function SectionEditor({
       return (
         <div className="space-y-4">
           <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} />
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Benefit Items</label>
@@ -548,6 +576,7 @@ function SectionEditor({
       return (
         <div className="space-y-4">
           <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Disclaimer" value={d.disclaimer} onChange={(v) => set('disclaimer', v)} type="textarea" placeholder="Individual results may vary..." />
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Before / After Pairs</label>
@@ -592,6 +621,7 @@ function SectionEditor({
       return (
         <div className="space-y-4">
           <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} />
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Steps</label>
@@ -639,6 +669,9 @@ function SectionEditor({
           </div>
           <FieldInput label="Bio" value={d.bio} onChange={(v) => set('bio', v)} type="textarea" />
           <StringArrayEditor label="Specialties" items={d.specialties || []} onChange={(v) => set('specialties', v)} />
+          <StringArrayEditor label="Achievements (shown as bullet list)" items={d.achievements || []} onChange={(v) => set('achievements', v)} />
+          <FieldInput label="Testimonial Quote" value={d.quote} onChange={(v) => set('quote', v)} type="textarea" />
+          <FieldInput label="Book Button Text" value={d.ctaText} onChange={(v) => set('ctaText', v)} placeholder="e.g. Book Appointment with Dr. Rao" />
         </div>
       );
 
@@ -647,6 +680,7 @@ function SectionEditor({
       return (
         <div className="space-y-4">
           <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} />
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Reviews</label>
@@ -709,12 +743,20 @@ function SectionEditor({
             </select>
           </div>
 
-          <FieldInput
-            label="Slots Remaining (0 = hidden)"
-            value={d.slotsLeft ?? 0}
-            onChange={(v) => set('slotsLeft', Number(v))}
-            type="number"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput
+              label="Slots Remaining (0 = hidden)"
+              value={d.slotsLeft ?? 0}
+              onChange={(v) => set('slotsLeft', Number(v))}
+              type="number"
+            />
+            <FieldInput
+              label="Total Slots (progress bar denominator)"
+              value={d.totalSlots ?? 20}
+              onChange={(v) => set('totalSlots', Number(v))}
+              type="number"
+            />
+          </div>
 
           <label className="flex items-center gap-2 cursor-pointer">
             <div
@@ -729,6 +771,9 @@ function SectionEditor({
             </div>
             <span className="text-xs font-semibold text-gray-600">EMI Available</span>
           </label>
+          {d.emiAvailable && (
+            <FieldInput label="EMI Text" value={d.emiText} onChange={(v) => set('emiText', v)} placeholder="EMI options available · Zero-cost EMI on 3 / 6 months" />
+          )}
         </div>
       );
 
@@ -916,6 +961,7 @@ function SectionEditor({
       return (
         <div className="space-y-4">
           <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} />
           <FieldInput label="City" value={d.city} onChange={(v) => set('city', v)} placeholder="e.g. Chennai" />
           <StringArrayEditor label="Branches" items={d.branches || []} onChange={(v) => set('branches', v)} />
           <ImagePicker
@@ -1478,10 +1524,10 @@ export default function LandingPageBuilder() {
             {activeTab === 'seo' && (
               <div className="space-y-4">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">SEO Settings</p>
-                {(['title', 'description', 'keywords', 'ogImage'] as const).map((key) => (
+                {(['title', 'description', 'keywords'] as const).map((key) => (
                   <div key={key}>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block capitalize">
-                      {key === 'ogImage' ? 'OG Image URL' : key}
+                      {key}
                     </label>
                     {key === 'description' ? (
                       <textarea value={lp.seo?.[key] ?? ''} onChange={(e) => updateLp((p) => ({ ...p, seo: { ...p.seo, [key]: e.target.value } }))}
@@ -1489,11 +1535,26 @@ export default function LandingPageBuilder() {
                         className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 resize-none" />
                     ) : (
                       <input value={lp.seo?.[key] ?? ''} onChange={(e) => updateLp((p) => ({ ...p, seo: { ...p.seo, [key]: e.target.value } }))}
-                        placeholder={key === 'title' ? 'SEO title (max 60 chars)' : key === 'keywords' ? 'keyword1, keyword2' : 'https://...'}
+                        placeholder={key === 'title' ? 'SEO title (max 60 chars)' : 'keyword1, keyword2'}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
                     )}
                   </div>
                 ))}
+                <SeoAiAssistant
+                  lpId={id}
+                  pageTitle={lp.seo?.title || lp.title}
+                  template={lp.template}
+                  description={lp.seo?.description ?? ''}
+                  keywords={lp.seo?.keywords ?? ''}
+                  onApplyDescription={(v) => updateLp((p) => ({ ...p, seo: { ...p.seo, description: v } }))}
+                  onKeywordsChange={(v) => updateLp((p) => ({ ...p, seo: { ...p.seo, keywords: v } }))}
+                />
+                <ImagePicker
+                  label="OG Image (shown when shared on social/WhatsApp)"
+                  value={lp.seo?.ogImage ?? ''}
+                  onChange={(v) => updateLp((p) => ({ ...p, seo: { ...p.seo, ogImage: v } }))}
+                  openGallery={openGallery}
+                />
               </div>
             )}
 

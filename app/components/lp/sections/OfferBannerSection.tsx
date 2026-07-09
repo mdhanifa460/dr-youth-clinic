@@ -11,6 +11,8 @@ interface OfferBannerData {
   ctaText?: string;
   animationStyle?: 'urgent' | 'festive' | 'glow' | 'minimal';
   slotsLeft?: number;
+  totalSlots?: number;
+  emiText?: string;
 }
 
 function useCountdown(expiry?: string) {
@@ -79,6 +81,8 @@ export default function OfferBannerSection({ data }: { data: OfferBannerData }) 
     ctaText  = 'Claim Your Free Slot',
     animationStyle = 'minimal',
     slotsLeft,
+    totalSlots = 20,
+    emiText = 'EMI options available · Zero-cost EMI on 3 / 6 months',
   } = data;
 
   const countdown = useCountdown(expiry);
@@ -89,7 +93,7 @@ export default function OfferBannerSection({ data }: { data: OfferBannerData }) 
   const style = animationStyle as AnimStyle;
   const cfg = STYLE_CONFIG[style] ?? STYLE_CONFIG.minimal;
 
-  const maxSlots = 20;
+  const maxSlots = totalSlots || 20;
   const slotsPct = slotsLeft ? Math.max(5, Math.min(100, (slotsLeft / maxSlots) * 100)) : 0;
 
   return (
@@ -249,9 +253,9 @@ export default function OfferBannerSection({ data }: { data: OfferBannerData }) 
           )}
 
           {/* EMI badge */}
-          {emiAvailable && (
+          {emiAvailable && emiText && (
             <p className="mt-4 text-[#F5A623] text-sm font-semibold">
-              ✦ EMI options available · Zero-cost EMI on 3 / 6 months
+              ✦ {emiText}
             </p>
           )}
 
