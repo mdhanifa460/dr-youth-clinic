@@ -128,6 +128,14 @@ export const EXPORT_ALLOWED_ROLES: AdminRole[] = [
   'marketing_manager',
 ];
 
+// Roles that may toggle patient-phone masking on/off, independent of the coarser
+// `settings` module permission (clinic_owner has 'view' only there) — a deliberate,
+// narrow field-level carve-out rather than a blanket settings:'full' grant.
+export const PHONE_MASK_TOGGLE_ROLES: AdminRole[] = [
+  'super_admin',
+  'clinic_owner',
+];
+
 // Which booking fields each role may export (data masking)
 export const EXPORT_FIELDS_BY_ROLE: Partial<Record<AdminRole, string[]>> = {
   super_admin:       ['bookingId', 'name', 'phone', 'service', 'location', 'date', 'time', 'status', 'concern', 'promoCode', 'promoDiscount', 'createdAt'],

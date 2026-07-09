@@ -3,9 +3,9 @@ interface JourneyPhase { title: string; description: string }
 interface Props {
   sessions: number;
   treatmentName: string;
-  /** Admin-editable phase titles/descriptions (Service.journeyPhases). Falls back to
-   *  generic defaults unless exactly 4 are provided — session ranges are always
-   *  computed automatically from `sessions`. */
+  /** Admin-editable phase titles/descriptions (Service.journeyPhases). Any phase left
+   *  unset (or the array left short of 4) falls back to that slot's generic default
+   *  individually — session ranges are always computed automatically from `sessions`. */
   phases?: JourneyPhase[];
 }
 
@@ -21,7 +21,7 @@ function buildPhases(sessions: number, custom?: JourneyPhase[]) {
   const p1 = Math.max(1, Math.round(s * 0.25));
   const p2 = Math.max(p1 + 1, Math.round(s * 0.5));
   const p3 = s;
-  const src = custom && custom.length === 4 ? custom : DEFAULT_PHASES;
+  const src = DEFAULT_PHASES.map((def, i) => custom?.[i]?.title || custom?.[i]?.description ? custom[i] : def);
 
   return [
     { number: 1, sessions: `Session 1–${p1}`, label: src[0].title, desc: src[0].description },

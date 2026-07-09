@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { connectDB } from './mongodb';
 import { getSettings } from '@/app/models/Settings';
 import { HomepageSection } from '@/app/models/HomepageSection';
@@ -10,9 +11,26 @@ export { SITE_CONFIG_DEFAULTS };
 
 /** Pulls a stat's `value` out of the homepage Stats Bar section by matching its label, so
  * pages like /book and /offers can reuse the one place patient/rating/years stats are edited. */
-function findStatValue(stats: { value: string; label: string }[], needle: string): string | undefined {
-  return stats.find((s) => (s.label || '').toLowerCase().includes(needle))?.value;
+function findStatValue(stats: { value: string; label: string }[], needle: string | string[]): string | undefined {
+  const needles = Array.isArray(needle) ? needle : [needle];
+  return stats.find((s) => {
+    const label = (s.label || '').toLowerCase();
+    return needles.some((n) => label.includes(n));
+  })?.value;
 }
+
+// Cached like every other HomepageSection reader (getCachedSections, getCmsFaqs, etc.) —
+// getSiteConfig() itself is only request-scoped (React cache()), and is called from
+// force-dynamic routes like app/lp/[slug]/page.tsx, so this needs its own persisted cache.
+const getCachedStats = unstable_cache(
+  async (): Promise<{ value: string; label: string }[]> => {
+    await connectDB();
+    const statsSection = await HomepageSection.findOne({ sectionKey: 'stats' } as any).lean() as any;
+    return statsSection?.data?.stats ?? HOMEPAGE_DEFAULTS.stats?.data?.stats ?? [];
+  },
+  ['site-config-stats'],
+  { revalidate: 300, tags: ['homepage-layout'] }
+);
 
 export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
   try {
@@ -21,13 +39,11 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
     const consultationFree = settings.freeLabels?.consultationFree ?? true;
     const skinQuizFree = settings.freeLabels?.skinQuizFree ?? true;
 
-    const statsSection = await HomepageSection.findOne({ sectionKey: 'stats' } as any).lean() as any;
-    const stats: { value: string; label: string }[] =
-      statsSection?.data?.stats ?? HOMEPAGE_DEFAULTS.stats?.data?.stats ?? [];
-    const ratingValue = (findStatValue(stats, 'rating') || SITE_CONFIG_DEFAULTS.ratingValue).split('/')[0];
-    const patientsCount = findStatValue(stats, 'patient') || SITE_CONFIG_DEFAULTS.patientsCount;
+    const stats = await getCachedStats();
+    const ratingValue = (findStatValue(stats, ['rating', 'star', 'review']) || SITE_CONFIG_DEFAULTS.ratingValue).split('/')[0];
+    const patientsCount = findStatValue(stats, ['patient', 'client', 'happy']) || SITE_CONFIG_DEFAULTS.patientsCount;
     const yearsExperience =
-      findStatValue(stats, 'year') || findStatValue(stats, 'excellence') || SITE_CONFIG_DEFAULTS.yearsExperience;
+      findStatValue(stats, ['year', 'excellence', 'experience']) || SITE_CONFIG_DEFAULTS.yearsExperience;
 
     return {
       consultationFree,

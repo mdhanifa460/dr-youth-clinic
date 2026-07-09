@@ -106,7 +106,10 @@ export default function ContactSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contact,
-          contactPrivacy: { showPatientPhoneRoles: phoneRoles },
+          // Include phoneMaskEnabled even though this form doesn't edit it directly —
+          // the generic settings PUT does a $set on the whole contactPrivacy object,
+          // which would otherwise silently wipe the value set via the dedicated toggle.
+          contactPrivacy: { showPatientPhoneRoles: phoneRoles, phoneMaskEnabled: maskEnabled },
         }),
       });
       const data = await res.json();

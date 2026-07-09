@@ -41,7 +41,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
         setDurationLabel(`${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`);
       }
     };
-    return () => { probe.src = ''; };
+    return () => { probe.onloadedmetadata = null; probe.src = ''; };
   }, [videoUrl]);
 
   // Scroll lock + Escape key close

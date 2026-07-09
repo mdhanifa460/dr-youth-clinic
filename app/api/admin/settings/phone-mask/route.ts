@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
-import { Settings, getSettings } from '@/app/models/Settings';
+import { Settings } from '@/app/models/Settings';
 import { getAdminUser } from '@/app/lib/adminAuth';
-
-// Narrower than the generic settings 'full' permission (super_admin only) — this one
-// toggle is also editable by clinic_owner, per an explicit product decision, without
-// widening clinic_owner's access to the rest of Settings.
-const ALLOWED_ROLES = ['super_admin', 'clinic_owner'];
+import { PHONE_MASK_TOGGLE_ROLES } from '@/app/lib/permissions';
 
 export async function PUT(req: NextRequest) {
   const user = await getAdminUser();
   if (!user) return NextResponse.json({ success: false }, { status: 401 });
-  if (!ALLOWED_ROLES.includes(user.role)) {
+  if (!PHONE_MASK_TOGGLE_ROLES.includes(user.role)) {
     return NextResponse.json({ success: false, message: 'Forbidden: insufficient permissions' }, { status: 403 });
   }
 
@@ -22,12 +18,13 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'enabled must be a boolean' }, { status: 400 });
     }
 
-    const existing = await Settings.findOne({} as any);
-    const contactPrivacy = { ...(existing?.contactPrivacy ?? (await getSettings()).contactPrivacy), phoneMaskEnabled: enabled };
-
-    const updated = existing
-      ? await (Settings as any).findByIdAndUpdate(existing._id, { $set: { contactPrivacy } }, { new: true, runValidators: true })
-      : await Settings.create({ contactPrivacy });
+    // Atomic upsert on the single nested field — avoids both a duplicate-document
+    // race on first write (no doc yet) and clobbering sibling contactPrivacy fields.
+    const updated = await (Settings as any).findOneAndUpdate(
+      {},
+      { $set: { 'contactPrivacy.phoneMaskEnabled': enabled } },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    );
 
     return NextResponse.json({ success: true, data: updated.contactPrivacy });
   } catch (error: any) {

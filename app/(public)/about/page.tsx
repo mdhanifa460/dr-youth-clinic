@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
+import { Review } from '@/app/models/Review';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { makeDefaultAboutSections, type AboutSection } from '@/app/lib/aboutPageDefaults';
 
@@ -60,11 +61,36 @@ async function getFeaturedDoctors() {
   }
 }
 
+// Prefetches reviews server-side so ReviewsSection (TestimonialsSlider) can skip its
+// own client-side fetch/loading-spinner, mirroring app/(public)/page.tsx's pattern.
+const getCachedReviews = unstable_cache(
+  async (count: number, source: string, location: string, service: string) => {
+    try {
+      await connectDB();
+      const filter: Record<string, any> = { isVisible: true, showOnHomepage: true };
+      if (source) filter.source = source;
+      if (location) filter.location = location;
+      if (service) filter.services = service;
+      const docs = await Review.find(filter as any)
+        .sort({ isFeatured: -1, displayOrder: 1, createdAt: -1 })
+        .limit(Math.min(count, 50))
+        .lean();
+      return JSON.parse(JSON.stringify(docs));
+    } catch {
+      return [];
+    }
+  },
+  ['about-page-reviews'],
+  { revalidate: 60, tags: ['reviews'] }
+);
+
 async function getTestimonialsData() {
   try {
     await connectDB();
     const s = await HomepageSection.findOne({ sectionKey: 'testimonials' } as any).lean() as any;
-    return s?.data ?? {};
+    const data = s?.data ?? {};
+    const reviews = await getCachedReviews(data.displayCount ?? 6, data.filterSource || '', data.filterLocation || '', data.filterService || '');
+    return { ...data, _reviews: reviews };
   } catch {
     return {};
   }

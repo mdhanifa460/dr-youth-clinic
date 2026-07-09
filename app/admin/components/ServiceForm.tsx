@@ -663,7 +663,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">{form.journeyPhases.length}/4 phases set</span>
             </div>
             <p className="text-xs text-gray-400 mb-4">
-              A separate "Phase 1–4" timeline further down the page for multi-session treatments. Session ranges are calculated automatically from Total Sessions below — set exactly 4 phases to override the generic titles/descriptions, or leave empty to use the defaults.
+              A separate "Phase 1–4" timeline further down the page for multi-session treatments. Session ranges are calculated automatically from Total Sessions below. Each phase you fill in overrides that slot's generic title/description — leave any phase blank (or all of them) to use the default for just that slot.
             </p>
 
             <div className="mb-4 max-w-[180px]">
@@ -671,7 +671,10 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               <input
                 type="number" min={1} max={30}
                 value={form.sessionsCount}
-                onChange={(e) => updateForm({ sessionsCount: Number(e.target.value) })}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  updateForm({ sessionsCount: raw === "" ? 1 : Math.min(30, Math.max(1, Number(raw))) });
+                }}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

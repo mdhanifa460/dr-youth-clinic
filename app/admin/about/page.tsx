@@ -153,6 +153,13 @@ function ImagePicker({
             className="shrink-0 text-gray-400 hover:text-red-500 transition p-0.5"><X size={14} /></button>
         )}
       </div>
+      <input
+        type="text"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Or paste URL directly..."
+        className="w-full mt-2 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 text-gray-500 placeholder-gray-300"
+      />
     </div>
   );
 }
