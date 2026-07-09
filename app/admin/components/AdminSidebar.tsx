@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/services", label: "🩺 Services", module: "services" },
   { href: "/admin/doctors", label: "👨‍⚕️ Doctors", module: "doctors" },
   { href: "/admin/homepage", label: "🏠 Homepage", module: "homepage" },
+  { href: "/admin/about", label: "📖 About Page", module: "homepage" },
   { href: "/admin/locations", label: "📍 Locations", module: "locations" },
   { href: "/admin/offers", label: "🏷️ Offers", module: "offers" },
   { href: "/admin/reviews", label: "⭐ Reviews", module: "reviews" },
