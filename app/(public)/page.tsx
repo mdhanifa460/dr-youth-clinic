@@ -25,6 +25,8 @@ import { FAQSchema } from '@/app/components/SchemaMarkup';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
 export const revalidate = 300;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+
 const getHomeSeo = unstable_cache(
   async () => {
     try {
@@ -68,7 +70,7 @@ export async function generateMetadata(): Promise<Metadata> {
         openGraph: {
           title: seo.metaTitle,
           description: seo.metaDescription || '',
-          url: 'https://dryouthclinic.com',
+          url: SITE_URL,
           siteName: 'DR Youth Clinic',
           type: 'website',
           locale: 'en_IN',
@@ -89,7 +91,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
       description: 'Trusted by 25,000+ patients across India.',
-      url: 'https://dryouthclinic.com',
+      url: SITE_URL,
       siteName: 'DR Youth Clinic',
       type: 'website',
       locale: 'en_IN',

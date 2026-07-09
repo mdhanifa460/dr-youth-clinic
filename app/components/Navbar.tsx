@@ -57,6 +57,7 @@ export default function Navbar() {
     { name: "Home",     id: "home",      href: null },
     { name: "Services", id: "services",  href: null },
     { name: "Doctors",  id: "expertise", href: "/doctors" },
+    { name: "About",    id: "about",     href: "/about" },
     { name: "Results",  id: "results",   href: "/results" },
     { name: "Blog",     id: "blog",      href: "/blog" },
     { name: "Offers",   id: "offers",    href: "/offers" },
@@ -119,21 +120,25 @@ export default function Navbar() {
         <nav className="flex items-center gap-4 xl:gap-6">
           {navItems.map((item, i) => {
             const isActive = active === item.id;
-            const dest = item.href ? item.href : `${homeLink}#${item.id}`;
-            return (
-              <a
-                key={i}
-                href={dest}
-                className={`relative text-[13px] xl:text-[14px] font-semibold transition-all duration-200 whitespace-nowrap ${
-                  isActive ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
+            const linkClassName = `relative text-[13px] xl:text-[14px] font-semibold transition-all duration-200 whitespace-nowrap ${
+              isActive ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
+            }`;
+            const underline = (
+              <span
+                className={`absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full transition-all duration-300 ${
+                  isActive ? "w-full" : "w-0"
                 }`}
-              >
+              />
+            );
+            return item.href ? (
+              <Link key={i} href={item.href} className={linkClassName}>
                 {item.name}
-                <span
-                  className={`absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full transition-all duration-300 ${
-                    isActive ? "w-full" : "w-0"
-                  }`}
-                />
+                {underline}
+              </Link>
+            ) : (
+              <a key={i} href={`${homeLink}#${item.id}`} className={linkClassName}>
+                {item.name}
+                {underline}
               </a>
             );
           })}
@@ -199,7 +204,7 @@ export default function Navbar() {
             href="/book"
             className="min-h-10 bg-[#0B2560] text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-[0_6px_20px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-lg transition flex items-center justify-center whitespace-nowrap"
           >
-            Consult Online
+            {siteConfig.consultationBadge}
           </Link>
         </div>
       </div>
@@ -212,20 +217,29 @@ export default function Navbar() {
         >
           {navItems.map((item, i) => {
             const isActive = active === item.id;
-            const dest = item.href ? item.href : `${homeLink}#${item.id}`;
-            return (
-              <a
-                key={i}
-                href={dest}
-                onClick={() => setMobileOpen(false)}
-                className={`min-h-11 flex items-center gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition ${
-                  isActive
-                    ? "bg-[#f6faff] text-[#0B2560]"
-                    : "text-gray-700 hover:text-[#0B2560] hover:bg-[#f6faff]"
-                }`}
-              >
+            const linkClassName = `min-h-11 flex items-center gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition ${
+              isActive
+                ? "bg-[#f6faff] text-[#0B2560]"
+                : "text-gray-700 hover:text-[#0B2560] hover:bg-[#f6faff]"
+            }`;
+            const label = (
+              <>
                 {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#0B2560] shrink-0" />}
                 {item.name}
+              </>
+            );
+            return item.href ? (
+              <Link key={i} href={item.href} onClick={() => setMobileOpen(false)} className={linkClassName}>
+                {label}
+              </Link>
+            ) : (
+              <a
+                key={i}
+                href={`${homeLink}#${item.id}`}
+                onClick={() => setMobileOpen(false)}
+                className={linkClassName}
+              >
+                {label}
               </a>
             );
           })}
@@ -268,7 +282,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="min-h-12 w-full bg-[#0B2560] text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center"
             >
-              Consult Online
+              {siteConfig.consultationBadge}
             </Link>
           </div>
         </div>
