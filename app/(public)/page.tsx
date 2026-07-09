@@ -5,6 +5,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review } from '@/app/models/Review';
 import { Doctor } from '@/app/models/Doctor';
+import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
@@ -23,6 +24,7 @@ import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
 import FAQAccordion from '@/app/components/homepage/FAQAccordion';
 import { FAQSchema } from '@/app/components/SchemaMarkup';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
+import VideoAcademySection from '@/app/components/homepage/VideoAcademySection';
 export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
@@ -113,6 +115,7 @@ const PUBLIC_SECTION_ORDER = [
   'before_after',
   'services',
   'doctors',
+  'video_academy',
   'locations',
   'testimonials',
   'faq',
@@ -228,6 +231,25 @@ const getCachedBlogPosts = unstable_cache(
   { revalidate: 300, tags: ['blog'] }
 );
 
+const getCachedFeaturedVideos = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await (Video as any)
+        .find({ status: 'published' } as any)
+        .sort({ featured: -1, displayOrder: 1, createdAt: -1 })
+        .limit(9)
+        .populate('doctor', 'name')
+        .lean();
+      return JSON.parse(JSON.stringify(docs));
+    } catch {
+      return [];
+    }
+  },
+  ['homepage-video-academy'],
+  { revalidate: 300, tags: ['videos'] }
+);
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   hero: HeroSection,
   stats: StatsBar,
@@ -235,6 +257,7 @@ const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   services: ServicesCards,
   before_after: BeforeAfterSection,
   doctors: DoctorsSection,
+  video_academy: VideoAcademySection,
   locations: HomepageLocations,
   cta_strip: CTAStrip,
   testimonials: TestimonialsSlider,
@@ -255,13 +278,14 @@ export default async function Home() {
   const rawCity = headers().get('x-vercel-ip-city') || '';
   const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
     getCachedLocationEmbeds(),
     getCachedDoctors(''), // fetch all — client filters by detected location
     getCachedBlogPosts(),
+    getCachedFeaturedVideos(),
   ]);
 
   const enriched = {
@@ -272,6 +296,10 @@ export default async function Home() {
       ...(sectionData['doctors'] ?? {}),
       doctors: liveDoctors,
       _detectedCity: detectedCity,
+    },
+    video_academy: {
+      ...(sectionData['video_academy'] ?? {}),
+      videos: liveVideos,
     },
     blog: {
       ...(sectionData['blog'] ?? {}),

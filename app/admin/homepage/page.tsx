@@ -796,6 +796,17 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
         </div>
       );
 
+    case 'video_academy':
+      return (
+        <div className="space-y-4">
+          <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <TextField label="Subheadline" value={d.subheadline} onChange={(v) => set('subheadline', v)} />
+          <p className="text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2">
+            Videos themselves are managed in Admin → Video Academy — add, categorise, and feature videos there.
+          </p>
+        </div>
+      );
+
     case 'cta_strip':
       return (
         <div className="space-y-6">

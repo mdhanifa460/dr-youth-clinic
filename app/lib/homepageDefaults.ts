@@ -211,6 +211,15 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       ],
     },
   },
+  video_academy: {
+    label: 'Skin & Hair Academy (Videos)',
+    order: 91,
+    visible: true,
+    data: {
+      headline: 'Skin & Hair Academy',
+      subheadline: 'Learn directly from our specialists.',
+    },
+  },
   locations: {
     label: 'Locations',
     order: 10,
