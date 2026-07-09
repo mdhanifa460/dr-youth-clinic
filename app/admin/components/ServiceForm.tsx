@@ -17,6 +17,7 @@ interface FormData {
   sessionsRequired: string;
   recoveryTime: string;
   technology: string;
+  anaesthesia: string;
   metaTitle: string;
   metaDescription: string;
   keywords: string;
@@ -24,6 +25,9 @@ interface FormData {
   idealFor: string[];
   benefits: Array<{ icon: string; title: string; description: string }>;
   treatmentSteps: Array<{ title: string; description: string }>;
+  recoveryStages: Array<{ phase: string; icon: string; label: string; description: string }>;
+  sessionsCount: number;
+  journeyPhases: Array<{ title: string; description: string }>;
   myths: Array<{ myth: string; fact: string }>;
   faq: Array<{ question: string; answer: string }>;
   heroImage: { url: string; publicId: string } | null;
@@ -71,11 +75,15 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             : initialData.keywords ?? "",
           idealFor: initialData.idealFor ?? [],
           treatmentSteps: initialData.treatmentSteps ?? [],
+          recoveryStages: initialData.recoveryStages ?? [],
+          sessionsCount: initialData.sessionsCount ?? 6,
+          journeyPhases: initialData.journeyPhases ?? [],
           myths: initialData.myths ?? [],
           faq: initialData.faq ?? [],
           sessionsRequired: initialData.sessionsRequired ?? "",
           recoveryTime: initialData.recoveryTime ?? "",
           technology: initialData.technology ?? "",
+          anaesthesia: initialData.anaesthesia ?? "",
         }
       : {
           name: "",
@@ -91,9 +99,13 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           keywords: "",
           narrative: "",
           technology: "",
+          anaesthesia: "",
           idealFor: [],
           benefits: [],
           treatmentSteps: [],
+          recoveryStages: [],
+          sessionsCount: 6,
+          journeyPhases: [],
           myths: [],
           faq: [],
           heroImage: null,
@@ -394,6 +406,11 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               <input type="text" value={form.recoveryTime} onChange={(e) => updateForm({ recoveryTime: e.target.value })} placeholder="e.g., Zero downtime" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
               <p className="text-xs text-gray-400 mt-1">Highly conversion-relevant for busy patients</p>
             </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Anaesthesia</label>
+              <input type="text" value={form.anaesthesia} onChange={(e) => updateForm({ anaesthesia: e.target.value })} placeholder="e.g., Topical / None" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+              <p className="text-xs text-gray-400 mt-1">Shown in the "Treatment at a Glance" card — leave blank to default to "Topical / None"</p>
+            </div>
           </div>
         </div>
       )}
@@ -569,6 +586,118 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               className="mt-3 w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition text-sm font-medium flex items-center justify-center gap-2"
             >
               <Plus size={15} /> Add Step
+            </button>
+          </div>
+
+          {/* Recovery Timeline */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-base font-semibold text-gray-800">Recovery Timeline</label>
+              <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">{form.recoveryStages.length} stages</span>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Shown as a 4-card grid under "Recovery Timeline". Leave empty to use the generic default (Day 1 / Days 2–3 / Week 1 / Month 1+).</p>
+
+            <div className="space-y-3">
+              {form.recoveryStages.map((stage, idx) => (
+                <div key={idx} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      value={stage.phase}
+                      onChange={(e) => { const updated = [...form.recoveryStages]; updated[idx] = { ...updated[idx], phase: e.target.value }; updateForm({ recoveryStages: updated }); }}
+                      placeholder="Phase (e.g., Day 1)"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      value={stage.icon}
+                      onChange={(e) => { const updated = [...form.recoveryStages]; updated[idx] = { ...updated[idx], icon: e.target.value }; updateForm({ recoveryStages: updated }); }}
+                      placeholder="Icon (e.g., 🛌)"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      value={stage.label}
+                      onChange={(e) => { const updated = [...form.recoveryStages]; updated[idx] = { ...updated[idx], label: e.target.value }; updateForm({ recoveryStages: updated }); }}
+                      placeholder="Label (e.g., Immediate)"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <textarea
+                      value={stage.description}
+                      onChange={(e) => { const updated = [...form.recoveryStages]; updated[idx] = { ...updated[idx], description: e.target.value }; updateForm({ recoveryStages: updated }); }}
+                      placeholder="What to expect at this stage…"
+                      rows={2}
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button onClick={() => updateForm({ recoveryStages: form.recoveryStages.filter((_, i) => i !== idx) })} className="text-gray-300 hover:text-red-400 transition self-start mt-1">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => updateForm({ recoveryStages: [...form.recoveryStages, { phase: "", icon: "", label: "", description: "" }] })}
+              className="mt-3 w-full py-3 border-2 border-dashed border-green-200 text-green-600 rounded-xl hover:bg-green-50 transition text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Plus size={15} /> Add Recovery Stage
+            </button>
+          </div>
+
+          {/* Phase-Based Multi-Session Journey */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-base font-semibold text-gray-800">Multi-Session Journey (Phase 1–4)</label>
+              <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">{form.journeyPhases.length}/4 phases set</span>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              A separate "Phase 1–4" timeline further down the page for multi-session treatments. Session ranges are calculated automatically from Total Sessions below — set exactly 4 phases to override the generic titles/descriptions, or leave empty to use the defaults.
+            </p>
+
+            <div className="mb-4 max-w-[180px]">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Total Sessions</label>
+              <input
+                type="number" min={1} max={30}
+                value={form.sessionsCount}
+                onChange={(e) => updateForm({ sessionsCount: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-3">
+              {form.journeyPhases.map((phase, idx) => (
+                <div key={idx} className="flex gap-3 p-4 border border-gray-100 rounded-xl bg-gray-50">
+                  <div className="w-8 h-8 rounded-full bg-[#F5A623] text-[#0B2560] text-xs font-bold flex items-center justify-center shrink-0 mt-1">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input
+                      value={phase.title}
+                      onChange={(e) => { const updated = [...form.journeyPhases]; updated[idx] = { ...updated[idx], title: e.target.value }; updateForm({ journeyPhases: updated }); }}
+                      placeholder="Phase title (e.g., Initial Assessment)"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <textarea
+                      value={phase.description}
+                      onChange={(e) => { const updated = [...form.journeyPhases]; updated[idx] = { ...updated[idx], description: e.target.value }; updateForm({ journeyPhases: updated }); }}
+                      placeholder="What happens in this phase…"
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button onClick={() => updateForm({ journeyPhases: form.journeyPhases.filter((_, i) => i !== idx) })} className="text-gray-300 hover:text-red-400 transition mt-1">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => updateForm({ journeyPhases: [...form.journeyPhases, { title: "", description: "" }] })}
+              disabled={form.journeyPhases.length >= 4}
+              className="mt-3 w-full py-3 border-2 border-dashed border-[#F5A623]/50 text-[#c47f10] rounded-xl hover:bg-[#F5A623]/5 transition text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Plus size={15} /> Add Phase {form.journeyPhases.length >= 4 ? "(max 4)" : ""}
             </button>
           </div>
 

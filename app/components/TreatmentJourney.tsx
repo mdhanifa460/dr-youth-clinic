@@ -1,44 +1,38 @@
+interface JourneyPhase { title: string; description: string }
+
 interface Props {
   sessions: number;
   treatmentName: string;
+  /** Admin-editable phase titles/descriptions (Service.journeyPhases). Falls back to
+   *  generic defaults unless exactly 4 are provided — session ranges are always
+   *  computed automatically from `sessions`. */
+  phases?: JourneyPhase[];
 }
 
-function buildPhases(sessions: number) {
+const DEFAULT_PHASES: JourneyPhase[] = [
+  { title: 'Initial Assessment', description: 'Doctor evaluates your skin, personalised protocol designed for your unique concern.' },
+  { title: 'Active Treatment', description: 'Core sessions targeting your concern with calibrated intensity and precision.' },
+  { title: 'Visible Results', description: 'Significant improvement becomes visible. Progress is documented and tracked.' },
+  { title: 'Maintenance Plan', description: 'Monthly sessions to sustain your results and prevent regression long-term.' },
+];
+
+function buildPhases(sessions: number, custom?: JourneyPhase[]) {
   const s = Math.max(4, sessions);
   const p1 = Math.max(1, Math.round(s * 0.25));
   const p2 = Math.max(p1 + 1, Math.round(s * 0.5));
   const p3 = s;
+  const src = custom && custom.length === 4 ? custom : DEFAULT_PHASES;
 
   return [
-    {
-      number: 1,
-      sessions: `Session 1–${p1}`,
-      label: 'Initial Assessment',
-      desc: 'Doctor evaluates your skin, personalised protocol designed for your unique concern.',
-    },
-    {
-      number: 2,
-      sessions: `Session ${p1 + 1}–${p2}`,
-      label: 'Active Treatment',
-      desc: 'Core sessions targeting your concern with calibrated intensity and precision.',
-    },
-    {
-      number: 3,
-      sessions: `Session ${p2 + 1}–${p3}`,
-      label: 'Visible Results',
-      desc: 'Significant improvement becomes visible. Progress is documented and tracked.',
-    },
-    {
-      number: 4,
-      sessions: 'Post-treatment',
-      label: 'Maintenance Plan',
-      desc: 'Monthly sessions to sustain your results and prevent regression long-term.',
-    },
+    { number: 1, sessions: `Session 1–${p1}`, label: src[0].title, desc: src[0].description },
+    { number: 2, sessions: `Session ${p1 + 1}–${p2}`, label: src[1].title, desc: src[1].description },
+    { number: 3, sessions: `Session ${p2 + 1}–${p3}`, label: src[2].title, desc: src[2].description },
+    { number: 4, sessions: 'Post-treatment', label: src[3].title, desc: src[3].description },
   ];
 }
 
-export default function TreatmentJourney({ sessions, treatmentName }: Props) {
-  const phases = buildPhases(sessions);
+export default function TreatmentJourney({ sessions, treatmentName, phases: customPhases }: Props) {
+  const phases = buildPhases(sessions, customPhases);
 
   return (
     <div>

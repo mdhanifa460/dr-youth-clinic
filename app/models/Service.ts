@@ -20,6 +20,10 @@ export interface IService extends Document {
   sessionsRequired?: string;
   recoveryTime?: string;
   technology?: string;
+  anaesthesia?: string;
+  recoveryStages?: Array<{ phase: string; icon: string; label: string; description: string }>;
+  sessionsCount?: number;
+  journeyPhases?: Array<{ title: string; description: string }>;
   treatmentSteps?: Array<{ title: string; description: string }>;
   myths?: Array<{ myth: string; fact: string }>;
   faq?: Array<{ question: string; answer: string }>;
@@ -111,6 +115,10 @@ const ServiceSchema = new Schema<IService>(
     sessionsRequired: { type: String, default: '' },
     recoveryTime: { type: String, default: '' },
     technology: { type: String, default: '' },
+    anaesthesia: { type: String, default: '' },
+    recoveryStages: [{ phase: String, icon: String, label: String, description: String }],
+    sessionsCount: { type: Number, default: 6, min: 1, max: 30 },
+    journeyPhases: [{ title: String, description: String }],
     treatmentSteps: [{ title: String, description: String }],
     myths: [{ myth: String, fact: String }],
     faq: [{ question: String, answer: String }],

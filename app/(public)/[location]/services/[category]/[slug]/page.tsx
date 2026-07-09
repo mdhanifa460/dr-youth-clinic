@@ -33,6 +33,15 @@ const CATEGORY_ICON: Record<string, string> = {
   Skin: '✨', Hair: '🌿', Laser: '⚡', Other: '🏥',
 };
 
+// Fallback recovery-timeline template used when a service hasn't set its own
+// Service.recoveryStages (Admin → Services → Treatment Journey).
+const DEFAULT_RECOVERY_STAGES = [
+  { phase: 'Day 1', icon: '🛌', label: 'Immediate', description: 'Mild redness or swelling is normal. Avoid sun exposure.' },
+  { phase: 'Days 2–3', icon: '💧', label: 'Healing', description: 'Skin settles. Follow aftercare routine provided by your doctor.' },
+  { phase: 'Week 1', icon: '🌱', label: 'Recovery', description: 'Most side effects resolve. Light activity resumed.' },
+  { phase: 'Month 1+', icon: '✨', label: 'Results', description: 'Full results become visible. Follow-up appointment recommended.' },
+];
+
 interface PageProps {
   params: { location: string; category: string; slug: string };
 }
@@ -413,7 +422,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   { label: 'Sessions Needed', value: svc.sessionsRequired || 'Consult' },
                   { label: 'Recovery', value: svc.recoveryTime || 'Minimal' },
                   { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}` },
-                  { label: 'Anaesthesia', value: 'Topical / None' },
+                  { label: 'Anaesthesia', value: svc.anaesthesia || 'Topical / None' },
                 ].map((row) => (
                   <div key={row.label} className="bg-white rounded-2xl p-3 border border-blue-50">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{row.label}</p>
@@ -523,17 +532,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     </div>
                   </div>
                   <div className="grid sm:grid-cols-4 gap-3">
-                    {[
-                      { phase: 'Day 1', icon: '🛌', label: 'Immediate', desc: 'Mild redness or swelling is normal. Avoid sun exposure.' },
-                      { phase: 'Days 2–3', icon: '💧', label: 'Healing', desc: 'Skin settles. Follow aftercare routine provided by your doctor.' },
-                      { phase: 'Week 1', icon: '🌱', label: 'Recovery', desc: 'Most side effects resolve. Light activity resumed.' },
-                      { phase: 'Month 1+', icon: '✨', label: 'Results', desc: 'Full results become visible. Follow-up appointment recommended.' },
-                    ].map((phase, i) => (
+                    {(svc.recoveryStages?.length ? svc.recoveryStages : DEFAULT_RECOVERY_STAGES).map((phase: any, i: number) => (
                       <div key={i} className="bg-white rounded-2xl p-4 border border-green-100 text-center">
                         <div className="text-2xl mb-1.5">{phase.icon}</div>
                         <p className="font-bold text-[#0B2560] text-xs">{phase.phase}</p>
                         <p className="text-green-600 text-[10px] font-semibold mb-1.5">{phase.label}</p>
-                        <p className="text-gray-500 text-[11px] leading-relaxed">{phase.desc}</p>
+                        <p className="text-gray-500 text-[11px] leading-relaxed">{phase.description}</p>
                       </div>
                     ))}
                   </div>
@@ -573,7 +577,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Treatment Session Journey */}
-            <TreatmentJourney sessions={svc.sessions || 6} treatmentName={svc.name} />
+            <TreatmentJourney
+              sessions={svc.sessionsCount || 6}
+              treatmentName={svc.name}
+              phases={svc.journeyPhases}
+            />
 
             {/* Patient Reviews */}
             {hasReviews && (
