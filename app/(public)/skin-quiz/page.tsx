@@ -638,7 +638,7 @@ function ResultsScreen({
   recommendations,
   email,
   setEmail,
-  emailSent,
+  emailStatus,
   onEmailSubmit,
   onRetake,
 }: {
@@ -646,7 +646,7 @@ function ResultsScreen({
   recommendations: Treatment[];
   email: string;
   setEmail: (v: string) => void;
-  emailSent: boolean;
+  emailStatus: "idle" | "sending" | "sent" | "saved" | "error";
   onEmailSubmit: (e: React.FormEvent) => void;
   onRetake: () => void;
 }) {
@@ -698,7 +698,7 @@ function ResultsScreen({
           <p className="text-sm text-blue-200 mb-5">
             Receive your personalised treatment plan + a special first-consultation offer.
           </p>
-          {emailSent ? (
+          {emailStatus === "sent" && (
             <div className="bg-white/10 rounded-2xl px-6 py-4 flex items-center justify-center gap-3">
               <span className="text-2xl">✅</span>
               <div className="text-left">
@@ -706,7 +706,17 @@ function ResultsScreen({
                 <p className="text-xs text-blue-200">Check your inbox (and spam folder).</p>
               </div>
             </div>
-          ) : (
+          )}
+          {emailStatus === "saved" && (
+            <div className="bg-white/10 rounded-2xl px-6 py-4 flex items-center justify-center gap-3">
+              <span className="text-2xl">👍</span>
+              <div className="text-left">
+                <p className="font-bold">Got it, thanks!</p>
+                <p className="text-xs text-blue-200">We've saved your details — our team will reach out to you shortly.</p>
+              </div>
+            </div>
+          )}
+          {(emailStatus === "idle" || emailStatus === "sending" || emailStatus === "error") && (
             <form onSubmit={onEmailSubmit} className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
@@ -718,11 +728,15 @@ function ResultsScreen({
               />
               <button
                 type="submit"
-                className="px-6 py-3 bg-[#F5A623] hover:bg-[#e09520] text-[#0B2560] font-bold rounded-xl text-sm transition-all duration-200 hover:shadow-lg whitespace-nowrap"
+                disabled={emailStatus === "sending"}
+                className="px-6 py-3 bg-[#F5A623] hover:bg-[#e09520] text-[#0B2560] font-bold rounded-xl text-sm transition-all duration-200 hover:shadow-lg whitespace-nowrap disabled:opacity-60"
               >
-                Send Plan
+                {emailStatus === "sending" ? "Sending…" : "Send Plan"}
               </button>
             </form>
+          )}
+          {emailStatus === "error" && (
+            <p className="text-xs text-red-200 mt-2">Something went wrong — please try again.</p>
           )}
         </div>
       </div>
@@ -771,7 +785,7 @@ export default function SkinQuizPage() {
     timeline: "",
   });
   const [email, setEmail] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "sent" | "saved" | "error">("idle");
 
   useEffect(() => {
     fetch("/api/quiz-config")
@@ -823,19 +837,27 @@ export default function SkinQuizPage() {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailStatus("sending");
     try {
-      await fetch('/api/leads', {
+      const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           source: 'skin-quiz',
           answers,
-          recommendations: recommendations.map((r) => r.name),
+          recommendations,
         }),
       });
-    } catch {}
-    setEmailSent(true);
+      const data = await res.json();
+      if (!data.success) {
+        setEmailStatus("error");
+        return;
+      }
+      setEmailStatus(data.emailSent ? "sent" : "saved");
+    } catch {
+      setEmailStatus("error");
+    }
   };
 
   const handleRetake = () => {
@@ -843,7 +865,7 @@ export default function SkinQuizPage() {
     setShowResults(false);
     setAnalysing(false);
     setEmail("");
-    setEmailSent(false);
+    setEmailStatus("idle");
     transition(() => setStep(0));
   };
 
@@ -993,7 +1015,7 @@ export default function SkinQuizPage() {
             recommendations={recommendations}
             email={email}
             setEmail={setEmail}
-            emailSent={emailSent}
+            emailStatus={emailStatus}
             onEmailSubmit={handleEmailSubmit}
             onRetake={handleRetake}
           />
