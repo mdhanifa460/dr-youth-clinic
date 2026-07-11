@@ -45,7 +45,7 @@ export default function GEOIntelligence({ data }: { data: any }) {
 
       <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 text-xs text-purple-800 flex items-start gap-2">
         <span className="shrink-0">🤖</span>
-        <span><strong>GEO</strong> (Generative Engine Optimisation) is the new SEO. 40% of users now get answers directly from AI without clicking a website. This data shows your AI search footprint.</span>
+        <span><strong>Sample data.</strong> <strong>GEO</strong> (Generative Engine Optimisation) is the new SEO — 40% of users now get answers directly from AI without clicking a website. The figures below are illustrative, not live-tracked mentions. No AI-visibility monitoring is connected yet.</span>
       </div>
 
       {/* Overview */}

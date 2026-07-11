@@ -186,6 +186,31 @@ const ServiceSchema = new Schema<IService>(
   }
 );
 
+// Deterministic content-completeness score (0-100) — not a live search-ranking
+// signal, just how much of the on-page/SEO content an admin has actually filled
+// in. Recomputed on every save so it stays honest as content changes.
+function computeSeoScore(svc: any): number {
+  let score = 0;
+  const metaTitleLen = svc.metaTitle?.length ?? 0;
+  const metaDescLen = svc.metaDescription?.length ?? 0;
+
+  if (metaTitleLen >= 30 && metaTitleLen <= 60) score += 15;
+  else if (metaTitleLen > 0) score += 7;
+
+  if (metaDescLen >= 70 && metaDescLen <= 160) score += 15;
+  else if (metaDescLen > 0) score += 7;
+
+  if ((svc.keywords?.length ?? 0) >= 3) score += 10;
+  if (svc.urlSlug) score += 5;
+  if (svc.heroImage?.url) score += 10;
+  if ((svc.narrative?.length ?? 0) >= 300) score += 15;
+  if (svc.heroDescription) score += 10;
+  if ((svc.benefits?.length ?? 0) >= 3) score += 10;
+  if ((svc.faq?.length ?? 0) >= 3) score += 10;
+
+  return score;
+}
+
 // Auto-generate fields before save.
 // Mongoose 6+: async hooks resolve via the returned Promise — do NOT call next().
 ServiceSchema.pre('save', async function () {
@@ -204,6 +229,20 @@ ServiceSchema.pre('save', async function () {
   if (!this.metaTitle && this.name) {
     const city = this.location.charAt(0).toUpperCase() + this.location.slice(1);
     this.metaTitle = `${this.name} in ${city} | DR Youth Clinic`;
+  }
+
+  this.seoScore = computeSeoScore(this);
+});
+
+// The admin edit route updates via findByIdAndUpdate, which bypasses the
+// 'save' hook above — recompute the score here too so it stays accurate
+// after edits, not just on creation.
+ServiceSchema.pre('findOneAndUpdate', function () {
+  const update: any = this.getUpdate();
+  if (!update) return;
+  const target = update.$set ?? update;
+  if (target && typeof target === 'object') {
+    target.seoScore = computeSeoScore(target);
   }
 });
 

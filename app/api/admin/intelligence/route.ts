@@ -44,16 +44,19 @@ export async function GET() {
     const docs = allDoctors as any[];
     const revs = allReviews as any[];
 
-    // price + category lookup by normalized service name
-    const priceMap  = new Map<string, number>();
-    const catMap    = new Map<string, string>();
+    // price + category + SEO score lookup by normalized service name
+    const priceMap    = new Map<string, number>();
+    const catMap      = new Map<string, string>();
+    const seoScoreMap = new Map<string, number>();
     for (const s of svcs) {
       const key = (s.name || '').toLowerCase().trim();
       priceMap.set(key, s.price || 0);
       catMap.set(key,   s.category || 'Other');
+      seoScoreMap.set(key, s.seoScore || 0);
     }
-    const getPrice = (name: string) => priceMap.get((name || '').toLowerCase().trim()) || 0;
-    const getCat   = (name: string) => catMap.get((name || '').toLowerCase().trim()) || 'Other';
+    const getPrice    = (name: string) => priceMap.get((name || '').toLowerCase().trim()) || 0;
+    const getCat      = (name: string) => catMap.get((name || '').toLowerCase().trim()) || 'Other';
+    const getSeoScore = (name: string) => seoScoreMap.get((name || '').toLowerCase().trim()) || 0;
 
     // ── Core counts ──────────────────────────────────────────────────────────
     const totalBookings     = bs.length;
@@ -141,6 +144,7 @@ export async function GET() {
         name,
         category: getCat(name),
         price:    getPrice(name),
+        seoScore: getSeoScore(name),
         count:    e.count,
         revenue:  e.revenue,
         completionRate:  e.count ? Math.round((e.completed  / e.count) * 100) : 0,

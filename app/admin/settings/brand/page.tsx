@@ -147,6 +147,9 @@ export default function BrandSettingsPage() {
                   className="w-32 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] focus:ring-1 focus:ring-[#0B2560]/20 font-mono"
                 />
               </div>
+              <p className="text-[11px] text-amber-600 mt-1.5">
+                Not yet applied site-wide — this value is saved but the website's colours are still hardcoded in the page templates. Changing it here won't change how the site looks yet.
+              </p>
             </div>
 
           </div>

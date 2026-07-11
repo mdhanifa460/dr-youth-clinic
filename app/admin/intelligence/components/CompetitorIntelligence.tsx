@@ -67,14 +67,20 @@ export default function CompetitorIntelligence({ data }: { data: any }) {
   const revs = data?.reviewsBySource || [];
   const totalReviews = o.totalReviews || 0;
   const avgRating    = o.avgRating    || 0;
+  const byService: any[] = data?.byService || [];
+  const scoredServices = byService.filter((s: any) => s.seoScore > 0);
+  const ourSeoScore = scoredServices.length
+    ? Math.round(scoredServices.reduce((s: number, x: any) => s + x.seoScore, 0) / scoredServices.length)
+    : 0;
 
-  // Inject real data for DR Youth
+  // Inject real data for DR Youth where we have it; other fields (keywords/social)
+  // stay as sample placeholders — no real tracking exists yet for those.
   const enriched = COMPETITORS.map(c => c.isUs ? {
     ...c,
     rating:   avgRating || 4.8,
     reviews:  totalReviews,
     services: o.activeServices || 0,
-    seoScore: 62,
+    seoScore: ourSeoScore,
     keywords: 210,
     social:   '12K',
   } : c);
@@ -101,7 +107,7 @@ export default function CompetitorIntelligence({ data }: { data: any }) {
 
       <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 text-xs text-indigo-800 flex items-start gap-2">
         <span className="shrink-0">📊</span>
-        <span>All competitor data is sourced from publicly available information (Google, websites, social media). Updated monthly.</span>
+        <span><strong>Sample data.</strong> Competitor figures below are illustrative placeholders, not real, sourced measurements — no live competitor tracking is connected yet. Do not treat or share these as factual claims about the named businesses.</span>
       </div>
 
       {/* Comparison table */}

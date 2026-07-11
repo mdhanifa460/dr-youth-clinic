@@ -25,9 +25,13 @@ const ISSUES = [
 
 export default function SEOIntelligence({ data }: { data: any }) {
   const byService = data?.byService || [];
-  const seoScore = byService.length
-    ? Math.round(byService.reduce((s: number, x: any) => s + (x.seoScore || 55), 0) / byService.length)
-    : 62;
+  // seoScore is a real content-completeness score computed on save (see
+  // Service.ts computeSeoScore) — 0 means the record hasn't been saved since
+  // that was added yet, not a genuine zero, so exclude it from the average.
+  const scoredServices = byService.filter((x: any) => x.seoScore > 0);
+  const seoScore = scoredServices.length
+    ? Math.round(scoredServices.reduce((s: number, x: any) => s + x.seoScore, 0) / scoredServices.length)
+    : null;
 
   const topByPos  = [...KEYWORDS].sort((a, b) => a.pos - b.pos);
   const needsWork = KEYWORDS.filter(k => k.pos > 10);
@@ -42,13 +46,13 @@ export default function SEOIntelligence({ data }: { data: any }) {
 
       <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-800 flex items-start gap-2">
         <span className="shrink-0">🔍</span>
-        <span>Keyword positions are indicative benchmarks. Connect Google Search Console to see live ranking data.</span>
+        <span><strong>Sample data.</strong> Keyword positions, indexed pages, and audit issues below are illustrative placeholders, not live rankings. Connect Google Search Console to see real data. The "SEO Score by Service" section below, however, is real — calculated from each service's actual on-page content.</span>
       </div>
 
       {/* Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Avg SEO Score',   value: `${seoScore}/100`,  icon: '📊', color: seoScore > 70 ? '#10B981' : '#F5A623' },
+          { label: 'Avg SEO Score',   value: seoScore !== null ? `${seoScore}/100` : 'Not scored yet',  icon: '📊', color: seoScore !== null && seoScore > 70 ? '#10B981' : '#F5A623' },
           { label: 'Indexed Pages',   value: '34',               icon: '📄', color: '#0B2560' },
           { label: 'Top-10 Keywords', value: KEYWORDS.filter(k => k.pos <= 10).length, icon: '🎯', color: '#0B2560' },
           { label: 'Est. Monthly Clicks', value: '2.8K',         icon: '👆', color: '#10B981' },
@@ -118,18 +122,19 @@ export default function SEOIntelligence({ data }: { data: any }) {
         </div>
         <div className="space-y-3">
           {byService.slice(0, 6).map((s: any, i: number) => {
-            const score = s.seoScore || Math.floor(Math.random() * 40 + 45);
+            const score: number = s.seoScore || 0;
+            const scored = score > 0;
             return (
               <div key={i}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-gray-700 truncate max-w-[70%]">{s.name}</span>
-                  <span className={`text-xs font-bold ${score >= 70 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
-                    {score}/100
+                  <span className={`text-xs font-bold ${!scored ? 'text-gray-400' : score >= 70 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
+                    {scored ? `${score}/100` : 'Not scored yet'}
                   </span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${score >= 70 ? 'bg-emerald-400' : score >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
-                    style={{ width: `${score}%` }} />
+                  <div className={`h-full rounded-full ${!scored ? 'bg-gray-200' : score >= 70 ? 'bg-emerald-400' : score >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
+                    style={{ width: `${scored ? score : 0}%` }} />
                 </div>
               </div>
             );

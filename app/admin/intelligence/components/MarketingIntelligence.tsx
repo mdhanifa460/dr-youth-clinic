@@ -48,7 +48,7 @@ export default function MarketingIntelligence({ data }: { data: any }) {
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800 flex items-start gap-2">
         <span className="shrink-0">💡</span>
-        <span>Lead source data shows industry benchmarks for aesthetic clinics. Connect your CRM or booking form UTM tracking to see real-time data.</span>
+        <span><strong>Sample data.</strong> Lead source splits and campaign figures below are illustrative industry benchmarks, not your actual tracked leads. Connect your CRM or booking form UTM tracking to see real-time data.</span>
       </div>
 
       {/* Lead source breakdown */}

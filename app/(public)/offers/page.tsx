@@ -37,7 +37,7 @@ const getOffers = unstable_cache(
 export default async function OffersPage() {
   const [offers, siteConfig] = await Promise.all([getOffers(), getSiteConfig()]);
   const activeOffers = offers.filter((o: any) => !o.validUntil || new Date(o.validUntil) >= new Date());
-  const maxSave = offers.reduce((max: number, o: any) => {
+  const maxSave = activeOffers.reduce((max: number, o: any) => {
     const pct = discountPct(o.originalPrice, o.discountedPrice);
     return pct > max ? pct : max;
   }, 0);
@@ -104,7 +104,7 @@ export default async function OffersPage() {
 
       <section id="offers" className="bg-[#f6faff] py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-6">
-          {offers.length === 0 ? (
+          {activeOffers.length === 0 ? (
             <div className="text-center py-24">
               <p className="text-6xl mb-4">🏷️</p>
               <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">New Offers Coming Soon</h2>
@@ -115,13 +115,13 @@ export default async function OffersPage() {
               </Link>
             </div>
           ) : (
-            <OffersClient offers={offers} />
+            <OffersClient offers={activeOffers} />
           )}
         </div>
       </section>
 
       {/* ── TERMS ── */}
-      {offers.length > 0 && (
+      {activeOffers.length > 0 && (
         <section className="bg-white py-12">
           <div className="max-w-3xl mx-auto px-6">
             <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-4 flex items-center gap-2">
