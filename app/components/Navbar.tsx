@@ -53,9 +53,16 @@ export default function Navbar() {
 
   const isHomepage = !currentLocation || CITY_SLUGS.includes(currentLocation);
 
+  // Services only exists as a real page once a location is picked (e.g. /bangalore/services).
+  // On the plain "/" homepage there's no location-less services listing, so fall back to
+  // scrolling to that page's own Services teaser section instead.
+  const servicesHref = CITY_SLUGS.includes(currentLocation)
+    ? `/${currentLocation}/services`
+    : `${homeLink}#services`;
+
   const navItems = [
-    { name: "Home",     id: "home",      href: null },
-    { name: "Services", id: "services",  href: null },
+    { name: "Home",     id: "home",      href: homeLink },
+    { name: "Services", id: "services",  href: servicesHref },
     { name: "Doctors",  id: "expertise", href: "/doctors" },
     { name: "About",    id: "about",     href: "/about" },
     { name: "Results",  id: "results",   href: "/results" },
@@ -93,7 +100,7 @@ export default function Navbar() {
 
         {/* Right: results / gallery icon */}
         <Link
-          href={`${homeLink}#results`}
+          href="/results"
           className="w-11 h-11 rounded-xl flex items-center justify-center text-[#0B2560] hover:bg-[#f6faff] transition"
           aria-label="View results"
         >

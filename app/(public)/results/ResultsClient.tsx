@@ -49,7 +49,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
 
         <div className="max-w-7xl mx-auto px-6 md:px-10 relative">
           {/* Breadcrumb */}
-          <Link href="/#results" className="inline-flex items-center gap-1.5 text-white/60 text-sm hover:text-white transition mb-6">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-white/60 text-sm hover:text-white transition mb-6">
             <ChevronLeft size={15} />
             Back to Home
           </Link>
@@ -136,7 +136,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
                 Book Consultation
               </button>
             </Link>
-            <Link href="/#results">
+            <Link href="/">
               <button className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition">
                 Back to Home
               </button>
