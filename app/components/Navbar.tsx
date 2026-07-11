@@ -92,13 +92,13 @@ export default function Navbar() {
         </Link>
 
         {/* Right: results / gallery icon */}
-        <a
+        <Link
           href={`${homeLink}#results`}
           className="w-11 h-11 rounded-xl flex items-center justify-center text-[#0B2560] hover:bg-[#f6faff] transition"
           aria-label="View results"
         >
           <MdPhotoLibrary size={22} />
-        </a>
+        </Link>
       </div>
 
       {/* ── DESKTOP ROW: [logo] [nav] [phone + CTA] ── */}
@@ -130,16 +130,11 @@ export default function Navbar() {
                 }`}
               />
             );
-            return item.href ? (
-              <Link key={i} href={item.href} className={linkClassName}>
+            return (
+              <Link key={i} href={item.href ?? `${homeLink}#${item.id}`} className={linkClassName}>
                 {item.name}
                 {underline}
               </Link>
-            ) : (
-              <a key={i} href={`${homeLink}#${item.id}`} className={linkClassName}>
-                {item.name}
-                {underline}
-              </a>
             );
           })}
 
@@ -228,19 +223,15 @@ export default function Navbar() {
                 {item.name}
               </>
             );
-            return item.href ? (
-              <Link key={i} href={item.href} onClick={() => setMobileOpen(false)} className={linkClassName}>
-                {label}
-              </Link>
-            ) : (
-              <a
+            return (
+              <Link
                 key={i}
-                href={`${homeLink}#${item.id}`}
+                href={item.href ?? `${homeLink}#${item.id}`}
                 onClick={() => setMobileOpen(false)}
                 className={linkClassName}
               >
                 {label}
-              </a>
+              </Link>
             );
           })}
 
