@@ -25,6 +25,7 @@ interface FormData {
   heroDescription: string;
   idealFor: string[];
   benefits: Array<{ icon: string; title: string; description: string }>;
+  whyChooseUs: string[];
   treatmentSteps: Array<{ title: string; description: string }>;
   recoveryStages: Array<{ phase: string; icon: string; label: string; description: string }>;
   sessionsCount: number;
@@ -75,6 +76,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             ? initialData.keywords.join(", ")
             : initialData.keywords ?? "",
           idealFor: initialData.idealFor ?? [],
+          whyChooseUs: initialData.whyChooseUs ?? [],
           treatmentSteps: initialData.treatmentSteps ?? [],
           recoveryStages: initialData.recoveryStages ?? [],
           sessionsCount: initialData.sessionsCount ?? 6,
@@ -104,6 +106,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           technology: "",
           anaesthesia: "",
           idealFor: [],
+          whyChooseUs: [],
           benefits: [],
           treatmentSteps: [],
           recoveryStages: [],
@@ -879,6 +882,42 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               className="mt-3 w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition text-sm font-medium flex items-center justify-center gap-2"
             >
               <Plus size={15} /> Add Benefit
+            </button>
+          </div>
+
+          {/* Why Choose DR Youth Clinic (per-service trust points) */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-base font-semibold text-gray-800">Why Choose DR Youth Clinic?</label>
+              <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">{form.whyChooseUs.length} points</span>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Clinic trust points shown near the bottom of this service's page. Leave empty to use the default clinic-wide points.</p>
+
+            <div className="space-y-3">
+              {form.whyChooseUs.map((point, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    value={point}
+                    onChange={(e) => {
+                      const updated = [...form.whyChooseUs];
+                      updated[idx] = e.target.value;
+                      updateForm({ whyChooseUs: updated });
+                    }}
+                    placeholder="e.g., FDA-approved technology and evidence-based protocols"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button onClick={() => updateForm({ whyChooseUs: form.whyChooseUs.filter((_, i) => i !== idx) })} className="text-gray-300 hover:text-red-400 transition">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => updateForm({ whyChooseUs: [...form.whyChooseUs, ""] })}
+              className="mt-3 w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Plus size={15} /> Add Trust Point
             </button>
           </div>
 

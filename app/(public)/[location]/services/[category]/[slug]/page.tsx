@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import {
   CheckCircle, Clock, IndianRupee, ChevronRight, Phone, Calendar,
   ArrowLeft, Star, Shield, Users, BadgeCheck, MapPin, Zap, Cpu,
-  X, ThumbsUp, Quote, Activity,
+  X, ThumbsUp, Quote,
 } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
@@ -184,7 +184,9 @@ function ServiceSchemas({ svc, cityName, params }: { svc: any; cityName: string;
   );
 }
 
-const WHY_US = [
+// Fallback trust points used when a service hasn't set its own
+// Service.whyChooseUs (Admin → Services → Benefits & Results Gallery).
+const DEFAULT_WHY_US = [
   'Expert dermatologists with 10+ years of clinical experience',
   'FDA-approved technology and evidence-based protocols',
   'Personalised treatment plans tailored to your skin biology',
@@ -355,12 +357,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         {/* ── QUICK FACTS — horizontal scroll mobile, grid desktop ── */}
         <section className="bg-white border-b border-gray-50">
           <div className="max-w-7xl mx-auto px-6 md:px-10 py-5">
-            <div className="flex md:grid md:grid-cols-5 gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0">
+            <div className="flex md:grid md:grid-cols-6 gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0">
               {[
                 { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, icon: '💰' },
                 { label: 'Session Duration', value: `${svc.duration} min`, icon: '⏱️' },
                 { label: 'Sessions Needed', value: svc.sessionsRequired || 'Consult', icon: '🔄' },
                 { label: 'Recovery Time', value: svc.recoveryTime || 'Varies', icon: '🌿' },
+                { label: 'Anaesthesia', value: svc.anaesthesia || 'Topical / None', icon: '💉' },
                 { label: 'Category', value: svc.category, icon: CATEGORY_ICON[svc.category] },
               ].map((fact) => (
                 <div key={fact.label} className="flex-shrink-0 w-40 md:w-auto bg-[#f6faff] rounded-2xl px-4 py-3 text-center border border-blue-50">
@@ -409,28 +412,6 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
           {/* ── LEFT COLUMN ── */}
           <div className="lg:col-span-2 space-y-14">
-
-            {/* Treatment at a Glance */}
-            <div className="rounded-3xl border border-blue-50 bg-[#f6faff] p-6">
-              <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-4 flex items-center gap-2">
-                <Activity size={18} className="text-[#3B82C4]" /> Treatment at a Glance
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { label: 'Treatment Type', value: svc.category },
-                  { label: 'Session Time', value: `${svc.duration} min` },
-                  { label: 'Sessions Needed', value: svc.sessionsRequired || 'Consult' },
-                  { label: 'Recovery', value: svc.recoveryTime || 'Minimal' },
-                  { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}` },
-                  { label: 'Anaesthesia', value: svc.anaesthesia || 'Topical / None' },
-                ].map((row) => (
-                  <div key={row.label} className="bg-white rounded-2xl p-3 border border-blue-50">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{row.label}</p>
-                    <p className="font-bold text-[#0B2560] text-sm">{row.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* Overview */}
             <div>
@@ -576,7 +557,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Treatment Session Journey */}
+            {/* Multi-Session Plan */}
             <TreatmentJourney
               sessions={svc.sessionsCount || 6}
               treatmentName={svc.name}
@@ -649,7 +630,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             <div className="bg-gradient-to-br from-[#f6faff] to-white rounded-3xl p-7 border border-blue-50">
               <h2 className="text-xl font-headline font-bold text-[#0B2560] mb-5">Why Choose DR Youth Clinic?</h2>
               <div className="grid sm:grid-cols-2 gap-3">
-                {WHY_US.map((point, i) => (
+                {(svc.whyChooseUs?.length ? svc.whyChooseUs : DEFAULT_WHY_US).map((point: string, i: number) => (
                   <div key={i} className="flex items-start gap-3 bg-white rounded-xl p-4 border border-gray-50 shadow-sm">
                     <CheckCircle size={15} className="text-[#3B82C4] mt-0.5 shrink-0" />
                     <p className="text-gray-700 text-sm leading-relaxed">{point}</p>

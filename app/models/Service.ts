@@ -33,6 +33,7 @@ export interface IService extends Document {
     title: string;
     description: string;
   }>;
+  whyChooseUs?: string[];
 
   // Media
   heroImage: {
@@ -134,6 +135,7 @@ const ServiceSchema = new Schema<IService>(
         description: String,
       },
     ],
+    whyChooseUs: [String],
 
     // Media
     heroImage: {
