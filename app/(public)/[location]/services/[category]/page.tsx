@@ -437,9 +437,9 @@ function ServiceCard({
           </div>
         )}
 
-        {(svc.heroDescription || svc.metaDescription) && (
+        {(svc.heroDescription || svc.narrative) && (
           <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-3">
-            {svc.heroDescription || svc.metaDescription}
+            {svc.heroDescription || svc.narrative?.slice(0, 200)}
           </p>
         )}
 

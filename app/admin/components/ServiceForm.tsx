@@ -487,7 +487,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               Hero Description <span className="text-gray-400 font-normal">{form.heroDescription.length}/220</span>
             </label>
             <textarea value={form.heroDescription} onChange={(e) => updateForm({ heroDescription: e.target.value })} placeholder="A short, compelling pitch shown prominently at the top of the page — write for patients, not search engines." maxLength={220} rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm leading-relaxed" />
-            <p className="text-xs text-gray-400 mt-1">Shown directly under the page title. Leave blank to temporarily fall back to Meta Description.</p>
+            <p className="text-xs text-gray-400 mt-1">Shown directly under the page title. Leave blank to fall back to the start of the Treatment Narrative below.</p>
           </div>
 
           <div>
