@@ -751,6 +751,55 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
         </div>
       );
 
+    case 'founder':
+      return (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 flex items-start gap-3">
+            <span className="text-lg shrink-0">💡</span>
+            <p className="text-xs text-amber-800">
+              This section is hidden by default. Fill in the founder's real name, photo, and quote below, then
+              switch it to Visible in the section list once it's ready.
+            </p>
+          </div>
+          <TextField label="Eyebrow Label" value={d.eyebrow} onChange={(v) => set('eyebrow', v)} />
+          <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <TextField label="Quote / Philosophy" value={d.quote} onChange={(v) => set('quote', v)} multiline />
+          <div className="grid sm:grid-cols-2 gap-3">
+            <TextField label="Founder Name" value={d.name} onChange={(v) => set('name', v)} />
+            <TextField label="Title" value={d.title} onChange={(v) => set('title', v)} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <ImgField label="Photo" value={d.photo} onChange={(v) => set('photo', v)} folder="dr-youth-clinic/homepage/founder" />
+            <ImgField label="Signature (optional)" value={d.signature} onChange={(v) => set('signature', v)} folder="dr-youth-clinic/homepage/founder" />
+          </div>
+          <StringListField label="Credential Badges (e.g. MBBS, MD - Dermatology)" value={d.credentials} onChange={(v) => set('credentials', v)} />
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-3">Stats (optional)</p>
+            <div className="space-y-3">
+              {(d.stats || []).map((s: any, i: number) => (
+                <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-center">
+                  <input type="text" placeholder="Value (e.g. 15+ Years)" value={s.value}
+                    onChange={(e) => setArr('stats', i, 'value', e.target.value)}
+                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                  <input type="text" placeholder="Label" value={s.label}
+                    onChange={(e) => setArr('stats', i, 'label', e.target.value)}
+                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                  <button type="button" onClick={() => removeArrItem('stats', i)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => addArrItem('stats', { value: '', label: '' })}
+                className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline mt-1">
+                <Plus size={12} /> Add stat
+              </button>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <TextField label="CTA Button Text" value={d.ctaText} onChange={(v) => set('ctaText', v)} />
+            <TextField label="CTA Link" value={d.ctaHref} onChange={(v) => set('ctaHref', v)} />
+          </div>
+        </div>
+      );
+
     case 'doctors':
       return (
         <div className="space-y-4">

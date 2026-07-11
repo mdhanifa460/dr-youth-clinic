@@ -169,6 +169,26 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       ],
     },
   },
+  // Off by default — turn on once the founder's real name, photo, and quote
+  // are filled in via Admin → Homepage → Founder / CEO Section.
+  founder: {
+    label: 'Founder / CEO Section',
+    order: 8.5,
+    visible: false,
+    data: {
+      eyebrow: 'Meet Our Founder',
+      headline: 'The Vision Behind DR Youth Clinic',
+      quote: '',
+      name: '',
+      title: 'Founder & CEO',
+      photo: { url: '', publicId: '' },
+      signature: { url: '', publicId: '' },
+      credentials: [],
+      stats: [],
+      ctaText: 'Book a Consultation',
+      ctaHref: '/book',
+    },
+  },
   doctors: {
     label: 'Doctors Section',
     order: 9,

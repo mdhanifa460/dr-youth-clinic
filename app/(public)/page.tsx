@@ -18,6 +18,7 @@ import ConsultationFormBar from '@/app/components/homepage/ConsultationFormBar';
 import ServicesCards from '@/app/components/homepage/ServicesCards';
 import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
 import DoctorsSection from '@/app/components/homepage/DoctorsSection';
+import FounderSection from '@/app/components/homepage/FounderSection';
 import HomepageLocations from '@/app/components/homepage/HomepageLocations';
 import CTAStrip from '@/app/components/homepage/CTAStrip';
 import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
@@ -114,6 +115,7 @@ const PUBLIC_SECTION_ORDER = [
   'cta_strip',
   'before_after',
   'services',
+  'founder',
   'doctors',
   'video_academy',
   'locations',
@@ -256,6 +258,7 @@ const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   consultation_form: ConsultationFormBar,
   services: ServicesCards,
   before_after: BeforeAfterSection,
+  founder: FounderSection,
   doctors: DoctorsSection,
   video_academy: VideoAcademySection,
   locations: HomepageLocations,

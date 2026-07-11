@@ -17,8 +17,12 @@ export async function GET() {
 
     let sections = await HomepageSection.find({} as any).sort({ order: 1 }).lean();
 
-    if (sections.length === 0) {
-      const defaults = Object.entries(HOMEPAGE_DEFAULTS).map(([key, val]) => ({
+    // Seed any default section keys that don't exist yet — covers both the
+    // first-ever load (empty collection) and new section types added later.
+    const existingKeys = new Set(sections.map((s: any) => s.sectionKey));
+    const missing = Object.entries(HOMEPAGE_DEFAULTS).filter(([key]) => !existingKeys.has(key));
+    if (missing.length > 0) {
+      const defaults = missing.map(([key, val]) => ({
         sectionKey: key,
         label: val.label,
         order: val.order,
