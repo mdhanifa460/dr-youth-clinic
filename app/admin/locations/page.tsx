@@ -235,7 +235,7 @@ function GalleryItem({
 export default function LocationsAdminPage() {
   const [city, setCity] = useState('chennai');
   const EMPTY_CLINIC_INFO = {
-    address: '', phone: '',
+    address: '', phone: '', whatsappNotifyNumber: '',
     hours: [{ day: 'Monday - Saturday', hours: '' }, { day: 'Sunday', hours: 'Closed' }],
     rating: 0, reviewCount: 0, serviceCount: 0, doctorCount: 0,
     description: '', specialties: [] as string[], whyUs: [] as { icon: string; title: string; desc: string }[],
@@ -277,6 +277,7 @@ export default function LocationsAdminPage() {
         clinicInfo: {
           address:      dci?.address      || loc?.address      || '',
           phone:        dci?.phone        || loc?.phone        || '',
+          whatsappNotifyNumber: dci?.whatsappNotifyNumber || '',
           hours:        dci?.hours?.length ? dci.hours : (loc?.hours ?? EMPTY_CLINIC_INFO.hours),
           rating:       dci?.rating       ?? loc?.rating       ?? 0,
           reviewCount:  dci?.reviewCount  ?? loc?.reviewCount  ?? 0,
@@ -470,6 +471,16 @@ export default function LocationsAdminPage() {
                       placeholder="+91 98765 43210"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">WhatsApp Booking Alerts <span className="font-normal text-gray-400">(optional)</span></label>
+                    <input
+                      value={data.clinicInfo.whatsappNotifyNumber}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, whatsappNotifyNumber: e.target.value } }))}
+                      placeholder="Defaults to Phone above"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">New bookings for this location send a WhatsApp alert here instead of the clinic's default number.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Google Rating <span className="font-normal text-gray-400">(e.g. 4.9)</span></label>

@@ -1,7 +1,25 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../lib/mongodb";
 import Booking from "../../models/Booking";
+import { LocationContent } from "../../models/LocationContent";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
+
+// Resolves which WhatsApp number gets the "new booking" alert for a given
+// location: per-location whatsappNotifyNumber -> per-location public phone
+// -> global CLINIC_PHONE fallback, so locations without a configured number
+// still work exactly as before.
+async function getClinicNotifyNumber(location: string): Promise<string | undefined> {
+  try {
+    const lc = await (LocationContent as any)
+      .findOne({ location: (location || "").toLowerCase() })
+      .select("clinicInfo.phone clinicInfo.whatsappNotifyNumber")
+      .lean();
+    const raw = lc?.clinicInfo?.whatsappNotifyNumber || lc?.clinicInfo?.phone;
+    return raw ? formatPhone(raw) : process.env.CLINIC_PHONE;
+  } catch {
+    return process.env.CLINIC_PHONE;
+  }
+}
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -62,6 +80,7 @@ export async function POST(req: Request) {
     // =========================
     // 🟢 1. SEND TO CLINIC (TEXT OK)
     // =========================
+    const clinicNotifyNumber = await getClinicNotifyNumber(location);
     const clinicRes = await fetch(API_URL, {
       method: "POST",
       headers: {
@@ -70,7 +89,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         messaging_product: "whatsapp",
-        to: process.env.CLINIC_PHONE,
+        to: clinicNotifyNumber,
         type: "text",
         text: {
           body: `🆕 New Booking

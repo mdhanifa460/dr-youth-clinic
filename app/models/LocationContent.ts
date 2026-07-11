@@ -41,6 +41,11 @@ export interface IWhyUsItem {
 export interface IClinicInfo {
   address: string;
   phone: string;
+  /** Where booking WhatsApp alerts for this location go. Separate from `phone`
+   *  (the public "call us" number) since the staff member who should get
+   *  internal booking alerts may not be the same number shown to patients.
+   *  Falls back to `phone`, then to the global CLINIC_PHONE env var, if unset. */
+  whatsappNotifyNumber?: string;
   hours: IClinicHour[];
   rating: number;
   reviewCount: number;
@@ -109,6 +114,7 @@ const ClinicInfoSchema = new Schema<IClinicInfo>(
   {
     address:      { type: String, default: '' },
     phone:        { type: String, default: '' },
+    whatsappNotifyNumber: { type: String, default: '' },
     hours:        { type: [ClinicHourSchema], default: [] },
     rating:       { type: Number, default: 0 },
     reviewCount:  { type: Number, default: 0 },
