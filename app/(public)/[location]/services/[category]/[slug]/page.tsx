@@ -19,6 +19,7 @@ import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
 import EMICalculator from '@/app/components/EMICalculator';
 import SocialProofBar from '@/app/components/SocialProofBar';
 import TreatmentJourney from '@/app/components/TreatmentJourney';
+import AiJourneySimulator from '@/app/components/AiJourneySimulator';
 
 export const revalidate = 300;
 
@@ -565,6 +566,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               treatmentName={svc.name}
               phases={svc.journeyPhases}
             />
+
+            {/* AI Treatment Journey Simulator */}
+            <AiJourneySimulator serviceId={String(svc._id)} serviceName={svc.name} />
 
             {/* Patient Reviews */}
             {hasReviews && (
