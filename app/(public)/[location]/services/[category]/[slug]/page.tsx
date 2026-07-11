@@ -12,6 +12,7 @@ import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
 import { locations } from '@/app/data/locations';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
 import CostEstimator from '@/app/components/CostEstimator';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
@@ -206,11 +207,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
     getServiceAtOtherLocations(svc.name, params.location),
+    getSiteConfig(),
   ]);
 
   const cityName = loc.name;
@@ -294,7 +296,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="flex flex-wrap gap-3 pt-1">
                 <Link href="/book">
                   <button className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-6 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm">
-                    <Calendar size={14} /> Book Free Consultation
+                    <Calendar size={14} /> {siteConfig.consultationCta}
                   </button>
                 </Link>
                 <a href={`tel:${loc.phone}`} className="inline-flex items-center gap-2 border border-white/30 text-white px-5 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition text-sm">
@@ -320,7 +322,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 <div className="absolute bottom-4 left-4">
                   <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur text-[#0B2560] text-xs font-bold px-4 py-2 rounded-full shadow-lg">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    Free consultation included
+                    {siteConfig.consultationFree ? 'Free consultation included' : 'Consultation included'}
                   </div>
                 </div>
               </div>
@@ -393,7 +395,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="p-4 flex gap-2.5">
                 <Link href="/book" className="flex-1">
                   <button className="w-full bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
-                    <Calendar size={14} /> Book Consultation
+                    <Calendar size={14} /> {siteConfig.consultationCta}
                   </button>
                 </Link>
                 <a href={`tel:${loc.phone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] px-4 rounded-2xl font-semibold text-sm shrink-0">
@@ -667,13 +669,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   <div className="pt-4 space-y-2.5">
                     <Link href="/book" className="block">
                       <button className="w-full bg-[#0B2560] text-white py-3.5 rounded-2xl font-bold text-sm shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 transition flex items-center justify-center gap-2">
-                        <Calendar size={14} /> Book Consultation
+                        <Calendar size={14} /> {siteConfig.consultationCta}
                       </button>
                     </Link>
                     <a href={`tel:${loc.phone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition">
                       <Phone size={13} /> Call to Book
                     </a>
-                    <p className="text-center text-xs text-gray-400 pt-1">Free consultation · No commitment</p>
+                    <p className="text-center text-xs text-gray-400 pt-1">{siteConfig.consultationSub}</p>
                   </div>
                 </div>
               </div>
@@ -845,19 +847,19 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               Start Your {svc.name} Journey
             </h2>
             <p className="text-white/60 text-sm leading-relaxed mb-7">
-              Book a free consultation with our {cityName} specialists and receive a personalised treatment plan.
+              Book a {siteConfig.consultationFree ? 'free ' : ''}consultation with our {cityName} specialists and receive a personalised treatment plan.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link href="/book">
                 <button className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3.5 rounded-2xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm">
-                  <Calendar size={15} /> Book Free Consultation
+                  <Calendar size={15} /> {siteConfig.consultationCta}
                 </button>
               </Link>
               <a href={`tel:${loc.phone}`} className="inline-flex items-center gap-2 border-2 border-white/20 text-white px-7 py-3.5 rounded-2xl font-semibold hover:bg-white/10 transition text-sm">
                 <Phone size={15} /> {loc.phone}
               </a>
             </div>
-            <p className="text-white/25 text-xs mt-5">Free consultation · No commitment · Personalised plan</p>
+            <p className="text-white/25 text-xs mt-5">{siteConfig.consultationSub} · Personalised plan</p>
           </div>
         </section>
 

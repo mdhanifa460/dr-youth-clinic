@@ -5,6 +5,7 @@ import { Calendar } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
 import AcademyClient from './AcademyClient';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 300;
 
@@ -35,7 +36,7 @@ const getVideos = unstable_cache(
 );
 
 export default async function AcademyPage() {
-  const videos = await getVideos();
+  const [videos, siteConfig] = await Promise.all([getVideos(), getSiteConfig()]);
 
   return (
     <main>
@@ -63,7 +64,7 @@ export default async function AcademyPage() {
               href="/book"
               className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-6 py-3 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg"
             >
-              <Calendar size={15} /> Free Consultation
+              <Calendar size={15} /> {siteConfig.consultationBadge}
             </Link>
           </div>
         </div>
@@ -77,13 +78,13 @@ export default async function AcademyPage() {
               <p className="text-6xl mb-4">🎬</p>
               <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">New Videos Coming Soon</h2>
               <p className="text-gray-500 mb-6">
-                We're filming expert answers to your skin &amp; hair questions. Check back shortly or book a free consultation.
+                We're filming expert answers to your skin &amp; hair questions. Check back shortly or book a {siteConfig.consultationFree ? 'free ' : ''}consultation.
               </p>
               <Link
                 href="/book"
                 className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition"
               >
-                <Calendar size={15} /> Book Free Consultation
+                <Calendar size={15} /> {siteConfig.consultationCta}
               </Link>
             </div>
           ) : (
@@ -109,13 +110,13 @@ export default async function AcademyPage() {
             Have Questions After Watching?
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
-            Talk to our specialists directly — book a free consultation and get a personalised treatment plan.
+            Talk to our specialists directly — book a {siteConfig.consultationFree ? 'free ' : ''}consultation and get a personalised treatment plan.
           </p>
           <Link
             href="/book"
             className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg"
           >
-            <Calendar size={15} /> Book Free Consultation
+            <Calendar size={15} /> {siteConfig.consultationCta}
           </Link>
         </div>
       </section>

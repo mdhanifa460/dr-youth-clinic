@@ -96,7 +96,7 @@ export default async function OffersPage() {
               <Tag size={15} /> Browse Offers
             </Link>
             <Link href="/book" className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-white/20 transition">
-              Free Consultation →
+              {siteConfig.consultationBadge} →
             </Link>
           </div>
         </div>
@@ -108,10 +108,10 @@ export default async function OffersPage() {
             <div className="text-center py-24">
               <p className="text-6xl mb-4">🏷️</p>
               <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">New Offers Coming Soon</h2>
-              <p className="text-gray-500 mb-6">We're putting together exclusive packages for you. Check back shortly or book a free consultation.</p>
+              <p className="text-gray-500 mb-6">We're putting together exclusive packages for you. Check back shortly or book a {siteConfig.consultationFree ? 'free ' : ''}consultation.</p>
               <Link href="/book"
                 className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
-                <Calendar size={15} /> Book Free Consultation
+                <Calendar size={15} /> {siteConfig.consultationCta}
               </Link>
             </div>
           ) : (
@@ -152,7 +152,7 @@ export default async function OffersPage() {
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/book"
               className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
-              <Calendar size={15} /> Book Free Consultation
+              <Calendar size={15} /> {siteConfig.consultationCta}
             </Link>
             <Link href="/doctors"
               className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-white/20 transition">

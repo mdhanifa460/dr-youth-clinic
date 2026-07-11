@@ -29,7 +29,7 @@ export default function FAQPageClient({
   categories: FAQCategory[];
   heroStats?: HeroStats;
 }) {
-  const { publicPhone, publicWhatsApp } = useSiteConfig();
+  const { publicPhone, publicWhatsApp, consultationFree, consultationCta } = useSiteConfig();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [openIndex, setOpenIndex] = useState<string | null>(null);
@@ -244,7 +244,7 @@ export default function FAQPageClient({
                                   href="/book"
                                   className="mt-4 inline-flex items-center gap-1.5 text-[#3B82C4] text-xs font-semibold hover:text-[#0B2560] transition"
                                 >
-                                  Still have questions? Book a free consultation →
+                                  Still have questions? Book a {consultationFree ? 'free ' : ''}consultation →
                                 </Link>
                               </div>
                             </div>
@@ -265,7 +265,7 @@ export default function FAQPageClient({
             Still have a question?
           </h2>
           <p className="text-white/70 text-sm md:text-base mb-8 max-w-md mx-auto leading-relaxed">
-            Our doctors and patient care team are happy to answer any question specific to your concern — completely free, no obligation.
+            Our doctors and patient care team are happy to answer any question specific to your concern{consultationFree ? ' — completely free, no obligation' : ' — no obligation'}.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
@@ -273,7 +273,7 @@ export default function FAQPageClient({
               className="flex items-center gap-2 bg-[#F5A623] text-[#0B2560] font-bold px-6 py-3.5 rounded-xl hover:brightness-105 transition shadow-lg"
             >
               <Calendar size={16} />
-              Book Free Consultation
+              {consultationCta}
             </Link>
             {waHref && (
               <a

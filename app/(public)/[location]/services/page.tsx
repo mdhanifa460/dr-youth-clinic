@@ -6,6 +6,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { LocationContent } from '@/app/models/LocationContent';
 import { locations } from '@/app/data/locations';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 300;
 
@@ -134,8 +135,11 @@ export default async function ServicesHubPage({ params }: PageProps) {
   const loc = locations[params.location];
   if (!loc) notFound();
 
-  const { counts, previews, total } = await getCategoryData(params.location);
-  const phone = await getClinicPhone(params.location, loc.phone);
+  const [{ counts, previews, total }, phone, siteConfig] = await Promise.all([
+    getCategoryData(params.location),
+    getClinicPhone(params.location, loc.phone),
+    getSiteConfig(),
+  ]);
 
   return (
     <main className="bg-white min-h-screen">
@@ -168,7 +172,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
                 href="/book"
                 className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition-all text-sm"
               >
-                Book Free Consultation
+                {siteConfig.consultationCta}
                 <ArrowRight size={15} />
               </Link>
               <a
@@ -287,7 +291,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
             Not sure where to start?
           </h2>
           <p className="text-white/60 text-lg max-w-lg mx-auto leading-relaxed">
-            Book a free consultation. Our specialists in {loc.name} will assess your needs and
+            Book a {siteConfig.consultationFree ? 'free ' : ''}consultation. Our specialists in {loc.name} will assess your needs and
             recommend the right treatment — no pressure.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
@@ -295,7 +299,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
               href="/book"
               className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-4 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition"
             >
-              Book Free Consultation
+              {siteConfig.consultationCta}
               <ArrowRight size={16} />
             </Link>
             <a

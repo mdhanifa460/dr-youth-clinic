@@ -4,6 +4,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { FAQSchema } from '@/app/components/SchemaMarkup';
 import FAQPageClient from './FAQPageClient';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
@@ -268,7 +269,17 @@ const STATIC_FAQS: { category: string; icon: string; items: { question: string; 
 ];
 
 export default async function FAQPage() {
-  const [cmsFaqs, statsData] = await Promise.all([getCmsFaqs(), getStatsData()]);
+  const [cmsFaqs, statsData, siteConfig] = await Promise.all([getCmsFaqs(), getStatsData(), getSiteConfig()]);
+
+  // The "free consultation" FAQ answer is a factual claim, not just CTA copy —
+  // keep it in sync with Settings → Free Label Controls so it never promises
+  // something the clinic isn't currently offering.
+  const consultationQuestion = siteConfig.consultationFree
+    ? 'Do you offer a free consultation?'
+    : 'Do you offer a consultation?';
+  const consultationAnswer = siteConfig.consultationFree
+    ? 'Yes, we offer a free first consultation for most treatments. Our doctors will evaluate your skin or scalp condition, discuss your goals, and recommend a personalised treatment plan — with no obligation.'
+    : 'Yes. Our doctors will evaluate your skin or scalp condition, discuss your goals, and recommend a personalised treatment plan — with no obligation.';
 
   // Merge CMS FAQs (filtered by category, defaulting to 'General') into each
   // hardcoded default category. CMS items are de-duped against the defaults by
@@ -278,7 +289,12 @@ export default async function FAQPage() {
     const newItems = cmsFaqs.filter(
       (f) => (f.category || 'General') === cat.category && !existingQuestions.has(f.question)
     );
-    return { ...cat, items: [...newItems, ...cat.items] };
+    const items = [...newItems, ...cat.items].map((item) =>
+      item.question === 'Do you offer a free consultation?'
+        ? { ...item, question: consultationQuestion, answer: consultationAnswer }
+        : item
+    );
+    return { ...cat, items };
   });
 
   const allFlatFaqs = allFaqs.flatMap((c) => c.items);

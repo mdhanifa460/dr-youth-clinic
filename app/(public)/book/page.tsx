@@ -7,7 +7,7 @@ import ConsultationForm from './Form';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 export default function BookingPage() {
-  const { consultationCta, consultationBadge, consultationSub, ratingValue, patientsCount, yearsExperience } = useSiteConfig();
+  const { consultationCta, consultationBadge, consultationSub, consultationFree, ratingValue, patientsCount, yearsExperience } = useSiteConfig();
   const [step, setStep] = useState(1);
 
   const TRUST = [
@@ -32,7 +32,7 @@ export default function BookingPage() {
             {consultationCta}
           </h1>
           <p className="text-white/60 text-sm max-w-md">
-            Speak with an expert dermatologist and get a personalised treatment plan — at no cost.
+            Speak with an expert dermatologist and get a personalised treatment plan{consultationFree ? ' — at no cost' : ''}.
           </p>
           {/* Trust bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-7">

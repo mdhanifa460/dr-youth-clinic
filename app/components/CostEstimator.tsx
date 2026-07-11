@@ -109,7 +109,7 @@ export default function CostEstimator({ basePrice, sessionsRequired, serviceName
         >
           Book & Confirm Cost <ChevronRight size={14} />
         </a>
-        <p className="text-center text-[10px] text-gray-400">Final cost confirmed at your free consultation</p>
+        <p className="text-center text-[10px] text-gray-400">Final cost confirmed at your {siteConfig.consultationFree ? 'free ' : ''}consultation</p>
       </div>
     </div>
   );

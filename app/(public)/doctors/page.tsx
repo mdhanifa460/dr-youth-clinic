@@ -6,6 +6,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import DoctorsGrid from './DoctorsGrid';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 300;
 
@@ -41,7 +42,7 @@ async function getAllDoctors() {
 }
 
 export default async function DoctorsPage() {
-  const [doctors, pc] = await Promise.all([getAllDoctors(), getCachedPageContent()]);
+  const [doctors, pc, siteConfig] = await Promise.all([getAllDoctors(), getCachedPageContent(), getSiteConfig()]);
 
   const avgExp = doctors.length
     ? Math.round(doctors.reduce((s: number, d: any) => s + (d.experience || 0), 0) / doctors.length)
@@ -64,7 +65,7 @@ export default async function DoctorsPage() {
   const gridHeading   = pc.gridHeading   || 'Trusted by 25,000+ Patients';
   const gridSubheading = pc.gridSubheading || 'Filter by clinic location below';
   const ctaHeading    = pc.ctaHeading    || 'Consult a Specialist Today';
-  const ctaBody       = pc.ctaBody       || 'Book a free initial consultation — zero commitment, just an honest assessment of your concerns.';
+  const ctaBody       = pc.ctaBody       || `Book a ${siteConfig.consultationFree ? 'free ' : ''}initial consultation — zero commitment, just an honest assessment of your concerns.`;
 
   // Split heading at last space for gold highlight on last word
   const headingWords = heroHeading.trim().split(' ');
@@ -112,7 +113,7 @@ export default async function DoctorsPage() {
               href="/book"
               className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg shadow-[#0B2560]/30"
             >
-              <Calendar size={15} /> Book a Free Consultation
+              <Calendar size={15} /> {siteConfig.consultationCta}
             </Link>
           </div>
         </div>
@@ -156,7 +157,7 @@ export default async function DoctorsPage() {
             href="/book"
             className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg"
           >
-            <Calendar size={15} /> Book Free Consultation
+            <Calendar size={15} /> {siteConfig.consultationCta}
           </Link>
         </div>
       </section>

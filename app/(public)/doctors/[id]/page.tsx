@@ -7,6 +7,7 @@ import { Calendar, MapPin, Award, ArrowLeft, GraduationCap, Languages, Stethosco
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
 import { HomepageSection } from '@/app/models/HomepageSection';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 300;
 
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function DoctorDetailPage({ params }: { params: { id: string } }) {
-  const [doctor, pc] = await Promise.all([getDoctor(params.id), getCachedPageContent()]);
+  const [doctor, pc, siteConfig] = await Promise.all([getDoctor(params.id), getCachedPageContent(), getSiteConfig()]);
   if (!doctor) notFound();
 
   const locationLabel = doctor.locations?.includes('all')
@@ -59,10 +60,11 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
   const firstName = doctor.name?.split(' ').find((w: string) => w.toLowerCase() !== 'dr') || doctor.name?.split(' ')[0] || '';
 
   // Admin-editable copy for this page, with the current hardcoded text as fallback defaults
+  const freeWord = siteConfig.consultationFree ? 'free ' : '';
   const sidebarHeading  = pc.detailSidebarHeading || 'Book a Consultation';
-  const sidebarBodyTpl  = pc.detailSidebarBody    || 'Schedule a free initial consultation with {firstName} — zero commitment, just an honest expert assessment.';
+  const sidebarBodyTpl  = pc.detailSidebarBody    || `Schedule a ${freeWord}initial consultation with {firstName} — zero commitment, just an honest expert assessment.`;
   const ctaHeadingTpl   = pc.detailCtaHeading      || 'Consult {firstName} Today';
-  const ctaBody         = pc.detailCtaBody         || 'Book a free initial consultation — get an expert opinion on your skin, hair or aesthetic concerns.';
+  const ctaBody         = pc.detailCtaBody         || `Book a ${freeWord}initial consultation — get an expert opinion on your skin, hair or aesthetic concerns.`;
 
   const withFirstName = (tpl: string) => tpl.replace(/\{firstName\}/g, firstName);
   const sidebarBody = withFirstName(sidebarBodyTpl);
@@ -214,7 +216,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
             </p>
             <Link href="/book"
               className="flex items-center justify-center gap-2 bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm hover:bg-[#0d2d73] hover:-translate-y-0.5 transition-all shadow-md shadow-[#0B2560]/20">
-              <Calendar size={14} /> Book Free Consultation
+              <Calendar size={14} /> {siteConfig.consultationCta}
             </Link>
             <p className="text-[10px] text-gray-400 text-center">No fees · No obligation</p>
           </div>
@@ -266,7 +268,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           </p>
           <Link href="/book"
             className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
-            <Calendar size={15} /> Book Free Consultation
+            <Calendar size={15} /> {siteConfig.consultationCta}
           </Link>
         </div>
       </section>

@@ -8,6 +8,7 @@ import { Blog } from '@/app/models/Blog';
 import { markdownToHtml, extractHeadings } from '@/app/lib/blogMarkdown';
 import ReadingProgress from './ReadingProgress';
 import ArticleSidebar from './ArticleSidebar';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 async function getPost(slug: string) {
   try {
@@ -60,7 +61,7 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
   const post = await getPost(params.slug);
   if (!post) notFound();
 
-  const related = await getRelatedPosts(params.slug, post.category);
+  const [related, siteConfig] = await Promise.all([getRelatedPosts(params.slug, post.category), getSiteConfig()]);
   const html = markdownToHtml(post.body || '');
   const headings = extractHeadings(post.body || '');
 
@@ -235,9 +236,9 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
           <div className="max-w-2xl mx-auto px-6 text-center">
             <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Take the Next Step</p>
             <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">Consult Our Specialists</h2>
-            <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">Book a free consultation — personalised advice for your specific concern, zero commitment.</p>
+            <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">Book a {siteConfig.consultationFree ? 'free ' : ''}consultation — personalised advice for your specific concern, zero commitment.</p>
             <Link href="/book" className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
-              <Calendar size={15} /> Book Free Consultation
+              <Calendar size={15} /> {siteConfig.consultationCta}
             </Link>
           </div>
         </section>

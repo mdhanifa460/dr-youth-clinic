@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calendar } from 'lucide-react';
 import type { Heading } from '@/app/lib/blogMarkdown';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 export default function ArticleSidebar({ headings }: { headings: Heading[] }) {
+  const siteConfig = useSiteConfig();
   const [activeId, setActiveId] = useState('');
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function ArticleSidebar({ headings }: { headings: Heading[] }) {
       {/* Book CTA */}
       <div className="bg-[#0B2560] rounded-2xl p-5 text-white">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-2">Ready to Begin?</p>
-        <p className="text-sm font-bold leading-snug mb-1">Free Consultation</p>
+        <p className="text-sm font-bold leading-snug mb-1">{siteConfig.consultationBadge}</p>
         <p className="text-xs text-white/60 mb-4">Talk to our specialists — no commitment, honest advice.</p>
         <Link href="/book" className="flex items-center justify-center gap-2 bg-[#F5A623] text-[#0B2560] py-2.5 rounded-xl font-extrabold text-xs hover:-translate-y-0.5 transition">
           <Calendar size={13} /> Book Now

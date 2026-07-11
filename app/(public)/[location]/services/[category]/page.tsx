@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Clock, IndianRupee, Zap } from 'luc
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { locations } from '@/app/data/locations';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 300;
 
@@ -160,7 +161,10 @@ export default async function CategoryPage({ params }: PageProps) {
 
   const dbCategory = CATEGORY_MAP[catSlug];
   const meta = CATEGORY_META[catSlug];
-  const services = await getServicesForCategory(params.location, dbCategory);
+  const [services, siteConfig] = await Promise.all([
+    getServicesForCategory(params.location, dbCategory),
+    getSiteConfig(),
+  ]);
   const city = loc.name;
 
   return (
@@ -215,7 +219,7 @@ export default async function CategoryPage({ params }: PageProps) {
               href="/book"
               className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm"
             >
-              Book Free Consultation
+              {siteConfig.consultationCta}
               <ArrowRight size={15} />
             </Link>
           </div>
@@ -346,14 +350,14 @@ export default async function CategoryPage({ params }: PageProps) {
             Ready to begin?
           </h2>
           <p className="text-white/60 max-w-md mx-auto">
-            Book a free consultation with our {city} {meta.label.toLowerCase()} specialists today.
+            Book a {siteConfig.consultationFree ? 'free ' : ''}consultation with our {city} {meta.label.toLowerCase()} specialists today.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <Link
               href="/book"
               className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-4 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition"
             >
-              Book Consultation
+              {siteConfig.consultationCta}
               <ArrowRight size={16} />
             </Link>
             <a
