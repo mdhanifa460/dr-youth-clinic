@@ -4,6 +4,7 @@ import { getAdminUser } from "@/app/lib/adminAuth";
 import { canAccess, type AdminModule } from "@/app/lib/permissions";
 import AdminSidebar from "./components/AdminSidebar";
 import IdleWatcher from "./components/IdleWatcher";
+import CommandPalette from "./components/CommandPalette";
 
 // Maps URL prefix → required module (longest prefix wins)
 const MODULE_MAP: [string, AdminModule][] = [
@@ -72,6 +73,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen bg-gray-100">
       <IdleWatcher />
+      <CommandPalette />
       <AdminSidebar user={user} />
       <main className="flex-1 p-6">
         {allowed ? children : <AccessDenied module={requiredModule ?? ""} />}
