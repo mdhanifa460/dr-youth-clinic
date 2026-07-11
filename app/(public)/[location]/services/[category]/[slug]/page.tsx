@@ -268,8 +268,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 {svc.name}
                 <span className="block text-[#F5A623] text-xl md:text-3xl mt-1 font-bold">in {cityName}</span>
               </h1>
-              {(svc.heroDescription || svc.narrative) && (
-                <p className="text-white/70 text-base md:text-[17px] leading-relaxed max-w-lg">{svc.heroDescription || svc.narrative?.slice(0, 200)}</p>
+              {svc.heroDescription && (
+                <p className="text-white/70 text-base md:text-[17px] leading-relaxed max-w-lg">{svc.heroDescription}</p>
               )}
 
               {/* Quick stat badges */}
