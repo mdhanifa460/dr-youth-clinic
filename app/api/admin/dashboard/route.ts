@@ -4,6 +4,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import { Review } from '@/app/models/Review';
 import { Service } from '@/app/models/Service';
+import { getTodayBookingStats } from '@/app/lib/bookingStats';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,20 +14,17 @@ export async function GET() {
 
   await connectDB();
 
-  const today = new Date().toISOString().slice(0, 10);
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const [
-    todayBookings,
-    pendingLeads,
+    { todayBookings, pendingLeads },
     totalBookings,
     newReviews,
     totalServices,
     recentBookings,
     recentReviews,
   ] = await Promise.all([
-    Booking.countDocuments({ date: today } as any),
-    Booking.countDocuments({ status: 'new' } as any),
+    getTodayBookingStats(),
     Booking.countDocuments({} as any),
     Review.countDocuments({ createdAt: { $gte: sevenDaysAgo } } as any),
     Service.countDocuments({ status: 'active' } as any),

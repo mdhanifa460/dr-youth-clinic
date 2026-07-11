@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { canAccess, ROLE_LABELS, ROLE_COLORS, type AdminRole } from "@/app/lib/permissions";
 import type { AdminUserPublic } from "@/app/lib/adminAuth";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 type NavItem = {
   href: string;
@@ -144,6 +145,7 @@ export default function AdminSidebar({ user }: { user: AdminUserPublic }) {
       </nav>
 
       <div className="mt-6 border-t border-white/10 pt-4 space-y-2">
+        <ThemeSwitcher />
         <Link
           href="/admin/profile"
           className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition ${

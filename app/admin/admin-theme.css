@@ -1,0 +1,58 @@
+/* ===== ADMIN DARK THEME =====
+   Imported only from app/admin/layout.tsx, not the shared globals.css, so
+   public visitors never download admin-only dark-mode CSS.
+
+   Scoped under .admin-theme-dark (applied to <html> by the inline script in
+   admin/layout.tsx and kept in sync by AdminThemeProvider) so this can never
+   affect the public site. Retargets the utility classes actually used across
+   /admin (bg-white, bg-gray-50/100/200/300, text-gray-*, border-gray-*) via
+   the CSS cascade instead of adding dark: variants to every admin page
+   individually — broad real coverage, not pixel-perfect on every screen. A
+   class outside this list (an arbitrary color, an inline style) will still
+   render light-mode colors in dark mode. */
+.admin-theme-dark {
+  --dark-bg-page: #0f1419;
+  --dark-bg-card: #1a2130;
+  --dark-bg-subtle: #151b28;
+  --dark-bg-muted: #232b3d;
+  --dark-text-heading: #e5e7eb;
+  --dark-text-body: #b0b8c4;
+  --dark-text-faint: #7b8494;
+  --dark-border: #2d3548;
+  --dark-border-soft: #232a3a;
+
+  color-scheme: dark;
+  background: var(--dark-bg-page);
+  color: var(--dark-text-body);
+}
+
+.admin-theme-dark .bg-white { background-color: var(--dark-bg-card) !important; }
+.admin-theme-dark .bg-gray-50 { background-color: var(--dark-bg-subtle) !important; }
+.admin-theme-dark .bg-gray-100 { background-color: var(--dark-bg-page) !important; }
+.admin-theme-dark .bg-gray-200 { background-color: var(--dark-bg-muted) !important; }
+.admin-theme-dark .bg-gray-300 { background-color: var(--dark-bg-muted) !important; }
+
+.admin-theme-dark .text-gray-900,
+.admin-theme-dark .text-gray-800 { color: var(--dark-text-heading) !important; }
+.admin-theme-dark .text-gray-700,
+.admin-theme-dark .text-gray-600 { color: var(--dark-text-body) !important; }
+.admin-theme-dark .text-gray-500,
+.admin-theme-dark .text-gray-400,
+.admin-theme-dark .text-gray-300 { color: var(--dark-text-faint) !important; }
+
+.admin-theme-dark .border-gray-50,
+.admin-theme-dark .border-gray-100 { border-color: var(--dark-border-soft) !important; }
+.admin-theme-dark .border-gray-200,
+.admin-theme-dark .border-gray-300 { border-color: var(--dark-border) !important; }
+
+.admin-theme-dark input,
+.admin-theme-dark textarea,
+.admin-theme-dark select {
+  background-color: var(--dark-bg-card);
+  color: var(--dark-text-heading);
+}
+.admin-theme-dark input::placeholder,
+.admin-theme-dark textarea::placeholder { color: var(--dark-text-faint); }
+
+.admin-theme-dark table thead tr.bg-gray-50 { background-color: var(--dark-bg-subtle) !important; }
+.admin-theme-dark ::-webkit-scrollbar-track { background: var(--dark-bg-page); }

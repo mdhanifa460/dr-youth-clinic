@@ -83,6 +83,9 @@ export interface ISettings extends Document {
     phoneMaskEnabled: boolean;
     showPatientPhoneRoles: string[];
   };
+  adminUi: {
+    analyticsStripEnabled: boolean;
+  };
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -171,6 +174,9 @@ const SettingsSchema = new Schema<ISettings>(
         type: [String],
         default: ['super_admin', 'clinic_owner', 'receptionist', 'customer_support'],
       },
+    },
+    adminUi: {
+      analyticsStripEnabled: { type: Boolean, default: true },
     },
   },
   { timestamps: true }

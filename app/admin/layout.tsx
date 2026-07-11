@@ -1,3 +1,4 @@
+import "./admin-theme.css";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAdminUser } from "@/app/lib/adminAuth";
@@ -5,6 +6,8 @@ import { canAccess, type AdminModule } from "@/app/lib/permissions";
 import AdminSidebar from "./components/AdminSidebar";
 import IdleWatcher from "./components/IdleWatcher";
 import CommandPalette from "./components/CommandPalette";
+import AdminThemeProvider from "./components/AdminThemeProvider";
+import AdminAnalyticsStrip from "./components/AdminAnalyticsStrip";
 
 // Maps URL prefix → required module (longest prefix wins)
 const MODULE_MAP: [string, AdminModule][] = [
@@ -69,15 +72,33 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const requiredModule = moduleForPath(pathname);
   const allowed = !requiredModule || canAccess(user.role, requiredModule);
+  // The dashboard itself already shows its own (richer) stat cards —
+  // showing the strip there too would just duplicate them.
+  const isDashboardRoot = pathname === "/admin";
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <IdleWatcher />
-      <CommandPalette />
-      <AdminSidebar user={user} />
-      <main className="flex-1 p-6">
-        {allowed ? children : <AccessDenied module={requiredModule ?? ""} />}
-      </main>
-    </div>
+    <>
+      {/* Runs synchronously as the browser parses it, before anything below
+          paints — applies the saved dark-mode preference immediately instead
+          of waiting for React to hydrate and flashing light theme first. A
+          plain inline script (not next/script beforeInteractive, which only
+          nested layouts can't use — that strategy is root-layout-only). */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var p=localStorage.getItem("admin-theme")||"system";var d=p==="dark"||(p==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("admin-theme-dark");}catch(e){}})();`,
+        }}
+      />
+      <AdminThemeProvider>
+        <div className="flex min-h-screen bg-gray-100">
+          <IdleWatcher />
+          <CommandPalette />
+          <AdminSidebar user={user} />
+          <main className="flex-1 p-6">
+            {allowed && !isDashboardRoot && <AdminAnalyticsStrip />}
+            {allowed ? children : <AccessDenied module={requiredModule ?? ""} />}
+          </main>
+        </div>
+      </AdminThemeProvider>
+    </>
   );
 }

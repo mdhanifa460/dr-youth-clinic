@@ -128,6 +128,15 @@ const GROUPS = [
         desc: "Control what visitors see on service cards — toggle price visibility, duration badges, before/after gallery, and related service count.",
         tags: ["Cards", "Before/After", "Related"],
       },
+      {
+        href: "/admin/settings/admin-ui",
+        icon: BarChart2,
+        color: "bg-indigo-50 text-indigo-600",
+        border: "border-indigo-100 hover:border-indigo-300",
+        title: "Admin Dashboard",
+        desc: "Controls for the admin panel itself, not the public site — toggle the persistent Analytics Strip shown to staff.",
+        tags: ["Analytics Strip", "Staff-only"],
+      },
     ],
   },
 ];
