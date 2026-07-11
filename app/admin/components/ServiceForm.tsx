@@ -35,6 +35,20 @@ interface FormData {
   heroImage: { url: string; publicId: string } | null;
   beforeAfterImages: Array<{ before: any; after: any }>;
   status: "draft" | "active" | "hidden";
+  journeyExplorer: Array<{
+    stage: string;
+    progressPercent: number;
+    summary: string;
+    doctorTip: string;
+    dos: string[];
+    donts: string[];
+    faqs: Array<{ question: string; answer: string }>;
+  }>;
+  journeyExplorerVisible: boolean;
+  painLevel: "" | "None" | "Mild" | "Moderate" | "High";
+  comparisonVisible: boolean;
+  aftercareGuidance: Array<{ activity: string; waitPeriod: string; guidance: string }>;
+  aftercareVisible: boolean;
 }
 
 const ICONS = ["⚡", "🛡️", "🏥", "💎", "✨", "🔬", "💪", "👨‍⚕️", "🌿", "⭐"];
@@ -88,6 +102,12 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           technology: initialData.technology ?? "",
           anaesthesia: initialData.anaesthesia ?? "",
           heroDescription: initialData.heroDescription ?? "",
+          journeyExplorer: initialData.journeyExplorer ?? [],
+          journeyExplorerVisible: initialData.journeyExplorerVisible ?? true,
+          painLevel: initialData.painLevel ?? "",
+          comparisonVisible: initialData.comparisonVisible ?? true,
+          aftercareGuidance: initialData.aftercareGuidance ?? [],
+          aftercareVisible: initialData.aftercareVisible ?? true,
         }
       : {
           name: "",
@@ -117,6 +137,12 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           heroImage: null,
           beforeAfterImages: [],
           status: "active",
+          journeyExplorer: [],
+          journeyExplorerVisible: true,
+          painLevel: "",
+          comparisonVisible: true,
+          aftercareGuidance: [],
+          aftercareVisible: true,
         }
   );
 
@@ -817,6 +843,135 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               <Plus size={15} /> Add FAQ
             </button>
           </div>
+
+          {/* Interactive Journey Explorer */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-base font-semibold text-gray-800">Interactive Journey Explorer</label>
+              <label className="flex items-center gap-1.5 text-xs text-gray-500">
+                <input type="checkbox" checked={form.journeyExplorerVisible} onChange={(e) => updateForm({ journeyExplorerVisible: e.target.checked })} />
+                Show on service page
+              </label>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              A clickable Today → Week 1 → Month 1 → Month 3 → Month 6 → Results explorer, separate from the AI journey simulator. Each stage is written by you/your doctors — add up to 6.
+            </p>
+
+            <div className="space-y-4">
+              {form.journeyExplorer.map((stage, idx) => (
+                <div key={idx} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-2.5">
+                  <div className="flex gap-2 items-start">
+                    <div className="flex-1 grid grid-cols-[1fr_100px] gap-2">
+                      <input
+                        value={stage.stage}
+                        onChange={(e) => { const u = [...form.journeyExplorer]; u[idx] = { ...u[idx], stage: e.target.value }; updateForm({ journeyExplorer: u }); }}
+                        placeholder="Stage label (e.g., Week 1)"
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="number" min={0} max={100}
+                        value={stage.progressPercent}
+                        onChange={(e) => { const u = [...form.journeyExplorer]; u[idx] = { ...u[idx], progressPercent: Math.min(100, Math.max(0, Number(e.target.value))) }; updateForm({ journeyExplorer: u }); }}
+                        placeholder="% progress"
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <button onClick={() => updateForm({ journeyExplorer: form.journeyExplorer.filter((_, i) => i !== idx) })} className="text-gray-300 hover:text-red-400 transition mt-1">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                  <textarea
+                    value={stage.summary}
+                    onChange={(e) => { const u = [...form.journeyExplorer]; u[idx] = { ...u[idx], summary: e.target.value }; updateForm({ journeyExplorer: u }); }}
+                    placeholder="What's happening at this stage — 2-3 sentences…"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <textarea
+                    value={stage.doctorTip}
+                    onChange={(e) => { const u = [...form.journeyExplorer]; u[idx] = { ...u[idx], doctorTip: e.target.value }; updateForm({ journeyExplorer: u }); }}
+                    placeholder="Doctor's tip for this stage (optional)"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    <textarea
+                      value={(stage.dos || []).join('\n')}
+                      onChange={(e) => { const u = [...form.journeyExplorer]; u[idx] = { ...u[idx], dos: e.target.value.split('\n').filter(Boolean) }; updateForm({ journeyExplorer: u }); }}
+                      placeholder={"Do's — one per line"}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-green-100 bg-green-50/30 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+                    />
+                    <textarea
+                      value={(stage.donts || []).join('\n')}
+                      onChange={(e) => { const u = [...form.journeyExplorer]; u[idx] = { ...u[idx], donts: e.target.value.split('\n').filter(Boolean) }; updateForm({ journeyExplorer: u }); }}
+                      placeholder={"Don'ts — one per line"}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-red-100 bg-red-50/30 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => updateForm({ journeyExplorer: [...form.journeyExplorer, { stage: "", progressPercent: 0, summary: "", doctorTip: "", dos: [], donts: [], faqs: [] }] })}
+              disabled={form.journeyExplorer.length >= 6}
+              className="mt-3 w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Plus size={15} /> Add Stage {form.journeyExplorer.length >= 6 ? "(max 6)" : ""}
+            </button>
+          </div>
+
+          {/* Aftercare Calendar */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-base font-semibold text-gray-800">Aftercare Guide</label>
+              <label className="flex items-center gap-1.5 text-xs text-gray-500">
+                <input type="checkbox" checked={form.aftercareVisible} onChange={(e) => updateForm({ aftercareVisible: e.target.checked })} />
+                Show on service page
+              </label>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Everyday aftercare questions — when can I wash my hair, exercise, swim, travel, dye my hair?</p>
+
+            <div className="space-y-3">
+              {form.aftercareGuidance.map((item, idx) => (
+                <div key={idx} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-2">
+                  <div className="grid grid-cols-[1fr_140px_auto] gap-2">
+                    <input
+                      value={item.activity}
+                      onChange={(e) => { const u = [...form.aftercareGuidance]; u[idx] = { ...u[idx], activity: e.target.value }; updateForm({ aftercareGuidance: u }); }}
+                      placeholder="Activity (e.g., Washing hair)"
+                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      value={item.waitPeriod}
+                      onChange={(e) => { const u = [...form.aftercareGuidance]; u[idx] = { ...u[idx], waitPeriod: e.target.value }; updateForm({ aftercareGuidance: u }); }}
+                      placeholder="Wait period (e.g., 24 hours)"
+                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button onClick={() => updateForm({ aftercareGuidance: form.aftercareGuidance.filter((_, i) => i !== idx) })} className="text-gray-300 hover:text-red-400 transition">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                  <textarea
+                    value={item.guidance}
+                    onChange={(e) => { const u = [...form.aftercareGuidance]; u[idx] = { ...u[idx], guidance: e.target.value }; updateForm({ aftercareGuidance: u }); }}
+                    placeholder="Guidance — e.g., Use lukewarm water and a mild shampoo…"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => updateForm({ aftercareGuidance: [...form.aftercareGuidance, { activity: "", waitPeriod: "", guidance: "" }] })}
+              className="mt-3 w-full py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Plus size={15} /> Add Aftercare Item
+            </button>
+          </div>
         </div>
       )}
 
@@ -919,6 +1074,31 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             >
               <Plus size={15} /> Add Trust Point
             </button>
+          </div>
+
+          {/* Treatment Comparison */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-base font-semibold text-gray-800">Treatment Comparison</label>
+              <label className="flex items-center gap-1.5 text-xs text-gray-500">
+                <input type="checkbox" checked={form.comparisonVisible} onChange={(e) => updateForm({ comparisonVisible: e.target.checked })} />
+                Show on service page
+              </label>
+            </div>
+            <p className="text-xs text-gray-400 mb-3">
+              Shows a side-by-side comparison against similar treatments in the same category (price, sessions, recovery, etc. are pulled automatically — set pain level here).
+            </p>
+            <select
+              value={form.painLevel}
+              onChange={(e) => updateForm({ painLevel: e.target.value as any })}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Pain level — not specified</option>
+              <option value="None">None</option>
+              <option value="Mild">Mild</option>
+              <option value="Moderate">Moderate</option>
+              <option value="High">High</option>
+            </select>
           </div>
 
           {/* Before / After Image Pairs */}

@@ -35,6 +35,28 @@ export interface IService extends Document {
   }>;
   whyChooseUs?: string[];
 
+  // Interactive Journey Explorer — fixed, doctor-authored stages (distinct from
+  // the AI-personalised journey simulator, which stays free-text/AI-generated).
+  journeyExplorer?: Array<{
+    stage: string;
+    progressPercent: number;
+    summary: string;
+    doctorTip?: string;
+    dos?: string[];
+    donts?: string[];
+    faqs?: Array<{ question: string; answer: string }>;
+  }>;
+  journeyExplorerVisible: boolean;
+
+  // Treatment Comparison — most fields reuse existing price/duration/
+  // sessionsRequired/recoveryTime/idealFor; painLevel is the only new axis.
+  painLevel?: 'None' | 'Mild' | 'Moderate' | 'High';
+  comparisonVisible: boolean;
+
+  // Aftercare Calendar
+  aftercareGuidance?: Array<{ activity: string; waitPeriod?: string; guidance: string }>;
+  aftercareVisible: boolean;
+
   // Media
   heroImage: {
     url: string;
@@ -136,6 +158,31 @@ const ServiceSchema = new Schema<IService>(
       },
     ],
     whyChooseUs: [String],
+
+    journeyExplorer: [
+      {
+        stage: String,
+        progressPercent: { type: Number, min: 0, max: 100, default: 0 },
+        summary: String,
+        doctorTip: String,
+        dos: [String],
+        donts: [String],
+        faqs: [{ question: String, answer: String }],
+      },
+    ],
+    journeyExplorerVisible: { type: Boolean, default: true },
+
+    painLevel: { type: String, enum: ['None', 'Mild', 'Moderate', 'High'] },
+    comparisonVisible: { type: Boolean, default: true },
+
+    aftercareGuidance: [
+      {
+        activity: String,
+        waitPeriod: String,
+        guidance: String,
+      },
+    ],
+    aftercareVisible: { type: Boolean, default: true },
 
     // Media
     heroImage: {

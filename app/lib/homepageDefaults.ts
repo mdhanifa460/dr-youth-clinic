@@ -77,6 +77,20 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       ],
     },
   },
+  // Numbers are always live-computed from real bookings (see getTrustTimelineStats
+  // in app/(public)/page.tsx) — only the labels below are admin-editable, deliberately
+  // never the counts themselves, so this section can never show fabricated numbers.
+  trust_timeline: {
+    label: 'Trust Timeline (Live Stats)',
+    order: 4.5,
+    visible: true,
+    data: {
+      headline: 'Real Activity, Real Trust',
+      todayLabel: 'Consultations Today',
+      weekLabel: 'Treatments This Week',
+      monthLabel: 'Happy Patients This Month',
+    },
+  },
   consultation_form: {
     label: 'Consultation Form Bar',
     order: 5,

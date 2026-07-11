@@ -9,6 +9,7 @@ import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
+import Booking from '@/app/models/Booking';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
 
@@ -19,6 +20,7 @@ import ServicesCards from '@/app/components/homepage/ServicesCards';
 import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
 import DoctorsSection from '@/app/components/homepage/DoctorsSection';
 import FounderSection from '@/app/components/homepage/FounderSection';
+import TrustTimeline from '@/app/components/homepage/TrustTimeline';
 import HomepageLocations from '@/app/components/homepage/HomepageLocations';
 import CTAStrip from '@/app/components/homepage/CTAStrip';
 import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
@@ -111,6 +113,7 @@ type SectionOrderItem = {
 const PUBLIC_SECTION_ORDER = [
   'hero',
   'stats',
+  'trust_timeline',
   'consultation_form',
   'cta_strip',
   'before_after',
@@ -252,6 +255,32 @@ const getCachedFeaturedVideos = unstable_cache(
   { revalidate: 300, tags: ['videos'] }
 );
 
+// Live counts only — never admin-editable, so this section can't show fabricated
+// numbers (see the comment on the trust_timeline default in homepageDefaults.ts).
+const getCachedTrustStats = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const [todayCount, weekCount, monthPatients] = await Promise.all([
+        (Booking as any).countDocuments({ createdAt: { $gte: todayStart } }),
+        (Booking as any).countDocuments({ status: 'completed', updatedAt: { $gte: weekStart } }),
+        (Booking as any).distinct('phone', { status: 'completed', updatedAt: { $gte: monthStart } }),
+      ]);
+
+      return { todayCount, weekCount, monthCount: monthPatients.length };
+    } catch {
+      return null;
+    }
+  },
+  ['homepage-trust-timeline'],
+  { revalidate: 300, tags: ['bookings'] }
+);
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   hero: HeroSection,
   stats: StatsBar,
@@ -259,6 +288,7 @@ const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   services: ServicesCards,
   before_after: BeforeAfterSection,
   founder: FounderSection,
+  trust_timeline: TrustTimeline,
   doctors: DoctorsSection,
   video_academy: VideoAcademySection,
   locations: HomepageLocations,
@@ -281,7 +311,7 @@ export default async function Home() {
   const rawCity = headers().get('x-vercel-ip-city') || '';
   const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -289,6 +319,7 @@ export default async function Home() {
     getCachedDoctors(''), // fetch all — client filters by detected location
     getCachedBlogPosts(),
     getCachedFeaturedVideos(),
+    getCachedTrustStats(),
   ]);
 
   const enriched = {
@@ -307,6 +338,12 @@ export default async function Home() {
     blog: {
       ...(sectionData['blog'] ?? {}),
       posts: liveBlogPosts.length > 0 ? liveBlogPosts : (sectionData['blog']?.posts ?? []),
+    },
+    trust_timeline: {
+      ...(sectionData['trust_timeline'] ?? {}),
+      todayCount: trustStats?.todayCount ?? null,
+      weekCount: trustStats?.weekCount ?? null,
+      monthCount: trustStats?.monthCount ?? null,
     },
   };
 

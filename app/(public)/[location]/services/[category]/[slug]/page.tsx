@@ -20,6 +20,9 @@ import EMICalculator from '@/app/components/EMICalculator';
 import SocialProofBar from '@/app/components/SocialProofBar';
 import TreatmentJourney from '@/app/components/TreatmentJourney';
 import AiJourneySimulator from '@/app/components/AiJourneySimulator';
+import TreatmentJourneyExplorer from '@/app/components/TreatmentJourneyExplorer';
+import TreatmentComparison from '@/app/components/TreatmentComparison';
+import AftercareCalendar from '@/app/components/AftercareCalendar';
 
 export const revalidate = 300;
 
@@ -529,6 +532,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
             )}
 
+            {/* Aftercare Calendar */}
+            {svc.aftercareVisible && svc.aftercareGuidance?.length > 0 && (
+              <AftercareCalendar items={svc.aftercareGuidance} serviceName={svc.name} />
+            )}
+
             {/* Myths vs Facts */}
             {hasMyths && (
               <div>
@@ -560,6 +568,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
             )}
 
+            {/* Interactive Journey Explorer */}
+            {svc.journeyExplorerVisible && svc.journeyExplorer?.length > 0 && (
+              <TreatmentJourneyExplorer stages={svc.journeyExplorer} serviceName={svc.name} />
+            )}
+
             {/* Multi-Session Plan */}
             <TreatmentJourney
               sessions={svc.sessionsCount || 6}
@@ -569,6 +582,14 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
             {/* AI Treatment Journey Simulator */}
             <AiJourneySimulator serviceId={String(svc._id)} serviceName={svc.name} />
+
+            {/* Treatment Comparison */}
+            {svc.comparisonVisible && related.length > 0 && (
+              <TreatmentComparison
+                current={{ _id: String(svc._id), name: svc.name, price: svc.price, duration: svc.duration, sessionsRequired: svc.sessionsRequired, recoveryTime: svc.recoveryTime, painLevel: svc.painLevel, idealFor: svc.idealFor }}
+                alternatives={related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor }))}
+              />
+            )}
 
             {/* Patient Reviews */}
             {hasReviews && (

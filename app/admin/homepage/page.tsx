@@ -600,6 +600,23 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
     case 'hero':
       return <HeroSlidesEditor d={d} onChange={onChange} />;
 
+    case 'trust_timeline':
+      return (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-green-100 bg-green-50 p-4 flex items-start gap-3">
+            <span className="text-lg shrink-0">🔴</span>
+            <p className="text-xs text-green-800">
+              The numbers themselves are always live — calculated from real bookings, never editable. Only the
+              labels below can be changed.
+            </p>
+          </div>
+          <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <TextField label="Today Label" value={d.todayLabel} onChange={(v) => set('todayLabel', v)} />
+          <TextField label="This Week Label" value={d.weekLabel} onChange={(v) => set('weekLabel', v)} />
+          <TextField label="This Month Label" value={d.monthLabel} onChange={(v) => set('monthLabel', v)} />
+        </div>
+      );
+
     case 'stats':
       return (
         <div>
