@@ -12,9 +12,16 @@ export interface ServiceLocationSeoLike {
   isCustomized?: boolean;
 }
 
-export interface ServiceSeoShapeLike {
+// Minimal shape needed to resolve which cities a service targets — callers
+// that only need getServiceCities/isServiceAtCity (e.g. an admin list view
+// that never fetched metaTitle/metaDescription/urlSlug) shouldn't have to
+// satisfy the fuller SEO shape below just to call them.
+export interface ServiceLocationShapeLike {
   location: string;
   targetLocations?: string[];
+}
+
+export interface ServiceSeoShapeLike extends ServiceLocationShapeLike {
   metaTitle: string;
   metaDescription: string;
   urlSlug: string;
@@ -27,7 +34,7 @@ export interface ServiceSeoShapeLike {
  * (a specific city, or 'all' meaning every city) for documents created
  * before per-city targeting existed.
  */
-export function getServiceCities(svc: ServiceSeoShapeLike): string[] {
+export function getServiceCities(svc: ServiceLocationShapeLike): string[] {
   if (svc.targetLocations && svc.targetLocations.length > 0) return svc.targetLocations;
   if (svc.location === 'all') return [...ALL_SERVICE_CITIES];
   return svc.location ? [svc.location] : [];
@@ -53,6 +60,6 @@ export function getEffectiveSlug(svc: ServiceSeoShapeLike, city: string): string
 }
 
 /** True if this service is shown at the given city at all. */
-export function isServiceAtCity(svc: ServiceSeoShapeLike, city: string): boolean {
+export function isServiceAtCity(svc: ServiceLocationShapeLike, city: string): boolean {
   return getServiceCities(svc).includes(city);
 }
