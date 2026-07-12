@@ -107,7 +107,7 @@ export default function FreeLabelsSettingsPage() {
   );
 
   const consultationCta = form.consultationFree ? "Book Free Consultation" : "Book Consultation";
-  const skinQuizLabel   = form.skinQuizFree    ? "✨ Free Quiz"             : "✨ Quiz";
+  const skinQuizLabel   = form.skinQuizFree    ? "✨ Free Assessment"       : "✨ AI Assessment";
 
   return (
     <div className="min-h-screen bg-[#f6faff]">
@@ -172,9 +172,9 @@ export default function FreeLabelsSettingsPage() {
             <Toggle
               checked={form.skinQuizFree}
               onChange={(v) => setForm((f) => ({ ...f, skinQuizFree: v }))}
-              label="Free Quiz"
-              description='Affects: Navbar quiz button, footer link, quiz intro page, trust badges.'
-              preview={{ on: skinQuizLabel, off: "✨ Quiz" }}
+              label="Free AI Assessment"
+              description='Affects: Navbar assessment button, footer link, assessment intro page, trust badges.'
+              preview={{ on: skinQuizLabel, off: "✨ AI Assessment" }}
             />
           </div>
         </div>

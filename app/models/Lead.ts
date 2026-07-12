@@ -20,6 +20,13 @@ const LeadSchema = new mongoose.Schema(
     // True when the visitor arrived via a QR code (?qr=1) — lets the QR
     // Generator's in-clinic kiosk flow be distinguished from organic web traffic.
     qrSource: { type: Boolean, default: false },
+    // Which clinic the QR/link was printed for (?clinic= on the assessment
+    // URL) — separate from `city`, which is free text the visitor typed
+    // themselves in the lead form and may not match the QR's branch.
+    clinicLocation: { type: String, default: "" },
+    // Which physical/digital placement the QR was printed on (?channel= on
+    // the URL, e.g. "reception", "instagram", "standee").
+    channel: { type: String, default: "" },
     answers: { type: mongoose.Schema.Types.Mixed, default: {} },
     recommendations: { type: mongoose.Schema.Types.Mixed, default: [] },
     emailSent: { type: Boolean, default: false },

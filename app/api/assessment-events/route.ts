@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {
-    const { event, primaryConcern, campaign, qrSource } = await req.json();
+    const { event, primaryConcern, campaign, qrSource, clinicLocation, channel } = await req.json();
     if (event !== 'started' && event !== 'completed') {
       return NextResponse.json({ success: false, message: 'Invalid event' }, { status: 400 });
     }
@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
       primaryConcern: primaryConcern || '',
       campaign: campaign || '',
       qrSource: !!qrSource,
+      clinicLocation: clinicLocation || '',
+      channel: channel || '',
     });
 
     return NextResponse.json({ success: true });

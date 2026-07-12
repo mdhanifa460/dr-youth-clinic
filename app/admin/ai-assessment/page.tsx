@@ -372,37 +372,178 @@ function AnalyticsTab() {
         <p className="text-sm font-bold text-gray-700 mb-1">Traffic Source</p>
         <p className="text-xs text-gray-400">QR / in-clinic: <b>{data.qrLeads}</b> · Web / organic: <b>{data.organicLeads}</b></p>
       </div>
+
+      <BreakdownPanel title="By Clinic Location" rows={data.locationBreakdown} emptyText="No location-tagged QR scans yet — generate one in the QR Generator tab." />
+      <BreakdownPanel title="By Lead Source / Channel" rows={data.channelBreakdown} emptyText="No channel-tagged QR scans yet — tag a QR with a placement (Reception, Instagram, etc.) in the QR Generator tab." />
+    </div>
+  );
+}
+
+function BreakdownPanel({ title, rows, emptyText }: { title: string; rows: { label: string; started: number; completed: number; leads: number; booked: number; conversionRate: number }[]; emptyText: string }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <p className="text-sm font-bold text-gray-700 mb-3">{title}</p>
+      {rows.length === 0 ? (
+        <p className="text-xs text-gray-400">{emptyText}</p>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-center justify-between gap-3 border border-gray-50 bg-gray-50/60 rounded-xl px-4 py-2.5">
+              <span className="text-sm font-semibold text-gray-800 capitalize">{r.label.replace(/-/g, " ")}</span>
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <span>{r.started} scans</span>
+                <span>{r.completed} completed</span>
+                <span>{r.leads} leads</span>
+                <span>{r.booked} booked</span>
+                <span className="font-bold text-[#0B2545]">{r.conversionRate}% conv.</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── QR Generator tab ────────────────────────────────────────────────────────
 
+const QR_LOCATIONS = ["Chennai", "Bangalore", "Coimbatore", "Kochi"];
+const QR_CHANNELS = ["Reception", "Waiting Hall", "Doctor Room", "Brochure", "Visiting Card", "Prescription Sheet", "Standee Banner", "Newspaper", "Instagram", "Facebook", "WhatsApp", "Bus Banner", "Mall"];
+
 function QrGeneratorTab() {
-  const [campaign, setCampaign] = useState("clinic-kiosk");
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [channel, setChannel] = useState("");
+  const [campaign, setCampaign] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const loadHistory = () => {
+    fetch("/api/admin/quiz/qr-codes").then((r) => r.json()).then((d) => { if (d.success) setHistory(d.data); }).finally(() => setLoadingHistory(false));
+  };
+  useEffect(() => { loadHistory(); }, []);
+
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const targetUrl = `${siteUrl}/skin-quiz?qr=1${campaign ? `&campaign=${encodeURIComponent(campaign)}` : ""}`;
-  const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(targetUrl)}`;
+  const locationSlug = location.toLowerCase().replace(/\s+/g, "-");
+  const channelSlug = channel.toLowerCase().replace(/\s+/g, "-");
+  const campaignSlug = campaign.trim() || [locationSlug, channelSlug].filter(Boolean).join("-") || "clinic-kiosk";
+  const targetUrl = `${siteUrl}/skin-quiz?qr=1`
+    + `&campaign=${encodeURIComponent(campaignSlug)}`
+    + (locationSlug ? `&clinic=${encodeURIComponent(locationSlug)}` : "")
+    + (channelSlug ? `&channel=${encodeURIComponent(channelSlug)}` : "");
+  const qrPngUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(targetUrl)}`;
+  const qrSvgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=svg&data=${encodeURIComponent(targetUrl)}`;
+  const fileBase = `ai-assessment-qr-${campaignSlug}`;
+
+  const saveQr = async () => {
+    if (!name.trim()) { setSaveError("Give this QR code a name (e.g. \"Anna Nagar Reception\")"); return; }
+    setSaving(true);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/admin/quiz/qr-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, clinicLocation: locationSlug, channel: channelSlug, campaign: campaignSlug, targetUrl }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      setName("");
+      loadHistory();
+    } catch (err: any) {
+      setSaveError(err.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteQr = async (id: string) => {
+    if (!confirm("Delete this saved QR code? Existing printed copies keep working — this only removes it from the list.")) return;
+    await fetch("/api/admin/quiz/qr-codes", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    loadHistory();
+  };
 
   return (
-    <div className="max-w-md space-y-5">
-      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-blue-800">
-        Print this QR code at reception — visitors who scan it are tagged as in-clinic traffic in Analytics, separate from web visitors.
+    <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+      <div className="space-y-5">
+        <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-blue-800">
+          Print this anywhere — reception, waiting hall, brochures, bills, even outdoor banners. Each QR carries its own location + channel, so Analytics can tell you exactly which one is driving bookings.
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">QR Name</label>
+          <Input value={name} onChange={setName} placeholder="e.g. Anna Nagar Reception" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Clinic Location</label>
+            <select value={location} onChange={(e) => setLocation(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">— None —</option>
+              {QR_LOCATIONS.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Placement / Channel</label>
+            <select value={channel} onChange={(e) => setChannel(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">— None —</option>
+              {QR_CHANNELS.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Campaign (optional — auto-filled from location + channel)</label>
+          <Input value={campaign} onChange={setCampaign} placeholder={campaignSlug} />
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrPngUrl} alt="Assessment QR code" width={240} height={240} className="rounded-lg" />
+          <div className="flex items-center gap-4">
+            <a href={qrPngUrl} download={`${fileBase}.png`} className="text-sm font-semibold text-[#0B2545] underline">Download PNG</a>
+            <a href={qrSvgUrl} download={`${fileBase}.svg`} className="text-sm font-semibold text-[#0B2545] underline">Download SVG</a>
+          </div>
+        </div>
+
+        {saveError && <p className="text-xs text-red-600 bg-red-50 rounded px-3 py-1.5">{saveError}</p>}
+        <button onClick={saveQr} disabled={saving} className="w-full py-2.5 bg-[#0B2545] hover:bg-[#1a3a6e] text-white font-semibold text-sm rounded-lg disabled:opacity-60 transition">
+          {saving ? "Saving…" : "Save to QR Library"}
+        </button>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Target URL</label>
+          <p className="text-xs font-mono text-gray-500 bg-gray-50 rounded-lg px-3 py-2 break-all">{targetUrl}</p>
+        </div>
       </div>
+
       <div>
-        <label className="text-xs font-semibold text-gray-500 mb-1 block">Campaign / Location Label</label>
-        <Input value={campaign} onChange={setCampaign} placeholder="e.g. chennai-reception" />
-      </div>
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={qrImg} alt="Assessment QR code" width={240} height={240} className="rounded-lg" />
-        <a href={qrImg} download={`ai-assessment-qr-${campaign || "default"}.png`} className="text-sm font-semibold text-[#0B2545] underline">
-          Download PNG
-        </a>
-      </div>
-      <div>
-        <label className="text-xs font-semibold text-gray-500 mb-1 block">Target URL</label>
-        <p className="text-xs font-mono text-gray-500 bg-gray-50 rounded-lg px-3 py-2 break-all">{targetUrl}</p>
+        <p className="text-sm font-bold text-gray-700 mb-3">Saved QR Codes</p>
+        {loadingHistory ? (
+          <div className="text-sm text-gray-400 py-8 text-center">Loading…</div>
+        ) : history.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm">
+            No saved QR codes yet — generate one and click "Save to QR Library" so marketing can find it again later.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {history.map((h) => {
+              const png = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(h.targetUrl)}`;
+              return (
+                <div key={h._id} className="bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={png} alt={h.name} width={48} height={48} className="rounded shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{h.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{[h.clinicLocation, h.channel, h.campaign].filter(Boolean).join(" · ")}</p>
+                  </div>
+                  <a href={png} download={`${h.name}.png`} className="text-xs font-semibold text-[#0B2545] underline shrink-0">PNG</a>
+                  <button onClick={() => deleteQr(h._id)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0">×</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

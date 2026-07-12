@@ -7,9 +7,9 @@ export interface SiteConfig {
   /** "free · no commitment" or "no commitment" (inline sub-text) */
   consultationSub: string;
   skinQuizFree: boolean;
-  /** "✨ Free Skin Quiz" or "✨ Skin Quiz" */
+  /** "✨ Free Assessment" or "✨ AI Assessment" */
   skinQuizNav: string;
-  /** "Free Skin Quiz" or "Skin Quiz" (link text) */
+  /** "Free AI Assessment" or "AI Assessment" (link text) */
   skinQuizLabel: string;
   /** Public-facing phone number from Settings (e.g. "1800 890 9669") */
   publicPhone: string;
@@ -39,8 +39,8 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   consultationBadge: 'Free Consult',
   consultationSub: 'Free · No Commitment',
   skinQuizFree: true,
-  skinQuizNav: '✨ Free Quiz',
-  skinQuizLabel: 'Free Quiz',
+  skinQuizNav: '✨ Free Assessment',
+  skinQuizLabel: 'Free AI Assessment',
   publicPhone: '',
   publicWhatsApp: '',
   publicEmail: '',

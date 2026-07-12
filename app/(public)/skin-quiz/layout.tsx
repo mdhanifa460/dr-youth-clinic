@@ -7,14 +7,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const { skinQuizFree, consultationFree } = await getSiteConfig();
 
   return {
-    title: "AI Quiz – Find Your Perfect Treatment | DR Youth Clinic",
+    title: "AI Skin & Hair Assessment – Find Your Perfect Treatment | DR Youth Clinic",
     description:
-      `Answer 5 quick questions and get a personalised treatment plan from DR Youth's dermatology experts — ${skinQuizFree ? 'free, ' : ''}in 60 seconds. Evidence-based matching across 50,000+ patient outcomes.`,
+      `Answer a few quick questions and get a personalised treatment plan from DR Youth's dermatology experts — ${skinQuizFree ? 'free, ' : ''}in 60 seconds. Evidence-based matching across 50,000+ patient outcomes.`,
     alternates: {
       canonical: `${SITE_URL}/skin-quiz`,
     },
     openGraph: {
-      title: "Discover Your Perfect Skin Treatment | DR Youth Clinic AI Quiz",
+      title: "Discover Your Perfect Skin Treatment | DR Youth Clinic AI Assessment",
       description:
         `${skinQuizFree ? 'Free personalised' : 'Personalised'} treatment plan in 60 seconds. Evidence-based matching from expert dermatologists.`,
       url: `${SITE_URL}/skin-quiz`,
@@ -23,8 +23,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "AI Quiz | DR Youth Clinic",
-      description: `5 questions. Personalised treatment plan.${consultationFree ? ' Free consultation included.' : ''}`,
+      title: "AI Skin & Hair Assessment | DR Youth Clinic",
+      description: `A few quick questions. Personalised treatment plan.${consultationFree ? ' Free consultation included.' : ''}`,
     },
   };
 }

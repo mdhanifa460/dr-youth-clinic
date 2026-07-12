@@ -15,12 +15,13 @@ export async function GET() {
 
     const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const [started, completed, leads, bookingPhones] = await Promise.all([
-      AssessmentEvent.countDocuments({ event: "started", createdAt: { $gte: since30d } } as any),
-      AssessmentEvent.countDocuments({ event: "completed", createdAt: { $gte: since30d } } as any),
-      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone primaryConcern recommendations campaign qrSource createdAt").lean() as Promise<any[]>,
+    const [events, leads, bookingPhones] = await Promise.all([
+      AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel").lean() as Promise<any[]>,
+      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone primaryConcern recommendations campaign qrSource clinicLocation channel createdAt").lean() as Promise<any[]>,
       (Booking as any).distinct("phone"),
     ]);
+    const started = events.filter((e) => e.event === "started").length;
+    const completed = events.filter((e) => e.event === "completed").length;
 
     // Normalize both sides — leads saved before the phone.ts fix still have
     // raw, unformatted numbers, so a straight string comparison against
@@ -69,6 +70,34 @@ export async function GET() {
     // QR vs organic split
     const qrLeads = leads.filter((l) => l.qrSource).length;
 
+    // Per-clinic and per-channel breakdown — lets a QR printed for a specific
+    // branch/placement (?clinic=, ?channel=) be traced end-to-end: scans in,
+    // leads captured, and actual bookings out.
+    const groupBy = (key: "clinicLocation" | "channel") => {
+      const buckets = new Map<string, { started: number; completed: number; leads: number; booked: number }>();
+      const bucket = (k: string) => {
+        if (!buckets.has(k)) buckets.set(k, { started: 0, completed: 0, leads: 0, booked: 0 });
+        return buckets.get(k)!;
+      };
+      for (const e of events) {
+        const k = e[key];
+        if (!k) continue;
+        if (e.event === "started") bucket(k).started++;
+        else if (e.event === "completed") bucket(k).completed++;
+      }
+      for (const l of leads) {
+        const k = l[key];
+        if (!k) continue;
+        bucket(k).leads++;
+        if (l.phone && bookingPhoneSet.has(normalizePhone(l.phone))) bucket(k).booked++;
+      }
+      return Array.from(buckets.entries())
+        .map(([label, s]) => ({ label, ...s, conversionRate: s.leads > 0 ? Math.round((s.booked / s.leads) * 100) : 0 }))
+        .sort((a, b) => b.leads - a.leads);
+    };
+    const locationBreakdown = groupBy("clinicLocation");
+    const channelBreakdown = groupBy("channel");
+
     return NextResponse.json({
       success: true,
       data: {
@@ -86,6 +115,8 @@ export async function GET() {
         concernHeatmap,
         qrLeads,
         organicLeads: leads.length - qrLeads,
+        locationBreakdown,
+        channelBreakdown,
       },
     });
   } catch (err: any) {

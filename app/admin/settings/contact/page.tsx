@@ -167,7 +167,7 @@ export default function ContactSettingsPage() {
           <div className="px-6 py-4 border-b border-gray-50">
             <h2 className="font-bold text-[#0B2560] text-sm">Public Contact Details</h2>
             <p className="text-gray-400 text-xs mt-0.5">
-              Shown on the website Navbar, FAQ page, skin quiz, booking sidebar, and JSON-LD schema.
+              Shown on the website Navbar, FAQ page, AI Assessment, booking sidebar, and JSON-LD schema.
             </p>
           </div>
           <div className="px-6 py-5 space-y-5">
@@ -200,7 +200,7 @@ export default function ContactSettingsPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] focus:ring-1 focus:ring-[#0B2560]/20 font-mono"
               />
               <p className="text-[11px] text-gray-400 mt-1.5">
-                Used for WhatsApp CTA links on the FAQ and skin quiz results pages. Digits only with country code, e.g. 919876543210.
+                Used for WhatsApp CTA links on the FAQ and AI Assessment results pages. Digits only with country code, e.g. 919876543210.
               </p>
             </div>
 

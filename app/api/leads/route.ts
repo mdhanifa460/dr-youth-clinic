@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {
-    const { name, phone, email, city, source, campaign, qrSource, answers, recommendations, primaryConcern } = await req.json();
+    const { name, phone, email, city, source, campaign, qrSource, clinicLocation, channel, answers, recommendations, primaryConcern } = await req.json();
     if (!email || typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
       return NextResponse.json({ success: false, message: 'Valid email is required' }, { status: 400 });
     }
@@ -92,6 +92,8 @@ export async function POST(req: NextRequest) {
       source: source || 'skin-quiz',
       campaign: campaign || '',
       qrSource: !!qrSource,
+      clinicLocation: clinicLocation || '',
+      channel: channel || '',
       primaryConcern: concern,
       answers,
       recommendations: recs,
