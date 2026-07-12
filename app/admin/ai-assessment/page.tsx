@@ -254,7 +254,7 @@ function TreatmentCard({ t, onChange, onRemove }: { t: TreatmentRecommendation; 
   );
 }
 
-function ConcernTreatmentPanel({ entry, aiPrompt, onChange }: { entry: TreatmentMapEntry; aiPrompt: string; onChange: (e: TreatmentMapEntry) => void }) {
+function ConcernTreatmentPanel({ entry, aiPrompt, enableAI, onChange }: { entry: TreatmentMapEntry; aiPrompt: string; enableAI: boolean; onChange: (e: TreatmentMapEntry) => void }) {
   const [generating, setGenerating] = useState(false);
   const [aiError, setAiError] = useState("");
 
@@ -297,10 +297,14 @@ function ConcernTreatmentPanel({ entry, aiPrompt, onChange }: { entry: Treatment
           {entry.concernLabel || entry.concernTag}
           <span className="ml-2 text-xs text-gray-400 font-normal">({entry.treatments.length} treatments)</span>
         </h4>
-        <button onClick={aiSuggest} disabled={generating}
-          className="flex items-center gap-1.5 bg-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-purple-700 disabled:opacity-60 transition">
-          {generating ? <>⏳ Generating…</> : <>✨ AI Suggest</>}
-        </button>
+        {enableAI ? (
+          <button onClick={aiSuggest} disabled={generating}
+            className="flex items-center gap-1.5 bg-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-purple-700 disabled:opacity-60 transition">
+            {generating ? <>⏳ Generating…</> : <>✨ AI Suggest</>}
+          </button>
+        ) : (
+          <span className="text-xs text-gray-400 italic">AI Suggest is off — enable it in Settings</span>
+        )}
       </div>
       {aiError && <p className="text-xs text-red-600 bg-red-50 rounded px-3 py-1.5">{aiError}</p>}
       <div className="space-y-2">
@@ -442,7 +446,23 @@ export default function AiAssessmentAdminPage() {
     setSaved(false);
   };
 
+  // A newly-added answer defaults to id: "" until its title is typed (AnswerRow
+  // derives the id from the title on change) — saving before that leaves an
+  // answer a visitor can select but that never matches any tag/branch, and for
+  // a required question with only that answer, permanently blocks progress.
+  const findEmptyAnswerId = (): string | null => {
+    for (const q of config.questions) {
+      if (q.answers.some((a) => !a.id)) return q.title || "Untitled question";
+    }
+    return null;
+  };
+
   const save = async () => {
+    const emptyIn = findEmptyAnswerId();
+    if (emptyIn) {
+      setError(`"${emptyIn}" has an answer with no title yet — give it a title (or remove it) before saving.`);
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -565,7 +585,7 @@ export default function AiAssessmentAdminPage() {
                 </button>
                 {openConcern === entry.concernTag && (
                   <div className="px-5 pb-5 border-t border-gray-50 pt-4">
-                    <ConcernTreatmentPanel entry={entry} aiPrompt={config.aiPrompt} onChange={(updated) => updateTreatmentMap(entry.concernTag, updated)} />
+                    <ConcernTreatmentPanel entry={entry} aiPrompt={config.aiPrompt} enableAI={config.settings.enableAI} onChange={(updated) => updateTreatmentMap(entry.concernTag, updated)} />
                   </div>
                 )}
               </div>
@@ -575,7 +595,13 @@ export default function AiAssessmentAdminPage() {
       )}
 
       {tab === "analytics" && <AnalyticsTab />}
-      {tab === "qr" && <QrGeneratorTab />}
+      {tab === "qr" && (
+        config.settings.enableQR ? <QrGeneratorTab /> : (
+          <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">
+            QR code access is turned off. Enable "Enable QR Code Access" under Settings → Feature Toggles to generate one.
+          </div>
+        )
+      )}
 
       {tab === "settings" && (
         <div className="space-y-6 max-w-xl">

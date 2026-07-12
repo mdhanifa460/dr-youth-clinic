@@ -4,6 +4,7 @@ import { requirePermission } from "@/app/lib/adminAuth";
 import { AssessmentEvent } from "@/app/models/AssessmentEvent";
 import { Lead } from "@/app/models/Lead";
 import Booking from "@/app/models/Booking";
+import { normalizePhone } from "@/app/lib/phone";
 
 export async function GET() {
   const denied = await requirePermission("ai-assessment", "view");
@@ -21,8 +22,11 @@ export async function GET() {
       (Booking as any).distinct("phone"),
     ]);
 
-    const bookingPhoneSet = new Set((bookingPhones as string[]).filter(Boolean));
-    const convertedLeads = leads.filter((l) => l.phone && bookingPhoneSet.has(l.phone));
+    // Normalize both sides — leads saved before the phone.ts fix still have
+    // raw, unformatted numbers, so a straight string comparison against
+    // Booking.phone (always saved normalized) would miss real conversions.
+    const bookingPhoneSet = new Set((bookingPhones as string[]).filter(Boolean).map(normalizePhone));
+    const convertedLeads = leads.filter((l) => l.phone && bookingPhoneSet.has(normalizePhone(l.phone)));
 
     // Most common concern — across all leads
     const concernCounts: Record<string, number> = {};

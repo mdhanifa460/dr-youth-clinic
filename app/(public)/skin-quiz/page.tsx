@@ -300,6 +300,9 @@ function ResultsScreen({
   recommendations,
   doctorMessage,
   showDoctorMessage,
+  showTopRecommendation,
+  showAllRecommendations,
+  showBookCta,
   showEmailForm,
   lead,
   setLead,
@@ -310,6 +313,9 @@ function ResultsScreen({
   recommendations: TreatmentRecommendation[];
   doctorMessage: string;
   showDoctorMessage: boolean;
+  showTopRecommendation: boolean;
+  showAllRecommendations: boolean;
+  showBookCta: boolean;
   showEmailForm: boolean;
   lead: LeadForm;
   setLead: React.Dispatch<React.SetStateAction<LeadForm>>;
@@ -321,6 +327,14 @@ function ResultsScreen({
   const waQuizHref = publicWhatsApp
     ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}?text=Hi%2C%20I%20just%20completed%20the%20AI%20skin%20%26%20hair%20assessment%20and%20would%20like%20to%20know%20more%20about%20my%20treatment%20plan.`
     : null;
+
+  // 'allRecommendations' shows the full ranked list; 'topRecommendation' alone
+  // narrows it down to just the #1 match — same data, different Settings toggle.
+  const visibleRecommendations = showAllRecommendations
+    ? recommendations
+    : showTopRecommendation
+    ? recommendations.slice(0, 1)
+    : [];
 
   return (
     <div className="py-2">
@@ -339,13 +353,13 @@ function ResultsScreen({
         )}
       </div>
 
-      {recommendations.length === 0 ? (
+      {visibleRecommendations.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 mb-10">
           We couldn't match a treatment to your answers — a specialist will review your responses personally.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {recommendations.map((rec, i) => (
+          {visibleRecommendations.map((rec, i) => (
             <TreatmentCard key={rec.id} treatment={rec} rank={i} />
           ))}
         </div>
@@ -424,7 +438,7 @@ function ResultsScreen({
       )}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        {waQuizHref && (
+        {showBookCta && waQuizHref && (
           <a
             href={waQuizHref} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2.5 px-6 py-3 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold rounded-xl text-sm transition-all duration-200 shadow-sm hover:shadow-md"
@@ -517,6 +531,18 @@ export default function SkinQuizPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
+  // Slider/number inputs render a default value (sliderMin) as soon as they're
+  // shown, but `answers` stays undefined until the user actually drags/types —
+  // without this, a required slider question blocks "Next" despite already
+  // displaying a valid value.
+  useEffect(() => {
+    if (!currentQuestion) return;
+    if ((currentQuestion.type === "slider" || currentQuestion.type === "number") && answers[currentQuestion.id] === undefined) {
+      setAnswers((a) => ({ ...a, [currentQuestion.id]: currentQuestion.sliderMin ?? 0 }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion]);
+
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
   const canProceed = !currentQuestion?.required || (
     Array.isArray(currentAnswer) ? currentAnswer.length > 0 : currentAnswer !== undefined && currentAnswer !== ""
@@ -532,6 +558,14 @@ export default function SkinQuizPage() {
       if (chosen?.nextQuestionId) nextId = chosen.nextQuestionId;
     }
     if (!nextId) nextId = orderedQuestions[currentIndex + 1]?.id;
+
+    // Guard against a misconfigured branch: a dangling nextQuestionId (its
+    // question was deleted after the branch was set) or a cycle (points back
+    // to an already-visited question) would otherwise strand the visitor on
+    // a blank page or in an infinite loop — treat both as "no more questions".
+    if (nextId && (!orderedQuestions.some((q) => q.id === nextId) || path.includes(nextId))) {
+      nextId = undefined;
+    }
 
     if (nextId) {
       transition(() => setPath((p) => [...p, nextId!]));
@@ -591,8 +625,21 @@ export default function SkinQuizPage() {
   };
 
   const totalQuestions = orderedQuestions.length;
-  const progressPct = screen === "intro" ? 0 : screen !== "question" ? 100 : totalQuestions > 0 ? Math.round((path.length / totalQuestions) * 100) : 0;
-  const stepLabel = screen === "intro" ? "Assessment" : screen === "question" ? `Question ${path.length} of ${totalQuestions}` : "Your Results";
+  // Branching means the visitor's actual path can be shorter than the full
+  // question set (some questions get skipped), so dividing by totalQuestions
+  // understates progress and desyncs the label from what's actually being
+  // asked. Estimate the path length instead: what's been visited, plus one
+  // more if there's a next question to go to from here.
+  const hasNextQuestion = !!currentQuestion && (() => {
+    if (typeof currentAnswer === "string") {
+      const chosen = currentQuestion.answers.find((a) => a.id === currentAnswer);
+      if (chosen?.nextQuestionId) return orderedQuestions.some((q) => q.id === chosen.nextQuestionId) && !path.includes(chosen.nextQuestionId);
+    }
+    return !!orderedQuestions[currentIndex + 1];
+  })();
+  const estimatedTotal = Math.max(path.length + (hasNextQuestion ? 1 : 0), path.length, 1);
+  const progressPct = screen === "intro" ? 0 : screen !== "question" ? 100 : Math.round((path.length / estimatedTotal) * 100);
+  const stepLabel = screen === "intro" ? "Assessment" : screen === "question" ? `Question ${path.length} of ${estimatedTotal}` : "Your Results";
 
   const resultSections = quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections;
   const sectionVisible = (key: string) => resultSections.find((s) => s.key === key)?.visible !== false;
@@ -641,8 +688,8 @@ export default function SkinQuizPage() {
           <div>
             <div className="mb-7">
               <div className="flex items-center gap-2 mb-3">
-                {orderedQuestions.map((q, i) => (
-                  <div key={q.id} className={`h-1 rounded-full flex-1 transition-all duration-300 ${
+                {Array.from({ length: estimatedTotal }).map((_, i) => (
+                  <div key={i} className={`h-1 rounded-full flex-1 transition-all duration-300 ${
                     i < path.length - 1 ? "bg-[#0B2560]" : i === path.length - 1 ? "bg-[#F5A623]" : "bg-gray-200"
                   }`} />
                 ))}
@@ -685,6 +732,9 @@ export default function SkinQuizPage() {
             recommendations={recommendations}
             doctorMessage={quizConfig.doctorMessage}
             showDoctorMessage={sectionVisible("doctorMessage")}
+            showTopRecommendation={sectionVisible("topRecommendation")}
+            showAllRecommendations={sectionVisible("allRecommendations")}
+            showBookCta={sectionVisible("bookCta")}
             showEmailForm={sectionVisible("emailForm") && quizConfig.settings?.enableEmail !== false}
             lead={lead}
             setLead={setLead}

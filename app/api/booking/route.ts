@@ -3,6 +3,7 @@ import { connectDB } from "../../lib/mongodb";
 import Booking from "../../models/Booking";
 import { LocationContent } from "../../models/LocationContent";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
+import { normalizePhone as formatPhone } from "@/app/lib/phone";
 
 // Resolves which WhatsApp number gets the "new booking" alert for a given
 // location: per-location whatsappNotifyNumber -> per-location public phone
@@ -162,21 +163,4 @@ Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscoun
       { status: 500 }
     );
   }
-}
-
-function formatPhone(phone: string) {
-  // remove spaces, +, etc.
-  let cleaned = phone.replace(/\D/g, "");
-
-  // remove leading 0
-  if (cleaned.startsWith("0")) {
-    cleaned = cleaned.substring(1);
-  }
-
-  // add 91 if not present
-  if (!cleaned.startsWith("91")) {
-    cleaned = "91" + cleaned;
-  }
-
-  return cleaned;
 }

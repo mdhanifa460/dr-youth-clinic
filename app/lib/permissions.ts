@@ -63,14 +63,19 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'view', doctors: 'view', homepage: 'none',
     locations: 'view', offers: 'view', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none',
+    // Was 'services: view' before this feature had its own module — the
+    // quiz page was reachable at that level, so 'none' here would be a
+    // silent access regression, not an intentional policy change.
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
     services: 'full', doctors: 'view', homepage: 'full',
     locations: 'full', offers: 'view', reviews: 'view',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'view',
+    // Was 'services: full' before this feature had its own module — content
+    // editors could already edit quiz content at that level.
+    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -84,7 +89,8 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'view', doctors: 'view', homepage: 'none',
     locations: 'view', offers: 'view', reviews: 'full',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none',
+    // Was 'services: view' before this feature had its own module.
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view',
   },
 };
 

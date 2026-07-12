@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Lead } from '@/app/models/Lead';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
+import { normalizePhone } from '@/app/lib/phone';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -78,9 +79,14 @@ export async function POST(req: NextRequest) {
     const concern = primaryConcern || answers?.concern || '';
     const emailSent = await sendPlanEmail(email.trim(), concern, recs);
 
+    // Normalized the same way Booking.phone is (app/lib/phone.ts) — otherwise
+    // this and a booking phone can never be compared for equality, and the
+    // Analytics "Booking Rate" would never find a match even for a real conversion.
+    const normalizedPhone = phone ? normalizePhone(phone) : '';
+
     await Lead.create({
       name: name || '',
-      phone: phone || '',
+      phone: normalizedPhone,
       email: email.trim(),
       city: city || '',
       source: source || 'skin-quiz',

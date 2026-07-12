@@ -7,7 +7,7 @@
 //
 // This is a pure, read-time transform — it does not write to the database.
 // The next admin Save persists the new shape naturally.
-import { DEFAULT_QUESTIONS, DEFAULT_RESULT_SECTIONS, DEFAULT_ASSESSMENT_SETTINGS, type AssessmentConfigData, type AssessmentQuestion, type TreatmentMapEntry } from "./quizDefaults";
+import { DEFAULT_QUESTIONS, DEFAULT_RESULT_SECTIONS, DEFAULT_ASSESSMENT_SETTINGS, DEFAULT_AI_PROMPT, DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion, type TreatmentMapEntry } from "./quizDefaults";
 
 function isLegacyShape(config: any): boolean {
   return !!config && !Array.isArray(config.questions) && Array.isArray(config.concerns);
@@ -75,9 +75,13 @@ export function migrateLegacyQuizConfig(config: any): AssessmentConfigData {
   return {
     questions,
     treatmentMap,
-    aiPrompt: config.aiPrompt || "",
+    // The legacy shape never had these fields at all, so falling back to ''
+    // here (instead of the real defaults) would silently blank out the
+    // Doctor's Message section and drop the AI safety-guardrail prompt for
+    // the one document that's actually live in production right now.
+    aiPrompt: config.aiPrompt || DEFAULT_AI_PROMPT,
     settings: config.settings || DEFAULT_ASSESSMENT_SETTINGS,
     resultSections: config.resultSections?.length ? config.resultSections : DEFAULT_RESULT_SECTIONS,
-    doctorMessage: config.doctorMessage || "",
+    doctorMessage: config.doctorMessage || DEFAULT_QUIZ_CONFIG.doctorMessage,
   };
 }
