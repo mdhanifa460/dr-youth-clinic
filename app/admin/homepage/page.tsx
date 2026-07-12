@@ -777,7 +777,11 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
             </button>
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-600 mb-3">Stats Row (shown under the headline)</p>
+            <p className="text-xs font-semibold text-gray-600 mb-1">Stats Row</p>
+            <p className="text-[11px] text-gray-400 mb-3">
+              Not shown on the homepage itself anymore (it repeated the numbers already in the Stats Bar section above it) —
+              still used on the standalone <a href="/results" target="_blank" rel="noopener noreferrer" className="underline">/results</a> page.
+            </p>
             <div className="space-y-3">
               {(d.stats || []).map((s: any, i: number) => (
                 <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-center">

@@ -23,6 +23,7 @@ import AiJourneySimulator from '@/app/components/AiJourneySimulator';
 import TreatmentJourneyExplorer from '@/app/components/TreatmentJourneyExplorer';
 import TreatmentComparison from '@/app/components/TreatmentComparison';
 import AftercareCalendar from '@/app/components/AftercareCalendar';
+import ServiceStickyDesktopCta from '@/app/components/ServiceStickyDesktopCta';
 
 export const revalidate = 300;
 
@@ -573,12 +574,17 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <TreatmentJourneyExplorer stages={svc.journeyExplorer} serviceName={svc.name} />
             )}
 
-            {/* Multi-Session Plan */}
-            <TreatmentJourney
-              sessions={svc.sessionsCount || 6}
-              treatmentName={svc.name}
-              phases={svc.journeyPhases}
-            />
+            {/* Multi-Session Plan — generic fallback only. When the admin has
+                authored a more specific journey (step-by-step above, or the
+                Interactive Explorer), showing this too just repeated the same
+                "what happens over time" question a third time. */}
+            {!hasJourney && !(svc.journeyExplorerVisible && svc.journeyExplorer?.length > 0) && (
+              <TreatmentJourney
+                sessions={svc.sessionsCount || 6}
+                treatmentName={svc.name}
+                phases={svc.journeyPhases}
+              />
+            )}
 
             {/* AI Treatment Journey Simulator */}
             <AiJourneySimulator serviceId={String(svc._id)} serviceName={svc.name} />
@@ -861,7 +867,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         )}
 
         {/* ── BOTTOM CTA ── */}
-        <section className="bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] py-16 text-white text-center relative overflow-hidden">
+        <section id="bottom-cta" className="bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] py-16 text-white text-center relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/[0.03] translate-x-1/3 -translate-y-1/3" />
             <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-[#F5A623]/[0.05] -translate-x-1/3 translate-y-1/3" />
@@ -889,6 +895,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         </section>
 
       </main>
+
+      <ServiceStickyDesktopCta ctaText={siteConfig.consultationCta} phone={loc.phone} />
     </>
   );
 }

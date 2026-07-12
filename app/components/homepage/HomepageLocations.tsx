@@ -144,12 +144,14 @@ export default function HomepageLocations({ data }: { data: any }) {
   const heroImg      = embed.heroImageUrl || '';
   const openStatus   = getOpenStatus(hours);
 
+  // Only location-specific figures here — clinic-wide patient count and
+  // Google rating are already stated once in StatsBar right after the hero;
+  // this used to restate both with different numbers than StatsBar, which
+  // read as inconsistent rather than reassuring.
   const STATS = [
     { value: String(cities.length || 4),     label: 'Clinics Across India', icon: MapPin },
     { value: '20+',                           label: 'Expert Doctors',       icon: Users },
     { value: '50+',                           label: 'Advanced Treatments',  icon: Stethoscope },
-    { value: '25,000+',                       label: 'Happy Patients',       icon: CalendarCheck },
-    { value: '4.9 ★',                         label: 'Google Rating',        icon: Star },
   ];
 
   return (
@@ -374,7 +376,7 @@ export default function HomepageLocations({ data }: { data: any }) {
 
         {/* ── Stats bar ── */}
         <div className="mt-5 bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] px-6 py-5">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
             {STATS.map(({ value, label, icon: Icon }, i) => (
               <div key={i} className="flex items-center gap-3 py-2 sm:py-0 sm:px-4 first:pl-0 last:pr-0">
                 <div className="w-9 h-9 rounded-xl bg-[#f0f5ff] flex items-center justify-center shrink-0">

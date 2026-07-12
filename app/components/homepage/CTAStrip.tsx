@@ -28,8 +28,8 @@ export default function CTAStrip({ data }: { data: any }) {
               </li>
             ))}
           </ul>
-          {rewards.ctaText && (
-            <Link href={rewards.ctaHref || '#'} className="min-h-11 text-[#F5A623] text-sm font-semibold mt-2 hover:underline flex items-center gap-1">
+          {rewards.ctaText && rewards.ctaHref && rewards.ctaHref !== '#' && (
+            <Link href={rewards.ctaHref} className="min-h-11 text-[#F5A623] text-sm font-semibold mt-2 hover:underline flex items-center gap-1">
               {rewards.ctaText} →
             </Link>
           )}

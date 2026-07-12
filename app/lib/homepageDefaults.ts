@@ -161,6 +161,9 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       headline: 'Real Results, Real Confidence',
       subheadline:
         'Visible improvements that our patients are thrilled about. See the difference.',
+      // Not shown on the homepage section itself anymore (redundant with
+      // StatsBar directly above it there) — still used as the stats row on
+      // the standalone /results page, which doesn't have that redundancy.
       stats: [
         { value: '98%', label: 'Patient satisfaction' },
         { value: '10K+', label: 'Treatments done' },
@@ -287,8 +290,10 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
           'Priority Appointments',
           'Referral Benefits',
         ],
+        // No ctaHref by default — there's no dedicated rewards page yet, and a
+        // dead '#' link is worse than no link. Set a real URL here once one exists.
         ctaText: 'Learn more about rewards',
-        ctaHref: '#',
+        ctaHref: '',
       },
       booking: {
         title: 'Book Your Consultation',

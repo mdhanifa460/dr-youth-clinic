@@ -46,31 +46,19 @@ export default function BeforeAfterSection({ data }: { data: any }) {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 relative">
 
         {/* HEADER */}
-        <div className="grid md:grid-cols-2 gap-6 items-end mb-8 md:mb-10">
-          <div>
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-6 h-[2px] bg-[#F5A623]" />
-              <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
-            </div>
-            <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
-              {headline}
-            </h2>
-            <p className="text-[#6B7280] mt-4 text-sm leading-relaxed max-w-sm">{subheadline}</p>
+        {/* No stat row here by design — the clinic-wide numbers (patients, years,
+            rating) are already stated once in StatsBar right after the hero;
+            repeating a second, slightly different set here undercut trust
+            rather than building it. */}
+        <div className="mb-8 md:mb-10 max-w-2xl">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-6 h-[2px] bg-[#F5A623]" />
+            <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
           </div>
-
-          {/* Stats */}
-          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-wrap md:justify-end">
-            {[
-              { value: '98%', label: 'Patient satisfaction' },
-              { value: '10K+', label: 'Treatments done' },
-              { value: '22+', label: 'Years of care' },
-            ].map((s, i) => (
-              <div key={i} className="text-center rounded-2xl bg-white/55 px-3 py-2.5 shadow-sm ring-1 ring-[#EBE8E3]/70 md:bg-transparent md:p-0 md:shadow-none md:ring-0">
-                <p className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] leading-none">{s.value}</p>
-                <p className="text-[#9CA3AF] text-xs mt-1 font-medium">{s.label}</p>
-              </div>
-            ))}
-          </div>
+          <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
+            {headline}
+          </h2>
+          <p className="text-[#6B7280] mt-4 text-sm leading-relaxed max-w-sm">{subheadline}</p>
         </div>
 
         {/* DRAG HINT */}
