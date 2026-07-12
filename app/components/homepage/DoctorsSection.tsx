@@ -111,13 +111,20 @@ export default function DoctorsSection({ data }: { data: any }) {
 
   if (doctors.length === 0) return null;
 
-  // Derive available city tabs from actual doctor data
+  // Derive available city tabs from actual doctor data, then order them to a
+  // fixed city order — not doctor-scan order. Without this, Set insertion
+  // order tracked whichever doctor happened to be sorted first by the admin's
+  // `order` field, so Chennai could land last if a Bangalore/Coimbatore/Kochi
+  // doctor's `order` was lower than every Chennai doctor's.
+  const CANONICAL_CITY_ORDER = Object.keys(CITY_COORDS);
   const cityKeys = Array.from(
     new Set(
       doctors.flatMap((d: any) =>
         (d.locations as string[] || []).filter((l) => l !== 'all')
       )
     )
+  ).sort(
+    (a, b) => CANONICAL_CITY_ORDER.indexOf(a as string) - CANONICAL_CITY_ORDER.indexOf(b as string)
   ) as string[];
 
   // Server-detected city → initial tab
