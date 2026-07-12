@@ -3,22 +3,23 @@ import { connectDB } from "@/app/lib/mongodb";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
 import { requirePermission } from "@/app/lib/adminAuth";
 import { revalidateTag } from "next/cache";
+import { migrateLegacyQuizConfig } from "@/app/lib/quizMigration";
 
 export async function GET() {
-  const denied = await requirePermission("services", "view");
+  const denied = await requirePermission("ai-assessment", "view");
   if (denied) return denied;
 
   try {
     await connectDB();
     const config = await (QuizConfig as any).findOne({}).lean();
-    return NextResponse.json({ success: true, data: config ?? DEFAULT_QUIZ_CONFIG });
+    return NextResponse.json({ success: true, data: config ? migrateLegacyQuizConfig(config) : DEFAULT_QUIZ_CONFIG });
   } catch {
     return NextResponse.json({ success: false, message: "Failed to load quiz config" }, { status: 500 });
   }
 }
 
 export async function PUT(req: NextRequest) {
-  const denied = await requirePermission("services", "full");
+  const denied = await requirePermission("ai-assessment", "full");
   if (denied) return denied;
 
   try {

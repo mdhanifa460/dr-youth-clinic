@@ -24,7 +24,8 @@ export type AdminModule =
   | 'landing-pages'
   | 'settings'
   | 'team'
-  | 'videos';
+  | 'videos'
+  | 'ai-assessment';
 
 export type AccessLevel = 'full' | 'view' | 'none';
 
@@ -34,56 +35,56 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'full', doctors: 'full', homepage: 'full',
     locations: 'full', offers: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'full', team: 'full', videos: 'full',
+    settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full',
   },
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
     services: 'full', doctors: 'full', homepage: 'full',
     locations: 'full', offers: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'view', team: 'full', videos: 'full',
+    settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full',
   },
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
     services: 'full', doctors: 'view', homepage: 'full',
     locations: 'view', offers: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'none', team: 'none', videos: 'full',
+    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full',
   },
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'view', doctors: 'view', homepage: 'none',
     locations: 'none', offers: 'none', reviews: 'view',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'view',
+    settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full',
   },
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
     services: 'view', doctors: 'view', homepage: 'none',
     locations: 'view', offers: 'view', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'none',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
     services: 'full', doctors: 'view', homepage: 'full',
     locations: 'full', offers: 'view', reviews: 'view',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'none', team: 'none', videos: 'full',
+    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'view',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'none', doctors: 'none', homepage: 'none',
     locations: 'none', offers: 'none', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'none',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none',
   },
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'view', doctors: 'view', homepage: 'none',
     locations: 'view', offers: 'view', reviews: 'full',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'none',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none',
   },
 };
 

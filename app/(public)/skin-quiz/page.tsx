@@ -1,265 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
-import { DEFAULT_QUIZ_CONFIG, type QuizConfigData } from "@/app/lib/quizDefaults";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type Answers = {
-  concern: string;
-  skinType: string;
-  experience: string;
-  budget: string;
-  timeline: string;
-};
-
-type Treatment = {
-  name: string;
-  desc: string;
-  sessions: string;
-  price: string;
-  match: number;
-  icon: string;
-};
-
-type QuizOption = { id: string; emoji: string; label: string; desc: string };
-
-// ─── Quiz Data (fallback — overridden by DB fetch) ────────────────────────────
-
-const CONCERNS = [
-  { id: "Acne & Breakouts", emoji: "🔴", label: "Acne & Breakouts" },
-  { id: "Pigmentation & Dark Spots", emoji: "🟫", label: "Pigmentation & Dark Spots" },
-  { id: "Ageing & Fine Lines", emoji: "⏳", label: "Ageing & Fine Lines" },
-  { id: "Hair Loss & Thinning", emoji: "💇", label: "Hair Loss & Thinning" },
-  { id: "Unwanted Hair Removal", emoji: "✨", label: "Unwanted Hair Removal" },
-  { id: "General Glow & Refresh", emoji: "🌟", label: "General Glow & Refresh" },
-];
-
-const SKIN_TYPES = [
-  { id: "Oily", emoji: "💧", label: "Oily", desc: "Shiny, large pores, prone to acne" },
-  { id: "Dry", emoji: "🌵", label: "Dry", desc: "Tight, flaky, dull" },
-  { id: "Combination", emoji: "🌊", label: "Combination", desc: "Oily T-zone, dry cheeks" },
-  { id: "Sensitive", emoji: "🌹", label: "Sensitive", desc: "Redness, reacts easily" },
-  { id: "Normal", emoji: "✅", label: "Normal", desc: "Balanced, few issues" },
-];
-
-const EXPERIENCES = [
-  { id: "First timer", emoji: "🌱", label: "First timer", desc: "Never had professional treatment" },
-  { id: "Some experience", emoji: "🌿", label: "Some experience", desc: "Had basic facials or peels" },
-  { id: "Experienced", emoji: "🌳", label: "Experienced", desc: "Done PRP, laser, or advanced treatments" },
-];
-
-const BUDGETS = [
-  "Under ₹5,000 per session",
-  "₹5,000 – ₹15,000 per session",
-  "₹15,000+ (premium treatments)",
-  "Open to packages",
-];
-
-const TIMELINES = [
-  { id: "ASAP", emoji: "⚡", label: "ASAP", desc: "I want to start this week" },
-  { id: "This month", emoji: "📅", label: "This month", desc: "Planning within 30 days" },
-  { id: "Exploring", emoji: "🔍", label: "Exploring", desc: "Just researching options" },
-];
-
-const STEP_META: Record<number, { title: string; subtitle: string }> = {
-  1: {
-    title: "What's your main concern?",
-    subtitle: "Select the skin or hair issue that matters most to you right now",
-  },
-  2: {
-    title: "What's your skin type?",
-    subtitle: "This helps us choose the safest, most effective treatments for you",
-  },
-  3: {
-    title: "Your treatment experience?",
-    subtitle: "So we can recommend the right level of treatment",
-  },
-  4: {
-    title: "What's your budget per session?",
-    subtitle: "We have excellent options at every price point",
-  },
-  5: {
-    title: "When do you want to start?",
-    subtitle: "We'll tailor the urgency of our recommendations accordingly",
-  },
-};
-
-// ─── Treatment Matching Logic ─────────────────────────────────────────────────
-
-const RECOMMENDATIONS: Record<string, Treatment[]> = {
-  "Acne & Breakouts": [
-    {
-      name: "Chemical Peel",
-      desc: "Removes dead skin, unclogs pores, reduces active acne and post-acne marks",
-      sessions: "4–6 sessions, every 3 weeks",
-      price: "₹3,000 – ₹8,000/session",
-      match: 96,
-      icon: "⚗️",
-    },
-    {
-      name: "Hydra Facial",
-      desc: "Deep cleanse + extraction + hydration. Immediate glow, zero downtime",
-      sessions: "Monthly maintenance",
-      price: "₹5,000 – ₹12,000",
-      match: 88,
-      icon: "💧",
-    },
-    {
-      name: "Laser Acne Treatment",
-      desc: "Kills acne-causing bacteria and reduces oil production at the source",
-      sessions: "6–8 sessions",
-      price: "₹8,000 – ₹18,000/session",
-      match: 82,
-      icon: "⚡",
-    },
-  ],
-  "Pigmentation & Dark Spots": [
-    {
-      name: "Q-Switch Laser",
-      desc: "Targets melanin clusters to break up pigmentation without damaging surrounding skin",
-      sessions: "4–8 sessions",
-      price: "₹6,000 – ₹15,000/session",
-      match: 95,
-      icon: "🎯",
-    },
-    {
-      name: "Chemical Peel",
-      desc: "Accelerates cell turnover to fade dark spots and even skin tone",
-      sessions: "4–6 sessions",
-      price: "₹3,000 – ₹8,000/session",
-      match: 87,
-      icon: "⚗️",
-    },
-    {
-      name: "Vitamin C Infusion",
-      desc: "Medical-grade brightening treatment that inhibits melanin production",
-      sessions: "6 sessions",
-      price: "₹4,000 – ₹9,000/session",
-      match: 80,
-      icon: "🍋",
-    },
-  ],
-  "Ageing & Fine Lines": [
-    {
-      name: "Anti-Ageing Facial",
-      desc: "Collagen-boosting treatment with peptides and growth factors for firmer, plumper skin",
-      sessions: "6–8 sessions",
-      price: "₹8,000 – ₹20,000/session",
-      match: 94,
-      icon: "✨",
-    },
-    {
-      name: "Botox / Fillers",
-      desc: "Smooths expression lines and restores volume for a refreshed, natural look",
-      sessions: "Once every 4–6 months",
-      price: "₹15,000 – ₹40,000",
-      match: 89,
-      icon: "💉",
-    },
-    {
-      name: "HIFU Skin Tightening",
-      desc: "Non-surgical facelift using high-intensity ultrasound energy to lift and tighten",
-      sessions: "1–2 sessions/year",
-      price: "₹25,000 – ₹60,000",
-      match: 83,
-      icon: "🔊",
-    },
-  ],
-  "Hair Loss & Thinning": [
-    {
-      name: "PRP Hair Treatment",
-      desc: "Your own platelet-rich plasma injected into the scalp to stimulate dormant follicles",
-      sessions: "6–8 sessions, monthly",
-      price: "₹8,000 – ₹15,000/session",
-      match: 96,
-      icon: "🩸",
-    },
-    {
-      name: "GFC Hair Treatment",
-      desc: "Next-generation Growth Factor Concentrate — 3x more potent than standard PRP",
-      sessions: "4–6 sessions",
-      price: "₹12,000 – ₹20,000/session",
-      match: 91,
-      icon: "🧬",
-    },
-    {
-      name: "Mesotherapy for Hair",
-      desc: "Micro-injections of vitamins and minerals directly into the scalp for maximum absorption",
-      sessions: "8–10 sessions",
-      price: "₹5,000 – ₹10,000/session",
-      match: 83,
-      icon: "💊",
-    },
-  ],
-  "Unwanted Hair Removal": [
-    {
-      name: "Laser Hair Removal",
-      desc: "Permanent reduction of unwanted hair. Safe for all skin tones with our diode laser",
-      sessions: "6–8 sessions per area",
-      price: "₹2,000 – ₹15,000/area",
-      match: 98,
-      icon: "⚡",
-    },
-    {
-      name: "Full Body Laser Package",
-      desc: "Complete hair-free solution for face + arms + legs + underarms + bikini",
-      sessions: "8 sessions",
-      price: "₹45,000 – ₹80,000 package",
-      match: 90,
-      icon: "🌟",
-    },
-    {
-      name: "IPL Hair Reduction",
-      desc: "Intense Pulsed Light for lighter hair colours. Gentler than laser",
-      sessions: "8–10 sessions",
-      price: "₹3,000 – ₹12,000/area",
-      match: 78,
-      icon: "💡",
-    },
-  ],
-  "General Glow & Refresh": [
-    {
-      name: "Hydra Facial",
-      desc: "Cleanse + exfoliate + extract + hydrate + protect. Instant glow, zero downtime",
-      sessions: "Monthly",
-      price: "₹5,000 – ₹12,000",
-      match: 97,
-      icon: "💧",
-    },
-    {
-      name: "Skin Brightening Peel",
-      desc: "Medical-grade fruit acid peel that reveals fresher, brighter skin underneath",
-      sessions: "4–6 sessions",
-      price: "₹3,500 – ₹8,000/session",
-      match: 89,
-      icon: "🍑",
-    },
-    {
-      name: "IV Glow Drip",
-      desc: "Glutathione + Vitamin C intravenous infusion for full-body skin brightening and radiance",
-      sessions: "8–12 sessions",
-      price: "₹4,000 – ₹8,000/session",
-      match: 82,
-      icon: "✨",
-    },
-  ],
-};
-
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-function getStepAnswer(step: number, answers: Answers): string {
-  switch (step) {
-    case 1: return answers.concern;
-    case 2: return answers.skinType;
-    case 3: return answers.experience;
-    case 4: return answers.budget;
-    case 5: return answers.timeline;
-    default: return "";
-  }
-}
+import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion, type TreatmentRecommendation } from "@/app/lib/quizDefaults";
+import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -275,33 +20,27 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
   const { skinQuizFree, consultationBadge } = useSiteConfig();
   return (
     <div className="flex flex-col items-center text-center py-6 md:py-10">
-      {/* Badge */}
       <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
         <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] inline-block" />
         {skinQuizFree ? 'Free · No Commitment · 60 Seconds' : 'No Commitment · 60 Seconds'}
       </span>
 
-      {/* Headline */}
       <h1 className="text-3xl md:text-5xl font-extrabold text-[#0B2560] leading-tight mb-4 max-w-xl tracking-tight">
         Discover Your<br />
         <span className="text-[#F5A623]">Perfect Treatment</span>
       </h1>
 
       <p className="text-gray-500 text-base md:text-lg max-w-md mb-10 leading-relaxed">
-        Answer 5 quick questions. Get a personalised treatment plan from DR Youth's experts{skinQuizFree ? ' — free,' : ','} in 60 seconds.
+        Answer a few quick questions. Get an AI-matched treatment plan from DR Youth's experts{skinQuizFree ? ' — free,' : ','} in under a minute.
       </p>
 
-      {/* Trust badges */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 w-full max-w-lg">
         {[
           { icon: "🏆", text: "Based on 50,000+", sub: "patient outcomes" },
           { icon: "🔬", text: "Evidence-based", sub: "matching algorithm" },
           { icon: "🎁", text: `${consultationBadge}`, sub: "included with results" },
         ].map((badge) => (
-          <div
-            key={badge.text}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4 flex flex-col items-center gap-1"
-          >
+          <div key={badge.text} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4 flex flex-col items-center gap-1">
             <span className="text-2xl">{badge.icon}</span>
             <span className="text-xs font-bold text-[#0B2560] text-center leading-snug">{badge.text}</span>
             <span className="text-xs text-gray-400 text-center">{badge.sub}</span>
@@ -309,12 +48,11 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         ))}
       </div>
 
-      {/* CTA */}
       <button
         onClick={onStart}
         className="group relative px-10 py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#0B2560]/30 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-3"
       >
-        Start My Quiz
+        Start My Assessment
         <span className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200">→</span>
       </button>
 
@@ -325,193 +63,129 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 
 function SelectionCheck({ selected }: { selected: boolean }) {
   return (
-    <span
-      className={`absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
-        selected ? "bg-[#0B2560] scale-100 opacity-100" : "bg-gray-100 scale-90 opacity-0"
-      }`}
-    >
+    <span className={`absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+      selected ? "bg-[#0B2560] scale-100 opacity-100" : "bg-gray-100 scale-90 opacity-0"
+    }`}>
       <CheckIcon />
     </span>
   );
 }
 
-function ConcernStep({
-  answers,
-  setAnswers,
-  concerns,
+// One generic renderer for every question type — replaces the 5 bespoke
+// per-step components the old fixed-question quiz had, since questions are
+// now admin-defined and their number/order isn't fixed at build time.
+function QuestionStep({
+  question,
+  value,
+  onChange,
 }: {
-  answers: Answers;
-  setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
-  concerns: QuizOption[];
+  question: AssessmentQuestion;
+  value: string | string[] | number | undefined;
+  onChange: (v: string | string[] | number) => void;
 }) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {concerns.map((c) => {
-        const selected = answers.concern === c.id;
-        return (
-          <button
-            key={c.id}
-            onClick={() => setAnswers((a) => ({ ...a, concern: c.id }))}
-            className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 px-3 py-5 text-center transition-all duration-200 cursor-pointer
-              ${
-                selected
-                  ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10"
-                  : "border-gray-100 bg-white hover:border-[#0B2560]/30 hover:shadow-sm"
-              }`}
-          >
-            <SelectionCheck selected={selected} />
-            <span className="text-3xl leading-none">{c.emoji}</span>
-            <span
-              className={`text-sm font-semibold leading-snug ${
-                selected ? "text-[#0B2560]" : "text-gray-700"
+  if (question.type === "slider" || question.type === "number") {
+    const num = typeof value === "number" ? value : question.sliderMin;
+    return (
+      <div className="bg-white rounded-2xl border-2 border-gray-100 px-6 py-8">
+        <div className="flex items-baseline justify-between mb-4">
+          <span className="text-3xl font-extrabold text-[#0B2560]">{num}</span>
+          {question.sliderUnit && <span className="text-sm text-gray-400">{question.sliderUnit}</span>}
+        </div>
+        <input
+          type="range"
+          min={question.sliderMin}
+          max={question.sliderMax}
+          step={question.sliderStep || 1}
+          value={num}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full accent-[#0B2560]"
+        />
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <span>{question.sliderMin}</span>
+          <span>{question.sliderMax}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (question.type === "dropdown") {
+    return (
+      <select
+        value={typeof value === "string" ? value : ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 font-semibold focus:outline-none focus:border-[#0B2560]"
+      >
+        <option value="">Select an option</option>
+        {question.answers.map((a) => (
+          <option key={a.id} value={a.id}>{a.title}</option>
+        ))}
+      </select>
+    );
+  }
+
+  if (question.type === "yesno") {
+    return (
+      <div className="flex gap-3">
+        {question.answers.map((a) => {
+          const selected = value === a.id;
+          return (
+            <button
+              key={a.id}
+              onClick={() => onChange(a.id)}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-2xl border-2 px-6 py-6 font-bold text-lg transition-all duration-200 ${
+                selected ? "border-[#0B2560] bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/25" : "border-gray-100 bg-white text-gray-700 hover:border-[#0B2560]/30"
               }`}
             >
-              {c.label}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+              {a.icon && <span className="text-2xl">{a.icon}</span>}
+              {a.title}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
-function SkinTypeStep({
-  answers,
-  setAnswers,
-  skinTypes,
-}: {
-  answers: Answers;
-  setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
-  skinTypes: QuizOption[];
-}) {
+  // single / multi / image / emoji — same card-grid visual language
+  const isMulti = question.type === "multi";
+  const selectedIds = isMulti ? (Array.isArray(value) ? value : []) : [];
+  const singleId = !isMulti && typeof value === "string" ? value : "";
+
+  const toggle = (id: string) => {
+    if (isMulti) {
+      const next = selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
+      onChange(next);
+    } else {
+      onChange(id);
+    }
+  };
+
+  const hasDescriptions = question.answers.some((a) => a.description);
+
   return (
-    <div className="flex flex-col gap-3">
-      {skinTypes.map((s) => {
-        const selected = answers.skinType === s.id;
+    <div className={hasDescriptions ? "flex flex-col gap-3" : "grid grid-cols-2 md:grid-cols-3 gap-3"}>
+      {question.answers.map((a) => {
+        const selected = isMulti ? selectedIds.includes(a.id) : singleId === a.id;
         return (
           <button
-            key={s.id}
-            onClick={() => setAnswers((a) => ({ ...a, skinType: s.id }))}
-            className={`relative flex items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-all duration-200 cursor-pointer
-              ${
-                selected
-                  ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10"
-                  : "border-gray-100 bg-white hover:border-[#0B2560]/30 hover:shadow-sm"
-              }`}
+            key={a.id}
+            onClick={() => toggle(a.id)}
+            className={`relative flex items-center gap-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer ${
+              hasDescriptions ? "px-5 py-4" : "flex-col justify-center gap-2 px-3 py-5 text-center"
+            } ${
+              selected ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10" : "border-gray-100 bg-white hover:border-[#0B2560]/30 hover:shadow-sm"
+            }`}
           >
             <SelectionCheck selected={selected} />
-            <span className="text-2xl flex-shrink-0">{s.emoji}</span>
+            {a.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={a.image} alt={a.title} className="w-12 h-12 rounded-xl object-cover shrink-0" />
+            ) : (
+              <span className={hasDescriptions ? "text-2xl flex-shrink-0" : "text-3xl leading-none"}>{a.icon}</span>
+            )}
             <div>
-              <p className={`font-bold text-sm ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>
-                {s.label}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+              <p className={`font-bold text-sm ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>{a.title}</p>
+              {a.description && <p className="text-xs text-gray-500 mt-0.5">{a.description}</p>}
             </div>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function ExperienceStep({
-  answers,
-  setAnswers,
-  experiences,
-}: {
-  answers: Answers;
-  setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
-  experiences: QuizOption[];
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      {experiences.map((e) => {
-        const selected = answers.experience === e.id;
-        return (
-          <button
-            key={e.id}
-            onClick={() => setAnswers((a) => ({ ...a, experience: e.id }))}
-            className={`relative flex items-center gap-4 rounded-2xl border-2 px-5 py-5 text-left transition-all duration-200 cursor-pointer
-              ${
-                selected
-                  ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10"
-                  : "border-gray-100 bg-white hover:border-[#0B2560]/30 hover:shadow-sm"
-              }`}
-          >
-            <SelectionCheck selected={selected} />
-            <span className="text-3xl flex-shrink-0">{e.emoji}</span>
-            <div>
-              <p className={`font-bold ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>{e.label}</p>
-              <p className="text-sm text-gray-500 mt-0.5">{e.desc}</p>
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function BudgetStep({
-  answers,
-  setAnswers,
-  budgets,
-}: {
-  answers: Answers;
-  setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
-  budgets: string[];
-}) {
-  return (
-    <div className="flex flex-wrap gap-3">
-      {budgets.map((b) => {
-        const selected = answers.budget === b;
-        return (
-          <button
-            key={b}
-            onClick={() => setAnswers((a) => ({ ...a, budget: b }))}
-            className={`relative flex items-center gap-2 rounded-full border-2 px-5 py-3 text-sm font-semibold transition-all duration-200 cursor-pointer
-              ${
-                selected
-                  ? "border-[#0B2560] bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/25"
-                  : "border-gray-200 bg-white text-gray-700 hover:border-[#0B2560]/50 hover:text-[#0B2560]"
-              }`}
-          >
-            {selected && <CheckIcon />}
-            {b}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function TimelineStep({
-  answers,
-  setAnswers,
-  timelines,
-}: {
-  answers: Answers;
-  setAnswers: React.Dispatch<React.SetStateAction<Answers>>;
-  timelines: QuizOption[];
-}) {
-  return (
-    <div className="flex flex-col sm:flex-row gap-3">
-      {timelines.map((t) => {
-        const selected = answers.timeline === t.id;
-        return (
-          <button
-            key={t.id}
-            onClick={() => setAnswers((a) => ({ ...a, timeline: t.id }))}
-            className={`relative flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-6 text-center transition-all duration-200 cursor-pointer
-              ${
-                selected
-                  ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10"
-                  : "border-gray-100 bg-white hover:border-[#0B2560]/30 hover:shadow-sm"
-              }`}
-          >
-            <SelectionCheck selected={selected} />
-            <span className="text-3xl">{t.emoji}</span>
-            <p className={`font-bold text-sm ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>{t.label}</p>
-            <p className="text-xs text-gray-500 leading-snug">{t.desc}</p>
           </button>
         );
       })}
@@ -522,24 +196,19 @@ function TimelineStep({
 function AnalysingScreen() {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
-      {/* Spinner */}
       <div className="relative w-20 h-20">
         <div className="absolute inset-0 rounded-full border-4 border-gray-100" />
         <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#0B2560] animate-spin" />
         <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-[#F5A623] animate-spin [animation-direction:reverse] [animation-duration:0.8s]" />
       </div>
       <div>
-        <p className="text-lg font-bold text-[#0B2560] mb-1">Analysing your profile…</p>
+        <p className="text-lg font-bold text-[#0B2560] mb-1">Analysing your answers…</p>
         <p className="text-sm text-gray-500">Matching against 50,000+ patient outcomes</p>
       </div>
-      {/* Animated dots */}
-      <div className="flex gap-3 mt-2">
-        {["Checking skin type", "Matching treatments", "Calculating fit scores"].map((label, i) => (
+      <div className="flex gap-3 mt-2 flex-wrap justify-center">
+        {["Matching treatments", "Comparing protocols", "Preparing your plan"].map((label, i) => (
           <div key={label} className="flex items-center gap-1.5 text-xs text-gray-400">
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse"
-              style={{ animationDelay: `${i * 0.3}s` }}
-            />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
             {label}
           </div>
         ))}
@@ -548,115 +217,113 @@ function AnalysingScreen() {
   );
 }
 
-function TreatmentCard({
-  treatment,
-  concern,
-  rank,
-}: {
-  treatment: Treatment;
-  concern: string;
-  rank: number;
-}) {
+function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation; rank: number }) {
   const { consultationCta } = useSiteConfig();
-  const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}&concern=${encodeURIComponent(concern)}`;
+  const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}`;
 
   return (
-    <div
-      className={`bg-white rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
-        rank === 0
-          ? "border-[#0B2560] shadow-md shadow-[#0B2560]/10"
-          : "border-gray-100 shadow-sm"
-      }`}
-    >
+    <div className={`bg-white rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
+      rank === 0 ? "border-[#0B2560] shadow-md shadow-[#0B2560]/10" : "border-gray-100 shadow-sm"
+    }`}>
       {rank === 0 && (
         <div className="bg-[#0B2560] text-white text-xs font-bold uppercase tracking-widest text-center py-1.5 px-4">
           Top Match for You
         </div>
       )}
       <div className="p-5">
-        {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{treatment.icon}</span>
             <h3 className="font-bold text-[#0B2560] text-base leading-tight">{treatment.name}</h3>
           </div>
           <span className="flex-shrink-0 text-sm font-black text-[#0B2560] bg-[#0B2560]/8 rounded-full px-3 py-1">
-            {treatment.match}%
+            {treatment.confidence}%
           </span>
         </div>
 
-        {/* Match bar */}
         <div className="mb-4">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
-              style={{
-                width: `${treatment.match}%`,
-                background: rank === 0
-                  ? "linear-gradient(90deg, #0B2560, #1a4a8a)"
-                  : "#0B2560",
-              }}
+              style={{ width: `${treatment.confidence}%`, background: rank === 0 ? "linear-gradient(90deg, #0B2560, #1a4a8a)" : "#0B2560" }}
             />
           </div>
-          <p className="text-xs text-gray-400 mt-1">{treatment.match}% match with your profile</p>
+          <p className="text-xs text-gray-400 mt-1">{treatment.confidence}% match with your profile</p>
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-gray-600 leading-relaxed mb-4">{treatment.desc}</p>
+        <p className="text-sm text-gray-600 leading-relaxed mb-4">{treatment.description}</p>
 
-        {/* Meta */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span className="inline-flex items-center gap-1 text-xs bg-[#f6faff] text-[#0B2560] rounded-lg px-3 py-1.5 font-medium border border-[#0B2560]/10">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {treatment.sessions}
-          </span>
-          <span className="inline-flex items-center gap-1 text-xs bg-[#F5A623]/10 text-[#c47e00] rounded-lg px-3 py-1.5 font-medium border border-[#F5A623]/20">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {treatment.price}
-          </span>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {treatment.sessions && (
+            <span className="inline-flex items-center gap-1 text-xs bg-[#f6faff] text-[#0B2560] rounded-lg px-3 py-1.5 font-medium border border-[#0B2560]/10">
+              📅 {treatment.sessions}
+            </span>
+          )}
+          {treatment.price && (
+            <span className="inline-flex items-center gap-1 text-xs bg-[#F5A623]/10 text-[#c47e00] rounded-lg px-3 py-1.5 font-medium border border-[#F5A623]/20">
+              ₹ {treatment.price}
+            </span>
+          )}
+          {treatment.recovery && (
+            <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 rounded-lg px-3 py-1.5 font-medium border border-green-100">
+              ⏱ {treatment.recovery}
+            </span>
+          )}
         </div>
 
-        {/* CTA */}
+        {(treatment.advantages?.length || treatment.disadvantages?.length) ? (
+          <div className="mb-4 space-y-1">
+            {treatment.advantages?.slice(0, 2).map((a, i) => (
+              <p key={i} className="text-xs text-green-700 flex items-start gap-1.5"><span>✓</span>{a}</p>
+            ))}
+            {treatment.disadvantages?.slice(0, 1).map((d, i) => (
+              <p key={i} className="text-xs text-gray-400 flex items-start gap-1.5"><span>–</span>{d}</p>
+            ))}
+          </div>
+        ) : null}
+
         <Link
           href={bookUrl}
-          className="block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200
-            bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
+          className="block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200 bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
         >
-          {consultationCta}
+          {treatment.cta || consultationCta}
         </Link>
       </div>
     </div>
   );
 }
 
+type LeadForm = { name: string; phone: string; email: string; city: string };
+type LeadStatus = "idle" | "sending" | "sent" | "saved" | "error";
+
 function ResultsScreen({
-  answers,
   recommendations,
-  email,
-  setEmail,
-  emailStatus,
-  onEmailSubmit,
+  doctorMessage,
+  showDoctorMessage,
+  showEmailForm,
+  lead,
+  setLead,
+  leadStatus,
+  onLeadSubmit,
   onRetake,
 }: {
-  answers: Answers;
-  recommendations: Treatment[];
-  email: string;
-  setEmail: (v: string) => void;
-  emailStatus: "idle" | "sending" | "sent" | "saved" | "error";
-  onEmailSubmit: (e: React.FormEvent) => void;
+  recommendations: TreatmentRecommendation[];
+  doctorMessage: string;
+  showDoctorMessage: boolean;
+  showEmailForm: boolean;
+  lead: LeadForm;
+  setLead: React.Dispatch<React.SetStateAction<LeadForm>>;
+  leadStatus: LeadStatus;
+  onLeadSubmit: (e: React.FormEvent) => void;
   onRetake: () => void;
 }) {
   const { publicWhatsApp } = useSiteConfig();
   const waQuizHref = publicWhatsApp
-    ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}?text=Hi%2C%20I%20just%20completed%20the%20skin%20quiz%20and%20would%20like%20to%20know%20more%20about%20my%20treatment%20plan.`
+    ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}?text=Hi%2C%20I%20just%20completed%20the%20AI%20skin%20%26%20hair%20assessment%20and%20would%20like%20to%20know%20more%20about%20my%20treatment%20plan.`
     : null;
+
   return (
     <div className="py-2">
-      {/* Results headline */}
       <div className="text-center mb-8">
         <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
@@ -665,89 +332,101 @@ function ResultsScreen({
         <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-3 tracking-tight">
           Your Personalised Treatment Plan
         </h2>
-        <p className="text-sm text-gray-500 max-w-md mx-auto">
-          Based on your profile:{" "}
-          <span className="font-semibold text-[#0B2560]">{answers.concern}</span>
-          {answers.skinType && (
-            <>
-              {" "}·{" "}
-              <span className="font-semibold text-[#0B2560]">{answers.skinType} skin</span>
-            </>
-          )}
-          {answers.experience && (
-            <>
-              {" "}·{" "}
-              <span className="font-semibold text-[#0B2560]">{answers.experience}</span>
-            </>
-          )}
-        </p>
-      </div>
-
-      {/* Treatment cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-        {recommendations.map((rec, i) => (
-          <TreatmentCard key={rec.name} treatment={rec} concern={answers.concern} rank={i} />
-        ))}
-      </div>
-
-      {/* Lead capture */}
-      <div className="bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] rounded-3xl p-6 md:p-8 text-white mb-6 shadow-xl shadow-[#0B2560]/20">
-        <div className="max-w-md mx-auto text-center">
-          <div className="text-3xl mb-3">📩</div>
-          <h3 className="text-xl font-bold mb-2">Get this plan emailed to you</h3>
-          <p className="text-sm text-blue-200 mb-5">
-            Receive your personalised treatment plan + a special first-consultation offer.
+        {recommendations[0] && (
+          <p className="text-sm text-gray-500 max-w-md mx-auto">
+            Overall match: <span className="font-semibold text-[#0B2560]">{recommendations[0].confidence}%</span>
           </p>
-          {emailStatus === "sent" && (
-            <div className="bg-white/10 rounded-2xl px-6 py-4 flex items-center justify-center gap-3">
-              <span className="text-2xl">✅</span>
-              <div className="text-left">
-                <p className="font-bold">Plan sent!</p>
-                <p className="text-xs text-blue-200">Check your inbox (and spam folder).</p>
-              </div>
-            </div>
-          )}
-          {emailStatus === "saved" && (
-            <div className="bg-white/10 rounded-2xl px-6 py-4 flex items-center justify-center gap-3">
-              <span className="text-2xl">👍</span>
-              <div className="text-left">
-                <p className="font-bold">Got it, thanks!</p>
-                <p className="text-xs text-blue-200">We've saved your details — our team will reach out to you shortly.</p>
-              </div>
-            </div>
-          )}
-          {(emailStatus === "idle" || emailStatus === "sending" || emailStatus === "error") && (
-            <form onSubmit={onEmailSubmit} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className="flex-1 px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
-              />
-              <button
-                type="submit"
-                disabled={emailStatus === "sending"}
-                className="px-6 py-3 bg-[#F5A623] hover:bg-[#e09520] text-[#0B2560] font-bold rounded-xl text-sm transition-all duration-200 hover:shadow-lg whitespace-nowrap disabled:opacity-60"
-              >
-                {emailStatus === "sending" ? "Sending…" : "Send Plan"}
-              </button>
-            </form>
-          )}
-          {emailStatus === "error" && (
-            <p className="text-xs text-red-200 mt-2">Something went wrong — please try again.</p>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* WhatsApp + Retake */}
+      {recommendations.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 mb-10">
+          We couldn't match a treatment to your answers — a specialist will review your responses personally.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {recommendations.map((rec, i) => (
+            <TreatmentCard key={rec.id} treatment={rec} rank={i} />
+          ))}
+        </div>
+      )}
+
+      {showDoctorMessage && doctorMessage && (
+        <div className="bg-[#f6faff] border border-[#0B2560]/10 rounded-2xl p-5 mb-8 flex items-start gap-3">
+          <span className="text-2xl shrink-0">👨‍⚕️</span>
+          <p className="text-sm text-gray-600 leading-relaxed">{doctorMessage}</p>
+        </div>
+      )}
+
+      {showEmailForm && (
+        <div className="bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] rounded-3xl p-6 md:p-8 text-white mb-6 shadow-xl shadow-[#0B2560]/20">
+          <div className="max-w-md mx-auto text-center">
+            <div className="text-3xl mb-3">📩</div>
+            <h3 className="text-xl font-bold mb-2">Get this plan emailed to you</h3>
+            <p className="text-sm text-blue-200 mb-5">
+              Receive your personalised treatment plan + a special first-consultation offer.
+            </p>
+            {leadStatus === "sent" && (
+              <div className="bg-white/10 rounded-2xl px-6 py-4 flex items-center justify-center gap-3">
+                <span className="text-2xl">✅</span>
+                <div className="text-left">
+                  <p className="font-bold">Plan sent!</p>
+                  <p className="text-xs text-blue-200">Check your inbox (and spam folder).</p>
+                </div>
+              </div>
+            )}
+            {leadStatus === "saved" && (
+              <div className="bg-white/10 rounded-2xl px-6 py-4 flex items-center justify-center gap-3">
+                <span className="text-2xl">👍</span>
+                <div className="text-left">
+                  <p className="font-bold">Got it, thanks!</p>
+                  <p className="text-xs text-blue-200">We've saved your details — our team will reach out to you shortly.</p>
+                </div>
+              </div>
+            )}
+            {(leadStatus === "idle" || leadStatus === "sending" || leadStatus === "error") && (
+              <form onSubmit={onLeadSubmit} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text" value={lead.name} onChange={(e) => setLead((l) => ({ ...l, name: e.target.value }))}
+                    placeholder="Your name" required
+                    className="px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
+                  />
+                  <input
+                    type="tel" value={lead.phone} onChange={(e) => setLead((l) => ({ ...l, phone: e.target.value }))}
+                    placeholder="Phone number" required
+                    className="px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
+                  />
+                </div>
+                <input
+                  type="email" value={lead.email} onChange={(e) => setLead((l) => ({ ...l, email: e.target.value }))}
+                  placeholder="your@email.com" required
+                  className="w-full px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
+                />
+                <input
+                  type="text" value={lead.city} onChange={(e) => setLead((l) => ({ ...l, city: e.target.value }))}
+                  placeholder="City (optional)"
+                  className="w-full px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
+                />
+                <button
+                  type="submit" disabled={leadStatus === "sending"}
+                  className="w-full px-6 py-3 bg-[#F5A623] hover:bg-[#e09520] text-[#0B2560] font-bold rounded-xl text-sm transition-all duration-200 hover:shadow-lg disabled:opacity-60"
+                >
+                  {leadStatus === "sending" ? "Sending…" : "Send My Plan"}
+                </button>
+              </form>
+            )}
+            {leadStatus === "error" && (
+              <p className="text-xs text-red-200 mt-2">Something went wrong — please try again.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         {waQuizHref && (
           <a
-            href={waQuizHref}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={waQuizHref} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2.5 px-6 py-3 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold rounded-xl text-sm transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -756,36 +435,39 @@ function ResultsScreen({
             Speak to a doctor now
           </a>
         )}
-
-        <button
-          onClick={onRetake}
-          className="text-sm text-gray-400 hover:text-[#0B2560] underline underline-offset-4 transition-colors"
-        >
-          Retake the quiz
+        <button onClick={onRetake} className="text-sm text-gray-400 hover:text-[#0B2560] underline underline-offset-4 transition-colors">
+          Retake the assessment
         </button>
       </div>
     </div>
   );
 }
 
-// ─── Main Quiz Page ───────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function SkinQuizPage() {
-  const [quizConfig, setQuizConfig] = useState<QuizConfigData>(DEFAULT_QUIZ_CONFIG as unknown as QuizConfigData);
+  // Read directly from window.location instead of next/navigation's
+  // useSearchParams() — that hook requires a <Suspense> boundary during
+  // static generation, and this value is only ever needed client-side after
+  // mount anyway (campaign/QR attribution, not anything rendered on first paint).
+  const [campaign, setCampaign] = useState("");
+  const [qrSource, setQrSource] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setCampaign(params.get("campaign") || "");
+    setQrSource(params.get("qr") === "1");
+  }, []);
+
+  const [quizConfig, setQuizConfig] = useState<AssessmentConfigData>(DEFAULT_QUIZ_CONFIG);
   const [configReady, setConfigReady] = useState(false);
-  const [step, setStep] = useState(0);
+  const [screen, setScreen] = useState<"intro" | "question" | "analysing" | "results">("intro");
   const [visible, setVisible] = useState(true);
-  const [analysing, setAnalysing] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [answers, setAnswers] = useState<Answers>({
-    concern: "",
-    skinType: "",
-    experience: "",
-    budget: "",
-    timeline: "",
-  });
-  const [email, setEmail] = useState("");
-  const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "sent" | "saved" | "error">("idle");
+  const [path, setPath] = useState<string[]>([]); // visited question ids, in order
+  const [answers, setAnswers] = useState<AssessmentAnswers>({});
+  const [lead, setLead] = useState<LeadForm>({ name: "", phone: "", email: "", city: "" });
+  const [leadStatus, setLeadStatus] = useState<LeadStatus>("idle");
+  const startedTracked = useRef(false);
+  const completedTracked = useRef(false);
 
   useEffect(() => {
     fetch("/api/quiz-config")
@@ -795,110 +477,144 @@ export default function SkinQuizPage() {
       .finally(() => setConfigReady(true));
   }, []);
 
-  // Auto-transition from analysing → results after 2s
-  useEffect(() => {
-    if (step === 6 && analysing) {
-      const timer = setTimeout(() => {
-        setAnalysing(false);
-        setShowResults(true);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [step, analysing]);
+  const trackEvent = useCallback((event: "started" | "completed", primaryConcern?: string) => {
+    fetch("/api/assessment-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event, primaryConcern: primaryConcern || "", campaign, qrSource }),
+    }).catch(() => {});
+  }, [campaign, qrSource]);
 
-  const canProceed = step === 0 || getStepAnswer(step, answers) !== "";
+  const orderedQuestions = [...quizConfig.questions].sort((a, b) => a.order - b.order);
+  const currentQuestionId = path[path.length - 1];
+  const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
+  const currentIndex = orderedQuestions.findIndex((q) => q.id === currentQuestionId);
 
-  // Animated page transition
   const transition = (fn: () => void) => {
     setVisible(false);
-    setTimeout(() => {
-      fn();
-      setVisible(true);
-    }, 200);
+    setTimeout(() => { fn(); setVisible(true); }, 200);
   };
 
+  const startAssessment = () => {
+    if (!startedTracked.current) { startedTracked.current = true; trackEvent("started"); }
+    const first = orderedQuestions[0];
+    if (!first) return;
+    transition(() => { setPath([first.id]); setScreen("question"); });
+  };
+
+  const goToResults = () => {
+    transition(() => setScreen("analysing"));
+  };
+
+  useEffect(() => {
+    if (screen !== "analysing") return;
+    const timer = setTimeout(() => {
+      const primary = getPrimaryConcernTag(quizConfig.questions, answers);
+      if (!completedTracked.current) { completedTracked.current = true; trackEvent("completed", primary); }
+      transition(() => setScreen("results"));
+    }, 2200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
+
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
+  const canProceed = !currentQuestion?.required || (
+    Array.isArray(currentAnswer) ? currentAnswer.length > 0 : currentAnswer !== undefined && currentAnswer !== ""
+  );
+
   const handleNext = () => {
-    if (step < 5) {
-      transition(() => setStep((s) => s + 1));
+    if (!currentQuestion) return;
+    // Branching: a chosen single-select answer can point to a specific next
+    // question; otherwise fall through to the next question in order.
+    let nextId: string | undefined;
+    if (typeof currentAnswer === "string") {
+      const chosen = currentQuestion.answers.find((a) => a.id === currentAnswer);
+      if (chosen?.nextQuestionId) nextId = chosen.nextQuestionId;
+    }
+    if (!nextId) nextId = orderedQuestions[currentIndex + 1]?.id;
+
+    if (nextId) {
+      transition(() => setPath((p) => [...p, nextId!]));
     } else {
-      // Step 5 → analysis screen
-      transition(() => {
-        setAnalysing(true);
-        setStep(6);
-      });
+      goToResults();
     }
   };
 
   const handleBack = () => {
-    if (step > 0 && step < 6) {
-      transition(() => setStep((s) => s - 1));
+    if (path.length > 1) {
+      transition(() => setPath((p) => p.slice(0, -1)));
+    } else {
+      transition(() => setScreen("intro"));
     }
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const recommendations = scoreRecommendations(
+    quizConfig.questions,
+    answers,
+    quizConfig.treatmentMap,
+    { maxRecommendations: quizConfig.settings?.maxRecommendations, confidenceThreshold: quizConfig.settings?.confidenceThreshold }
+  );
+
+  const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEmailStatus("sending");
+    setLeadStatus("sending");
     try {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
-          source: 'skin-quiz',
+          ...lead,
+          source: 'ai-assessment',
+          campaign,
+          qrSource,
+          primaryConcern: getPrimaryConcernTag(quizConfig.questions, answers),
           answers,
           recommendations,
         }),
       });
       const data = await res.json();
-      if (!data.success) {
-        setEmailStatus("error");
-        return;
-      }
-      setEmailStatus(data.emailSent ? "sent" : "saved");
+      if (!data.success) { setLeadStatus("error"); return; }
+      setLeadStatus(data.emailSent ? "sent" : "saved");
     } catch {
-      setEmailStatus("error");
+      setLeadStatus("error");
     }
   };
 
   const handleRetake = () => {
-    setAnswers({ concern: "", skinType: "", experience: "", budget: "", timeline: "" });
-    setShowResults(false);
-    setAnalysing(false);
-    setEmail("");
-    setEmailStatus("idle");
-    transition(() => setStep(0));
+    setAnswers({});
+    setPath([]);
+    setLead({ name: "", phone: "", email: "", city: "" });
+    setLeadStatus("idle");
+    startedTracked.current = false;
+    completedTracked.current = false;
+    transition(() => setScreen("intro"));
   };
 
-  const recommendations = answers.concern
-    ? (quizConfig.treatmentMap.find((e) => e.concernId === answers.concern)?.treatments ?? [])
-    : [];
+  const totalQuestions = orderedQuestions.length;
+  const progressPct = screen === "intro" ? 0 : screen !== "question" ? 100 : totalQuestions > 0 ? Math.round((path.length / totalQuestions) * 100) : 0;
+  const stepLabel = screen === "intro" ? "Assessment" : screen === "question" ? `Question ${path.length} of ${totalQuestions}` : "Your Results";
 
-  // Progress: 0 on intro, 100 on results, proportional in between
-  const progressPct =
-    step === 0 ? 0 : step >= 6 ? 100 : Math.round((step / 5) * 100);
+  const resultSections = quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections;
+  const sectionVisible = (key: string) => resultSections.find((s) => s.key === key)?.visible !== false;
 
-  const stepLabel =
-    step === 0
-      ? "Quiz"
-      : step >= 6
-      ? "Your Results"
-      : `Question ${step} of 5`;
+  if (configReady && quizConfig.settings && quizConfig.settings.enabled === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f6faff] text-center px-6">
+        <div>
+          <p className="text-4xl mb-4">🩺</p>
+          <p className="text-lg font-bold text-[#0B2560] mb-2">This assessment is temporarily unavailable</p>
+          <Link href="/book" className="text-sm text-[#3B82C4] underline">Book a consultation instead →</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f6faff] via-white to-[#edf4fc]">
-      {/* ── Sticky progress bar ────────────────────────────────────────────── */}
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100/80 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-[#0B2560] hover:text-[#F5A623] transition-colors text-sm font-semibold group"
-          >
-            <svg
-              className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+          <Link href="/" className="flex items-center gap-2 text-[#0B2560] hover:text-[#F5A623] transition-colors text-sm font-semibold group">
+            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             DR Youth Clinic
@@ -907,97 +623,54 @@ export default function SkinQuizPage() {
         </div>
         <div className="max-w-2xl mx-auto px-4 pb-2.5">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#0B2560] rounded-full transition-all duration-500 ease-in-out"
-              style={{ width: `${progressPct}%` }}
-            />
+            <div className="h-full bg-[#0B2560] rounded-full transition-all duration-500 ease-in-out" style={{ width: `${progressPct}%` }} />
           </div>
         </div>
       </div>
 
-      {/* ── Main content (animated) ─────────────────────────────────────────── */}
-      <div
-        className={`max-w-2xl mx-auto px-4 py-8 md:py-12 transition-all duration-200 ease-out ${
-          visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
-        }`}
-      >
-        {/* Step 0 — Intro (wait for config to avoid flash) */}
-        {step === 0 && !configReady && (
+      <div className={`max-w-2xl mx-auto px-4 py-8 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
+        {screen === "intro" && !configReady && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-10 h-10 rounded-full border-4 border-[#0B2560]/20 border-t-[#0B2560] animate-spin" />
-            <p className="text-sm text-gray-400">Loading your personalised quiz…</p>
+            <p className="text-sm text-gray-400">Loading your personalised assessment…</p>
           </div>
         )}
-        {step === 0 && configReady && (
-          <IntroScreen onStart={() => transition(() => setStep(1))} />
-        )}
+        {screen === "intro" && configReady && <IntroScreen onStart={startAssessment} />}
 
-        {/* Steps 1–5 */}
-        {step >= 1 && step <= 5 && (
+        {screen === "question" && currentQuestion && (
           <div>
-            {/* Step header */}
             <div className="mb-7">
               <div className="flex items-center gap-2 mb-3">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <div
-                    key={n}
-                    className={`h-1 rounded-full flex-1 transition-all duration-300 ${
-                      n < step
-                        ? "bg-[#0B2560]"
-                        : n === step
-                        ? "bg-[#F5A623]"
-                        : "bg-gray-200"
-                    }`}
-                  />
+                {orderedQuestions.map((q, i) => (
+                  <div key={q.id} className={`h-1 rounded-full flex-1 transition-all duration-300 ${
+                    i < path.length - 1 ? "bg-[#0B2560]" : i === path.length - 1 ? "bg-[#F5A623]" : "bg-gray-200"
+                  }`} />
                 ))}
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
-                {quizConfig.stepMeta.find((s) => s.step === step)?.title ?? ""}
-              </h2>
-              <p className="text-gray-500 text-sm md:text-base">
-                {quizConfig.stepMeta.find((s) => s.step === step)?.subtitle ?? ""}
-              </p>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">{currentQuestion.title}</h2>
+              {currentQuestion.subtitle && <p className="text-gray-500 text-sm md:text-base">{currentQuestion.subtitle}</p>}
             </div>
 
-            {/* Step content */}
-            {step === 1 && <ConcernStep answers={answers} setAnswers={setAnswers} concerns={quizConfig.concerns} />}
-            {step === 2 && <SkinTypeStep answers={answers} setAnswers={setAnswers} skinTypes={quizConfig.skinTypes} />}
-            {step === 3 && <ExperienceStep answers={answers} setAnswers={setAnswers} experiences={quizConfig.experiences} />}
-            {step === 4 && <BudgetStep answers={answers} setAnswers={setAnswers} budgets={quizConfig.budgets} />}
-            {step === 5 && <TimelineStep answers={answers} setAnswers={setAnswers} timelines={quizConfig.timelines} />}
+            <QuestionStep
+              question={currentQuestion}
+              value={currentAnswer}
+              onChange={(v) => setAnswers((a) => ({ ...a, [currentQuestion.id]: v }))}
+            />
 
-            {/* Navigation */}
             <div className="mt-8 flex items-center justify-between">
-              <button
-                onClick={handleBack}
-                className="flex items-center gap-2 text-gray-400 hover:text-[#0B2560] transition-colors text-sm font-medium group"
-              >
-                <svg
-                  className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+              <button onClick={handleBack} className="flex items-center gap-2 text-gray-400 hover:text-[#0B2560] transition-colors text-sm font-medium group">
+                <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 Back
               </button>
-
               <button
                 onClick={handleNext}
                 disabled={!canProceed}
-                className="group flex items-center gap-2 px-8 py-3 bg-[#0B2560] text-white font-bold rounded-xl shadow-md shadow-[#0B2560]/20
-                  hover:bg-[#0d2d72] hover:shadow-lg hover:shadow-[#0B2560]/25 hover:-translate-y-0.5
-                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md
-                  transition-all duration-200 active:translate-y-0"
+                className="group flex items-center gap-2 px-8 py-3 bg-[#0B2560] text-white font-bold rounded-xl shadow-md shadow-[#0B2560]/20 hover:bg-[#0d2d72] hover:shadow-lg hover:shadow-[#0B2560]/25 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md transition-all duration-200 active:translate-y-0"
               >
-                {step === 5 ? "See My Results" : "Next"}
-                <svg
-                  className="w-4 h-4 group-hover:translate-x-0.5 transition-transform group-disabled:translate-x-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                {currentIndex >= totalQuestions - 1 ? "See My Results" : "Next"}
+                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform group-disabled:translate-x-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </button>
@@ -1005,18 +678,18 @@ export default function SkinQuizPage() {
           </div>
         )}
 
-        {/* Step 6a — Analysing */}
-        {step === 6 && analysing && <AnalysingScreen />}
+        {screen === "analysing" && <AnalysingScreen />}
 
-        {/* Step 6b — Results */}
-        {step === 6 && !analysing && showResults && (
+        {screen === "results" && (
           <ResultsScreen
-            answers={answers}
             recommendations={recommendations}
-            email={email}
-            setEmail={setEmail}
-            emailStatus={emailStatus}
-            onEmailSubmit={handleEmailSubmit}
+            doctorMessage={quizConfig.doctorMessage}
+            showDoctorMessage={sectionVisible("doctorMessage")}
+            showEmailForm={sectionVisible("emailForm") && quizConfig.settings?.enableEmail !== false}
+            lead={lead}
+            setLead={setLead}
+            leadStatus={leadStatus}
+            onLeadSubmit={handleLeadSubmit}
             onRetake={handleRetake}
           />
         )}

@@ -1,41 +1,83 @@
 import mongoose from "mongoose";
 export { DEFAULT_QUIZ_CONFIG } from "@/app/lib/quizDefaults";
 
+const AnswerSchema = new mongoose.Schema({
+  id:             { type: String, required: true },
+  title:          { type: String, required: true },
+  description:    { type: String, default: "" },
+  icon:           { type: String, default: "" },
+  image:          { type: String, default: "" },
+  score:          { type: Number, default: 0 },
+  tags:           { type: [String], default: [] },
+  weight:         { type: Number, default: 0 },
+  nextQuestionId: { type: String, default: "" },
+}, { _id: false });
+
+const QuestionSchema = new mongoose.Schema({
+  id:          { type: String, required: true },
+  title:       { type: String, required: true },
+  subtitle:    { type: String, default: "" },
+  description: { type: String, default: "" },
+  icon:        { type: String, default: "" },
+  image:       { type: String, default: "" },
+  type:        { type: String, enum: ["single", "multi", "slider", "yesno", "number", "dropdown", "image", "emoji"], default: "single" },
+  order:       { type: Number, required: true },
+  required:    { type: Boolean, default: true },
+  answers:     { type: [AnswerSchema], default: [] },
+  sliderMin:   { type: Number, default: 0 },
+  sliderMax:   { type: Number, default: 100 },
+  sliderStep:  { type: Number, default: 1 },
+  sliderUnit:  { type: String, default: "" },
+}, { _id: false });
+
 const TreatmentSchema = new mongoose.Schema({
-  name:     { type: String, required: true },
-  icon:     { type: String, default: "✨" },
-  desc:     { type: String, default: "" },
-  sessions: { type: String, default: "" },
-  price:    { type: String, default: "" },
-  match:    { type: Number, default: 90, min: 0, max: 100 },
-}, { _id: false });
-
-const OptionSchema = new mongoose.Schema({
-  id:    { type: String, required: true },
-  emoji: { type: String, default: "" },
-  label: { type: String, required: true },
-  desc:  { type: String, default: "" },
-}, { _id: false });
-
-const StepMetaSchema = new mongoose.Schema({
-  step:     { type: Number, required: true },
-  title:    { type: String, required: true },
-  subtitle: { type: String, default: "" },
+  id:             { type: String, required: true },
+  name:           { type: String, required: true },
+  icon:           { type: String, default: "✨" },
+  description:    { type: String, default: "" },
+  confidence:     { type: Number, default: 90, min: 0, max: 100 },
+  priority:       { type: Number, default: 1 },
+  sessions:       { type: String, default: "" },
+  duration:       { type: String, default: "" },
+  recovery:       { type: String, default: "" },
+  price:          { type: String, default: "" },
+  advantages:     { type: [String], default: [] },
+  disadvantages:  { type: [String], default: [] },
+  cta:            { type: String, default: "Book Consultation" },
+  requiredTags:   { type: [String], default: [] },
 }, { _id: false });
 
 const TreatmentMapSchema = new mongoose.Schema({
-  concernId:  { type: String, required: true },
-  treatments: { type: [TreatmentSchema], default: [] },
+  concernTag:   { type: String, required: true },
+  concernLabel: { type: String, default: "" },
+  treatments:   { type: [TreatmentSchema], default: [] },
+}, { _id: false });
+
+const ResultSectionSchema = new mongoose.Schema({
+  key:     { type: String, required: true },
+  label:   { type: String, default: "" },
+  visible: { type: Boolean, default: true },
+  order:   { type: Number, default: 0 },
+}, { _id: false });
+
+const SettingsSchema = new mongoose.Schema({
+  enabled:             { type: Boolean, default: true },
+  enableAI:            { type: Boolean, default: true },
+  enableEmail:         { type: Boolean, default: true },
+  enablePDF:           { type: Boolean, default: false },
+  enableQR:            { type: Boolean, default: true },
+  anonymousMode:       { type: Boolean, default: true },
+  maxRecommendations:  { type: Number, default: 3 },
+  confidenceThreshold: { type: Number, default: 0 },
 }, { _id: false });
 
 const QuizConfigSchema = new mongoose.Schema({
-  stepMeta:     { type: [StepMetaSchema],     default: [] },
-  concerns:     { type: [OptionSchema],        default: [] },
-  skinTypes:    { type: [OptionSchema],        default: [] },
-  experiences:  { type: [OptionSchema],        default: [] },
-  budgets:      { type: [String],              default: [] },
-  timelines:    { type: [OptionSchema],        default: [] },
-  treatmentMap: { type: [TreatmentMapSchema],  default: [] },
+  questions:      { type: [QuestionSchema],     default: [] },
+  treatmentMap:   { type: [TreatmentMapSchema], default: [] },
+  aiPrompt:       { type: String, default: "" },
+  settings:       { type: SettingsSchema, default: () => ({}) },
+  resultSections: { type: [ResultSectionSchema], default: [] },
+  doctorMessage:  { type: String, default: "" },
 }, { timestamps: true });
 
 export default mongoose.models.QuizConfig ||

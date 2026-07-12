@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { connectDB } from "@/app/lib/mongodb";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
+import { migrateLegacyQuizConfig } from "@/app/lib/quizMigration";
 
 export const revalidate = 300;
 
@@ -10,12 +11,15 @@ const getCachedQuizConfig = unstable_cache(
     try {
       await connectDB();
       const config = await (QuizConfig as any).findOne({}).lean();
-      return config ?? DEFAULT_QUIZ_CONFIG;
+      return config ? migrateLegacyQuizConfig(config) : DEFAULT_QUIZ_CONFIG;
     } catch {
       return DEFAULT_QUIZ_CONFIG;
     }
   },
-  ["quiz-config-v1"],
+  // Bumped to v2 — the config shape changed (rigid concerns/skinTypes/...
+  // fields → generic questions[]), so a stale v1-shaped cache entry must not
+  // be served after this deploy.
+  ["quiz-config-v2"],
   { revalidate: 300, tags: ["quiz-config"] }
 );
 
