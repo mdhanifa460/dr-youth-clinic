@@ -132,8 +132,15 @@ export default function DoctorsSection({ data }: { data: any }) {
   const validKeys = cityKeys.length > 0 ? cityKeys : [];
   const initialTab = validKeys.includes(detectedKey) ? detectedKey : 'all';
 
-  const [activeTab, setActiveTab]       = useState<string>(initialTab);
-  const [autoDetected, setAutoDetected] = useState(validKeys.includes(detectedKey));
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  // The actual detected/nearest city, tracked separately from which tab is
+  // currently open — so the "Near you" badge re-appears if the visitor clicks
+  // back onto it after viewing another city. It used to be a one-shot
+  // boolean that any manual tab click (including clicking Chennai itself)
+  // permanently turned off, so it could only ever show once per page load.
+  const [detectedCityKey, setDetectedCityKey] = useState<string>(
+    validKeys.includes(detectedKey) ? detectedKey : ''
+  );
 
   // Browser geolocation — picks nearest city
   useEffect(() => {
@@ -142,7 +149,7 @@ export default function DoctorsSection({ data }: { data: any }) {
       ({ coords }) => {
         const nearest = nearestCityKey(coords.latitude, coords.longitude, validKeys);
         setActiveTab(nearest);
-        setAutoDetected(true);
+        setDetectedCityKey(nearest);
       },
       () => { /* denied — keep server default */ },
       { timeout: 6000, maximumAge: 300_000 },
@@ -194,12 +201,12 @@ export default function DoctorsSection({ data }: { data: any }) {
           <div className="flex items-center gap-2 flex-wrap mb-6">
             {tabs.map((tab) => {
               const isActive = activeTab === tab;
-              const isDetected = autoDetected && tab === activeTab && tab !== 'all';
+              const isDetected = tab === activeTab && tab === detectedCityKey && tab !== 'all';
               const count = countFor(tab);
               return (
                 <button
                   key={tab}
-                  onClick={() => { setActiveTab(tab); setAutoDetected(false); }}
+                  onClick={() => setActiveTab(tab)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
                     isActive
                       ? 'bg-[#0B2560] text-white border-[#0B2560] shadow-sm'
