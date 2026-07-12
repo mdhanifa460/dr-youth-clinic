@@ -433,7 +433,10 @@ export default function AiAssessmentAdminPage() {
         }
       }
       const existing = new Set(next.treatmentMap.map((e) => e.concernTag));
-      const missing = [...concernTags].filter((t) => !existing.has(t)).map((t) => ({ concernTag: t, concernLabel: concernLabels[t] || t, treatments: [] }));
+      // Array.from, not [...concernTags] — this project's TS target doesn't
+      // have downlevelIteration on, so spreading a Set (as opposed to an
+      // array) fails to compile.
+      const missing = Array.from(concernTags).filter((t) => !existing.has(t)).map((t) => ({ concernTag: t, concernLabel: concernLabels[t] || t, treatments: [] }));
       return { ...next, treatmentMap: [...next.treatmentMap, ...missing] };
     });
     setSaved(false);
