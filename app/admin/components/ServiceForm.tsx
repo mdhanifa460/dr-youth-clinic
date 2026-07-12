@@ -151,6 +151,36 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
     setForm((prev) => ({ ...prev, ...data }));
   };
 
+  // Guarantees a baseline geo-modified keyword ("{service} {city}") is
+  // present even if the admin never touches the AI keyword generator on Step
+  // 2 — local/geo search intent is some of the highest-value SEO for a
+  // clinic, so it shouldn't only exist as an optional AI suggestion pill.
+  // One keyword per city for "All Locations", matching how the AI generator
+  // itself now spreads across all 4 cities rather than favouring one.
+  const seedGeoKeywords = (name: string, location: string) => {
+    const svc = name.trim().toLowerCase();
+    if (!svc || !location) return;
+    const geoKeywords = location === "all"
+      ? ["chennai", "bangalore", "coimbatore", "kochi"].map((c) => `${svc} ${c}`)
+      : [`${svc} ${location}`];
+
+    setForm((prev) => {
+      const current = prev.keywords.split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
+      const currentSet = new Set(current);
+      const toAdd = geoKeywords.filter((k) => !currentSet.has(k));
+      if (toAdd.length === 0) return prev;
+      return { ...prev, keywords: [...current, ...toAdd].join(", ") };
+    });
+  };
+
+  // Existing services created before this feature existed may be missing the
+  // baseline geo-keyword — seed it once on load when editing, same as a
+  // fresh creation gets via the name/location field handlers below.
+  useEffect(() => {
+    if (initialData) seedGeoKeywords(initialData.name, initialData.location);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (step !== 2 || !form.name || !form.location) {
       setSlugCheck({ checking: false, available: null, suggestion: null });
@@ -395,6 +425,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               type="text"
               value={form.name}
               onChange={(e) => updateForm({ name: e.target.value })}
+              onBlur={() => seedGeoKeywords(form.name, form.location)}
               placeholder="e.g., Advanced Dermal Fillers"
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -403,7 +434,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
-              <select value={form.location} onChange={(e) => updateForm({ location: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <select value={form.location} onChange={(e) => { const loc = e.target.value; updateForm({ location: loc }); seedGeoKeywords(form.name, loc); }} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Select Location</option>
                 <option value="all">All Locations</option>
                 <option value="chennai">Chennai</option>
