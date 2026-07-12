@@ -4,6 +4,7 @@ import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Blog } from '@/app/models/Blog';
 import { LandingPage } from '@/app/models/LandingPage';
+import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,7 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const [services, doctors, blogPosts, landingPages] = await Promise.all([
       Service.find({ status: 'active' } as any)
-        .select('urlSlug location category updatedAt')
+        .select('urlSlug location targetLocations category updatedAt locationSeo')
         .lean() as Promise<any[]>,
       Doctor.find({ active: true } as any)
         .select('_id updatedAt')
@@ -125,13 +126,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const serviceUrls: MetadataRoute.Sitemap = services
       .filter((s) => s.location && s.category && s.urlSlug)
-      // An 'all'-location service is a real page at every city, not just one
-      // — list all of them, or Google only ever discovers/indexes it under a
-      // single arbitrary location string.
+      // A service can show at several cities (targetLocations, or the legacy
+      // 'all'), each with its own effective slug — list one URL per city it's
+      // actually shown at, or Google only ever discovers/indexes it under a
+      // single arbitrary location/slug combination.
       .flatMap((s) => {
-        const cities = s.location === 'all' ? LOCATIONS : [s.location];
+        const cities = getServiceCities(s);
         return cities.map((city) => ({
-          url: `${SITE_URL}/${city}/services/${s.category.toLowerCase()}/${s.urlSlug}`,
+          url: `${SITE_URL}/${city}/services/${s.category.toLowerCase()}/${getEffectiveSlug(s, city)}`,
           lastModified: s.updatedAt ? new Date(s.updatedAt) : new Date(),
           changeFrequency: 'weekly' as const,
           priority: 0.8,

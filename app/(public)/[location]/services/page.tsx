@@ -112,9 +112,14 @@ async function getClinicPhone(location: string, fallback: string) {
 async function getCategoryData(location: string) {
   try {
     await connectDB();
-    const raw = await Service.find(
-      { location: { $in: [location.toLowerCase(), 'all'] }, status: 'active' } as any
-    )
+    const loc = location.toLowerCase();
+    const raw = await Service.find({
+      status: 'active',
+      $or: [
+        { targetLocations: loc },
+        { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
+      ],
+    } as any)
       .select('category name')
       .lean() as any[];
 

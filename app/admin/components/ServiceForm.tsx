@@ -7,10 +7,22 @@ import ImageUpload from "./ImageUpload";
 import SeoPreviewCard from "./SeoPreviewCard";
 import KeywordSuggestions from "./KeywordSuggestions";
 import MetaSuggestions from "./MetaSuggestions";
+import LocationSeoPanel from "./LocationSeoPanel";
+import { getServiceCities, ALL_SERVICE_CITIES } from "@/app/lib/serviceSeo";
+
+interface LocationSeoOverride {
+  location: string;
+  metaTitle: string;
+  metaDescription: string;
+  urlSlug: string;
+  isCustomized: boolean;
+}
 
 interface FormData {
   name: string;
   location: string;
+  targetLocations: string[];
+  locationSeo: LocationSeoOverride[];
   category: string;
   price: number;
   duration: number;
@@ -90,6 +102,14 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           keywords: Array.isArray(initialData.keywords)
             ? initialData.keywords.join(", ")
             : initialData.keywords ?? "",
+          targetLocations: getServiceCities(initialData),
+          locationSeo: (initialData.locationSeo ?? []).map((l: any) => ({
+            location: l.location,
+            metaTitle: l.metaTitle ?? "",
+            metaDescription: l.metaDescription ?? "",
+            urlSlug: l.urlSlug ?? "",
+            isCustomized: !!l.isCustomized,
+          })),
           idealFor: initialData.idealFor ?? [],
           whyChooseUs: initialData.whyChooseUs ?? [],
           treatmentSteps: initialData.treatmentSteps ?? [],
@@ -113,6 +133,8 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
       : {
           name: "",
           location: "",
+          targetLocations: [],
+          locationSeo: [],
           category: "",
           price: 0,
           duration: 45,
@@ -155,14 +177,11 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
   // present even if the admin never touches the AI keyword generator on Step
   // 2 — local/geo search intent is some of the highest-value SEO for a
   // clinic, so it shouldn't only exist as an optional AI suggestion pill.
-  // One keyword per city for "All Locations", matching how the AI generator
-  // itself now spreads across all 4 cities rather than favouring one.
-  const seedGeoKeywords = (name: string, location: string) => {
+  // One keyword per selected city.
+  const seedGeoKeywords = (name: string, cities: string[]) => {
     const svc = name.trim().toLowerCase();
-    if (!svc || !location) return;
-    const geoKeywords = location === "all"
-      ? ["chennai", "bangalore", "coimbatore", "kochi"].map((c) => `${svc} ${c}`)
-      : [`${svc} ${location}`];
+    if (!svc || cities.length === 0) return;
+    const geoKeywords = cities.map((c) => `${svc} ${c}`);
 
     setForm((prev) => {
       const current = prev.keywords.split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
@@ -177,18 +196,18 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
   // baseline geo-keyword — seed it once on load when editing, same as a
   // fresh creation gets via the name/location field handlers below.
   useEffect(() => {
-    if (initialData) seedGeoKeywords(initialData.name, initialData.location);
+    if (initialData) seedGeoKeywords(initialData.name, getServiceCities(initialData));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (step !== 2 || !form.name || !form.location) {
+    if (step !== 2 || !form.name || form.targetLocations.length === 0) {
       setSlugCheck({ checking: false, available: null, suggestion: null });
       return;
     }
     const slug = toSlug(form.name);
     const excludeId = initialData?._id || "";
-    const params = new URLSearchParams({ slug, location: form.location });
+    const params = new URLSearchParams({ slug, locations: form.targetLocations.join(",") });
     if (excludeId) params.set("excludeId", excludeId);
 
     setSlugCheck({ checking: true, available: null, suggestion: null });
@@ -204,13 +223,20 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
         }
       })
       .catch(() => setSlugCheck({ checking: false, available: null, suggestion: null }));
-  }, [step, form.name, form.location]);
+  }, [step, form.name, form.targetLocations]);
+
+  const isMultiCity = form.targetLocations.length > 1;
+  const primaryLocation = form.targetLocations[0] || "";
+  // 'all' signals "city-agnostic" to the shared AI generators whenever this
+  // service shows at more than one city — not just when literally all 4 are
+  // selected, since a title shared by even 2 cities can't safely name either.
+  const seoLocationForAi = isMultiCity ? "all" : primaryLocation;
 
   const validateStep = (stepNum: number): boolean => {
     switch (stepNum) {
       case 1:
         if (!form.name.trim()) { setError("Service name is required"); return false; }
-        if (!form.location) { setError("Location is required"); return false; }
+        if (form.targetLocations.length === 0) { setError("Select at least one location"); return false; }
         if (!form.category) { setError("Category is required"); return false; }
         break;
       case 2: {
@@ -218,15 +244,16 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
         if (form.metaTitle.length > 60) { setError("Meta title should be max 60 characters"); return false; }
         if (!form.metaDescription.trim()) { setError("Meta description is required"); return false; }
         if (form.metaDescription.length > 160) { setError("Meta description should be max 160 characters"); return false; }
-        // An 'all'-location service is the SAME document rendered at every
-        // city's URL — a title/description naming one city would be wrong on
-        // the other 3, so this is a correctness check, not just a style nit.
-        if (form.location === "all") {
+        // The shared title/description is the fallback for EVERY selected
+        // city (unless a city has its own per-city override below) — naming
+        // one city here would be wrong wherever a different city inherits it,
+        // so this is a correctness check, not just a style nit.
+        if (form.targetLocations.length > 1) {
           const cityHit = ["chennai", "bangalore", "bengaluru", "coimbatore", "kochi"].find((c) =>
             form.metaTitle.toLowerCase().includes(c) || form.metaDescription.toLowerCase().includes(c)
           );
           if (cityHit) {
-            setError(`This service is set to "All Locations" but the meta title/description mentions ${cityHit[0].toUpperCase()}${cityHit.slice(1)} — remove it, since this text is shown on every city's page.`);
+            setError(`This service shows at ${form.targetLocations.length} cities but the shared meta title/description mentions ${cityHit[0].toUpperCase()}${cityHit.slice(1)} — remove it, or set a custom title for that specific city below.`);
             return false;
           }
         }
@@ -284,7 +311,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
   if (success) {
     const isActive = form.status === "active";
     const slug = toSlug(form.name);
-    const city = form.location;
+    const city = isMultiCity ? "all" : primaryLocation;
 
     return (
       <>
@@ -425,37 +452,71 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               type="text"
               value={form.name}
               onChange={(e) => updateForm({ name: e.target.value })}
-              onBlur={() => seedGeoKeywords(form.name, form.location)}
+              onBlur={() => seedGeoKeywords(form.name, form.targetLocations)}
               placeholder="e.g., Advanced Dermal Fillers"
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
-              <select value={form.location} onChange={(e) => { const loc = e.target.value; updateForm({ location: loc }); seedGeoKeywords(form.name, loc); }} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select Location</option>
-                <option value="all">All Locations</option>
-                <option value="chennai">Chennai</option>
-                <option value="bangalore">Bangalore</option>
-                <option value="coimbatore">Coimbatore</option>
-                <option value="kochi">Kochi</option>
-              </select>
-              {form.location === "all" && (
-                <p className="text-xs text-[#3B82C4] mt-1.5">Shown at every clinic location, using the same content and price everywhere.</p>
-              )}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Locations *</label>
+            <div className="flex flex-wrap gap-2">
+              {ALL_SERVICE_CITIES.map((city) => {
+                const checked = form.targetLocations.includes(city);
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => {
+                      const next = checked
+                        ? form.targetLocations.filter((c) => c !== city)
+                        : [...form.targetLocations, city];
+                      updateForm({ targetLocations: next, location: next.length === ALL_SERVICE_CITIES.length ? "all" : next[0] || "" });
+                      seedGeoKeywords(form.name, next);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold border transition capitalize ${
+                      checked
+                        ? "bg-[#0B2560] text-white border-[#0B2560]"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-[#0B2560]"
+                    }`}
+                  >
+                    {city}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => {
+                  const allSelected = form.targetLocations.length === ALL_SERVICE_CITIES.length;
+                  const next = allSelected ? [] : [...ALL_SERVICE_CITIES];
+                  updateForm({ targetLocations: next, location: allSelected ? "" : "all" });
+                  seedGeoKeywords(form.name, next);
+                }}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
+                  form.targetLocations.length === ALL_SERVICE_CITIES.length
+                    ? "bg-[#F5A623] text-white border-[#F5A623]"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-[#F5A623]"
+                }`}
+              >
+                All Locations
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-              <select value={form.category} onChange={(e) => updateForm({ category: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select Category</option>
-                <option value="Skin">Skin</option>
-                <option value="Hair">Hair</option>
-                <option value="Laser">Laser</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            {form.targetLocations.length > 1 && (
+              <p className="text-xs text-[#3B82C4] mt-2">
+                Shown at {form.targetLocations.length} cities, sharing the same treatment content — you can give any city its own title/description/URL on the SEO step.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+            <select value={form.category} onChange={(e) => updateForm({ category: e.target.value })} className="w-full sm:w-1/2 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Select Category</option>
+              <option value="Skin">Skin</option>
+              <option value="Hair">Hair</option>
+              <option value="Laser">Laser</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -506,10 +567,10 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Meta Title * <span className="text-gray-400 font-normal">{form.metaTitle.length}/60</span>
             </label>
-            <input type="text" value={form.metaTitle} onChange={(e) => updateForm({ metaTitle: e.target.value })} placeholder={form.location === "all" ? "e.g., Advanced Dermal Fillers: Results, Reviews & Cost | DR Youth Clinic" : "e.g., Advanced Dermal Fillers in Chennai | DR Youth Clinic"} maxLength={60} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="text" value={form.metaTitle} onChange={(e) => updateForm({ metaTitle: e.target.value })} placeholder={isMultiCity ? "e.g., Advanced Dermal Fillers: Results, Reviews & Cost | DR Youth Clinic" : "e.g., Advanced Dermal Fillers in Chennai | DR Youth Clinic"} maxLength={60} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <p className="text-xs text-gray-400 mt-1">
-              {form.location === "all"
-                ? "This is shared across all 4 city pages — don't name a specific city here."
+              {isMultiCity
+                ? `This is shared across all ${form.targetLocations.length} selected city pages — don't name a specific city here. Customize a city below if it needs its own title.`
                 : "Keep it concise · Include service + city"}
             </p>
           </div>
@@ -525,7 +586,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           <MetaSuggestions
             serviceName={form.name}
             category={form.category}
-            location={form.location}
+            location={seoLocationForAi}
             onApply={(title, description) => updateForm({ metaTitle: title, metaDescription: description })}
           />
 
@@ -539,17 +600,17 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             <KeywordSuggestions
               serviceName={form.name}
               category={form.category}
-              location={form.location}
+              location={seoLocationForAi}
               keywords={form.keywords}
               onChange={(v) => updateForm({ keywords: v })}
             />
           </div>
 
           <div className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 mb-1">URL Slug (auto-generated)</p>
+            <p className="text-xs font-semibold text-gray-500 mb-1">URL Slug (auto-generated · shared default)</p>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-gray-400 font-mono">
-                dryouthclinic.com/{form.location === "all" ? "{chennai|bangalore|coimbatore|kochi}" : (form.location || "city")}/services/{form.category?.toLowerCase() || "category"}/
+                dryouthclinic.com/{isMultiCity ? `{${form.targetLocations.join("|")}}` : (primaryLocation || "city")}/services/{form.category?.toLowerCase() || "category"}/
               </span>
               <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{computedSlug || "service-name"}</span>
               {slugCheck.checking && <span className="text-xs text-gray-400">checking…</span>}
@@ -562,9 +623,20 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             </div>
           </div>
 
+          <LocationSeoPanel
+            cities={form.targetLocations}
+            serviceName={form.name}
+            category={form.category}
+            sharedTitle={form.metaTitle}
+            sharedDescription={form.metaDescription}
+            sharedSlug={computedSlug}
+            locationSeo={form.locationSeo}
+            onChange={(next) => updateForm({ locationSeo: next })}
+          />
+
           <div>
             <p className="text-sm font-semibold text-gray-700 mb-2">Live Preview</p>
-            <SeoPreviewCard title={form.metaTitle} description={form.metaDescription} keywords={form.keywords} slug={computedSlug} location={form.location} serviceName={form.name} benefits={form.benefits} narrative={form.narrative} />
+            <SeoPreviewCard title={form.metaTitle} description={form.metaDescription} keywords={form.keywords} slug={computedSlug} location={primaryLocation} isMultiCity={isMultiCity} serviceName={form.name} benefits={form.benefits} narrative={form.narrative} />
           </div>
         </div>
       )}
@@ -592,7 +664,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Hero Image *</label>
-            <ImageUpload onUpload={(data) => updateForm({ heroImage: data })} label="Service Hero Image (1200×800px recommended)" folder={`dr-youth-clinic/services/${form.location || "general"}`} />
+            <ImageUpload onUpload={(data) => updateForm({ heroImage: data })} label="Service Hero Image (1200×800px recommended)" folder={`dr-youth-clinic/services/${primaryLocation || "general"}`} />
           </div>
 
           {/* Technology */}
@@ -1206,7 +1278,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                             updateForm({ beforeAfterImages: updated });
                           }}
                           label="Upload Before"
-                          folder={`dr-youth-clinic/services/${form.location || "general"}/before-after`}
+                          folder={`dr-youth-clinic/services/${primaryLocation || "general"}/before-after`}
                         />
                       )}
                     </div>
@@ -1234,7 +1306,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                             updateForm({ beforeAfterImages: updated });
                           }}
                           label="Upload After"
-                          folder={`dr-youth-clinic/services/${form.location || "general"}/before-after`}
+                          folder={`dr-youth-clinic/services/${primaryLocation || "general"}/before-after`}
                         />
                       )}
                     </div>
@@ -1282,7 +1354,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             <h3 className="font-bold text-[#0B2560] text-sm">Service Summary</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <p><span className="text-gray-500">Name:</span> <span className="font-semibold">{form.name}</span></p>
-              <p><span className="text-gray-500">Location:</span> <span className="font-semibold capitalize">{form.location === "all" ? "All Locations" : form.location}</span></p>
+              <p><span className="text-gray-500">Locations:</span> <span className="font-semibold capitalize">{form.targetLocations.length === 4 ? "All Locations" : form.targetLocations.join(", ") || "—"}</span></p>
               <p><span className="text-gray-500">Price:</span> <span className="font-semibold">{form.currency} {form.price}</span></p>
               <p><span className="text-gray-500">Duration:</span> <span className="font-semibold">{form.duration} mins</span></p>
               {form.sessionsRequired && <p><span className="text-gray-500">Sessions:</span> <span className="font-semibold">{form.sessionsRequired}</span></p>}
@@ -1292,7 +1364,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             </div>
             {computedSlug && (
               <p className="text-xs text-gray-400 font-mono pt-1 border-t border-blue-50">
-                URL: /{form.location === "all" ? "{every city}" : form.location}/services/{form.category?.toLowerCase() || "category"}/{computedSlug}
+                URL: /{isMultiCity ? "{every selected city}" : primaryLocation}/services/{form.category?.toLowerCase() || "category"}/{computedSlug}
               </p>
             )}
           </div>

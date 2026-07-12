@@ -24,6 +24,7 @@ import TreatmentJourneyExplorer from '@/app/components/TreatmentJourneyExplorer'
 import TreatmentComparison from '@/app/components/TreatmentComparison';
 import AftercareCalendar from '@/app/components/AftercareCalendar';
 import ServiceStickyDesktopCta from '@/app/components/ServiceStickyDesktopCta';
+import { getServiceCities, getEffectiveSeo, getEffectiveSlug } from '@/app/lib/serviceSeo';
 
 export const revalidate = 300;
 
@@ -52,20 +53,38 @@ interface PageProps {
   params: { location: string; category: string; slug: string };
 }
 
+// A service's slug can now be overridden per city (locationSeo[]), which
+// can't be resolved in a single flat Mongo query since it lives in a sparse
+// sub-array — fetch the (small, per-clinic-catalog) candidate set visible at
+// this city, then resolve the effective slug for that city in JS.
+async function getServiceCandidates(location: string, extraFilter: Record<string, any> = {}) {
+  const loc = location.toLowerCase();
+  return Service.find({
+    status: 'active',
+    $or: [
+      { targetLocations: loc },
+      { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
+    ],
+    ...extraFilter,
+  } as any).lean() as Promise<any[]>;
+}
+
 async function getService(location: string, slug: string) {
   try {
     await connectDB();
-    // 'all'-location services show at every city, so a city's page must also
-    // match them, not just an exact-location document.
-    return Service.findOne({ urlSlug: slug, location: { $in: [location.toLowerCase(), 'all'] }, status: 'active' } as any).lean() as Promise<any | null>;
+    const candidates = await getServiceCandidates(location);
+    return candidates.find((s) => getEffectiveSlug(s, location.toLowerCase()) === slug) ?? null;
   } catch { return null; }
 }
 
 async function getRelatedServices(location: string, category: string, excludeSlug: string) {
   try {
     await connectDB();
-    return Service.find({ location: { $in: [location.toLowerCase(), 'all'] }, category, status: 'active', urlSlug: { $ne: excludeSlug } } as any)
-      .limit(3).lean() as Promise<any[]>;
+    const loc = location.toLowerCase();
+    const candidates = await getServiceCandidates(location, { category });
+    return candidates
+      .filter((s) => getEffectiveSlug(s, loc) !== excludeSlug)
+      .slice(0, 3);
   } catch { return []; }
 }
 
@@ -92,33 +111,53 @@ async function getServiceReviews(location: string, serviceName: string) {
   } catch { return []; }
 }
 
-async function getServiceAtOtherLocations(serviceName: string, currentLocation: string) {
+// "Also available at" — the same service's OTHER target cities (derived
+// straight from the doc itself, no query needed), plus any separate legacy
+// documents sharing the same name that predate per-city targeting.
+async function getServiceAtOtherLocations(svc: any, currentLocation: string) {
+  const ownCities = getServiceCities(svc);
+  const sameDocOthers = ownCities
+    .filter((c) => c !== currentLocation)
+    .map((c) => ({ location: c, urlSlug: getEffectiveSlug(svc, c) }));
+
   try {
     await connectDB();
-    // Skip entirely for 'all'-location services — they're already showing at
-    // every city, so an "also available at" list has nothing meaningful to
-    // add. 'all' docs are also excluded from the results themselves, since
-    // "available at: All" isn't a real place to link to.
-    if (currentLocation.toLowerCase() === 'all') return [];
-    return Service.find({
-      name: { $regex: `^${serviceName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
-      location: { $nin: [currentLocation.toLowerCase(), 'all'] },
+    const legacyDocs = await Service.find({
+      _id: { $ne: svc._id },
+      name: { $regex: `^${String(svc.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
       status: 'active',
-    } as any).select('location').lean() as Promise<any[]>;
-  } catch { return []; }
+    } as any).select('location targetLocations urlSlug locationSeo').lean() as any[];
+
+    const seen = new Set(sameDocOthers.map((o) => o.location));
+    const merged = [...sameDocOthers];
+    for (const d of legacyDocs) {
+      for (const c of getServiceCities(d)) {
+        if (seen.has(c)) continue;
+        seen.add(c);
+        merged.push({ location: c, urlSlug: getEffectiveSlug(d, c) });
+      }
+    }
+    return merged;
+  } catch {
+    return sameDocOthers;
+  }
 }
 
 export async function generateStaticParams() {
   try {
     await connectDB();
-    const services = await Service.find({ status: 'active' } as any).select('location category urlSlug').lean() as any[];
-    // An 'all'-location service needs a static path generated for every city,
-    // not just one — otherwise it would only actually build/render for
-    // whichever single location string happened to be stored.
-    return services.flatMap((s) => {
-      const locs = s.location === 'all' ? Object.keys(locations) : [s.location];
-      return locs.map((location) => ({ location, category: s.category.toLowerCase(), slug: s.urlSlug }));
-    });
+    const services = await Service.find({ status: 'active' } as any)
+      .select('location targetLocations category urlSlug locationSeo').lean() as any[];
+    // A service can now show at several cities (targetLocations, or the
+    // legacy 'all') with a different slug per city — generate one static
+    // path per city it's actually shown at, using that city's effective slug.
+    return services.flatMap((s) =>
+      getServiceCities(s).map((location) => ({
+        location,
+        category: s.category.toLowerCase(),
+        slug: getEffectiveSlug(s, location),
+      }))
+    );
   } catch { return []; }
 }
 
@@ -128,14 +167,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const loc = locations[params.location];
   const city = loc?.name ?? params.location;
   const catSlug = params.category.toLowerCase();
+  const seo = getEffectiveSeo(svc, params.location.toLowerCase());
   return {
-    title: svc.metaTitle || `${svc.name} in ${city} | DR Youth Clinic`,
-    description: svc.metaDescription || `Book ${svc.name} at DR Youth Clinic ${city}. Expert dermatologists, proven results.`,
+    title: seo.metaTitle || `${svc.name} in ${city} | DR Youth Clinic`,
+    description: seo.metaDescription || `Book ${svc.name} at DR Youth Clinic ${city}. Expert dermatologists, proven results.`,
     keywords: svc.keywords?.join(', '),
     alternates: { canonical: `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}` },
     openGraph: {
-      title: svc.metaTitle || svc.name,
-      description: svc.metaDescription || '',
+      title: seo.metaTitle || svc.name,
+      description: seo.metaDescription || '',
       url: `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}`,
       images: svc.heroImage?.url ? [{ url: svc.heroImage.url, width: 1200, height: 630 }] : [],
       type: 'website',
@@ -147,13 +187,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 function ServiceSchemas({ svc, cityName, params }: { svc: any; cityName: string; params: PageProps['params'] }) {
   const catSlug = params.category.toLowerCase();
   const pageUrl = `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}`;
+  const seo = getEffectiveSeo(svc, params.location.toLowerCase());
 
   const schemas: any[] = [
     {
       '@context': 'https://schema.org',
       '@type': 'MedicalProcedure',
       name: svc.name,
-      description: svc.metaDescription || svc.narrative?.slice(0, 200) || '',
+      description: seo.metaDescription || svc.narrative?.slice(0, 200) || '',
       procedureType: 'https://schema.org/TherapeuticProcedure',
       bodyLocation: svc.category,
       howPerformed: svc.narrative || '',
@@ -229,7 +270,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
-    getServiceAtOtherLocations(svc.name, svc.location),
+    getServiceAtOtherLocations(svc, params.location.toLowerCase()),
     getSiteConfig(),
   ]);
 
@@ -747,7 +788,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 <div className="rounded-3xl border border-gray-100 p-5 space-y-3">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.18em]">Also available at</p>
                   {otherLocations.map((o: any) => (
-                    <Link key={o.location} href={`/${o.location}/services/${catSlug}/${params.slug}`} className="flex items-center justify-between hover:bg-[#f6faff] rounded-xl p-2 -mx-2 transition group">
+                    <Link key={o.location} href={`/${o.location}/services/${catSlug}/${o.urlSlug}`} className="flex items-center justify-between hover:bg-[#f6faff] rounded-xl p-2 -mx-2 transition group">
                       <span className="text-sm font-semibold text-[#0B2560] capitalize">{locations[o.location]?.name ?? o.location}</span>
                       <ChevronRight size={13} className="text-gray-300 group-hover:text-[#3B82C4] transition" />
                     </Link>

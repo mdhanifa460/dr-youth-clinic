@@ -8,6 +8,10 @@ interface SeoPreviewProps {
   keywords: string;
   slug: string;
   location: string;
+  // True when this service shows at more than one city sharing this same
+  // title/description — flips the "Location in title/desc" check, since a
+  // city name here would then be wrong on whichever city it doesn't belong to.
+  isMultiCity?: boolean;
   serviceName: string;
   benefits?: Array<{ icon: string; title: string; description: string }>;
   narrative?: string;
@@ -42,18 +46,20 @@ export default function SeoPreviewCard({
   keywords,
   slug,
   location,
+  isMultiCity = false,
   serviceName,
   benefits = [],
   narrative = "",
 }: SeoPreviewProps) {
   const [tab, setTab] = useState<Tab>("seo");
 
-  const cityName = location
+  const cityName = !isMultiCity && location
     ? location.charAt(0).toUpperCase() + location.slice(1)
     : "";
 
-  const displayUrl =
-    slug && location
+  const displayUrl = isMultiCity
+    ? `dryouthclinic.com › [city] › services › ${slug || "[slug]"}`
+    : slug && location
       ? `dryouthclinic.com › ${location} › services › ${slug}`
       : "dryouthclinic.com › [city] › services › [slug]";
 
@@ -283,7 +289,13 @@ export default function SeoPreviewCard({
               { label: "Concise answer-ready desc", ok: description.length >= 60 && description.length <= 160, hint: description.length ? `${description.length} chars (60–160 ideal)` : "Not set" },
               { label: "Question-style keywords", ok: keywordList.some((k) => k.toLowerCase().includes("best") || k.toLowerCase().includes("near") || k.toLowerCase().includes("how") || k.toLowerCase().includes("what")), hint: keywordList.length ? "Add 'best / how / what' phrases" : "No keywords yet" },
               { label: "Extractable benefit facts", ok: benefits.length >= 1, hint: `${benefits.length} benefit${benefits.length !== 1 ? "s" : ""} (cited by voice AI)` },
-              { label: "Location in title/desc", ok: !!(cityName && (title.toLowerCase().includes(location) || description.toLowerCase().includes(location) || description.toLowerCase().includes(cityName.toLowerCase()))), hint: cityName ? `"${cityName}" signals local authority` : "Select a location in step 1" },
+              isMultiCity
+                ? {
+                    label: "City-agnostic (shared across cities)",
+                    ok: !["chennai", "bangalore", "coimbatore", "kochi"].some((c) => title.toLowerCase().includes(c) || description.toLowerCase().includes(c)),
+                    hint: "Shared by multiple cities — naming one here would be wrong on the others",
+                  }
+                : { label: "Location in title/desc", ok: !!(cityName && (title.toLowerCase().includes(location) || description.toLowerCase().includes(location) || description.toLowerCase().includes(cityName.toLowerCase()))), hint: cityName ? `"${cityName}" signals local authority` : "Select a location in step 1" },
             ].map((s) => (
               <div key={s.label} className={`rounded-lg p-2.5 border text-xs ${s.ok ? "bg-green-50 border-green-100" : "bg-gray-50 border-gray-100"}`}>
                 <p className={`font-semibold text-[10px] ${s.ok ? "text-green-600" : "text-gray-400"}`}>

@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader } from 'lucide-react';
 import Image from 'next/image';
+import { getServiceCities } from '@/app/lib/serviceSeo';
 
 interface Service {
   _id: string;
   name: string;
   location: string;
+  targetLocations?: string[];
   category: string;
   price: number;
   currency: string;
@@ -160,7 +162,12 @@ export default function ServicesPage() {
                       <span className="font-semibold text-gray-800">{service.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600 capitalize">{service.location}</td>
+                  <td className="px-6 py-4 text-gray-600 capitalize">
+                    {(() => {
+                      const cities = getServiceCities(service);
+                      return cities.length === 4 ? 'All Locations' : cities.length > 1 ? `${cities.length} cities` : cities[0] || '—';
+                    })()}
+                  </td>
                   <td className="px-6 py-4 text-gray-600">{service.category}</td>
                   <td className="px-6 py-4 font-semibold text-gray-800">
                     {service.currency} {service.price}

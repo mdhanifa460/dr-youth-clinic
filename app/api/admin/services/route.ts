@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Service } from '@/app/models/Service';
 import { connectDB } from '@/app/lib/mongodb';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { ALL_SERVICE_CITIES, getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 
 export async function GET(req: NextRequest) {
   const denied = await requirePermission('services', 'view');
@@ -15,9 +16,15 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status');
 
     const query: any = {};
-    // A city filter should also surface 'all'-location services, since those
-    // are genuinely visible at that city too — not just exact-location ones.
-    if (location) query.location = { $in: [location.toLowerCase(), 'all'] };
+    // A city filter should also surface services that target it via the
+    // newer `targetLocations` list, or the legacy 'all' value.
+    if (location) {
+      const loc = location.toLowerCase();
+      query.$or = [
+        { targetLocations: loc },
+        { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
+      ];
+    }
     if (status) query.status = status;
 
     const services = await Service.find(query as any).sort({ createdAt: -1 });
@@ -47,23 +54,37 @@ export async function POST(req: NextRequest) {
 
     const service = new Service(body);
 
-    // Ensure slug uniqueness before the pre-save hook runs. An 'all'-location
-    // service occupies the slug at every city, so it must not collide with
-    // ANY existing service regardless of location; a specific-city service
-    // must avoid colliding with that city's slugs AND with any 'all'-location
-    // service (which is already showing there too).
+    // Ensure the shared slug is unique against every city this service will
+    // actually be shown at before the pre-save hook runs — a service now
+    // targets a SET of cities (targetLocations, or the legacy single
+    // `location`/'all'), so uniqueness has to be checked per city, not once.
     if (body.name && body.location) {
       const baseSlug = body.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
-      const collisionFilter = (s: string) =>
-        body.location === 'all'
-          ? { urlSlug: s }
-          : { urlSlug: s, location: { $in: [body.location, 'all'] } };
+      const targetCities: string[] = body.targetLocations?.length
+        ? body.targetLocations
+        : body.location === 'all' ? [...ALL_SERVICE_CITIES] : [body.location];
+
+      const collides = async (slug: string) => {
+        const candidates = await Service.find({
+          status: 'active',
+          $or: targetCities.map((c) => ({
+            $or: [
+              { targetLocations: c },
+              { targetLocations: { $exists: false }, location: { $in: [c, 'all'] } },
+            ],
+          })),
+        } as any).select('location targetLocations urlSlug locationSeo').lean() as any[];
+        return candidates.some((s) =>
+          targetCities.some((c) => getServiceCities(s).includes(c) && getEffectiveSlug(s, c) === slug)
+        );
+      };
+
       let slug = baseSlug;
       let counter = 1;
-      while (await Service.findOne(collisionFilter(slug) as any).select('_id').lean()) {
+      while (await collides(slug)) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }

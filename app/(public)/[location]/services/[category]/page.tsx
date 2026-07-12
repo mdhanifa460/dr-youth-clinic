@@ -7,6 +7,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import { getEffectiveSlug } from '@/app/lib/serviceSeo';
 
 export const revalidate = 300;
 
@@ -93,13 +94,21 @@ interface PageProps {
 async function getServicesForCategory(location: string, category: string) {
   try {
     await connectDB();
-    return Service.find({
-      location: { $in: [location.toLowerCase(), 'all'] },
-      category,
+    const loc = location.toLowerCase();
+    const services = await Service.find({
       status: 'active',
+      category,
+      $or: [
+        { targetLocations: loc },
+        { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
+      ],
     } as any)
       .sort({ createdAt: -1 })
-      .lean() as Promise<any[]>;
+      .lean() as any[];
+    // Normalize urlSlug to this city's effective slug here, at the data
+    // boundary, so every card/link downstream can keep using `svc.urlSlug`
+    // unchanged instead of every render site needing to know about overrides.
+    return services.map((s) => ({ ...s, urlSlug: getEffectiveSlug(s, loc) }));
   } catch {
     return [];
   }
@@ -109,13 +118,16 @@ async function getServicesForCategory(location: string, category: string) {
 async function findServiceBySlug(location: string, slug: string) {
   try {
     await connectDB();
-    return Service.findOne({
-      urlSlug: slug,
-      location: { $in: [location.toLowerCase(), 'all'] },
+    const loc = location.toLowerCase();
+    const candidates = await Service.find({
       status: 'active',
-    } as any)
-      .select('category urlSlug')
-      .lean() as Promise<any | null>;
+      $or: [
+        { targetLocations: loc },
+        { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
+      ],
+    } as any).select('category urlSlug targetLocations location locationSeo').lean() as any[];
+    const match = candidates.find((s) => getEffectiveSlug(s, loc) === slug);
+    return match ? { ...match, urlSlug: getEffectiveSlug(match, loc) } : null;
   } catch {
     return null;
   }

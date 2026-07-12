@@ -1,10 +1,25 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface ILocationSeo {
+  location: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  urlSlug?: string;
+  // true once an admin has directly edited this city's fields — distinguishes
+  // "Edited Manually" from "inherited from the shared default" in the UI.
+  isCustomized?: boolean;
+}
+
 export interface IService extends Document {
   // Basic Info
   name: string;
   internalCode: string;
   location: string;
+  // Explicit set of cities this service is shown at (e.g. ['chennai','bangalore','kochi']).
+  // Optional and additive — documents created before this existed have no
+  // targetLocations, and fall back to the legacy single `location` field
+  // (a specific city, or 'all' meaning every city) everywhere this is read.
+  targetLocations?: string[];
   category: 'Skin' | 'Hair' | 'Laser' | 'Other';
 
   // SEO
@@ -13,6 +28,12 @@ export interface IService extends Document {
   urlSlug: string;
   keywords: string[];
   seoScore?: number;
+  // Sparse per-city overrides of metaTitle/metaDescription/urlSlug — only
+  // cities that differ from the shared defaults above need an entry here.
+  // This is what lets one service (shared treatment content) rank
+  // independently in each city instead of requiring a duplicate document
+  // per city just to vary the title.
+  locationSeo?: ILocationSeo[];
 
   // Content
   narrative: string;
@@ -99,9 +120,17 @@ const ServiceSchema = new Schema<IService>(
       type: String,
       required: [true, 'Location is required'],
       // 'all' shows the same service at every clinic location instead of
-      // requiring a separate duplicate document per city.
+      // requiring a separate duplicate document per city. Kept as a
+      // required legacy field (auto-derived from targetLocations on save
+      // when that's set) so every existing query that reads `location`
+      // keeps working without a migration.
       enum: ['all', 'chennai', 'bangalore', 'coimbatore', 'kochi'],
       lowercase: true,
+    },
+    targetLocations: {
+      type: [String],
+      enum: ['chennai', 'bangalore', 'coimbatore', 'kochi'],
+      default: undefined,
     },
     category: {
       type: String,
@@ -130,6 +159,18 @@ const ServiceSchema = new Schema<IService>(
       default: 0,
       min: 0,
       max: 100,
+    },
+    locationSeo: {
+      type: [
+        {
+          location: { type: String, enum: ['chennai', 'bangalore', 'coimbatore', 'kochi'], required: true },
+          metaTitle: { type: String, maxlength: 60 },
+          metaDescription: { type: String, maxlength: 160 },
+          urlSlug: { type: String, lowercase: true, match: /^[a-z0-9-]+$/ },
+          isCustomized: { type: Boolean, default: false },
+        },
+      ],
+      default: undefined,
     },
 
     // Content
