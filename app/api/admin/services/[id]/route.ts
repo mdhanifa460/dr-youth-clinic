@@ -45,6 +45,12 @@ export async function PUT(
     await connectDB();
 
     const body = await req.json();
+    // Optional enum field — the admin form sends '' when left unanswered,
+    // which Mongoose's enum validator rejects (unlike `required`, it doesn't
+    // treat '' as "not set"). findByIdAndUpdate is a query, not a document
+    // save, so the schema-level setter for this isn't guaranteed to run here.
+    if (body.painLevel === '') delete body.painLevel;
+
     const service: IService | null = await (Service as any).findByIdAndUpdate(
       params.id,
       body,

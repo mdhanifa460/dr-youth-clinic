@@ -40,6 +40,10 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
+    // Optional enum field — the admin form sends '' when left unanswered,
+    // which Mongoose's enum validator rejects (unlike `required`, it doesn't
+    // treat '' as "not set").
+    if (body.painLevel === '') delete body.painLevel;
 
     const service = new Service(body);
 

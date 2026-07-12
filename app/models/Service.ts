@@ -174,7 +174,14 @@ const ServiceSchema = new Schema<IService>(
     ],
     journeyExplorerVisible: { type: Boolean, default: true },
 
-    painLevel: { type: String, enum: ['None', 'Mild', 'Moderate', 'High'] },
+    // Optional — the admin form defaults this to '' when unset, and Mongoose's
+    // enum validator (unlike `required`) rejects '' since it isn't one of the
+    // listed values. Treat blank as "not answered" instead of an invalid pick.
+    painLevel: {
+      type: String,
+      enum: ['None', 'Mild', 'Moderate', 'High'],
+      set: (v: string) => (v === '' ? undefined : v),
+    },
     comparisonVisible: { type: Boolean, default: true },
 
     aftercareGuidance: [
