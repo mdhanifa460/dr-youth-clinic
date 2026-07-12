@@ -4,13 +4,17 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, Eye, Loader, ChevronUp, ChevronDown, Trash2, Plus,
-  Settings, Search, BarChart2, Webhook, Cpu, Globe, ToggleLeft, ToggleRight,
-  ExternalLink, Rocket, Save, X, Check,
+  ArrowLeft, Eye, Loader, Trash2, Plus,
+  Settings, Search, BarChart2, Webhook, Cpu, Globe,
+  ExternalLink, Rocket, Save, X, Check, LayoutTemplate,
 } from 'lucide-react';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import SeoAiAssistant from '@/app/admin/components/SeoAiAssistant';
 import OfferBannerSection from '@/app/components/lp/sections/OfferBannerSection';
+import SectionList from '@/app/admin/components/builder/SectionList';
+import SectionCard from '@/app/admin/components/builder/SectionCard';
+import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
+import TemplatePicker from '@/app/admin/components/builder/TemplatePicker';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1019,81 +1023,35 @@ function SectionEditor({
 
 // ─── Section card ─────────────────────────────────────────────────────────────
 
-function SectionCard({
-  section, index, total, onToggleVisible, onMoveUp, onMoveDown, onDelete, onDuplicate, onDataChange, openGallery,
+// The field-level editor shown inside the shared SectionCard's expanded
+// body — just the per-type fields + the offer-banner preview, since reorder/
+// visibility/duplicate/delete/save-as-template chrome now lives in the
+// shared builder SectionCard used by Landing Pages, Homepage, and About.
+function SectionFieldPanel({
+  section, onDataChange, openGallery,
 }: {
   section: Section;
-  index: number;
-  total: number;
-  onToggleVisible: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDelete: () => void;
-  onDuplicate: () => void;
   onDataChange: (data: Record<string, any>) => void;
   openGallery: (cb: (url: string) => void) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
-  const meta = SECTION_LABELS[section.type] || { label: section.type, icon: '📄' };
 
   return (
     <>
-      <div className={`bg-white rounded-xl border shadow-sm transition-all ${expanded ? 'border-[#3B82C4]/40 shadow-md' : 'border-gray-100'}`}>
-        <div className="flex items-center gap-3 px-4 py-3">
-          <span className="text-xl shrink-0">{meta.icon}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#0B2560] truncate">{meta.label}</p>
-            <p className="text-[10px] text-gray-400">{section.type}</p>
-          </div>
+      <SectionEditor section={section} onChange={onDataChange} openGallery={openGallery} />
 
-          <div className="flex items-center gap-1 shrink-0">
-            <button onClick={onToggleVisible} title={section.visible ? 'Hide' : 'Show'}
-              className={`p-1.5 rounded-lg transition ${section.visible ? 'text-green-600 hover:bg-green-50' : 'text-gray-300 hover:bg-gray-100'}`}>
-              {section.visible ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-            </button>
-            <button onClick={onMoveUp} disabled={index === 0}
-              className="p-1.5 text-gray-400 hover:text-[#0B2560] hover:bg-gray-100 rounded-lg transition disabled:opacity-30">
-              <ChevronUp size={14} />
-            </button>
-            <button onClick={onMoveDown} disabled={index === total - 1}
-              className="p-1.5 text-gray-400 hover:text-[#0B2560] hover:bg-gray-100 rounded-lg transition disabled:opacity-30">
-              <ChevronDown size={14} />
-            </button>
-            <button onClick={onDuplicate} title="Duplicate section"
-              className="p-1.5 text-gray-400 hover:text-[#3B82C4] hover:bg-[#3B82C4]/10 rounded-lg transition text-xs">
-              ⧉
-            </button>
-            <button onClick={() => setExpanded((e) => !e)}
-              className={`p-1.5 rounded-lg transition text-xs font-semibold px-2.5 ${expanded ? 'bg-[#0B2560] text-white' : 'text-[#0B2560] hover:bg-[#0B2560]/10'}`}>
-              {expanded ? 'Close' : 'Edit'}
-            </button>
-            <button onClick={onDelete}
-              className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-              <Trash2 size={14} />
-            </button>
-          </div>
+      {section.type === 'offer-banner' && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={() => setShowBannerPreview(true)}
+            className="w-full flex items-center justify-center gap-2 bg-[#0B2560]/5 hover:bg-[#0B2560]/10 text-[#0B2560] font-bold text-sm py-3 rounded-xl border border-[#0B2560]/15 transition"
+          >
+            <Eye size={15} />
+            Preview Animation
+          </button>
         </div>
-
-        {expanded && (
-          <div className="border-t border-gray-100 px-4 py-4">
-            <SectionEditor section={section} onChange={onDataChange} openGallery={openGallery} />
-
-            {section.type === 'offer-banner' && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setShowBannerPreview(true)}
-                  className="w-full flex items-center justify-center gap-2 bg-[#0B2560]/5 hover:bg-[#0B2560]/10 text-[#0B2560] font-bold text-sm py-3 rounded-xl border border-[#0B2560]/15 transition"
-                >
-                  <Eye size={15} />
-                  Preview Animation
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Offer banner preview modal */}
       {showBannerPreview && (
@@ -1286,6 +1244,10 @@ export default function LandingPageBuilder() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const galleryCallbackRef = useRef<((url: string) => void) | null>(null);
 
+  // Section templates
+  const [templateModalIdx, setTemplateModalIdx] = useState<number | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
+
   const openGallery = useCallback((cb: (url: string) => void) => {
     galleryCallbackRef.current = cb;
     setGalleryOpen(true);
@@ -1368,16 +1330,6 @@ export default function LandingPageBuilder() {
     });
   };
 
-  const moveSection = (idx: number, dir: -1 | 1) => {
-    updateLp((prev) => {
-      const sections = [...prev.sections];
-      const target = idx + dir;
-      if (target < 0 || target >= sections.length) return prev;
-      [sections[idx], sections[target]] = [sections[target], sections[idx]];
-      return { ...prev, sections };
-    });
-  };
-
   const toggleVisible = (idx: number) => {
     updateLp((prev) => {
       const sections = [...prev.sections];
@@ -1392,6 +1344,29 @@ export default function LandingPageBuilder() {
       sections[idx] = { ...sections[idx], data };
       return { ...prev, sections };
     });
+  };
+
+  const insertTemplate = (template: { type: string; icon: string; data: Record<string, any> }) => {
+    updateLp((prev) => ({
+      ...prev,
+      sections: [
+        ...prev.sections,
+        { id: `${template.type}-${Date.now()}`, type: template.type, visible: true, data: { ...template.data } },
+      ],
+    }));
+  };
+
+  const saveSectionAsTemplate = async (name: string) => {
+    if (templateModalIdx === null || !lp) return;
+    const section = lp.sections[templateModalIdx];
+    const meta = SECTION_LABELS[section.type] || { label: section.type, icon: '📄' };
+    const res = await fetch('/api/admin/section-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, type: section.type, icon: meta.icon, data: section.data, sourceSystem: 'landing-page' }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Failed to save template');
   };
 
   if (loading) {
@@ -1625,26 +1600,58 @@ export default function LandingPageBuilder() {
               </div>
             )}
 
-            {lp.sections.map((section, idx) => (
-              <SectionCard
-                key={section.id}
-                section={section}
-                index={idx}
-                total={lp.sections.length}
-                onToggleVisible={() => toggleVisible(idx)}
-                onMoveUp={() => moveSection(idx, -1)}
-                onMoveDown={() => moveSection(idx, 1)}
-                onDelete={() => deleteSection(idx)}
-                onDuplicate={() => duplicateSection(idx)}
-                onDataChange={(data) => updateSectionData(idx, data)}
-                openGallery={openGallery}
-              />
-            ))}
+            <SectionList
+              sections={lp.sections}
+              onReorder={(next) => updateLp((prev) => ({ ...prev, sections: next }))}
+              renderSection={(section, idx, dragControls) => {
+                const meta = SECTION_LABELS[section.type] || { label: section.type, icon: '📄' };
+                return (
+                  <SectionCard
+                    section={section}
+                    label={meta.label}
+                    icon={meta.icon}
+                    dragControls={dragControls}
+                    onToggleVisible={() => toggleVisible(idx)}
+                    onDuplicate={() => duplicateSection(idx)}
+                    onDelete={() => deleteSection(idx)}
+                    onSaveAsTemplate={() => setTemplateModalIdx(idx)}
+                  >
+                    <SectionFieldPanel
+                      section={section}
+                      onDataChange={(data) => updateSectionData(idx, data)}
+                      openGallery={openGallery}
+                    />
+                  </SectionCard>
+                );
+              }}
+            />
 
             <AddSectionPicker onAdd={addSection} />
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowTemplates((s) => !s)}
+                className="w-full flex items-center justify-center gap-2 text-xs font-bold text-gray-400 hover:text-[#0B2560] py-2 transition"
+              >
+                <LayoutTemplate size={13} /> {showTemplates ? 'Hide' : 'Show'} Saved Templates
+              </button>
+              {showTemplates && (
+                <div className="mt-2 p-4 bg-white rounded-2xl border border-gray-100">
+                  <TemplatePicker sourceSystem="landing-page" onInsert={insertTemplate} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      <SaveTemplateModal
+        isOpen={templateModalIdx !== null}
+        onClose={() => setTemplateModalIdx(null)}
+        onSave={saveSectionAsTemplate}
+        defaultName={templateModalIdx !== null ? (SECTION_LABELS[lp.sections[templateModalIdx].type]?.label || '') : ''}
+      />
 
       {/* Gallery modal (shared, one instance) */}
       <MediaGalleryModal

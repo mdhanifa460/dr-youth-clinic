@@ -3,10 +3,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft, Plus, Trash2, Loader, CheckCircle, X,
-  ChevronUp, ChevronDown, ToggleLeft, ToggleRight, ExternalLink,
+  ArrowLeft, Plus, Trash2, Loader, CheckCircle, X, ExternalLink, LayoutTemplate,
 } from 'lucide-react';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
+import SectionList from '@/app/admin/components/builder/SectionList';
+import SectionCard from '@/app/admin/components/builder/SectionCard';
+import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
+import TemplatePicker from '@/app/admin/components/builder/TemplatePicker';
 import {
   type AboutSection, SECTION_LABELS, SECTION_DEFAULTS, makeDefaultAboutSections,
 } from '@/app/lib/aboutPageDefaults';
@@ -416,60 +419,19 @@ function SectionEditor({
   }
 }
 
-// ─── Section card ──────────────────────────────────────────────────────────────
+// ─── Section field panel ──────────────────────────────────────────────────────
+// The field-level editor shown inside the shared SectionCard's expanded body —
+// reorder/visibility/duplicate/delete/save-as-template chrome now lives in the
+// shared builder SectionCard used by Landing Pages, Homepage, and About.
 
-function SectionCard({
-  section, index, total, onToggleVisible, onMoveUp, onMoveDown, onDelete, onDataChange, openGallery,
+function SectionFieldPanel({
+  section, onDataChange, openGallery,
 }: {
   section: AboutSection;
-  index: number;
-  total: number;
-  onToggleVisible: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDelete: () => void;
   onDataChange: (data: Record<string, any>) => void;
   openGallery: (cb: (url: string) => void) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const meta = SECTION_LABELS[section.type] || { label: section.type, icon: '📄' };
-
-  return (
-    <div className={`bg-white rounded-xl border shadow-sm transition-all ${expanded ? 'border-[#3B82C4]/40 shadow-md' : 'border-gray-100'}`}>
-      <div className="flex items-center gap-3 px-4 py-3">
-        <span className="text-xl shrink-0">{meta.icon}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#0B2560] truncate">{meta.label}</p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={onToggleVisible} title={section.visible ? 'Hide' : 'Show'}
-            className={`p-1.5 rounded-lg transition ${section.visible ? 'text-green-600 hover:bg-green-50' : 'text-gray-300 hover:bg-gray-100'}`}>
-            {section.visible ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-          </button>
-          <button onClick={onMoveUp} disabled={index === 0}
-            className="p-1.5 text-gray-400 hover:text-[#0B2560] hover:bg-gray-100 rounded-lg transition disabled:opacity-30">
-            <ChevronUp size={14} />
-          </button>
-          <button onClick={onMoveDown} disabled={index === total - 1}
-            className="p-1.5 text-gray-400 hover:text-[#0B2560] hover:bg-gray-100 rounded-lg transition disabled:opacity-30">
-            <ChevronDown size={14} />
-          </button>
-          <button onClick={() => setExpanded((e) => !e)}
-            className={`p-1.5 rounded-lg transition text-xs font-semibold px-2.5 ${expanded ? 'bg-[#0B2560] text-white' : 'text-[#0B2560] hover:bg-[#0B2560]/10'}`}>
-            {expanded ? 'Close' : 'Edit'}
-          </button>
-          <button onClick={onDelete} className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-      {expanded && (
-        <div className="border-t border-gray-100 px-4 py-4">
-          <SectionEditor section={section} onChange={onDataChange} openGallery={openGallery} />
-        </div>
-      )}
-    </div>
-  );
+  return <SectionEditor section={section} onChange={onDataChange} openGallery={openGallery} />;
 }
 
 function AddSectionPicker({ existingTypes, onAdd }: { existingTypes: string[]; onAdd: (type: string) => void }) {
@@ -507,6 +469,10 @@ export default function AboutPageBuilder() {
 
   const [galleryOpen, setGalleryOpen] = useState(false);
   const galleryCallbackRef = useRef<((url: string) => void) | null>(null);
+
+  // Section templates
+  const [templateModalIdx, setTemplateModalIdx] = useState<number | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
   const openGallery = useCallback((cb: (url: string) => void) => {
     galleryCallbackRef.current = cb;
     setGalleryOpen(true);
@@ -534,23 +500,41 @@ export default function AboutPageBuilder() {
   function toggleVisible(idx: number) {
     setSections((prev) => prev.map((s, i) => (i === idx ? { ...s, visible: !s.visible } : s)));
   }
-  function moveSection(idx: number, dir: 1 | -1) {
-    setSections((prev) => {
-      const next = [...prev];
-      const target = idx + dir;
-      if (target < 0 || target >= next.length) return prev;
-      [next[idx], next[target]] = [next[target], next[idx]];
-      return next;
-    });
-  }
   function deleteSection(idx: number) {
     setSections((prev) => prev.filter((_, i) => i !== idx));
+  }
+  function duplicateSection(idx: number) {
+    setSections((prev) => {
+      const next = [...prev];
+      const src = next[idx];
+      const copy = { ...src, id: `${src.type}-${Date.now()}`, data: { ...src.data } };
+      next.splice(idx + 1, 0, copy);
+      return next;
+    });
   }
   function addSection(type: string) {
     setSections((prev) => [
       ...prev,
       { id: `${type}-${Date.now()}`, type, visible: true, data: JSON.parse(JSON.stringify(SECTION_DEFAULTS[type] ?? {})) },
     ]);
+  }
+  function insertTemplate(template: { type: string; icon: string; data: Record<string, any> }) {
+    setSections((prev) => [
+      ...prev,
+      { id: `${template.type}-${Date.now()}`, type: template.type, visible: true, data: { ...template.data } },
+    ]);
+  }
+  async function saveSectionAsTemplate(name: string) {
+    if (templateModalIdx === null) return;
+    const section = sections[templateModalIdx];
+    const meta = SECTION_LABELS[section.type] || { label: section.type, icon: '📄' };
+    const res = await fetch('/api/admin/section-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, type: section.type, icon: meta.icon, data: section.data, sourceSystem: 'about' }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Failed to save template');
   }
 
   async function save() {
@@ -617,24 +601,57 @@ export default function AboutPageBuilder() {
         )}
 
         <div className="space-y-3 mt-6">
-          {sections.map((section, idx) => (
-            <SectionCard
-              key={section.id}
-              section={section}
-              index={idx}
-              total={sections.length}
-              onToggleVisible={() => toggleVisible(idx)}
-              onMoveUp={() => moveSection(idx, -1)}
-              onMoveDown={() => moveSection(idx, 1)}
-              onDelete={() => deleteSection(idx)}
-              onDataChange={(data) => updateSectionData(idx, data)}
-              openGallery={openGallery}
-            />
-          ))}
+          <SectionList
+            sections={sections}
+            onReorder={setSections}
+            renderSection={(section, idx, dragControls) => {
+              const meta = SECTION_LABELS[section.type] || { label: section.type, icon: '📄' };
+              return (
+                <SectionCard
+                  section={section}
+                  label={meta.label}
+                  icon={meta.icon}
+                  dragControls={dragControls}
+                  onToggleVisible={() => toggleVisible(idx)}
+                  onDuplicate={() => duplicateSection(idx)}
+                  onDelete={() => deleteSection(idx)}
+                  onSaveAsTemplate={() => setTemplateModalIdx(idx)}
+                >
+                  <SectionFieldPanel
+                    section={section}
+                    onDataChange={(data) => updateSectionData(idx, data)}
+                    openGallery={openGallery}
+                  />
+                </SectionCard>
+              );
+            }}
+          />
 
           <AddSectionPicker existingTypes={sections.map((s) => s.type)} onAdd={addSection} />
+
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowTemplates((s) => !s)}
+              className="w-full flex items-center justify-center gap-2 text-xs font-bold text-gray-400 hover:text-[#0B2560] py-2 transition"
+            >
+              <LayoutTemplate size={13} /> {showTemplates ? 'Hide' : 'Show'} Saved Templates
+            </button>
+            {showTemplates && (
+              <div className="mt-2 p-4 bg-white rounded-2xl border border-gray-100">
+                <TemplatePicker sourceSystem="about" onInsert={insertTemplate} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      <SaveTemplateModal
+        isOpen={templateModalIdx !== null}
+        onClose={() => setTemplateModalIdx(null)}
+        onSave={saveSectionAsTemplate}
+        defaultName={templateModalIdx !== null ? (SECTION_LABELS[sections[templateModalIdx].type]?.label || '') : ''}
+      />
 
       <MediaGalleryModal
         isOpen={galleryOpen}

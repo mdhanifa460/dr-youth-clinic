@@ -110,34 +110,12 @@ type SectionOrderItem = {
   order: number;
 };
 
-const PUBLIC_SECTION_ORDER = [
-  'hero',
-  'stats',
-  'trust_timeline',
-  'consultation_form',
-  'cta_strip',
-  'before_after',
-  'services',
-  'founder',
-  'doctors',
-  'video_academy',
-  'locations',
-  'testimonials',
-  'faq',
-  'blog',
-];
-
-const PUBLIC_SECTION_RANK = new Map(
-  PUBLIC_SECTION_ORDER.map((key, index) => [key, index])
-);
-
+// The admin Homepage Builder's drag-and-drop reorder writes directly to each
+// section's `order` field (see app/admin/homepage/page.tsx's handleReorder) —
+// this must stay the sole source of truth for display order here, or admin
+// reordering has no effect on the live site.
 function sortPublicSections(sections: SectionOrderItem[]) {
-  return [...sections].sort((a, b) => {
-    const rankA = PUBLIC_SECTION_RANK.get(a.key) ?? 1000 + a.order;
-    const rankB = PUBLIC_SECTION_RANK.get(b.key) ?? 1000 + b.order;
-
-    return rankA - rankB || a.order - b.order;
-  });
+  return [...sections].sort((a, b) => a.order - b.order);
 }
 
 const DEFAULT_SECTIONS = {

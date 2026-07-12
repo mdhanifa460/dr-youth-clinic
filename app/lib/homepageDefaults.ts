@@ -247,7 +247,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
   },
   video_academy: {
     label: 'Skin & Hair Academy (Videos)',
-    order: 91,
+    order: 9.1,
     visible: true,
     data: {
       headline: 'Skin & Hair Academy',

@@ -1,18 +1,49 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Plus, Trash2, Upload, CheckCircle, Loader, Images } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, Upload, CheckCircle, Loader, Images } from 'lucide-react';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
+import SectionList from '@/app/admin/components/builder/SectionList';
+import SectionCard from '@/app/admin/components/builder/SectionCard';
+import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
 
 // ─── Types ────────────────────────────────────────────────
+// id/type mirror sectionKey — homepage sections are fixed, one-per-type slots
+// (unlike Landing Pages/About's free-form lists), but keeping this shape
+// structurally compatible with BuilderSection lets it reuse the same shared
+// drag-and-drop SectionList/SectionCard components.
 interface Section {
   _id?: string;
+  id: string;
+  type: string;
   sectionKey: string;
   label: string;
   order: number;
   visible: boolean;
   data: Record<string, any>;
 }
+
+// Homepage sections don't carry their own icon field (unlike Landing Pages/
+// About's SECTION_LABELS) — this is purely cosmetic for the shared SectionCard.
+const SECTION_ICONS: Record<string, string> = {
+  topbar: '🔝',
+  header: '🧭',
+  hero: '🖼️',
+  stats: '📊',
+  trust_timeline: '🔴',
+  consultation_form: '📝',
+  cta_strip: '📣',
+  before_after: '↔️',
+  services: '🩺',
+  founder: '👤',
+  doctors: '👨‍⚕️',
+  video_academy: '🎬',
+  locations: '📍',
+  testimonials: '💬',
+  faq: '❓',
+  blog: '📰',
+  footer: '🔻',
+};
 
 // ─── FAQ categories ────────────────────────────────────────
 // Mirrors the category groupings on the public /faqs page (app/(public)/faqs/page.tsx
@@ -1143,29 +1174,24 @@ export default function HomepageBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Section templates ("Save as Template" only — homepage sections are fixed
+  // one-per-type slots, so there's no generic "Insert Template" here the way
+  // Landing Pages/About have it).
+  const [templateModalIdx, setTemplateModalIdx] = useState<number | null>(null);
 
   // Fetch sections
   useEffect(() => {
     fetch('/api/admin/homepage')
       .then((r) => r.json())
       .then((json) => {
-        if (json.success) setSections(json.sections);
+        if (json.success) {
+          setSections(json.sections.map((s: any) => ({ ...s, id: s.sectionKey, type: s.sectionKey })));
+        }
       })
       .catch(() => setError('Failed to load sections'))
       .finally(() => setLoading(false));
   }, []);
-
-  // Toggle expand
-  const toggleExpand = (key: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  };
 
   // Toggle visibility
   const toggleVisible = (i: number) => {
@@ -1186,21 +1212,26 @@ export default function HomepageBuilderPage() {
   };
 
   // Drag-to-reorder
-  const handleDragStart = (i: number) => setDragIdx(i);
-  const handleDragOver = (e: React.DragEvent, i: number) => {
-    e.preventDefault();
-    setDragOverIdx(i);
+  const handleReorder = (next: Section[]) => {
+    setSections(next.map((s, idx) => ({ ...s, order: idx + 1 })));
   };
-  const handleDrop = (i: number) => {
-    if (dragIdx === null || dragIdx === i) { setDragIdx(null); setDragOverIdx(null); return; }
-    setSections((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(dragIdx, 1);
-      next.splice(i, 0, moved);
-      return next.map((s, idx) => ({ ...s, order: idx + 1 }));
+
+  const saveSectionAsTemplate = async (name: string) => {
+    if (templateModalIdx === null) return;
+    const section = sections[templateModalIdx];
+    const res = await fetch('/api/admin/section-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        type: section.sectionKey,
+        icon: SECTION_ICONS[section.sectionKey] || '📄',
+        data: section.data,
+        sourceSystem: 'homepage',
+      }),
     });
-    setDragIdx(null);
-    setDragOverIdx(null);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Failed to save template');
   };
 
   // Save & Publish
@@ -1269,83 +1300,32 @@ export default function HomepageBuilderPage() {
       )}
 
       {/* SECTION CARDS */}
-      <div className="space-y-3">
-        {sections.map((section, i) => {
-          const isExpanded = expanded.has(section.sectionKey);
-          const isDragTarget = dragOverIdx === i;
+      <SectionList
+        sections={sections}
+        onReorder={handleReorder}
+        renderSection={(section, i, dragControls) => (
+          <SectionCard
+            section={section}
+            label={section.label}
+            icon={SECTION_ICONS[section.sectionKey] || '📄'}
+            dragControls={dragControls}
+            onToggleVisible={() => toggleVisible(i)}
+            onSaveAsTemplate={() => setTemplateModalIdx(i)}
+          >
+            <SectionForm
+              section={section}
+              onChange={(data) => updateData(i, data)}
+            />
+          </SectionCard>
+        )}
+      />
 
-          return (
-            <div
-              key={section.sectionKey}
-              draggable
-              onDragStart={() => handleDragStart(i)}
-              onDragOver={(e) => handleDragOver(e, i)}
-              onDrop={() => handleDrop(i)}
-              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
-              className={`bg-white rounded-2xl border transition ${
-                isDragTarget ? 'border-[#0B2560] shadow-lg scale-[1.01]' : 'border-gray-200 shadow-sm'
-              } ${dragIdx === i ? 'opacity-50' : 'opacity-100'}`}
-            >
-              {/* CARD HEADER */}
-              <div className="flex items-center gap-3 px-5 py-4">
-                {/* DRAG HANDLE */}
-                <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0">
-                  <GripVertical size={18} />
-                </div>
-
-                {/* ORDER BADGE */}
-                <span className="w-6 h-6 rounded-full bg-[#f6faff] border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
-                  {i + 1}
-                </span>
-
-                {/* LABEL */}
-                <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm ${section.visible ? 'text-[#0B2560]' : 'text-gray-400'}`}>
-                    {section.label}
-                  </p>
-                  <p className="text-xs text-gray-400">{section.sectionKey}</p>
-                </div>
-
-                {/* ACTIONS */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {/* VISIBILITY TOGGLE */}
-                  <button
-                    type="button"
-                    onClick={() => toggleVisible(i)}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${
-                      section.visible
-                        ? 'bg-[#0B2560]/10 text-[#0B2560] hover:bg-[#0B2560]/20'
-                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                    }`}
-                    title={section.visible ? 'Hide section' : 'Show section'}
-                  >
-                    {section.visible ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-
-                  {/* EXPAND / COLLAPSE */}
-                  <button
-                    type="button"
-                    onClick={() => toggleExpand(section.sectionKey)}
-                    className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"
-                  >
-                    {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* EXPANDED FORM */}
-              {isExpanded && (
-                <div className="px-5 pb-6 border-t border-gray-100 pt-5">
-                  <SectionForm
-                    section={section}
-                    onChange={(data) => updateData(i, data)}
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <SaveTemplateModal
+        isOpen={templateModalIdx !== null}
+        onClose={() => setTemplateModalIdx(null)}
+        onSave={saveSectionAsTemplate}
+        defaultName={templateModalIdx !== null ? sections[templateModalIdx].label : ''}
+      />
 
       {/* BOTTOM SAVE */}
       <div className="mt-6 flex justify-end">
