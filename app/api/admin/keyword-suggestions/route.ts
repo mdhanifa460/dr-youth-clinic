@@ -10,22 +10,35 @@ function makeCacheKey(name: string, category: string, location: string) {
   return `${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}_${category.toLowerCase()}_${location.toLowerCase()}`;
 }
 
+const ALL_CITIES = ['Chennai', 'Bangalore', 'Coimbatore', 'Kochi'];
+
 // ── Gemini REST call (no SDK dependency) ─────────────────────────────────────
 async function callGemini(serviceName: string, category: string, city: string) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
+  // 'all' means this service is genuinely offered at every clinic — the SEO
+  // keywords should spread real city-tagged search queries across all 4
+  // cities (each is a distinct search a patient in that city actually
+  // types), not default to one city or drop city-intent entirely.
+  const isAllLocations = city === 'All';
+  const locationBlock = isAllLocations
+    ? `Cities: this service is offered at every DR Youth Clinic location — ${ALL_CITIES.join(', ')}, India. Spread city-tagged keywords across multiple of these cities rather than favouring one.`
+    : `City: ${city}, India`;
+
   const prompt = `You are a senior SEO strategist for DR Youth Clinic, a premium aesthetic dermatology clinic in India competing with top clinics like Oliva Clinic, Kaya Clinic, and Dermacos.
 
 New service: "${serviceName}"
 Category: ${category} treatment
-City: ${city}, India
+${locationBlock}
+
+Real competitor pages that already rank well for this kind of service use titles like "PRP Hair Treatment In Chennai: Cost, Procedure, Results & Reviews" (city page) and "PRP Hair Treatment: Results, Reviews, Benefits & Procedure" (non-city page) — notice "Cost" and "Results" are consistently high-value terms in this market. Use that as a quality bar, not something to copy.
 
 Generate 18 high-value keywords — exactly 6 per intent type — that will help this service outrank competitor clinics and appear in AI-generated health content.
 
 Think like this:
-- SEO: What do patients in ${city} actually type into Google when ready to book "${serviceName}"? Include city name in at least 2.
-- GEO: What comparative/authoritative phrases would Perplexity, ChatGPT, or Gemini synthesise when asked about this treatment? ("best X for Y", "top rated X in ${city}", "most effective treatment for Z")
+- SEO: What do patients actually type into Google when ready to book "${serviceName}"? Cost/price-related queries convert heavily in this market — include at least 1. ${isAllLocations ? `Include city-tagged variants for at least 3 different cities from the list above (e.g. "${serviceName.toLowerCase()} cost in chennai", "${serviceName.toLowerCase()} bangalore"), plus 1-2 city-agnostic ones ("near me", "in india").` : `Include "${city}" in at least 2.`}
+- GEO: What comparative/authoritative phrases would Perplexity, ChatGPT, or Gemini synthesise when asked about this treatment? ("best X for Y", "${isAllLocations ? 'top rated X in india' : `top rated X in ${city}`}", "most effective treatment for Z")
 - AEO: What direct-answer questions would patients ask Alexa, Siri, or Google Answer Box? Must start with what/how/which/why/is/can.
 
 Return ONLY valid JSON, no explanation, no markdown:

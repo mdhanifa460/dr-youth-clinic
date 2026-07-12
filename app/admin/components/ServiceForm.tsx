@@ -6,6 +6,7 @@ import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import ImageUpload from "./ImageUpload";
 import SeoPreviewCard from "./SeoPreviewCard";
 import KeywordSuggestions from "./KeywordSuggestions";
+import MetaSuggestions from "./MetaSuggestions";
 
 interface FormData {
   name: string;
@@ -182,12 +183,25 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
         if (!form.location) { setError("Location is required"); return false; }
         if (!form.category) { setError("Category is required"); return false; }
         break;
-      case 2:
+      case 2: {
         if (!form.metaTitle.trim()) { setError("Meta title is required"); return false; }
         if (form.metaTitle.length > 60) { setError("Meta title should be max 60 characters"); return false; }
         if (!form.metaDescription.trim()) { setError("Meta description is required"); return false; }
         if (form.metaDescription.length > 160) { setError("Meta description should be max 160 characters"); return false; }
+        // An 'all'-location service is the SAME document rendered at every
+        // city's URL — a title/description naming one city would be wrong on
+        // the other 3, so this is a correctness check, not just a style nit.
+        if (form.location === "all") {
+          const cityHit = ["chennai", "bangalore", "bengaluru", "coimbatore", "kochi"].find((c) =>
+            form.metaTitle.toLowerCase().includes(c) || form.metaDescription.toLowerCase().includes(c)
+          );
+          if (cityHit) {
+            setError(`This service is set to "All Locations" but the meta title/description mentions ${cityHit[0].toUpperCase()}${cityHit.slice(1)} — remove it, since this text is shown on every city's page.`);
+            return false;
+          }
+        }
         break;
+      }
       case 3:
         if (!form.narrative.trim()) { setError("Treatment narrative is required"); return false; }
         if (!form.heroImage) { setError("Hero image is required"); return false; }
@@ -461,8 +475,12 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Meta Title * <span className="text-gray-400 font-normal">{form.metaTitle.length}/60</span>
             </label>
-            <input type="text" value={form.metaTitle} onChange={(e) => updateForm({ metaTitle: e.target.value })} placeholder="e.g., Advanced Dermal Fillers in Chennai | DR Youth Clinic" maxLength={60} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <p className="text-xs text-gray-400 mt-1">Keep it concise · Include service + city</p>
+            <input type="text" value={form.metaTitle} onChange={(e) => updateForm({ metaTitle: e.target.value })} placeholder={form.location === "all" ? "e.g., Advanced Dermal Fillers: Results, Reviews & Cost | DR Youth Clinic" : "e.g., Advanced Dermal Fillers in Chennai | DR Youth Clinic"} maxLength={60} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p className="text-xs text-gray-400 mt-1">
+              {form.location === "all"
+                ? "This is shared across all 4 city pages — don't name a specific city here."
+                : "Keep it concise · Include service + city"}
+            </p>
           </div>
 
           <div>
@@ -472,6 +490,13 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             <textarea value={form.metaDescription} onChange={(e) => updateForm({ metaDescription: e.target.value })} placeholder="Describe what users will see in Google search results…" maxLength={160} rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
             <p className="text-xs text-gray-400 mt-1">Only appears in Google search results — not shown on the page itself. Use Hero Description (Step 3) for the on-page pitch.</p>
           </div>
+
+          <MetaSuggestions
+            serviceName={form.name}
+            category={form.category}
+            location={form.location}
+            onApply={(title, description) => updateForm({ metaTitle: title, metaDescription: description })}
+          />
 
           <div className="space-y-3">
             <div>
