@@ -55,14 +55,16 @@ interface PageProps {
 async function getService(location: string, slug: string) {
   try {
     await connectDB();
-    return Service.findOne({ urlSlug: slug, location: location.toLowerCase(), status: 'active' } as any).lean() as Promise<any | null>;
+    // 'all'-location services show at every city, so a city's page must also
+    // match them, not just an exact-location document.
+    return Service.findOne({ urlSlug: slug, location: { $in: [location.toLowerCase(), 'all'] }, status: 'active' } as any).lean() as Promise<any | null>;
   } catch { return null; }
 }
 
 async function getRelatedServices(location: string, category: string, excludeSlug: string) {
   try {
     await connectDB();
-    return Service.find({ location: location.toLowerCase(), category, status: 'active', urlSlug: { $ne: excludeSlug } } as any)
+    return Service.find({ location: { $in: [location.toLowerCase(), 'all'] }, category, status: 'active', urlSlug: { $ne: excludeSlug } } as any)
       .limit(3).lean() as Promise<any[]>;
   } catch { return []; }
 }
@@ -93,9 +95,14 @@ async function getServiceReviews(location: string, serviceName: string) {
 async function getServiceAtOtherLocations(serviceName: string, currentLocation: string) {
   try {
     await connectDB();
+    // Skip entirely for 'all'-location services — they're already showing at
+    // every city, so an "also available at" list has nothing meaningful to
+    // add. 'all' docs are also excluded from the results themselves, since
+    // "available at: All" isn't a real place to link to.
+    if (currentLocation.toLowerCase() === 'all') return [];
     return Service.find({
       name: { $regex: `^${serviceName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
-      location: { $ne: currentLocation.toLowerCase() },
+      location: { $nin: [currentLocation.toLowerCase(), 'all'] },
       status: 'active',
     } as any).select('location').lean() as Promise<any[]>;
   } catch { return []; }
@@ -105,7 +112,13 @@ export async function generateStaticParams() {
   try {
     await connectDB();
     const services = await Service.find({ status: 'active' } as any).select('location category urlSlug').lean() as any[];
-    return services.map((s) => ({ location: s.location, category: s.category.toLowerCase(), slug: s.urlSlug }));
+    // An 'all'-location service needs a static path generated for every city,
+    // not just one — otherwise it would only actually build/render for
+    // whichever single location string happened to be stored.
+    return services.flatMap((s) => {
+      const locs = s.location === 'all' ? Object.keys(locations) : [s.location];
+      return locs.map((location) => ({ location, category: s.category.toLowerCase(), slug: s.urlSlug }));
+    });
   } catch { return []; }
 }
 
@@ -154,7 +167,7 @@ function ServiceSchemas({ svc, cityName, params }: { svc: any; cityName: string;
       provider: {
         '@type': 'MedicalClinic',
         name: `DR Youth Clinic ${cityName}`,
-        url: `${SITE_URL}/${svc.location}`,
+        url: `${SITE_URL}/${params.location}`,
       },
     },
     {
@@ -216,7 +229,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
-    getServiceAtOtherLocations(svc.name, params.location),
+    getServiceAtOtherLocations(svc.name, svc.location),
     getSiteConfig(),
   ]);
 

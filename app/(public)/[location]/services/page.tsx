@@ -113,7 +113,7 @@ async function getCategoryData(location: string) {
   try {
     await connectDB();
     const raw = await Service.find(
-      { location: location.toLowerCase(), status: 'active' } as any
+      { location: { $in: [location.toLowerCase(), 'all'] }, status: 'active' } as any
     )
       .select('category name')
       .lean() as any[];

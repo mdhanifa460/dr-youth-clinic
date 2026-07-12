@@ -125,12 +125,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const serviceUrls: MetadataRoute.Sitemap = services
       .filter((s) => s.location && s.category && s.urlSlug)
-      .map((s) => ({
-        url: `${SITE_URL}/${s.location}/services/${s.category.toLowerCase()}/${s.urlSlug}`,
-        lastModified: s.updatedAt ? new Date(s.updatedAt) : new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      }));
+      // An 'all'-location service is a real page at every city, not just one
+      // — list all of them, or Google only ever discovers/indexes it under a
+      // single arbitrary location string.
+      .flatMap((s) => {
+        const cities = s.location === 'all' ? LOCATIONS : [s.location];
+        return cities.map((city) => ({
+          url: `${SITE_URL}/${city}/services/${s.category.toLowerCase()}/${s.urlSlug}`,
+          lastModified: s.updatedAt ? new Date(s.updatedAt) : new Date(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        }));
+      });
 
     const doctorUrls: MetadataRoute.Sitemap = doctors.map((d) => ({
       url: `${SITE_URL}/doctors/${d._id}`,

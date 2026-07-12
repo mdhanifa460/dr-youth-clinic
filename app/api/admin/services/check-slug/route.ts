@@ -21,7 +21,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const baseQuery: any = { urlSlug: slug, location };
+    // An 'all'-location service occupies the slug at every city, so it must
+    // not collide with ANY existing service regardless of location; a
+    // specific-city service must avoid colliding with that city's slugs AND
+    // with any 'all'-location service (which is already showing there too).
+    const locationFilter = location === 'all' ? {} : { location: { $in: [location, 'all'] } };
+
+    const baseQuery: any = { urlSlug: slug, ...locationFilter };
     if (excludeId) baseQuery._id = { $ne: excludeId };
 
     const existing = await Service.findOne(baseQuery).select('_id').lean();
@@ -36,7 +42,7 @@ export async function GET(req: NextRequest) {
     while (
       await Service.findOne({
         urlSlug: suggestion,
-        location,
+        ...locationFilter,
         ...(excludeId ? { _id: { $ne: excludeId } } : {}),
       } as any)
         .select('_id')

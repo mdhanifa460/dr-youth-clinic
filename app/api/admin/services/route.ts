@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status');
 
     const query: any = {};
-    if (location) query.location = location.toLowerCase();
+    // A city filter should also surface 'all'-location services, since those
+    // are genuinely visible at that city too — not just exact-location ones.
+    if (location) query.location = { $in: [location.toLowerCase(), 'all'] };
     if (status) query.status = status;
 
     const services = await Service.find(query as any).sort({ createdAt: -1 });
@@ -41,15 +43,23 @@ export async function POST(req: NextRequest) {
 
     const service = new Service(body);
 
-    // Ensure slug uniqueness within the same location before the pre-save hook runs
+    // Ensure slug uniqueness before the pre-save hook runs. An 'all'-location
+    // service occupies the slug at every city, so it must not collide with
+    // ANY existing service regardless of location; a specific-city service
+    // must avoid colliding with that city's slugs AND with any 'all'-location
+    // service (which is already showing there too).
     if (body.name && body.location) {
       const baseSlug = body.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
+      const collisionFilter = (s: string) =>
+        body.location === 'all'
+          ? { urlSlug: s }
+          : { urlSlug: s, location: { $in: [body.location, 'all'] } };
       let slug = baseSlug;
       let counter = 1;
-      while (await Service.findOne({ urlSlug: slug, location: body.location } as any).select('_id').lean()) {
+      while (await Service.findOne(collisionFilter(slug) as any).select('_id').lean()) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }

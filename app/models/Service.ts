@@ -98,7 +98,9 @@ const ServiceSchema = new Schema<IService>(
     location: {
       type: String,
       required: [true, 'Location is required'],
-      enum: ['chennai', 'bangalore', 'coimbatore', 'kochi'],
+      // 'all' shows the same service at every clinic location instead of
+      // requiring a separate duplicate document per city.
+      enum: ['all', 'chennai', 'bangalore', 'coimbatore', 'kochi'],
       lowercase: true,
     },
     category: {
@@ -274,8 +276,9 @@ ServiceSchema.pre('save', async function () {
   }
 
   if (!this.metaTitle && this.name) {
-    const city = this.location.charAt(0).toUpperCase() + this.location.slice(1);
-    this.metaTitle = `${this.name} in ${city} | DR Youth Clinic`;
+    this.metaTitle = this.location === 'all'
+      ? `${this.name} | DR Youth Clinic`
+      : `${this.name} in ${this.location.charAt(0).toUpperCase() + this.location.slice(1)} | DR Youth Clinic`;
   }
 
   this.seoScore = computeSeoScore(this);

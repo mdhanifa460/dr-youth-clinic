@@ -94,7 +94,7 @@ async function getServicesForCategory(location: string, category: string) {
   try {
     await connectDB();
     return Service.find({
-      location: location.toLowerCase(),
+      location: { $in: [location.toLowerCase(), 'all'] },
       category,
       status: 'active',
     } as any)
@@ -111,7 +111,7 @@ async function findServiceBySlug(location: string, slug: string) {
     await connectDB();
     return Service.findOne({
       urlSlug: slug,
-      location: location.toLowerCase(),
+      location: { $in: [location.toLowerCase(), 'all'] },
       status: 'active',
     } as any)
       .select('category urlSlug')

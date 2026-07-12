@@ -321,7 +321,8 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           </p>
           {isActive && slug && city && (
             <p className="anim-sub text-xs text-gray-400 mb-4 font-mono">
-              /{city}/services/{form.category?.toLowerCase() || "category"}/{slug}
+              /{city === "all" ? "chennai" : city}/services/{form.category?.toLowerCase() || "category"}/{slug}
+              {city === "all" && <span className="not-italic"> &nbsp;(and every other city)</span>}
             </p>
           )}
           <div className="w-full max-w-xs bg-gray-100 rounded-full h-1 mb-2 overflow-hidden mt-4">
@@ -390,11 +391,15 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
               <select value={form.location} onChange={(e) => updateForm({ location: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Select Location</option>
+                <option value="all">All Locations</option>
                 <option value="chennai">Chennai</option>
                 <option value="bangalore">Bangalore</option>
                 <option value="coimbatore">Coimbatore</option>
                 <option value="kochi">Kochi</option>
               </select>
+              {form.location === "all" && (
+                <p className="text-xs text-[#3B82C4] mt-1.5">Shown at every clinic location, using the same content and price everywhere.</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
@@ -487,7 +492,9 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           <div className="bg-gray-50 rounded-xl px-4 py-3">
             <p className="text-xs font-semibold text-gray-500 mb-1">URL Slug (auto-generated)</p>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-400 font-mono">dryouthclinic.com/{form.location || "city"}/services/{form.category?.toLowerCase() || "category"}/</span>
+              <span className="text-xs text-gray-400 font-mono">
+                dryouthclinic.com/{form.location === "all" ? "{chennai|bangalore|coimbatore|kochi}" : (form.location || "city")}/services/{form.category?.toLowerCase() || "category"}/
+              </span>
               <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{computedSlug || "service-name"}</span>
               {slugCheck.checking && <span className="text-xs text-gray-400">checking…</span>}
               {!slugCheck.checking && slugCheck.available === true && <span className="text-xs text-green-600 font-semibold">✓ Available</span>}
@@ -1219,7 +1226,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             <h3 className="font-bold text-[#0B2560] text-sm">Service Summary</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <p><span className="text-gray-500">Name:</span> <span className="font-semibold">{form.name}</span></p>
-              <p><span className="text-gray-500">Location:</span> <span className="font-semibold capitalize">{form.location}</span></p>
+              <p><span className="text-gray-500">Location:</span> <span className="font-semibold capitalize">{form.location === "all" ? "All Locations" : form.location}</span></p>
               <p><span className="text-gray-500">Price:</span> <span className="font-semibold">{form.currency} {form.price}</span></p>
               <p><span className="text-gray-500">Duration:</span> <span className="font-semibold">{form.duration} mins</span></p>
               {form.sessionsRequired && <p><span className="text-gray-500">Sessions:</span> <span className="font-semibold">{form.sessionsRequired}</span></p>}
@@ -1229,7 +1236,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             </div>
             {computedSlug && (
               <p className="text-xs text-gray-400 font-mono pt-1 border-t border-blue-50">
-                URL: /{form.location}/services/{form.category?.toLowerCase() || "category"}/{computedSlug}
+                URL: /{form.location === "all" ? "{every city}" : form.location}/services/{form.category?.toLowerCase() || "category"}/{computedSlug}
               </p>
             )}
           </div>
