@@ -9,6 +9,8 @@ import KeywordSuggestions from "./KeywordSuggestions";
 import MetaSuggestions from "./MetaSuggestions";
 import LocationSeoPanel from "./LocationSeoPanel";
 import { getServiceCities, ALL_SERVICE_CITIES } from "@/app/lib/serviceSeo";
+import ContentBlockEditor from "./contentblocks/ContentBlockEditor";
+import { plainTextToBlocks, blocksToPlainText } from "@/app/lib/contentBlocks/types";
 
 interface LocationSeoOverride {
   location: string;
@@ -35,6 +37,7 @@ interface FormData {
   metaDescription: string;
   keywords: string;
   narrative: string;
+  narrativeBlocks: Array<{ id: string; type: string; visible: boolean; data: Record<string, any> }>;
   heroDescription: string;
   idealFor: string[];
   benefits: Array<{ icon: string; title: string; description: string }>;
@@ -118,6 +121,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           journeyPhases: initialData.journeyPhases ?? [],
           myths: initialData.myths ?? [],
           faq: initialData.faq ?? [],
+          narrativeBlocks: initialData.narrativeBlocks ?? [],
           sessionsRequired: initialData.sessionsRequired ?? "",
           recoveryTime: initialData.recoveryTime ?? "",
           technology: initialData.technology ?? "",
@@ -145,6 +149,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           metaDescription: "",
           keywords: "",
           narrative: "",
+          narrativeBlocks: [],
           heroDescription: "",
           technology: "",
           anaesthesia: "",
@@ -260,7 +265,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
         break;
       }
       case 3:
-        if (!form.narrative.trim()) { setError("Treatment narrative is required"); return false; }
+        if (!form.narrative.trim() && form.narrativeBlocks.length === 0) { setError("Treatment narrative is required"); return false; }
         if (!form.heroImage) { setError("Hero image is required"); return false; }
         break;
       case 5:
@@ -636,7 +641,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
 
           <div>
             <p className="text-sm font-semibold text-gray-700 mb-2">Live Preview</p>
-            <SeoPreviewCard title={form.metaTitle} description={form.metaDescription} keywords={form.keywords} slug={computedSlug} location={primaryLocation} isMultiCity={isMultiCity} serviceName={form.name} benefits={form.benefits} narrative={form.narrative} />
+            <SeoPreviewCard title={form.metaTitle} description={form.metaDescription} keywords={form.keywords} slug={computedSlug} location={primaryLocation} isMultiCity={isMultiCity} serviceName={form.name} benefits={form.benefits} narrative={form.narrativeBlocks.length > 0 ? blocksToPlainText(form.narrativeBlocks, 5000) : form.narrative} />
           </div>
         </div>
       )}
@@ -655,11 +660,30 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Treatment Narrative * <span className="text-gray-400 font-normal">{form.narrative.length}/5000</span>
-            </label>
-            <textarea value={form.narrative} onChange={(e) => updateForm({ narrative: e.target.value })} placeholder="Describe the treatment in detail — what it is, how it works, expected outcomes, who it's for. More detail = better SEO." rows={8} maxLength={5000} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm leading-relaxed" />
-            <p className="text-xs text-gray-400 mt-1">Rich content here directly improves Google ranking for this treatment page.</p>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Treatment Narrative *</label>
+            <p className="text-xs text-gray-400 mb-3">Rich content here directly improves Google ranking for this treatment page.</p>
+            {form.narrativeBlocks.length === 0 && form.narrative.trim() && (
+              <button
+                type="button"
+                onClick={() => updateForm({ narrativeBlocks: plainTextToBlocks(form.narrative) })}
+                className="mb-3 text-xs font-semibold text-[#0B2560] bg-[#f6faff] border border-[#0B2560]/10 rounded-lg px-3 py-2 hover:bg-[#0B2560]/5 transition"
+              >
+                ✨ Convert existing text to blocks
+              </button>
+            )}
+            <ContentBlockEditor
+              blocks={form.narrativeBlocks}
+              onChange={(next) => updateForm({ narrativeBlocks: next })}
+              sourceSystem="content-block-service"
+            />
+            {form.narrativeBlocks.length === 0 && (
+              <div className="mt-3">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Or use plain text for now <span className="text-gray-400 font-normal">{form.narrative.length}/5000</span>
+                </label>
+                <textarea value={form.narrative} onChange={(e) => updateForm({ narrative: e.target.value })} placeholder="Describe the treatment in detail — what it is, how it works, expected outcomes, who it's for. More detail = better SEO." rows={6} maxLength={5000} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm leading-relaxed" />
+              </div>
+            )}
           </div>
 
           <div>

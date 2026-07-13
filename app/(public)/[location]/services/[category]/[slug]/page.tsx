@@ -13,6 +13,8 @@ import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
+import { blocksToPlainText } from '@/app/lib/contentBlocks/types';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
 import CostEstimator from '@/app/components/CostEstimator';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
@@ -194,10 +196,10 @@ function ServiceSchemas({ svc, cityName, params }: { svc: any; cityName: string;
       '@context': 'https://schema.org',
       '@type': 'MedicalProcedure',
       name: svc.name,
-      description: seo.metaDescription || svc.narrative?.slice(0, 200) || '',
+      description: seo.metaDescription || blocksToPlainText(svc.narrativeBlocks, 200) || svc.narrative?.slice(0, 200) || '',
       procedureType: 'https://schema.org/TherapeuticProcedure',
       bodyLocation: svc.category,
-      howPerformed: svc.narrative || '',
+      howPerformed: blocksToPlainText(svc.narrativeBlocks, 5000) || svc.narrative || '',
       preparation: 'Consult with our specialist before treatment',
       offers: {
         '@type': 'Offer',
@@ -477,7 +479,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             {/* Overview */}
             <div>
               <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-4">About This Treatment</h2>
-              {svc.narrative && (
+              {svc.narrativeBlocks?.length > 0 ? (
+                <BlockRenderer blocks={svc.narrativeBlocks} />
+              ) : svc.narrative && (
                 <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line">{svc.narrative}</p>
               )}
               {hasIdealFor && (

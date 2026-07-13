@@ -9,6 +9,8 @@ import { markdownToHtml, extractHeadings } from '@/app/lib/blogMarkdown';
 import ReadingProgress from './ReadingProgress';
 import ArticleSidebar from './ArticleSidebar';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
+import { extractHeadingsFromBlocks } from '@/app/lib/contentBlocks/types';
 
 async function getPost(slug: string) {
   try {
@@ -62,8 +64,9 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
   if (!post) notFound();
 
   const [related, siteConfig] = await Promise.all([getRelatedPosts(params.slug, post.category), getSiteConfig()]);
-  const html = markdownToHtml(post.body || '');
-  const headings = extractHeadings(post.body || '');
+  const hasBlocks = Array.isArray(post.bodyBlocks) && post.bodyBlocks.length > 0;
+  const html = hasBlocks ? '' : markdownToHtml(post.body || '');
+  const headings = hasBlocks ? extractHeadingsFromBlocks(post.bodyBlocks) : extractHeadings(post.body || '');
 
   const dateFormatted = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -148,20 +151,26 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
 
               {/* Article content */}
               <article>
-                <div
-                  className="
-                    text-[17px] text-gray-700 leading-[1.85]
-                    [&_h2]:text-2xl [&_h2]:md:text-3xl [&_h2]:font-headline [&_h2]:font-extrabold [&_h2]:text-[#0B2560] [&_h2]:mt-14 [&_h2]:mb-5 [&_h2]:pb-3 [&_h2]:border-b [&_h2]:border-gray-100
-                    [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#0B2560] [&_h3]:mt-10 [&_h3]:mb-3
-                    [&_p]:mb-7 [&_p]:leading-[1.9]
-                    [&_ul]:pl-6 [&_ul]:mb-7 [&_ul]:space-y-2.5 [&_ul>li]:list-disc [&_ul>li]:marker:text-[#F5A623]
-                    [&_ol]:pl-6 [&_ol]:mb-7 [&_ol]:space-y-2.5 [&_ol>li]:list-decimal [&_ol>li]:marker:text-[#3B82C4] [&_ol>li]:marker:font-bold
-                    [&_blockquote]:border-l-4 [&_blockquote]:border-[#F5A623] [&_blockquote]:pl-6 [&_blockquote]:pr-4 [&_blockquote]:py-4 [&_blockquote]:my-10 [&_blockquote]:bg-[#fffbf0] [&_blockquote]:rounded-r-2xl [&_blockquote]:text-gray-600 [&_blockquote]:italic [&_blockquote]:text-lg
-                    [&_strong]:text-[#0B2560] [&_strong]:font-bold
-                    [&_em]:italic [&_em]:text-gray-600
-                  "
-                  dangerouslySetInnerHTML={{ __html: html }}
-                />
+                {hasBlocks ? (
+                  <div className="text-[17px] text-gray-700 leading-[1.85]">
+                    <BlockRenderer blocks={post.bodyBlocks} />
+                  </div>
+                ) : (
+                  <div
+                    className="
+                      text-[17px] text-gray-700 leading-[1.85]
+                      [&_h2]:text-2xl [&_h2]:md:text-3xl [&_h2]:font-headline [&_h2]:font-extrabold [&_h2]:text-[#0B2560] [&_h2]:mt-14 [&_h2]:mb-5 [&_h2]:pb-3 [&_h2]:border-b [&_h2]:border-gray-100
+                      [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#0B2560] [&_h3]:mt-10 [&_h3]:mb-3
+                      [&_p]:mb-7 [&_p]:leading-[1.9]
+                      [&_ul]:pl-6 [&_ul]:mb-7 [&_ul]:space-y-2.5 [&_ul>li]:list-disc [&_ul>li]:marker:text-[#F5A623]
+                      [&_ol]:pl-6 [&_ol]:mb-7 [&_ol]:space-y-2.5 [&_ol>li]:list-decimal [&_ol>li]:marker:text-[#3B82C4] [&_ol>li]:marker:font-bold
+                      [&_blockquote]:border-l-4 [&_blockquote]:border-[#F5A623] [&_blockquote]:pl-6 [&_blockquote]:pr-4 [&_blockquote]:py-4 [&_blockquote]:my-10 [&_blockquote]:bg-[#fffbf0] [&_blockquote]:rounded-r-2xl [&_blockquote]:text-gray-600 [&_blockquote]:italic [&_blockquote]:text-lg
+                      [&_strong]:text-[#0B2560] [&_strong]:font-bold
+                      [&_em]:italic [&_em]:text-gray-600
+                    "
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                )}
 
                 {/* Tags */}
                 {post.tags?.length > 0 && (

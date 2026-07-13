@@ -37,6 +37,12 @@ export interface IService extends Document {
 
   // Content
   narrative: string;
+  // Structured Content Block Builder version of `narrative` — additive; when
+  // present, the public page renders this instead of the plain-text
+  // `narrative` paragraph. `narrative` stays as the fallback for services
+  // that haven't been converted to blocks yet, and as the plain-text source
+  // for SEO meta description / schema.org fallbacks when blocks are absent.
+  narrativeBlocks?: Array<{ id: string; type: string; visible: boolean; data: Record<string, any> }>;
   heroDescription?: string;
   idealFor?: string[];
   sessionsRequired?: string;
@@ -177,6 +183,10 @@ const ServiceSchema = new Schema<IService>(
     narrative: {
       type: String,
       maxlength: 5000,
+    },
+    narrativeBlocks: {
+      type: [Schema.Types.Mixed],
+      default: undefined,
     },
     heroDescription: {
       type: String,

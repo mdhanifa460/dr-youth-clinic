@@ -25,6 +25,12 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/vite": "4.1.14",
+    "@tiptap/extension-highlight": "^2.11.5",
+    "@tiptap/extension-link": "^2.11.5",
+    "@tiptap/extension-underline": "^2.11.5",
+    "@tiptap/pm": "^2.11.5",
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
     "@types/mongoose": "^5.11.96",
     "cloudinary": "^2.10.0",
     "dotenv": "16.4.5",

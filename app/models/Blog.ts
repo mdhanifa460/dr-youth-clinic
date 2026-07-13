@@ -5,6 +5,10 @@ export interface IBlog extends Document {
   slug: string;
   excerpt: string;
   body: string;
+  // Structured Content Block Builder version of `body` — additive; when
+  // present, the public page renders this instead of parsing `body` as
+  // Markdown. `body` stays as the fallback for posts not yet converted.
+  bodyBlocks?: Array<{ id: string; type: string; visible: boolean; data: Record<string, any> }>;
   coverImage: { url: string; publicId: string };
   category: string;
   tags: string[];
@@ -23,6 +27,7 @@ const BlogSchema = new Schema<IBlog>({
   slug:        { type: String, required: [true, 'Slug is required'], trim: true, lowercase: true },
   excerpt:     { type: String, maxlength: 300 },
   body:        { type: String, default: '' },
+  bodyBlocks:  { type: [Schema.Types.Mixed], default: undefined },
   coverImage:  { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
   category:    { type: String, enum: ['Hair Care', 'Skin Care', 'Laser', 'Aesthetics', 'General'], default: 'General' },
   tags:        [String],

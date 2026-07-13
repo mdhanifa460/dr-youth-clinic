@@ -11,7 +11,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ success: false, message: 'Template not found' }, { status: 404 });
     }
 
-    const moduleMap: Record<string, any> = { 'landing-page': 'landing-pages', homepage: 'homepage', about: 'homepage' };
+    const moduleMap: Record<string, any> = {
+      'landing-page': 'landing-pages', homepage: 'homepage', about: 'homepage',
+      'content-block-service': 'services', 'content-block-blog': 'blog',
+    };
     const denied = await requirePermission(moduleMap[existing.sourceSystem] || 'landing-pages', 'full');
     if (denied) return denied;
 

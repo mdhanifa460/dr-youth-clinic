@@ -12,6 +12,8 @@ const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   'landing-page': 'landing-pages',
   homepage: 'homepage',
   about: 'homepage',
+  'content-block-service': 'services',
+  'content-block-blog': 'blog',
 };
 
 function moduleFor(sourceSystem: string | null): AdminModule {

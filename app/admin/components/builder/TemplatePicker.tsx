@@ -15,7 +15,7 @@ export default function TemplatePicker({
   sourceSystem,
   onInsert,
 }: {
-  sourceSystem: "landing-page" | "homepage" | "about";
+  sourceSystem: "landing-page" | "homepage" | "about" | "content-block-service" | "content-block-blog";
   onInsert: (template: SavedTemplate) => void;
 }) {
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);

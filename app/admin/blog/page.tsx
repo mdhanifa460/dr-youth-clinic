@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, X, Loader, CheckCircle, Trash2, Edit2, Eye, EyeOff, BookOpen, Star } from 'lucide-react';
 import ImageUpload from '@/app/admin/components/ImageUpload';
+import ContentBlockEditor from '@/app/admin/components/contentblocks/ContentBlockEditor';
+import { markdownToBlocks } from '@/app/lib/contentBlocks/types';
 
 const CATEGORIES = ['Hair Care', 'Skin Care', 'Laser', 'Aesthetics', 'General'];
 
@@ -11,7 +13,7 @@ function slugify(text: string) {
 }
 
 const EMPTY_FORM = {
-  title: '', slug: '', excerpt: '', body: '',
+  title: '', slug: '', excerpt: '', body: '', bodyBlocks: [] as any[],
   coverImage: { url: '', publicId: '' },
   category: 'General', tags: '', author: 'DR Youth Clinic Team',
   authorTitle: 'Medical Content Team', readTime: '5 min read',
@@ -168,11 +170,30 @@ function BlogModal({ initial, onClose, onSave }: {
 
           {/* Body */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Body Content <span className="font-normal text-gray-400">(Markdown supported)</span></label>
-            <textarea rows={14} value={form.body} onChange={(e) => set('body', e.target.value)}
-              placeholder={`## Introduction\n\nYour opening paragraph here...\n\n## What is PRP Therapy?\n\nExplain the topic in depth.\n\n- Point one\n- Point two\n- Point three\n\n> Expert tip: Add a blockquote for key insights.\n\n## Results & Recovery\n\nMore content...`}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono resize-y" />
-            <p className="text-[10px] text-gray-400 mt-1">Use ## for headings, - for bullets, **bold**, *italic*, &gt; for quotes</p>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Body Content</label>
+            {form.bodyBlocks.length === 0 && form.body.trim() && (
+              <button
+                type="button"
+                onClick={() => set('bodyBlocks', markdownToBlocks(form.body))}
+                className="mb-2 text-xs font-semibold text-[#0B2560] bg-[#f6faff] border border-[#0B2560]/10 rounded-lg px-3 py-2 hover:bg-[#0B2560]/5 transition"
+              >
+                ✨ Convert existing Markdown to blocks
+              </button>
+            )}
+            <ContentBlockEditor
+              blocks={form.bodyBlocks}
+              onChange={(next) => set('bodyBlocks', next)}
+              sourceSystem="content-block-blog"
+            />
+            {form.bodyBlocks.length === 0 && (
+              <div className="mt-3">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Or use Markdown for now</label>
+                <textarea rows={14} value={form.body} onChange={(e) => set('body', e.target.value)}
+                  placeholder={`## Introduction\n\nYour opening paragraph here...\n\n## What is PRP Therapy?\n\nExplain the topic in depth.\n\n- Point one\n- Point two\n- Point three\n\n> Expert tip: Add a blockquote for key insights.\n\n## Results & Recovery\n\nMore content...`}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono resize-y" />
+                <p className="text-[10px] text-gray-400 mt-1">Use ## for headings, - for bullets, **bold**, *italic*, &gt; for quotes</p>
+              </div>
+            )}
           </div>
 
           {/* Author */}
