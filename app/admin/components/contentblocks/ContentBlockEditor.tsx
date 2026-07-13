@@ -7,6 +7,7 @@ import SectionCard from "@/app/admin/components/builder/SectionCard";
 import SaveTemplateModal from "@/app/admin/components/builder/SaveTemplateModal";
 import TemplatePicker from "@/app/admin/components/builder/TemplatePicker";
 import MediaGalleryModal from "@/app/admin/components/MediaGalleryModal";
+import ContentHealthCard from "./ContentHealthCard";
 import {
   CONTENT_BLOCK_TYPES,
   newBlock,
@@ -549,6 +550,7 @@ export default function ContentBlockEditor({
 
   return (
     <div className="space-y-3">
+      {blocks.length > 0 && <ContentHealthCard blocks={blocks} hasFaq={!!serviceContext?.faq?.length} />}
       {blocks.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-sm">
           No content blocks yet — add your first one below.
