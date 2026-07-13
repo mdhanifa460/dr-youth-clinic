@@ -86,6 +86,66 @@ function SelectionCheck({ selected }: { selected: boolean }) {
   );
 }
 
+// Uploads straight to Cloudinary via a dedicated, rate-limited public route
+// (app/api/assessment-photo-upload) — never blocks progress: skipping is
+// always allowed regardless of the question's Required setting, since asking
+// a visitor to mandatorily upload a photo of their face/skin is bad practice.
+function PhotoUploadField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    setError("");
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/assessment-photo-upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Upload failed");
+      onChange(data.data.secure_url);
+    } catch (err: any) {
+      setError(err.message || "Upload failed — please try again or skip this step.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 px-6 py-10 text-center">
+      {value ? (
+        <div className="flex flex-col items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="Uploaded photo" className="w-32 h-32 rounded-xl object-cover shadow-sm" />
+          <button
+            type="button"
+            onClick={() => { onChange(""); if (inputRef.current) inputRef.current.value = ""; }}
+            className="text-xs font-semibold text-red-500 hover:text-red-700"
+          >
+            Remove photo
+          </button>
+        </div>
+      ) : (
+        <label className="cursor-pointer flex flex-col items-center gap-3">
+          <span className="text-4xl">📷</span>
+          <span className="text-sm font-bold text-[#0B2560]">{uploading ? "Uploading…" : "Tap to add a photo"}</span>
+          <span className="text-xs text-gray-400">Optional — you can skip this step</span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          />
+        </label>
+      )}
+      {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+    </div>
+  );
+}
+
 // One generic renderer for every question type — replaces the 5 bespoke
 // per-step components the old fixed-question quiz had, since questions are
 // now admin-defined and their number/order isn't fixed at build time.
@@ -98,6 +158,10 @@ function QuestionStep({
   value: string | string[] | number | undefined;
   onChange: (v: string | string[] | number) => void;
 }) {
+  if (question.type === "photo") {
+    return <PhotoUploadField value={typeof value === "string" ? value : ""} onChange={onChange} />;
+  }
+
   if (question.type === "slider" || question.type === "number") {
     const num = typeof value === "number" ? value : question.sliderMin;
     return (
@@ -629,7 +693,7 @@ export default function SkinQuizPage() {
   }, [currentQuestion]);
 
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
-  const canProceed = !currentQuestion?.required || (
+  const canProceed = !currentQuestion?.required || currentQuestion.type === "photo" || (
     Array.isArray(currentAnswer) ? currentAnswer.length > 0 : currentAnswer !== undefined && currentAnswer !== ""
   );
 
@@ -791,6 +855,7 @@ export default function SkinQuizPage() {
             </div>
 
             <QuestionStep
+              key={currentQuestion.id}
               question={currentQuestion}
               value={currentAnswer}
               onChange={(v) => setAnswers((a) => ({ ...a, [currentQuestion.id]: v }))}

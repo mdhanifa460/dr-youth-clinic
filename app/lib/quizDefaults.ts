@@ -1,7 +1,7 @@
 // Shared AI Assessment defaults — imported by both the model (server) and
 // client components. No mongoose imports here so it's safe in client bundles.
 
-export type QuestionType = "single" | "multi" | "slider" | "yesno" | "number" | "dropdown" | "image" | "emoji";
+export type QuestionType = "single" | "multi" | "slider" | "yesno" | "number" | "dropdown" | "image" | "emoji" | "photo";
 
 export interface AssessmentAnswer {
   id: string;
@@ -184,6 +184,38 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
       { id: "this-month", title: "This month", description: "Planning within 30 days", icon: "📅", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
       { id: "exploring", title: "Exploring", description: "Just researching options", icon: "🔍", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
     ],
+  },
+  // Demographic + photo questions — informational for the doctor's review,
+  // not scoring inputs (no tags/weight), so they never change which
+  // treatments get recommended. All optional by default (required: false);
+  // the visitor can always skip a photo upload regardless of this setting —
+  // see the public page's canProceed logic.
+  {
+    id: "gender", title: "What's your gender?",
+    subtitle: "Helps your doctor tailor their assessment",
+    description: "", icon: "🧑", image: "",
+    type: "single", order: 6, required: false,
+    sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
+    answers: [
+      { id: "male", title: "Male", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+      { id: "female", title: "Female", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    ],
+  },
+  {
+    id: "age", title: "What's your age?",
+    subtitle: "Helps your doctor tailor their assessment",
+    description: "", icon: "🎂", image: "",
+    type: "number", order: 7, required: false,
+    sliderMin: 12, sliderMax: 80, sliderStep: 1, sliderUnit: "years",
+    answers: [],
+  },
+  {
+    id: "photo", title: "Add a photo",
+    subtitle: "Optional — helps your doctor give a more accurate assessment",
+    description: "", icon: "📷", image: "",
+    type: "photo", order: 8, required: false,
+    sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
+    answers: [],
   },
 ];
 

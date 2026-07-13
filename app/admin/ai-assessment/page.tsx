@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   DEFAULT_QUIZ_CONFIG,
+  DEFAULT_QUESTIONS,
   type AssessmentConfigData,
   type AssessmentQuestion,
   type AssessmentAnswer,
@@ -65,7 +66,15 @@ const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
   { value: "dropdown", label: "Dropdown" },
   { value: "image", label: "Image Choice" },
   { value: "emoji", label: "Emoji Choice" },
+  { value: "photo", label: "Photo Upload" },
 ];
+
+// Questions that never need an answers editor or slider config — visitors
+// interact with them directly (a number input, a photo picker).
+const NO_ANSWERS_TYPES: QuestionType[] = ["slider", "number", "photo"];
+const SLIDER_CONFIG_TYPES: QuestionType[] = ["slider", "number"];
+
+const DEMOGRAPHIC_QUESTION_IDS = ["gender", "age", "photo"];
 
 // ─── Answer editor ───────────────────────────────────────────────────────────
 
@@ -136,7 +145,8 @@ function QuestionCard({
   const updateAnswer = (i: number, a: AssessmentAnswer) => set({ answers: question.answers.map((x, idx) => idx === i ? a : x) });
   const removeAnswer = (i: number) => set({ answers: question.answers.filter((_, idx) => idx !== i) });
 
-  const needsAnswers = !["slider", "number"].includes(question.type);
+  const needsAnswers = !NO_ANSWERS_TYPES.includes(question.type);
+  const needsSliderConfig = SLIDER_CONFIG_TYPES.includes(question.type);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -182,8 +192,11 @@ function QuestionCard({
               <Toggle checked={question.required} onChange={(v) => set({ required: v })} label="Required" />
             </div>
           </div>
+          {question.type === "photo" && (
+            <p className="text-[10px] text-gray-400 -mt-2">Photo questions are always skippable for visitors, regardless of the Required toggle above.</p>
+          )}
 
-          {!needsAnswers ? (
+          {needsSliderConfig ? (
             <div className="grid grid-cols-4 gap-2">
               <div><label className="text-[10px] text-gray-400 block mb-0.5">Min</label>
                 <input type="number" value={question.sliderMin} onChange={(e) => set({ sliderMin: Number(e.target.value) })} className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm" /></div>
@@ -194,7 +207,7 @@ function QuestionCard({
               <div><label className="text-[10px] text-gray-400 block mb-0.5">Unit</label>
                 <Input value={question.sliderUnit} onChange={(v) => set({ sliderUnit: v })} placeholder="years" /></div>
             </div>
-          ) : (
+          ) : needsAnswers ? (
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-2 block">Answers</label>
               <div className="space-y-2">
@@ -204,7 +217,7 @@ function QuestionCard({
               </div>
               <button onClick={addAnswer} className="text-sm text-blue-600 hover:text-blue-800 font-medium mt-2">+ Add answer</button>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>
@@ -313,6 +326,117 @@ function ConcernTreatmentPanel({ entry, aiPrompt, enableAI, onChange }: { entry:
         ))}
       </div>
       {entry.treatments.length < 5 && <button onClick={addTreatment} className="text-sm text-blue-600 hover:text-blue-800 font-medium">+ Add treatment</button>}
+    </div>
+  );
+}
+
+// ─── Leads tab ───────────────────────────────────────────────────────────────
+
+// Individual visitor submissions — previously only aggregate Analytics
+// numbers existed, so a doctor had no way to open a specific person's
+// gender/age/uploaded photo/full answers before this.
+function LeadsTab() {
+  const [leads, setLeads] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetch(`/api/admin/quiz/leads?page=${page}&limit=20`).then((r) => r.json()),
+      fetch("/api/admin/quiz").then((r) => r.json()),
+    ]).then(([leadsRes, configRes]) => {
+      if (leadsRes.success) { setLeads(leadsRes.data); setTotalPages(leadsRes.totalPages || 1); }
+      if (configRes.success) setQuestions(configRes.data.questions || []);
+    }).finally(() => setLoading(false));
+  }, [page]);
+
+  const questionById = (id: string) => questions.find((q) => q.id === id);
+  const photoQuestionId = questions.find((q) => q.type === "photo")?.id;
+
+  const answerLabel = (q: AssessmentQuestion | undefined, raw: any): string => {
+    if (raw === undefined || raw === null || raw === "") return "—";
+    if (Array.isArray(raw)) return raw.map((id) => q?.answers.find((a) => a.id === id)?.title || id).join(", ");
+    if (!q) return String(raw);
+    const match = q.answers.find((a) => a.id === raw);
+    return match ? match.title : String(raw);
+  };
+
+  if (loading) return <div className="text-center py-16 text-gray-400">Loading leads…</div>;
+  if (leads.length === 0) return <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">No assessment leads yet.</div>;
+
+  return (
+    <div className="space-y-3">
+      {leads.map((lead) => {
+        const photoUrl = photoQuestionId ? lead.answers?.[photoQuestionId] : "";
+        const genderLabel = answerLabel(questionById("gender"), lead.answers?.gender);
+        const ageRaw = lead.answers?.age;
+        const isOpen = expanded === lead._id;
+        return (
+          <div key={lead._id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <button onClick={() => setExpanded(isOpen ? null : lead._id)} className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 transition">
+              {photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photoUrl} alt="" className="w-11 h-11 rounded-full object-cover shrink-0" />
+              ) : (
+                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-300 shrink-0 text-lg">👤</div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">{lead.name || "Anonymous"} <span className="text-gray-400 font-normal">· {lead.phone || "—"}</span></p>
+                <p className="text-xs text-gray-400 truncate">
+                  {lead.primaryConcern || "—"}
+                  {genderLabel !== "—" && ` · ${genderLabel}`}
+                  {ageRaw ? `, ${ageRaw}y` : ""}
+                  {" · "}{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "—"}
+                </p>
+              </div>
+              <span className="text-gray-400 shrink-0">{isOpen ? "▲" : "▼"}</span>
+            </button>
+            {isOpen && (
+              <div className="px-5 pb-5 border-t border-gray-50 pt-4 space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <p><span className="text-gray-400">Email:</span> {lead.email || "—"}</p>
+                  <p><span className="text-gray-400">City:</span> {lead.city || "—"}</p>
+                  <p><span className="text-gray-400">Source:</span> {lead.source || "—"}{lead.qrSource ? " (QR)" : ""}</p>
+                  <p><span className="text-gray-400">Location / Channel:</span> {[lead.clinicLocation, lead.channel].filter(Boolean).join(" · ") || "—"}</p>
+                </div>
+                {photoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoUrl} alt="Uploaded photo" className="w-40 h-40 rounded-xl object-cover" />
+                )}
+                <div>
+                  <p className="text-xs font-bold text-gray-500 mb-1.5">Answers</p>
+                  <div className="space-y-1">
+                    {Object.entries(lead.answers || {}).map(([qId, raw]) => {
+                      const q = questionById(qId);
+                      if (q?.type === "photo") return null;
+                      return (
+                        <p key={qId} className="text-xs text-gray-600"><span className="text-gray-400">{q?.title || qId}:</span> {answerLabel(q, raw)}</p>
+                      );
+                    })}
+                  </div>
+                </div>
+                {Array.isArray(lead.recommendations) && lead.recommendations.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 mb-1.5">Recommended</p>
+                    <p className="text-xs text-gray-600">{lead.recommendations.map((r: any) => (typeof r === "string" ? r : r?.name)).filter(Boolean).join(", ")}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-xs font-semibold text-gray-500 disabled:opacity-30">← Prev</button>
+          <span className="text-xs text-gray-400">Page {page} of {totalPages}</span>
+          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="text-xs font-semibold text-gray-500 disabled:opacity-30">Next →</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -557,7 +681,7 @@ export default function AiAssessmentAdminPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"questions" | "treatments" | "analytics" | "qr" | "settings">("questions");
+  const [tab, setTab] = useState<"questions" | "treatments" | "leads" | "analytics" | "qr" | "settings">("questions");
   const [openConcern, setOpenConcern] = useState<string | null>(null);
 
   useEffect(() => {
@@ -636,6 +760,19 @@ export default function AiAssessmentAdminPage() {
     });
   };
 
+  // One-click way to add the built-in Gender/Age/Photo questions to an
+  // already-customized live config — DEFAULT_QUESTIONS only seeds a brand
+  // new install or a full "Reset defaults", so a doctor who's already
+  // configured this assessment needs an additive path to pick these up.
+  const missingDemographicIds = DEMOGRAPHIC_QUESTION_IDS.filter((id) => !config.questions.some((q) => q.id === id));
+  const addDemographicQuestions = () => {
+    const toAdd = DEFAULT_QUESTIONS.filter((q) => missingDemographicIds.includes(q.id));
+    if (toAdd.length === 0) return;
+    const maxOrder = config.questions.reduce((m, q) => Math.max(m, q.order), 0);
+    const withOrder = toAdd.map((q, i) => ({ ...q, order: maxOrder + i + 1 }));
+    updateConfig({ questions: [...config.questions, ...withOrder] });
+  };
+
   const updateQuestion = (id: string, q: AssessmentQuestion) => updateConfig({ questions: config.questions.map((x) => x.id === id ? q : x) });
   const removeQuestion = (id: string) => {
     if (!confirm("Remove this question?")) return;
@@ -679,6 +816,7 @@ export default function AiAssessmentAdminPage() {
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit flex-wrap">
         {([
           ["questions", "📋 Questions"], ["treatments", "💊 Treatment Mapping"],
+          ["leads", "🧑‍🤝‍🧑 Leads"],
           ["analytics", "📊 Analytics"], ["qr", "🔗 QR Generator"], ["settings", "⚙ Settings"],
         ] as const).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === t ? "bg-white text-[#0B2545] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
@@ -699,6 +837,11 @@ export default function AiAssessmentAdminPage() {
           <button onClick={addQuestion} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-semibold text-[#0B2545] hover:border-[#0B2545]/40 hover:bg-[#f6faff] transition">
             + Add Question
           </button>
+          {missingDemographicIds.length > 0 && (
+            <button onClick={addDemographicQuestions} className="w-full py-3 border-2 border-dashed border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:border-purple-400 hover:bg-purple-50 transition">
+              + Add Gender / Age / Photo Upload
+            </button>
+          )}
         </div>
       )}
 
@@ -735,6 +878,7 @@ export default function AiAssessmentAdminPage() {
         </div>
       )}
 
+      {tab === "leads" && <LeadsTab />}
       {tab === "analytics" && <AnalyticsTab />}
       {tab === "qr" && (
         config.settings.enableQR ? <QrGeneratorTab /> : (

@@ -20,7 +20,7 @@ const QuestionSchema = new mongoose.Schema({
   description: { type: String, default: "" },
   icon:        { type: String, default: "" },
   image:       { type: String, default: "" },
-  type:        { type: String, enum: ["single", "multi", "slider", "yesno", "number", "dropdown", "image", "emoji"], default: "single" },
+  type:        { type: String, enum: ["single", "multi", "slider", "yesno", "number", "dropdown", "image", "emoji", "photo"], default: "single" },
   order:       { type: Number, required: true },
   required:    { type: Boolean, default: true },
   answers:     { type: [AnswerSchema], default: [] },
