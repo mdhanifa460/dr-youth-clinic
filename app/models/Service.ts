@@ -185,7 +185,14 @@ const ServiceSchema = new Schema<IService>(
       maxlength: 5000,
     },
     narrativeBlocks: {
-      type: [Schema.Types.Mixed],
+      type: [
+        {
+          id: { type: String, required: true },
+          type: { type: String, required: true },
+          visible: { type: Boolean, default: true },
+          data: { type: Schema.Types.Mixed, default: {} },
+        },
+      ],
       default: undefined,
     },
     heroDescription: {

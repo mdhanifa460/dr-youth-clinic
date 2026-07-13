@@ -22,12 +22,22 @@ export interface IBlog extends Document {
   updatedAt: Date;
 }
 
+const ContentBlockSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    type: { type: String, required: true },
+    visible: { type: Boolean, default: true },
+    data: { type: Schema.Types.Mixed, default: {} },
+  },
+  { _id: false }
+);
+
 const BlogSchema = new Schema<IBlog>({
   title:       { type: String, required: [true, 'Title is required'], trim: true },
   slug:        { type: String, required: [true, 'Slug is required'], trim: true, lowercase: true },
   excerpt:     { type: String, maxlength: 300 },
   body:        { type: String, default: '' },
-  bodyBlocks:  { type: [Schema.Types.Mixed], default: undefined },
+  bodyBlocks:  { type: [ContentBlockSchema], default: undefined },
   coverImage:  { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
   category:    { type: String, enum: ['Hair Care', 'Skin Care', 'Laser', 'Aesthetics', 'General'], default: 'General' },
   tags:        [String],
