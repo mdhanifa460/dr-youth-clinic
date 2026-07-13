@@ -25,7 +25,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const { photoUrl, primaryConcern } = await req.json();
-    if (!photoUrl || typeof photoUrl !== "string" || !photoUrl.startsWith("https://res.cloudinary.com/")) {
+    // Scoped to this clinic's own Cloudinary cloud + assessment-photos folder —
+    // a bare "starts with res.cloudinary.com" check would let any admin
+    // session (even at 'view' level) point this at an arbitrary externally
+    // hosted image and burn the clinic's Anthropic quota analyzing it.
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const expectedPrefix = `https://res.cloudinary.com/${cloudName}/image/upload/`;
+    if (!photoUrl || typeof photoUrl !== "string" || !cloudName || !photoUrl.startsWith(expectedPrefix) || !photoUrl.includes("/dr-youth-clinic/assessment-photos/")) {
       return NextResponse.json({ success: false, message: "A valid uploaded photo URL is required" }, { status: 400 });
     }
 

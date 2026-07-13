@@ -390,7 +390,10 @@ function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation
   );
 }
 
-type LeadForm = { name: string; phone: string; email: string; city: string };
+// No `city` field — the unlock form never collected it after being merged
+// from the old post-results email form; app/api/leads still accepts and
+// stores it (for any pre-existing leads that have it), it's just never sent.
+type LeadForm = { name: string; phone: string; email: string };
 type LeadStatus = "idle" | "sending" | "sent" | "saved" | "error";
 
 function ResultsScreen({
@@ -505,7 +508,11 @@ function ResultsScreen({
 // followed. Same underlying number as TreatmentCard's confidence, just
 // presented the way a fitness/skin-scoring app would.
 function ScoreGauge({ confidence }: { confidence: number }) {
-  const potential = Math.min(98, confidence + 18);
+  // Capped at 100 (not a fixed 98) so this never renders equal to or lower
+  // than the current score — several default treatments already ship with
+  // confidence in the 96-98 range, where a hard 98 cap would show no
+  // improvement (or, above 98, a "potential" score lower than today's).
+  const potential = Math.min(100, confidence + 18);
   return (
     <div className="flex items-center justify-center gap-8 bg-white rounded-2xl border-2 border-gray-100 px-8 py-6 mb-6">
       <div className="text-center">
@@ -527,6 +534,7 @@ function ScoreGauge({ confidence }: { confidence: number }) {
 // ResultsScreen (same lead-capture endpoint, just moved earlier in the flow).
 function ResultsPreview({
   topRecommendation,
+  showTopRecommendation,
   lockedCount,
   lead,
   setLead,
@@ -534,6 +542,7 @@ function ResultsPreview({
   onLeadSubmit,
 }: {
   topRecommendation: TreatmentRecommendation | undefined;
+  showTopRecommendation: boolean;
   lockedCount: number;
   lead: LeadForm;
   setLead: React.Dispatch<React.SetStateAction<LeadForm>>;
@@ -541,6 +550,7 @@ function ResultsPreview({
   onLeadSubmit: (e: React.FormEvent) => void;
 }) {
   const [unlocking, setUnlocking] = useState(false);
+  const showTeaser = showTopRecommendation && !!topRecommendation;
 
   return (
     <div className="py-2">
@@ -554,12 +564,12 @@ function ResultsPreview({
         </h2>
       </div>
 
-      {topRecommendation && <ScoreGauge confidence={topRecommendation.confidence} />}
+      {showTeaser && <ScoreGauge confidence={topRecommendation!.confidence} />}
 
-      {topRecommendation && (
+      {showTeaser && (
         <div className="mb-4">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Top Match</p>
-          <TreatmentCard treatment={topRecommendation} rank={0} />
+          <TreatmentCard treatment={topRecommendation!} rank={0} />
         </div>
       )}
 
@@ -655,7 +665,7 @@ export default function SkinQuizPage() {
   const [visible, setVisible] = useState(true);
   const [path, setPath] = useState<string[]>([]); // visited question ids, in order
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
-  const [lead, setLead] = useState<LeadForm>({ name: "", phone: "", email: "", city: "" });
+  const [lead, setLead] = useState<LeadForm>({ name: "", phone: "", email: "" });
   const [leadStatus, setLeadStatus] = useState<LeadStatus>("idle");
   const startedTracked = useRef(false);
   const completedTracked = useRef(false);
@@ -676,11 +686,12 @@ export default function SkinQuizPage() {
     }).catch(() => {});
   }, [campaign, qrSource, clinicLocation, channel]);
 
-  // "text" (free-text notes) questions have a master on/off switch in
-  // Settings, independent of the question itself, so a doctor can toggle
-  // note collection off without deleting the question and losing its wording.
+  // The "Enable 'Anything else for your doctor?' Note" Settings toggle only
+  // controls the specific quick-add "notes" question (id "notes"), not every
+  // free-text question — a doctor who adds a second, unrelated text question
+  // shouldn't have it silently hidden by a toggle labeled for a different one.
   const orderedQuestions = [...quizConfig.questions]
-    .filter((q) => q.type !== "text" || quizConfig.settings?.enableNotes !== false)
+    .filter((q) => !(q.type === "text" && q.id === "notes" && quizConfig.settings?.enableNotes === false))
     .sort((a, b) => a.order - b.order);
   const currentQuestionId = path[path.length - 1];
   const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
@@ -803,7 +814,7 @@ export default function SkinQuizPage() {
   const handleRetake = () => {
     setAnswers({});
     setPath([]);
-    setLead({ name: "", phone: "", email: "", city: "" });
+    setLead({ name: "", phone: "", email: "" });
     setLeadStatus("idle");
     startedTracked.current = false;
     completedTracked.current = false;
@@ -937,7 +948,8 @@ export default function SkinQuizPage() {
           ) : (
             <ResultsPreview
               topRecommendation={recommendations[0]}
-              lockedCount={Math.max(0, recommendations.length - 1)}
+              showTopRecommendation={sectionVisible("topRecommendation")}
+              lockedCount={sectionVisible("allRecommendations") ? Math.max(0, recommendations.length - 1) : 0}
               lead={lead}
               setLead={setLead}
               leadStatus={leadStatus}

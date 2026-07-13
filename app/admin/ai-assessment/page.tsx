@@ -48,7 +48,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${checked ? "bg-[#0B2545]" : "bg-gray-200"}`}
+        className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${checked ? "bg-[#0B2560]" : "bg-gray-200"}`}
       >
         <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all shadow ${checked ? "left-[18px]" : "left-0.5"}`} />
       </button>
@@ -356,12 +356,14 @@ function LeadsTab() {
     ]).then(([leadsRes, configRes]) => {
       if (leadsRes.success) { setLeads(leadsRes.data); setTotalPages(leadsRes.totalPages || 1); }
       if (configRes.success) setQuestions(configRes.data.questions || []);
-    }).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [page]);
 
   const questionById = (id: string) => questions.find((q) => q.id === id);
-  const photoQuestionId = questions.find((q) => q.type === "photo")?.id;
-  const noteQuestionId = questions.find((q) => q.type === "text")?.id;
+  // .filter, not .find — a doctor can add more than one Photo Upload or Free
+  // Text question, and every one of them needs to actually show up here.
+  const photoQuestionIds = questions.filter((q) => q.type === "photo").map((q) => q.id);
+  const noteQuestionIds = questions.filter((q) => q.type === "text").map((q) => q.id);
 
   const answerLabel = (q: AssessmentQuestion | undefined, raw: any): string => {
     if (raw === undefined || raw === null || raw === "") return "—";
@@ -380,10 +382,11 @@ function LeadsTab() {
         <LeadRow
           key={lead._id}
           lead={lead}
+          questions={questions}
           questionById={questionById}
           answerLabel={answerLabel}
-          photoQuestionId={photoQuestionId}
-          noteQuestionId={noteQuestionId}
+          photoQuestionIds={photoQuestionIds}
+          noteQuestionIds={noteQuestionIds}
           isOpen={expanded === lead._id}
           onToggle={() => setExpanded(expanded === lead._id ? null : lead._id)}
         />
@@ -399,73 +402,120 @@ function LeadsTab() {
   );
 }
 
+// Shared by PhotoBlock/NoteBlock — one "trigger an AI action, show result or
+// error" trio instead of hand-rolling the same 3-state pattern per feature.
+function useAsyncAction<T>() {
+  const [result, setResult] = useState<T | null>(null);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState("");
+  const run = async (fn: () => Promise<T>) => {
+    setRunning(true);
+    setError("");
+    try {
+      setResult(await fn());
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setRunning(false);
+    }
+  };
+  return { result, running, error, run };
+}
+
+function PhotoBlock({ url, primaryConcern }: { url: string; primaryConcern: string }) {
+  const { result: analysis, running: analyzing, error, run } = useAsyncAction<string>();
+  const analyze = () => run(async () => {
+    const res = await fetch("/api/admin/quiz/analyze-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photoUrl: url, primaryConcern }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    return data.data.analysis as string;
+  });
+
+  return (
+    <div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt="Uploaded photo" className="w-40 h-40 rounded-xl object-cover mb-2" />
+      {!analysis && (
+        <button onClick={analyze} disabled={analyzing} className="block text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50">
+          {analyzing ? "Analyzing…" : "🔍 Analyze Photo with AI"}
+        </button>
+      )}
+      {analysis && (
+        <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 max-w-md">
+          <p className="text-xs font-bold text-purple-700 mb-1">🔍 AI Visual Observations (not a diagnosis)</p>
+          <p className="text-xs text-purple-800 whitespace-pre-wrap">{analysis}</p>
+        </div>
+      )}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function NoteBlock({ note, primaryConcern }: { note: string; primaryConcern: string }) {
+  const { result: summary, running: summarizing, error, run } = useAsyncAction<string>();
+  const summarize = () => run(async () => {
+    const res = await fetch("/api/admin/quiz/summarize-note", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note, primaryConcern }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    return data.data.summary as string;
+  });
+
+  return (
+    <div className="bg-[#f6faff] border border-[#0B2560]/10 rounded-xl p-3">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <p className="text-xs font-bold text-gray-600">📝 Note to Doctor</p>
+        {!summary && (
+          <button onClick={summarize} disabled={summarizing} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50 shrink-0">
+            {summarizing ? "Summarizing…" : "✨ Summarize with AI"}
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-gray-700 whitespace-pre-wrap">{note}</p>
+      {summary && <p className="text-xs text-purple-700 mt-2 pt-2 border-t border-[#0B2560]/10"><span className="font-bold">AI summary:</span> {summary}</p>}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
 function LeadRow({
-  lead, questionById, answerLabel, photoQuestionId, noteQuestionId, isOpen, onToggle,
+  lead, questions, questionById, answerLabel, photoQuestionIds, noteQuestionIds, isOpen, onToggle,
 }: {
   lead: any;
+  questions: AssessmentQuestion[];
   questionById: (id: string) => AssessmentQuestion | undefined;
   answerLabel: (q: AssessmentQuestion | undefined, raw: any) => string;
-  photoQuestionId?: string;
-  noteQuestionId?: string;
+  photoQuestionIds: string[];
+  noteQuestionIds: string[];
   isOpen: boolean;
   onToggle: () => void;
 }) {
-  const [summary, setSummary] = useState("");
-  const [summarizing, setSummarizing] = useState(false);
-  const [summarizeError, setSummarizeError] = useState("");
-  const [photoAnalysis, setPhotoAnalysis] = useState("");
-  const [analyzingPhoto, setAnalyzingPhoto] = useState(false);
-  const [photoAnalysisError, setPhotoAnalysisError] = useState("");
-
-  const photoUrl = photoQuestionId ? lead.answers?.[photoQuestionId] : "";
-  const note: string = noteQuestionId ? (lead.answers?.[noteQuestionId] || "") : "";
-  const genderLabel = answerLabel(questionById("gender"), lead.answers?.gender);
-  const ageRaw = lead.answers?.age;
-
-  const summarize = async () => {
-    setSummarizing(true);
-    setSummarizeError("");
-    try {
-      const res = await fetch("/api/admin/quiz/summarize-note", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note, primaryConcern: lead.primaryConcern }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
-      setSummary(data.data.summary);
-    } catch (err: any) {
-      setSummarizeError(err.message || "Summarization failed");
-    } finally {
-      setSummarizing(false);
-    }
-  };
-
-  const analyzePhoto = async () => {
-    setAnalyzingPhoto(true);
-    setPhotoAnalysisError("");
-    try {
-      const res = await fetch("/api/admin/quiz/analyze-photo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl, primaryConcern: lead.primaryConcern }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
-      setPhotoAnalysis(data.data.analysis);
-    } catch (err: any) {
-      setPhotoAnalysisError(err.message || "Photo analysis failed");
-    } finally {
-      setAnalyzingPhoto(false);
-    }
-  };
+  const photoUrls = photoQuestionIds.map((id) => lead.answers?.[id]).filter(Boolean);
+  const notes: string[] = noteQuestionIds.map((id) => lead.answers?.[id]).filter(Boolean);
+  // "gender"/"age" only resolve to a nice label via the fixed ids the
+  // "+ Add Gender / Age / Photo / Notes" quick-add button uses; fall back to
+  // matching by title so a manually-recreated question (different id, same
+  // recognizable name) doesn't silently disappear from this view.
+  const findByIdOrTitle = (id: string, titleMatch: string) =>
+    questionById(id) || questions.find((q) => q.title.toLowerCase().includes(titleMatch));
+  const genderQuestion = findByIdOrTitle("gender", "gender");
+  const ageQuestion = findByIdOrTitle("age", "age");
+  const ageValue = ageQuestion ? lead.answers?.[ageQuestion.id] : undefined;
+  const genderLabel = answerLabel(genderQuestion, genderQuestion ? lead.answers?.[genderQuestion.id] : undefined);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
       <button onClick={onToggle} className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 transition">
-        {photoUrl ? (
+        {photoUrls[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photoUrl} alt="" className="w-11 h-11 rounded-full object-cover shrink-0" />
+          <img src={photoUrls[0]} alt="" className="w-11 h-11 rounded-full object-cover shrink-0" />
         ) : (
           <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-300 shrink-0 text-lg">👤</div>
         )}
@@ -474,8 +524,8 @@ function LeadRow({
           <p className="text-xs text-gray-400 truncate">
             {lead.primaryConcern || "—"}
             {genderLabel !== "—" && ` · ${genderLabel}`}
-            {ageRaw ? `, ${ageRaw}y` : ""}
-            {note && " · 📝 has a note"}
+            {ageValue ? `, ${ageValue}y` : ""}
+            {notes.length > 0 && " · 📝 has a note"}
             {" · "}{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "—"}
           </p>
         </div>
@@ -489,39 +539,14 @@ function LeadRow({
             <p><span className="text-gray-400">Source:</span> {lead.source || "—"}{lead.qrSource ? " (QR)" : ""}</p>
             <p><span className="text-gray-400">Location / Channel:</span> {[lead.clinicLocation, lead.channel].filter(Boolean).join(" · ") || "—"}</p>
           </div>
-          {photoUrl && (
-            <div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photoUrl} alt="Uploaded photo" className="w-40 h-40 rounded-xl object-cover mb-2" />
-              {!photoAnalysis && (
-                <button onClick={analyzePhoto} disabled={analyzingPhoto} className="block text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50">
-                  {analyzingPhoto ? "Analyzing…" : "🔍 Analyze Photo with AI"}
-                </button>
-              )}
-              {photoAnalysis && (
-                <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 max-w-md">
-                  <p className="text-xs font-bold text-purple-700 mb-1">🔍 AI Visual Observations (not a diagnosis)</p>
-                  <p className="text-xs text-purple-800 whitespace-pre-wrap">{photoAnalysis}</p>
-                </div>
-              )}
-              {photoAnalysisError && <p className="text-xs text-red-500 mt-1">{photoAnalysisError}</p>}
-            </div>
-          )}
-          {note && (
-            <div className="bg-[#f6faff] border border-[#0B2545]/10 rounded-xl p-3">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <p className="text-xs font-bold text-gray-600">📝 Note to Doctor</p>
-                {!summary && (
-                  <button onClick={summarize} disabled={summarizing} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50 shrink-0">
-                    {summarizing ? "Summarizing…" : "✨ Summarize with AI"}
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-gray-700 whitespace-pre-wrap">{note}</p>
-              {summary && <p className="text-xs text-purple-700 mt-2 pt-2 border-t border-[#0B2545]/10"><span className="font-bold">AI summary:</span> {summary}</p>}
-              {summarizeError && <p className="text-xs text-red-500 mt-1">{summarizeError}</p>}
-            </div>
-          )}
+          {photoQuestionIds.map((id) => {
+            const url = lead.answers?.[id];
+            return url ? <PhotoBlock key={id} url={url} primaryConcern={lead.primaryConcern} /> : null;
+          })}
+          {noteQuestionIds.map((id) => {
+            const noteText = lead.answers?.[id];
+            return noteText ? <NoteBlock key={id} note={noteText} primaryConcern={lead.primaryConcern} /> : null;
+          })}
           <div>
             <p className="text-xs font-bold text-gray-500 mb-1.5">Answers</p>
             <div className="space-y-1">
@@ -562,7 +587,7 @@ function AnalyticsTab() {
   const stat = (label: string, value: string | number, sub?: string) => (
     <div className="bg-white rounded-2xl border border-gray-100 p-5">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-      <p className="text-2xl font-extrabold text-[#0B2545]">{value}</p>
+      <p className="text-2xl font-extrabold text-[#0B2560]">{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );
@@ -589,7 +614,7 @@ function AnalyticsTab() {
             <div key={c.concern} className="flex items-center gap-3">
               <span className="text-xs text-gray-600 w-32 truncate">{c.concern}</span>
               <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#0B2545] rounded-full" style={{ width: `${c.pct}%` }} />
+                <div className="h-full bg-[#0B2560] rounded-full" style={{ width: `${c.pct}%` }} />
               </div>
               <span className="text-xs font-semibold text-gray-500 w-10 text-right">{c.pct}%</span>
             </div>
@@ -624,7 +649,7 @@ function BreakdownPanel({ title, rows, emptyText }: { title: string; rows: { lab
                 <span>{r.completed} completed</span>
                 <span>{r.leads} leads</span>
                 <span>{r.booked} booked</span>
-                <span className="font-bold text-[#0B2545]">{r.conversionRate}% conv.</span>
+                <span className="font-bold text-[#0B2560]">{r.conversionRate}% conv.</span>
               </div>
             </div>
           ))}
@@ -650,7 +675,7 @@ function QrGeneratorTab() {
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   const loadHistory = () => {
-    fetch("/api/admin/quiz/qr-codes").then((r) => r.json()).then((d) => { if (d.success) setHistory(d.data); }).finally(() => setLoadingHistory(false));
+    fetch("/api/admin/quiz/qr-codes").then((r) => r.json()).then((d) => { if (d.success) setHistory(d.data); }).catch(() => {}).finally(() => setLoadingHistory(false));
   };
   useEffect(() => { loadHistory(); }, []);
 
@@ -689,8 +714,13 @@ function QrGeneratorTab() {
 
   const deleteQr = async (id: string) => {
     if (!confirm("Delete this saved QR code? Existing printed copies keep working — this only removes it from the list.")) return;
-    await fetch("/api/admin/quiz/qr-codes", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
-    loadHistory();
+    try {
+      await fetch("/api/admin/quiz/qr-codes", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+      loadHistory();
+    } catch {
+      // loadHistory's own catch already handles a failed refresh; a failed
+      // DELETE itself just leaves the list showing the (still-existing) entry.
+    }
   };
 
   return (
@@ -730,13 +760,13 @@ function QrGeneratorTab() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrPngUrl} alt="Assessment QR code" width={240} height={240} className="rounded-lg" />
           <div className="flex items-center gap-4">
-            <a href={qrPngUrl} download={`${fileBase}.png`} className="text-sm font-semibold text-[#0B2545] underline">Download PNG</a>
-            <a href={qrSvgUrl} download={`${fileBase}.svg`} className="text-sm font-semibold text-[#0B2545] underline">Download SVG</a>
+            <a href={qrPngUrl} download={`${fileBase}.png`} className="text-sm font-semibold text-[#0B2560] underline">Download PNG</a>
+            <a href={qrSvgUrl} download={`${fileBase}.svg`} className="text-sm font-semibold text-[#0B2560] underline">Download SVG</a>
           </div>
         </div>
 
         {saveError && <p className="text-xs text-red-600 bg-red-50 rounded px-3 py-1.5">{saveError}</p>}
-        <button onClick={saveQr} disabled={saving} className="w-full py-2.5 bg-[#0B2545] hover:bg-[#1a3a6e] text-white font-semibold text-sm rounded-lg disabled:opacity-60 transition">
+        <button onClick={saveQr} disabled={saving} className="w-full py-2.5 bg-[#0B2560] hover:bg-[#1a3a6e] text-white font-semibold text-sm rounded-lg disabled:opacity-60 transition">
           {saving ? "Saving…" : "Save to QR Library"}
         </button>
 
@@ -766,7 +796,7 @@ function QrGeneratorTab() {
                     <p className="text-sm font-semibold text-gray-800 truncate">{h.name}</p>
                     <p className="text-xs text-gray-400 truncate">{[h.clinicLocation, h.channel, h.campaign].filter(Boolean).join(" · ")}</p>
                   </div>
-                  <a href={png} download={`${h.name}.png`} className="text-xs font-semibold text-[#0B2545] underline shrink-0">PNG</a>
+                  <a href={png} download={`${h.name}.png`} className="text-xs font-semibold text-[#0B2560] underline shrink-0">PNG</a>
                   <button onClick={() => deleteQr(h._id)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0">×</button>
                 </div>
               );
@@ -910,7 +940,7 @@ export default function AiAssessmentAdminPage() {
         </div>
         <div className="flex items-center gap-3">
           <button onClick={resetToDefaults} className="text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-2">Reset defaults</button>
-          <button onClick={save} disabled={saving} className={`px-5 py-2 rounded-lg text-sm font-semibold text-white transition ${saved ? "bg-green-600" : "bg-[#0B2545] hover:bg-[#1a3a6e]"} disabled:opacity-50`}>
+          <button onClick={save} disabled={saving} className={`px-5 py-2 rounded-lg text-sm font-semibold text-white transition ${saved ? "bg-green-600" : "bg-[#0B2560] hover:bg-[#1a3a6e]"} disabled:opacity-50`}>
             {saving ? "Saving…" : saved ? "✓ Saved" : "Save Changes"}
           </button>
         </div>
@@ -924,7 +954,7 @@ export default function AiAssessmentAdminPage() {
           ["leads", "🧑‍🤝‍🧑 Leads"],
           ["analytics", "📊 Analytics"], ["qr", "🔗 QR Generator"], ["settings", "⚙ Settings"],
         ] as const).map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === t ? "bg-white text-[#0B2545] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === t ? "bg-white text-[#0B2560] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
             {label}
           </button>
         ))}
@@ -939,7 +969,7 @@ export default function AiAssessmentAdminPage() {
               onMove={(dir) => moveQuestion(q.id, dir)} isFirst={i === 0} isLast={i === orderedQuestions.length - 1}
             />
           ))}
-          <button onClick={addQuestion} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-semibold text-[#0B2545] hover:border-[#0B2545]/40 hover:bg-[#f6faff] transition">
+          <button onClick={addQuestion} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-semibold text-[#0B2560] hover:border-[#0B2560]/40 hover:bg-[#f6faff] transition">
             + Add Question
           </button>
           {missingQuickAddIds.length > 0 && (

@@ -35,11 +35,30 @@ export async function POST(req: NextRequest) {
 
     const primaryConcern = typeof context?.primaryConcern === "string" ? context.primaryConcern.slice(0, 100) : "";
     const doctorMessage = typeof context?.doctorMessage === "string" ? context.doctorMessage.slice(0, 500) : "";
-    const recommendations = Array.isArray(context?.recommendations) ? context.recommendations.slice(0, 3) : [];
+    const rawRecommendations = Array.isArray(context?.recommendations) ? context.recommendations.slice(0, 3) : [];
+
+    // Untrusted client input feeds straight into the system prompt below, so
+    // every field is coerced to the expected type (never trusted as-is) —
+    // otherwise a malformed/hostile payload can crash the route (e.g. a
+    // string where an array is expected) or inject arbitrary text into the
+    // assistant's persona context.
+    const str = (v: any, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+    const strArray = (v: any, max: number) => (Array.isArray(v) ? v.filter((x) => typeof x === "string").slice(0, 5).map((x) => x.slice(0, max)) : []);
+    const recommendations = rawRecommendations.map((t: any) => ({
+      name: str(t?.name, 100) || "Unknown",
+      confidence: typeof t?.confidence === "number" ? Math.max(0, Math.min(100, t.confidence)) : undefined,
+      description: str(t?.description, 300),
+      sessions: str(t?.sessions, 100),
+      duration: str(t?.duration, 100),
+      recovery: str(t?.recovery, 100),
+      price: str(t?.price, 100),
+      advantages: strArray(t?.advantages, 150),
+      disadvantages: strArray(t?.disadvantages, 150),
+    }));
 
     const treatmentContext = recommendations
-      .map((t: any, i: number) =>
-        `${i + 1}. ${t?.name || "Unknown"} (${t?.confidence ?? "?"}% match) — ${t?.description || ""}. Sessions: ${t?.sessions || "N/A"}. Duration: ${t?.duration || "N/A"}. Recovery: ${t?.recovery || "N/A"}. Price: ${t?.price || "N/A"}.${t?.advantages?.length ? ` Advantages: ${t.advantages.join(", ")}.` : ""}${t?.disadvantages?.length ? ` Considerations: ${t.disadvantages.join(", ")}.` : ""}`
+      .map((t, i: number) =>
+        `${i + 1}. ${t.name} (${t.confidence ?? "?"}% match) — ${t.description}. Sessions: ${t.sessions || "N/A"}. Duration: ${t.duration || "N/A"}. Recovery: ${t.recovery || "N/A"}. Price: ${t.price || "N/A"}.${t.advantages.length ? ` Advantages: ${t.advantages.join(", ")}.` : ""}${t.disadvantages.length ? ` Considerations: ${t.disadvantages.join(", ")}.` : ""}`
       )
       .join("\n");
 
