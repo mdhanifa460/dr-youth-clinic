@@ -1,7 +1,7 @@
 // Shared AI Assessment defaults — imported by both the model (server) and
 // client components. No mongoose imports here so it's safe in client bundles.
 
-export type QuestionType = "single" | "multi" | "slider" | "yesno" | "number" | "dropdown" | "image" | "emoji" | "photo";
+export type QuestionType = "single" | "multi" | "slider" | "yesno" | "number" | "dropdown" | "image" | "emoji" | "photo" | "text";
 
 export interface AssessmentAnswer {
   id: string;
@@ -70,6 +70,10 @@ export interface AssessmentSettings {
   enableEmail: boolean;
   enablePDF: boolean;
   enableQR: boolean;
+  // Master on/off for any "text"-type question (e.g. "Anything else for your
+  // doctor?") — lets a doctor toggle free-text note collection without
+  // deleting the question and losing its custom wording.
+  enableNotes: boolean;
   anonymousMode: boolean;
   maxRecommendations: number;
   confidenceThreshold: number;
@@ -107,6 +111,7 @@ export const DEFAULT_ASSESSMENT_SETTINGS: AssessmentSettings = {
   enableEmail: true,
   enablePDF: false,
   enableQR: true,
+  enableNotes: true,
   anonymousMode: true,
   maxRecommendations: 3,
   confidenceThreshold: 0,
@@ -214,6 +219,14 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     subtitle: "Optional — helps your doctor give a more accurate assessment",
     description: "", icon: "📷", image: "",
     type: "photo", order: 8, required: false,
+    sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
+    answers: [],
+  },
+  {
+    id: "notes", title: "Anything else you'd like your doctor to know?",
+    subtitle: "Optional — describe your concern in your own words",
+    description: "", icon: "📝", image: "",
+    type: "text", order: 9, required: false,
     sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
     answers: [],
   },

@@ -162,6 +162,23 @@ function QuestionStep({
     return <PhotoUploadField value={typeof value === "string" ? value : ""} onChange={onChange} />;
   }
 
+  if (question.type === "text") {
+    const text = typeof value === "string" ? value : "";
+    return (
+      <div className="bg-white rounded-2xl border-2 border-gray-100 px-5 py-4">
+        <textarea
+          value={text}
+          onChange={(e) => onChange(e.target.value.slice(0, 500))}
+          maxLength={500}
+          rows={5}
+          placeholder="Type here… (optional)"
+          className="w-full resize-none border-none outline-none text-gray-800 text-sm placeholder-gray-400"
+        />
+        <p className="text-right text-xs text-gray-300 mt-1">{text.length}/500</p>
+      </div>
+    );
+  }
+
   if (question.type === "slider" || question.type === "number") {
     const num = typeof value === "number" ? value : question.sliderMin;
     return (
@@ -648,7 +665,12 @@ export default function SkinQuizPage() {
     }).catch(() => {});
   }, [campaign, qrSource, clinicLocation, channel]);
 
-  const orderedQuestions = [...quizConfig.questions].sort((a, b) => a.order - b.order);
+  // "text" (free-text notes) questions have a master on/off switch in
+  // Settings, independent of the question itself, so a doctor can toggle
+  // note collection off without deleting the question and losing its wording.
+  const orderedQuestions = [...quizConfig.questions]
+    .filter((q) => q.type !== "text" || quizConfig.settings?.enableNotes !== false)
+    .sort((a, b) => a.order - b.order);
   const currentQuestionId = path[path.length - 1];
   const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
   const currentIndex = orderedQuestions.findIndex((q) => q.id === currentQuestionId);

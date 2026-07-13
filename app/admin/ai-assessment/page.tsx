@@ -67,14 +67,19 @@ const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
   { value: "image", label: "Image Choice" },
   { value: "emoji", label: "Emoji Choice" },
   { value: "photo", label: "Photo Upload" },
+  { value: "text", label: "Free Text / Notes" },
 ];
 
 // Questions that never need an answers editor or slider config — visitors
-// interact with them directly (a number input, a photo picker).
-const NO_ANSWERS_TYPES: QuestionType[] = ["slider", "number", "photo"];
+// interact with them directly (a number input, a photo picker, a text box).
+const NO_ANSWERS_TYPES: QuestionType[] = ["slider", "number", "photo", "text"];
 const SLIDER_CONFIG_TYPES: QuestionType[] = ["slider", "number"];
 
-const DEMOGRAPHIC_QUESTION_IDS = ["gender", "age", "photo"];
+// Built-in "helper" questions a doctor can add with one click instead of
+// building from scratch — demographics (gender/age), photo, and a free-text
+// note. Not all scoring-relevant; some are purely informational for the
+// doctor (see quizDefaults.ts comment on the same ids).
+const QUICK_ADD_QUESTION_IDS = ["gender", "age", "photo", "notes"];
 
 // ─── Answer editor ───────────────────────────────────────────────────────────
 
@@ -356,6 +361,7 @@ function LeadsTab() {
 
   const questionById = (id: string) => questions.find((q) => q.id === id);
   const photoQuestionId = questions.find((q) => q.type === "photo")?.id;
+  const noteQuestionId = questions.find((q) => q.type === "text")?.id;
 
   const answerLabel = (q: AssessmentQuestion | undefined, raw: any): string => {
     if (raw === undefined || raw === null || raw === "") return "—";
@@ -370,71 +376,134 @@ function LeadsTab() {
 
   return (
     <div className="space-y-3">
-      {leads.map((lead) => {
-        const photoUrl = photoQuestionId ? lead.answers?.[photoQuestionId] : "";
-        const genderLabel = answerLabel(questionById("gender"), lead.answers?.gender);
-        const ageRaw = lead.answers?.age;
-        const isOpen = expanded === lead._id;
-        return (
-          <div key={lead._id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <button onClick={() => setExpanded(isOpen ? null : lead._id)} className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 transition">
-              {photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={photoUrl} alt="" className="w-11 h-11 rounded-full object-cover shrink-0" />
-              ) : (
-                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-300 shrink-0 text-lg">👤</div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">{lead.name || "Anonymous"} <span className="text-gray-400 font-normal">· {lead.phone || "—"}</span></p>
-                <p className="text-xs text-gray-400 truncate">
-                  {lead.primaryConcern || "—"}
-                  {genderLabel !== "—" && ` · ${genderLabel}`}
-                  {ageRaw ? `, ${ageRaw}y` : ""}
-                  {" · "}{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "—"}
-                </p>
-              </div>
-              <span className="text-gray-400 shrink-0">{isOpen ? "▲" : "▼"}</span>
-            </button>
-            {isOpen && (
-              <div className="px-5 pb-5 border-t border-gray-50 pt-4 space-y-3">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <p><span className="text-gray-400">Email:</span> {lead.email || "—"}</p>
-                  <p><span className="text-gray-400">City:</span> {lead.city || "—"}</p>
-                  <p><span className="text-gray-400">Source:</span> {lead.source || "—"}{lead.qrSource ? " (QR)" : ""}</p>
-                  <p><span className="text-gray-400">Location / Channel:</span> {[lead.clinicLocation, lead.channel].filter(Boolean).join(" · ") || "—"}</p>
-                </div>
-                {photoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photoUrl} alt="Uploaded photo" className="w-40 h-40 rounded-xl object-cover" />
-                )}
-                <div>
-                  <p className="text-xs font-bold text-gray-500 mb-1.5">Answers</p>
-                  <div className="space-y-1">
-                    {Object.entries(lead.answers || {}).map(([qId, raw]) => {
-                      const q = questionById(qId);
-                      if (q?.type === "photo") return null;
-                      return (
-                        <p key={qId} className="text-xs text-gray-600"><span className="text-gray-400">{q?.title || qId}:</span> {answerLabel(q, raw)}</p>
-                      );
-                    })}
-                  </div>
-                </div>
-                {Array.isArray(lead.recommendations) && lead.recommendations.length > 0 && (
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 mb-1.5">Recommended</p>
-                    <p className="text-xs text-gray-600">{lead.recommendations.map((r: any) => (typeof r === "string" ? r : r?.name)).filter(Boolean).join(", ")}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {leads.map((lead) => (
+        <LeadRow
+          key={lead._id}
+          lead={lead}
+          questionById={questionById}
+          answerLabel={answerLabel}
+          photoQuestionId={photoQuestionId}
+          noteQuestionId={noteQuestionId}
+          isOpen={expanded === lead._id}
+          onToggle={() => setExpanded(expanded === lead._id ? null : lead._id)}
+        />
+      ))}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 pt-2">
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-xs font-semibold text-gray-500 disabled:opacity-30">← Prev</button>
           <span className="text-xs text-gray-400">Page {page} of {totalPages}</span>
           <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="text-xs font-semibold text-gray-500 disabled:opacity-30">Next →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LeadRow({
+  lead, questionById, answerLabel, photoQuestionId, noteQuestionId, isOpen, onToggle,
+}: {
+  lead: any;
+  questionById: (id: string) => AssessmentQuestion | undefined;
+  answerLabel: (q: AssessmentQuestion | undefined, raw: any) => string;
+  photoQuestionId?: string;
+  noteQuestionId?: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const [summary, setSummary] = useState("");
+  const [summarizing, setSummarizing] = useState(false);
+  const [summarizeError, setSummarizeError] = useState("");
+
+  const photoUrl = photoQuestionId ? lead.answers?.[photoQuestionId] : "";
+  const note: string = noteQuestionId ? (lead.answers?.[noteQuestionId] || "") : "";
+  const genderLabel = answerLabel(questionById("gender"), lead.answers?.gender);
+  const ageRaw = lead.answers?.age;
+
+  const summarize = async () => {
+    setSummarizing(true);
+    setSummarizeError("");
+    try {
+      const res = await fetch("/api/admin/quiz/summarize-note", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note, primaryConcern: lead.primaryConcern }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      setSummary(data.data.summary);
+    } catch (err: any) {
+      setSummarizeError(err.message || "Summarization failed");
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <button onClick={onToggle} className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 transition">
+        {photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photoUrl} alt="" className="w-11 h-11 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-300 shrink-0 text-lg">👤</div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-800 truncate">{lead.name || "Anonymous"} <span className="text-gray-400 font-normal">· {lead.phone || "—"}</span></p>
+          <p className="text-xs text-gray-400 truncate">
+            {lead.primaryConcern || "—"}
+            {genderLabel !== "—" && ` · ${genderLabel}`}
+            {ageRaw ? `, ${ageRaw}y` : ""}
+            {note && " · 📝 has a note"}
+            {" · "}{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "—"}
+          </p>
+        </div>
+        <span className="text-gray-400 shrink-0">{isOpen ? "▲" : "▼"}</span>
+      </button>
+      {isOpen && (
+        <div className="px-5 pb-5 border-t border-gray-50 pt-4 space-y-3">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <p><span className="text-gray-400">Email:</span> {lead.email || "—"}</p>
+            <p><span className="text-gray-400">City:</span> {lead.city || "—"}</p>
+            <p><span className="text-gray-400">Source:</span> {lead.source || "—"}{lead.qrSource ? " (QR)" : ""}</p>
+            <p><span className="text-gray-400">Location / Channel:</span> {[lead.clinicLocation, lead.channel].filter(Boolean).join(" · ") || "—"}</p>
+          </div>
+          {photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt="Uploaded photo" className="w-40 h-40 rounded-xl object-cover" />
+          )}
+          {note && (
+            <div className="bg-[#f6faff] border border-[#0B2545]/10 rounded-xl p-3">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-xs font-bold text-gray-600">📝 Note to Doctor</p>
+                {!summary && (
+                  <button onClick={summarize} disabled={summarizing} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50 shrink-0">
+                    {summarizing ? "Summarizing…" : "✨ Summarize with AI"}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-700 whitespace-pre-wrap">{note}</p>
+              {summary && <p className="text-xs text-purple-700 mt-2 pt-2 border-t border-[#0B2545]/10"><span className="font-bold">AI summary:</span> {summary}</p>}
+              {summarizeError && <p className="text-xs text-red-500 mt-1">{summarizeError}</p>}
+            </div>
+          )}
+          <div>
+            <p className="text-xs font-bold text-gray-500 mb-1.5">Answers</p>
+            <div className="space-y-1">
+              {Object.entries(lead.answers || {}).map(([qId, raw]) => {
+                const q = questionById(qId);
+                if (q?.type === "photo" || q?.type === "text") return null;
+                return (
+                  <p key={qId} className="text-xs text-gray-600"><span className="text-gray-400">{q?.title || qId}:</span> {answerLabel(q, raw)}</p>
+                );
+              })}
+            </div>
+          </div>
+          {Array.isArray(lead.recommendations) && lead.recommendations.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-gray-500 mb-1.5">Recommended</p>
+              <p className="text-xs text-gray-600">{lead.recommendations.map((r: any) => (typeof r === "string" ? r : r?.name)).filter(Boolean).join(", ")}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -760,13 +829,13 @@ export default function AiAssessmentAdminPage() {
     });
   };
 
-  // One-click way to add the built-in Gender/Age/Photo questions to an
+  // One-click way to add the built-in Gender/Age/Photo/Notes questions to an
   // already-customized live config — DEFAULT_QUESTIONS only seeds a brand
   // new install or a full "Reset defaults", so a doctor who's already
   // configured this assessment needs an additive path to pick these up.
-  const missingDemographicIds = DEMOGRAPHIC_QUESTION_IDS.filter((id) => !config.questions.some((q) => q.id === id));
-  const addDemographicQuestions = () => {
-    const toAdd = DEFAULT_QUESTIONS.filter((q) => missingDemographicIds.includes(q.id));
+  const missingQuickAddIds = QUICK_ADD_QUESTION_IDS.filter((id) => !config.questions.some((q) => q.id === id));
+  const addQuickAddQuestions = () => {
+    const toAdd = DEFAULT_QUESTIONS.filter((q) => missingQuickAddIds.includes(q.id));
     if (toAdd.length === 0) return;
     const maxOrder = config.questions.reduce((m, q) => Math.max(m, q.order), 0);
     const withOrder = toAdd.map((q, i) => ({ ...q, order: maxOrder + i + 1 }));
@@ -837,9 +906,9 @@ export default function AiAssessmentAdminPage() {
           <button onClick={addQuestion} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-semibold text-[#0B2545] hover:border-[#0B2545]/40 hover:bg-[#f6faff] transition">
             + Add Question
           </button>
-          {missingDemographicIds.length > 0 && (
-            <button onClick={addDemographicQuestions} className="w-full py-3 border-2 border-dashed border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:border-purple-400 hover:bg-purple-50 transition">
-              + Add Gender / Age / Photo Upload
+          {missingQuickAddIds.length > 0 && (
+            <button onClick={addQuickAddQuestions} className="w-full py-3 border-2 border-dashed border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:border-purple-400 hover:bg-purple-50 transition">
+              + Add Gender / Age / Photo / Notes
             </button>
           )}
         </div>
@@ -896,6 +965,7 @@ export default function AiAssessmentAdminPage() {
             <Toggle checked={config.settings.enableAI} onChange={(v) => updateConfig({ settings: { ...config.settings, enableAI: v } })} label="Enable AI Suggest (Treatment Mapping)" />
             <Toggle checked={config.settings.enableEmail} onChange={(v) => updateConfig({ settings: { ...config.settings, enableEmail: v } })} label="Enable Email Report" />
             <Toggle checked={config.settings.enableQR} onChange={(v) => updateConfig({ settings: { ...config.settings, enableQR: v } })} label="Enable QR Code Access" />
+            <Toggle checked={config.settings.enableNotes !== false} onChange={(v) => updateConfig({ settings: { ...config.settings, enableNotes: v } })} label={'Enable "Anything else for your doctor?" Note'} />
             <Toggle checked={config.settings.anonymousMode} onChange={(v) => updateConfig({ settings: { ...config.settings, anonymousMode: v } })} label="Anonymous Mode (no login required)" />
           </div>
 
