@@ -1,11 +1,17 @@
 // Content Block Builder (Phase 1) — reuses the existing page-builder's
 // BuilderSection shape ({id, type, visible, data}) at a finer grain: blocks
 // inside a single long-form content field (Service.narrativeBlocks,
-// Blog.bodyBlocks) rather than sections of a whole page. Anything that
-// already has its own structured field + admin UI on Service (FAQ, journey/
-// timeline, comparison, benefits) is deliberately NOT a block type here —
-// duplicating those as blocks would fragment content into two competing
-// systems for the same thing.
+// Blog.bodyBlocks) rather than sections of a whole page.
+//
+// Phase 2 adds "reference" block types (`availableIn: ['content-block-service']`)
+// for content that already has a dedicated Service field + admin UI (FAQ,
+// journey/timeline variants, comparison, benefits, recovery). These blocks
+// store no data of their own — they render live from the parent Service
+// document at request time (via the `serviceContext` prop on ContentBlockEditor/
+// BlockRenderer), so admins can reposition them within the content flow
+// without a second, competing copy of that data ever existing. Because the
+// data only exists on Service, these types are Service-only — they never
+// appear in Blog's "+ Add Block" picker.
 import type { BuilderSection } from "@/app/lib/pageBuilder/types";
 
 export type ContentBlock = BuilderSection;
@@ -19,13 +25,55 @@ export type ContentBlockType =
   | "quote"
   | "callout"
   | "cta"
-  | "divider";
+  | "divider"
+  // Phase 2 — reference blocks (Service-only, render live Service data)
+  | "faq-block"
+  | "benefits-block"
+  | "treatment-steps-block"
+  | "recovery-timeline-block"
+  | "journey-block"
+  | "journey-explorer-block"
+  | "comparison-block"
+  // Phase 2 — freestanding medical blocks (own stored data, work anywhere)
+  | "doctor-recommendation"
+  | "suitability"
+  | "expected-results"
+  | "side-effects";
+
+export type ContentBlockSourceSystem = "content-block-service" | "content-block-blog";
+
+// Shape passed to ContentBlockEditor (admin, from ServiceForm's in-memory
+// form state) and BlockRenderer (public, from the fetched Service document)
+// so the 7 reference block types above have something to render — the block
+// itself carries none of this data. `current`/`relatedServices`/`doctors` are
+// only ever populated on the public side (they need a DB fetch the admin
+// form doesn't do); the admin editor only needs the plain Service fields to
+// show a live "here's what this block will show" summary.
+export interface BlockServiceContext {
+  faq?: Array<{ question: string; answer: string }>;
+  benefits?: Array<{ icon: string; title: string; description?: string }>;
+  treatmentSteps?: Array<{ title: string; description?: string }>;
+  recoveryTime?: string;
+  recoveryStages?: Array<{ phase: string; icon: string; label: string; description?: string }>;
+  journeyPhases?: Array<{ title: string; description: string }>;
+  sessionsCount?: number;
+  serviceName?: string;
+  journeyExplorer?: Array<{ stage: string; progressPercent: number; summary: string; doctorTip?: string; dos?: string[]; donts?: string[] }>;
+  journeyExplorerVisible?: boolean;
+  painLevel?: string;
+  current?: { _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] };
+  relatedServices?: Array<{ _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] }>;
+  doctors?: Record<string, { name: string; title: string; photo?: { url: string } }>;
+}
 
 export interface ContentBlockTypeDef {
   type: ContentBlockType;
   label: string;
   icon: string;
   defaultData: Record<string, any>;
+  // Restricts which "+ Add Block" pickers offer this type. Omitted = available
+  // everywhere (all 9 Phase 1 types, plus the 4 new freestanding types below).
+  availableIn?: ContentBlockSourceSystem[];
 }
 
 export const CONTENT_BLOCK_TYPES: ContentBlockTypeDef[] = [
@@ -38,6 +86,21 @@ export const CONTENT_BLOCK_TYPES: ContentBlockTypeDef[] = [
   { type: "callout", label: "Callout", icon: "⚠️", defaultData: { variant: "info", text: "" } },
   { type: "cta", label: "Button / CTA", icon: "🔘", defaultData: { label: "Book Free Consultation", href: "/book" } },
   { type: "divider", label: "Divider", icon: "―", defaultData: {} },
+
+  // Reference blocks — Service-only, no data of their own (see file header).
+  { type: "faq-block", label: "FAQ (this service)", icon: "❓", defaultData: {}, availableIn: ["content-block-service"] },
+  { type: "benefits-block", label: "Benefits (this service)", icon: "✨", defaultData: {}, availableIn: ["content-block-service"] },
+  { type: "treatment-steps-block", label: "Treatment/Procedure Steps", icon: "🩺", defaultData: {}, availableIn: ["content-block-service"] },
+  { type: "recovery-timeline-block", label: "Recovery Timeline", icon: "🌱", defaultData: {}, availableIn: ["content-block-service"] },
+  { type: "journey-block", label: "Multi-Session Journey", icon: "🗓️", defaultData: {}, availableIn: ["content-block-service"] },
+  { type: "journey-explorer-block", label: "Interactive Journey Explorer", icon: "🧭", defaultData: {}, availableIn: ["content-block-service"] },
+  { type: "comparison-block", label: "Comparison Table", icon: "⚖️", defaultData: {}, availableIn: ["content-block-service"] },
+
+  // Freestanding medical blocks — own stored data, available everywhere.
+  { type: "doctor-recommendation", label: "Doctor Recommendation", icon: "👨‍⚕️", defaultData: { doctorId: "", quote: "" } },
+  { type: "suitability", label: "Suitable For / Not Suitable For", icon: "✅", defaultData: { suitableFor: "", notSuitableFor: "" } },
+  { type: "expected-results", label: "Expected Results", icon: "📈", defaultData: { items: [{ timeframe: "", description: "" }] } },
+  { type: "side-effects", label: "Side Effects", icon: "⚠️", defaultData: { items: [{ effect: "", note: "" }] } },
 ];
 
 export function newBlock(type: ContentBlockType): ContentBlock {

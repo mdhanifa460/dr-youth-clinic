@@ -675,6 +675,19 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               blocks={form.narrativeBlocks}
               onChange={(next) => updateForm({ narrativeBlocks: next })}
               sourceSystem="content-block-service"
+              serviceContext={{
+                faq: form.faq,
+                benefits: form.benefits,
+                treatmentSteps: form.treatmentSteps,
+                recoveryTime: form.recoveryTime,
+                recoveryStages: form.recoveryStages,
+                journeyPhases: form.journeyPhases,
+                sessionsCount: form.sessionsCount,
+                serviceName: form.name,
+                journeyExplorer: form.journeyExplorer,
+                journeyExplorerVisible: form.journeyExplorerVisible,
+                painLevel: form.painLevel,
+              }}
             />
             {form.narrativeBlocks.length === 0 && (
               <div className="mt-3">

@@ -25,6 +25,10 @@ import AiJourneySimulator from '@/app/components/AiJourneySimulator';
 import TreatmentJourneyExplorer from '@/app/components/TreatmentJourneyExplorer';
 import TreatmentComparison from '@/app/components/TreatmentComparison';
 import AftercareCalendar from '@/app/components/AftercareCalendar';
+import FaqAccordion from '@/app/components/FaqAccordion';
+import BenefitsGrid from '@/app/components/BenefitsGrid';
+import TreatmentStepsList from '@/app/components/TreatmentStepsList';
+import RecoveryTimeline from '@/app/components/RecoveryTimeline';
 import ServiceStickyDesktopCta from '@/app/components/ServiceStickyDesktopCta';
 import { getServiceCities, getEffectiveSeo, getEffectiveSlug } from '@/app/lib/serviceSeo';
 
@@ -41,15 +45,6 @@ const CATEGORY_LABEL: Record<string, string> = {
 const CATEGORY_ICON: Record<string, string> = {
   Skin: '✨', Hair: '🌿', Laser: '⚡', Other: '🏥',
 };
-
-// Fallback recovery-timeline template used when a service hasn't set its own
-// Service.recoveryStages (Admin → Services → Treatment Journey).
-const DEFAULT_RECOVERY_STAGES = [
-  { phase: 'Day 1', icon: '🛌', label: 'Immediate', description: 'Mild redness or swelling is normal. Avoid sun exposure.' },
-  { phase: 'Days 2–3', icon: '💧', label: 'Healing', description: 'Skin settles. Follow aftercare routine provided by your doctor.' },
-  { phase: 'Week 1', icon: '🌱', label: 'Recovery', description: 'Most side effects resolve. Light activity resumed.' },
-  { phase: 'Month 1+', icon: '✨', label: 'Results', description: 'Full results become visible. Follow-up appointment recommended.' },
-];
 
 interface PageProps {
   params: { location: string; category: string; slug: string };
@@ -96,6 +91,25 @@ async function getLocationDoctors(location: string) {
     return Doctor.find({ location: { $in: [location.toLowerCase(), 'all'] }, active: true } as any)
       .sort({ order: 1 }).limit(3).lean() as Promise<any[]>;
   } catch { return []; }
+}
+
+// Doctor Recommendation content blocks reference an existing Doctor by _id —
+// batch-fetch just the ones actually referenced in this service's blocks,
+// keyed by id, for BlockRenderer to look up at render time.
+async function getReferencedDoctors(blocks: any[] | undefined) {
+  try {
+    const ids = Array.from(new Set(
+      (blocks || [])
+        .filter((b) => b.type === 'doctor-recommendation' && b.data?.doctorId)
+        .map((b) => b.data.doctorId)
+    ));
+    if (ids.length === 0) return {};
+    await connectDB();
+    const docs: any[] = await Doctor.find({ _id: { $in: ids } } as any).lean();
+    const map: Record<string, { name: string; title: string; photo?: { url: string } }> = {};
+    for (const d of docs) map[String(d._id)] = { name: d.name, title: d.title, photo: d.photo };
+    return map;
+  } catch { return {}; }
 }
 
 async function getServiceReviews(location: string, serviceName: string) {
@@ -268,12 +282,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations, siteConfig] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
     getServiceAtOtherLocations(svc, params.location.toLowerCase()),
     getSiteConfig(),
+    getReferencedDoctors(svc.narrativeBlocks),
   ]);
 
   const cityName = loc.name;
@@ -480,7 +495,24 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             <div>
               <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-4">About This Treatment</h2>
               {svc.narrativeBlocks?.length > 0 ? (
-                <BlockRenderer blocks={svc.narrativeBlocks} />
+                <BlockRenderer
+                  blocks={svc.narrativeBlocks}
+                  serviceContext={{
+                    faq: svc.faq,
+                    benefits: svc.benefits,
+                    treatmentSteps: svc.treatmentSteps,
+                    recoveryTime: svc.recoveryTime,
+                    recoveryStages: svc.recoveryStages,
+                    journeyPhases: svc.journeyPhases,
+                    sessionsCount: svc.sessionsCount,
+                    serviceName: svc.name,
+                    journeyExplorer: svc.journeyExplorer,
+                    journeyExplorerVisible: svc.journeyExplorerVisible,
+                    current: { _id: String(svc._id), name: svc.name, price: svc.price, duration: svc.duration, sessionsRequired: svc.sessionsRequired, recoveryTime: svc.recoveryTime, painLevel: svc.painLevel, idealFor: svc.idealFor },
+                    relatedServices: related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor })),
+                    doctors: referencedDoctors,
+                  }}
+                />
               ) : svc.narrative && (
                 <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line">{svc.narrative}</p>
               )}
@@ -512,45 +544,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Treatment Journey */}
-            {hasJourney && (
-              <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-7">Your Treatment Journey</h2>
-                <div className="relative">
-                  <div className="absolute left-5 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#0B2560]/20 to-transparent hidden sm:block" />
-                  <div className="space-y-5">
-                    {svc.treatmentSteps.map((step: any, i: number) => (
-                      <div key={i} className="flex gap-4 relative">
-                        <div className="shrink-0 w-10 h-10 rounded-full bg-[#0B2560] text-white font-bold text-sm flex items-center justify-center shadow-md ring-4 ring-white z-10">
-                          {i + 1}
-                        </div>
-                        <div className="flex-1 bg-[#f6faff] rounded-2xl p-4 border border-blue-50">
-                          <h3 className="font-bold text-[#0B2560] text-sm mb-1">{step.title}</h3>
-                          {step.description && <p className="text-gray-500 text-sm leading-relaxed">{step.description}</p>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+            {hasJourney && <TreatmentStepsList steps={svc.treatmentSteps} />}
 
             {/* Key Benefits */}
-            {svc.benefits?.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">Key Benefits</h2>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {svc.benefits.map((b: any, i: number) => (
-                    <div key={i} className="group flex gap-4 p-5 rounded-2xl bg-[#f6faff] border border-blue-50 hover:border-[#3B82C4]/30 hover:shadow-md transition-all">
-                      <span className="text-2xl shrink-0 mt-0.5">{b.icon}</span>
-                      <div>
-                        <p className="font-bold text-[#0B2560] text-sm mb-1">{b.title}</p>
-                        {b.description && <p className="text-gray-500 text-sm leading-relaxed">{b.description}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {svc.benefits?.length > 0 && <BenefitsGrid benefits={svc.benefits} />}
 
             {/* Before / After — interactive gallery with filter + navigation */}
             {hasBeforeAfter && (
@@ -564,32 +561,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Recovery Timeline */}
-            {hasRecovery && (
-              <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">Recovery Timeline</h2>
-                <div className="rounded-3xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 p-6">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                      <CheckCircle size={18} className="text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-green-800 text-sm">Total recovery: <span className="text-[#0B2560]">{svc.recoveryTime}</span></p>
-                      <p className="text-green-600 text-xs">Most patients return to daily activities quickly</p>
-                    </div>
-                  </div>
-                  <div className="grid sm:grid-cols-4 gap-3">
-                    {(svc.recoveryStages?.length ? svc.recoveryStages : DEFAULT_RECOVERY_STAGES).map((phase: any, i: number) => (
-                      <div key={i} className="bg-white rounded-2xl p-4 border border-green-100 text-center">
-                        <div className="text-2xl mb-1.5">{phase.icon}</div>
-                        <p className="font-bold text-[#0B2560] text-xs">{phase.phase}</p>
-                        <p className="text-green-600 text-[10px] font-semibold mb-1.5">{phase.label}</p>
-                        <p className="text-gray-500 text-[11px] leading-relaxed">{phase.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+            {hasRecovery && <RecoveryTimeline recoveryTime={svc.recoveryTime} stages={svc.recoveryStages} />}
 
             {/* Aftercare Calendar */}
             {svc.aftercareVisible && svc.aftercareGuidance?.length > 0 && (
@@ -695,27 +667,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* FAQ */}
-            {hasFAQ && (
-              <div>
-                <div className="flex items-center gap-3 mb-5">
-                  <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Frequently Asked Questions</h2>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100 uppercase tracking-wide hidden sm:block">Rich Result</span>
-                </div>
-                <div className="space-y-3">
-                  {svc.faq.map((item: any, i: number) => (
-                    <details key={i} className="group border border-gray-100 rounded-2xl overflow-hidden hover:border-[#3B82C4]/30 transition-colors">
-                      <summary className="flex items-center justify-between px-5 py-4 cursor-pointer font-semibold text-[#0B2560] text-sm leading-snug [list-style:none] [&::-webkit-details-marker]:hidden select-none hover:bg-[#f6faff] transition-colors">
-                        <span className="pr-4">{item.question}</span>
-                        <span className="text-[#3B82C4] text-xl font-light shrink-0 group-open:rotate-45 transition-transform duration-200 inline-block">+</span>
-                      </summary>
-                      <div className="px-5 pb-4 pt-1 text-gray-600 text-sm leading-relaxed border-t border-gray-50">
-                        {item.answer}
-                      </div>
-                    </details>
-                  ))}
-                </div>
-              </div>
-            )}
+            {hasFAQ && <FaqAccordion faq={svc.faq} />}
 
             {/* Why DR Youth */}
             <div className="bg-gradient-to-br from-[#f6faff] to-white rounded-3xl p-7 border border-blue-50">

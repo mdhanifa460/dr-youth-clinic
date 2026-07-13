@@ -1,25 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, LayoutTemplate } from "lucide-react";
 import SectionList from "@/app/admin/components/builder/SectionList";
 import SectionCard from "@/app/admin/components/builder/SectionCard";
 import SaveTemplateModal from "@/app/admin/components/builder/SaveTemplateModal";
 import TemplatePicker from "@/app/admin/components/builder/TemplatePicker";
 import MediaGalleryModal from "@/app/admin/components/MediaGalleryModal";
-import { CONTENT_BLOCK_TYPES, newBlock, type ContentBlock, type ContentBlockType } from "@/app/lib/contentBlocks/types";
+import {
+  CONTENT_BLOCK_TYPES,
+  newBlock,
+  type ContentBlock,
+  type ContentBlockType,
+  type ContentBlockSourceSystem,
+  type BlockServiceContext,
+} from "@/app/lib/contentBlocks/types";
 import RichTextEditor from "./RichTextEditor";
 
-type SourceSystem = "content-block-service" | "content-block-blog";
+type SourceSystem = ContentBlockSourceSystem;
+
+// Live one-line summary shown on a reference block's card so an admin can
+// tell what it will render without leaving this form — the block itself
+// stores no data (see app/lib/contentBlocks/types.ts).
+const REFERENCE_SUMMARY: Partial<Record<ContentBlockType, (ctx?: BlockServiceContext) => string>> = {
+  "faq-block": (ctx) => (ctx?.faq?.length ? `Showing ${ctx.faq.length} FAQ${ctx.faq.length === 1 ? "" : "s"} from the FAQ section below.` : "No FAQs added yet — add some in the FAQ section of this form, or this block will render empty."),
+  "benefits-block": (ctx) => (ctx?.benefits?.length ? `Showing ${ctx.benefits.length} benefit${ctx.benefits.length === 1 ? "" : "s"} from the Benefits section below.` : "No benefits added yet — add some in the Benefits section of this form, or this block will render empty."),
+  "treatment-steps-block": (ctx) => (ctx?.treatmentSteps?.length ? `Showing ${ctx.treatmentSteps.length} step${ctx.treatmentSteps.length === 1 ? "" : "s"} from the Treatment Journey Steps section below.` : "No treatment steps added yet — add some below, or this block will render empty."),
+  "recovery-timeline-block": (ctx) => (ctx?.recoveryTime?.trim() ? `Showing the recovery timeline for "${ctx.recoveryTime}" from below.` : "No recovery time set yet — set one below, or this block will render empty."),
+  "journey-block": () => "Showing this service's Multi-Session Journey from below (uses default phases for anything left blank).",
+  "journey-explorer-block": (ctx) => (ctx?.journeyExplorerVisible && ctx.journeyExplorer?.length ? `Showing the ${ctx.journeyExplorer.length}-stage Interactive Journey Explorer from below.` : "The Interactive Journey Explorer is empty or hidden below — this block will render nothing until it's filled in and made visible."),
+  "comparison-block": (ctx) => (ctx?.painLevel?.trim() ? "Showing the auto-generated comparison against similar services (uses Pain Level below)." : "This compares against similar services automatically — set Pain Level below for a more complete table."),
+};
+
+function ReferenceBlockSummary({ type, serviceContext }: { type: ContentBlockType; serviceContext?: BlockServiceContext }) {
+  const summarize = REFERENCE_SUMMARY[type];
+  if (!summarize) return null;
+  return <p className="text-xs text-gray-500 italic bg-gray-50 rounded-lg px-3 py-2">{summarize(serviceContext)}</p>;
+}
 
 function BlockEditForm({
   block,
   onChange,
   onPickImage,
+  serviceContext,
+  doctors,
 }: {
   block: ContentBlock;
   onChange: (data: Record<string, any>) => void;
   onPickImage: () => void;
+  serviceContext?: BlockServiceContext;
+  doctors: { _id: string; name: string }[];
 }) {
   const data = block.data;
   const set = (patch: Record<string, any>) => onChange({ ...data, ...patch });
@@ -138,6 +168,7 @@ function BlockEditForm({
         { value: "info", label: "ℹ️ Info" },
         { value: "warning", label: "⚠️ Warning" },
         { value: "success", label: "✅ Success" },
+        { value: "medical", label: "⚕️ Medical Warning" },
       ];
       return (
         <div className="space-y-2">
@@ -187,6 +218,97 @@ function BlockEditForm({
     case "divider":
       return <p className="text-xs text-gray-400 italic">A horizontal divider — no settings needed.</p>;
 
+    case "faq-block":
+    case "benefits-block":
+    case "treatment-steps-block":
+    case "recovery-timeline-block":
+    case "journey-block":
+    case "journey-explorer-block":
+    case "comparison-block":
+      return <ReferenceBlockSummary type={block.type} serviceContext={serviceContext} />;
+
+    case "doctor-recommendation":
+      return (
+        <div className="space-y-2">
+          <select
+            value={data.doctorId || ""}
+            onChange={(e) => set({ doctorId: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">— Select a doctor —</option>
+            {doctors.map((d) => (
+              <option key={d._id} value={d._id}>{d.name}</option>
+            ))}
+          </select>
+          <textarea
+            value={data.quote || ""}
+            onChange={(e) => set({ quote: e.target.value })}
+            placeholder="Recommendation / quote text"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+        </div>
+      );
+
+    case "suitability":
+      return (
+        <div className="grid sm:grid-cols-2 gap-2">
+          <textarea
+            value={data.suitableFor || ""}
+            onChange={(e) => set({ suitableFor: e.target.value })}
+            placeholder={"Suitable for (one per line)"}
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+          <textarea
+            value={data.notSuitableFor || ""}
+            onChange={(e) => set({ notSuitableFor: e.target.value })}
+            placeholder={"Not suitable for (one per line)"}
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+        </div>
+      );
+
+    case "expected-results":
+    case "side-effects": {
+      const fieldA = block.type === "expected-results" ? "timeframe" : "effect";
+      const fieldB = block.type === "expected-results" ? "description" : "note";
+      const placeholderA = block.type === "expected-results" ? "Timeframe (e.g. 2 weeks)" : "Effect (e.g. Mild redness)";
+      const placeholderB = block.type === "expected-results" ? "What to expect" : "Note (optional)";
+      const items: Array<Record<string, string>> = data.items?.length ? data.items : [{ [fieldA]: "", [fieldB]: "" }];
+      const setItem = (i: number, patch: Record<string, string>) =>
+        set({ items: items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)) });
+      const addItem = () => set({ items: [...items, { [fieldA]: "", [fieldB]: "" }] });
+      const removeItem = (i: number) => set({ items: items.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-2">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="flex-1 grid sm:grid-cols-2 gap-2">
+                <input
+                  value={item[fieldA] || ""}
+                  onChange={(e) => setItem(i, { [fieldA]: e.target.value })}
+                  placeholder={placeholderA}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  value={item[fieldB] || ""}
+                  onChange={(e) => setItem(i, { [fieldB]: e.target.value })}
+                  placeholder={placeholderB}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 mt-2">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addItem} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add row</button>
+        </div>
+      );
+    }
+
     default:
       return null;
   }
@@ -196,15 +318,30 @@ export default function ContentBlockEditor({
   blocks,
   onChange,
   sourceSystem,
+  serviceContext,
 }: {
   blocks: ContentBlock[];
   onChange: (next: ContentBlock[]) => void;
   sourceSystem: SourceSystem;
+  serviceContext?: BlockServiceContext;
 }) {
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [templateTarget, setTemplateTarget] = useState<ContentBlock | null>(null);
   const [imagePickerTarget, setImagePickerTarget] = useState<string | null>(null);
+  const [doctors, setDoctors] = useState<{ _id: string; name: string }[]>([]);
+
+  // Only needed for the Doctor Recommendation block's picker — fetched once
+  // regardless of sourceSystem, matching VideoForm's existing doctor-select
+  // pattern (app/admin/components/VideoForm.tsx).
+  useEffect(() => {
+    fetch("/api/admin/doctors")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setDoctors(d.data ?? []); })
+      .catch(() => {});
+  }, []);
+
+  const availableTypes = CONTENT_BLOCK_TYPES.filter((t) => !t.availableIn || t.availableIn.includes(sourceSystem));
 
   const updateBlock = (id: string, data: Record<string, any>) =>
     onChange(blocks.map((b) => (b.id === id ? { ...b, data } : b)));
@@ -271,6 +408,8 @@ export default function ContentBlockEditor({
                   block={block}
                   onChange={(data) => updateBlock(block.id, data)}
                   onPickImage={() => setImagePickerTarget(block.id)}
+                  serviceContext={serviceContext}
+                  doctors={doctors}
                 />
               </SectionCard>
             );
@@ -289,7 +428,7 @@ export default function ContentBlockEditor({
           </button>
           {showAddPicker && (
             <div className="absolute z-10 top-full mt-2 left-0 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 grid grid-cols-3 gap-1 w-72">
-              {CONTENT_BLOCK_TYPES.map((t) => (
+              {availableTypes.map((t) => (
                 <button
                   key={t.type}
                   type="button"

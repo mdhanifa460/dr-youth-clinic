@@ -1,18 +1,30 @@
 import Link from "next/link";
-import type { ContentBlock } from "@/app/lib/contentBlocks/types";
+import type { ContentBlock, BlockServiceContext } from "@/app/lib/contentBlocks/types";
+import FaqAccordion from "@/app/components/FaqAccordion";
+import BenefitsGrid from "@/app/components/BenefitsGrid";
+import TreatmentStepsList from "@/app/components/TreatmentStepsList";
+import RecoveryTimeline from "@/app/components/RecoveryTimeline";
+import TreatmentJourney from "@/app/components/TreatmentJourney";
+import TreatmentJourneyExplorer from "@/app/components/TreatmentJourneyExplorer";
+import TreatmentComparison from "@/app/components/TreatmentComparison";
 
 const CALLOUT_STYLES: Record<string, string> = {
   info: "bg-[#f6faff] border-[#0B2560]/10 text-gray-700",
   warning: "bg-amber-50 border-amber-200 text-amber-800",
   success: "bg-emerald-50 border-emerald-200 text-emerald-800",
+  medical: "bg-red-50 border-red-200 text-red-800",
 };
-const CALLOUT_ICONS: Record<string, string> = { info: "ℹ️", warning: "⚠️", success: "✅" };
+const CALLOUT_ICONS: Record<string, string> = { info: "ℹ️", warning: "⚠️", success: "✅", medical: "⚕️" };
 
 function slugify(text: string): string {
   return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function BlockItem({ block }: { block: ContentBlock }) {
+function splitLines(text: string | undefined): string[] {
+  return (text || "").split("\n").map((s) => s.trim()).filter(Boolean);
+}
+
+function BlockItem({ block, serviceContext }: { block: ContentBlock; serviceContext?: BlockServiceContext }) {
   if (!block.visible) return null;
   const data = block.data || {};
 
@@ -89,6 +101,132 @@ function BlockItem({ block }: { block: ContentBlock }) {
     case "divider":
       return <hr className="my-10 border-gray-100" />;
 
+    // Reference blocks — Service-only, render live from serviceContext rather
+    // than block.data (see app/lib/contentBlocks/types.ts). Each is a thin
+    // wrapper around the same standalone component the fixed-position service
+    // page section already uses, so there is exactly one implementation.
+    case "faq-block":
+      return <FaqAccordion faq={serviceContext?.faq} />;
+
+    case "benefits-block":
+      return <BenefitsGrid benefits={serviceContext?.benefits} />;
+
+    case "treatment-steps-block":
+      return <TreatmentStepsList steps={serviceContext?.treatmentSteps} />;
+
+    case "recovery-timeline-block":
+      return <RecoveryTimeline recoveryTime={serviceContext?.recoveryTime} stages={serviceContext?.recoveryStages} />;
+
+    case "journey-block":
+      return serviceContext ? (
+        <TreatmentJourney
+          sessions={serviceContext.sessionsCount || 6}
+          treatmentName={serviceContext.serviceName || ""}
+          phases={serviceContext.journeyPhases}
+        />
+      ) : null;
+
+    case "journey-explorer-block":
+      return serviceContext?.journeyExplorerVisible && (serviceContext.journeyExplorer?.length ?? 0) > 0 ? (
+        <TreatmentJourneyExplorer stages={serviceContext.journeyExplorer!} serviceName={serviceContext.serviceName || ""} />
+      ) : null;
+
+    case "comparison-block":
+      return serviceContext?.current ? (
+        <TreatmentComparison current={serviceContext.current} alternatives={serviceContext.relatedServices || []} />
+      ) : null;
+
+    // Freestanding medical blocks — own stored data, work in any content type.
+    case "doctor-recommendation": {
+      const doctor = data.doctorId ? serviceContext?.doctors?.[data.doctorId] : undefined;
+      if (!doctor || !data.quote) return null;
+      return (
+        <div className="mb-8 flex gap-4 p-5 rounded-2xl bg-[#f6faff] border border-blue-50 items-start">
+          {doctor.photo?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={doctor.photo.url} alt={doctor.name} className="w-14 h-14 rounded-full object-cover shrink-0" />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-[#0B2560]/10 flex items-center justify-center text-lg font-bold text-[#0B2560] shrink-0">
+              {doctor.name?.[0]}
+            </div>
+          )}
+          <div>
+            <p className="text-gray-600 text-sm italic leading-relaxed mb-2">&ldquo;{data.quote}&rdquo;</p>
+            <p className="font-bold text-[#0B2560] text-sm">{doctor.name}</p>
+            {doctor.title && <p className="text-gray-400 text-xs">{doctor.title}</p>}
+          </div>
+        </div>
+      );
+    }
+
+    case "suitability": {
+      const suitable = splitLines(data.suitableFor);
+      const notSuitable = splitLines(data.notSuitableFor);
+      if (suitable.length === 0 && notSuitable.length === 0) return null;
+      return (
+        <div className="mb-8 grid sm:grid-cols-2 gap-4">
+          {suitable.length > 0 && (
+            <div className="rounded-2xl border border-green-100 bg-green-50/60 p-5">
+              <p className="text-xs font-bold text-green-600 uppercase tracking-widest mb-3">Suitable For</p>
+              <ul className="space-y-2">
+                {suitable.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700"><span className="text-green-500">✓</span> {s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {notSuitable.length > 0 && (
+            <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5">
+              <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3">Not Suitable For</p>
+              <ul className="space-y-2">
+                {notSuitable.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700"><span className="text-red-400">✕</span> {s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    case "expected-results": {
+      const items = Array.isArray(data.items) ? data.items.filter((i: any) => i?.description) : [];
+      if (items.length === 0) return null;
+      return (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-[#0B2560] mb-3">What to Expect</h3>
+          <div className="space-y-3">
+            {items.map((item: any, i: number) => (
+              <div key={i} className="flex gap-3 p-4 rounded-xl bg-[#f6faff] border border-blue-50">
+                {item.timeframe && (
+                  <span className="shrink-0 text-xs font-bold text-[#3B82C4] bg-white px-2.5 py-1 rounded-full border border-blue-100 h-fit">{item.timeframe}</span>
+                )}
+                <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    case "side-effects": {
+      const items = Array.isArray(data.items) ? data.items.filter((i: any) => i?.effect) : [];
+      if (items.length === 0) return null;
+      return (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-[#0B2560] mb-3">Possible Side Effects</h3>
+          <ul className="space-y-2">
+            {items.map((item: any, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-600 leading-relaxed">
+                <span className="text-amber-500 mt-0.5">⚠</span>
+                <span><span className="font-semibold text-gray-700">{item.effect}</span>{item.note && ` — ${item.note}`}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
     default:
       return null;
   }
@@ -99,11 +237,13 @@ function BlockItem({ block }: { block: ContentBlock }) {
 // app/components/lp/LpRenderer.tsx for page-level sections, at the block grain
 // instead. Callers fall back to their existing plain-text/Markdown rendering
 // when `blocks` is empty — this component has no fallback logic of its own.
-export default function BlockRenderer({ blocks }: { blocks: ContentBlock[] }) {
+// `serviceContext` is only ever passed by Service content — the 7 reference
+// block types read from it; every other block type ignores it.
+export default function BlockRenderer({ blocks, serviceContext }: { blocks: ContentBlock[]; serviceContext?: BlockServiceContext }) {
   return (
     <div>
       {blocks.map((block) => (
-        <BlockItem key={block.id} block={block} />
+        <BlockItem key={block.id} block={block} serviceContext={serviceContext} />
       ))}
     </div>
   );
