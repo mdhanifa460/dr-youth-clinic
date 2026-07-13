@@ -12,6 +12,7 @@ import BlockPreviewPanel from "./BlockPreviewPanel";
 import {
   CONTENT_BLOCK_TYPES,
   newBlock,
+  parseYoutubeId,
   type ContentBlock,
   type ContentBlockType,
   type ContentBlockSourceSystem,
@@ -99,6 +100,40 @@ function RelatedLinkEditForm({
   );
 }
 
+// Reuses the same video list already fetched for Related Link's "A Video"
+// option (relatedEntities.video / ensureEntitiesLoaded) — no second fetch
+// mechanism for what's the same underlying list.
+function VideoBlockEditForm({
+  data,
+  set,
+  relatedEntities,
+  ensureEntitiesLoaded,
+}: {
+  data: Record<string, any>;
+  set: (patch: Record<string, any>) => void;
+  relatedEntities: Partial<Record<RelatedEntityType, RelatedEntityOption[]>>;
+  ensureEntitiesLoaded: (type: RelatedEntityType) => void;
+}) {
+  useEffect(() => {
+    ensureEntitiesLoaded("video");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const options = relatedEntities.video || [];
+
+  return (
+    <select
+      value={data.videoId || ""}
+      onChange={(e) => set({ videoId: e.target.value })}
+      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="">— Select a video —</option>
+      {options.map((o) => (
+        <option key={o._id} value={o._id}>{o.title || o.name}</option>
+      ))}
+    </select>
+  );
+}
+
 // Live one-line summary shown on a reference block's card so an admin can
 // tell what it will render without leaving this form — the block itself
 // stores no data (see app/lib/contentBlocks/types.ts).
@@ -176,6 +211,7 @@ function BlockEditForm({
   block,
   onChange,
   onPickImage,
+  onPickGalleryImage,
   serviceContext,
   doctors,
   relatedEntities,
@@ -185,6 +221,7 @@ function BlockEditForm({
   block: ContentBlock;
   onChange: (data: Record<string, any>) => void;
   onPickImage: () => void;
+  onPickGalleryImage: () => void;
   serviceContext?: BlockServiceContext;
   doctors: { _id: string; name: string }[];
   relatedEntities: Partial<Record<RelatedEntityType, RelatedEntityOption[]>>;
@@ -466,6 +503,99 @@ function BlockEditForm({
         />
       );
 
+    case "image-gallery": {
+      const images: Array<Record<string, any>> = data.images || [];
+      const updateImage = (i: number, patch: Record<string, any>) =>
+        set({ images: images.map((img, idx) => (idx === i ? { ...img, ...patch } : img)) });
+      const removeImage = (i: number) => set({ images: images.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          {images.map((img, i) => (
+            <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="w-16 h-16 rounded-lg object-cover border border-gray-100 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <input
+                  value={img.alt || ""}
+                  onChange={(e) => updateImage(i, { alt: e.target.value })}
+                  placeholder="Alt text"
+                  className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  value={img.caption || ""}
+                  onChange={(e) => updateImage(i, { caption: e.target.value })}
+                  placeholder="Caption (optional)"
+                  className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button type="button" onClick={() => removeImage(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 px-1">×</button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={onPickGalleryImage}
+            className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-semibold text-gray-400 hover:border-[#0B2560]/40 hover:bg-[#f6faff] transition"
+          >
+            📷 Add Image to Gallery
+          </button>
+        </div>
+      );
+    }
+
+    case "youtube-embed": {
+      const videoId = data.youtubeUrl ? parseYoutubeId(data.youtubeUrl) : "";
+      return (
+        <div className="space-y-2">
+          <input
+            value={data.youtubeUrl || ""}
+            onChange={(e) => set({ youtubeUrl: e.target.value })}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {data.youtubeUrl && (
+            <p className={`text-xs ${videoId ? "text-green-600" : "text-red-500"}`}>
+              {videoId ? "✓ Valid YouTube URL" : "⚠ Couldn't find a video ID in this URL"}
+            </p>
+          )}
+          <input
+            value={data.caption || ""}
+            onChange={(e) => set({ caption: e.target.value })}
+            placeholder="Caption (optional)"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      );
+    }
+
+    case "video-block":
+      return (
+        <VideoBlockEditForm
+          data={data}
+          set={set}
+          relatedEntities={relatedEntities}
+          ensureEntitiesLoaded={ensureEntitiesLoaded}
+        />
+      );
+
+    case "pdf-download":
+      return (
+        <div className="space-y-2">
+          <input
+            value={data.label || ""}
+            onChange={(e) => set({ label: e.target.value })}
+            placeholder="Link text (e.g. Download Price List)"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            value={data.url || ""}
+            onChange={(e) => set({ url: e.target.value })}
+            placeholder="PDF URL (upload it to the Media Library or another host first)"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-xs text-gray-400 italic">There&apos;s no in-admin PDF upload yet — paste a link to an already-hosted PDF.</p>
+        </div>
+      );
+
     default:
       return null;
   }
@@ -487,6 +617,7 @@ export default function ContentBlockEditor({
   const [showPreview, setShowPreview] = useState(false);
   const [templateTarget, setTemplateTarget] = useState<ContentBlock | null>(null);
   const [imagePickerTarget, setImagePickerTarget] = useState<string | null>(null);
+  const [galleryPickerTarget, setGalleryPickerTarget] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<{ _id: string; name: string }[]>([]);
 
   // Only needed for the Doctor Recommendation block's picker — fetched once
@@ -579,6 +710,7 @@ export default function ContentBlockEditor({
                   block={block}
                   onChange={(data) => updateBlock(block.id, data)}
                   onPickImage={() => setImagePickerTarget(block.id)}
+                  onPickGalleryImage={() => setGalleryPickerTarget(block.id)}
                   serviceContext={serviceContext}
                   doctors={doctors}
                   relatedEntities={relatedEntities}
@@ -652,12 +784,19 @@ export default function ContentBlockEditor({
       />
 
       <MediaGalleryModal
-        isOpen={!!imagePickerTarget}
-        onClose={() => setImagePickerTarget(null)}
+        isOpen={!!imagePickerTarget || !!galleryPickerTarget}
+        onClose={() => { setImagePickerTarget(null); setGalleryPickerTarget(null); }}
         onSelect={(img) => {
-          if (!imagePickerTarget) return;
-          const block = blocks.find((b) => b.id === imagePickerTarget);
-          if (block) updateBlock(imagePickerTarget, { ...block.data, url: img.url, publicId: img.publicId });
+          if (imagePickerTarget) {
+            const block = blocks.find((b) => b.id === imagePickerTarget);
+            if (block) updateBlock(imagePickerTarget, { ...block.data, url: img.url, publicId: img.publicId });
+          } else if (galleryPickerTarget) {
+            const block = blocks.find((b) => b.id === galleryPickerTarget);
+            if (block) {
+              const images = Array.isArray(block.data.images) ? block.data.images : [];
+              updateBlock(galleryPickerTarget, { ...block.data, images: [...images, { url: img.url, publicId: img.publicId, alt: "", caption: "" }] });
+            }
+          }
         }}
       />
     </div>

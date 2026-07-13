@@ -11,7 +11,7 @@ import ArticleSidebar from './ArticleSidebar';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
 import { extractHeadingsFromBlocks } from '@/app/lib/contentBlocks/types';
-import { resolveRelatedLinks } from '@/app/lib/contentBlocks/relatedContent';
+import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
 
 async function getPost(slug: string) {
   try {
@@ -64,10 +64,12 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
   const post = await getPost(params.slug);
   if (!post) notFound();
 
-  const [related, siteConfig, relatedLinks] = await Promise.all([
+  const [related, siteConfig, relatedLinks, referencedDoctors, referencedVideos] = await Promise.all([
     getRelatedPosts(params.slug, post.category),
     getSiteConfig(),
     resolveRelatedLinks(post.bodyBlocks),
+    resolveReferencedDoctors(post.bodyBlocks),
+    resolveReferencedVideos(post.bodyBlocks),
   ]);
   const hasBlocks = Array.isArray(post.bodyBlocks) && post.bodyBlocks.length > 0;
   const html = hasBlocks ? '' : markdownToHtml(post.body || '');
@@ -158,7 +160,11 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
               <article>
                 {hasBlocks ? (
                   <div className="text-[17px] text-gray-700 leading-[1.85]">
-                    <BlockRenderer blocks={post.bodyBlocks} relatedLinks={relatedLinks} />
+                    <BlockRenderer
+                      blocks={post.bodyBlocks}
+                      relatedLinks={relatedLinks}
+                      serviceContext={{ doctors: referencedDoctors, videos: referencedVideos }}
+                    />
                   </div>
                 ) : (
                   <div

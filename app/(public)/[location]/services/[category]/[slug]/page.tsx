@@ -15,7 +15,7 @@ import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
 import { blocksToPlainText } from '@/app/lib/contentBlocks/types';
-import { resolveRelatedLinks } from '@/app/lib/contentBlocks/relatedContent';
+import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
 import CostEstimator from '@/app/components/CostEstimator';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
@@ -92,25 +92,6 @@ async function getLocationDoctors(location: string) {
     return Doctor.find({ location: { $in: [location.toLowerCase(), 'all'] }, active: true } as any)
       .sort({ order: 1 }).limit(3).lean() as Promise<any[]>;
   } catch { return []; }
-}
-
-// Doctor Recommendation content blocks reference an existing Doctor by _id —
-// batch-fetch just the ones actually referenced in this service's blocks,
-// keyed by id, for BlockRenderer to look up at render time.
-async function getReferencedDoctors(blocks: any[] | undefined) {
-  try {
-    const ids = Array.from(new Set(
-      (blocks || [])
-        .filter((b) => b.type === 'doctor-recommendation' && b.data?.doctorId)
-        .map((b) => b.data.doctorId)
-    ));
-    if (ids.length === 0) return {};
-    await connectDB();
-    const docs: any[] = await Doctor.find({ _id: { $in: ids } } as any).lean();
-    const map: Record<string, { name: string; title: string; photo?: { url: string } }> = {};
-    for (const d of docs) map[String(d._id)] = { name: d.name, title: d.title, photo: d.photo };
-    return map;
-  } catch { return {}; }
 }
 
 async function getServiceReviews(location: string, serviceName: string) {
@@ -283,14 +264,15 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
     getServiceAtOtherLocations(svc, params.location.toLowerCase()),
     getSiteConfig(),
-    getReferencedDoctors(svc.narrativeBlocks),
+    resolveReferencedDoctors(svc.narrativeBlocks),
     resolveRelatedLinks(svc.narrativeBlocks),
+    resolveReferencedVideos(svc.narrativeBlocks),
   ]);
 
   const cityName = loc.name;
@@ -513,6 +495,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     current: { _id: String(svc._id), name: svc.name, price: svc.price, duration: svc.duration, sessionsRequired: svc.sessionsRequired, recoveryTime: svc.recoveryTime, painLevel: svc.painLevel, idealFor: svc.idealFor },
                     relatedServices: related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor })),
                     doctors: referencedDoctors,
+                    videos: referencedVideos,
                   }}
                   relatedLinks={relatedLinks}
                 />

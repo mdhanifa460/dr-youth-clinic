@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ContentBlock, BlockServiceContext } from "@/app/lib/contentBlocks/types";
+import { parseYoutubeId, type ContentBlock, type BlockServiceContext } from "@/app/lib/contentBlocks/types";
 import type { RelatedLinkInfo } from "@/app/lib/contentBlocks/relatedContent";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import BenefitsGrid from "@/app/components/BenefitsGrid";
@@ -253,6 +253,85 @@ function BlockItem({
         </Link>
       );
     }
+
+    case "image-gallery": {
+      const images = Array.isArray(data.images) ? data.images.filter((i: any) => i?.url) : [];
+      if (images.length === 0) return null;
+      const cols = images.length === 1 ? "max-w-lg mx-auto" : images.length === 2 ? "sm:grid-cols-2 max-w-3xl mx-auto" : "sm:grid-cols-2 lg:grid-cols-3";
+      return (
+        <div className={`mb-8 grid gap-4 ${cols}`}>
+          {images.map((img: any, i: number) => (
+            <div key={i} className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.url}
+                alt={img.alt || `Gallery image ${i + 1}`}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              {img.caption && (
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3">
+                  <p className="text-white text-xs font-medium">{img.caption}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    case "youtube-embed": {
+      const videoId = parseYoutubeId(data.youtubeUrl || "");
+      if (!videoId) return null;
+      return (
+        <div className="mb-8">
+          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-sm bg-[#0B2560]">
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+              title={data.caption || "YouTube video"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+          {data.caption && <p className="text-xs text-gray-400 text-center mt-2">{data.caption}</p>}
+        </div>
+      );
+    }
+
+    case "video-block": {
+      const video = data.videoId ? serviceContext?.videos?.[data.videoId] : undefined;
+      if (!video?.youtubeId) return null;
+      return (
+        <div className="mb-8">
+          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-sm bg-[#0B2560]">
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0`}
+              title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+          {video.title && <p className="text-xs text-gray-400 text-center mt-2">{video.title}</p>}
+        </div>
+      );
+    }
+
+    case "pdf-download":
+      return data.url ? (
+        <a
+          href={data.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-6 flex items-center gap-3 p-4 rounded-2xl border border-blue-50 bg-[#f6faff] hover:border-[#3B82C4]/30 hover:shadow-md transition-all"
+        >
+          <span className="text-2xl shrink-0">📄</span>
+          <div>
+            <p className="font-bold text-[#0B2560] text-sm">{data.label || "Download PDF"}</p>
+            <p className="text-gray-400 text-xs">Opens in a new tab</p>
+          </div>
+        </a>
+      ) : null;
 
     default:
       return null;

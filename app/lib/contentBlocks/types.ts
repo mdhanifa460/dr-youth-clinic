@@ -40,7 +40,12 @@ export type ContentBlockType =
   | "expected-results"
   | "side-effects"
   // Phase 2 Priority 2 — relationship engine
-  | "related-link";
+  | "related-link"
+  // Phase 2 Priority 6 — media enhancements
+  | "image-gallery"
+  | "youtube-embed"
+  | "video-block"
+  | "pdf-download";
 
 export type ContentBlockSourceSystem = "content-block-service" | "content-block-blog";
 
@@ -75,6 +80,10 @@ export interface BlockServiceContext {
   current?: { _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] };
   relatedServices?: Array<{ _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] }>;
   doctors?: Record<string, { name: string; title: string; photo?: { url: string } }>;
+  // Populated for the "Video Block" type (Priority 6) — batch-resolved the
+  // same way `doctors` is for Doctor Recommendation. Used by both Service
+  // and Blog content, not Service-only despite the prop's name.
+  videos?: Record<string, { youtubeId: string; title: string }>;
 }
 
 export interface ContentBlockTypeDef {
@@ -116,7 +125,22 @@ export const CONTENT_BLOCK_TYPES: ContentBlockTypeDef[] = [
   // Relationship engine — links to another CMS entity, resolved at render
   // time (see app/lib/contentBlocks/relatedContent.ts). Available everywhere.
   { type: "related-link", label: "Related Link", icon: "🔗", defaultData: { entityType: "", entityId: "", label: "" } },
+
+  // Media enhancements — available everywhere.
+  { type: "image-gallery", label: "Image Gallery", icon: "🖼️", defaultData: { images: [] } },
+  { type: "youtube-embed", label: "YouTube Embed", icon: "▶️", defaultData: { youtubeUrl: "", caption: "" } },
+  { type: "video-block", label: "Video (from Academy)", icon: "🎬", defaultData: { videoId: "" } },
+  { type: "pdf-download", label: "PDF Download", icon: "📄", defaultData: { url: "", label: "" } },
 ];
+
+// Mirrors the private parseYoutubeId() inside app/models/Video.ts's pre-save
+// hook (same regex) — duplicated rather than imported because that file
+// pulls in Mongoose and is server-only, while this needs to run in the
+// "YouTube Embed" block's admin form (a client component) too.
+export function parseYoutubeId(url: string): string {
+  const match = url?.match(/(?:youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : "";
+}
 
 export function newBlock(type: ContentBlockType): ContentBlock {
   const def = CONTENT_BLOCK_TYPES.find((t) => t.type === type);

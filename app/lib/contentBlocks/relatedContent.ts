@@ -37,59 +37,112 @@ export async function resolveRelatedLinks(blocks: ContentBlock[] | undefined): P
     (idsByType[type] ||= []).push(b.data.entityId);
   }
 
-  await connectDB();
   const result: Record<string, RelatedLinkInfo> = {};
 
-  await Promise.all([
-    (async () => {
-      if (!idsByType.service?.length) return;
-      const docs = (await Service.find({ _id: { $in: idsByType.service } } as any).lean()) as any[];
-      for (const s of docs) {
-        const city = getServiceCities(s)[0] || "chennai";
-        const slug = getEffectiveSlug(s, city);
-        result[relatedLinkKey("service", String(s._id))] = {
-          href: `/${city}/services/${(s.category || "").toLowerCase()}/${slug}`,
-          title: s.name,
-          subtitle: s.category,
-        };
-      }
-    })(),
-    (async () => {
-      if (!idsByType.doctor?.length) return;
-      const docs = (await Doctor.find({ _id: { $in: idsByType.doctor } } as any).lean()) as any[];
-      for (const d of docs) {
-        result[relatedLinkKey("doctor", String(d._id))] = { href: `/doctors/${d._id}`, title: d.name, subtitle: d.title };
-      }
-    })(),
-    (async () => {
-      if (!idsByType.blog?.length) return;
-      const docs = (await Blog.find({ _id: { $in: idsByType.blog } } as any).lean()) as any[];
-      for (const p of docs) {
-        result[relatedLinkKey("blog", String(p._id))] = { href: `/blog/${p.slug}`, title: p.title };
-      }
-    })(),
-    (async () => {
-      if (!idsByType.video?.length) return;
-      const docs = (await Video.find({ _id: { $in: idsByType.video } } as any).lean()) as any[];
-      for (const v of docs) {
-        result[relatedLinkKey("video", String(v._id))] = { href: `/academy/${v.slug}`, title: v.title };
-      }
-    })(),
-    (async () => {
-      if (!idsByType.offer?.length) return;
-      const docs = (await Offer.find({ _id: { $in: idsByType.offer } } as any).lean()) as any[];
-      for (const o of docs) {
-        result[relatedLinkKey("offer", String(o._id))] = { href: `/offers`, title: o.title, subtitle: OFFER_SUBTITLE };
-      }
-    })(),
-    (async () => {
-      if (!idsByType["landing-page"]?.length) return;
-      const docs = (await LandingPage.find({ _id: { $in: idsByType["landing-page"] } } as any).lean()) as any[];
-      for (const lp of docs) {
-        result[relatedLinkKey("landing-page", String(lp._id))] = { href: `/lp/${lp.slug}`, title: lp.title };
-      }
-    })(),
-  ]);
+  try {
+    await connectDB();
+
+    await Promise.all([
+      (async () => {
+        if (!idsByType.service?.length) return;
+        const docs = (await Service.find({ _id: { $in: idsByType.service } } as any).lean()) as any[];
+        for (const s of docs) {
+          const city = getServiceCities(s)[0] || "chennai";
+          const slug = getEffectiveSlug(s, city);
+          result[relatedLinkKey("service", String(s._id))] = {
+            href: `/${city}/services/${(s.category || "").toLowerCase()}/${slug}`,
+            title: s.name,
+            subtitle: s.category,
+          };
+        }
+      })(),
+      (async () => {
+        if (!idsByType.doctor?.length) return;
+        const docs = (await Doctor.find({ _id: { $in: idsByType.doctor } } as any).lean()) as any[];
+        for (const d of docs) {
+          result[relatedLinkKey("doctor", String(d._id))] = { href: `/doctors/${d._id}`, title: d.name, subtitle: d.title };
+        }
+      })(),
+      (async () => {
+        if (!idsByType.blog?.length) return;
+        const docs = (await Blog.find({ _id: { $in: idsByType.blog } } as any).lean()) as any[];
+        for (const p of docs) {
+          result[relatedLinkKey("blog", String(p._id))] = { href: `/blog/${p.slug}`, title: p.title };
+        }
+      })(),
+      (async () => {
+        if (!idsByType.video?.length) return;
+        const docs = (await Video.find({ _id: { $in: idsByType.video } } as any).lean()) as any[];
+        for (const v of docs) {
+          result[relatedLinkKey("video", String(v._id))] = { href: `/academy/${v.slug}`, title: v.title };
+        }
+      })(),
+      (async () => {
+        if (!idsByType.offer?.length) return;
+        const docs = (await Offer.find({ _id: { $in: idsByType.offer } } as any).lean()) as any[];
+        for (const o of docs) {
+          result[relatedLinkKey("offer", String(o._id))] = { href: `/offers`, title: o.title, subtitle: OFFER_SUBTITLE };
+        }
+      })(),
+      (async () => {
+        if (!idsByType["landing-page"]?.length) return;
+        const docs = (await LandingPage.find({ _id: { $in: idsByType["landing-page"] } } as any).lean()) as any[];
+        for (const lp of docs) {
+          result[relatedLinkKey("landing-page", String(lp._id))] = { href: `/lp/${lp.slug}`, title: lp.title };
+        }
+      })(),
+    ]);
+  } catch {
+    // A partial result (whatever resolved before the failure) is still
+    // better than crashing the whole page over one bad reference.
+  }
 
   return result;
+}
+
+// Doctor Recommendation blocks reference an existing Doctor by _id — batch
+// resolved here so both Service and Blog public pages share one lookup
+// instead of each maintaining its own copy (this used to be Service-only,
+// which meant a Doctor Recommendation block on a Blog post silently
+// rendered nothing; now both content types resolve it the same way).
+export async function resolveReferencedDoctors(
+  blocks: ContentBlock[] | undefined
+): Promise<Record<string, { name: string; title: string; photo?: { url: string } }>> {
+  try {
+    const ids = Array.from(new Set(
+      (blocks || [])
+        .filter((b) => b.type === "doctor-recommendation" && b.data?.doctorId)
+        .map((b) => b.data.doctorId)
+    ));
+    if (ids.length === 0) return {};
+    await connectDB();
+    const docs = (await Doctor.find({ _id: { $in: ids } } as any).lean()) as any[];
+    const map: Record<string, { name: string; title: string; photo?: { url: string } }> = {};
+    for (const d of docs) map[String(d._id)] = { name: d.name, title: d.title, photo: d.photo };
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+// Video Block blocks reference an existing Academy Video by _id — same
+// shared-batch-resolve reasoning as resolveReferencedDoctors above.
+export async function resolveReferencedVideos(
+  blocks: ContentBlock[] | undefined
+): Promise<Record<string, { youtubeId: string; title: string }>> {
+  try {
+    const ids = Array.from(new Set(
+      (blocks || [])
+        .filter((b) => b.type === "video-block" && b.data?.videoId)
+        .map((b) => b.data.videoId)
+    ));
+    if (ids.length === 0) return {};
+    await connectDB();
+    const docs = (await Video.find({ _id: { $in: ids } } as any).lean()) as any[];
+    const map: Record<string, { youtubeId: string; title: string }> = {};
+    for (const v of docs) map[String(v._id)] = { youtubeId: v.youtubeId, title: v.title };
+    return map;
+  } catch {
+    return {};
+  }
 }
