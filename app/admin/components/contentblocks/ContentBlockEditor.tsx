@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, LayoutTemplate } from "lucide-react";
+import { Plus, LayoutTemplate, Eye } from "lucide-react";
 import SectionList from "@/app/admin/components/builder/SectionList";
 import SectionCard from "@/app/admin/components/builder/SectionCard";
 import SaveTemplateModal from "@/app/admin/components/builder/SaveTemplateModal";
 import TemplatePicker from "@/app/admin/components/builder/TemplatePicker";
 import MediaGalleryModal from "@/app/admin/components/MediaGalleryModal";
 import ContentHealthCard from "./ContentHealthCard";
+import BlockPreviewPanel from "./BlockPreviewPanel";
 import {
   CONTENT_BLOCK_TYPES,
   newBlock,
@@ -483,6 +484,7 @@ export default function ContentBlockEditor({
 }) {
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [templateTarget, setTemplateTarget] = useState<ContentBlock | null>(null);
   const [imagePickerTarget, setImagePickerTarget] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<{ _id: string; name: string }[]>([]);
@@ -621,6 +623,17 @@ export default function ContentBlockEditor({
         >
           <LayoutTemplate size={14} /> Insert Saved Block
         </button>
+        <button
+          type="button"
+          onClick={() => setShowPreview((s) => !s)}
+          className={`flex items-center gap-1.5 px-4 py-2 border-2 border-dashed rounded-xl text-sm font-semibold transition ${
+            showPreview
+              ? "border-[#0B2560]/40 bg-[#f6faff] text-[#0B2560]"
+              : "border-gray-200 text-gray-500 hover:border-[#0B2560]/40 hover:bg-[#f6faff]"
+          }`}
+        >
+          <Eye size={14} /> {showPreview ? "Hide Preview" : "Preview"}
+        </button>
       </div>
 
       {showTemplates && (
@@ -628,6 +641,8 @@ export default function ContentBlockEditor({
           <TemplatePicker sourceSystem={sourceSystem} onInsert={insertTemplate} />
         </div>
       )}
+
+      {showPreview && <BlockPreviewPanel blocks={blocks} serviceContext={serviceContext} />}
 
       <SaveTemplateModal
         isOpen={!!templateTarget}
