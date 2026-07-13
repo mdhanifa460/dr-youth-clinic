@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion, type TreatmentRecommendation } from "@/app/lib/quizDefaults";
 import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import AssessmentChat from "./AssessmentChat";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -395,20 +396,24 @@ type LeadStatus = "idle" | "sending" | "sent" | "saved" | "error";
 function ResultsScreen({
   recommendations,
   doctorMessage,
+  primaryConcern,
   showDoctorMessage,
   showTopRecommendation,
   showAllRecommendations,
   showBookCta,
+  showChat,
   leadCaptured,
   emailSent,
   onRetake,
 }: {
   recommendations: TreatmentRecommendation[];
   doctorMessage: string;
+  primaryConcern: string;
   showDoctorMessage: boolean;
   showTopRecommendation: boolean;
   showAllRecommendations: boolean;
   showBookCta: boolean;
+  showChat: boolean;
   leadCaptured: boolean;
   emailSent: boolean;
   onRetake: () => void;
@@ -466,6 +471,12 @@ function ResultsScreen({
         <div className="bg-[#f6faff] border border-[#0B2560]/10 rounded-2xl p-5 mb-8 flex items-start gap-3">
           <span className="text-2xl shrink-0">👨‍⚕️</span>
           <p className="text-sm text-gray-600 leading-relaxed">{doctorMessage}</p>
+        </div>
+      )}
+
+      {showChat && recommendations.length > 0 && (
+        <div className="mb-8">
+          <AssessmentChat primaryConcern={primaryConcern} recommendations={recommendations} doctorMessage={doctorMessage} />
         </div>
       )}
 
@@ -759,6 +770,8 @@ export default function SkinQuizPage() {
     quizConfig.treatmentMap,
     { maxRecommendations: quizConfig.settings?.maxRecommendations, confidenceThreshold: quizConfig.settings?.confidenceThreshold }
   );
+  const primaryConcernTag = getPrimaryConcernTag(quizConfig.questions, answers);
+  const primaryConcernLabel = quizConfig.treatmentMap.find((e) => e.concernTag === primaryConcernTag)?.concernLabel || primaryConcernTag;
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -911,10 +924,12 @@ export default function SkinQuizPage() {
             <ResultsScreen
               recommendations={recommendations}
               doctorMessage={quizConfig.doctorMessage}
+              primaryConcern={primaryConcernLabel}
               showDoctorMessage={sectionVisible("doctorMessage")}
               showTopRecommendation={sectionVisible("topRecommendation")}
               showAllRecommendations={sectionVisible("allRecommendations")}
               showBookCta={sectionVisible("bookCta")}
+              showChat={quizConfig.settings?.enableChat !== false}
               leadCaptured={leadStatus === "sent" || leadStatus === "saved"}
               emailSent={leadStatus === "sent"}
               onRetake={handleRetake}

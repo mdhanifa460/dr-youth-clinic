@@ -67,6 +67,7 @@ const SettingsSchema = new mongoose.Schema({
   enablePDF:           { type: Boolean, default: false },
   enableQR:            { type: Boolean, default: true },
   enableNotes:         { type: Boolean, default: true },
+  enableChat:          { type: Boolean, default: true },
   anonymousMode:       { type: Boolean, default: true },
   maxRecommendations:  { type: Number, default: 3 },
   confidenceThreshold: { type: Number, default: 0 },

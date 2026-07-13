@@ -74,6 +74,10 @@ export interface AssessmentSettings {
   // doctor?") — lets a doctor toggle free-text note collection without
   // deleting the question and losing its custom wording.
   enableNotes: boolean;
+  // Master on/off for the post-results "Chat with AI about your results"
+  // follow-up assistant (app/api/assessment-chat) — separate from enableAI,
+  // which only gates the admin's Treatment Mapping AI Suggest tool.
+  enableChat: boolean;
   anonymousMode: boolean;
   maxRecommendations: number;
   confidenceThreshold: number;
@@ -112,6 +116,7 @@ export const DEFAULT_ASSESSMENT_SETTINGS: AssessmentSettings = {
   enablePDF: false,
   enableQR: true,
   enableNotes: true,
+  enableChat: true,
   anonymousMode: true,
   maxRecommendations: 3,
   confidenceThreshold: 0,
