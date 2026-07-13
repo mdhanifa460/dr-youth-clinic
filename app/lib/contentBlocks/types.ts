@@ -38,9 +38,20 @@ export type ContentBlockType =
   | "doctor-recommendation"
   | "suitability"
   | "expected-results"
-  | "side-effects";
+  | "side-effects"
+  // Phase 2 Priority 2 — relationship engine
+  | "related-link";
 
 export type ContentBlockSourceSystem = "content-block-service" | "content-block-blog";
+
+// Entity types the "related-link" block can point at (see
+// app/lib/contentBlocks/relatedContent.ts for URL resolution). Location and
+// standalone FAQ are deliberately not included — neither has a real entity
+// model with its own detail page today (locations are a hardcoded city enum,
+// FAQs only exist embedded inside Service/Video); adding either as a real
+// linkable entity is a separate modeling decision, not a Relationship Engine
+// wiring task.
+export type RelatedEntityType = "service" | "doctor" | "blog" | "video" | "offer" | "landing-page";
 
 // Shape passed to ContentBlockEditor (admin, from ServiceForm's in-memory
 // form state) and BlockRenderer (public, from the fetched Service document)
@@ -101,6 +112,10 @@ export const CONTENT_BLOCK_TYPES: ContentBlockTypeDef[] = [
   { type: "suitability", label: "Suitable For / Not Suitable For", icon: "✅", defaultData: { suitableFor: "", notSuitableFor: "" } },
   { type: "expected-results", label: "Expected Results", icon: "📈", defaultData: { items: [{ timeframe: "", description: "" }] } },
   { type: "side-effects", label: "Side Effects", icon: "⚠️", defaultData: { items: [{ effect: "", note: "" }] } },
+
+  // Relationship engine — links to another CMS entity, resolved at render
+  // time (see app/lib/contentBlocks/relatedContent.ts). Available everywhere.
+  { type: "related-link", label: "Related Link", icon: "🔗", defaultData: { entityType: "", entityId: "", label: "" } },
 ];
 
 export function newBlock(type: ContentBlockType): ContentBlock {

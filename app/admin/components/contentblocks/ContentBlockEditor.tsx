@@ -14,10 +14,88 @@ import {
   type ContentBlockType,
   type ContentBlockSourceSystem,
   type BlockServiceContext,
+  type RelatedEntityType,
 } from "@/app/lib/contentBlocks/types";
 import RichTextEditor from "./RichTextEditor";
 
 type SourceSystem = ContentBlockSourceSystem;
+
+type RelatedEntityOption = { _id: string; name?: string; title?: string };
+
+const RELATED_ENTITY_LABELS: Record<RelatedEntityType, string> = {
+  service: "A Service",
+  doctor: "A Doctor",
+  blog: "A Blog Post",
+  video: "A Video",
+  offer: "An Offer",
+  "landing-page": "A Landing Page",
+};
+
+// Which admin list endpoint backs each entity type's picker — fetched lazily
+// (only once a type is actually selected) rather than loading all 6 up front.
+const RELATED_ENTITY_ENDPOINTS: Record<RelatedEntityType, string> = {
+  service: "/api/admin/services",
+  doctor: "/api/admin/doctors",
+  blog: "/api/admin/blog",
+  video: "/api/admin/videos",
+  offer: "/api/admin/offers",
+  "landing-page": "/api/admin/landing-pages",
+};
+
+function RelatedLinkEditForm({
+  data,
+  set,
+  relatedEntities,
+  ensureEntitiesLoaded,
+}: {
+  data: Record<string, any>;
+  set: (patch: Record<string, any>) => void;
+  relatedEntities: Partial<Record<RelatedEntityType, RelatedEntityOption[]>>;
+  ensureEntitiesLoaded: (type: RelatedEntityType) => void;
+}) {
+  useEffect(() => {
+    if (data.entityType) ensureEntitiesLoaded(data.entityType as RelatedEntityType);
+  }, [data.entityType]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const options = data.entityType ? relatedEntities[data.entityType as RelatedEntityType] || [] : [];
+
+  return (
+    <div className="space-y-2">
+      <div className="grid sm:grid-cols-2 gap-2">
+        <select
+          value={data.entityType || ""}
+          onChange={(e) => set({ entityType: e.target.value, entityId: "" })}
+          className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">— Link to… —</option>
+          {(Object.keys(RELATED_ENTITY_LABELS) as RelatedEntityType[]).map((type) => (
+            <option key={type} value={type}>{RELATED_ENTITY_LABELS[type]}</option>
+          ))}
+        </select>
+        <select
+          value={data.entityId || ""}
+          onChange={(e) => set({ entityId: e.target.value })}
+          disabled={!data.entityType}
+          className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-300"
+        >
+          <option value="">{data.entityType ? "— Select —" : "Pick a type first"}</option>
+          {options.map((o) => (
+            <option key={o._id} value={o._id}>{o.name || o.title}</option>
+          ))}
+        </select>
+      </div>
+      {data.entityType === "offer" && (
+        <p className="text-xs text-gray-400 italic">Offers don&apos;t have individual pages yet — this links to the main Offers page.</p>
+      )}
+      <input
+        value={data.label || ""}
+        onChange={(e) => set({ label: e.target.value })}
+        placeholder="Custom link text (optional — defaults to the entity's own title)"
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+  );
+}
 
 // Live one-line summary shown on a reference block's card so an admin can
 // tell what it will render without leaving this form — the block itself
@@ -44,12 +122,16 @@ function BlockEditForm({
   onPickImage,
   serviceContext,
   doctors,
+  relatedEntities,
+  ensureEntitiesLoaded,
 }: {
   block: ContentBlock;
   onChange: (data: Record<string, any>) => void;
   onPickImage: () => void;
   serviceContext?: BlockServiceContext;
   doctors: { _id: string; name: string }[];
+  relatedEntities: Partial<Record<RelatedEntityType, RelatedEntityOption[]>>;
+  ensureEntitiesLoaded: (type: RelatedEntityType) => void;
 }) {
   const data = block.data;
   const set = (patch: Record<string, any>) => onChange({ ...data, ...patch });
@@ -309,6 +391,16 @@ function BlockEditForm({
       );
     }
 
+    case "related-link":
+      return (
+        <RelatedLinkEditForm
+          data={data}
+          set={set}
+          relatedEntities={relatedEntities}
+          ensureEntitiesLoaded={ensureEntitiesLoaded}
+        />
+      );
+
     default:
       return null;
   }
@@ -340,6 +432,18 @@ export default function ContentBlockEditor({
       .then((d) => { if (d.success) setDoctors(d.data ?? []); })
       .catch(() => {});
   }, []);
+
+  // Related Link block's entity pickers — fetched lazily per type, only once
+  // an admin actually selects that type (avoids loading all 6 admin lists
+  // up front for content that may never use this block).
+  const [relatedEntities, setRelatedEntities] = useState<Partial<Record<RelatedEntityType, RelatedEntityOption[]>>>({});
+  const ensureEntitiesLoaded = (type: RelatedEntityType) => {
+    if (!type || relatedEntities[type]) return;
+    fetch(RELATED_ENTITY_ENDPOINTS[type])
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setRelatedEntities((prev) => ({ ...prev, [type]: d.data ?? [] })); })
+      .catch(() => {});
+  };
 
   const availableTypes = CONTENT_BLOCK_TYPES.filter((t) => !t.availableIn || t.availableIn.includes(sourceSystem));
 
@@ -410,6 +514,8 @@ export default function ContentBlockEditor({
                   onPickImage={() => setImagePickerTarget(block.id)}
                   serviceContext={serviceContext}
                   doctors={doctors}
+                  relatedEntities={relatedEntities}
+                  ensureEntitiesLoaded={ensureEntitiesLoaded}
                 />
               </SectionCard>
             );

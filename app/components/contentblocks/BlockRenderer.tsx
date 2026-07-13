@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ContentBlock, BlockServiceContext } from "@/app/lib/contentBlocks/types";
+import type { RelatedLinkInfo } from "@/app/lib/contentBlocks/relatedContent";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import BenefitsGrid from "@/app/components/BenefitsGrid";
 import TreatmentStepsList from "@/app/components/TreatmentStepsList";
@@ -24,7 +25,15 @@ function splitLines(text: string | undefined): string[] {
   return (text || "").split("\n").map((s) => s.trim()).filter(Boolean);
 }
 
-function BlockItem({ block, serviceContext }: { block: ContentBlock; serviceContext?: BlockServiceContext }) {
+function BlockItem({
+  block,
+  serviceContext,
+  relatedLinks,
+}: {
+  block: ContentBlock;
+  serviceContext?: BlockServiceContext;
+  relatedLinks?: Record<string, RelatedLinkInfo>;
+}) {
   if (!block.visible) return null;
   const data = block.data || {};
 
@@ -227,6 +236,24 @@ function BlockItem({ block, serviceContext }: { block: ContentBlock; serviceCont
       );
     }
 
+    case "related-link": {
+      const key = data.entityType && data.entityId ? `${data.entityType}:${data.entityId}` : "";
+      const info = key ? relatedLinks?.[key] : undefined;
+      if (!info) return null;
+      return (
+        <Link
+          href={info.href}
+          className="mb-6 flex items-center justify-between gap-4 p-4 rounded-2xl border border-blue-50 bg-[#f6faff] hover:border-[#3B82C4]/30 hover:shadow-md transition-all group"
+        >
+          <div>
+            <p className="font-bold text-[#0B2560] text-sm">{data.label || info.title}</p>
+            {info.subtitle && <p className="text-gray-400 text-xs mt-0.5">{info.subtitle}</p>}
+          </div>
+          <span className="text-[#3B82C4] group-hover:translate-x-1 transition-transform shrink-0">→</span>
+        </Link>
+      );
+    }
+
     default:
       return null;
   }
@@ -238,12 +265,22 @@ function BlockItem({ block, serviceContext }: { block: ContentBlock; serviceCont
 // instead. Callers fall back to their existing plain-text/Markdown rendering
 // when `blocks` is empty — this component has no fallback logic of its own.
 // `serviceContext` is only ever passed by Service content — the 7 reference
-// block types read from it; every other block type ignores it.
-export default function BlockRenderer({ blocks, serviceContext }: { blocks: ContentBlock[]; serviceContext?: BlockServiceContext }) {
+// block types read from it; every other block type ignores it. `relatedLinks`
+// (see app/lib/contentBlocks/relatedContent.ts) is populated by both Service
+// and Blog content for any "related-link" blocks present.
+export default function BlockRenderer({
+  blocks,
+  serviceContext,
+  relatedLinks,
+}: {
+  blocks: ContentBlock[];
+  serviceContext?: BlockServiceContext;
+  relatedLinks?: Record<string, RelatedLinkInfo>;
+}) {
   return (
     <div>
       {blocks.map((block) => (
-        <BlockItem key={block.id} block={block} serviceContext={serviceContext} />
+        <BlockItem key={block.id} block={block} serviceContext={serviceContext} relatedLinks={relatedLinks} />
       ))}
     </div>
   );

@@ -15,6 +15,7 @@ import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
 import { blocksToPlainText } from '@/app/lib/contentBlocks/types';
+import { resolveRelatedLinks } from '@/app/lib/contentBlocks/relatedContent';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
 import CostEstimator from '@/app/components/CostEstimator';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
@@ -282,13 +283,14 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
     getServiceAtOtherLocations(svc, params.location.toLowerCase()),
     getSiteConfig(),
     getReferencedDoctors(svc.narrativeBlocks),
+    resolveRelatedLinks(svc.narrativeBlocks),
   ]);
 
   const cityName = loc.name;
@@ -512,6 +514,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     relatedServices: related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor })),
                     doctors: referencedDoctors,
                   }}
+                  relatedLinks={relatedLinks}
                 />
               ) : svc.narrative && (
                 <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line">{svc.narrative}</p>
