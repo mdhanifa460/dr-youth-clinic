@@ -116,6 +116,60 @@ function ReferenceBlockSummary({ type, serviceContext }: { type: ContentBlockTyp
   return <p className="text-xs text-gray-500 italic bg-gray-50 rounded-lg px-3 py-2">{summarize(serviceContext)}</p>;
 }
 
+// "✨ Improve Writing" — one AI action, one block type, on-demand only (never
+// runs automatically). Loading/error state mirrors the existing convention
+// in app/admin/intelligence/components/AIAdvisor.tsx.
+function ParagraphEditForm({
+  data,
+  set,
+  sourceSystem,
+  contextLabel,
+}: {
+  data: Record<string, any>;
+  set: (patch: Record<string, any>) => void;
+  sourceSystem: SourceSystem;
+  contextLabel?: string;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const improve = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/content-blocks/improve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: data.html || "", sourceSystem, context: contextLabel }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "Improve Writing failed");
+      set({ html: json.data.html });
+    } catch (e: any) {
+      setError(e.message || "Improve Writing failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <RichTextEditor html={data.html || ""} onChange={(html) => set({ html })} />
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={improve}
+          disabled={loading || !data.html?.trim()}
+          className="text-xs font-semibold text-[#0B2560] bg-[#f6faff] border border-[#0B2560]/10 rounded-lg px-3 py-1.5 hover:bg-[#0B2560]/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "✨ Improving…" : "✨ Improve Writing"}
+        </button>
+        {error && <span className="text-xs text-red-500">{error}</span>}
+      </div>
+    </div>
+  );
+}
+
 function BlockEditForm({
   block,
   onChange,
@@ -124,6 +178,7 @@ function BlockEditForm({
   doctors,
   relatedEntities,
   ensureEntitiesLoaded,
+  sourceSystem,
 }: {
   block: ContentBlock;
   onChange: (data: Record<string, any>) => void;
@@ -132,6 +187,7 @@ function BlockEditForm({
   doctors: { _id: string; name: string }[];
   relatedEntities: Partial<Record<RelatedEntityType, RelatedEntityOption[]>>;
   ensureEntitiesLoaded: (type: RelatedEntityType) => void;
+  sourceSystem: SourceSystem;
 }) {
   const data = block.data;
   const set = (patch: Record<string, any>) => onChange({ ...data, ...patch });
@@ -164,7 +220,14 @@ function BlockEditForm({
       );
 
     case "paragraph":
-      return <RichTextEditor html={data.html || ""} onChange={(html) => set({ html })} />;
+      return (
+        <ParagraphEditForm
+          data={data}
+          set={set}
+          sourceSystem={sourceSystem}
+          contextLabel={serviceContext?.serviceName}
+        />
+      );
 
     case "bullet-list":
     case "numbered-list": {
@@ -516,6 +579,7 @@ export default function ContentBlockEditor({
                   doctors={doctors}
                   relatedEntities={relatedEntities}
                   ensureEntitiesLoaded={ensureEntitiesLoaded}
+                  sourceSystem={sourceSystem}
                 />
               </SectionCard>
             );

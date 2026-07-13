@@ -132,8 +132,15 @@ function toAnchorId(text: string): string {
   return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// Wraps plain text back into the same simple HTML shape the Paragraph
+// block's data.html expects — shared by plainTextToBlocks() below and the
+// "Improve Writing" AI action (app/api/admin/content-blocks/improve).
+export function plainTextToHtml(text: string): string {
+  return `<p>${escapeHtml(text).replace(/\n{2,}/g, "</p><p>").replace(/\n/g, "<br />")}</p>`;
 }
 
 // Plain-text summary for SEO meta description / schema.org fallbacks and
@@ -188,7 +195,7 @@ export function extractHeadingsFromBlocks(blocks: ContentBlock[] | undefined): B
 // — a single Paragraph block, so nobody has to retype existing content.
 export function plainTextToBlocks(text: string): ContentBlock[] {
   if (!text?.trim()) return [];
-  return [{ id: `paragraph-${Date.now()}`, type: "paragraph", visible: true, data: { html: `<p>${escapeHtml(text).replace(/\n{2,}/g, "</p><p>").replace(/\n/g, "<br />")}</p>` } }];
+  return [{ id: `paragraph-${Date.now()}`, type: "paragraph", visible: true, data: { html: plainTextToHtml(text) } }];
 }
 
 // One-click "convert my existing Markdown body to blocks" for Blog.body —
