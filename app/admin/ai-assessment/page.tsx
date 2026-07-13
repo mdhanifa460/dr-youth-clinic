@@ -413,6 +413,9 @@ function LeadRow({
   const [summary, setSummary] = useState("");
   const [summarizing, setSummarizing] = useState(false);
   const [summarizeError, setSummarizeError] = useState("");
+  const [photoAnalysis, setPhotoAnalysis] = useState("");
+  const [analyzingPhoto, setAnalyzingPhoto] = useState(false);
+  const [photoAnalysisError, setPhotoAnalysisError] = useState("");
 
   const photoUrl = photoQuestionId ? lead.answers?.[photoQuestionId] : "";
   const note: string = noteQuestionId ? (lead.answers?.[noteQuestionId] || "") : "";
@@ -435,6 +438,25 @@ function LeadRow({
       setSummarizeError(err.message || "Summarization failed");
     } finally {
       setSummarizing(false);
+    }
+  };
+
+  const analyzePhoto = async () => {
+    setAnalyzingPhoto(true);
+    setPhotoAnalysisError("");
+    try {
+      const res = await fetch("/api/admin/quiz/analyze-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrl, primaryConcern: lead.primaryConcern }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      setPhotoAnalysis(data.data.analysis);
+    } catch (err: any) {
+      setPhotoAnalysisError(err.message || "Photo analysis failed");
+    } finally {
+      setAnalyzingPhoto(false);
     }
   };
 
@@ -468,8 +490,22 @@ function LeadRow({
             <p><span className="text-gray-400">Location / Channel:</span> {[lead.clinicLocation, lead.channel].filter(Boolean).join(" · ") || "—"}</p>
           </div>
           {photoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photoUrl} alt="Uploaded photo" className="w-40 h-40 rounded-xl object-cover" />
+            <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoUrl} alt="Uploaded photo" className="w-40 h-40 rounded-xl object-cover mb-2" />
+              {!photoAnalysis && (
+                <button onClick={analyzePhoto} disabled={analyzingPhoto} className="block text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50">
+                  {analyzingPhoto ? "Analyzing…" : "🔍 Analyze Photo with AI"}
+                </button>
+              )}
+              {photoAnalysis && (
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 max-w-md">
+                  <p className="text-xs font-bold text-purple-700 mb-1">🔍 AI Visual Observations (not a diagnosis)</p>
+                  <p className="text-xs text-purple-800 whitespace-pre-wrap">{photoAnalysis}</p>
+                </div>
+              )}
+              {photoAnalysisError && <p className="text-xs text-red-500 mt-1">{photoAnalysisError}</p>}
+            </div>
           )}
           {note && (
             <div className="bg-[#f6faff] border border-[#0B2545]/10 rounded-xl p-3">
