@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -49,6 +50,22 @@ export default function RichTextEditor({ html, onChange }: { html: string; onCha
     },
     immediatelyRender: false,
   });
+
+  // useEditor's `content` option only seeds the document once, on mount —
+  // it doesn't reactively track the `html` prop. Without this, external
+  // updates to a block's html (the "✨ Improve Writing" AI action, or the
+  // slash command clearing this paragraph after inserting a new block)
+  // would silently leave the visible editor showing stale text. Skipped
+  // when the incoming html already matches what the editor has (i.e. this
+  // update originated from the user's own typing via onUpdate below) so we
+  // don't fight the user's cursor position on every keystroke.
+  useEffect(() => {
+    if (!editor) return;
+    const incoming = html || "<p></p>";
+    if (incoming !== editor.getHTML()) {
+      editor.commands.setContent(incoming, false);
+    }
+  }, [html, editor]);
 
   if (!editor) return null;
 

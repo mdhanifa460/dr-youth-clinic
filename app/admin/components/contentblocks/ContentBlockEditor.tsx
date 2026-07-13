@@ -13,6 +13,7 @@ import {
   CONTENT_BLOCK_TYPES,
   newBlock,
   parseYoutubeId,
+  stripHtml,
   type ContentBlock,
   type ContentBlockType,
   type ContentBlockSourceSystem,
@@ -156,16 +157,26 @@ function ReferenceBlockSummary({ type, serviceContext }: { type: ContentBlockTyp
 // "✨ Improve Writing" — one AI action, one block type, on-demand only (never
 // runs automatically). Loading/error state mirrors the existing convention
 // in app/admin/intelligence/components/AIAdvisor.tsx.
+// Slash command (Priority 7) — typing "/" as a paragraph's only content
+// opens the same block-type grid as "+ Add Block" (reusing CONTENT_BLOCK_TYPES,
+// filtered by sourceSystem the same way). Simplified vs. true Notion parity:
+// triggers only when the paragraph is exactly "/" (no fuzzy-filter-as-you-type
+// by typed label), and the menu is anchored below the editor rather than
+// following the text cursor's pixel position — a real Tiptap Suggestion-
+// based implementation would need a new dependency this late is riskier to
+// verify with no local build/browser tooling in this sandbox.
 function ParagraphEditForm({
   data,
   set,
   sourceSystem,
   contextLabel,
+  onInsertAfter,
 }: {
   data: Record<string, any>;
   set: (patch: Record<string, any>) => void;
   sourceSystem: SourceSystem;
   contextLabel?: string;
+  onInsertAfter: (type: ContentBlockType) => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -189,9 +200,34 @@ function ParagraphEditForm({
     }
   };
 
+  const showSlashMenu = stripHtml(data.html || "").trim() === "/";
+  const slashTypes = CONTENT_BLOCK_TYPES.filter(
+    (t) => t.type !== "paragraph" && (!t.availableIn || t.availableIn.includes(sourceSystem))
+  );
+
   return (
     <div className="space-y-2">
       <RichTextEditor html={data.html || ""} onChange={(html) => set({ html })} />
+      {showSlashMenu && (
+        // Deliberately in-flow, not position:absolute — SectionCard's outer
+        // wrapper (app/admin/components/builder/SectionCard.tsx) has
+        // overflow-hidden, which would clip an absolutely-positioned popup
+        // that extends past the card's edge. Rendering in-flow lets the
+        // card grow to fit it instead.
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 grid grid-cols-3 gap-1 max-h-80 overflow-y-auto">
+          {slashTypes.map((t) => (
+            <button
+              key={t.type}
+              type="button"
+              onClick={() => onInsertAfter(t.type)}
+              className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-gray-50 transition text-center"
+            >
+              <span className="text-xl">{t.icon}</span>
+              <span className="text-[10px] font-semibold text-gray-600">{t.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex items-center gap-2 flex-wrap">
         <button
           type="button"
@@ -212,6 +248,7 @@ function BlockEditForm({
   onChange,
   onPickImage,
   onPickGalleryImage,
+  onInsertAfter,
   serviceContext,
   doctors,
   relatedEntities,
@@ -222,6 +259,7 @@ function BlockEditForm({
   onChange: (data: Record<string, any>) => void;
   onPickImage: () => void;
   onPickGalleryImage: () => void;
+  onInsertAfter: (type: ContentBlockType) => void;
   serviceContext?: BlockServiceContext;
   doctors: { _id: string; name: string }[];
   relatedEntities: Partial<Record<RelatedEntityType, RelatedEntityOption[]>>;
@@ -265,6 +303,7 @@ function BlockEditForm({
           set={set}
           sourceSystem={sourceSystem}
           contextLabel={serviceContext?.serviceName}
+          onInsertAfter={onInsertAfter}
         />
       );
 
@@ -660,6 +699,21 @@ export default function ContentBlockEditor({
     onChange([...blocks, newBlock(type)]);
     setShowAddPicker(false);
   };
+  // Slash command (Priority 7) inserts right after the block being edited,
+  // rather than always at the end like addBlock() above. Clearing the "/"
+  // and inserting the new block must happen as ONE array computation/onChange
+  // call — two separate onChange calls in the same click handler would both
+  // read the same pre-update `blocks` closure, so the second would silently
+  // overwrite the first's effect instead of composing with it.
+  const insertBlockAfter = (afterId: string, type: ContentBlockType, clearData?: Record<string, any>) => {
+    const idx = blocks.findIndex((b) => b.id === afterId);
+    const inserted = newBlock(type);
+    const base = clearData !== undefined && idx !== -1
+      ? blocks.map((b, i) => (i === idx ? { ...b, data: clearData } : b))
+      : blocks;
+    if (idx === -1) { onChange([...base, inserted]); return; }
+    onChange([...base.slice(0, idx + 1), inserted, ...base.slice(idx + 1)]);
+  };
   const insertTemplate = (template: { type: string; data: Record<string, any> }) => {
     onChange([...blocks, { id: `${template.type}-${Date.now()}`, type: template.type, visible: true, data: { ...template.data } }]);
     setShowTemplates(false);
@@ -711,6 +765,7 @@ export default function ContentBlockEditor({
                   onChange={(data) => updateBlock(block.id, data)}
                   onPickImage={() => setImagePickerTarget(block.id)}
                   onPickGalleryImage={() => setGalleryPickerTarget(block.id)}
+                  onInsertAfter={(type) => insertBlockAfter(block.id, type, { ...block.data, html: "" })}
                   serviceContext={serviceContext}
                   doctors={doctors}
                   relatedEntities={relatedEntities}
