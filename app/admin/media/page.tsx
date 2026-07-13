@@ -14,6 +14,11 @@ interface MediaImage {
   isUsed?: boolean;
   duplicateCount?: number;
   duplicateGroup?: string | null;
+  // Same width+height+bytes as another asset but a different checksum — a
+  // weaker "likely the same photo, re-uploaded" signal than duplicateGroup
+  // (which is a byte-for-byte identical match).
+  possibleDuplicateCount?: number;
+  possibleDuplicateGroup?: string | null;
 }
 
 const CLEANUP_AGE_DAYS = 90;
@@ -24,7 +29,7 @@ function fmt(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
 }
 
-type Filter = "all" | "suggested" | "unused" | "duplicates";
+type Filter = "all" | "suggested" | "unused" | "duplicates" | "possible-duplicates";
 
 export default function MediaLibraryPage() {
   const [images, setImages] = useState<MediaImage[]>([]);
@@ -80,6 +85,7 @@ export default function MediaLibraryPage() {
     if (filter === "suggested") return !img.isUsed && (img.ageInDays ?? 0) >= CLEANUP_AGE_DAYS;
     if (filter === "unused") return !img.isUsed;
     if (filter === "duplicates") return !!img.duplicateGroup;
+    if (filter === "possible-duplicates") return !!img.possibleDuplicateGroup;
     return true;
   });
 
@@ -113,6 +119,7 @@ export default function MediaLibraryPage() {
   const suggestedCount = images.filter((i) => !i.isUsed && (i.ageInDays ?? 0) >= CLEANUP_AGE_DAYS).length;
   const unusedCount = images.filter((i) => !i.isUsed).length;
   const duplicateCount = images.filter((i) => !!i.duplicateGroup).length;
+  const possibleDuplicateCount = images.filter((i) => !!i.possibleDuplicateGroup).length;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -146,9 +153,10 @@ export default function MediaLibraryPage() {
           <Sparkles size={16} className="text-[#3B82C4] mt-0.5 shrink-0" />
           <p className="text-sm text-blue-800">
             Click <strong>Analyze for Cleanup</strong> to check every image against every service, doctor, blog
-            post, offer, video, and homepage/landing page section — flagging which are actually used, which are
-            exact-duplicate uploads, and which have sat unused for {CLEANUP_AGE_DAYS}+ days. Nothing is ever
-            deleted automatically — you review and confirm every deletion.
+            post, offer, video, homepage/landing page section, and AI Assessment question/patient photo —
+            flagging which are actually used, which are exact-duplicate uploads (plus likely re-uploads of the
+            same photo at a different size/compression), and which have sat unused for {CLEANUP_AGE_DAYS}+ days.
+            Nothing is ever deleted automatically — you review and confirm every deletion.
           </p>
         </div>
       )}
@@ -160,6 +168,7 @@ export default function MediaLibraryPage() {
             ["suggested", `🧹 Suggested Cleanup (${suggestedCount})`],
             ["unused", `⚠️ Unused (${unusedCount})`],
             ["duplicates", `🔁 Duplicates (${duplicateCount})`],
+            ["possible-duplicates", `🔁? Possible Duplicates (${possibleDuplicateCount})`],
           ] as [Filter, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -240,6 +249,11 @@ export default function MediaLibraryPage() {
                     {img.duplicateGroup && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500 text-white flex items-center gap-0.5">
                         <Copy size={8} /> ×{img.duplicateCount}
+                      </span>
+                    )}
+                    {!img.duplicateGroup && img.possibleDuplicateGroup && (
+                      <span title="Same dimensions and file size as another image — likely a re-upload of the same photo" className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-200 text-purple-800 flex items-center gap-0.5">
+                        <Copy size={8} /> ×{img.possibleDuplicateCount}?
                       </span>
                     )}
                   </div>

@@ -10,6 +10,8 @@ import { Offer } from '@/app/models/Offer';
 import { Video } from '@/app/models/Video';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { LandingPage } from '@/app/models/LandingPage';
+import QuizConfig from '@/app/models/QuizConfig';
+import { Lead } from '@/app/models/Lead';
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -52,7 +54,7 @@ async function fetchAllAssets() {
 // can't miss a field the way a hand-picked list of paths could.
 async function buildUsedTextBlob(): Promise<string> {
   await connectDB();
-  const [services, doctors, blogs, locations, offers, videos, homepageSections, landingPages] =
+  const [services, doctors, blogs, locations, offers, videos, homepageSections, landingPages, quizConfigs, leads] =
     await Promise.all([
       Service.find().lean(),
       Doctor.find().lean(),
@@ -62,9 +64,15 @@ async function buildUsedTextBlob(): Promise<string> {
       Video.find().lean(),
       HomepageSection.find().lean(),
       LandingPage.find().lean(),
+      // QuizConfig (question/answer .image fields) and Lead (patient-uploaded
+      // assessment photos, answers.<photoQuestionId>) were both added after
+      // this scan was built and never wired in — every image referenced only
+      // from the AI Assessment was invisible here and wrongly flagged unused.
+      (QuizConfig as any).find().lean(),
+      (Lead as any).find().lean(),
     ]);
   return JSON.stringify([
-    services, doctors, blogs, locations, offers, videos, homepageSections, landingPages,
+    services, doctors, blogs, locations, offers, videos, homepageSections, landingPages, quizConfigs, leads,
   ]);
 }
 
@@ -79,16 +87,35 @@ export async function GET(req: NextRequest) {
     // duplicates — this won't catch re-compressed/resized copies of the
     // same photo, only exact re-uploads of the same file.
     const etagGroups = new Map<string, string[]>();
+    // Second, looser signal: same width + height + byte size. This app's
+    // upload flow doesn't preserve original filenames (no use_filename on
+    // upload, so Cloudinary assigns a random public_id) and no perceptual/
+    // visual hashing is set up, so exact dimensions+size is the strongest
+    // "likely the same photo, re-uploaded through a different path" signal
+    // available without adding new upload-time metadata or a hashing service.
+    const dimensionGroups = new Map<string, string[]>();
     for (const a of assets) {
-      if (!a.etag) continue;
-      const list = etagGroups.get(a.etag) ?? [];
-      list.push(a.public_id);
-      etagGroups.set(a.etag, list);
+      if (a.etag) {
+        const list = etagGroups.get(a.etag) ?? [];
+        list.push(a.public_id);
+        etagGroups.set(a.etag, list);
+      }
+      if (a.width && a.height && a.bytes) {
+        const key = `${a.width}x${a.height}:${a.bytes}`;
+        const list = dimensionGroups.get(key) ?? [];
+        list.push(a.public_id);
+        dimensionGroups.set(key, list);
+      }
     }
 
     const now = Date.now();
     const images = assets.map((a: any) => {
-      const group = a.etag ? etagGroups.get(a.etag) : undefined;
+      const exactGroup = a.etag ? etagGroups.get(a.etag) : undefined;
+      const dimensionKey = a.width && a.height && a.bytes ? `${a.width}x${a.height}:${a.bytes}` : undefined;
+      const looseGroup = dimensionKey ? dimensionGroups.get(dimensionKey) : undefined;
+      // Don't double-report a pair that's already an exact match as a
+      // separate "possible" duplicate too.
+      const possibleGroup = looseGroup && looseGroup.length > 1 && (!exactGroup || looseGroup.length > exactGroup.length) ? looseGroup : undefined;
       const ageInDays = Math.floor((now - new Date(a.created_at).getTime()) / (1000 * 60 * 60 * 24));
       return {
         publicId: a.public_id,
@@ -99,8 +126,10 @@ export async function GET(req: NextRequest) {
         createdAt: a.created_at,
         ageInDays,
         isUsed: usedBlob.includes(a.public_id),
-        duplicateCount: group ? group.length : 1,
-        duplicateGroup: group && group.length > 1 ? a.etag : null,
+        duplicateCount: exactGroup ? exactGroup.length : 1,
+        duplicateGroup: exactGroup && exactGroup.length > 1 ? a.etag : null,
+        possibleDuplicateCount: possibleGroup ? possibleGroup.length : 1,
+        possibleDuplicateGroup: possibleGroup ? dimensionKey : null,
       };
     });
 
