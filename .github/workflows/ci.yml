@@ -104,9 +104,12 @@ jobs:
           # provided path: .next/" even though the directory very much
           # existed) — likely a storage-quota ceiling on a free-tier account.
           # Excluding cache/ drops the artifact to just the runtime output.
+          # (First attempt at this used bare `.next/` + `!.next/cache`, which
+          # matched zero files — @actions/glob's exclusion patterns need an
+          # explicit `/**` to recurse the same way inclusion patterns do.)
           path: |
-            .next/
-            !.next/cache
+            .next/**
+            !.next/cache/**
           retention-days: 1
 
   # ── 5. E2E Tests (Playwright) ────────────────────────────────────────────────
