@@ -201,6 +201,19 @@ export function blocksToPlainText(blocks: ContentBlock[] | undefined, maxLength 
       case "numbered-list":
         if (Array.isArray(b.data?.items)) parts.push(b.data.items.filter(Boolean).join(". "));
         break;
+      case "doctor-recommendation":
+        if (b.data?.quote) parts.push(b.data.quote);
+        break;
+      case "suitability":
+        if (b.data?.suitableFor) parts.push(b.data.suitableFor.replace(/\n/g, ". "));
+        if (b.data?.notSuitableFor) parts.push(b.data.notSuitableFor.replace(/\n/g, ". "));
+        break;
+      case "expected-results":
+        if (Array.isArray(b.data?.items)) parts.push(b.data.items.map((i: any) => i?.description).filter(Boolean).join(". "));
+        break;
+      case "side-effects":
+        if (Array.isArray(b.data?.items)) parts.push(b.data.items.map((i: any) => i?.effect).filter(Boolean).join(". "));
+        break;
       default:
         break;
     }

@@ -272,7 +272,7 @@ function BlockEditForm({
   ensureEntitiesLoaded: (type: RelatedEntityType) => void;
   sourceSystem: SourceSystem;
 }) {
-  const data = block.data;
+  const data = block.data || {};
   const set = (patch: Record<string, any>) => onChange({ ...data, ...patch });
 
   switch (block.type) {
@@ -696,7 +696,7 @@ export default function ContentBlockEditor({
   const duplicate = (id: string) => {
     const src = blocks.find((b) => b.id === id);
     if (!src) return;
-    const copy: ContentBlock = { ...src, id: `${src.type}-${Date.now()}`, data: JSON.parse(JSON.stringify(src.data)) };
+    const copy: ContentBlock = { ...src, id: `${src.type}-${Date.now()}`, data: JSON.parse(JSON.stringify(src.data || {})) };
     const idx = blocks.findIndex((b) => b.id === id);
     onChange([...blocks.slice(0, idx + 1), copy, ...blocks.slice(idx + 1)]);
   };
