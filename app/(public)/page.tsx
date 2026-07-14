@@ -72,6 +72,7 @@ export async function generateMetadata(): Promise<Metadata> {
         title: seo.metaTitle,
         description: seo.metaDescription || undefined,
         keywords: Array.isArray(seo.keywords) ? seo.keywords : [],
+        alternates: { canonical: `${SITE_URL}/` },
         openGraph: {
           title: seo.metaTitle,
           description: seo.metaDescription || '',
@@ -93,6 +94,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
     description: 'Trusted by 25,000+ patients across India. Expert dermatology, hair restoration & aesthetic treatments.',
+    alternates: { canonical: `${SITE_URL}/` },
     openGraph: {
       title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
       description: 'Trusted by 25,000+ patients across India.',

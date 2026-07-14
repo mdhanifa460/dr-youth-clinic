@@ -41,14 +41,24 @@ const nextConfig = {
         { key: 'X-XSS-Protection',        value: '1; mode=block' },
         { key: 'Referrer-Policy',         value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy',      value: 'camera=(), microphone=(), geolocation=()' },
-        // HSTS — enforce HTTPS for 2 years, include subdomains
-        { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        // HSTS and CSP's upgrade-insecure-requests only make sense once the site is
+        // actually served over HTTPS. Chromium treats `localhost` as a secure origin
+        // and honors both directives there too — sending them from `next dev` (plain
+        // HTTP) makes the browser force-upgrade every subresource request to HTTPS,
+        // which then fails with a TLS error since the dev server has no TLS listener.
+        ...(process.env.NODE_ENV === 'production'
+          ? [{ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }]
+          : []),
         // CSP — allow known analytics/tracking origins; unsafe-inline required by Next.js inline scripts
         {
           key: 'Content-Security-Policy',
           value: [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com",
+            // 'unsafe-eval' is needed in dev only — Next.js dev-mode bundles use eval()
+            // for Fast Refresh / source maps, and without it the CSP silently blocks
+            // all client JS from executing, so the app never hydrates (no onClick
+            // handlers attach anywhere). Production bundles don't use eval().
+            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' "}https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com`,
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com",
             "font-src 'self' data:",
@@ -58,7 +68,7 @@ const nextConfig = {
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
-            "upgrade-insecure-requests",
+            ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
           ].join('; '),
         },
       ],

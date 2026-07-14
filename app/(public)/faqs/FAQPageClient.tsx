@@ -119,7 +119,7 @@ export default function FAQPageClient({
       <div ref={faqListRef} className="max-w-5xl mx-auto px-4 md:px-6 py-10 scroll-mt-4">
         {/* ── Category Tabs ── */}
         {!search && (
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-8" data-testid="faq-category-tabs">
             {tabs.map((tab) => {
               const cat = categories.find((c) => c.category === tab);
               return (

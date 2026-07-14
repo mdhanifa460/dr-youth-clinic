@@ -92,7 +92,10 @@ async function getTestimonialsData() {
     const reviews = await getCachedReviews(data.displayCount ?? 6, data.filterSource || '', data.filterLocation || '', data.filterService || '');
     return { ...data, _reviews: reviews };
   } catch {
-    return {};
+    // Return _reviews: [] (not {}) so TestimonialsSlider sees a resolved-but-empty
+    // result and skips its own client-side fetch — otherwise `_reviews` is
+    // undefined and the client redundantly retries the same failed DB call itself.
+    return { _reviews: [] };
   }
 }
 

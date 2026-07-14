@@ -14,7 +14,7 @@ test.describe('FAQ page', () => {
   test('search filters questions', async ({ page }) => {
     await page.goto('/faqs');
     await page.getByPlaceholder(/search questions/i).fill('laser');
-    await expect(page.getByText(/result/i)).toBeVisible();
+    await expect(page.getByText(/\d+ results? for/i)).toBeVisible();
   });
 
   test('clear search restores all questions', async ({ page }) => {
@@ -26,15 +26,16 @@ test.describe('FAQ page', () => {
 
   test('category tabs are visible', async ({ page }) => {
     await page.goto('/faqs');
-    await expect(page.getByRole('button', { name: /general/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /skin/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /hair/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /laser/i })).toBeVisible();
+    const tabs = page.getByTestId('faq-category-tabs');
+    await expect(tabs.getByRole('button', { name: /general/i })).toBeVisible();
+    await expect(tabs.getByRole('button', { name: /skin/i })).toBeVisible();
+    await expect(tabs.getByRole('button', { name: /hair/i })).toBeVisible();
+    await expect(tabs.getByRole('button', { name: /laser/i })).toBeVisible();
   });
 
   test('clicking a category filters the FAQ list', async ({ page }) => {
     await page.goto('/faqs');
-    await page.getByRole('button', { name: /pricing/i }).click();
+    await page.getByTestId('faq-category-tabs').getByRole('button', { name: /pricing/i }).click();
     await expect(page.getByText(/pricing/i).first()).toBeVisible();
   });
 
@@ -54,8 +55,10 @@ test.describe('FAQ page', () => {
 
   test('has FAQ structured data in page', async ({ page }) => {
     await page.goto('/faqs');
-    const schemaScript = page.locator('script[type="application/ld+json"]').first();
-    const content = await schemaScript.textContent();
-    expect(content).toContain('FAQPage');
+    // The page also renders an OrganizationSchema ld+json script (from the
+    // shared layout) ahead of this one in DOM order, so check all of them.
+    const scripts = page.locator('script[type="application/ld+json"]');
+    const contents = await scripts.allTextContents();
+    expect(contents.some((c) => c.includes('FAQPage'))).toBe(true);
   });
 });
