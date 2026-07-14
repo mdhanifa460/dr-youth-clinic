@@ -56,10 +56,18 @@ function isBlockEmpty(block: ContentBlock): boolean {
       return !Array.isArray(data.items) || data.items.filter((i: any) => i?.effect?.trim()).length === 0;
     case "related-link":
       return !data.entityType || !data.entityId;
+    case "image-gallery":
+      return !Array.isArray(data.images) || data.images.filter((i: any) => i?.url).length === 0;
+    case "youtube-embed":
+      return !data.youtubeUrl?.trim();
+    case "video-block":
+      return !data.videoId;
+    case "pdf-download":
+      return !data.url?.trim();
     case "divider":
       return false; // structural, never "empty"
     default:
-      return REFERENCE_TYPES.has(block.type) ? false : false;
+      return false; // reference blocks (see REFERENCE_TYPES) — positional, not admin-authored
   }
 }
 
@@ -128,7 +136,11 @@ export function computeContentHealth(
     if (!applicable) {
       checks.push({ label: "FAQ presence", passed: true, na: true, message: "Not applicable to this content." });
     } else {
-      const passed = hasFaqBlock || !!opts?.hasFaq;
+      // Applicability can be triggered by the mere presence of an faq-block
+      // reference, but whether it actually PASSES depends on the underlying
+      // FAQ having real entries — a faq-block referencing an empty svc.faq
+      // renders nothing on the public page, so it shouldn't score as "included".
+      const passed = !!opts?.hasFaq;
       checks.push({
         label: "FAQ presence",
         passed,

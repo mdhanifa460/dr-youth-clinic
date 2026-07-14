@@ -687,6 +687,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                 journeyExplorer: form.journeyExplorer,
                 journeyExplorerVisible: form.journeyExplorerVisible,
                 painLevel: form.painLevel,
+                comparisonVisible: form.comparisonVisible,
               }}
             />
             {form.narrativeBlocks.length === 0 && (

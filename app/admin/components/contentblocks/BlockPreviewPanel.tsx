@@ -38,7 +38,7 @@ export default function BlockPreviewPanel({
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-gray-400 italic">Related Link blocks resolve after saving — they show empty here.</p>
+        <p className="text-[11px] text-gray-400 italic">Related Link, Doctor Recommendation, Video, and Comparison blocks resolve after saving — they show empty here.</p>
       </div>
       <div className="p-6 flex justify-center overflow-x-auto">
         <div

@@ -42,7 +42,12 @@ export async function resolveRelatedLinks(blocks: ContentBlock[] | undefined): P
   try {
     await connectDB();
 
-    await Promise.all([
+    // allSettled, not all — one entity type's query failing shouldn't
+    // discard results the other types already resolved (Promise.all would
+    // reject as soon as any one rejects, and code after it never runs, so
+    // whichever of the other 5 lookups hadn't already written into `result`
+    // yet would be silently lost even though their queries kept running).
+    await Promise.allSettled([
       (async () => {
         if (!idsByType.service?.length) return;
         const docs = (await Service.find({ _id: { $in: idsByType.service } } as any).lean()) as any[];

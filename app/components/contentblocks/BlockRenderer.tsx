@@ -141,7 +141,7 @@ function BlockItem({
       ) : null;
 
     case "comparison-block":
-      return serviceContext?.current ? (
+      return serviceContext?.comparisonVisible && serviceContext?.current ? (
         <TreatmentComparison current={serviceContext.current} alternatives={serviceContext.relatedServices || []} />
       ) : null;
 

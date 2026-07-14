@@ -14,7 +14,7 @@ import { Review } from '@/app/models/Review';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
-import { blocksToPlainText } from '@/app/lib/contentBlocks/types';
+import { blocksToPlainText, hasVisibleBlockType } from '@/app/lib/contentBlocks/types';
 import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
 import CostEstimator from '@/app/components/CostEstimator';
@@ -287,6 +287,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const hasReviews = reviews.length > 0;
   const hasDoctors = doctors.length > 0;
   const hasRecovery = !!svc.recoveryTime?.trim();
+  // A "reference" content block (Content Block Builder) lets an admin move
+  // any of these sections into the narrative flow — once they do, the fixed
+  // position below must stand down, or the same content renders twice.
+  const inBlocks = (type: string) => hasVisibleBlockType(svc.narrativeBlocks, type as any);
 
   return (
     <>
@@ -492,6 +496,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     serviceName: svc.name,
                     journeyExplorer: svc.journeyExplorer,
                     journeyExplorerVisible: svc.journeyExplorerVisible,
+                    painLevel: svc.painLevel,
+                    comparisonVisible: svc.comparisonVisible,
                     current: { _id: String(svc._id), name: svc.name, price: svc.price, duration: svc.duration, sessionsRequired: svc.sessionsRequired, recoveryTime: svc.recoveryTime, painLevel: svc.painLevel, idealFor: svc.idealFor },
                     relatedServices: related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor })),
                     doctors: referencedDoctors,
@@ -530,10 +536,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Treatment Journey */}
-            {hasJourney && <TreatmentStepsList steps={svc.treatmentSteps} />}
+            {hasJourney && !inBlocks('treatment-steps-block') && <TreatmentStepsList steps={svc.treatmentSteps} />}
 
             {/* Key Benefits */}
-            {svc.benefits?.length > 0 && <BenefitsGrid benefits={svc.benefits} />}
+            {svc.benefits?.length > 0 && !inBlocks('benefits-block') && <BenefitsGrid benefits={svc.benefits} />}
 
             {/* Before / After — interactive gallery with filter + navigation */}
             {hasBeforeAfter && (
@@ -547,7 +553,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Recovery Timeline */}
-            {hasRecovery && <RecoveryTimeline recoveryTime={svc.recoveryTime} stages={svc.recoveryStages} />}
+            {hasRecovery && !inBlocks('recovery-timeline-block') && <RecoveryTimeline recoveryTime={svc.recoveryTime} stages={svc.recoveryStages} />}
 
             {/* Aftercare Calendar */}
             {svc.aftercareVisible && svc.aftercareGuidance?.length > 0 && (
@@ -586,7 +592,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Interactive Journey Explorer */}
-            {svc.journeyExplorerVisible && svc.journeyExplorer?.length > 0 && (
+            {svc.journeyExplorerVisible && svc.journeyExplorer?.length > 0 && !inBlocks('journey-explorer-block') && (
               <TreatmentJourneyExplorer stages={svc.journeyExplorer} serviceName={svc.name} />
             )}
 
@@ -594,7 +600,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 authored a more specific journey (step-by-step above, or the
                 Interactive Explorer), showing this too just repeated the same
                 "what happens over time" question a third time. */}
-            {!hasJourney && !(svc.journeyExplorerVisible && svc.journeyExplorer?.length > 0) && (
+            {!hasJourney && !(svc.journeyExplorerVisible && svc.journeyExplorer?.length > 0) && !inBlocks('journey-block') && (
               <TreatmentJourney
                 sessions={svc.sessionsCount || 6}
                 treatmentName={svc.name}
@@ -606,7 +612,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             <AiJourneySimulator serviceId={String(svc._id)} serviceName={svc.name} />
 
             {/* Treatment Comparison */}
-            {svc.comparisonVisible && related.length > 0 && (
+            {svc.comparisonVisible && related.length > 0 && !inBlocks('comparison-block') && (
               <TreatmentComparison
                 current={{ _id: String(svc._id), name: svc.name, price: svc.price, duration: svc.duration, sessionsRequired: svc.sessionsRequired, recoveryTime: svc.recoveryTime, painLevel: svc.painLevel, idealFor: svc.idealFor }}
                 alternatives={related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor }))}
@@ -653,7 +659,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* FAQ */}
-            {hasFAQ && <FaqAccordion faq={svc.faq} />}
+            {hasFAQ && !inBlocks('faq-block') && <FaqAccordion faq={svc.faq} />}
 
             {/* Why DR Youth */}
             <div className="bg-gradient-to-br from-[#f6faff] to-white rounded-3xl p-7 border border-blue-50">

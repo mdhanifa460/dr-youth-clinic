@@ -145,7 +145,13 @@ const REFERENCE_SUMMARY: Partial<Record<ContentBlockType, (ctx?: BlockServiceCon
   "recovery-timeline-block": (ctx) => (ctx?.recoveryTime?.trim() ? `Showing the recovery timeline for "${ctx.recoveryTime}" from below.` : "No recovery time set yet — set one below, or this block will render empty."),
   "journey-block": () => "Showing this service's Multi-Session Journey from below (uses default phases for anything left blank).",
   "journey-explorer-block": (ctx) => (ctx?.journeyExplorerVisible && ctx.journeyExplorer?.length ? `Showing the ${ctx.journeyExplorer.length}-stage Interactive Journey Explorer from below.` : "The Interactive Journey Explorer is empty or hidden below — this block will render nothing until it's filled in and made visible."),
-  "comparison-block": (ctx) => (ctx?.painLevel?.trim() ? "Showing the auto-generated comparison against similar services (uses Pain Level below)." : "This compares against similar services automatically — set Pain Level below for a more complete table."),
+  "comparison-block": (ctx) => (
+    ctx?.comparisonVisible === false
+      ? "Comparison is currently turned off below — this block will render nothing until it's switched on."
+      : ctx?.painLevel?.trim()
+      ? "Showing the auto-generated comparison against similar services (uses Pain Level below)."
+      : "This compares against similar services automatically — set Pain Level below for a more complete table."
+  ),
 };
 
 function ReferenceBlockSummary({ type, serviceContext }: { type: ContentBlockType; serviceContext?: BlockServiceContext }) {

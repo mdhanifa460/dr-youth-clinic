@@ -77,6 +77,7 @@ export interface BlockServiceContext {
   journeyExplorer?: Array<{ stage: string; progressPercent: number; summary: string; doctorTip?: string; dos?: string[]; donts?: string[] }>;
   journeyExplorerVisible?: boolean;
   painLevel?: string;
+  comparisonVisible?: boolean;
   current?: { _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] };
   relatedServices?: Array<{ _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] }>;
   doctors?: Record<string, { name: string; title: string; photo?: { url: string } }>;
@@ -140,6 +141,14 @@ export const CONTENT_BLOCK_TYPES: ContentBlockTypeDef[] = [
 export function parseYoutubeId(url: string): string {
   const match = url?.match(/(?:youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
   return match ? match[1] : "";
+}
+
+// True if a visible block of this type exists in the array — used by the
+// public Service page to suppress a fixed-position section (FAQ, Benefits,
+// etc.) once the admin has placed the equivalent reference block somewhere
+// in the content flow, so the same data never renders twice on one page.
+export function hasVisibleBlockType(blocks: ContentBlock[] | undefined, type: ContentBlockType): boolean {
+  return Array.isArray(blocks) && blocks.some((b) => b.type === type && b.visible);
 }
 
 export function newBlock(type: ContentBlockType): ContentBlock {
