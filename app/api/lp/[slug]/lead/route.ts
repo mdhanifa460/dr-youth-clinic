@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
 import { LandingPageLead } from '@/app/models/LandingPageLead';
+import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
+  // Same 5/hour/IP limit as the equivalent app/api/leads/route.ts — this was
+  // the one public lead-capture endpoint with no throttling at all.
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`lp-lead:${ip}`, 5, 60 * 60 * 1000);
+  if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
+
   try {
     await connectDB();
 

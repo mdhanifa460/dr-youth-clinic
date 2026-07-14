@@ -11,11 +11,23 @@ export const ADMIN_SESSION_COOKIE = "admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 8;
 
 const PASSWORD_ITERATIONS = 210_000;
+const FALLBACK_SESSION_SECRET = "change-this-admin-session-secret";
 const SESSION_SECRET =
   process.env.ADMIN_SESSION_SECRET ||
   process.env.NEXTAUTH_SECRET ||
   process.env.ADMIN_PASSWORD ||
-  "change-this-admin-session-secret";
+  FALLBACK_SESSION_SECRET;
+
+// This string is public (it's in the source of a public repo), so signing
+// session cookies with it is equivalent to not signing them at all. Warn
+// loudly rather than silently accepting it — kept as a warning, not a throw,
+// so a misconfigured deploy doesn't hard-crash and invalidate real sessions
+// that happen to already be running on it.
+if (SESSION_SECRET === FALLBACK_SESSION_SECRET) {
+  console.error(
+    "[SECURITY] No ADMIN_SESSION_SECRET, NEXTAUTH_SECRET, or ADMIN_PASSWORD is set — admin session cookies are being signed with a hardcoded, publicly-known secret. Set ADMIN_SESSION_SECRET immediately."
+  );
+}
 
 type AdminUserDocument = {
   _id: unknown;
@@ -104,8 +116,18 @@ async function ensureBootstrapAdmin() {
 
   if (count > 0) return;
 
-  const email = (process.env.ADMIN_EMAIL || "admin@dryouth.com").toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || "admin123";
+  // This repo is public — a hardcoded fallback here (previously
+  // admin@dryouth.com / admin123) would be a publicly known default
+  // credential for any freshly-provisioned deployment. Require real values
+  // instead of silently creating a guessable admin account.
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    throw new Error(
+      "No admin account exists yet, and ADMIN_EMAIL/ADMIN_PASSWORD are not set — refusing to bootstrap an admin with a default (guessable) credential. Set both env vars and try again."
+    );
+  }
+
+  const email = process.env.ADMIN_EMAIL.toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
   const { hash, salt, iterations } = hashPassword(password);
 
   await AdminUserModel.create({

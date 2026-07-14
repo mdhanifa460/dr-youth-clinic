@@ -43,7 +43,12 @@ export async function POST(req: Request) {
     ? getSafeRedirectPath(body.get("next"))
     : "/admin";
 
-  if (!email || !password) {
+  // The form branch above already coerces both to strings; for the JSON
+  // branch, `body.email`/`body.password` are unnarrowed — require strings
+  // explicitly rather than relying on downstream methods (.toLowerCase(),
+  // pbkdf2Sync) to incidentally throw on a non-string (e.g. a NoSQL-operator
+  // object like {"$ne": null}) and fall through to the catch block below.
+  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     if (fromForm) {
       return NextResponse.redirect(
         new URL("/admin/login?error=missing", req.url),
@@ -57,13 +62,27 @@ export async function POST(req: Request) {
     );
   }
 
-  const session = await loginAdmin({
-    email,
-    password,
-    remember,
-    userAgent: req.headers.get("user-agent"),
-    ipAddress: req.headers.get("x-forwarded-for"),
-  });
+  let session;
+  try {
+    session = await loginAdmin({
+      email,
+      password,
+      remember,
+      userAgent: req.headers.get("user-agent"),
+      ipAddress: req.headers.get("x-forwarded-for"),
+    });
+  } catch (err: any) {
+    // Thrown when no admin account exists yet and ADMIN_EMAIL/ADMIN_PASSWORD
+    // aren't configured (see ensureBootstrapAdmin in adminAuth.ts) — a
+    // deploy-configuration problem, not a normal login failure, so it's
+    // logged server-side but not exposed verbatim to the client.
+    console.error("Admin login failed:", err.message);
+    const message = "Admin login is not yet configured. Contact the site administrator.";
+    if (fromForm) {
+      return NextResponse.redirect(new URL(`/admin/login?error=config`, req.url), 303);
+    }
+    return NextResponse.json({ success: false, message }, { status: 503 });
+  }
 
   if (!session) {
     if (fromForm) {
