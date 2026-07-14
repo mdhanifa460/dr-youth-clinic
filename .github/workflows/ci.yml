@@ -10,6 +10,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Explicit permissions — without this, actions/download-artifact@v4 (used by
+# the e2e/visual-regression/lighthouse jobs to fetch the build job's output)
+# 403s on repos whose default GITHUB_TOKEN permissions are read-only-content,
+# since artifact listing/download needs the `actions` scope.
+permissions:
+  contents: read
+  actions: read
+
 env:
   NODE_VERSION: '20'
 
