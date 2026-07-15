@@ -105,18 +105,18 @@ export async function resolveRelatedLinks(blocks: ContentBlock[] | undefined): P
   return result;
 }
 
-// Doctor Recommendation blocks reference an existing Doctor by _id — batch
-// resolved here so both Service and Blog public pages share one lookup
-// instead of each maintaining its own copy (this used to be Service-only,
-// which meant a Doctor Recommendation block on a Blog post silently
-// rendered nothing; now both content types resolve it the same way).
+// Doctor Recommendation and Doctor Tip blocks both reference an existing
+// Doctor by _id — batch resolved here so both Service and Blog public pages
+// share one lookup instead of each maintaining its own copy (this used to be
+// Service-only, which meant a Doctor Recommendation block on a Blog post
+// silently rendered nothing; now both content types resolve it the same way).
 export async function resolveReferencedDoctors(
   blocks: ContentBlock[] | undefined
 ): Promise<Record<string, { name: string; title: string; photo?: { url: string } }>> {
   try {
     const ids = Array.from(new Set(
       (blocks || [])
-        .filter((b) => b.type === "doctor-recommendation" && b.data?.doctorId)
+        .filter((b) => (b.type === "doctor-recommendation" || b.type === "doctor-tip") && b.data?.doctorId)
         .map((b) => b.data.doctorId)
     ));
     if (ids.length === 0) return {};

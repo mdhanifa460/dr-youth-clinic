@@ -7,6 +7,7 @@ import SectionCard from "@/app/admin/components/builder/SectionCard";
 import SaveTemplateModal from "@/app/admin/components/builder/SaveTemplateModal";
 import TemplatePicker from "@/app/admin/components/builder/TemplatePicker";
 import MediaGalleryModal from "@/app/admin/components/MediaGalleryModal";
+import ImageUpload from "@/app/admin/components/ImageUpload";
 import ContentHealthCard from "./ContentHealthCard";
 import BlockPreviewPanel from "./BlockPreviewPanel";
 import {
@@ -184,11 +185,11 @@ function ParagraphEditForm({
   contextLabel?: string;
   onInsertAfter: (type: ContentBlockType) => void;
 }) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"improve" | "medical" | null>(null);
   const [error, setError] = useState("");
 
   const improve = async () => {
-    setLoading(true);
+    setLoading("improve");
     setError("");
     try {
       const res = await fetch("/api/admin/content-blocks/improve", {
@@ -202,7 +203,26 @@ function ParagraphEditForm({
     } catch (e: any) {
       setError(e.message || "Improve Writing failed");
     } finally {
-      setLoading(false);
+      setLoading(null);
+    }
+  };
+
+  const medicalTone = async () => {
+    setLoading("medical");
+    setError("");
+    try {
+      const res = await fetch("/api/admin/content-blocks/generate-medical-tone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: data.html || "", sourceSystem, context: contextLabel }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "Medical Tone rewrite failed");
+      set({ html: json.data.html });
+    } catch (e: any) {
+      setError(e.message || "Medical Tone rewrite failed");
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -238,10 +258,92 @@ function ParagraphEditForm({
         <button
           type="button"
           onClick={improve}
-          disabled={loading || !data.html?.trim()}
+          disabled={loading !== null || !data.html?.trim()}
           className="text-xs font-semibold text-[#0B2560] bg-[#f6faff] border border-[#0B2560]/10 rounded-lg px-3 py-1.5 hover:bg-[#0B2560]/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "✨ Improving…" : "✨ Improve Writing"}
+          {loading === "improve" ? "✨ Improving…" : "✨ Improve Writing"}
+        </button>
+        <button
+          type="button"
+          onClick={medicalTone}
+          disabled={loading !== null || !data.html?.trim()}
+          className="text-xs font-semibold text-violet-700 bg-violet-50 border border-violet-100 rounded-lg px-3 py-1.5 hover:bg-violet-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading === "medical" ? "✨ Rewriting…" : "✨ Medical Tone"}
+        </button>
+        {error && <span className="text-xs text-red-500">{error}</span>}
+      </div>
+    </div>
+  );
+}
+
+// Doctor Tip's own component (rather than an inline switch case) so it can
+// hold its own AI-rewrite loading state, same reasoning as ParagraphEditForm.
+function DoctorTipEditForm({
+  data,
+  set,
+  sourceSystem,
+  contextLabel,
+  doctors,
+}: {
+  data: Record<string, any>;
+  set: (patch: Record<string, any>) => void;
+  sourceSystem: SourceSystem;
+  contextLabel?: string;
+  doctors: { _id: string; name: string }[];
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const medicalTone = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/content-blocks/generate-medical-tone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: data.text || "", sourceSystem, context: contextLabel }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "Medical Tone rewrite failed");
+      set({ text: json.data.text });
+    } catch (e: any) {
+      setError(e.message || "Medical Tone rewrite failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <select
+        value={data.doctorId || ""}
+        onChange={(e) => set({ doctorId: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">— No doctor attribution —</option>
+        {doctors.map((d) => (
+          <option key={d._id} value={d._id}>{d.name}</option>
+        ))}
+      </select>
+      <div className="flex gap-2">
+        <input value={data.icon || ""} onChange={(e) => set({ icon: e.target.value })} placeholder="💡" className="w-14 px-2 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <textarea
+          value={data.text || ""}
+          onChange={(e) => set({ text: e.target.value })}
+          placeholder="Tip text"
+          rows={2}
+          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        />
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={medicalTone}
+          disabled={loading || !data.text?.trim()}
+          className="text-xs font-semibold text-violet-700 bg-violet-50 border border-violet-100 rounded-lg px-3 py-1.5 hover:bg-violet-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "✨ Rewriting…" : "✨ Medical Tone"}
         </button>
         {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
@@ -641,6 +743,340 @@ function BlockEditForm({
         </div>
       );
 
+    case "key-takeaways": {
+      const items: string[] = data.items?.length ? data.items : [""];
+      const setItem = (i: number, val: string) => set({ items: items.map((it: string, idx: number) => (idx === i ? val : it)) });
+      const addItem = () => set({ items: [...items, ""] });
+      const removeItem = (i: number) => set({ items: items.filter((_: string, idx: number) => idx !== i) });
+      return (
+        <div className="space-y-2">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-[#F5A623] shrink-0">✓</span>
+              <input
+                value={item}
+                onChange={(e) => setItem(i, e.target.value)}
+                placeholder="Key takeaway"
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addItem} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add takeaway</button>
+        </div>
+      );
+    }
+
+    case "checklist": {
+      const items: Array<{ text: string; checked: boolean }> = data.items?.length ? data.items : [{ text: "", checked: false }];
+      const setItem = (i: number, patch: Partial<{ text: string; checked: boolean }>) =>
+        set({ items: items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)) });
+      const addItem = () => set({ items: [...items, { text: "", checked: false }] });
+      const removeItem = (i: number) => set({ items: items.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-2">
+          <input
+            value={data.title || ""}
+            onChange={(e) => set({ title: e.target.value })}
+            placeholder="Checklist title (optional)"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <button type="button" onClick={() => setItem(i, { checked: !item.checked })}
+                className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs ${item.checked ? "bg-[#0B2560] text-white" : "border-2 border-gray-200 text-transparent"}`}>
+                ✓
+              </button>
+              <input
+                value={item.text}
+                onChange={(e) => setItem(i, { text: e.target.value })}
+                placeholder="Checklist item"
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addItem} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add item</button>
+        </div>
+      );
+    }
+
+    case "timeline": {
+      const steps: Array<{ label: string; description?: string; duration?: string }> = data.steps?.length ? data.steps : [{ label: "", description: "", duration: "" }];
+      const setStep = (i: number, patch: Record<string, string>) => set({ steps: steps.map((s, idx) => (idx === i ? { ...s, ...patch } : s)) });
+      const addStep = () => set({ steps: [...steps, { label: "", description: "", duration: "" }] });
+      const removeStep = (i: number) => set({ steps: steps.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
+              <div className="flex-1 space-y-1.5">
+                <div className="flex gap-2">
+                  <input value={step.label} onChange={(e) => setStep(i, { label: e.target.value })} placeholder="Step label" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={step.duration || ""} onChange={(e) => setStep(i, { duration: e.target.value })} placeholder="Duration (e.g. Day 1)" className="w-40 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <input value={step.description || ""} onChange={(e) => setStep(i, { description: e.target.value })} placeholder="Description (optional)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              {steps.length > 1 && (
+                <button type="button" onClick={() => removeStep(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 mt-2">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addStep} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add step</button>
+        </div>
+      );
+    }
+
+    case "procedure": {
+      const steps: Array<{ title: string; description?: string; icon?: string }> = data.steps?.length ? data.steps : [{ title: "", description: "", icon: "" }];
+      const setStep = (i: number, patch: Record<string, string>) => set({ steps: steps.map((s, idx) => (idx === i ? { ...s, ...patch } : s)) });
+      const addStep = () => set({ steps: [...steps, { title: "", description: "", icon: "" }] });
+      const removeStep = (i: number) => set({ steps: steps.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
+              <input value={step.icon || ""} onChange={(e) => setStep(i, { icon: e.target.value })} placeholder="🩺" className="w-14 px-2 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <div className="flex-1 space-y-1.5">
+                <input value={step.title} onChange={(e) => setStep(i, { title: e.target.value })} placeholder="Step title" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input value={step.description || ""} onChange={(e) => setStep(i, { description: e.target.value })} placeholder="Description (optional)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              {steps.length > 1 && (
+                <button type="button" onClick={() => removeStep(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 mt-2">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addStep} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add step</button>
+        </div>
+      );
+    }
+
+    case "recovery": {
+      const stages: Array<{ phase: string; description?: string; icon?: string }> = data.stages?.length ? data.stages : [{ phase: "", description: "", icon: "" }];
+      const setStage = (i: number, patch: Record<string, string>) => set({ stages: stages.map((s, idx) => (idx === i ? { ...s, ...patch } : s)) });
+      const addStage = () => set({ stages: [...stages, { phase: "", description: "", icon: "" }] });
+      const removeStage = (i: number) => set({ stages: stages.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          {stages.map((stage, i) => (
+            <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
+              <input value={stage.icon || ""} onChange={(e) => setStage(i, { icon: e.target.value })} placeholder="🌱" className="w-14 px-2 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <div className="flex-1 space-y-1.5">
+                <input value={stage.phase} onChange={(e) => setStage(i, { phase: e.target.value })} placeholder="Phase (e.g. Week 1)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input value={stage.description || ""} onChange={(e) => setStage(i, { description: e.target.value })} placeholder="Description (optional)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              {stages.length > 1 && (
+                <button type="button" onClick={() => removeStage(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 mt-2">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addStage} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add stage</button>
+        </div>
+      );
+    }
+
+    case "comparison-table": {
+      const headers: string[] = data.headers?.length ? data.headers : ["", ""];
+      const rows: Array<{ label: string; values: string[] }> = data.rows?.length ? data.rows : [{ label: "", values: headers.map(() => "") }];
+      const setHeader = (i: number, val: string) => set({ headers: headers.map((h, idx) => (idx === i ? val : h)) });
+      const addColumn = () => set({ headers: [...headers, ""], rows: rows.map((r) => ({ ...r, values: [...r.values, ""] })) });
+      const removeColumn = (i: number) => set({ headers: headers.filter((_, idx) => idx !== i), rows: rows.map((r) => ({ ...r, values: r.values.filter((_, idx) => idx !== i) })) });
+      const setRow = (i: number, patch: Partial<{ label: string; values: string[] }>) => set({ rows: rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) });
+      const setCell = (i: number, j: number, val: string) => setRow(i, { values: rows[i].values.map((v, idx) => (idx === j ? val : v)) });
+      const addRow = () => set({ rows: [...rows, { label: "", values: headers.map(() => "") }] });
+      const removeRow = (i: number) => set({ rows: rows.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold text-gray-500 mb-1.5">Columns</p>
+            <div className="flex flex-wrap gap-2">
+              {headers.map((h, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <input value={h} onChange={(e) => setHeader(i, e.target.value)} placeholder={`Column ${i + 1}`} className="w-32 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  {headers.length > 1 && <button type="button" onClick={() => removeColumn(i)} className="text-red-400 hover:text-red-600 text-sm leading-none">×</button>}
+                </div>
+              ))}
+              <button type="button" onClick={addColumn} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Column</button>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 mb-1.5">Rows</p>
+            <div className="space-y-2">
+              {rows.map((row, i) => (
+                <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl p-2">
+                  <input value={row.label} onChange={(e) => setRow(i, { label: e.target.value })} placeholder="Row label" className="w-32 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0" />
+                  {headers.map((_, j) => (
+                    <input key={j} value={row.values[j] || ""} onChange={(e) => setCell(i, j, e.target.value)} placeholder="Value" className="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  ))}
+                  <button type="button" onClick={() => removeRow(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0">×</button>
+                </div>
+              ))}
+              <button type="button" onClick={addRow} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Row</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case "statistics": {
+      const stats: Array<{ value: string; label: string }> = data.stats?.length ? data.stats : [{ value: "", label: "" }];
+      const setStat = (i: number, patch: Record<string, string>) => set({ stats: stats.map((s, idx) => (idx === i ? { ...s, ...patch } : s)) });
+      const addStat = () => set({ stats: [...stats, { value: "", label: "" }] });
+      const removeStat = (i: number) => set({ stats: stats.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-2">
+          {stats.map((stat, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input value={stat.value} onChange={(e) => setStat(i, { value: e.target.value })} placeholder="90%" className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={stat.label} onChange={(e) => setStat(i, { label: e.target.value })} placeholder="Reduction after 6 sessions" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              {stats.length > 1 && (
+                <button type="button" onClick={() => removeStat(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addStat} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add stat</button>
+          <p className="text-xs text-gray-400 italic">Statistics are author-verified, not AI-generated — double-check figures before publishing.</p>
+        </div>
+      );
+    }
+
+    case "research-citation": {
+      const citations: Array<{ text: string; url?: string; source?: string }> = data.citations?.length ? data.citations : [{ text: "", url: "", source: "" }];
+      const setCitation = (i: number, patch: Record<string, string>) => set({ citations: citations.map((c, idx) => (idx === i ? { ...c, ...patch } : c)) });
+      const addCitation = () => set({ citations: [...citations, { text: "", url: "", source: "" }] });
+      const removeCitation = (i: number) => set({ citations: citations.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          {citations.map((c, i) => (
+            <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
+              <div className="flex-1 space-y-1.5">
+                <input value={c.text} onChange={(e) => setCitation(i, { text: e.target.value })} placeholder="Citation text" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <div className="flex gap-2">
+                  <input value={c.source || ""} onChange={(e) => setCitation(i, { source: e.target.value })} placeholder="Source (e.g. PubMed)" className="w-40 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={c.url || ""} onChange={(e) => setCitation(i, { url: e.target.value })} placeholder="URL (optional)" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              {citations.length > 1 && (
+                <button type="button" onClick={() => removeCitation(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 mt-2">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addCitation} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add citation</button>
+          <p className="text-xs text-gray-400 italic">Citations must be human-sourced — never AI-invented.</p>
+        </div>
+      );
+    }
+
+    case "before-after": {
+      const pairs: Array<{ before?: { url: string; publicId: string }; after?: { url: string; publicId: string }; concern?: string }> = data.pairs || [];
+      const setPair = (i: number, patch: Record<string, any>) => set({ pairs: pairs.map((p, idx) => (idx === i ? { ...p, ...patch } : p)) });
+      const addPair = () => set({ pairs: [...pairs, {}] });
+      const removePair = (i: number) => set({ pairs: pairs.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          <input value={data.label || ""} onChange={(e) => set({ label: e.target.value })} placeholder="Label (e.g. Laser Hair Removal)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          {pairs.map((pair, i) => (
+            <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Before</p>
+                  {pair.before?.url ? (
+                    <div className="flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={pair.before.url} alt="" className="w-14 h-14 rounded-lg object-cover border border-gray-100" />
+                      <ImageUpload folder="dr-youth-clinic/blog" label="Change" onUpload={(d) => setPair(i, { before: d })} />
+                    </div>
+                  ) : (
+                    <ImageUpload folder="dr-youth-clinic/blog" label="Upload Before" onUpload={(d) => setPair(i, { before: d })} />
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">After</p>
+                  {pair.after?.url ? (
+                    <div className="flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={pair.after.url} alt="" className="w-14 h-14 rounded-lg object-cover border border-gray-100" />
+                      <ImageUpload folder="dr-youth-clinic/blog" label="Change" onUpload={(d) => setPair(i, { after: d })} />
+                    </div>
+                  ) : (
+                    <ImageUpload folder="dr-youth-clinic/blog" label="Upload After" onUpload={(d) => setPair(i, { after: d })} />
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input value={pair.concern || ""} onChange={(e) => setPair(i, { concern: e.target.value })} placeholder="Concern (optional, e.g. Acne Scars)" className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button type="button" onClick={() => removePair(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0">×</button>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addPair} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add before/after pair</button>
+        </div>
+      );
+    }
+
+    case "doctor-tip":
+      return (
+        <DoctorTipEditForm
+          data={data}
+          set={set}
+          sourceSystem={sourceSystem}
+          contextLabel={serviceContext?.serviceName}
+          doctors={doctors}
+        />
+      );
+
+    case "faq": {
+      const items: Array<{ question: string; answer: string }> = data.items?.length ? data.items : [{ question: "", answer: "" }];
+      const setItem = (i: number, patch: Partial<{ question: string; answer: string }>) =>
+        set({ items: items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)) });
+      const addItem = () => set({ items: [...items, { question: "", answer: "" }] });
+      const removeItem = (i: number) => set({ items: items.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
+              <div className="flex-1 space-y-1.5">
+                <input value={item.question} onChange={(e) => setItem(i, { question: e.target.value })} placeholder="Question" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <textarea value={item.answer} onChange={(e) => setItem(i, { answer: e.target.value })} placeholder="Answer" rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              </div>
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 mt-2">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addItem} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add question</button>
+        </div>
+      );
+    }
+
+    case "benefits": {
+      const items: Array<{ icon: string; title: string; description?: string }> = data.items?.length ? data.items : [{ icon: "⚡", title: "", description: "" }];
+      const setItem = (i: number, patch: Record<string, string>) => set({ items: items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)) });
+      const addItem = () => set({ items: [...items, { icon: "⚡", title: "", description: "" }] });
+      const removeItem = (i: number) => set({ items: items.filter((_, idx) => idx !== i) });
+      return (
+        <div className="space-y-3">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
+              <input value={item.icon} onChange={(e) => setItem(i, { icon: e.target.value })} placeholder="⚡" className="w-14 px-2 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <div className="flex-1 space-y-1.5">
+                <input value={item.title} onChange={(e) => setItem(i, { title: e.target.value })} placeholder="Benefit title" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input value={item.description || ""} onChange={(e) => setItem(i, { description: e.target.value })} placeholder="Description (optional)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0 mt-2">×</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addItem} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Add benefit</button>
+        </div>
+      );
+    }
+
     default:
       return null;
   }
@@ -743,7 +1179,17 @@ export default function ContentBlockEditor({
 
   return (
     <div className="space-y-3">
-      {blocks.length > 0 && <ContentHealthCard blocks={blocks} hasFaq={!!serviceContext?.faq?.length} />}
+      {blocks.length > 0 && (
+        <ContentHealthCard
+          blocks={blocks}
+          // Service's "FAQ presence" comes from a live faq-block reference
+          // (serviceContext.faq); Blog has no such reference and instead
+          // authors a freestanding "faq" block with its own items — check
+          // both, or Blog content would always show "FAQ presence: failed"
+          // here even when a real FAQ block with real items exists.
+          hasFaq={!!serviceContext?.faq?.length || blocks.some((b) => b.type === "faq" && b.data?.items?.some((i: any) => i?.question?.trim() && i?.answer?.trim()))}
+        />
+      )}
       {blocks.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-sm">
           No content blocks yet — add your first one below.

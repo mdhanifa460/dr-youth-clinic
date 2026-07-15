@@ -1,11 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-
-const CATEGORY_COLOR: Record<string, string> = {
-  'Hair Care': 'bg-emerald-500', 'Skin Care': 'bg-rose-500',
-  'Laser': 'bg-violet-500', 'Aesthetics': 'bg-amber-500', 'General': 'bg-[#3B82C4]',
-};
+import { CATEGORY_COLOR } from '@/app/lib/blogCategories';
 
 export default function BlogInsights({ data }: { data: any }) {
   const {

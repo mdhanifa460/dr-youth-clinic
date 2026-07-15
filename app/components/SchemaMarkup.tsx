@@ -137,3 +137,75 @@ export function FAQSchema({ faqs }: { faqs: FAQItem[] }) {
     />
   );
 }
+
+interface BreadcrumbItem {
+  name: string;
+  // Absolute URL. Pass SITE_URL-prefixed paths, matching the existing inline
+  // convention in app/(public)/[location]/services/[category]/[slug]/page.tsx.
+  url: string;
+}
+
+export function BreadcrumbSchema({ items }: { items: BreadcrumbItem[] }) {
+  if (!items || items.length === 0) return null;
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+interface BlogPostingProps {
+  title: string;
+  description: string;
+  slug: string;
+  image?: string;
+  authorName: string;
+  // Only set when the post has a real Doctor reviewer — otherwise the
+  // author renders as a Person with just a name, no medical credentials.
+  authorCredential?: string;
+  datePublished: string;
+  dateModified?: string;
+}
+
+export function BlogPostingSchema({ title, description, slug, image, authorName, authorCredential, datePublished, dateModified }: BlogPostingProps) {
+  const schema: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: title,
+    description,
+    image: image || CLOUDINARY_LOGO_URL,
+    author: {
+      "@type": "Person",
+      name: authorName,
+      ...(authorCredential ? { honorificSuffix: authorCredential } : {}),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "DR Youth Clinic",
+      logo: { "@type": "ImageObject", url: CLOUDINARY_LOGO_URL },
+    },
+    datePublished,
+    dateModified: dateModified || datePublished,
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/blog/${slug}` },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}

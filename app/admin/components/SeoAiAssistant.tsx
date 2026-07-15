@@ -11,6 +11,9 @@ interface Props {
   keywords: string; // comma-separated current value in the form
   onApplyDescription: (v: string) => void;
   onKeywordsChange: (v: string) => void;
+  // Defaults to the landing-page route (`/api/admin/landing-pages/${lpId}/seo-keywords`).
+  // Callers with their own seo-keywords route (e.g. BlogForm) pass it here.
+  endpoint?: string;
 }
 
 type AiResult = { title: string; description: string; keywords: string[] };
@@ -24,7 +27,7 @@ function serializeKws(arr: string[]) {
 }
 
 export default function SeoAiAssistant({
-  lpId, pageTitle, template, description, keywords, onApplyDescription, onKeywordsChange,
+  lpId, pageTitle, template, description, keywords, onApplyDescription, onKeywordsChange, endpoint,
 }: Props) {
   const [status, setStatus] = useState<AiStatus>("idle");
   const [result, setResult] = useState<AiResult | null>(null);
@@ -45,7 +48,7 @@ export default function SeoAiAssistant({
     if (!pageTitle?.trim()) return;
     setStatus("loading");
     try {
-      const res = await fetch(`/api/admin/landing-pages/${lpId}/seo-keywords`, {
+      const res = await fetch(endpoint || `/api/admin/landing-pages/${lpId}/seo-keywords`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: pageTitle, template, description }),

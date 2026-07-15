@@ -45,7 +45,21 @@ export type ContentBlockType =
   | "image-gallery"
   | "youtube-embed"
   | "video-block"
-  | "pdf-download";
+  | "pdf-download"
+  // Medical Knowledge Center — freestanding editorial/medical blocks, own
+  // stored data, available everywhere (see CONTENT_BLOCK_TYPES below).
+  | "key-takeaways"
+  | "checklist"
+  | "timeline"
+  | "procedure"
+  | "recovery"
+  | "comparison-table"
+  | "statistics"
+  | "research-citation"
+  | "before-after"
+  | "doctor-tip"
+  | "faq"
+  | "benefits";
 
 export type ContentBlockSourceSystem = "content-block-service" | "content-block-blog";
 
@@ -132,6 +146,25 @@ export const CONTENT_BLOCK_TYPES: ContentBlockTypeDef[] = [
   { type: "youtube-embed", label: "YouTube Embed", icon: "▶️", defaultData: { youtubeUrl: "", caption: "" } },
   { type: "video-block", label: "Video (from Academy)", icon: "🎬", defaultData: { videoId: "" } },
   { type: "pdf-download", label: "PDF Download", icon: "📄", defaultData: { url: "", label: "" } },
+
+  // Medical Knowledge Center — freestanding editorial/medical blocks, own
+  // stored data, available everywhere. "comparison-table" and "faq"/"benefits"
+  // are deliberately distinct type strings from the Service-only reference
+  // blocks above ("comparison-block", "faq-block", "benefits-block") — those
+  // render live from a parent Service document, these carry their own data
+  // and work in any content (most importantly, Blog).
+  { type: "key-takeaways", label: "Key Takeaways", icon: "🔑", defaultData: { items: [""] } },
+  { type: "checklist", label: "Checklist", icon: "☑️", defaultData: { title: "", items: [{ text: "", checked: false }] } },
+  { type: "timeline", label: "Timeline", icon: "🕒", defaultData: { steps: [{ label: "", description: "", duration: "" }] } },
+  { type: "procedure", label: "Procedure Steps", icon: "🩹", defaultData: { steps: [{ title: "", description: "", icon: "" }] } },
+  { type: "recovery", label: "Recovery Stages", icon: "🌱", defaultData: { stages: [{ phase: "", description: "", icon: "" }] } },
+  { type: "comparison-table", label: "Comparison Table", icon: "⚖️", defaultData: { headers: ["", ""], rows: [{ label: "", values: ["", ""] }] } },
+  { type: "statistics", label: "Statistics", icon: "📊", defaultData: { stats: [{ value: "", label: "" }] } },
+  { type: "research-citation", label: "Research / Citations", icon: "📚", defaultData: { citations: [{ text: "", url: "", source: "" }] } },
+  { type: "before-after", label: "Before & After", icon: "🔄", defaultData: { label: "Results", pairs: [] } },
+  { type: "doctor-tip", label: "Doctor Tip", icon: "💡", defaultData: { doctorId: "", icon: "💡", text: "" } },
+  { type: "faq", label: "FAQ", icon: "❓", defaultData: { items: [{ question: "", answer: "" }] } },
+  { type: "benefits", label: "Benefits", icon: "✨", defaultData: { items: [{ icon: "⚡", title: "", description: "" }] } },
 ];
 
 // Mirrors the private parseYoutubeId() inside app/models/Video.ts's pre-save
@@ -213,6 +246,42 @@ export function blocksToPlainText(blocks: ContentBlock[] | undefined, maxLength 
         break;
       case "side-effects":
         if (Array.isArray(b.data?.items)) parts.push(b.data.items.map((i: any) => i?.effect).filter(Boolean).join(". "));
+        break;
+      case "key-takeaways":
+        if (Array.isArray(b.data?.items)) parts.push(b.data.items.filter(Boolean).join(". "));
+        break;
+      case "doctor-tip":
+        if (b.data?.text) parts.push(b.data.text);
+        break;
+      case "faq":
+        if (Array.isArray(b.data?.items)) parts.push(b.data.items.map((i: any) => i?.answer).filter(Boolean).join(". "));
+        break;
+      case "benefits":
+        if (Array.isArray(b.data?.items)) parts.push(b.data.items.map((i: any) => i?.description || i?.title).filter(Boolean).join(". "));
+        break;
+      case "checklist":
+        if (Array.isArray(b.data?.items)) parts.push(b.data.items.map((i: any) => i?.text).filter(Boolean).join(". "));
+        break;
+      case "timeline":
+        if (Array.isArray(b.data?.steps)) parts.push(b.data.steps.map((s: any) => [s?.label, s?.description].filter(Boolean).join(" — ")).filter(Boolean).join(". "));
+        break;
+      case "procedure":
+        if (Array.isArray(b.data?.steps)) parts.push(b.data.steps.map((s: any) => [s?.title, s?.description].filter(Boolean).join(" — ")).filter(Boolean).join(". "));
+        break;
+      case "recovery":
+        if (Array.isArray(b.data?.stages)) parts.push(b.data.stages.map((s: any) => [s?.phase, s?.description].filter(Boolean).join(" — ")).filter(Boolean).join(". "));
+        break;
+      case "comparison-table":
+        if (Array.isArray(b.data?.rows)) parts.push(b.data.rows.map((r: any) => r?.label).filter(Boolean).join(", "));
+        break;
+      case "statistics":
+        if (Array.isArray(b.data?.stats)) parts.push(b.data.stats.map((s: any) => [s?.value, s?.label].filter(Boolean).join(" ")).filter(Boolean).join(". "));
+        break;
+      case "research-citation":
+        if (Array.isArray(b.data?.citations)) parts.push(b.data.citations.map((c: any) => c?.text).filter(Boolean).join(". "));
+        break;
+      case "before-after":
+        if (b.data?.label) parts.push(b.data.label);
         break;
       default:
         break;

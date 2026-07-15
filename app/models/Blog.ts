@@ -18,6 +18,17 @@ export interface IBlog extends Document {
   publishedAt: Date;
   featured: boolean;
   active: boolean;
+  // SEO overrides — generateMetadata falls back to title/excerpt when unset.
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  ogImage?: { url: string; publicId: string };
+  keywords?: string[];
+  // Trust section — the doctor who reviewed this article, and any medical
+  // sources it cites. Also powers the "Doctor-recommended reads" listing
+  // section and the Article Intelligence checklist.
+  reviewedByDoctorId?: mongoose.Types.ObjectId;
+  medicalReferences?: Array<{ label: string; url: string }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +58,13 @@ const BlogSchema = new Schema<IBlog>({
   publishedAt: { type: Date, default: Date.now },
   featured:    { type: Boolean, default: false },
   active:      { type: Boolean, default: true },
+  metaTitle:        { type: String, maxlength: 60 },
+  metaDescription:  { type: String, maxlength: 160 },
+  canonicalUrl:     { type: String, trim: true },
+  ogImage:          { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
+  keywords:         [String],
+  reviewedByDoctorId: { type: Schema.Types.ObjectId, ref: 'Doctor' },
+  medicalReferences:  [{ label: { type: String, required: true }, url: { type: String, required: true }, _id: false }],
 }, { timestamps: true });
 
 BlogSchema.index({ slug: 1 }, { unique: true });

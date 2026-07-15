@@ -66,6 +66,30 @@ function isBlockEmpty(block: ContentBlock): boolean {
       return !data.url?.trim();
     case "divider":
       return false; // structural, never "empty"
+    case "key-takeaways":
+      return !Array.isArray(data.items) || data.items.filter((i: string) => i?.trim()).length === 0;
+    case "checklist":
+      return !Array.isArray(data.items) || data.items.filter((i: any) => i?.text?.trim()).length === 0;
+    case "timeline":
+      return !Array.isArray(data.steps) || data.steps.filter((s: any) => s?.label?.trim()).length === 0;
+    case "procedure":
+      return !Array.isArray(data.steps) || data.steps.filter((s: any) => s?.title?.trim()).length === 0;
+    case "recovery":
+      return !Array.isArray(data.stages) || data.stages.filter((s: any) => s?.phase?.trim()).length === 0;
+    case "comparison-table":
+      return !Array.isArray(data.headers) || data.headers.length === 0 || !Array.isArray(data.rows) || data.rows.filter((r: any) => r?.label?.trim()).length === 0;
+    case "statistics":
+      return !Array.isArray(data.stats) || data.stats.filter((s: any) => s?.value?.trim()).length === 0;
+    case "research-citation":
+      return !Array.isArray(data.citations) || data.citations.filter((c: any) => c?.text?.trim()).length === 0;
+    case "before-after":
+      return !Array.isArray(data.pairs) || data.pairs.filter((p: any) => p?.before?.url && p?.after?.url).length === 0;
+    case "doctor-tip":
+      return !data.text?.trim();
+    case "faq":
+      return !Array.isArray(data.items) || data.items.filter((i: any) => i?.question?.trim() && i?.answer?.trim()).length === 0;
+    case "benefits":
+      return !Array.isArray(data.items) || data.items.filter((i: any) => i?.title?.trim()).length === 0;
     default:
       return false; // reference blocks (see REFERENCE_TYPES) — positional, not admin-authored
   }
@@ -129,10 +153,16 @@ export function computeContentHealth(
     });
   }
 
-  // 4. FAQ presence — only applicable when the caller says so or an FAQ reference block is used
+  // 4. FAQ presence — applicable when the caller says so, an FAQ reference
+  // block is used (Service), or a freestanding "faq" block is used (Blog and
+  // anywhere else — it carries its own data, unlike the Service-only ref type).
   {
     const hasFaqBlock = visible.some((b) => b.type === "faq-block");
-    const applicable = !!opts?.hasFaq || hasFaqBlock;
+    const freestandingFaqItems = visible
+      .filter((b) => b.type === "faq")
+      .flatMap((b) => (Array.isArray(b.data?.items) ? b.data.items : []))
+      .filter((i: any) => i?.question?.trim() && i?.answer?.trim());
+    const applicable = !!opts?.hasFaq || hasFaqBlock || visible.some((b) => b.type === "faq");
     if (!applicable) {
       checks.push({ label: "FAQ presence", passed: true, na: true, message: "Not applicable to this content." });
     } else {
@@ -140,7 +170,7 @@ export function computeContentHealth(
       // reference, but whether it actually PASSES depends on the underlying
       // FAQ having real entries — a faq-block referencing an empty svc.faq
       // renders nothing on the public page, so it shouldn't score as "included".
-      const passed = !!opts?.hasFaq;
+      const passed = !!opts?.hasFaq || freestandingFaqItems.length > 0;
       checks.push({
         label: "FAQ presence",
         passed,

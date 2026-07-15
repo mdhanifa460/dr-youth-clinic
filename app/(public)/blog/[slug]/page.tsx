@@ -2,16 +2,21 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
+import { Calendar, Clock, ArrowLeft, Tag, ShieldCheck } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
+import { Doctor } from '@/app/models/Doctor';
 import { markdownToHtml, extractHeadings } from '@/app/lib/blogMarkdown';
 import ReadingProgress from './ReadingProgress';
-import ArticleSidebar from './ArticleSidebar';
+import ArticleSidebar, { MobileArticleToc } from './ArticleSidebar';
+import TrustSection from './TrustSection';
+import ArticleCtaBand from './ArticleCtaBand';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
 import { extractHeadingsFromBlocks } from '@/app/lib/contentBlocks/types';
 import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
+import { CATEGORY_COLOR } from '@/app/lib/blogCategories';
+import { BreadcrumbSchema, BlogPostingSchema, FAQSchema } from '@/app/components/SchemaMarkup';
 
 async function getPost(slug: string) {
   try {
@@ -36,18 +41,32 @@ async function getRelatedPosts(slug: string, category: string) {
   } catch { return []; }
 }
 
+async function getReviewingDoctor(doctorId?: string) {
+  if (!doctorId) return null;
+  try {
+    await connectDB();
+    const doctor = await (Doctor as any).findById(doctorId).lean();
+    if (!doctor) return null;
+    return JSON.parse(JSON.stringify(doctor));
+  } catch { return null; }
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getPost(params.slug);
   if (!post) return { title: 'Post Not Found | DR Youth Clinic' };
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+  const title = post.metaTitle || `${post.title} | DR Youth Clinic Blog`;
+  const description = post.metaDescription || post.excerpt || post.title;
+  const ogImage = post.ogImage?.url || post.coverImage?.url;
   return {
-    title: `${post.title} | DR Youth Clinic Blog`,
-    description: post.excerpt || post.title,
-    alternates: { canonical: `${SITE_URL}/blog/${params.slug}` },
+    title,
+    description,
+    keywords: post.keywords?.length ? post.keywords : undefined,
+    alternates: { canonical: post.canonicalUrl || `${SITE_URL}/blog/${params.slug}` },
     openGraph: {
-      title: post.title,
-      description: post.excerpt || '',
-      images: post.coverImage?.url ? [post.coverImage.url] : [],
+      title: post.metaTitle || post.title,
+      description: post.metaDescription || post.excerpt || '',
+      images: ogImage ? [ogImage] : [],
       type: 'article',
       publishedTime: post.publishedAt,
       authors: [post.author || 'DR Youth Clinic'],
@@ -55,51 +74,59 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-const CATEGORY_COLOR: Record<string, string> = {
-  'Hair Care': 'bg-emerald-500', 'Skin Care': 'bg-rose-500',
-  'Laser': 'bg-violet-500', 'Aesthetics': 'bg-amber-500', 'General': 'bg-[#3B82C4]',
-};
-
 export default async function BlogDetailPage({ params }: { params: { slug: string } }) {
   const post = await getPost(params.slug);
   if (!post) notFound();
 
-  const [related, siteConfig, relatedLinks, referencedDoctors, referencedVideos] = await Promise.all([
+  const [related, siteConfig, relatedLinks, referencedDoctors, referencedVideos, reviewingDoctor] = await Promise.all([
     getRelatedPosts(params.slug, post.category),
     getSiteConfig(),
     resolveRelatedLinks(post.bodyBlocks),
     resolveReferencedDoctors(post.bodyBlocks),
     resolveReferencedVideos(post.bodyBlocks),
+    getReviewingDoctor(post.reviewedByDoctorId),
   ]);
   const hasBlocks = Array.isArray(post.bodyBlocks) && post.bodyBlocks.length > 0;
   const html = hasBlocks ? '' : markdownToHtml(post.body || '');
   const headings = hasBlocks ? extractHeadingsFromBlocks(post.bodyBlocks) : extractHeadings(post.body || '');
+
+  // Feeds FAQPage schema below — this is what makes the Article Intelligence
+  // checklist's "FAQ Schema Generated" check true rather than a false promise.
+  const faqItems = (post.bodyBlocks || [])
+    .filter((b: any) => b.visible && b.type === 'faq')
+    .flatMap((b: any) => (Array.isArray(b.data?.items) ? b.data.items : []))
+    .filter((i: any) => i?.question?.trim() && i?.answer?.trim());
 
   const dateFormatted = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
-  const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: post.title,
-    description: post.excerpt || post.title,
-    image: post.coverImage?.url || '',
-    author: { '@type': 'Person', name: post.author || 'DR Youth Clinic' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'DR Youth Clinic',
-      logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
-    },
-    datePublished: post.publishedAt,
-    dateModified: post.updatedAt || post.publishedAt,
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/blog/${post.slug}` },
-  };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <BlogPostingSchema
+        title={post.title}
+        description={post.excerpt || post.title}
+        slug={post.slug}
+        image={post.coverImage?.url}
+        authorName={reviewingDoctor?.name || post.author || 'DR Youth Clinic'}
+        authorCredential={reviewingDoctor?.qualifications}
+        datePublished={post.publishedAt}
+        dateModified={post.updatedAt}
+      />
+      <FAQSchema faqs={faqItems} />
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', url: SITE_URL },
+          // No category-scoped blog route exists — a 4th "category" level
+          // pointing at the same /blog URL as "Medical Knowledge Center"
+          // would give a BreadcrumbList two positions with an identical
+          // `item`, which structured-data validators flag as invalid.
+          { name: 'Medical Knowledge Center', url: `${SITE_URL}/blog` },
+          { name: post.title, url: `${SITE_URL}/blog/${post.slug}` },
+        ]}
+      />
       <ReadingProgress />
 
       <main>
@@ -146,7 +173,13 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
                 </span>
               )}
               <span className="text-white/30">·</span>
-              <span className="text-white/70 font-medium">{post.author}</span>
+              {reviewingDoctor ? (
+                <span className="flex items-center gap-1.5 text-white/70 font-medium">
+                  <ShieldCheck size={13} className="text-[#F5A623]" /> Reviewed by {reviewingDoctor.name}
+                </span>
+              ) : (
+                <span className="text-white/70 font-medium">{post.author}</span>
+              )}
             </div>
           </div>
         </section>
@@ -158,6 +191,10 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
 
               {/* Article content */}
               <article>
+                <div className="lg:hidden">
+                  <MobileArticleToc headings={headings} />
+                </div>
+
                 {hasBlocks ? (
                   <div className="text-[17px] text-gray-700 leading-[1.85]">
                     <BlockRenderer
@@ -193,19 +230,12 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
                   </div>
                 )}
 
-                {/* Author card */}
-                <div className="mt-12 p-6 bg-[#f6faff] rounded-3xl border border-blue-50 flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[#0B2560] flex items-center justify-center text-white font-extrabold text-lg shrink-0">
-                    {post.author?.split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#0B2560]">{post.author}</p>
-                    <p className="text-xs text-[#3B82C4] mt-0.5">{post.authorTitle}</p>
-                    <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-                      Medically reviewed content from the DR Youth Clinic specialist team — committed to accurate, evidence-based skin and hair care information.
-                    </p>
-                  </div>
-                </div>
+                <TrustSection
+                  doctor={reviewingDoctor}
+                  references={post.medicalReferences}
+                  author={post.author}
+                  authorTitle={post.authorTitle}
+                />
               </article>
 
               {/* Sticky sidebar */}
@@ -251,17 +281,11 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
           </section>
         )}
 
-        {/* ── CTA ── */}
-        <section className="bg-[#0B2560] py-14">
-          <div className="max-w-2xl mx-auto px-6 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Take the Next Step</p>
-            <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">Consult Our Specialists</h2>
-            <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">Book a {siteConfig.consultationFree ? 'free ' : ''}consultation — personalised advice for your specific concern, zero commitment.</p>
-            <Link href="/book" className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
-              <Calendar size={15} /> {siteConfig.consultationCta}
-            </Link>
-          </div>
-        </section>
+        <ArticleCtaBand
+          consultationFree={siteConfig.consultationFree}
+          consultationCta={siteConfig.consultationCta}
+          publicWhatsApp={siteConfig.publicWhatsApp}
+        />
       </main>
     </>
   );

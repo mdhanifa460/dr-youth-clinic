@@ -8,6 +8,7 @@ import RecoveryTimeline from "@/app/components/RecoveryTimeline";
 import TreatmentJourney from "@/app/components/TreatmentJourney";
 import TreatmentJourneyExplorer from "@/app/components/TreatmentJourneyExplorer";
 import TreatmentComparison from "@/app/components/TreatmentComparison";
+import BeforeAfterGallery from "@/app/components/BeforeAfterGallery";
 
 const CALLOUT_STYLES: Record<string, string> = {
   info: "bg-[#f6faff] border-[#0B2560]/10 text-gray-700",
@@ -332,6 +333,210 @@ function BlockItem({
           </div>
         </a>
       ) : null;
+
+    // Medical Knowledge Center — freestanding editorial/medical blocks.
+    case "key-takeaways": {
+      const items = Array.isArray(data.items) ? data.items.filter(Boolean) : [];
+      if (items.length === 0) return null;
+      return (
+        <div className="mb-8 p-6 rounded-2xl border border-[#F5A623]/20 bg-[#fffbf0]">
+          <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-3">Key Takeaways</p>
+          <ul className="space-y-2.5">
+            {items.map((item: string, i: number) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700 leading-relaxed">
+                <span className="text-[#F5A623] font-bold mt-0.5 shrink-0">✓</span> {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    case "checklist": {
+      const items = Array.isArray(data.items) ? data.items.filter((i: any) => i?.text?.trim()) : [];
+      if (items.length === 0) return null;
+      return (
+        <div className="mb-8 p-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
+          {data.title && <p className="font-bold text-[#0B2560] text-sm mb-3">{data.title}</p>}
+          <ul className="space-y-2.5">
+            {items.map((item: any, i: number) => (
+              <li key={i} className="flex items-start gap-3 text-sm text-gray-600 leading-relaxed">
+                <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] mt-0.5 ${
+                  item.checked ? "bg-[#0B2560] text-white" : "border-2 border-gray-200"
+                }`}>
+                  {item.checked && "✓"}
+                </span>
+                {item.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    case "timeline": {
+      const steps = Array.isArray(data.steps) ? data.steps.filter((s: any) => s?.label?.trim()) : [];
+      if (steps.length === 0) return null;
+      return (
+        <div className="mb-8 space-y-0">
+          {steps.map((step: any, i: number) => (
+            <div key={i} className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <span className="shrink-0 w-8 h-8 rounded-full bg-[#0B2560] text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                {i < steps.length - 1 && <span className="w-px flex-1 bg-gray-200 my-1" />}
+              </div>
+              <div className={i < steps.length - 1 ? "pb-6" : ""}>
+                <div className="flex items-center gap-2">
+                  <p className="font-headline font-bold text-[#0B2560] text-sm">{step.label}</p>
+                  {step.duration && <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{step.duration}</span>}
+                </div>
+                {step.description && <p className="text-sm text-gray-500 leading-relaxed mt-1">{step.description}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    case "procedure": {
+      const steps = Array.isArray(data.steps) ? data.steps.filter((s: any) => s?.title?.trim()) : [];
+      if (steps.length === 0) return null;
+      return (
+        <div className="mb-8 grid sm:grid-cols-2 gap-3">
+          {steps.map((step: any, i: number) => (
+            <div key={i} className="p-4 rounded-2xl bg-[#f6faff] border border-blue-50 flex items-start gap-3">
+              <span className="shrink-0 w-8 h-8 rounded-full bg-[#F5A623] text-[#0B2560] text-sm font-bold flex items-center justify-center">
+                {step.icon || i + 1}
+              </span>
+              <div>
+                <p className="font-bold text-[#0B2560] text-sm">{step.title}</p>
+                {step.description && <p className="text-gray-500 text-xs leading-relaxed mt-1">{step.description}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    case "recovery": {
+      const stages = Array.isArray(data.stages) ? data.stages.filter((s: any) => s?.phase?.trim()) : [];
+      if (stages.length === 0) return null;
+      return (
+        <div className="mb-8 grid sm:grid-cols-3 gap-3">
+          {stages.map((stage: any, i: number) => (
+            <div key={i} className="p-4 rounded-2xl border border-amber-100 bg-amber-50/40 text-center">
+              <span className="text-2xl">{stage.icon || "🌱"}</span>
+              <p className="font-bold text-[#0B2560] text-sm mt-2">{stage.phase}</p>
+              {stage.description && <p className="text-gray-500 text-xs leading-relaxed mt-1">{stage.description}</p>}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    case "comparison-table": {
+      const headers = Array.isArray(data.headers) ? data.headers : [];
+      const rows = Array.isArray(data.rows) ? data.rows.filter((r: any) => r?.label?.trim()) : [];
+      if (headers.length === 0 || rows.length === 0) return null;
+      return (
+        <div className="mb-8 overflow-x-auto rounded-2xl border border-gray-100">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[#0B2560] text-white">
+                <th className="text-left px-4 py-3 font-bold sticky left-0 bg-[#0B2560]"> </th>
+                {headers.map((h: string, i: number) => (
+                  <th key={i} className="text-left px-4 py-3 font-bold whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row: any, i: number) => (
+                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#f6faff]"}>
+                  <td className="px-4 py-3 font-bold text-[#0B2560] sticky left-0 bg-inherit">{row.label}</td>
+                  {(row.values || []).map((v: string, j: number) => (
+                    <td key={j} className="px-4 py-3 text-gray-600">{v}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    case "statistics": {
+      const stats = Array.isArray(data.stats) ? data.stats.filter((s: any) => s?.value?.trim()) : [];
+      if (stats.length === 0) return null;
+      return (
+        <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {stats.map((s: any, i: number) => (
+            <div key={i} className="text-center p-4 rounded-2xl bg-[#f6faff] border border-blue-50">
+              <p className="text-2xl md:text-3xl font-headline font-extrabold text-[#F5A623]">{s.value}</p>
+              <p className="text-xs text-[#0B2560] font-semibold mt-1">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    case "research-citation": {
+      const citations = Array.isArray(data.citations) ? data.citations.filter((c: any) => c?.text?.trim()) : [];
+      if (citations.length === 0) return null;
+      return (
+        <div className="mb-8 p-5 rounded-2xl bg-gray-50 border border-gray-100">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Sources & References</p>
+          <ol className="space-y-1.5">
+            {citations.map((c: any, i: number) => (
+              <li key={i} className="text-xs text-gray-500 leading-relaxed">
+                [{i + 1}] {c.source && <span className="font-semibold text-gray-600">{c.source} — </span>}
+                {c.url ? (
+                  <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-[#3B82C4] hover:underline">{c.text}</a>
+                ) : c.text}
+              </li>
+            ))}
+          </ol>
+        </div>
+      );
+    }
+
+    case "before-after": {
+      const pairs = Array.isArray(data.pairs) ? data.pairs.filter((p: any) => p?.before?.url && p?.after?.url) : [];
+      if (pairs.length === 0) return null;
+      return (
+        <div className="mb-8">
+          <BeforeAfterGallery pairs={pairs} serviceName={data.label || "Results"} />
+        </div>
+      );
+    }
+
+    case "doctor-tip": {
+      if (!data.text?.trim()) return null;
+      const doctor = data.doctorId ? serviceContext?.doctors?.[data.doctorId] : undefined;
+      return (
+        <div className="mb-6 flex items-start gap-3 p-4 rounded-2xl border-l-4 border-[#3B82C4] bg-blue-50/40">
+          {doctor?.photo?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={doctor.photo.url} alt={doctor.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+          ) : (
+            <span className="text-lg shrink-0">{data.icon || "💡"}</span>
+          )}
+          <div>
+            <p className="text-sm text-gray-700 leading-relaxed">{data.text}</p>
+            {doctor && <p className="text-xs font-bold text-[#0B2560] mt-1.5">— {doctor.name}</p>}
+          </div>
+        </div>
+      );
+    }
+
+    case "faq": {
+      const items = Array.isArray(data.items) ? data.items.filter((i: any) => i?.question?.trim() && i?.answer?.trim()) : [];
+      return items.length > 0 ? <FaqAccordion faq={items} /> : null;
+    }
+
+    case "benefits": {
+      const items = Array.isArray(data.items) ? data.items.filter((i: any) => i?.title?.trim()) : [];
+      return items.length > 0 ? <BenefitsGrid benefits={items} /> : null;
+    }
 
     default:
       return null;
