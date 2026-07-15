@@ -22,7 +22,7 @@ export default function ArticleCtaBand({
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link href="/skin-quiz" className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-white/20 transition">
-            <Sparkles size={15} /> Take AI Assessment
+            <Sparkles size={15} /> Start Clinical Intake
           </Link>
           <Link href="/book" className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-6 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
             <Calendar size={15} /> {consultationCta}

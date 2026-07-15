@@ -17,7 +17,7 @@ export async function GET() {
 
     const [events, leads, bookingPhones] = await Promise.all([
       AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel").lean() as Promise<any[]>,
-      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone primaryConcern recommendations campaign qrSource clinicLocation channel createdAt").lean() as Promise<any[]>,
+      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern recommendations campaign qrSource clinicLocation channel createdAt").lean() as Promise<any[]>,
       (Booking as any).distinct("phone"),
     ]);
     const started = events.filter((e) => e.event === "started").length;
@@ -106,7 +106,10 @@ export async function GET() {
         completed,
         leadsCapture: leads.length,
         conversionRate: started > 0 ? Math.round((completed / started) * 100) : 0,
-        emailCaptureRate: completed > 0 ? Math.round((leads.length / completed) * 100) : 0,
+        // Leads are now created at Step 2 (name/phone/preferred clinic) before
+        // email is ever asked for, so "captured" leads no longer implies an
+        // email was given — this is the actual % of leads with a real email.
+        emailCaptureRate: leads.length > 0 ? Math.round((leads.filter((l) => l.email).length / leads.length) * 100) : 0,
         bookingRate: leads.length > 0 ? Math.round((convertedLeads.length / leads.length) * 100) : 0,
         bookedCount: convertedLeads.length,
         mostCommonConcern,

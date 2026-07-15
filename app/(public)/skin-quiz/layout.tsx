@@ -7,24 +7,24 @@ export async function generateMetadata(): Promise<Metadata> {
   const { skinQuizFree, consultationFree } = await getSiteConfig();
 
   return {
-    title: "AI Skin & Hair Assessment – Find Your Perfect Treatment | DR Youth Clinic",
+    title: "Clinical Intake – Prepare for Your Consultation | DR Youth Clinic",
     description:
-      `Answer a few quick questions and get a personalised treatment plan from DR Youth's dermatology experts — ${skinQuizFree ? 'free, ' : ''}in 60 seconds. Evidence-based matching across 50,000+ patient outcomes.`,
+      `Answer a few quick questions so DR Youth's dermatology team can prepare for your consultation — ${skinQuizFree ? 'free, ' : ''}in about a minute. Your doctor reviews everything and confirms what's right for you at your visit.`,
     alternates: {
       canonical: `${SITE_URL}/skin-quiz`,
     },
     openGraph: {
-      title: "Discover Your Perfect Skin Treatment | DR Youth Clinic AI Assessment",
+      title: "Clinical Intake | DR Youth Clinic",
       description:
-        `${skinQuizFree ? 'Free personalised' : 'Personalised'} treatment plan in 60 seconds. Evidence-based matching from expert dermatologists.`,
+        `${skinQuizFree ? 'Free ' : ''}pre-consultation intake in about a minute — helps your doctor prepare before you arrive.`,
       url: `${SITE_URL}/skin-quiz`,
       siteName: "DR Youth Clinic",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "AI Skin & Hair Assessment | DR Youth Clinic",
-      description: `A few quick questions. Personalised treatment plan.${consultationFree ? ' Free consultation included.' : ''}`,
+      title: "Clinical Intake | DR Youth Clinic",
+      description: `A few quick questions to prepare your consultation.${consultationFree ? ' Free consultation included.' : ''}`,
     },
   };
 }

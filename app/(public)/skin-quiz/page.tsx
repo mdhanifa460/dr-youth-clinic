@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion, type TreatmentRecommendation } from "@/app/lib/quizDefaults";
 import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import { locations } from "@/app/data/locations";
 import AssessmentChat from "./AssessmentChat";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
@@ -34,7 +35,7 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
     <div className="flex flex-col items-center text-center py-6 md:py-10">
       <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
         <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] inline-block" />
-        {skinQuizFree ? 'Free · No Commitment · 60 Seconds' : 'No Commitment · 60 Seconds'}
+        {skinQuizFree ? 'Free · No Commitment · 30-60 Seconds' : 'No Commitment · 30-60 Seconds'}
       </span>
 
       {clinicLabel && (
@@ -42,19 +43,19 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
       )}
 
       <h1 className="text-3xl md:text-5xl font-extrabold text-[#0B2560] leading-tight mb-4 max-w-xl tracking-tight">
-        Discover Your<br />
-        <span className="text-[#F5A623]">Perfect Treatment</span>
+        Let's Prepare For<br />
+        <span className="text-[#F5A623]">Your Consultation</span>
       </h1>
 
       <p className="text-gray-500 text-base md:text-lg max-w-md mb-10 leading-relaxed">
-        Answer a few quick questions. Get an AI-matched treatment plan from DR Youth's experts{skinQuizFree ? ' — free,' : ','} in under a minute.
+        We'll ask a few questions to understand your concern and prepare your consultation{skinQuizFree ? ' — free,' : ','} in about 30-60 seconds.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 w-full max-w-lg">
         {[
-          { icon: "🏆", text: "Based on 50,000+", sub: "patient outcomes" },
-          { icon: "🔬", text: "Evidence-based", sub: "matching algorithm" },
-          { icon: "🎁", text: `${consultationBadge}`, sub: "included with results" },
+          { icon: "🩺", text: "Doctor-reviewed", sub: "before your visit" },
+          { icon: "🔬", text: "Evidence-based", sub: "clinical questions" },
+          { icon: "🎁", text: `${consultationBadge}`, sub: "included with intake" },
         ].map((badge) => (
           <div key={badge.text} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4 flex flex-col items-center gap-1">
             <span className="text-2xl">{badge.icon}</span>
@@ -68,11 +69,89 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
         onClick={onStart}
         className="group relative px-10 py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#0B2560]/30 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-3"
       >
-        Start My Assessment
+        Start Analysis
         <span className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200">→</span>
       </button>
 
-      <p className="mt-4 text-xs text-gray-400">No sign-up required. Results in under a minute.</p>
+      <p className="mt-4 text-xs text-gray-400">No sign-up required. Takes about 30-60 seconds.</p>
+    </div>
+  );
+}
+
+// Step 2 of Clinical Intake — captured immediately, before the patient has
+// invested any time answering questions, so the clinic has a lead even if
+// they abandon the rest of the flow. Deliberately just 3 fields (name,
+// mobile, preferred clinic) — email is never asked here.
+function LeadCaptureScreen({
+  lead,
+  setLead,
+  status,
+  onSubmit,
+}: {
+  lead: LeadCaptureForm;
+  setLead: React.Dispatch<React.SetStateAction<LeadCaptureForm>>;
+  status: LeadCaptureStatus;
+  onSubmit: (e: React.FormEvent) => void;
+}) {
+  return (
+    <div className="py-6 md:py-10">
+      <div className="text-center mb-8">
+        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] inline-block" />
+          Step 1 of 2 — Your Details
+        </span>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
+          Let's get your consultation ready
+        </h2>
+        <p className="text-gray-500 text-sm md:text-base max-w-sm mx-auto">
+          Just your name, number, and preferred clinic — we'll ask about your concern next.
+        </p>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-4 max-w-sm mx-auto">
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Full Name</label>
+          <input
+            type="text" required value={lead.name}
+            onChange={(e) => setLead((l) => ({ ...l, name: e.target.value }))}
+            placeholder="Your name"
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-[#0B2560]/40"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Mobile Number</label>
+          <input
+            type="tel" required value={lead.phone}
+            onChange={(e) => setLead((l) => ({ ...l, phone: e.target.value }))}
+            placeholder="10-digit mobile number"
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-[#0B2560]/40"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Preferred Clinic</label>
+          <select
+            value={lead.preferredClinic}
+            onChange={(e) => setLead((l) => ({ ...l, preferredClinic: e.target.value }))}
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-semibold focus:outline-none focus:border-[#0B2560]/40"
+          >
+            <option value="">Select a clinic (optional)</option>
+            {Object.entries(locations).map(([key, loc]) => (
+              <option key={key} value={key}>{loc.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="submit" disabled={status === "sending"}
+          className="w-full py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-base rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
+        >
+          {status === "sending" ? "Saving…" : "Continue →"}
+        </button>
+        {status === "error" && (
+          <p className="text-xs text-red-500 text-center">Something went wrong — please check your details and try again.</p>
+        )}
+        <p className="text-center text-xs text-gray-400">We'll never share your details. No spam, ever.</p>
+      </form>
     </div>
   );
 }
@@ -314,9 +393,20 @@ function AnalysingScreen() {
   );
 }
 
+// High/Medium/Low only — the numeric `confidence` field still exists (used
+// internally by the scoring engine's ranking) but is never shown to a
+// patient: this system must never claim a precise match percentage or
+// certainty of outcome.
+const CONFIDENCE_BADGE: Record<string, string> = {
+  High: "bg-[#0B2560]/8 text-[#0B2560]",
+  Medium: "bg-[#F5A623]/15 text-[#c47e00]",
+  Low: "bg-gray-100 text-gray-500",
+};
+
 function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation; rank: number }) {
   const { consultationCta } = useSiteConfig();
   const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}`;
+  const confidenceLevel = treatment.confidenceLevel || "Medium";
 
   return (
     <div className={`bg-white rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
@@ -324,7 +414,7 @@ function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation
     }`}>
       {rank === 0 && (
         <div className="bg-[#0B2560] text-white text-xs font-bold uppercase tracking-widest text-center py-1.5 px-4">
-          Top Match for You
+          Most Relevant Discussion Topic
         </div>
       )}
       <div className="p-5">
@@ -333,19 +423,9 @@ function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation
             <span className="text-3xl">{treatment.icon}</span>
             <h3 className="font-bold text-[#0B2560] text-base leading-tight">{treatment.name}</h3>
           </div>
-          <span className="flex-shrink-0 text-sm font-black text-[#0B2560] bg-[#0B2560]/8 rounded-full px-3 py-1">
-            {treatment.confidence}%
+          <span className={`flex-shrink-0 text-xs font-bold rounded-full px-3 py-1 ${CONFIDENCE_BADGE[confidenceLevel] || CONFIDENCE_BADGE.Medium}`}>
+            {confidenceLevel} Confidence
           </span>
-        </div>
-
-        <div className="mb-4">
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700 ease-out"
-              style={{ width: `${treatment.confidence}%`, background: rank === 0 ? "linear-gradient(90deg, #0B2560, #1a4a8a)" : "#0B2560" }}
-            />
-          </div>
-          <p className="text-xs text-gray-400 mt-1">{treatment.confidence}% match with your profile</p>
         </div>
 
         <p className="text-sm text-gray-600 leading-relaxed mb-4">{treatment.description}</p>
@@ -390,11 +470,63 @@ function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation
   );
 }
 
-// No `city` field — the unlock form never collected it after being merged
-// from the old post-results email form; app/api/leads still accepts and
-// stores it (for any pre-existing leads that have it), it's just never sent.
-type LeadForm = { name: string; phone: string; email: string };
-type LeadStatus = "idle" | "sending" | "sent" | "saved" | "error";
+// Step 2 — captured immediately, before the concern/question screens. No
+// email here (see app/(public)/skin-quiz's flow-restructuring notes) —
+// email is only ever collected later, as a non-blocking affordance on the
+// Results screen for patients who want a copy sent to their inbox.
+type LeadCaptureForm = { name: string; phone: string; preferredClinic: string };
+type LeadCaptureStatus = "idle" | "sending" | "error";
+
+// Small, self-contained "email me a copy" affordance shown on Results — not
+// a gate (the report is already unlocked once a Step-2 lead exists), purely
+// an optional convenience. Calls the same PATCH endpoint that persisted the
+// completed answers, this time with an email attached.
+function EmailCopyForm({ leadId }: { leadId: string | null }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadId || !email.trim()) return;
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId, email: email.trim() }),
+      });
+      const data = await res.json();
+      setStatus(data.success ? "sent" : "error");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (status === "sent") {
+    return (
+      <div className="bg-green-50 border border-green-100 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm text-green-800">
+        <span className="text-lg">✅</span> Sent — check your inbox (and spam folder).
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="flex flex-col sm:flex-row items-stretch gap-2">
+      <input
+        type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email me a copy of this report (optional)"
+        className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-100 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0B2560]/40"
+      />
+      <button
+        type="submit" disabled={status === "sending" || !email.trim()}
+        className="px-5 py-3 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-sm rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+      >
+        {status === "sending" ? "Sending…" : "Email Me a Copy"}
+      </button>
+      {status === "error" && <p className="text-xs text-red-500 sm:self-center">Something went wrong — please try again.</p>}
+    </form>
+  );
+}
 
 function ResultsScreen({
   recommendations,
@@ -405,8 +537,8 @@ function ResultsScreen({
   showAllRecommendations,
   showBookCta,
   showChat,
-  leadCaptured,
-  emailSent,
+  showEmailForm,
+  leadId,
   onRetake,
 }: {
   recommendations: TreatmentRecommendation[];
@@ -417,13 +549,13 @@ function ResultsScreen({
   showAllRecommendations: boolean;
   showBookCta: boolean;
   showChat: boolean;
-  leadCaptured: boolean;
-  emailSent: boolean;
+  showEmailForm: boolean;
+  leadId: string | null;
   onRetake: () => void;
 }) {
   const { publicWhatsApp } = useSiteConfig();
   const waQuizHref = publicWhatsApp
-    ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}?text=Hi%2C%20I%20just%20completed%20the%20AI%20skin%20%26%20hair%20assessment%20and%20would%20like%20to%20know%20more%20about%20my%20treatment%20plan.`
+    ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}?text=Hi%2C%20I%20just%20completed%20my%20clinical%20intake%20and%20would%20like%20to%20know%20more%20before%20my%20consultation.`
     : null;
 
   // 'allRecommendations' shows the full ranked list; 'topRecommendation' alone
@@ -439,21 +571,19 @@ function ResultsScreen({
       <div className="text-center mb-8">
         <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
-          Your Plan is Ready
+          Your Clinical Intake Is Complete
         </span>
         <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-3 tracking-tight">
-          Your Personalised Treatment Plan
+          Possible Discussion Topics for Your Consultation
         </h2>
-        {recommendations[0] && (
-          <p className="text-sm text-gray-500 max-w-md mx-auto">
-            Overall match: <span className="font-semibold text-[#0B2560]">{recommendations[0].confidence}%</span>
-          </p>
-        )}
+        <p className="text-sm text-gray-500 max-w-md mx-auto">
+          Based on what you shared — your doctor will confirm what's right for you after a full evaluation.
+        </p>
       </div>
 
       {visibleRecommendations.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 mb-10">
-          We couldn't match a treatment to your answers — a specialist will review your responses personally.
+          We couldn't match a discussion topic to your answers — a specialist will review your responses personally.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -463,10 +593,9 @@ function ResultsScreen({
         </div>
       )}
 
-      {leadCaptured && (
-        <div className="bg-green-50 border border-green-100 rounded-2xl px-5 py-3 mb-8 flex items-center gap-3 text-sm text-green-800">
-          <span className="text-lg">{emailSent ? "✅" : "👍"}</span>
-          {emailSent ? "Your full report has been emailed to you — check your inbox (and spam folder)." : "Report unlocked — our team will reach out to you shortly."}
+      {showEmailForm && (
+        <div className="mb-8">
+          <EmailCopyForm leadId={leadId} />
         </div>
       )}
 
@@ -499,148 +628,37 @@ function ResultsScreen({
           Retake the assessment
         </button>
       </div>
-    </div>
-  );
-}
 
-// Reframes match confidence as a motivational "score" — current match quality
-// vs. an estimated reachable score once the recommended treatment plan is
-// followed. Same underlying number as TreatmentCard's confidence, just
-// presented the way a fitness/skin-scoring app would.
-function ScoreGauge({ confidence }: { confidence: number }) {
-  // Capped at 100 (not a fixed 98) so this never renders equal to or lower
-  // than the current score — several default treatments already ship with
-  // confidence in the 96-98 range, where a hard 98 cap would show no
-  // improvement (or, above 98, a "potential" score lower than today's).
-  const potential = Math.min(100, confidence + 18);
-  return (
-    <div className="flex items-center justify-center gap-8 bg-white rounded-2xl border-2 border-gray-100 px-8 py-6 mb-6">
-      <div className="text-center">
-        <p className="text-4xl font-extrabold text-[#0B2560]">{confidence}%</p>
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mt-1">Your Score Today</p>
-      </div>
-      <div className="text-2xl text-[#F5A623]">→</div>
-      <div className="text-center">
-        <p className="text-4xl font-extrabold text-[#F5A623]">{potential}%</p>
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mt-1">Reachable With Treatment</p>
-      </div>
-    </div>
-  );
-}
-
-// Shown right after "Analysing" — a teaser of the top match plus a locked
-// preview of the rest, so the visitor invests in reading their result before
-// being asked for contact details. Name/Phone/Email submit unlocks the full
-// ResultsScreen (same lead-capture endpoint, just moved earlier in the flow).
-function ResultsPreview({
-  topRecommendation,
-  showTopRecommendation,
-  lockedCount,
-  lead,
-  setLead,
-  leadStatus,
-  onLeadSubmit,
-}: {
-  topRecommendation: TreatmentRecommendation | undefined;
-  showTopRecommendation: boolean;
-  lockedCount: number;
-  lead: LeadForm;
-  setLead: React.Dispatch<React.SetStateAction<LeadForm>>;
-  leadStatus: LeadStatus;
-  onLeadSubmit: (e: React.FormEvent) => void;
-}) {
-  const [unlocking, setUnlocking] = useState(false);
-  const showTeaser = showTopRecommendation && !!topRecommendation;
-
-  return (
-    <div className="py-2">
-      <div className="text-center mb-6">
-        <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
-          Your Plan is Ready
-        </span>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-1 tracking-tight">
-          Your Personalised Treatment Plan
-        </h2>
-      </div>
-
-      {showTeaser && <ScoreGauge confidence={topRecommendation!.confidence} />}
-
-      {showTeaser && (
-        <div className="mb-4">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Top Match</p>
-          <TreatmentCard treatment={topRecommendation!} rank={0} />
-        </div>
-      )}
-
-      {lockedCount > 0 && (
-        <div className="relative rounded-2xl overflow-hidden mb-6 border border-gray-100">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 blur-sm select-none pointer-events-none opacity-60">
-            {Array.from({ length: lockedCount }).map((_, i) => (
-              <div key={i} className="h-32 bg-gray-100 rounded-xl" />
-            ))}
-          </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/40 backdrop-blur-[1px]">
-            <span className="text-2xl">🔒</span>
-            <p className="text-sm font-bold text-[#0B2560]">
-              {lockedCount} more personalised treatment{lockedCount > 1 ? "s" : ""} matched to you
-            </p>
-          </div>
-        </div>
-      )}
-
-      {!unlocking ? (
-        <button
-          onClick={() => setUnlocking(true)}
-          className="w-full py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-base rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
-        >
-          🔓 Unlock My Full Report
-        </button>
-      ) : (
-        <div className="bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-[#0B2560]/20">
-          <div className="max-w-md mx-auto text-center">
-            <h3 className="text-xl font-bold mb-2">Unlock Your Full Report</h3>
-            <p className="text-sm text-blue-200 mb-5">
-              See every matched treatment, pricing, and your doctor's personal note.
-            </p>
-            {(leadStatus === "idle" || leadStatus === "sending" || leadStatus === "error") && (
-              <form onSubmit={onLeadSubmit} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text" value={lead.name} onChange={(e) => setLead((l) => ({ ...l, name: e.target.value }))}
-                    placeholder="Your name" required
-                    className="px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
-                  />
-                  <input
-                    type="tel" value={lead.phone} onChange={(e) => setLead((l) => ({ ...l, phone: e.target.value }))}
-                    placeholder="Phone number" required
-                    className="px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
-                  />
-                </div>
-                <input
-                  type="email" value={lead.email} onChange={(e) => setLead((l) => ({ ...l, email: e.target.value }))}
-                  placeholder="your@email.com" required
-                  className="w-full px-4 py-3 rounded-xl bg-white/15 border border-white/20 placeholder-blue-300 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] focus:border-transparent"
-                />
-                <button
-                  type="submit" disabled={leadStatus === "sending"}
-                  className="w-full px-6 py-3 bg-[#F5A623] hover:bg-[#e09520] text-[#0B2560] font-bold rounded-xl text-sm transition-all duration-200 hover:shadow-lg disabled:opacity-60"
-                >
-                  {leadStatus === "sending" ? "Unlocking…" : "Unlock Full Report"}
-                </button>
-              </form>
-            )}
-            {leadStatus === "error" && (
-              <p className="text-xs text-red-200 mt-2">Something went wrong — please try again.</p>
-            )}
-          </div>
-        </div>
-      )}
+      <p className="text-center text-xs text-gray-400 mt-8 max-w-md mx-auto leading-relaxed">
+        This report is educational and does not replace a doctor's consultation. Every topic above is
+        something your doctor may discuss with you after their own evaluation — not a diagnosis,
+        prescription, or guaranteed outcome.
+      </p>
     </div>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+
+// Which concern tag(s) the visitor's answers have collected so far — drives
+// the Dynamic Question Engine's per-concern filtering (Question.conditionTags).
+// Reuses the exact same tag/weight collection philosophy scoreRecommendations
+// already uses, rather than special-casing "the concern question" by id, so
+// any question's tags can steer which follow-ups appear, consistent with how
+// scoring already works.
+function collectAnsweredTags(questions: AssessmentQuestion[], answers: AssessmentAnswers): Set<string> {
+  const tags = new Set<string>();
+  for (const q of questions) {
+    const given = answers[q.id];
+    if (given === undefined || given === null || given === "") continue;
+    const ids = Array.isArray(given) ? given : [String(given)];
+    for (const id of ids) {
+      const ans = q.answers.find((a) => a.id === id);
+      ans?.tags.forEach((t) => tags.add(t));
+    }
+  }
+  return tags;
+}
 
 export default function SkinQuizPage() {
   // Read directly from window.location instead of next/navigation's
@@ -661,14 +679,17 @@ export default function SkinQuizPage() {
 
   const [quizConfig, setQuizConfig] = useState<AssessmentConfigData>(DEFAULT_QUIZ_CONFIG);
   const [configReady, setConfigReady] = useState(false);
-  const [screen, setScreen] = useState<"intro" | "question" | "analysing" | "results">("intro");
+  const [screen, setScreen] = useState<"intro" | "lead" | "question" | "analysing" | "results">("intro");
   const [visible, setVisible] = useState(true);
   const [path, setPath] = useState<string[]>([]); // visited question ids, in order
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
-  const [lead, setLead] = useState<LeadForm>({ name: "", phone: "", email: "" });
-  const [leadStatus, setLeadStatus] = useState<LeadStatus>("idle");
+  // Step 2 — captured immediately, before any concern/question screens.
+  const [leadForm, setLeadForm] = useState<LeadCaptureForm>({ name: "", phone: "", preferredClinic: "" });
+  const [leadCaptureStatus, setLeadCaptureStatus] = useState<LeadCaptureStatus>("idle");
+  const [leadId, setLeadId] = useState<string | null>(null);
   const startedTracked = useRef(false);
   const completedTracked = useRef(false);
+  const resultsPatched = useRef(false);
 
   useEffect(() => {
     fetch("/api/quiz-config")
@@ -690,8 +711,13 @@ export default function SkinQuizPage() {
   // controls the specific quick-add "notes" question (id "notes"), not every
   // free-text question — a doctor who adds a second, unrelated text question
   // shouldn't have it silently hidden by a toggle labeled for a different one.
+  // conditionTags filtering (Dynamic Question Engine): a question with tags
+  // only shows once the visitor's answers so far have collected at least one
+  // matching tag — empty conditionTags = universal, always shown.
+  const answeredTags = collectAnsweredTags(quizConfig.questions, answers);
   const orderedQuestions = [...quizConfig.questions]
     .filter((q) => !(q.type === "text" && q.id === "notes" && quizConfig.settings?.enableNotes === false))
+    .filter((q) => !q.conditionTags?.length || q.conditionTags.some((t) => answeredTags.has(t)))
     .sort((a, b) => a.order - b.order);
   const currentQuestionId = path[path.length - 1];
   const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
@@ -702,11 +728,34 @@ export default function SkinQuizPage() {
     setTimeout(() => { fn(); setVisible(true); }, 200);
   };
 
+  // Welcome → Lead capture (Step 2) — not straight into questions. Track
+  // "started" right here, not on a successful lead POST — otherwise a
+  // visitor who clicks Start but abandons at the lead-capture screen never
+  // counts as a drop-off, silently inflating the funnel's conversion rate.
   const startAssessment = () => {
     if (!startedTracked.current) { startedTracked.current = true; trackEvent("started"); }
-    const first = orderedQuestions[0];
-    if (!first) return;
-    transition(() => { setPath([first.id]); setScreen("question"); });
+    transition(() => setScreen("lead"));
+  };
+
+  const handleLeadCaptureSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLeadCaptureStatus("sending");
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...leadForm, source: "skin-quiz", campaign, qrSource, clinicLocation, channel }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.leadId) { setLeadCaptureStatus("error"); return; }
+      setLeadId(data.leadId);
+      setLeadCaptureStatus("idle");
+      const first = orderedQuestions[0];
+      if (!first) { transition(() => setScreen("results")); return; }
+      transition(() => { setPath([first.id]); setScreen("question"); });
+    } catch {
+      setLeadCaptureStatus("error");
+    }
   };
 
   const goToResults = () => {
@@ -784,40 +833,30 @@ export default function SkinQuizPage() {
   const primaryConcernTag = getPrimaryConcernTag(quizConfig.questions, answers);
   const primaryConcernLabel = quizConfig.treatmentMap.find((e) => e.concernTag === primaryConcernTag)?.concernLabel || primaryConcernTag;
 
-  const handleLeadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLeadStatus("sending");
-    try {
-      const res = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...lead,
-          source: 'ai-assessment',
-          campaign,
-          qrSource,
-          clinicLocation,
-          channel,
-          primaryConcern: getPrimaryConcernTag(quizConfig.questions, answers),
-          answers,
-          recommendations,
-        }),
-      });
-      const data = await res.json();
-      if (!data.success) { setLeadStatus("error"); return; }
-      setLeadStatus(data.emailSent ? "sent" : "saved");
-    } catch {
-      setLeadStatus("error");
-    }
-  };
+  // The lead already exists (captured at Step 2) by the time the patient
+  // reaches Results — this silently attaches the completed answers/
+  // recommendations to that same lead, rather than gating the report behind
+  // a second contact form. Guarded by a ref so it only fires once per visit.
+  useEffect(() => {
+    if (screen !== "results" || !leadId || resultsPatched.current) return;
+    resultsPatched.current = true;
+    fetch("/api/leads", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId, answers, recommendations, primaryConcern: primaryConcernTag }),
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, leadId]);
 
   const handleRetake = () => {
     setAnswers({});
     setPath([]);
-    setLead({ name: "", phone: "", email: "" });
-    setLeadStatus("idle");
+    setLeadForm({ name: "", phone: "", preferredClinic: "" });
+    setLeadCaptureStatus("idle");
+    setLeadId(null);
     startedTracked.current = false;
     completedTracked.current = false;
+    resultsPatched.current = false;
     transition(() => setScreen("intro"));
   };
 
@@ -835,16 +874,11 @@ export default function SkinQuizPage() {
     return !!orderedQuestions[currentIndex + 1];
   })();
   const estimatedTotal = Math.max(path.length + (hasNextQuestion ? 1 : 0), path.length, 1);
-  const progressPct = screen === "intro" ? 0 : screen !== "question" ? 100 : Math.round((path.length / estimatedTotal) * 100);
-  const stepLabel = screen === "intro" ? "Assessment" : screen === "question" ? `Question ${path.length} of ${estimatedTotal}` : "Your Results";
+  const progressPct = screen === "intro" || screen === "lead" ? 0 : screen !== "question" ? 100 : Math.round((path.length / estimatedTotal) * 100);
+  const stepLabel = screen === "intro" ? "Welcome" : screen === "lead" ? "Your Details" : screen === "question" ? `Question ${path.length} of ${estimatedTotal}` : "Your Report";
 
   const resultSections = quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections;
   const sectionVisible = (key: string) => resultSections.find((s) => s.key === key)?.visible !== false;
-  // Full results are gated behind Name/Phone/Email — the doctor can turn this
-  // gate off entirely by disabling the "emailForm" results section, which
-  // falls back to showing the full report immediately (old behaviour).
-  const emailFormEnabled = sectionVisible("emailForm") && quizConfig.settings?.enableEmail !== false;
-  const resultsUnlocked = !emailFormEnabled || leadStatus === "sent" || leadStatus === "saved";
 
   if (configReady && quizConfig.settings && quizConfig.settings.enabled === false) {
     return (
@@ -885,6 +919,15 @@ export default function SkinQuizPage() {
           </div>
         )}
         {screen === "intro" && configReady && <IntroScreen onStart={startAssessment} clinicLabel={clinicLocation ? slugToLabel(clinicLocation) : ""} />}
+
+        {screen === "lead" && (
+          <LeadCaptureScreen
+            lead={leadForm}
+            setLead={setLeadForm}
+            status={leadCaptureStatus}
+            onSubmit={handleLeadCaptureSubmit}
+          />
+        )}
 
         {screen === "question" && currentQuestion && (
           <div>
@@ -931,31 +974,19 @@ export default function SkinQuizPage() {
         {screen === "analysing" && <AnalysingScreen />}
 
         {screen === "results" && (
-          resultsUnlocked ? (
-            <ResultsScreen
-              recommendations={recommendations}
-              doctorMessage={quizConfig.doctorMessage}
-              primaryConcern={primaryConcernLabel}
-              showDoctorMessage={sectionVisible("doctorMessage")}
-              showTopRecommendation={sectionVisible("topRecommendation")}
-              showAllRecommendations={sectionVisible("allRecommendations")}
-              showBookCta={sectionVisible("bookCta")}
-              showChat={quizConfig.settings?.enableChat !== false}
-              leadCaptured={leadStatus === "sent" || leadStatus === "saved"}
-              emailSent={leadStatus === "sent"}
-              onRetake={handleRetake}
-            />
-          ) : (
-            <ResultsPreview
-              topRecommendation={recommendations[0]}
-              showTopRecommendation={sectionVisible("topRecommendation")}
-              lockedCount={sectionVisible("allRecommendations") ? Math.max(0, recommendations.length - 1) : 0}
-              lead={lead}
-              setLead={setLead}
-              leadStatus={leadStatus}
-              onLeadSubmit={handleLeadSubmit}
-            />
-          )
+          <ResultsScreen
+            recommendations={recommendations}
+            doctorMessage={quizConfig.doctorMessage}
+            primaryConcern={primaryConcernLabel}
+            showDoctorMessage={sectionVisible("doctorMessage")}
+            showTopRecommendation={sectionVisible("topRecommendation")}
+            showAllRecommendations={sectionVisible("allRecommendations")}
+            showBookCta={sectionVisible("bookCta")}
+            showChat={quizConfig.settings?.enableChat !== false}
+            showEmailForm={sectionVisible("emailForm") && quizConfig.settings?.enableEmail !== false}
+            leadId={leadId}
+            onRetake={handleRetake}
+          />
         )}
       </div>
     </div>

@@ -185,6 +185,21 @@ function QuestionCard({
             <label className="text-xs font-semibold text-gray-500 mb-1 block">Subtitle</label>
             <Input value={question.subtitle} onChange={(v) => set({ subtitle: v })} />
           </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">
+              Show only for these concerns <span className="font-normal text-gray-400">(comma-separated tags — leave blank to show for every concern)</span>
+            </label>
+            <Input
+              value={(question.conditionTags || []).join(", ")}
+              onChange={(v) => set({ conditionTags: v.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) })}
+              placeholder="e.g. hair, acne, pigmentation"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">
+              Matches the tags on the Concern question's answers (Answer editor below) — e.g. Hair Fall/Hair
+              Thinning/Baldness/Hair Transplant all carry the "hair" tag, so one set of hair follow-up
+              questions can apply to all of them.
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Question Type</label>
@@ -280,7 +295,7 @@ function ConcernTreatmentPanel({ entry, aiPrompt, enableAI, onChange }: { entry:
   const removeTreatment = (i: number) => onChange({ ...entry, treatments: entry.treatments.filter((_, idx) => idx !== i) });
   const addTreatment = () => onChange({
     ...entry,
-    treatments: [...entry.treatments, { id: `${entry.concernTag}-${Date.now()}`, name: "", icon: "✨", description: "", confidence: 80, priority: entry.treatments.length + 1, sessions: "", duration: "", recovery: "", price: "", advantages: [], disadvantages: [], cta: "Book Consultation", requiredTags: [] }],
+    treatments: [...entry.treatments, { id: `${entry.concernTag}-${Date.now()}`, name: "", icon: "✨", description: "", confidence: 80, priority: entry.treatments.length + 1, sessions: "", duration: "", recovery: "", price: "", advantages: [], disadvantages: [], cta: "Book Consultation", requiredTags: [], clinicalIndicators: [], possibleCauses: [], suggestedEvaluation: [], contraindications: [], doctorNotes: "", patientEducation: [], confidenceLevel: "Medium" }],
   });
 
   const aiSuggest = async () => {
@@ -596,7 +611,7 @@ function AnalyticsTab() {
     <div className="space-y-6">
       <p className="text-xs text-gray-400">Last {data.rangeDays} days</p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stat("Assessments Started", data.started)}
+        {stat("Intakes Started", data.started)}
         {stat("Completed", data.completed)}
         {stat("Conversion", `${data.conversionRate}%`, "started → completed")}
         {stat("Leads Captured", data.leadsCapture)}
@@ -758,7 +773,7 @@ function QrGeneratorTab() {
 
         <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrPngUrl} alt="Assessment QR code" width={240} height={240} className="rounded-lg" />
+          <img src={qrPngUrl} alt="Clinical Intake QR code" width={240} height={240} className="rounded-lg" />
           <div className="flex items-center gap-4">
             <a href={qrPngUrl} download={`${fileBase}.png`} className="text-sm font-semibold text-[#0B2560] underline">Download PNG</a>
             <a href={qrSvgUrl} download={`${fileBase}.svg`} className="text-sm font-semibold text-[#0B2560] underline">Download SVG</a>
@@ -879,7 +894,7 @@ export default function AiAssessmentAdminPage() {
   };
 
   const resetToDefaults = () => {
-    if (!confirm("Reset all AI Assessment content to the original defaults? This overwrites your changes.")) return;
+    if (!confirm("Reset all Clinical Intake content to the original defaults? This overwrites your changes.")) return;
     setConfig(JSON.parse(JSON.stringify(DEFAULT_QUIZ_CONFIG)));
     setSaved(false);
   };
@@ -890,7 +905,7 @@ export default function AiAssessmentAdminPage() {
       questions: [...config.questions, {
         id, title: "New Question", subtitle: "", description: "", icon: "❓", image: "",
         type: "single", order: config.questions.length + 1, required: true, answers: [],
-        sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
+        sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: [],
       }],
     });
   };
@@ -927,7 +942,7 @@ export default function AiAssessmentAdminPage() {
     setSaved(false);
   };
 
-  if (loading) return <div className="text-center py-20 text-gray-400">Loading AI Assessment…</div>;
+  if (loading) return <div className="text-center py-20 text-gray-400">Loading Clinical Intake…</div>;
 
   const orderedQuestions = [...config.questions].sort((a, b) => a.order - b.order);
 
@@ -935,8 +950,8 @@ export default function AiAssessmentAdminPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">✨ AI Assessment</h1>
-          <p className="text-sm text-gray-500 mt-1">Configure the AI Skin &amp; Hair Assessment — questions, treatment logic, and results. Changes go live instantly.</p>
+          <h1 className="text-2xl font-bold text-gray-900">✨ Clinical Intake</h1>
+          <p className="text-sm text-gray-500 mt-1">Configure the Clinical Intake flow — questions, clinical logic, and patient report. Changes go live instantly.</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={resetToDefaults} className="text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-2">Reset defaults</button>
@@ -1027,7 +1042,7 @@ export default function AiAssessmentAdminPage() {
         <div className="space-y-6 max-w-xl">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
             <p className="text-sm font-bold text-gray-700">Feature Toggles</p>
-            <Toggle checked={config.settings.enabled} onChange={(v) => updateConfig({ settings: { ...config.settings, enabled: v } })} label="Enable Assessment" />
+            <Toggle checked={config.settings.enabled} onChange={(v) => updateConfig({ settings: { ...config.settings, enabled: v } })} label="Enable Clinical Intake" />
             <Toggle checked={config.settings.enableAI} onChange={(v) => updateConfig({ settings: { ...config.settings, enableAI: v } })} label="Enable AI Suggest (Treatment Mapping)" />
             <Toggle checked={config.settings.enableEmail} onChange={(v) => updateConfig({ settings: { ...config.settings, enableEmail: v } })} label="Enable Email Report" />
             <Toggle checked={config.settings.enableQR} onChange={(v) => updateConfig({ settings: { ...config.settings, enableQR: v } })} label="Enable QR Code Access" />

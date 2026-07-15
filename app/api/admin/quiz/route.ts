@@ -3,7 +3,7 @@ import { connectDB } from "@/app/lib/mongodb";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
 import { requirePermission } from "@/app/lib/adminAuth";
 import { revalidateTag } from "next/cache";
-import { migrateLegacyQuizConfig } from "@/app/lib/quizMigration";
+import { migrateLegacyQuizConfig, backfillClinicalFields } from "@/app/lib/quizMigration";
 
 export async function GET() {
   const denied = await requirePermission("ai-assessment", "view");
@@ -12,7 +12,7 @@ export async function GET() {
   try {
     await connectDB();
     const config = await (QuizConfig as any).findOne({}).lean();
-    return NextResponse.json({ success: true, data: config ? migrateLegacyQuizConfig(config) : DEFAULT_QUIZ_CONFIG });
+    return NextResponse.json({ success: true, data: config ? backfillClinicalFields(migrateLegacyQuizConfig(config)) : DEFAULT_QUIZ_CONFIG });
   } catch {
     return NextResponse.json({ success: false, message: "Failed to load quiz config" }, { status: 500 });
   }

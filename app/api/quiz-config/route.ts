@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { connectDB } from "@/app/lib/mongodb";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
-import { migrateLegacyQuizConfig } from "@/app/lib/quizMigration";
+import { migrateLegacyQuizConfig, backfillClinicalFields } from "@/app/lib/quizMigration";
 
 export const revalidate = 300;
 
@@ -11,15 +11,16 @@ const getCachedQuizConfig = unstable_cache(
     try {
       await connectDB();
       const config = await (QuizConfig as any).findOne({}).lean();
-      return config ? migrateLegacyQuizConfig(config) : DEFAULT_QUIZ_CONFIG;
+      return config ? backfillClinicalFields(migrateLegacyQuizConfig(config)) : DEFAULT_QUIZ_CONFIG;
     } catch {
       return DEFAULT_QUIZ_CONFIG;
     }
   },
-  // Bumped to v2 — the config shape changed (rigid concerns/skinTypes/...
-  // fields → generic questions[]), so a stale v1-shaped cache entry must not
-  // be served after this deploy.
-  ["quiz-config-v2"],
+  // Bumped to v3 — Clinical Intake data model extension added
+  // conditionTags/clinicalIndicators/confidenceLevel etc.; a stale v2-shaped
+  // cache entry must not be served after this deploy. (v2 was the prior
+  // bump: rigid concerns/skinTypes/... fields → generic questions[].)
+  ["quiz-config-v3"],
   { revalidate: 300, tags: ["quiz-config"] }
 );
 

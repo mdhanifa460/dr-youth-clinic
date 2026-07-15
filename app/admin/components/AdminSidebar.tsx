@@ -56,7 +56,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/intelligence", label: "🧠 AI Intelligence", module: "intelligence" },
       { href: "/admin/seo", label: "🔍 SEO", module: "seo" },
-      { href: "/admin/ai-assessment", label: "✨ AI Assessment", module: "ai-assessment" },
+      { href: "/admin/ai-assessment", label: "✨ Clinical Intake", module: "ai-assessment" },
     ],
   },
   {

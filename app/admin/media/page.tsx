@@ -153,7 +153,7 @@ export default function MediaLibraryPage() {
           <Sparkles size={16} className="text-[#3B82C4] mt-0.5 shrink-0" />
           <p className="text-sm text-blue-800">
             Click <strong>Analyze for Cleanup</strong> to check every image against every service, doctor, blog
-            post, offer, video, homepage/landing page section, and AI Assessment question/patient photo —
+            post, offer, video, homepage/landing page section, and Clinical Intake question/patient photo —
             flagging which are actually used, which are exact-duplicate uploads (plus likely re-uploads of the
             same photo at a different size/compression), and which have sat unused for {CLEANUP_AGE_DAYS}+ days.
             Nothing is ever deleted automatically — you review and confirm every deletion.

@@ -28,6 +28,12 @@ const QuestionSchema = new mongoose.Schema({
   sliderMax:   { type: Number, default: 100 },
   sliderStep:  { type: Number, default: 1 },
   sliderUnit:  { type: String, default: "" },
+  // Which concern tag(s) (from the concern question's answers.tags) this
+  // question applies under — empty = universal (shown regardless of which
+  // concern the patient picked, e.g. gender/age/photo/notes). Lets a
+  // multi-select concern answer actually filter the follow-up questions the
+  // patient sees, instead of every question showing regardless of concern.
+  conditionTags: { type: [String], default: [] },
 }, { _id: false });
 
 const TreatmentSchema = new mongoose.Schema({
@@ -35,6 +41,9 @@ const TreatmentSchema = new mongoose.Schema({
   name:           { type: String, required: true },
   icon:           { type: String, default: "✨" },
   description:    { type: String, default: "" },
+  // Internal sort/threshold key only — never shown to a doctor or patient
+  // directly (see confidenceLevel below). Kept numeric so scoreRecommendations
+  // and Settings.confidenceThreshold don't need to change in this phase.
   confidence:     { type: Number, default: 90, min: 0, max: 100 },
   priority:       { type: Number, default: 1 },
   sessions:       { type: String, default: "" },
@@ -45,6 +54,18 @@ const TreatmentSchema = new mongoose.Schema({
   disadvantages:  { type: [String], default: [] },
   cta:            { type: String, default: "Book Consultation" },
   requiredTags:   { type: [String], default: [] },
+  // Clinical Intelligence Engine fields (Phase 1 wires up the admin UI and
+  // patient-facing "possible discussion topics" framing for these — schema
+  // lands now, additive, so Phase 1 doesn't need another migration).
+  clinicalIndicators: { type: [String], default: [] },
+  possibleCauses:     { type: [String], default: [] },
+  suggestedEvaluation: { type: [String], default: [] },
+  contraindications:  { type: [String], default: [] },
+  doctorNotes:        { type: String, default: "" },
+  patientEducation:   { type: [String], default: [] },
+  // The only confidence value ever displayed — auto-derived from `confidence`
+  // (High=90/Medium=60/Low=30) so nobody edits a raw number directly.
+  confidenceLevel: { type: String, enum: ["High", "Medium", "Low"], default: "Medium" },
 }, { _id: false });
 
 const TreatmentMapSchema = new mongoose.Schema({

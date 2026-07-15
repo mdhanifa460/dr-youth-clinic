@@ -268,7 +268,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="min-h-12 w-full bg-[#F5A623]/10 border border-[#F5A623] text-[#0B2560] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
             >
-              {siteConfig.skinQuizNav} — Find Your Treatment
+              {siteConfig.skinQuizNav} — Prepare Your Visit
             </Link>
             {phone && (
               <a href={phoneHref} className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">
