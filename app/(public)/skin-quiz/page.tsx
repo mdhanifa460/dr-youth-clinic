@@ -476,6 +476,13 @@ function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation
 // Results screen for patients who want a copy sent to their inbox.
 type LeadCaptureForm = { name: string; phone: string; preferredClinic: string };
 type LeadCaptureStatus = "idle" | "sending" | "error";
+type PatientReport = {
+  summary: string;
+  contributingFactors: string[];
+  lifestyleFindings: string[];
+  questionsForDoctor: string[];
+  treatmentOptionsDiscussed: string[];
+};
 
 // Small, self-contained "email me a copy" affordance shown on Results — not
 // a gate (the report is already unlocked once a Step-2 lead exists), purely
@@ -528,10 +535,29 @@ function EmailCopyForm({ leadId }: { leadId: string | null }) {
   );
 }
 
+function ReportList({ title, icon, items }: { title: string; icon: string; items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <p className="text-xs font-bold text-[#0B2560] mb-2.5 flex items-center gap-1.5">
+        <span>{icon}</span> {title}
+      </p>
+      <ul className="space-y-1.5">
+        {items.map((item, i) => (
+          <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
+            <span className="text-[#F5A623] mt-1 shrink-0">•</span> {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ResultsScreen({
   recommendations,
   doctorMessage,
   primaryConcern,
+  patientReport,
   showDoctorMessage,
   showTopRecommendation,
   showAllRecommendations,
@@ -544,6 +570,7 @@ function ResultsScreen({
   recommendations: TreatmentRecommendation[];
   doctorMessage: string;
   primaryConcern: string;
+  patientReport: PatientReport | null;
   showDoctorMessage: boolean;
   showTopRecommendation: boolean;
   showAllRecommendations: boolean;
@@ -577,9 +604,16 @@ function ResultsScreen({
           Possible Discussion Topics for Your Consultation
         </h2>
         <p className="text-sm text-gray-500 max-w-md mx-auto">
-          Based on what you shared — your doctor will confirm what's right for you after a full evaluation.
+          {patientReport?.summary || "Based on what you shared — your doctor will confirm what's right for you after a full evaluation."}
         </p>
       </div>
+
+      {patientReport && (patientReport.contributingFactors.length > 0 || patientReport.lifestyleFindings.length > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <ReportList title="Contributing Factors" icon="🔎" items={patientReport.contributingFactors} />
+          <ReportList title="Lifestyle Findings" icon="🌿" items={patientReport.lifestyleFindings} />
+        </div>
+      )}
 
       {visibleRecommendations.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 mb-10">
@@ -599,6 +633,12 @@ function ResultsScreen({
         </div>
       )}
 
+      {patientReport && patientReport.questionsForDoctor.length > 0 && (
+        <div className="mb-8">
+          <ReportList title="Questions to Ask Your Doctor" icon="💬" items={patientReport.questionsForDoctor} />
+        </div>
+      )}
+
       {showDoctorMessage && doctorMessage && (
         <div className="bg-[#f6faff] border border-[#0B2560]/10 rounded-2xl p-5 mb-8 flex items-start gap-3">
           <span className="text-2xl shrink-0">👨‍⚕️</span>
@@ -612,6 +652,7 @@ function ResultsScreen({
         </div>
       )}
 
+      <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Next Steps</p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         {showBookCta && waQuizHref && (
           <a
@@ -687,6 +728,7 @@ export default function SkinQuizPage() {
   const [leadForm, setLeadForm] = useState<LeadCaptureForm>({ name: "", phone: "", preferredClinic: "" });
   const [leadCaptureStatus, setLeadCaptureStatus] = useState<LeadCaptureStatus>("idle");
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [patientReport, setPatientReport] = useState<PatientReport | null>(null);
   const startedTracked = useRef(false);
   const completedTracked = useRef(false);
   const resultsPatched = useRef(false);
@@ -844,7 +886,23 @@ export default function SkinQuizPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ leadId, answers, recommendations, primaryConcern: primaryConcernTag }),
-    }).catch(() => {});
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`PATCH failed (${res.status})`))))
+      .then((data) => {
+        // Only generate the patient report once the intake data actually
+        // saved — otherwise /api/patient-report re-fetches the lead and
+        // builds a report from stale/empty answers with no retry, since
+        // resultsPatched is already latched true by this point.
+        if (!data.success) throw new Error(data.message || "PATCH failed");
+        return fetch("/api/patient-report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId }),
+        });
+      })
+      .then((res) => res.json())
+      .then((data) => { if (data.success) setPatientReport(data.data); })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, leadId]);
 
@@ -854,6 +912,7 @@ export default function SkinQuizPage() {
     setLeadForm({ name: "", phone: "", preferredClinic: "" });
     setLeadCaptureStatus("idle");
     setLeadId(null);
+    setPatientReport(null);
     startedTracked.current = false;
     completedTracked.current = false;
     resultsPatched.current = false;
@@ -978,6 +1037,7 @@ export default function SkinQuizPage() {
             recommendations={recommendations}
             doctorMessage={quizConfig.doctorMessage}
             primaryConcern={primaryConcernLabel}
+            patientReport={patientReport}
             showDoctorMessage={sectionVisible("doctorMessage")}
             showTopRecommendation={sectionVisible("topRecommendation")}
             showAllRecommendations={sectionVisible("allRecommendations")}

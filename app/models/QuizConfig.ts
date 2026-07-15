@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { DEFAULT_ASSESSMENT_SETTINGS } from "@/app/lib/quizDefaults";
 export { DEFAULT_QUIZ_CONFIG } from "@/app/lib/quizDefaults";
 
 const AnswerSchema = new mongoose.Schema({
@@ -92,6 +93,9 @@ const SettingsSchema = new mongoose.Schema({
   anonymousMode:       { type: Boolean, default: true },
   maxRecommendations:  { type: Number, default: 3 },
   confidenceThreshold: { type: Number, default: 0 },
+  // Function default (not a bare array literal) so Mongoose doesn't share
+  // one array reference across every document that falls back to it.
+  doctorNoteTemplates: { type: [String], default: () => [...DEFAULT_ASSESSMENT_SETTINGS.doctorNoteTemplates] },
 }, { _id: false });
 
 const QuizConfigSchema = new mongoose.Schema({

@@ -102,6 +102,10 @@ export interface AssessmentSettings {
   anonymousMode: boolean;
   maxRecommendations: number;
   confidenceThreshold: number;
+  // Doctor Notes Templates — reusable snippets a doctor can quick-insert
+  // into a lead's Doctor Notes field in the Doctor Dashboard, instead of
+  // retyping common phrasing for every patient.
+  doctorNoteTemplates: string[];
 }
 
 export interface ResultSectionConfig {
@@ -141,6 +145,11 @@ export const DEFAULT_ASSESSMENT_SETTINGS: AssessmentSettings = {
   anonymousMode: true,
   maxRecommendations: 3,
   confidenceThreshold: 0,
+  doctorNoteTemplates: [
+    "Discussed possible causes and next steps; patient understands this is a starting point, not a diagnosis.",
+    "Recommended in-clinic evaluation before finalizing any treatment.",
+    "Patient has no known contraindications reported at intake — to be reconfirmed in person.",
+  ],
 };
 
 export const DEFAULT_AI_PROMPT =

@@ -17,7 +17,7 @@ export async function GET() {
 
     const [events, leads, bookingPhones] = await Promise.all([
       AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel").lean() as Promise<any[]>,
-      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern recommendations campaign qrSource clinicLocation channel createdAt").lean() as Promise<any[]>,
+      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern recommendations campaign qrSource clinicLocation channel preferredClinic createdAt").lean() as Promise<any[]>,
       (Booking as any).distinct("phone"),
     ]);
     const started = events.filter((e) => e.event === "started").length;
@@ -98,6 +98,18 @@ export async function GET() {
     const locationBreakdown = groupBy("clinicLocation");
     const channelBreakdown = groupBy("channel");
 
+    // The patient's own clinic choice (Step 2 of the intake) — distinct from
+    // clinicLocation above, which is QR/link attribution and may not match
+    // where the patient actually said they want to be seen.
+    const preferredClinicCounts: Record<string, number> = {};
+    for (const l of leads) {
+      if (!l.preferredClinic) continue;
+      preferredClinicCounts[l.preferredClinic] = (preferredClinicCounts[l.preferredClinic] || 0) + 1;
+    }
+    const preferredClinicBreakdown = Object.entries(preferredClinicCounts)
+      .map(([label, count]) => ({ label, count, pct: leads.length ? Math.round((count / leads.length) * 100) : 0 }))
+      .sort((a, b) => b.count - a.count);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -120,6 +132,7 @@ export async function GET() {
         organicLeads: leads.length - qrLeads,
         locationBreakdown,
         channelBreakdown,
+        preferredClinicBreakdown,
       },
     });
   } catch (err: any) {

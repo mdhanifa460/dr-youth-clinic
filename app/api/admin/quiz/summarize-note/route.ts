@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
+import { callClaude } from "@/app/lib/ai/anthropic";
+import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 
 // On-demand only — a doctor clicks "Summarize with AI" while reviewing a
 // specific lead's free-text note (app/admin/ai-assessment LeadsTab). Never
@@ -9,8 +11,7 @@ export async function POST(req: NextRequest) {
   const denied = await requirePermission("ai-assessment", "view");
   if (denied) return denied;
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -20,7 +21,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "note is required" }, { status: 400 });
     }
 
-    const prompt = `A patient at a dermatology/aesthetic clinic wrote this free-text note before their AI skin & hair assessment${primaryConcern ? ` (their main concern was tagged as "${primaryConcern}")` : ""}:
+    const prompt = `${CLINICAL_AI_GUARDRAILS}
+
+A patient at a dermatology/aesthetic clinic wrote this free-text note before their clinical intake${primaryConcern ? ` (their main concern was tagged as "${primaryConcern}")` : ""}:
 
 "${note.trim().slice(0, 500)}"
 
@@ -28,25 +31,7 @@ Summarize this in 1-2 short sentences for the treating doctor to skim before the
 
 Return ONLY the summary text, no preamble, no quotes.`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 200,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!response.ok) throw new Error(`AI API error: ${response.status}`);
-
-    const data = await response.json();
-    const summary = (data.content?.[0]?.text ?? "").trim();
-    if (!summary) throw new Error("Empty AI response");
+    const summary = await callClaude(prompt, 200);
 
     return NextResponse.json({ success: true, data: { summary } });
   } catch (err: any) {

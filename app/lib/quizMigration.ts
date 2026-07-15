@@ -109,6 +109,13 @@ export function migrateLegacyQuizConfig(config: any): AssessmentConfigData {
 export function backfillClinicalFields(config: AssessmentConfigData): AssessmentConfigData {
   return {
     ...config,
+    settings: {
+      ...DEFAULT_ASSESSMENT_SETTINGS,
+      ...(config.settings || {}),
+      doctorNoteTemplates: Array.isArray((config.settings as any)?.doctorNoteTemplates)
+        ? (config.settings as any).doctorNoteTemplates
+        : DEFAULT_ASSESSMENT_SETTINGS.doctorNoteTemplates,
+    },
     questions: (config.questions || []).map((q) => ({
       ...q,
       conditionTags: Array.isArray((q as any).conditionTags) ? (q as any).conditionTags : [],

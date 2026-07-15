@@ -11,6 +11,7 @@ import {
   type TreatmentMapEntry,
   type TreatmentRecommendation,
 } from "@/app/lib/quizDefaults";
+import { deriveConfidenceLevel } from "@/app/lib/confidenceLevel";
 
 // ─── Small reusable inputs ─────────────────────────────────────────────────
 
@@ -259,12 +260,19 @@ function TreatmentCard({ t, onChange, onRemove }: { t: TreatmentRecommendation; 
           className="w-12 border border-gray-200 rounded-lg px-2 py-2 text-center text-base focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0" />
         <Input value={t.name} onChange={(v) => set({ name: v })} placeholder="Treatment name" className="flex-1" />
         <div className="flex items-center gap-1 shrink-0">
-          <input type="number" min={0} max={100} value={t.confidence} onChange={(e) => set({ confidence: Number(e.target.value) })}
+          <input type="number" min={0} max={100} value={t.confidence}
+            onChange={(e) => { const confidence = Number(e.target.value); set({ confidence, confidenceLevel: deriveConfidenceLevel(confidence) }); }}
             className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <span className="text-xs text-gray-400">%</span>
         </div>
         <button onClick={onRemove} className="text-red-400 hover:text-red-600 text-xl leading-none shrink-0">×</button>
       </div>
+      <p className="text-[10px] text-gray-400 -mt-2">
+        Shown to doctor/patient as{" "}
+        <span className={`font-semibold ${t.confidenceLevel === "High" ? "text-green-600" : t.confidenceLevel === "Low" ? "text-gray-500" : "text-amber-600"}`}>
+          {t.confidenceLevel || deriveConfidenceLevel(t.confidence)} Confidence
+        </span>{" "}— never the raw number above.
+      </p>
       <Textarea value={t.description} onChange={(v) => set({ description: v })} placeholder="Clinical description…" rows={2} />
       <div className="grid grid-cols-3 gap-2">
         <Input value={t.sessions} onChange={(v) => set({ sessions: v })} placeholder="Sessions" />
@@ -283,6 +291,42 @@ function TreatmentCard({ t, onChange, onRemove }: { t: TreatmentRecommendation; 
         <label className="text-[10px] text-gray-400 block mb-0.5">Required tags (eligibility gate — leave blank to always show)</label>
         <Input value={t.requiredTags.join(", ")} onChange={(v) => set({ requiredTags: v.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) })} placeholder="e.g. urgent" />
       </div>
+
+      <details className="border-t border-gray-100 pt-3">
+        <summary className="text-xs font-semibold text-[#0B2560] cursor-pointer select-none">
+          🩺 Clinical Intelligence — never diagnose or guarantee outcomes here
+        </summary>
+        <div className="space-y-2 mt-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-gray-400 block mb-0.5">Clinical indicators (patient signs that make this worth discussing — one per line)</label>
+              {listField(t.clinicalIndicators, (v) => set({ clinicalIndicators: v }), "Sudden hair shedding\nFamily history of pattern baldness")}
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-400 block mb-0.5">Possible causes (possibilities to investigate, not a diagnosis — one per line)</label>
+              {listField(t.possibleCauses, (v) => set({ possibleCauses: v }), "Telogen effluvium\nAndrogenetic alopecia")}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-gray-400 block mb-0.5">Suggested evaluation (what the doctor might check — one per line)</label>
+              {listField(t.suggestedEvaluation, (v) => set({ suggestedEvaluation: v }), "Scalp examination\nThyroid/iron panel if indicated")}
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-400 block mb-0.5">Contraindications (when this may not be suitable — one per line)</label>
+              {listField(t.contraindications, (v) => set({ contraindications: v }), "Active scalp infection\nPregnancy")}
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] text-gray-400 block mb-0.5">Doctor notes (internal guidance shown only in the doctor dashboard)</label>
+            <Textarea value={t.doctorNotes} onChange={(v) => set({ doctorNotes: v })} placeholder="Confirm duration and rule out telogen effluvium before discussing procedural options" rows={2} />
+          </div>
+          <div>
+            <label className="text-[10px] text-gray-400 block mb-0.5">Patient education (plain-language points safe to show a patient — one per line)</label>
+            {listField(t.patientEducation, (v) => set({ patientEducation: v }), "Hair fall can have many causes — your doctor will confirm what's driving yours")}
+          </div>
+        </div>
+      </details>
     </div>
   );
 }
@@ -314,6 +358,10 @@ function ConcernTreatmentPanel({ entry, aiPrompt, enableAI, onChange }: { entry:
         confidence: t.confidence, priority: i + 1, sessions: t.sessions, duration: t.duration || "",
         recovery: t.recovery || "", price: t.price, advantages: t.advantages || [], disadvantages: t.disadvantages || [],
         cta: t.cta || "Book Consultation", requiredTags: [],
+        clinicalIndicators: t.clinicalIndicators || [], possibleCauses: t.possibleCauses || [],
+        suggestedEvaluation: t.suggestedEvaluation || [], contraindications: t.contraindications || [],
+        doctorNotes: t.doctorNotes || "", patientEducation: t.patientEducation || [],
+        confidenceLevel: t.confidenceLevel || "Medium",
       }));
       onChange({ ...entry, treatments });
     } catch (err: any) {
@@ -358,6 +406,7 @@ function ConcernTreatmentPanel({ entry, aiPrompt, enableAI, onChange }: { entry:
 function LeadsTab() {
   const [leads, setLeads] = useState<any[]>([]);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
+  const [doctorNoteTemplates, setDoctorNoteTemplates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -370,9 +419,14 @@ function LeadsTab() {
       fetch("/api/admin/quiz").then((r) => r.json()),
     ]).then(([leadsRes, configRes]) => {
       if (leadsRes.success) { setLeads(leadsRes.data); setTotalPages(leadsRes.totalPages || 1); }
-      if (configRes.success) setQuestions(configRes.data.questions || []);
+      if (configRes.success) {
+        setQuestions(configRes.data.questions || []);
+        setDoctorNoteTemplates(configRes.data.settings?.doctorNoteTemplates || []);
+      }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [page]);
+
+  const updateLead = (id: string, patch: any) => setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, ...patch } : l)));
 
   const questionById = (id: string) => questions.find((q) => q.id === id);
   // .filter, not .find — a doctor can add more than one Photo Upload or Free
@@ -404,6 +458,8 @@ function LeadsTab() {
           noteQuestionIds={noteQuestionIds}
           isOpen={expanded === lead._id}
           onToggle={() => setExpanded(expanded === lead._id ? null : lead._id)}
+          onUpdate={(patch) => updateLead(lead._id, patch)}
+          doctorNoteTemplates={doctorNoteTemplates}
         />
       ))}
       {totalPages > 1 && (
@@ -500,8 +556,177 @@ function NoteBlock({ note, primaryConcern }: { note: string; primaryConcern: str
   );
 }
 
+// Doctor Review Mode — draft → doctor-edited → approved → care-plan-generated.
+// The server (app/api/admin/quiz/care-plan) enforces that a care plan can only
+// be generated once aiSummary.status === "approved" and always builds it from
+// the doctor's own edited text, never the raw AI draft — this panel is just
+// the UI for that state machine, not where the gate actually lives.
+function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates }: { lead: any; onUpdate: (patch: any) => void; doctorNoteTemplates: string[] }) {
+  const [editedText, setEditedText] = useState(lead.aiSummary?.editedText || lead.aiSummary?.draftText || "");
+  const [doctorNotes, setDoctorNotes] = useState(lead.doctorNotes || "");
+  const [finalRecommendation, setFinalRecommendation] = useState(lead.finalRecommendation || "");
+  const [treatmentPlan, setTreatmentPlan] = useState(lead.treatmentPlan || "");
+  const [busy, setBusy] = useState<"" | "generating" | "saving" | "approving" | "careplan">("");
+  const [error, setError] = useState("");
+  const [savedFields, setSavedFields] = useState(false);
+
+  const status: string = lead.aiSummary?.status || "none";
+  const hasDraft = !!(lead.aiSummary?.draftText || editedText);
+
+  // Any further edit after a successful save must clear the "✓ Saved"
+  // state — otherwise a doctor editing again post-save sees a stale
+  // confirmation and may believe the new edit is already persisted.
+  const editDoctorNotes = (v: string) => { setDoctorNotes(v); setSavedFields(false); };
+  const editFinalRecommendation = (v: string) => { setFinalRecommendation(v); setSavedFields(false); };
+  const editTreatmentPlan = (v: string) => { setTreatmentPlan(v); setSavedFields(false); };
+
+  const call = async (url: string, method: "POST" | "PATCH", body: any) => {
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    // Admin routes return {success:false,message} on app-level errors, but
+    // requirePermission()'s 403 body is shaped {error} with no `success`
+    // key at all — check res.ok too, or a "full"-only action (Save/Approve/
+    // Generate Care Plan) hit by a "view"-only user shows a blank/generic
+    // error instead of surfacing why it actually failed.
+    if (!res.ok || data.success === false) throw new Error(data.message || data.error || `Request failed (${res.status})`);
+    return data.data;
+  };
+
+  const generateSummary = async () => {
+    setBusy("generating"); setError("");
+    try {
+      const data = await call("/api/admin/quiz/doctor-summary", "POST", { leadId: lead._id });
+      setEditedText(data.draftText);
+      onUpdate({ aiSummary: { draftText: data.draftText, editedText: "", status: "draft", approvedAt: null, approvedBy: "", generatedAt: data.generatedAt }, carePlan: data.carePlan });
+    } catch (err: any) { setError(err.message); } finally { setBusy(""); }
+  };
+
+  const saveDoctorFields = async () => {
+    setBusy("saving"); setError(""); setSavedFields(false);
+    try {
+      const data = await call("/api/admin/quiz/leads", "PATCH", { leadId: lead._id, doctorNotes, finalRecommendation, treatmentPlan });
+      onUpdate(data);
+      setSavedFields(true);
+    } catch (err: any) { setError(err.message); } finally { setBusy(""); }
+  };
+
+  const setApproval = async (approve: boolean) => {
+    if (approve && !editedText.trim()) { setError("Summary can't be empty — write or generate one before approving."); return; }
+    setBusy("approving"); setError("");
+    try {
+      const data = await call("/api/admin/quiz/leads", "PATCH", { leadId: lead._id, aiSummaryEditedText: editedText, approve });
+      onUpdate(data);
+    } catch (err: any) { setError(err.message); } finally { setBusy(""); }
+  };
+
+  const generateCarePlan = async () => {
+    setBusy("careplan"); setError("");
+    try {
+      const data = await call("/api/admin/quiz/care-plan", "POST", { leadId: lead._id });
+      onUpdate({ carePlan: { text: data.text, generatedAt: data.generatedAt } });
+    } catch (err: any) { setError(err.message); } finally { setBusy(""); }
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-bold text-[#0B2560] flex items-center gap-1.5">
+          🩺 Doctor Review Mode
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${status === "approved" ? "bg-green-100 text-green-700" : status === "draft" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+            {status === "approved" ? "Approved" : status === "draft" ? "Draft — needs review" : "No summary yet"}
+          </span>
+        </p>
+        <button onClick={generateSummary} disabled={busy !== ""} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50 shrink-0">
+          {busy === "generating" ? "Generating…" : hasDraft ? "↻ Regenerate AI Summary" : "✨ Generate AI Summary"}
+        </button>
+      </div>
+
+      {hasDraft && (
+        <div>
+          <label className="text-[10px] text-gray-400 block mb-1">
+            AI-drafted summary — review and edit before approving. The care plan is built from this text, not the raw AI output.
+          </label>
+          <textarea
+            value={editedText}
+            onChange={(e) => setEditedText(e.target.value)}
+            rows={10}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="flex items-center gap-2 mt-2">
+            {status !== "approved" ? (
+              <button onClick={() => setApproval(true)} disabled={busy !== ""} className="text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50">
+                {busy === "approving" ? "Approving…" : "✓ Approve Summary"}
+              </button>
+            ) : (
+              <button onClick={() => setApproval(false)} disabled={busy !== ""} className="text-xs font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:text-gray-700">
+                Un-approve (edit again)
+              </button>
+            )}
+            {lead.aiSummary?.approvedBy && status === "approved" && (
+              <span className="text-[10px] text-gray-400">Approved by {lead.aiSummary.approvedBy}{lead.aiSummary.approvedAt ? ` on ${new Date(lead.aiSummary.approvedAt).toLocaleDateString()}` : ""}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {status === "approved" && (
+        <div className="border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-xs font-bold text-gray-600">Personalized Care Plan</p>
+            <button onClick={generateCarePlan} disabled={busy !== ""} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50">
+              {busy === "careplan" ? "Generating…" : lead.carePlan?.text ? "↻ Regenerate Care Plan" : "✨ Generate Personalized Care Plan"}
+            </button>
+          </div>
+          {lead.carePlan?.text ? (
+            <div className="bg-green-50 border border-green-100 rounded-lg p-3">
+              <p className="text-xs text-green-800 whitespace-pre-wrap leading-relaxed">{lead.carePlan.text}</p>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic">Not generated yet — based on the doctor's review above, not AI alone.</p>
+          )}
+        </div>
+      )}
+
+      <div className="border-t border-gray-100 pt-3 space-y-2">
+        <p className="text-xs font-bold text-gray-600">Doctor Notes &amp; Recommendation</p>
+        <div>
+          <div className="flex items-center justify-between mb-0.5">
+            <label className="text-[10px] text-gray-400 block">Doctor Notes (internal)</label>
+            {doctorNoteTemplates.length > 0 && (
+              <select
+                value=""
+                onChange={(e) => { if (e.target.value) editDoctorNotes(doctorNotes ? `${doctorNotes}\n${e.target.value}` : e.target.value); }}
+                className="text-[10px] border border-gray-200 rounded px-1.5 py-0.5 text-gray-500 focus:outline-none"
+              >
+                <option value="">+ Insert template…</option>
+                {doctorNoteTemplates.map((tpl, i) => (
+                  <option key={i} value={tpl}>{tpl.length > 60 ? `${tpl.slice(0, 60)}…` : tpl}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <Textarea value={doctorNotes} onChange={editDoctorNotes} placeholder="Internal notes for this patient…" rows={2} />
+        </div>
+        <div>
+          <label className="text-[10px] text-gray-400 block mb-0.5">Final Recommendation</label>
+          <Textarea value={finalRecommendation} onChange={editFinalRecommendation} placeholder="e.g. Discuss PRP + medical therapy at consultation" rows={2} />
+        </div>
+        <div>
+          <label className="text-[10px] text-gray-400 block mb-0.5">Treatment Plan</label>
+          <Textarea value={treatmentPlan} onChange={editTreatmentPlan} placeholder="Confirmed plan after consultation…" rows={2} />
+        </div>
+        <button onClick={saveDoctorFields} disabled={busy !== ""} className="text-xs font-semibold bg-[#0B2560] text-white px-3 py-1.5 rounded-lg hover:bg-[#1a3a6e] disabled:opacity-50">
+          {busy === "saving" ? "Saving…" : savedFields ? "✓ Saved" : "Save"}
+        </button>
+      </div>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
 function LeadRow({
-  lead, questions, questionById, answerLabel, photoQuestionIds, noteQuestionIds, isOpen, onToggle,
+  lead, questions, questionById, answerLabel, photoQuestionIds, noteQuestionIds, isOpen, onToggle, onUpdate, doctorNoteTemplates,
 }: {
   lead: any;
   questions: AssessmentQuestion[];
@@ -511,6 +736,8 @@ function LeadRow({
   noteQuestionIds: string[];
   isOpen: boolean;
   onToggle: () => void;
+  onUpdate: (patch: any) => void;
+  doctorNoteTemplates: string[];
 }) {
   const photoUrls = photoQuestionIds.map((id) => lead.answers?.[id]).filter(Boolean);
   const notes: string[] = noteQuestionIds.map((id) => lead.answers?.[id]).filter(Boolean);
@@ -563,7 +790,7 @@ function LeadRow({
             return noteText ? <NoteBlock key={id} note={noteText} primaryConcern={lead.primaryConcern} /> : null;
           })}
           <div>
-            <p className="text-xs font-bold text-gray-500 mb-1.5">Answers</p>
+            <p className="text-xs font-bold text-gray-500 mb-1.5">Full Intake Answers</p>
             <div className="space-y-1">
               {Object.entries(lead.answers || {}).map(([qId, raw]) => {
                 const q = questionById(qId);
@@ -576,10 +803,11 @@ function LeadRow({
           </div>
           {Array.isArray(lead.recommendations) && lead.recommendations.length > 0 && (
             <div>
-              <p className="text-xs font-bold text-gray-500 mb-1.5">Recommended</p>
+              <p className="text-xs font-bold text-gray-500 mb-1.5">Possible Treatment Categories</p>
               <p className="text-xs text-gray-600">{lead.recommendations.map((r: any) => (typeof r === "string" ? r : r?.name)).filter(Boolean).join(", ")}</p>
             </div>
           )}
+          <DoctorReviewPanel lead={lead} onUpdate={onUpdate} doctorNoteTemplates={doctorNoteTemplates} />
         </div>
       )}
     </div>
@@ -640,6 +868,23 @@ function AnalyticsTab() {
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <p className="text-sm font-bold text-gray-700 mb-1">Traffic Source</p>
         <p className="text-xs text-gray-400">QR / in-clinic: <b>{data.qrLeads}</b> · Web / organic: <b>{data.organicLeads}</b></p>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <p className="text-sm font-bold text-gray-700 mb-1">By Preferred Clinic</p>
+        <p className="text-xs text-gray-400 mb-3">Which branch patients said they'd like to be seen at (Step 2 of the intake) — not QR/link attribution.</p>
+        <div className="space-y-2">
+          {(!data.preferredClinicBreakdown || data.preferredClinicBreakdown.length === 0) && <p className="text-xs text-gray-400">No preferred-clinic data yet.</p>}
+          {data.preferredClinicBreakdown?.map((c: any) => (
+            <div key={c.label} className="flex items-center gap-3">
+              <span className="text-xs text-gray-600 w-32 truncate">{c.label}</span>
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-[#F5A623] rounded-full" style={{ width: `${c.pct}%` }} />
+              </div>
+              <span className="text-xs font-semibold text-gray-500 w-16 text-right">{c.count} · {c.pct}%</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <BreakdownPanel title="By Clinic Location" rows={data.locationBreakdown} emptyText="No location-tagged QR scans yet — generate one in the QR Generator tab." />
@@ -1007,13 +1252,25 @@ export default function AiAssessmentAdminPage() {
               No concerns tagged yet. Go to Questions and tag an answer (e.g. "hair") with weight ≥ 50 — it'll appear here automatically.
             </div>
           ) : (
-            config.treatmentMap.map((entry) => (
+            config.treatmentMap.map((entry) => {
+              // Knowledge Base completeness — how many of this concern's
+              // treatments have real doctor-authored clinical content
+              // (indicators/causes/evaluation) vs. still sitting at the
+              // empty Phase 1 placeholder. A quick signal for which concerns
+              // still need a doctor's pass before they're consultation-ready.
+              const authored = entry.treatments.filter((t) => t.clinicalIndicators.length > 0 || t.possibleCauses.length > 0 || t.suggestedEvaluation.length > 0).length;
+              return (
               <div key={entry.concernTag} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <button onClick={() => setOpenConcern(openConcern === entry.concernTag ? null : entry.concernTag)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition">
                   <div>
                     <span className="font-semibold text-gray-800">{entry.concernLabel || entry.concernTag}</span>
                     <span className="ml-3 text-xs text-gray-400">{entry.treatments.length} treatments</span>
+                    {entry.treatments.length > 0 && (
+                      <span className={`ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${authored === entry.treatments.length ? "bg-green-100 text-green-700" : authored > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                        🩺 {authored}/{entry.treatments.length} clinically authored
+                      </span>
+                    )}
                   </div>
                   <span className="text-gray-400">{openConcern === entry.concernTag ? "▲" : "▼"}</span>
                 </button>
@@ -1023,7 +1280,8 @@ export default function AiAssessmentAdminPage() {
                   </div>
                 )}
               </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
@@ -1078,6 +1336,17 @@ export default function AiAssessmentAdminPage() {
             <p className="text-sm font-bold text-gray-700">Doctor's Message</p>
             <p className="text-xs text-gray-400">Shown on the results screen, above the booking CTA.</p>
             <Textarea value={config.doctorMessage} onChange={(v) => updateConfig({ doctorMessage: v })} rows={3} />
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <p className="text-sm font-bold text-gray-700">Doctor Notes Templates</p>
+            <p className="text-xs text-gray-400">Reusable snippets a doctor can quick-insert into a lead's Doctor Notes in the Leads tab — one per line.</p>
+            <Textarea
+              value={(config.settings.doctorNoteTemplates || []).join("\n")}
+              onChange={(v) => updateConfig({ settings: { ...config.settings, doctorNoteTemplates: v.split("\n").map((x) => x.trim()).filter(Boolean) } })}
+              rows={4}
+              placeholder="Recommended in-clinic evaluation before finalizing any treatment."
+            />
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-2">
