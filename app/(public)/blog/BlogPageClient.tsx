@@ -129,7 +129,11 @@ export default function BlogPageClient({
   return (
     <div className="min-h-screen bg-white">
       {/* ── Hero ── */}
-      <section className="bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0B2560] text-white pt-16 pb-20 px-4">
+      {/* pb-32 (vs. pb-20 on lg+) keeps the category pills below clear of the
+          fixed mobile WhatsApp/Call/Book bar — without it, the pills row can
+          land partially behind the bar right on first paint, before any
+          scrolling. */}
+      <section className="bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0B2560] text-white pt-16 pb-32 lg:pb-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-4">
             Medical Knowledge Center

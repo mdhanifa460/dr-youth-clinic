@@ -126,11 +126,17 @@ export default async function LocationPage({ params }: { params: { location: str
       <main>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
-        <section id="home" className="py-24 px-6 md:px-10 bg-background">
+        {/* py-14/space-y-5 on mobile (vs md:py-24/md:space-y-7) trims enough
+            vertical rhythm that the CTA row below lands above the fixed
+            mobile WhatsApp/Call/Book bar instead of behind it —
+            margin-bottom on the CTA itself can't fix this (it only pushes
+            what comes AFTER it, not the row's own position), so the fix has
+            to come from the space above. */}
+        <section id="home" className="py-8 md:py-24 px-6 md:px-10 bg-background">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-start">
 
             {/* LEFT — headline + CTAs */}
-            <div className="space-y-7 pt-4">
+            <div className="space-y-4 md:space-y-7 pt-4">
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-tertiary text-primary text-sm font-semibold">
                 <BadgeCheck size={15} />
                 DR Youth Clinic — {loc.name}
@@ -142,7 +148,7 @@ export default async function LocationPage({ params }: { params: { location: str
                 <span className="text-secondary">in {loc.name}</span>
               </h1>
 
-              <p className="text-gray-700 text-lg leading-relaxed font-semibold max-w-lg">
+              <p className="text-gray-700 text-base md:text-lg leading-relaxed font-semibold max-w-lg">
                 {description}
               </p>
 

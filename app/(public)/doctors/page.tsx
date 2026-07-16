@@ -80,7 +80,13 @@ export default async function DoctorsPage() {
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 w-64 h-64 rounded-full bg-white/[0.03] pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
+        {/* py-10/mt-6 on mobile (vs md:py-24/md:mt-10) trims enough vertical
+            rhythm that the CTA button below lands above the fixed mobile
+            WhatsApp/Call/Book bar instead of behind it — margin-bottom on
+            the CTA itself can't fix this (it only pushes what comes AFTER
+            it, not the button's own position), so the fix has to come from
+            the space above. */}
+        <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-24">
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">
             DR Youth Clinic
           </p>
@@ -93,7 +99,7 @@ export default async function DoctorsPage() {
           </p>
 
           {/* Stats row */}
-          <div className="flex flex-wrap gap-8 mt-10">
+          <div className="flex flex-wrap gap-8 mt-6 md:mt-10">
             {STATS.map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
@@ -108,7 +114,7 @@ export default async function DoctorsPage() {
           </div>
 
           {/* CTA */}
-          <div className="mt-8">
+          <div className="mt-6 md:mt-8">
             <Link
               href="/book"
               className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg shadow-[#0B2560]/30"
