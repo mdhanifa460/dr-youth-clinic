@@ -767,7 +767,18 @@ export default function SkinQuizPage() {
 
   const transition = (fn: () => void) => {
     setVisible(false);
-    setTimeout(() => { fn(); setVisible(true); }, 200);
+    setTimeout(() => {
+      fn();
+      // Every screen change (intro→lead, lead→question, Back/Next between
+      // questions, →results) goes through here — without resetting scroll,
+      // a screen renders wherever the user happened to have scrolled to on
+      // the PREVIOUS (often taller) screen, so a shorter new screen can
+      // land mid-content or with its CTA already flush against the fixed
+      // mobile bottom bar, looking like a sizing/layout bug rather than a
+      // scroll-position one.
+      window.scrollTo({ top: 0, behavior: "auto" });
+      setVisible(true);
+    }, 200);
   };
 
   // Welcome → Lead capture (Step 2) — not straight into questions. Track
@@ -970,7 +981,12 @@ export default function SkinQuizPage() {
         </div>
       </div>
 
-      <div className={`max-w-2xl mx-auto px-4 py-8 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
+      {/* pb-28 clears the fixed MobileStickyBar (WhatsApp/Call/Book, ~62-72px
+          tall incl. safe-area) on mobile — without it, in-flow CTAs like the
+          question screen's Back/Next row can land underneath the bar instead
+          of above it, since the bar is always pinned to the viewport bottom
+          regardless of how tall this page's own content is. */}
+      <div className={`max-w-2xl mx-auto px-4 py-8 pb-28 lg:pb-12 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
         {screen === "intro" && !configReady && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-10 h-10 rounded-full border-4 border-[#0B2560]/20 border-t-[#0B2560] animate-spin" />
