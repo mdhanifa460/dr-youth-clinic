@@ -12,6 +12,7 @@ import {
   type TreatmentRecommendation,
 } from "@/app/lib/quizDefaults";
 import { deriveConfidenceLevel } from "@/app/lib/confidenceLevel";
+import { canAccess, type AdminRole } from "@/app/lib/permissions";
 
 // ─── Small reusable inputs ─────────────────────────────────────────────────
 
@@ -403,7 +404,7 @@ function ConcernTreatmentPanel({ entry, aiPrompt, enableAI, onChange }: { entry:
 // Individual visitor submissions — previously only aggregate Analytics
 // numbers existed, so a doctor had no way to open a specific person's
 // gender/age/uploaded photo/full answers before this.
-function LeadsTab() {
+function LeadsTab({ canFullReview }: { canFullReview: boolean }) {
   const [leads, setLeads] = useState<any[]>([]);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [doctorNoteTemplates, setDoctorNoteTemplates] = useState<string[]>([]);
@@ -460,6 +461,7 @@ function LeadsTab() {
           onToggle={() => setExpanded(expanded === lead._id ? null : lead._id)}
           onUpdate={(patch) => updateLead(lead._id, patch)}
           doctorNoteTemplates={doctorNoteTemplates}
+          canFullReview={canFullReview}
         />
       ))}
       {totalPages > 1 && (
@@ -561,7 +563,7 @@ function NoteBlock({ note, primaryConcern }: { note: string; primaryConcern: str
 // be generated once aiSummary.status === "approved" and always builds it from
 // the doctor's own edited text, never the raw AI draft — this panel is just
 // the UI for that state machine, not where the gate actually lives.
-function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates }: { lead: any; onUpdate: (patch: any) => void; doctorNoteTemplates: string[] }) {
+function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates, canFullReview }: { lead: any; onUpdate: (patch: any) => void; doctorNoteTemplates: string[]; canFullReview: boolean }) {
   const [editedText, setEditedText] = useState(lead.aiSummary?.editedText || lead.aiSummary?.draftText || "");
   const [doctorNotes, setDoctorNotes] = useState(lead.doctorNotes || "");
   const [finalRecommendation, setFinalRecommendation] = useState(lead.finalRecommendation || "");
@@ -636,10 +638,16 @@ function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates }: { lead: any;
             {status === "approved" ? "Approved" : status === "draft" ? "Draft — needs review" : "No summary yet"}
           </span>
         </p>
-        <button onClick={generateSummary} disabled={busy !== ""} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50 shrink-0">
+        <button onClick={generateSummary} disabled={busy !== "" || !canFullReview} title={canFullReview ? "" : "Requires full access to this module"} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50 shrink-0">
           {busy === "generating" ? "Generating…" : hasDraft ? "↻ Regenerate AI Summary" : "✨ Generate AI Summary"}
         </button>
       </div>
+
+      {!canFullReview && (
+        <p className="text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          You have view-only access to Clinical Intake — generating, editing, approving, or saving requires full access.
+        </p>
+      )}
 
       {hasDraft && (
         <div>
@@ -650,15 +658,16 @@ function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates }: { lead: any;
             value={editedText}
             onChange={(e) => setEditedText(e.target.value)}
             rows={10}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={!canFullReview}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
           />
           <div className="flex items-center gap-2 mt-2">
             {status !== "approved" ? (
-              <button onClick={() => setApproval(true)} disabled={busy !== ""} className="text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50">
+              <button onClick={() => setApproval(true)} disabled={busy !== "" || !canFullReview} className="text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50">
                 {busy === "approving" ? "Approving…" : "✓ Approve Summary"}
               </button>
             ) : (
-              <button onClick={() => setApproval(false)} disabled={busy !== ""} className="text-xs font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:text-gray-700">
+              <button onClick={() => setApproval(false)} disabled={busy !== "" || !canFullReview} className="text-xs font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:text-gray-700">
                 Un-approve (edit again)
               </button>
             )}
@@ -673,7 +682,7 @@ function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates }: { lead: any;
         <div className="border-t border-gray-100 pt-3">
           <div className="flex items-center justify-between gap-2 mb-2">
             <p className="text-xs font-bold text-gray-600">Personalized Care Plan</p>
-            <button onClick={generateCarePlan} disabled={busy !== ""} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50">
+            <button onClick={generateCarePlan} disabled={busy !== "" || !canFullReview} className="text-xs font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50">
               {busy === "careplan" ? "Generating…" : lead.carePlan?.text ? "↻ Regenerate Care Plan" : "✨ Generate Personalized Care Plan"}
             </button>
           </div>
@@ -715,7 +724,7 @@ function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates }: { lead: any;
           <label className="text-[10px] text-gray-400 block mb-0.5">Treatment Plan</label>
           <Textarea value={treatmentPlan} onChange={editTreatmentPlan} placeholder="Confirmed plan after consultation…" rows={2} />
         </div>
-        <button onClick={saveDoctorFields} disabled={busy !== ""} className="text-xs font-semibold bg-[#0B2560] text-white px-3 py-1.5 rounded-lg hover:bg-[#1a3a6e] disabled:opacity-50">
+        <button onClick={saveDoctorFields} disabled={busy !== "" || !canFullReview} className="text-xs font-semibold bg-[#0B2560] text-white px-3 py-1.5 rounded-lg hover:bg-[#1a3a6e] disabled:opacity-50">
           {busy === "saving" ? "Saving…" : savedFields ? "✓ Saved" : "Save"}
         </button>
       </div>
@@ -726,7 +735,7 @@ function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates }: { lead: any;
 }
 
 function LeadRow({
-  lead, questions, questionById, answerLabel, photoQuestionIds, noteQuestionIds, isOpen, onToggle, onUpdate, doctorNoteTemplates,
+  lead, questions, questionById, answerLabel, photoQuestionIds, noteQuestionIds, isOpen, onToggle, onUpdate, doctorNoteTemplates, canFullReview,
 }: {
   lead: any;
   questions: AssessmentQuestion[];
@@ -738,6 +747,7 @@ function LeadRow({
   onToggle: () => void;
   onUpdate: (patch: any) => void;
   doctorNoteTemplates: string[];
+  canFullReview: boolean;
 }) {
   const photoUrls = photoQuestionIds.map((id) => lead.answers?.[id]).filter(Boolean);
   const notes: string[] = noteQuestionIds.map((id) => lead.answers?.[id]).filter(Boolean);
@@ -807,7 +817,7 @@ function LeadRow({
               <p className="text-xs text-gray-600">{lead.recommendations.map((r: any) => (typeof r === "string" ? r : r?.name)).filter(Boolean).join(", ")}</p>
             </div>
           )}
-          <DoctorReviewPanel lead={lead} onUpdate={onUpdate} doctorNoteTemplates={doctorNoteTemplates} />
+          <DoctorReviewPanel lead={lead} onUpdate={onUpdate} doctorNoteTemplates={doctorNoteTemplates} canFullReview={canFullReview} />
         </div>
       )}
     </div>
@@ -1078,10 +1088,18 @@ export default function AiAssessmentAdminPage() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"questions" | "treatments" | "leads" | "analytics" | "qr" | "settings">("questions");
   const [openConcern, setOpenConcern] = useState<string | null>(null);
+  const [myRole, setMyRole] = useState<AdminRole | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/quiz").then((r) => r.json()).then((d) => { if (d.success) setConfig(d.data); }).catch(() => {}).finally(() => setLoading(false));
+    fetch("/api/admin/profile").then((r) => r.json()).then((d) => { if (d.success) setMyRole(d.data.role); }).catch(() => {});
   }, []);
+
+  // Doctor Review Mode's Save/Approve/Generate Care Plan actions are gated
+  // server-side at "full" — this mirrors that here so a "view"-only user
+  // sees those actions disabled instead of clicking them and getting a
+  // confusing permissions error.
+  const canFullReview = myRole ? canAccess(myRole, "ai-assessment", "full") : false;
 
   const updateConfig = (patch: Partial<AssessmentConfigData>) => {
     setConfig((prev) => {
@@ -1286,7 +1304,7 @@ export default function AiAssessmentAdminPage() {
         </div>
       )}
 
-      {tab === "leads" && <LeadsTab />}
+      {tab === "leads" && <LeadsTab canFullReview={canFullReview} />}
       {tab === "analytics" && <AnalyticsTab />}
       {tab === "qr" && (
         config.settings.enableQR ? <QrGeneratorTab /> : (

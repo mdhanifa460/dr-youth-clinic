@@ -3,6 +3,18 @@ import { connectDB } from "@/app/lib/mongodb";
 import AdminUser from "@/app/models/AdminUser";
 import { getAdminUser, hashPassword, checkPassword } from "@/app/lib/adminAuth";
 
+// Lets a client component find out its own user's role/permission level —
+// e.g. to hide or disable a "full"-only action instead of letting a
+// view-only user click it and get a confusing 403 (same info AdminSidebar
+// already gets, but that one is server-rendered via app/admin/layout.tsx;
+// pages that are "use client" all the way down have no other way to learn
+// their own role without a request like this one).
+export async function GET() {
+  const me = await getAdminUser();
+  if (!me) return NextResponse.json({ success: false, message: "Unauthorised" }, { status: 401 });
+  return NextResponse.json({ success: true, data: { role: me.role, name: me.name, email: me.email } });
+}
+
 export async function PUT(req: NextRequest) {
   const me = await getAdminUser();
   if (!me) return NextResponse.json({ success: false, message: "Unauthorised" }, { status: 401 });
