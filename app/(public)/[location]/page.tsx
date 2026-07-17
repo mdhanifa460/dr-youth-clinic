@@ -12,6 +12,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
 import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
 import { cloudGalleryThumb, cloudHero } from '@/app/lib/cloudinary-url';
+import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerRenderer from '@/app/components/banners/BannerRenderer';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -93,7 +95,10 @@ export default async function LocationPage({ params }: { params: { location: str
   const loc = locations[cityKey];
   if (!loc) notFound();
 
-  const [content] = await Promise.all([getLocationContent(cityKey)]);
+  const [content, locationBanner] = await Promise.all([
+    getLocationContent(cityKey),
+    resolveBanner({ page: 'location', location: cityKey }),
+  ]);
   const otherCities = Object.entries(locations).filter(([k]) => k !== cityKey);
   const hasHero    = !!(content?.heroImage?.url);
   const hasPairs   = (content?.beforeAfterPairs?.length ?? 0) > 0;
@@ -126,12 +131,14 @@ export default async function LocationPage({ params }: { params: { location: str
       <main>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
-        {/* py-14/space-y-5 on mobile (vs md:py-24/md:space-y-7) trims enough
-            vertical rhythm that the CTA row below lands above the fixed
-            mobile WhatsApp/Call/Book bar instead of behind it —
-            margin-bottom on the CTA itself can't fix this (it only pushes
-            what comes AFTER it, not the row's own position), so the fix has
-            to come from the space above. */}
+        {/* A matching Banner (admin-configured) takes over this slot when
+            one exists; otherwise the original hardcoded hero below renders
+            unchanged, including its mobile-spacing fix (py-8 md:py-24 etc.
+            trims enough vertical rhythm that the CTA row clears the fixed
+            mobile WhatsApp/Call/Book bar). */}
+        {locationBanner ? (
+          <BannerRenderer banner={locationBanner} />
+        ) : (
         <section id="home" className="py-8 md:py-24 px-6 md:px-10 bg-background">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-start">
 
@@ -251,6 +258,7 @@ export default async function LocationPage({ params }: { params: { location: str
             </div>
           </div>
         </section>
+        )}
 
         {/* ── SPECIALTIES ──────────────────────────────────────────────────── */}
         <section id="services" className="py-20 px-6 md:px-10 bg-white">

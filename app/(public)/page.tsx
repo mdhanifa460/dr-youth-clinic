@@ -12,6 +12,8 @@ import { LocationContent } from '@/app/models/LocationContent';
 import Booking from '@/app/models/Booking';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
+import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerRenderer from '@/app/components/banners/BannerRenderer';
 
 import HeroSection from '@/app/components/homepage/HeroSection';
 import StatsBar from '@/app/components/homepage/StatsBar';
@@ -291,7 +293,7 @@ export default async function Home() {
   const rawCity = headers().get('x-vercel-ip-city') || '';
   const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -300,6 +302,7 @@ export default async function Home() {
     getCachedBlogPosts(),
     getCachedFeaturedVideos(),
     getCachedTrustStats(),
+    resolveBanner({ page: 'homepage' }),
   ]);
 
   const enriched = {
@@ -335,6 +338,17 @@ export default async function Home() {
       {publicSectionOrder
         .filter((s) => s.visible)
         .map((s) => {
+          // A matching Banner (admin-configured, scheduled/targeted) takes
+          // over the hero slot when one exists; otherwise the existing
+          // HomepageSection-driven HeroSection renders exactly as before —
+          // this feature never deletes the original hero, only overrides it.
+          if (s.key === 'hero' && heroBanner) {
+            return (
+              <div key={s.key}>
+                <BannerRenderer banner={heroBanner} />
+              </div>
+            );
+          }
           const Component = SECTION_COMPONENTS[s.key];
           if (!Component) return null;
           return (

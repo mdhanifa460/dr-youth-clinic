@@ -31,6 +31,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/homepage", label: "🏠 Homepage", module: "homepage" },
       { href: "/admin/about", label: "📖 About Page", module: "homepage" },
+      { href: "/admin/banners", label: "🎯 Banners", module: "banners" },
       { href: "/admin/landing-pages", label: "🚀 Landing Pages", module: "landing-pages", countKey: "landingPages" },
       { href: "/admin/services", label: "🩺 Services", module: "services", countKey: "services" },
       { href: "/admin/locations", label: "📍 Locations", module: "locations" },

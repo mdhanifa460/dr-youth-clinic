@@ -17,6 +17,8 @@ import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
 import { blocksToPlainText, hasVisibleBlockType } from '@/app/lib/contentBlocks/types';
 import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
+import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import CostEstimator from '@/app/components/CostEstimator';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
 import EMICalculator from '@/app/components/EMICalculator';
@@ -264,7 +266,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos, serviceBanner] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
@@ -273,6 +275,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     resolveReferencedDoctors(svc.narrativeBlocks),
     resolveRelatedLinks(svc.narrativeBlocks),
     resolveReferencedVideos(svc.narrativeBlocks),
+    resolveBanner({ page: 'service', location: params.location, service: svc.urlSlug || params.slug }),
   ]);
 
   const cityName = loc.name;
@@ -314,6 +317,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         </nav>
 
         {/* ── HERO ── */}
+        {/* A matching Banner (admin-configured) takes over this slot when
+            one exists; otherwise the original hardcoded hero below renders
+            unchanged. */}
+        {serviceBanner ? (
+          <BannerRenderer banner={serviceBanner} />
+        ) : (
         <section className="relative bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute -top-24 -right-24 w-[480px] h-[480px] rounded-full bg-white/[0.03]" />
@@ -397,6 +406,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
           </div>
         </section>
+        )}
 
         {/* ── TRUST BAR ── */}
         <section className="bg-[#0B2560] border-t border-white/5">

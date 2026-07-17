@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const rawFolder = (formData.get('folder') as string) || 'dr-youth-clinic/services';
 
     // Only allow uploads into known dr-youth-clinic sub-folders
-    const FOLDER_PATTERN = /^dr-youth-clinic\/(services|doctors|gallery|hero|blogs|locations|results|homepage|offers)(\/[a-z0-9-]+)*$/;
+    const FOLDER_PATTERN = /^dr-youth-clinic\/(services|doctors|gallery|hero|blogs|locations|results|homepage|offers|banners)(\/[a-z0-9-]+)*$/;
     const folder = FOLDER_PATTERN.test(rawFolder) ? rawFolder : 'dr-youth-clinic/services';
 
     // ============ VALIDATION ============

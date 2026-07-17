@@ -25,7 +25,8 @@ export type AdminModule =
   | 'settings'
   | 'team'
   | 'videos'
-  | 'ai-assessment';
+  | 'ai-assessment'
+  | 'banners';
 
 export type AccessLevel = 'full' | 'view' | 'none';
 
@@ -35,28 +36,28 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'full', doctors: 'full', homepage: 'full',
     locations: 'full', offers: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full',
+    settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', banners: 'full',
   },
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
     services: 'full', doctors: 'full', homepage: 'full',
     locations: 'full', offers: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full',
+    settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', banners: 'full',
   },
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
     services: 'full', doctors: 'view', homepage: 'full',
     locations: 'view', offers: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full',
+    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', banners: 'full',
   },
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'view', doctors: 'view', homepage: 'none',
     locations: 'none', offers: 'none', reviews: 'view',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full',
+    settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', banners: 'none',
   },
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
@@ -66,7 +67,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // Was 'services: view' before this feature had its own module — the
     // quiz page was reachable at that level, so 'none' here would be a
     // silent access regression, not an intentional policy change.
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', banners: 'none',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
@@ -75,14 +76,14 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     // Was 'services: full' before this feature had its own module — content
     // editors could already edit quiz content at that level.
-    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full',
+    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', banners: 'full',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'none', doctors: 'none', homepage: 'none',
     locations: 'none', offers: 'none', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', banners: 'none',
   },
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -90,7 +91,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     locations: 'view', offers: 'view', reviews: 'full',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     // Was 'services: view' before this feature had its own module.
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', banners: 'none',
   },
 };
 
