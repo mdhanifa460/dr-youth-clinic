@@ -3,6 +3,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Lead } from '@/app/models/Lead';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 import { normalizePhone } from '@/app/lib/phone';
+import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -61,9 +62,13 @@ async function sendPlanEmail(email: string, concern: string, recommendations: an
   }
 }
 
-function notifyClinicWhatsApp(body: string) {
+// `to` is resolved per-lead by the caller via getClinicNotifyNumber() (the
+// lead's preferred/attributed clinic branch, falling back to the global
+// CLINIC_PHONE) — this used to always notify the single global number
+// regardless of which branch the patient actually picked.
+function notifyClinicWhatsApp(body: string, to: string | undefined) {
   // Fire-and-forget — never block the response on the clinic's own notification.
-  if (!(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID && process.env.CLINIC_PHONE)) return;
+  if (!(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID && to)) return;
   fetch(`https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
     headers: {
@@ -72,7 +77,7 @@ function notifyClinicWhatsApp(body: string) {
     },
     body: JSON.stringify({
       messaging_product: 'whatsapp',
-      to: process.env.CLINIC_PHONE,
+      to,
       type: 'text',
       text: { body },
     }),
@@ -116,9 +121,12 @@ export async function POST(req: NextRequest) {
       channel: channel || '',
     });
 
-    notifyClinicWhatsApp(
-      `📋 New Clinical Intake Lead\n\nName: ${name.trim()}\nPhone: ${phone}${preferredClinic ? `\nPreferred Clinic: ${preferredClinic}` : ''}\n\nStill completing their intake form.`
-    );
+    getClinicNotifyNumber(preferredClinic || clinicLocation).then((to) => {
+      notifyClinicWhatsApp(
+        `📋 New Clinical Intake Lead\n\nName: ${name.trim()}\nPhone: ${phone}${preferredClinic ? `\nPreferred Clinic: ${preferredClinic}` : ''}\n\nStill completing their intake form.`,
+        to
+      );
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, leadId: String(lead._id) });
   } catch (err: any) {
@@ -183,9 +191,12 @@ export async function PATCH(req: NextRequest) {
 
     if (hasIntakeData) {
       const recNames = recs.map((r: any) => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(', ');
-      notifyClinicWhatsApp(
-        `✅ Clinical Intake Completed\n\nName: ${lead.name || 'Unknown'}\nPhone: ${lead.phone || 'Unknown'}\nConcern: ${concern || 'Unknown'}\nPossible discussion topics: ${recNames || 'N/A'}`
-      );
+      getClinicNotifyNumber(lead.preferredClinic || lead.clinicLocation).then((to) => {
+        notifyClinicWhatsApp(
+          `✅ Clinical Intake Completed\n\nName: ${lead.name || 'Unknown'}\nPhone: ${lead.phone || 'Unknown'}\nConcern: ${concern || 'Unknown'}\nPossible discussion topics: ${recNames || 'N/A'}`,
+          to
+        );
+      }).catch(() => {});
     }
 
     return NextResponse.json({ success: true, emailSent });
