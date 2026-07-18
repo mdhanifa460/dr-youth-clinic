@@ -226,11 +226,13 @@ function ReviewModal({
 }) {
   const [form, setForm] = useState({ ...EMPTY_FORM, ...initial });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
       await onSave({
         ...form,
@@ -239,6 +241,14 @@ function ReviewModal({
           : [],
         rating: Number(form.rating),
       });
+      // onSave (saveReview) only resolves on genuine success — it closes
+      // this modal itself, so there's nothing left to do here.
+    } catch (err: any) {
+      // Previously onSave never rejected even when the API call failed
+      // (wrong permissions, validation error, etc.) — the modal closed as
+      // if it saved and the doctor had no idea the review was never
+      // actually created. Surface it instead of silently discarding it.
+      setError(err.message || 'Failed to save review');
     } finally {
       setSaving(false);
     }
@@ -362,6 +372,10 @@ function ReviewModal({
             ))}
           </div>
 
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose}
               className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
@@ -419,20 +433,24 @@ export default function ReviewsAdminPage() {
   };
 
   const saveReview = async (data: any) => {
-    if (data._id) {
-      // Edit
-      await fetch(`/api/admin/reviews/${data._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-    } else {
-      // Create
-      await fetch('/api/admin/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    // Previously this never checked res.ok/success — a failed save (wrong
+    // permissions, a validation error, anything) still fell through to
+    // setModal(null) below, so the dialog closed looking successful while
+    // nothing was actually written. Only close on a genuine 2xx + success.
+    const res = data._id
+      ? await fetch(`/api/admin/reviews/${data._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+      : await fetch('/api/admin/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json.success === false) {
+      throw new Error(json.message || `Failed to save review (${res.status})`);
     }
     setModal(null);
     fetchReviews();

@@ -89,9 +89,18 @@ const ReviewSchema = new Schema<IReview>(
   { timestamps: true }
 );
 
+// Prevents importing the same Google/synced review twice — but must NEVER
+// apply to manual reviews, which never have a sourceId at all. A `sparse`
+// index only excludes documents where the field is entirely absent; once
+// even one document is saved with sourceId explicitly `null` (as every
+// manual review naturally is), MongoDB treats that null as a real indexed
+// value and the FIRST manual review permanently blocks every manual review
+// created after it with a duplicate-key error. A partial index filtered to
+// "sourceId is an actual string" is the correct fix — null/missing values
+// are never subject to the uniqueness constraint at all.
 ReviewSchema.index(
   { source: 1, sourceId: 1 },
-  { unique: true, sparse: true }
+  { unique: true, partialFilterExpression: { sourceId: { $type: 'string' } } }
 );
 
 ReviewSchema.index({

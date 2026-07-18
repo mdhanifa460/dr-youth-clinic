@@ -42,7 +42,11 @@ export async function POST(req: NextRequest) {
 
     const review = await Review.create({
       source: body.source || 'manual',
-      sourceId: body.sourceId,
+      // Omit entirely rather than passing `undefined`/`null` through —
+      // belt-and-suspenders alongside the partial unique index fix on
+      // {source, sourceId} (see Review.ts), so a manual review never even
+      // risks tripping the Google-review-dedupe constraint.
+      ...(body.sourceId ? { sourceId: body.sourceId } : {}),
       authorName: body.authorName.trim(),
       authorAvatar: body.authorAvatar || '',
       rating: body.rating ? Number(body.rating) : undefined,
