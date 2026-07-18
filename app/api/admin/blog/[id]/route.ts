@@ -3,6 +3,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { deleteImage } from '@/app/lib/cloudinary';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { removeChunk } from '@/app/lib/rag/KnowledgeBase';
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   const denied = await requirePermission('blog', 'view');
@@ -50,6 +51,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     if (!post) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     if (post.coverImage?.publicId) await deleteImage(post.coverImage.publicId).catch(console.error);
     await (Blog as any).findByIdAndDelete(params.id);
+    removeChunk('blog', params.id).catch(console.error);
     return NextResponse.json({ success: true, message: 'Post deleted' });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to delete post' }, { status: 500 });

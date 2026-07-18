@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
 
 export interface ILocationSeo {
   location: string;
@@ -359,6 +360,21 @@ ServiceSchema.pre('findOneAndUpdate', function () {
   if (target && typeof target === 'object') {
     target.seoScore = computeSeoScore(target);
   }
+});
+
+// Keeps the RAG knowledge base (KnowledgeChunk) in sync whenever a service is
+// created or edited. Fire-and-forget + logged, never allowed to fail the
+// actual save — a knowledge-base sync hiccup must not block admin content edits.
+ServiceSchema.post('save', function (doc) {
+  syncKnowledgeChunk('service', doc).catch((e) => console.error('[KB] service sync failed', e));
+});
+
+// pre('findOneAndUpdate') above only has the update payload, not the full
+// resulting document — insufficient for a knowledge chunk, which needs the
+// complete name/narrative/benefits/faq. Every admin PUT route already passes
+// {new: true}, so post('findOneAndUpdate') receives the updated doc directly.
+ServiceSchema.post('findOneAndUpdate', function (doc) {
+  if (doc) syncKnowledgeChunk('service', doc).catch((e) => console.error('[KB] service sync failed', e));
 });
 
 export const Service = mongoose.models.Service || mongoose.model('Service', ServiceSchema);

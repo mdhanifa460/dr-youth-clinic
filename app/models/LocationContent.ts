@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
 
 export interface IBeforeAfterPair {
   title: string;
@@ -141,6 +142,21 @@ const LocationContentSchema = new Schema<ILocationContent>(
   { timestamps: true }
 );
 
+
+// LocationContent never calls .save()/.create() — only findOneAndUpdate
+// (upsert). Confirmed the admin GET route also does a lazy find-or-create
+// upsert (`$setOnInsert` only, no real content change) on every page view —
+// guard against syncing on that call, or every admin page load would embed
+// unnecessarily. Can't just check "$set is present": the `{timestamps:true}`
+// option makes Mongoose auto-inject `$set: {updatedAt}` into every update,
+// including the lazy GET-route's setOnInsert-only touch — so the real signal
+// is whether $set carries any key besides updatedAt.
+LocationContentSchema.post('findOneAndUpdate', function (doc) {
+  const update: any = this.getUpdate();
+  const realChange = Object.keys(update?.$set || {}).some((k) => k !== 'updatedAt');
+  if (!doc || !realChange) return;
+  syncKnowledgeChunk('location', doc).catch((e) => console.error('[KB] location sync failed', e));
+});
 
 export const LocationContent =
   (mongoose.models.LocationContent as mongoose.Model<ILocationContent>) ||

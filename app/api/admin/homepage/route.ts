@@ -5,6 +5,8 @@ import { HomepageSection } from '@/app/models/HomepageSection';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { syncFaqChunks } from '@/app/lib/rag/KnowledgeBase';
+import { flattenStaticFaqs } from '@/app/lib/rag/staticFaqs';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +76,20 @@ export async function PUT(req: NextRequest) {
 
     await (HomepageSection as any).bulkWrite(ops);
     revalidateTag('homepage-layout');
+
+    // Keep the RAG knowledge base's FAQ chunks in sync — fire-and-forget +
+    // logged, never allowed to fail the actual homepage save. FAQs have no
+    // per-document home to hook a save/update middleware on (they live inside
+    // this one section's Mixed `data.faqs` array), so this PUT route is the
+    // only viable sync trigger.
+    const faqSection = normalizedSections.find((s: any) => s.sectionKey === 'faq');
+    if (faqSection) {
+      syncFaqChunks(flattenStaticFaqs(), faqSection.data?.faqs ?? [])
+        .then((r) => {
+          if (r.failed.length > 0) console.error('[KB] faq sync had failures', r.failed);
+        })
+        .catch((e) => console.error('[KB] faq sync failed', e));
+    }
 
     return NextResponse.json({ success: true, message: 'Homepage saved successfully' });
   } catch (err: any) {

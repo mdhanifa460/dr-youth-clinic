@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
 
 export interface IDoctor extends Document {
   name: string;
@@ -34,5 +35,16 @@ const DoctorSchema = new Schema<IDoctor>(
   },
   { timestamps: true }
 );
+
+// Keeps the RAG knowledge base (KnowledgeChunk) in sync whenever a doctor is
+// created or edited — fire-and-forget + logged, never allowed to fail the
+// actual save. .create() triggers 'save'; the admin PUT route's
+// findByIdAndUpdate (with {new: true}) triggers 'findOneAndUpdate'.
+DoctorSchema.post('save', function (doc) {
+  syncKnowledgeChunk('doctor', doc).catch((e) => console.error('[KB] doctor sync failed', e));
+});
+DoctorSchema.post('findOneAndUpdate', function (doc) {
+  if (doc) syncKnowledgeChunk('doctor', doc).catch((e) => console.error('[KB] doctor sync failed', e));
+});
 
 export const Doctor = mongoose.models.Doctor || mongoose.model('Doctor', DoctorSchema);

@@ -2,8 +2,13 @@
 
 import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Search, ChevronDown, ChevronUp, MessageCircle, Calendar, Phone } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, MessageCircle, Calendar, Phone, Sparkles } from 'lucide-react';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
+
+type AssistantResult =
+  | { type: 'predefined'; answer: string; matchedQuestion: string }
+  | { type: 'ai-grounded'; answer: string; sources: { title: string; url?: string }[] }
+  | { type: 'no-answer' };
 
 interface FAQItem {
   question: string;
@@ -33,6 +38,9 @@ export default function FAQPageClient({
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [openIndex, setOpenIndex] = useState<string | null>(null);
+  const [assistantResult, setAssistantResult] = useState<AssistantResult | null>(null);
+  const [assistantLoading, setAssistantLoading] = useState(false);
+  const [assistantError, setAssistantError] = useState<string | null>(null);
   const faqListRef = useRef<HTMLDivElement>(null);
   const waHref   = publicWhatsApp ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}` : null;
   const telHref  = publicPhone    ? `tel:${publicPhone.replace(/\s+/g, '')}`              : null;
@@ -41,9 +49,40 @@ export default function FAQPageClient({
     setActiveCategory(cat);
     setSearch('');
     setOpenIndex(null);
+    setAssistantResult(null);
     setTimeout(() => {
       faqListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
+  }
+
+  function updateSearch(value: string) {
+    setSearch(value);
+    setActiveCategory('All');
+    setAssistantResult(null);
+    setAssistantError(null);
+  }
+
+  async function askAssistant() {
+    if (!search.trim() || assistantLoading) return;
+    setAssistantLoading(true);
+    setAssistantError(null);
+    try {
+      const res = await fetch('/api/faq-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: search.trim(), faqs: allItems }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setAssistantError(data.message || 'Something went wrong — please try again.');
+        return;
+      }
+      setAssistantResult(data as AssistantResult);
+    } catch {
+      setAssistantError('Something went wrong — please try again.');
+    } finally {
+      setAssistantLoading(false);
+    }
   }
 
   const allItems = useMemo(
@@ -94,7 +133,7 @@ export default function FAQPageClient({
               type="text"
               placeholder="Search questions — e.g. laser, PRP, cost, recovery..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setActiveCategory('All'); }}
+              onChange={(e) => updateSearch(e.target.value)}
               className="w-full pl-11 pr-4 py-4 rounded-2xl text-gray-800 text-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F5A623]"
             />
           </div>
@@ -148,7 +187,7 @@ export default function FAQPageClient({
           <p className="text-sm text-gray-500 mb-6">
             {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;{search}&rdquo;
             <button
-              onClick={() => setSearch('')}
+              onClick={() => updateSearch('')}
               className="ml-2 text-[#3B82C4] font-semibold hover:underline"
             >
               Clear
@@ -163,12 +202,75 @@ export default function FAQPageClient({
             <p className="text-sm text-gray-500 mb-6">
               Try a different search term or browse by category.
             </p>
-            <button
-              onClick={() => { setSearch(''); setActiveCategory('All'); }}
-              className="text-sm bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold"
-            >
-              Show all questions
-            </button>
+            <div className="flex flex-wrap justify-center gap-3 mb-2">
+              <button
+                onClick={() => updateSearch('')}
+                className="text-sm bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold"
+              >
+                Show all questions
+              </button>
+              {search && !assistantResult && (
+                <button
+                  onClick={askAssistant}
+                  disabled={assistantLoading}
+                  className="flex items-center gap-1.5 text-sm bg-white border border-[#F5A623] text-[#0B2560] px-5 py-2.5 rounded-xl font-semibold disabled:opacity-60"
+                >
+                  <Sparkles size={15} className="text-[#F5A623]" />
+                  {assistantLoading ? 'Thinking…' : 'Ask our AI Assistant instead'}
+                </button>
+              )}
+            </div>
+
+            {assistantError && (
+              <p className="text-sm text-red-500 mt-4 max-w-md mx-auto">{assistantError}</p>
+            )}
+
+            {assistantResult && (
+              <div className="mt-8 max-w-xl mx-auto text-left">
+                {assistantResult.type === 'no-answer' && (
+                  <div className="border border-gray-200 rounded-2xl p-5 bg-gray-50">
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      We don&apos;t have a specific answer for that yet. Book a free consultation and our doctors will help directly.
+                    </p>
+                    <Link href="/book" className="mt-3 inline-flex items-center gap-1.5 text-[#3B82C4] text-xs font-semibold hover:text-[#0B2560] transition">
+                      Book a consultation →
+                    </Link>
+                  </div>
+                )}
+
+                {assistantResult.type === 'predefined' && (
+                  <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
+                      📋 Matched FAQ — did you mean:
+                    </p>
+                    <p className="font-semibold text-[#0B2560] text-sm mb-2">{assistantResult.matchedQuestion}</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">{assistantResult.answer}</p>
+                  </div>
+                )}
+
+                {assistantResult.type === 'ai-grounded' && (
+                  <div className="border border-[#F5A623]/40 rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-white shadow-sm">
+                    <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">
+                      <Sparkles size={12} /> AI-generated answer
+                    </p>
+                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{assistantResult.answer}</p>
+                    {assistantResult.sources.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
+                        {assistantResult.sources.map((s, i) => (
+                          s.url ? (
+                            <Link key={i} href={s.url} className="text-[11px] text-[#3B82C4] hover:underline">
+                              {s.title}
+                            </Link>
+                          ) : (
+                            <span key={i} className="text-[11px] text-gray-400">{s.title}</span>
+                          )
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : search ? (
           /* Search results — flat list */

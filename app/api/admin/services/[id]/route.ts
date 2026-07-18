@@ -4,6 +4,7 @@ import { deleteImage } from '@/app/lib/cloudinary';
 import { Service } from '@/app/models/Service';
 import type { IService } from '@/app/models/Service';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { removeChunk } from '@/app/lib/rag/KnowledgeBase';
 
 export async function GET(
   req: NextRequest,
@@ -126,6 +127,7 @@ export async function DELETE(
     }
 
     await (Service as any).findByIdAndDelete(params.id);
+    removeChunk('service', params.id).catch(console.error);
 
     return NextResponse.json({
       success: true,

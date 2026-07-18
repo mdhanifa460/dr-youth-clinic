@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
 
 export interface IBlog extends Document {
   title: string;
@@ -69,5 +70,15 @@ const BlogSchema = new Schema<IBlog>({
 
 BlogSchema.index({ slug: 1 }, { unique: true });
 BlogSchema.index({ active: 1, publishedAt: -1 });
+
+// Keeps the RAG knowledge base (KnowledgeChunk) in sync whenever a blog post
+// is created or edited — fire-and-forget + logged, never allowed to fail the
+// actual save.
+BlogSchema.post('save', function (doc) {
+  syncKnowledgeChunk('blog', doc).catch((e) => console.error('[KB] blog sync failed', e));
+});
+BlogSchema.post('findOneAndUpdate', function (doc) {
+  if (doc) syncKnowledgeChunk('blog', doc).catch((e) => console.error('[KB] blog sync failed', e));
+});
 
 export const Blog = mongoose.models.Blog || mongoose.model<IBlog>('Blog', BlogSchema);
