@@ -226,3 +226,32 @@ p {
     padding-bottom: 0;
   }
 }
+
+/* ===== OFFERS PAGE — premium gradient-border cards =====
+   A static (non-animated) 1px navy->amber->blue border, applied via a
+   padding-box/border-box gradient trick so the border itself can be a
+   gradient without needing an extra wrapper element. Used by OfferCard.tsx
+   and OfferHighlightRail.tsx. Kept out of tailwind.config.js/legacy
+   .card-premium (see plan) since raw hex arbitrary-values are this
+   codebase's actually-followed color convention. */
+.offer-gradient-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(white, white) padding-box,
+    linear-gradient(135deg, #0B2560, #3B82C4, #F5A623) border-box;
+}
+
+/* Muted/frosted variant for the "Coming Soon" teaser tiles — deliberately
+   visually distinct (dashed, lower-opacity) from real bookable offers above,
+   so patients can tell at a glance these aren't live offers yet. */
+.offer-gradient-border-muted {
+  border: 1.5px dashed rgba(11, 37, 96, 0.18);
+  background: rgba(246, 250, 255, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-gradient-border,
+  .offer-gradient-border-muted {
+    transition: none !important;
+  }
+}

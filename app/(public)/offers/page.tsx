@@ -1,13 +1,20 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
-import { Calendar, Tag, CheckCircle } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Offer } from '@/app/models/Offer';
+import { Doctor } from '@/app/models/Doctor';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { locations } from '@/app/data/locations';
 import OffersClient from './OffersClient';
 import { discountPct } from './OfferCard';
+import OfferHero from './components/OfferHero';
+import OfferHighlightRail from './components/OfferHighlightRail';
+import OfferFAQSection from './components/OfferFAQSection';
+import OfferComingSoonSection from './components/OfferComingSoonSection';
+import OfferDoctorNote from './components/OfferDoctorNote';
+import OfferTestimonials from './components/OfferTestimonials';
 
 export const revalidate = 60;
 
@@ -33,9 +40,21 @@ const getOffers = unstable_cache(
   { revalidate: 60, tags: ['offers'] }
 );
 
+const getFeaturedDoctors = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await (Doctor as any).find({ active: true }).sort({ order: 1, createdAt: -1 }).limit(4).lean();
+      return JSON.parse(JSON.stringify(docs));
+    } catch { return []; }
+  },
+  ['offers-page-doctors'],
+  { revalidate: 300, tags: ['doctors'] }
+);
+
 // ── Page ────────────────────────────────────────────────────────────────────
 export default async function OffersPage() {
-  const [offers, siteConfig] = await Promise.all([getOffers(), getSiteConfig()]);
+  const [offers, siteConfig, doctors] = await Promise.all([getOffers(), getSiteConfig(), getFeaturedDoctors()]);
   const activeOffers = offers.filter((o: any) => !o.validUntil || new Date(o.validUntil) >= new Date());
   const maxSave = activeOffers.reduce((max: number, o: any) => {
     const pct = discountPct(o.originalPrice, o.discountedPrice);
@@ -43,64 +62,31 @@ export default async function OffersPage() {
   }, 0);
   const cityCount = Object.keys(locations).length;
 
-  const TERMS = [
-    'All offers are valid for a limited period and subject to availability.',
-    'Packages cannot be combined with other ongoing discounts or promotions.',
-    'Bookings must be made in advance to avail the offer price.',
-    'Offers are non-transferable and valid for one patient per transaction.',
-    'DR Youth Clinic reserves the right to modify or withdraw any offer without prior notice.',
-    'All treatments are subject to doctor consultation and suitability assessment.',
-  ];
+  const topOffers = [...activeOffers]
+    .sort((a: any, b: any) => {
+      if (a.featured !== b.featured) return a.featured ? -1 : 1;
+      return discountPct(b.originalPrice, b.discountedPrice) - discountPct(a.originalPrice, a.discountedPrice);
+    })
+    .slice(0, 4);
+
+  // Same real-contact-channel fallback chain MobileStickyBar already uses.
+  const waMessage = encodeURIComponent('Hi, I would like to know more about membership, combo, loyalty, referral or festival offers at DR Youth Clinic.');
+  const contactUrl = siteConfig.publicWhatsApp
+    ? `https://wa.me/${siteConfig.publicWhatsApp.replace(/\D/g, '')}?text=${waMessage}`
+    : siteConfig.publicPhone
+      ? `tel:${siteConfig.publicPhone.replace(/\s+/g, '')}`
+      : '/book';
 
   return (
     <main>
-      {/* ── HERO ── */}
-      <section className="relative bg-[#0B2560] overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-[32rem] h-[32rem] rounded-full bg-white/5 pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-80 h-80 rounded-full bg-[#F5A623]/10 pointer-events-none" />
-        <div className="absolute top-1/2 left-0 w-48 h-48 rounded-full bg-white/[0.03] pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="w-8 h-0.5 bg-[#F5A623]" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623]">Limited Time</p>
-          </div>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight mb-4">
-            Exclusive Offers &<br />
-            <span className="text-[#F5A623]">Packages</span>
-          </h1>
-          <p className="text-white/60 max-w-xl text-sm md:text-base leading-relaxed mb-8">
-            Premium skin, hair & laser treatments at unbeatable prices — trusted by {siteConfig.patientsCount} patients across {cityCount} cities. Book before they expire.
-          </p>
-
-          {/* Stats row */}
-          <div className="flex flex-wrap gap-8 mb-10">
-            {[
-              { icon: '🏷️', label: 'Active Offers', value: `${activeOffers.length}+` },
-              { icon: '💰', label: 'Max Savings', value: maxSave > 0 ? `${maxSave}%` : 'Up to 50%' },
-              { icon: '🏥', label: 'Clinics', value: `${cityCount} Cities` },
-              { icon: '⭐', label: 'Patient Rating', value: `${siteConfig.ratingValue}/5` },
-            ].map(s => (
-              <div key={s.label} className="flex items-center gap-3">
-                <span className="text-2xl">{s.icon}</span>
-                <div>
-                  <p className="text-xl font-extrabold text-white leading-none">{s.value}</p>
-                  <p className="text-xs text-white/50 mt-0.5">{s.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Link href="#offers" className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-6 py-3 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
-              <Tag size={15} /> Browse Offers
-            </Link>
-            <Link href="/book" className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-white/20 transition">
-              {siteConfig.consultationBadge} →
-            </Link>
-          </div>
-        </div>
-      </section>
+      <OfferHero
+        activeOfferCount={activeOffers.length}
+        maxSave={maxSave}
+        cityCount={cityCount}
+        patientsCount={siteConfig.patientsCount}
+        ratingValue={siteConfig.ratingValue}
+        consultationBadge={siteConfig.consultationBadge}
+      />
 
       <section id="offers" className="bg-[#f6faff] py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-6">
@@ -115,33 +101,23 @@ export default async function OffersPage() {
               </Link>
             </div>
           ) : (
-            <OffersClient offers={activeOffers} />
+            <div className="grid lg:grid-cols-[1fr_320px] gap-10">
+              <OffersClient offers={activeOffers} />
+              <OfferHighlightRail offers={topOffers} />
+            </div>
           )}
         </div>
       </section>
 
-      {/* ── TERMS ── */}
-      {activeOffers.length > 0 && (
-        <section className="bg-white py-12">
-          <div className="max-w-3xl mx-auto px-6">
-            <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-4 flex items-center gap-2">
-              <CheckCircle size={18} className="text-[#3B82C4]" /> Terms & Conditions
-            </h2>
-            <ul className="space-y-2">
-              {TERMS.map((t, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm text-gray-500">
-                  <span className="text-[#3B82C4] font-bold mt-0.5 shrink-0">{i + 1}.</span>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
+      {activeOffers.length > 0 && <OfferDoctorNote doctors={doctors} />}
+      <OfferTestimonials />
+      <OfferComingSoonSection contactUrl={contactUrl} />
+      {activeOffers.length > 0 && <OfferFAQSection />}
 
       {/* ── BOTTOM CTA ── */}
-      <section className="bg-[#0B2560] py-14">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+      <section className="relative bg-[#0B2560] py-14 overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[#F5A623]/10 backdrop-blur-3xl pointer-events-none" />
+        <div className="relative max-w-3xl mx-auto px-6 text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Tailored for You</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             Can't Find the Right Package?
@@ -151,11 +127,11 @@ export default async function OffersPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/book"
-              className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
+              className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(245,166,35,0.35)] transition-all duration-200">
               <Calendar size={15} /> {siteConfig.consultationCta}
             </Link>
             <Link href="/doctors"
-              className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-white/20 transition">
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white border border-white/20 px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-white/20 transition">
               Meet Our Doctors
             </Link>
           </div>

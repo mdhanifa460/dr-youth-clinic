@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { Calendar, CheckCircle, Clock } from 'lucide-react';
+import Image from 'next/image';
+import { Calendar, CheckCircle, Clock, Sparkles } from 'lucide-react';
+import OfferCountdownBadge from './components/OfferCountdownBadge';
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
   'Skin Care': 'from-pink-400 to-rose-500',
@@ -34,11 +36,28 @@ export function OfferCard({ offer }: { offer: any }) {
   const isExpired = offer.validUntil && new Date(offer.validUntil) < new Date();
 
   return (
-    <div className={`group relative bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col ${isExpired ? 'opacity-60' : ''}`}>
+    <div className={`offer-gradient-border group relative rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col ${isExpired ? 'opacity-60' : ''}`}>
+      {/* Most Popular ribbon — wires up the previously-unused `featured` field,
+          independent of the free-text `badge` pill (a card can have both). */}
+      {offer.featured && (
+        <>
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#F5A623] to-[#3B82C4] z-10" />
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-[#0B2560] text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
+            <Sparkles size={10} className="text-[#F5A623]" /> Most Popular
+          </div>
+        </>
+      )}
+
       {/* Top image / gradient strip */}
       <div className={`relative h-40 bg-gradient-to-br ${gradient} overflow-hidden`}>
         {offer.image?.url ? (
-          <img src={offer.image.url} alt={offer.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <Image
+            src={offer.image.url}
+            alt={offer.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+          />
         ) : (
           <div className="flex items-center justify-center h-full">
             <span className="text-6xl opacity-40">{icon}</span>
@@ -46,7 +65,7 @@ export function OfferCard({ offer }: { offer: any }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-          <span className="bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-700 px-2.5 py-1 rounded-full">
+          <span className="bg-white/80 backdrop-blur-sm text-[10px] font-bold text-gray-700 px-2.5 py-1 rounded-full">
             {icon} {offer.category}
           </span>
           {offer.badge && (
@@ -56,7 +75,7 @@ export function OfferCard({ offer }: { offer: any }) {
           )}
         </div>
         {pct > 0 && (
-          <div className="absolute bottom-3 right-3 bg-green-500 text-white text-sm font-extrabold w-14 h-14 rounded-full flex flex-col items-center justify-center shadow-lg">
+          <div className="absolute bottom-3 right-3 bg-green-500 text-white text-sm font-extrabold w-14 h-14 rounded-full flex flex-col items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.35)]">
             <span className="text-xs leading-none">Save</span>
             <span className="leading-none">{pct}%</span>
           </div>
@@ -69,7 +88,7 @@ export function OfferCard({ offer }: { offer: any }) {
       </div>
 
       {/* Card body */}
-      <div className="flex flex-col flex-1 p-5">
+      <div className="flex flex-col flex-1 p-5 bg-white">
         <h3 className="text-base font-extrabold text-[#0B2560] leading-snug mb-2 group-hover:text-[#3B82C4] transition-colors">
           {offer.title}
         </h3>
@@ -98,14 +117,17 @@ export function OfferCard({ offer }: { offer: any }) {
             <span className="text-2xl font-extrabold text-[#0B2560] leading-none">₹{offer.discountedPrice?.toLocaleString('en-IN')}</span>
           </div>
           {savings > 0 && (
-            <p className="text-xs text-green-600 font-semibold mb-3">
+            <p className="text-xs text-green-600 font-semibold mb-2">
               You save ₹{savings.toLocaleString('en-IN')}
             </p>
           )}
           {offer.validUntil && !isExpired && (
-            <p className="flex items-center gap-1 text-[10px] text-amber-600 font-semibold mb-3">
-              <Clock size={10} /> Valid until {formatDate(offer.validUntil)}
-            </p>
+            <div className="mb-3 flex items-center gap-2 flex-wrap">
+              <p className="flex items-center gap-1 text-[10px] text-amber-600 font-semibold">
+                <Clock size={10} /> Valid until {formatDate(offer.validUntil)}
+              </p>
+              <OfferCountdownBadge validUntil={offer.validUntil} />
+            </div>
           )}
           <Link
             href={`/book?offer=${encodeURIComponent(offer.title)}`}
