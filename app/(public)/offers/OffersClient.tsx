@@ -33,7 +33,7 @@ export default function OffersClient({ offers }: { offers: any[] }) {
           <p className="font-semibold">No {active} offers right now</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((offer: any) => (
             <OfferCard key={offer._id} offer={offer} />
           ))}

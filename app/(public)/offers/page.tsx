@@ -10,11 +10,13 @@ import { locations } from '@/app/data/locations';
 import OffersClient from './OffersClient';
 import { discountPct } from './OfferCard';
 import OfferHero from './components/OfferHero';
-import OfferHighlightRail from './components/OfferHighlightRail';
+import OfferCategoryShowcase, { CategorySummary } from './components/OfferCategoryShowcase';
 import OfferFAQSection from './components/OfferFAQSection';
 import OfferComingSoonSection from './components/OfferComingSoonSection';
 import OfferDoctorNote from './components/OfferDoctorNote';
 import OfferTestimonials from './components/OfferTestimonials';
+
+const CATEGORY_LIST = ['Skin Care', 'Hair Care', 'Laser', 'Body', 'Package'];
 
 export const revalidate = 60;
 
@@ -68,6 +70,16 @@ export default async function OffersPage() {
       return discountPct(b.originalPrice, b.discountedPrice) - discountPct(a.originalPrice, a.discountedPrice);
     })
     .slice(0, 4);
+  const featuredOffer = topOffers[0] ?? null;
+
+  const categorySummaries: CategorySummary[] = CATEGORY_LIST.map((cat) => {
+    const catOffers = activeOffers.filter((o: any) => o.category === cat);
+    const startingFrom = catOffers.length > 0
+      ? Math.min(...catOffers.map((o: any) => o.discountedPrice))
+      : null;
+    const maxDiscount = catOffers.reduce((max: number, o: any) => Math.max(max, discountPct(o.originalPrice, o.discountedPrice)), 0);
+    return { category: cat, count: catOffers.length, startingFrom, maxDiscount };
+  });
 
   // Same real-contact-channel fallback chain MobileStickyBar already uses.
   const waMessage = encodeURIComponent('Hi, I would like to know more about membership, combo, loyalty, referral or festival offers at DR Youth Clinic.');
@@ -86,7 +98,11 @@ export default async function OffersPage() {
         patientsCount={siteConfig.patientsCount}
         ratingValue={siteConfig.ratingValue}
         consultationBadge={siteConfig.consultationBadge}
+        featuredOffer={featuredOffer}
+        topOffers={topOffers}
       />
+
+      <OfferCategoryShowcase summaries={categorySummaries} />
 
       <section id="offers" className="bg-[#f6faff] py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-6">
@@ -101,10 +117,7 @@ export default async function OffersPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid lg:grid-cols-[1fr_320px] gap-10">
-              <OffersClient offers={activeOffers} />
-              <OfferHighlightRail offers={topOffers} />
-            </div>
+            <OffersClient offers={activeOffers} />
           )}
         </div>
       </section>
