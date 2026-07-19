@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
-  title: 'Privacy Policy | DR Youth Clinic',
+  title: 'Privacy Policy',
   description:
     'Read how DR Youth Clinic collects, uses and protects your personal information across our Chennai, Bangalore, Kochi and Coimbatore clinics.',
   alternates: { canonical: `${SITE_URL}/privacy-policy` },

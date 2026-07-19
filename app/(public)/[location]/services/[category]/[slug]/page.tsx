@@ -169,7 +169,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const catSlug = params.category.toLowerCase();
   const seo = getEffectiveSeo(svc, params.location.toLowerCase());
   return {
-    title: seo.metaTitle || `${svc.name} in ${city} | DR Youth Clinic`,
+    title: seo.metaTitle || `${svc.name} in ${city}`,
     description: seo.metaDescription || `Book ${svc.name} at DR Youth Clinic ${city}. Expert dermatologists, proven results.`,
     keywords: svc.keywords?.join(', '),
     alternates: { canonical: `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}` },
@@ -378,10 +378,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
 
               <div className="flex flex-wrap gap-5 text-xs text-white/50 border-t border-white/10 pt-4">
-                <span className="flex items-center gap-1.5">
-                  <IndianRupee size={11} className="text-[#F5A623]" />
-                  From <strong className="text-white ml-0.5">₹{svc.price.toLocaleString('en-IN')}</strong>
-                </span>
+                {siteConfig.showPriceOnCards && (
+                  <span className="flex items-center gap-1.5">
+                    <IndianRupee size={11} className="text-[#F5A623]" />
+                    From <strong className="text-white ml-0.5">₹{svc.price.toLocaleString('en-IN')}</strong>
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5">
                   <MapPin size={11} className="text-[#F5A623]" /> {cityName} Clinic
                 </span>
@@ -433,22 +435,27 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         {/* ── QUICK FACTS — horizontal scroll mobile, grid desktop ── */}
         <section className="bg-white border-b border-gray-50">
           <div className="max-w-7xl mx-auto px-6 md:px-10 py-5">
-            <div className="flex md:grid md:grid-cols-6 gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0">
-              {[
-                { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, icon: '💰' },
+            {(() => {
+              const quickFacts = [
+                { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, icon: '💰', priceOnly: true },
                 { label: 'Session Duration', value: `${svc.duration} min`, icon: '⏱️' },
                 { label: 'Sessions Needed', value: svc.sessionsRequired || 'Consult', icon: '🔄' },
                 { label: 'Recovery Time', value: svc.recoveryTime || 'Varies', icon: '🌿' },
                 { label: 'Anaesthesia', value: svc.anaesthesia || 'Topical / None', icon: '💉' },
                 { label: 'Category', value: svc.category, icon: CATEGORY_ICON[svc.category] },
-              ].map((fact) => (
-                <div key={fact.label} className="flex-shrink-0 w-40 md:w-auto bg-[#f6faff] rounded-2xl px-4 py-3 text-center border border-blue-50">
-                  <div className="text-xl mb-1">{fact.icon}</div>
-                  <div className="font-bold text-[#0B2560] text-sm">{fact.value}</div>
-                  <div className="text-gray-400 text-[10px] mt-0.5">{fact.label}</div>
+              ].filter((f) => !f.priceOnly || siteConfig.showPriceOnCards);
+              return (
+                <div className={`flex md:grid ${quickFacts.length === 6 ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0`}>
+                  {quickFacts.map((fact) => (
+                    <div key={fact.label} className="flex-shrink-0 w-40 md:w-auto bg-[#f6faff] rounded-2xl px-4 py-3 text-center border border-blue-50">
+                      <div className="text-xl mb-1">{fact.icon}</div>
+                      <div className="font-bold text-[#0B2560] text-sm">{fact.value}</div>
+                      <div className="text-gray-400 text-[10px] mt-0.5">{fact.label}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
         </section>
 
@@ -458,10 +465,17 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           <div className="max-w-7xl mx-auto px-6 py-5">
             <div className="rounded-3xl border border-gray-100 shadow-lg overflow-hidden">
               <div className="bg-[#0B2560] px-5 py-4 text-white flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Starting Price</p>
-                  <p className="text-2xl font-extrabold">₹{svc.price.toLocaleString('en-IN')}</p>
-                </div>
+                {siteConfig.showPriceOnCards ? (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Starting Price</p>
+                    <p className="text-2xl font-extrabold">₹{svc.price.toLocaleString('en-IN')}</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">{svc.name}</p>
+                    <p className="text-lg font-extrabold">Book a consultation</p>
+                  </div>
+                )}
                 {svc.recoveryTime && (
                   <span className="text-xs bg-white/10 px-3 py-1.5 rounded-full shrink-0">{svc.recoveryTime} recovery</span>
                 )}
@@ -512,6 +526,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     relatedServices: related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor })),
                     doctors: referencedDoctors,
                     videos: referencedVideos,
+                    showPrice: siteConfig.showPriceOnCards,
                   }}
                   relatedLinks={relatedLinks}
                 />
@@ -626,6 +641,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <TreatmentComparison
                 current={{ _id: String(svc._id), name: svc.name, price: svc.price, duration: svc.duration, sessionsRequired: svc.sessionsRequired, recoveryTime: svc.recoveryTime, painLevel: svc.painLevel, idealFor: svc.idealFor }}
                 alternatives={related.slice(0, 2).map((r: any) => ({ _id: String(r._id), name: r.name, price: r.price, duration: r.duration, sessionsRequired: r.sessionsRequired, recoveryTime: r.recoveryTime, painLevel: r.painLevel, idealFor: r.idealFor }))}
+                showPrice={siteConfig.showPriceOnCards}
               />
             )}
 
@@ -699,7 +715,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 </div>
                 <div className="p-5 space-y-1">
                   {[
-                    { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, bold: true },
+                    siteConfig.showPriceOnCards && { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, bold: true },
                     { label: 'Duration', value: `${svc.duration} min` },
                     svc.sessionsRequired && { label: 'Sessions', value: svc.sessionsRequired },
                     svc.recoveryTime && { label: 'Recovery', value: svc.recoveryTime, color: 'text-[#3B82C4]' },
@@ -760,15 +776,19 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 idealFor={svc.idealFor ?? []}
               />
 
-              {/* Cost Estimator */}
-              <CostEstimator
-                basePrice={svc.price}
-                sessionsRequired={svc.sessionsRequired}
-                serviceName={svc.name}
-              />
+              {siteConfig.showPriceOnCards && (
+                <>
+                  {/* Cost Estimator */}
+                  <CostEstimator
+                    basePrice={svc.price}
+                    sessionsRequired={svc.sessionsRequired}
+                    serviceName={svc.name}
+                  />
 
-              {/* EMI Calculator */}
-              <EMICalculator price={svc.price || 5000} />
+                  {/* EMI Calculator */}
+                  <EMICalculator price={svc.price || 5000} />
+                </>
+              )}
             </div>
           </aside>
         </section>
@@ -844,7 +864,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     <div className="p-4">
                       <h3 className="font-bold text-[#0B2560] text-sm leading-snug mb-2">{r.name}</h3>
                       <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>
+                        {siteConfig.showPriceOnCards && <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>}
                         <span>{r.duration} min</span>
                       </div>
                     </div>
@@ -867,7 +887,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     <div className="p-5">
                       <h3 className="font-bold text-[#0B2560] mb-2 text-sm leading-snug group-hover:text-[#3B82C4] transition">{r.name}</h3>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>
+                        {siteConfig.showPriceOnCards && <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>}
                         <span className="text-gray-400 text-xs">{r.duration} min</span>
                       </div>
                     </div>

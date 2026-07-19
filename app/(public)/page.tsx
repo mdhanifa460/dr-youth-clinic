@@ -71,7 +71,11 @@ export async function generateMetadata(): Promise<Metadata> {
     const seo = await getHomeSeo();
     if (seo?.metaTitle) {
       return {
-        title: seo.metaTitle,
+        // The homepage title stands alone (doesn't follow the "%s | DR Youth
+        // Clinic" template every other page uses) — .absolute bypasses the
+        // root layout's template, since an admin-authored homepage title is
+        // meant to be the complete brand tagline, not a suffixed page title.
+        title: { absolute: seo.metaTitle },
         description: seo.metaDescription || undefined,
         keywords: Array.isArray(seo.keywords) ? seo.keywords : [],
         alternates: { canonical: `${SITE_URL}/` },
@@ -94,7 +98,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // fall through to static defaults
   }
   return {
-    title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
+    title: { absolute: 'DR Youth Clinic – Advanced Skin & Aesthetic Care' },
     description: 'Trusted by 25,000+ patients across India. Expert dermatology, hair restoration & aesthetic treatments.',
     alternates: { canonical: `${SITE_URL}/` },
     openGraph: {

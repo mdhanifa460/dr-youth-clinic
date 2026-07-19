@@ -64,6 +64,8 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       ratingValue,
       patientsCount,
       yearsExperience,
+      showPriceOnCards: settings.display?.showPriceOnCards ?? true,
+      showDurationOnCards: settings.display?.showDurationOnCards ?? true,
     };
   } catch {
     return SITE_CONFIG_DEFAULTS;

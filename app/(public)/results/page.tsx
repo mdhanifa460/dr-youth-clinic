@@ -8,7 +8,7 @@ export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
-  title: 'Before & After Results | DR Youth Clinic',
+  title: 'Before & After Results',
   description: 'See real patient transformation results — skin, hair, laser and more at DR Youth Clinic.',
   alternates: { canonical: `${SITE_URL}/results` },
 };

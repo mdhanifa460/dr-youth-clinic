@@ -18,7 +18,7 @@ Article category: ${category || 'General'}
 ${existingDescription ? `Current description: "${existingDescription}"` : ''}
 
 Write SEO metadata for this Medical Knowledge Center article:
-- title: an SEO meta title under 60 characters, informative, include the core topic
+- title: an SEO meta title under 60 characters, informative, include the core topic. Do NOT include "DR Youth Clinic" — the site automatically appends " | DR Youth Clinic" to every page title, so adding it yourself would duplicate it.
 - description: a meta description under 155 characters, accurate and compelling, no clickbait
 - keywords: exactly 12 high-value, lowercase, comma-relevant search keywords a patient would type into Google when researching this topic in India (mix of short "head" terms and longer "long-tail" phrases, no duplicates)
 

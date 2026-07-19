@@ -11,7 +11,7 @@ export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
-  title: 'Skin & Hair Academy | DR Youth Clinic',
+  title: 'Skin & Hair Academy',
   description:
     'Watch expert-led videos on skin, hair, laser and aesthetic treatments from the specialists at DR Youth Clinic — real answers, real results, real patient stories.',
   alternates: { canonical: `${SITE_URL}/academy` },

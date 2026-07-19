@@ -11,8 +11,8 @@ interface CompareService {
   idealFor?: string[];
 }
 
-const ROWS: { label: string; render: (s: CompareService) => string }[] = [
-  { label: 'Starting Price', render: (s) => `₹${s.price?.toLocaleString('en-IN') ?? '—'}` },
+const ROWS: { label: string; render: (s: CompareService) => string; priceOnly?: boolean }[] = [
+  { label: 'Starting Price', render: (s) => `₹${s.price?.toLocaleString('en-IN') ?? '—'}`, priceOnly: true },
   { label: 'Session Duration', render: (s) => `${s.duration ?? '—'} min` },
   { label: 'Sessions Needed', render: (s) => s.sessionsRequired || 'Consult' },
   { label: 'Recovery / Downtime', render: (s) => s.recoveryTime || 'Minimal' },
@@ -20,9 +20,18 @@ const ROWS: { label: string; render: (s: CompareService) => string }[] = [
   { label: 'Suitable For', render: (s) => s.idealFor?.slice(0, 2).join(', ') || 'Most skin/hair types' },
 ];
 
-export default function TreatmentComparison({ current, alternatives }: { current: CompareService; alternatives: CompareService[] }) {
+export default function TreatmentComparison({
+  current,
+  alternatives,
+  showPrice = true,
+}: {
+  current: CompareService;
+  alternatives: CompareService[];
+  showPrice?: boolean;
+}) {
   const services = [current, ...alternatives];
   if (services.length < 2) return null;
+  const rows = ROWS.filter((r) => !r.priceOnly || showPrice);
 
   return (
     <div>
@@ -50,7 +59,7 @@ export default function TreatmentComparison({ current, alternatives }: { current
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {ROWS.map((row, i) => (
+            {rows.map((row, i) => (
               <tr key={row.label} className={i % 2 === 0 ? 'bg-white' : 'bg-[#f6faff]/50'}>
                 <td className="px-4 py-3.5 text-xs font-semibold text-gray-500">{row.label}</td>
                 {services.map((s) => (

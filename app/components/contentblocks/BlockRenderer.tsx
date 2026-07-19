@@ -143,7 +143,11 @@ function BlockItem({
 
     case "comparison-block":
       return serviceContext?.comparisonVisible && serviceContext?.current ? (
-        <TreatmentComparison current={serviceContext.current} alternatives={serviceContext.relatedServices || []} />
+        <TreatmentComparison
+          current={serviceContext.current}
+          alternatives={serviceContext.relatedServices || []}
+          showPrice={serviceContext.showPrice}
+        />
       ) : null;
 
     // Freestanding medical blocks — own stored data, work in any content type.

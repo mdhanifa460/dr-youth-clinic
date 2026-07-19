@@ -3,7 +3,7 @@ import { Metadata } from "next";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 export const metadata: Metadata = {
-  title: "Book Appointment | DR Youth Clinic",
+  title: "Book Appointment",
   description:
     "Schedule your dermatology consultation at DR Youth Clinic. Easy online booking with expert dermatologists at multiple locations.",
   alternates: {

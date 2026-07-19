@@ -25,7 +25,7 @@ import CtaSection from '@/app/components/about/sections/CtaSection';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
-  title: 'About Us | DR Youth Clinic',
+  title: 'About Us',
   description:
     'Learn about DR Youth Clinic — South India\'s most trusted aesthetic medicine practice with 15+ years of experience, 50,000+ patients treated across Chennai, Bangalore, Kochi and Coimbatore.',
   alternates: { canonical: `${SITE_URL}/about` },

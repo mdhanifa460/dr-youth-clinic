@@ -37,7 +37,7 @@ Note what makes these work: they front-load the service name, list concrete valu
 Generate 3 distinct (title, description) pairs for this service's page <title> and meta description tags. Vary the angle across the 3: one led by results/outcomes, one by expertise/technology, one by cost/value.
 
 Rules:
-- Title: 50-60 characters including " | DR Youth Clinic" at the end. Front-load the service name. ${isAllLocations ? 'Must NOT contain any specific city name.' : `May include "In ${city}"`}. Include 1-2 concrete value terms (Cost, Results, Reviews, Procedure, Benefits) where natural — not generic adjectives like "best" or "premium".
+- Title: 30-42 characters. Do NOT include "DR Youth Clinic" or "| DR Youth Clinic" — the site automatically appends " | DR Youth Clinic" to every page title, so adding it yourself would duplicate it. Front-load the service name. ${isAllLocations ? 'Must NOT contain any specific city name.' : `May include "In ${city}"`}. Include 1-2 concrete value terms (Cost, Results, Reviews, Procedure, Benefits) where natural — not generic adjectives like "best" or "premium".
 - Description: 140-160 characters. One concrete trust/value hook (real credential, technology, or outcome — not a vague claim), ending with an implicit call to action. ${isAllLocations ? 'Must NOT contain any specific city name — may say "at every DR Youth Clinic location" or "across India" if useful.' : `May naturally reference ${city}.`}
 - No clickbait, no exclamation marks, no ALL CAPS, no unverifiable superlatives ("India's #1", "world's best").
 

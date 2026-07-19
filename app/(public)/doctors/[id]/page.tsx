@@ -40,9 +40,9 @@ async function getDoctor(id: string) {
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const doctor = await getDoctor(params.id);
-  if (!doctor) return { title: 'Doctor Not Found | DR Youth Clinic' };
+  if (!doctor) return { title: 'Doctor Not Found' };
   return {
-    title: `${doctor.name} – ${doctor.title} | DR Youth Clinic`,
+    title: `${doctor.name} – ${doctor.title}`,
     description: doctor.bio
       ? doctor.bio.slice(0, 155) + (doctor.bio.length > 155 ? '…' : '')
       : `Meet ${doctor.name}, ${doctor.title} at DR Youth Clinic.`,

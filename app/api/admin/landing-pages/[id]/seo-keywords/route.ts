@@ -15,7 +15,7 @@ Landing page type: ${template || 'general treatment landing page'}
 ${existingDescription ? `Current description: "${existingDescription}"` : ''}
 
 Write SEO metadata for this landing page:
-- title: an SEO meta title under 60 characters, benefit-driven, include the core treatment/topic
+- title: an SEO meta title under 60 characters, benefit-driven, include the core treatment/topic. Do NOT include "DR Youth Clinic" — the site automatically appends " | DR Youth Clinic" to every page title, so adding it yourself would duplicate it.
 - description: a meta description under 155 characters, compelling, with a soft call to action
 - keywords: exactly 12 high-value, lowercase, comma-relevant search keywords a patient would type into Google when researching or booking this treatment in India (mix of short "head" terms and longer "long-tail" phrases, no duplicates)
 

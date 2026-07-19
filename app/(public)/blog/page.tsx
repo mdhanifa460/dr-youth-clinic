@@ -8,7 +8,7 @@ import BlogPageClient from './BlogPageClient';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
-  title: 'Medical Knowledge Center | DR Youth Clinic',
+  title: 'Medical Knowledge Center',
   description: 'Trusted skin & hair education from DR Youth Clinic — evidence-based articles, treatment guides and expert insights to help you make the right decisions.',
   alternates: { canonical: `${SITE_URL}/blog` },
 };

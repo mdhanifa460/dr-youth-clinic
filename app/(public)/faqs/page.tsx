@@ -9,7 +9,7 @@ import { STATIC_FAQS } from '@/app/lib/rag/staticFaqs';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
-  title: 'FAQs | DR Youth Clinic — Skin, Hair & Laser Treatments',
+  title: 'FAQs — Skin, Hair & Laser Treatments',
   description:
     'Get answers to the most common questions about skin, hair and laser treatments at DR Youth Clinic. Everything from pricing and safety to recovery time and booking.',
   alternates: { canonical: `${SITE_URL}/faqs` },

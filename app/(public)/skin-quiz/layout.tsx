@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { skinQuizFree, consultationFree } = await getSiteConfig();
 
   return {
-    title: "Clinical Intake – Prepare for Your Consultation | DR Youth Clinic",
+    title: "Clinical Intake – Prepare for Your Consultation",
     description:
       `Answer a few quick questions so DR Youth's dermatology team can prepare for your consultation — ${skinQuizFree ? 'free, ' : ''}in about a minute. Your doctor reviews everything and confirms what's right for you at your visit.`,
     alternates: {

@@ -145,7 +145,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!meta) return {};
   const city = loc.name;
   return {
-    title: `${meta.label} in ${city} | DR Youth Clinic`,
+    title: `${meta.label} in ${city}`,
     description: `Explore ${meta.label.toLowerCase()} treatments at DR Youth Clinic ${city}. ${meta.description.slice(0, 100)}...`,
     alternates: { canonical: `${SITE_URL}/${params.location}/services/${catSlug}` },
     openGraph: {
@@ -287,6 +287,8 @@ export default async function CategoryPage({ params }: PageProps) {
                   svc={svc}
                   location={params.location}
                   category={catSlug}
+                  showPrice={siteConfig.showPriceOnCards}
+                  showDuration={siteConfig.showDurationOnCards}
                 />
               ))}
             </div>
@@ -313,12 +315,12 @@ export default async function CategoryPage({ params }: PageProps) {
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-sm">
                       {[
-                        { label: 'Price from', getValue: (s: any) => `₹${(s.price ?? 0).toLocaleString('en-IN')}` },
+                        siteConfig.showPriceOnCards && { label: 'Price from', getValue: (s: any) => `₹${(s.price ?? 0).toLocaleString('en-IN')}` },
                         { label: 'Duration', getValue: (s: any) => `${s.duration} min` },
                         { label: 'Sessions', getValue: (s: any) => s.sessionsRequired || '—' },
                         { label: 'Recovery', getValue: (s: any) => s.recoveryTime || 'Minimal' },
                         { label: 'Ideal for', getValue: (s: any) => s.idealFor?.slice(0, 2).join(', ') || '—' },
-                      ].map((row, ri) => (
+                      ].filter(Boolean).map((row: any, ri) => (
                         <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-[#f6faff]'}>
                           <td className="py-3 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{row.label}</td>
                           {services.slice(0, 4).map((s: any) => (
@@ -390,10 +392,14 @@ function ServiceCard({
   svc,
   location,
   category,
+  showPrice,
+  showDuration,
 }: {
   svc: any;
   location: string;
   category: string;
+  showPrice: boolean;
+  showDuration: boolean;
 }) {
   const hasIdealFor = svc.idealFor?.length > 0;
 
@@ -420,15 +426,19 @@ function ServiceCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
         {/* price pill */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm text-[#0B2560] px-3 py-1.5 rounded-full shadow-sm">
-          <IndianRupee size={12} className="shrink-0" />
-          <span className="text-xs font-extrabold">{(svc.price ?? 0).toLocaleString('en-IN')}</span>
-        </div>
+        {showPrice && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm text-[#0B2560] px-3 py-1.5 rounded-full shadow-sm">
+            <IndianRupee size={12} className="shrink-0" />
+            <span className="text-xs font-extrabold">{(svc.price ?? 0).toLocaleString('en-IN')}</span>
+          </div>
+        )}
         {/* duration pill */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm text-gray-600 px-3 py-1.5 rounded-full shadow-sm">
-          <Clock size={11} className="shrink-0" />
-          <span className="text-xs font-semibold">{svc.duration} min</span>
-        </div>
+        {showDuration && (
+          <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm text-gray-600 px-3 py-1.5 rounded-full shadow-sm">
+            <Clock size={11} className="shrink-0" />
+            <span className="text-xs font-semibold">{svc.duration} min</span>
+          </div>
+        )}
       </div>
 
       {/* CONTENT */}

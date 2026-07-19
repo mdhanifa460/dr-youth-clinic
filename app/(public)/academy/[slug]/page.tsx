@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : `Watch "${video.title}" — expert insights from DR Youth Clinic on ${video.category.toLowerCase()} treatments.`;
 
   return {
-    title: `${video.title} | DR Youth Clinic`,
+    title: video.title,
     description,
     alternates: { canonical: `${SITE_URL}/academy/${video.slug}` },
     openGraph: {

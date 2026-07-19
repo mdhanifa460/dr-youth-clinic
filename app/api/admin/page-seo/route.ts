@@ -14,28 +14,31 @@ const PAGE_DEFAULTS = [
   {
     pageKey: 'services',
     pageLabel: 'Services Listing',
-    metaTitle: 'Our Services | DR Youth Clinic',
+    // No "| DR Youth Clinic" suffix — the root layout's title template
+    // appends it automatically to every page; only the 'home' pageKey is
+    // special-cased to bypass the template (see app/(public)/page.tsx).
+    metaTitle: 'Our Services',
     metaDescription: 'Explore our full range of skin, hair and laser treatments at DR Youth Clinic.',
     keywords: ['skin treatment', 'hair loss', 'laser therapy', 'aesthetic clinic'],
   },
   {
     pageKey: 'about',
     pageLabel: 'About Us',
-    metaTitle: 'About DR Youth Clinic | Expert Dermatologists',
+    metaTitle: 'About Us — Expert Dermatologists',
     metaDescription: "India's trusted skin and hair care specialists with 22+ years of clinical excellence.",
     keywords: ['about dr youth', 'dermatology clinic india', 'aesthetic specialists'],
   },
   {
     pageKey: 'contact',
     pageLabel: 'Contact Us',
-    metaTitle: 'Contact DR Youth Clinic | Book Appointment',
+    metaTitle: 'Contact Us — Book Appointment',
     metaDescription: 'Get in touch with DR Youth Clinic. Book your skin & hair consultation today.',
     keywords: ['contact dr youth', 'book appointment', 'skin clinic appointment'],
   },
   {
     pageKey: 'book',
     pageLabel: 'Book Appointment',
-    metaTitle: 'Book a Consultation | DR Youth Clinic',
+    metaTitle: 'Book a Consultation',
     metaDescription: 'Schedule your consultation with DR Youth expert doctors online. Fast, easy, personalised.',
     keywords: ['book skin clinic', 'online consultation dermatologist', 'book hair treatment'],
   },

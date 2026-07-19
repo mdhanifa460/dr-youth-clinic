@@ -31,6 +31,10 @@ export interface SiteConfig {
   patientsCount: string;
   /** Years of experience/excellence (e.g. "22+"), sourced from the homepage Stats Bar section */
   yearsExperience: string;
+  /** Whether to show the price pill on service listing/category cards (Settings → Display) */
+  showPriceOnCards: boolean;
+  /** Whether to show the duration pill on service listing/category cards (Settings → Display) */
+  showDurationOnCards: boolean;
 }
 
 export const SITE_CONFIG_DEFAULTS: SiteConfig = {
@@ -52,4 +56,6 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   ratingValue: '4.9',
   patientsCount: '25K+',
   yearsExperience: '22+',
+  showPriceOnCards: true,
+  showDurationOnCards: true,
 };

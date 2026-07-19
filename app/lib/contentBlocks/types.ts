@@ -94,6 +94,8 @@ export interface BlockServiceContext {
   comparisonVisible?: boolean;
   current?: { _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] };
   relatedServices?: Array<{ _id: string; name: string; price: number; duration: number; sessionsRequired?: string; recoveryTime?: string; painLevel?: string; idealFor?: string[] }>;
+  /** Settings -> Display -> "Show price on cards" — hides the price row in the Treatment Comparison block. Defaults to true when unset. */
+  showPrice?: boolean;
   doctors?: Record<string, { name: string; title: string; photo?: { url: string } }>;
   // Populated for the "Video Block" type (Priority 6) — batch-resolved the
   // same way `doctors` is for Doctor Recommendation. Used by both Service

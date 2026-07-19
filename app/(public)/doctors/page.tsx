@@ -12,7 +12,7 @@ export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
-  title: 'Our Expert Doctors | DR Youth Clinic',
+  title: 'Our Expert Doctors',
   description: 'Meet the specialist team at DR Youth Clinic — expert dermatologists, trichologists and aesthetic physicians across Chennai, Bangalore, Coimbatore and Kochi.',
   alternates: { canonical: `${SITE_URL}/doctors` },
 };

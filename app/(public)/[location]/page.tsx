@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: { location: string 
   if (!loc) return {};
   const { name } = loc;
   return {
-    title: `Best Dermatology & Skin Clinic in ${name} | DR Youth Clinic`,
+    title: `Best Dermatology & Skin Clinic in ${name}`,
     description: `Premium skin, hair & laser treatments in ${name}. Expert dermatologists at ${loc.address}. Book your consultation today. ${loc.specialties.join(', ')}.`,
     alternates: { canonical: `${SITE_URL}/${params.location}` },
     openGraph: {

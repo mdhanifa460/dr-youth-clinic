@@ -88,7 +88,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!loc) return {};
   const city = loc.name;
   return {
-    title: `All Treatments in ${city} | DR Youth Clinic`,
+    title: `All Treatments in ${city}`,
     description: `Explore skin, hair, and laser treatments at DR Youth Clinic ${city}. Expert dermatologists, proven results, transparent pricing.`,
     alternates: { canonical: `${SITE_URL}/${params.location}/services` },
     openGraph: {

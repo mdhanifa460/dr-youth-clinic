@@ -53,9 +53,9 @@ async function getReviewingDoctor(doctorId?: string) {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getPost(params.slug);
-  if (!post) return { title: 'Post Not Found | DR Youth Clinic' };
+  if (!post) return { title: 'Post Not Found' };
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
-  const title = post.metaTitle || `${post.title} | DR Youth Clinic Blog`;
+  const title = post.metaTitle || post.title;
   const description = post.metaDescription || post.excerpt || post.title;
   const ogImage = post.ogImage?.url || post.coverImage?.url;
   return {
