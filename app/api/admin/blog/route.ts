@@ -3,13 +3,27 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { requirePermission } from '@/app/lib/adminAuth';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const denied = await requirePermission('blog', 'view');
   if (denied) return denied;
 
   try {
     await connectDB();
-    const posts = await Blog.find({} as any).sort({ publishedAt: -1 }).lean();
+    const { searchParams } = req.nextUrl;
+
+    const query: Record<string, any> = {};
+    const category = searchParams.get('category');
+    if (category) query.category = category;
+    const active = searchParams.get('active');
+    if (active === 'true' || active === 'false') query.active = active === 'true';
+    const search = searchParams.get('search')?.trim();
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rx = new RegExp(escaped, 'i');
+      query.$or = [{ title: rx }, { excerpt: rx }];
+    }
+
+    const posts = await Blog.find(query as any).sort({ publishedAt: -1 }).lean();
     return NextResponse.json({ success: true, data: posts });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to fetch posts' }, { status: 500 });

@@ -12,17 +12,36 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = req.nextUrl;
 
-    const filter: Record<string, string> = {};
+    const filter: Record<string, any> = {};
     const source = searchParams.get('source');
     if (source && source !== 'all') filter.source = String(source);
     const location = searchParams.get('location');
     if (location && location !== 'all') filter.location = String(location);
+    const rating = searchParams.get('rating');
+    if (rating) filter.rating = Number(rating);
+    if (searchParams.get('featured') === 'true') filter.isFeatured = true;
+    if (searchParams.get('homepage') === 'true') filter.showOnHomepage = true;
 
-    const reviews = await Review.find(filter as any)
-      .sort({ isFeatured: -1, createdAt: -1 })
-      .lean();
+    // Counts must reflect the location filter only (not source/rating/flags),
+    // otherwise selecting a source tab makes every OTHER tab's count read wrong.
+    const countsFilter: Record<string, any> = {};
+    if (location && location !== 'all') countsFilter.location = String(location);
 
-    return NextResponse.json({ success: true, reviews });
+    const [reviews, countsAgg] = await Promise.all([
+      Review.find(filter as any)
+        .sort({ isFeatured: -1, createdAt: -1 })
+        .limit(200)
+        .lean(),
+      Review.aggregate([
+        { $match: countsFilter },
+        { $group: { _id: '$source', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const counts: Record<string, number> = {};
+    for (const c of countsAgg) counts[c._id || 'unknown'] = c.count;
+
+    return NextResponse.json({ success: true, reviews, counts });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }

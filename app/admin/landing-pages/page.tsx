@@ -34,15 +34,20 @@ export default function LandingPagesAdminPage() {
   const [pages, setPages] = useState<LandingPageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [status, setStatus] = useState<'' | 'draft' | 'published'>('');
+  const [template, setTemplate] = useState('');
 
   useEffect(() => {
     fetchPages();
-  }, []);
+  }, [status, template]);
 
   const fetchPages = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/landing-pages');
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      if (template) params.set('template', template);
+      const res = await fetch(`/api/admin/landing-pages?${params.toString()}`);
       const data = await res.json();
       if (data.success) setPages(data.data);
     } catch (error) {
@@ -91,6 +96,41 @@ export default function LandingPagesAdminPage() {
         </Link>
       </div>
 
+      {/* FILTERS */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+          {(['', 'draft', 'published'] as const).map((v) => (
+            <button
+              key={v || 'all'}
+              onClick={() => setStatus(v)}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition capitalize ${
+                status === v ? 'bg-white text-[#0B2560] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {v || 'All'}
+            </button>
+          ))}
+        </div>
+        <select
+          value={template}
+          onChange={(e) => setTemplate(e.target.value)}
+          className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+        >
+          <option value="">All Templates</option>
+          {Object.entries(TEMPLATE_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+        {(status || template) && (
+          <button
+            onClick={() => { setStatus(''); setTemplate(''); }}
+            className="text-xs text-gray-400 hover:text-[#0B2560] font-semibold underline"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       {/* TABLE */}
       {loading ? (
         <div className="flex justify-center py-16">
@@ -99,15 +139,28 @@ export default function LandingPagesAdminPage() {
       ) : pages.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="text-5xl mb-4">🚀</div>
-          <p className="text-gray-700 font-bold text-lg mb-2">No landing pages yet</p>
-          <p className="text-gray-400 text-sm mb-6">
-            Create your first landing page to start capturing leads from ads.
+          <p className="text-gray-700 font-bold text-lg mb-2">
+            {status || template ? 'No landing pages match these filters' : 'No landing pages yet'}
           </p>
-          <Link href="/admin/landing-pages/new">
-            <button className="bg-[#0B2560] text-white px-6 py-2.5 rounded-xl hover:bg-[#1a3a7a] font-semibold transition">
-              Create First Landing Page
+          <p className="text-gray-400 text-sm mb-6">
+            {status || template
+              ? 'Try clearing a filter to see more pages.'
+              : 'Create your first landing page to start capturing leads from ads.'}
+          </p>
+          {status || template ? (
+            <button
+              onClick={() => { setStatus(''); setTemplate(''); }}
+              className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl hover:bg-gray-200 font-semibold transition"
+            >
+              Clear filters
             </button>
-          </Link>
+          ) : (
+            <Link href="/admin/landing-pages/new">
+              <button className="bg-[#0B2560] text-white px-6 py-2.5 rounded-xl hover:bg-[#1a3a7a] font-semibold transition">
+                Create First Landing Page
+              </button>
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">

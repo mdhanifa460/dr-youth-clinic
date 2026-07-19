@@ -44,10 +44,16 @@ const EMPTY_FILTERS: Filters = {
   dateFrom: "", dateTo: "", location: "", status: "", service: "", search: "",
 };
 
+// Mirrors the real Booking.status enum in app/models/Booking.ts.
 const STATUS_COLORS: Record<string, string> = {
-  new:       "bg-green-100 text-green-700",
-  confirmed: "bg-blue-100 text-blue-700",
-  done:      "bg-gray-100 text-gray-600",
+  new:        "bg-green-100 text-green-700",
+  contacted:  "bg-cyan-100 text-cyan-700",
+  follow_up:  "bg-purple-100 text-purple-700",
+  confirmed:  "bg-blue-100 text-blue-700",
+  arrived:    "bg-indigo-100 text-indigo-700",
+  completed:  "bg-gray-100 text-gray-600",
+  no_show:    "bg-orange-100 text-orange-700",
+  cancelled:  "bg-red-100 text-red-700",
 };
 
 // ─── Export Modal ─────────────────────────────────────────────────────────────
@@ -485,8 +491,13 @@ export default function LeadsClient({
                 >
                   <option value="">All Status</option>
                   <option value="new">New</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="follow_up">Follow Up</option>
                   <option value="confirmed">Confirmed</option>
-                  <option value="done">Done</option>
+                  <option value="arrived">Arrived</option>
+                  <option value="completed">Completed</option>
+                  <option value="no_show">No Show</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
 

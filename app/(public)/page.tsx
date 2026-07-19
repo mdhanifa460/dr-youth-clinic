@@ -7,6 +7,8 @@ import { Review } from '@/app/models/Review';
 import { Doctor } from '@/app/models/Doctor';
 import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
+import { Service } from '@/app/models/Service';
+import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
 import Booking from '@/app/models/Booking';
@@ -267,6 +269,32 @@ const getCachedTrustStats = unstable_cache(
   { revalidate: 300, tags: ['bookings'] }
 );
 
+// Real active-service counts per category, for the homepage's category
+// cards — never fabricated, always reflects what's actually bookable.
+const getCachedServiceCategoryCounts = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const rows = await (Service as any).aggregate([
+        { $match: { status: 'active' } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+      ]);
+      const byDbCategory: Record<string, number> = {};
+      for (const row of rows) byDbCategory[row._id] = row.count;
+
+      const bySlug: Record<string, number> = {};
+      for (const [slug, dbCategory] of Object.entries(CATEGORY_MAP)) {
+        bySlug[slug] = byDbCategory[dbCategory] || 0;
+      }
+      return bySlug;
+    } catch {
+      return {};
+    }
+  },
+  ['homepage-service-category-counts'],
+  { revalidate: 300, tags: ['services'] }
+);
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   hero: HeroSection,
   stats: StatsBar,
@@ -297,7 +325,15 @@ export default async function Home() {
   const rawCity = headers().get('x-vercel-ip-city') || '';
   const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner] = await Promise.all([
+  // Same 4 city slugs used sitewide (Navbar.tsx, [location] routes) — used
+  // here so the homepage's category cards link to the visitor's own city's
+  // services instead of always defaulting to Chennai.
+  const CITY_SLUGS = ['chennai', 'bangalore', 'coimbatore', 'kochi'];
+  const resolvedLocation = CITY_SLUGS.includes(preferredLocation.toLowerCase())
+    ? preferredLocation.toLowerCase()
+    : 'chennai';
+
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -307,6 +343,7 @@ export default async function Home() {
     getCachedFeaturedVideos(),
     getCachedTrustStats(),
     resolveBanner({ page: 'homepage' }),
+    getCachedServiceCategoryCounts(),
   ]);
 
   const enriched = {
@@ -350,6 +387,15 @@ export default async function Home() {
             return (
               <div key={s.key}>
                 <BannerRenderer banner={heroBanner} />
+              </div>
+            );
+          }
+          // Needs extra props (location, real category counts) beyond the
+          // generic {data} every other section component takes.
+          if (s.key === 'services') {
+            return (
+              <div key={s.key}>
+                <ServicesCards data={enriched[s.key]} location={resolvedLocation} categoryCounts={serviceCategoryCounts} />
               </div>
             );
           }

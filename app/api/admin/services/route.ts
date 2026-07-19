@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const location = searchParams.get('location');
     const status = searchParams.get('status');
+    const category = searchParams.get('category');
 
     const query: any = {};
     // A city filter should also surface services that target it via the
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
       ];
     }
     if (status) query.status = status;
+    if (category) query.category = category;
 
     const services = await Service.find(query as any).sort({ createdAt: -1 });
 

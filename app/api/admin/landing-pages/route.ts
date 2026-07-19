@@ -17,7 +17,14 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const pages = await (LandingPage as any).find({})
+    const { searchParams } = req.nextUrl;
+    const query: Record<string, any> = {};
+    const status = searchParams.get('status');
+    if (status) query.status = status;
+    const template = searchParams.get('template');
+    if (template) query.template = template;
+
+    const pages = await (LandingPage as any).find(query)
       .sort({ createdAt: -1 })
       .select('title slug status template analytics createdAt updatedAt')
       .lean();

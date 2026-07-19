@@ -20,21 +20,29 @@ interface Service {
   createdAt: string;
 }
 
+const SERVICE_CATEGORIES = ['Skin', 'Hair', 'Laser', 'Other'];
+
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [category, setCategory] = useState('');
+  const [status, setStatus] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetchServices();
-  }, [filter]);
+  }, [filter, category, status]);
 
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const query = filter ? `?location=${filter}` : '';
-      const res = await fetch(`/api/admin/services${query}`);
+      const params = new URLSearchParams();
+      if (filter) params.set('location', filter);
+      if (category) params.set('category', category);
+      if (status) params.set('status', status);
+      const qs = params.toString();
+      const res = await fetch(`/api/admin/services${qs ? `?${qs}` : ''}`);
       const data = await res.json();
       if (data.success) {
         setServices(data.data);
@@ -91,7 +99,7 @@ export default function ServicesPage() {
       </div>
 
       {/* FILTERS */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setFilter('')}
           className={`px-4 py-2 rounded-lg transition ${
@@ -117,6 +125,40 @@ export default function ServicesPage() {
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          {['', ...SERVICE_CATEGORIES].map((c) => (
+            <button
+              key={c || 'all'}
+              onClick={() => setCategory(c)}
+              className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition ${
+                category === c ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {c || 'All Categories'}
+            </button>
+          ))}
+        </div>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="active">Active</option>
+          <option value="hidden">Hidden</option>
+        </select>
+        {(category || status) && (
+          <button
+            onClick={() => { setCategory(''); setStatus(''); }}
+            className="text-xs text-gray-400 hover:text-blue-600 font-semibold underline"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       {/* SERVICES TABLE */}
       {loading ? (
         <div className="flex justify-center py-12">
@@ -124,7 +166,17 @@ export default function ServicesPage() {
         </div>
       ) : services.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg">
-          <p className="text-gray-500 mb-4">No services found</p>
+          <p className="text-gray-500 mb-4">
+            {category || status || filter ? 'No services match these filters' : 'No services found'}
+          </p>
+          {category || status ? (
+            <button
+              onClick={() => { setCategory(''); setStatus(''); }}
+              className="bg-gray-100 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-200 mr-2"
+            >
+              Clear filters
+            </button>
+          ) : null}
           <Link href="/admin/services/new">
             <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
               Create First Service

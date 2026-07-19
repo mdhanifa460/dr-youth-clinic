@@ -395,9 +395,13 @@ function ReviewModal({
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ReviewsAdminPage() {
   const [reviews, setReviews] = useState<any[]>([]);
+  const [sourceCounts, setSourceCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'all' | 'manual' | 'google' | 'video'>('all');
   const [locationFilter, setLocationFilter] = useState('');
+  const [ratingFilter, setRatingFilter] = useState('');
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [homepageOnly, setHomepageOnly] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const [modal, setModal] = useState<any | null>(null); // null = closed, {} = new, {...} = edit
@@ -407,13 +411,19 @@ export default function ReviewsAdminPage() {
     const params = new URLSearchParams();
     if (tab !== 'all') params.set('source', tab);
     if (locationFilter) params.set('location', locationFilter);
+    if (ratingFilter) params.set('rating', ratingFilter);
+    if (featuredOnly) params.set('featured', 'true');
+    if (homepageOnly) params.set('homepage', 'true');
     try {
       const res = await fetch(`/api/admin/reviews?${params}`);
       const d = await res.json();
-      if (d.success) setReviews(d.reviews);
+      if (d.success) {
+        setReviews(d.reviews);
+        setSourceCounts(d.counts || {});
+      }
     } catch {}
     setLoading(false);
-  }, [tab, locationFilter]);
+  }, [tab, locationFilter, ratingFilter, featuredOnly, homepageOnly]);
 
   useEffect(() => { fetchReviews(); }, [fetchReviews]);
 
@@ -474,11 +484,14 @@ export default function ReviewsAdminPage() {
     setSyncing(false);
   };
 
+  // True global counts from the API's $group aggregation (scoped only by the
+  // location filter) — not derived from the already-tab-filtered `reviews`
+  // array, which previously made every non-active tab's count read wrong.
   const counts = {
-    all: reviews.length,
-    manual: reviews.filter((r) => r.source === 'manual').length,
-    google: reviews.filter((r) => r.source === 'google').length,
-    video: reviews.filter((r) => r.source === 'video').length,
+    all: Object.values(sourceCounts).reduce((sum, n) => sum + n, 0),
+    manual: sourceCounts.manual || 0,
+    google: sourceCounts.google || 0,
+    video: sourceCounts.video || 0,
   };
 
   const TABS: { key: typeof tab; label: string }[] = [
@@ -553,6 +566,43 @@ export default function ReviewsAdminPage() {
         >
           {CITIES.map((c) => <option key={c} value={c}>{CITY_LABELS[c]}</option>)}
         </select>
+
+        {/* Rating filter */}
+        <select
+          value={ratingFilter}
+          onChange={(e) => setRatingFilter(e.target.value)}
+          className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-[#0B2560]"
+        >
+          <option value="">All Ratings</option>
+          {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} Star{n !== 1 ? 's' : ''}</option>)}
+        </select>
+
+        {/* Flag toggles */}
+        <button
+          onClick={() => setFeaturedOnly((v) => !v)}
+          className={`flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-xl transition ${
+            featuredOnly ? 'bg-[#F5A623]/15 text-[#b87a00]' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+          }`}
+        >
+          <Star size={13} /> Featured Only
+        </button>
+        <button
+          onClick={() => setHomepageOnly((v) => !v)}
+          className={`flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-xl transition ${
+            homepageOnly ? 'bg-[#0B2560]/10 text-[#0B2560]' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+          }`}
+        >
+          <Home size={13} /> Homepage Only
+        </button>
+
+        {(locationFilter || ratingFilter || featuredOnly || homepageOnly) && (
+          <button
+            onClick={() => { setLocationFilter(''); setRatingFilter(''); setFeaturedOnly(false); setHomepageOnly(false); }}
+            className="text-xs text-gray-400 hover:text-[#0B2560] font-semibold underline"
+          >
+            Clear filters
+          </button>
+        )}
 
         <button onClick={fetchReviews} className="text-gray-400 hover:text-[#0B2560] transition p-2">
           <RefreshCw size={15} />

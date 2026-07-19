@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Plus, Trash2, Edit2, Eye, EyeOff, BookOpen, Star } from 'lucide-react';
+import { Plus, Trash2, Edit2, Eye, EyeOff, BookOpen, Star, Search } from 'lucide-react';
+import { BLOG_CATEGORIES } from '@/app/lib/blogCategories';
 
 // ── Post card ──────────────────────────────────────────────────────────────
 function PostCard({ post, onToggle, onToggleFeatured, onDelete }: {
@@ -69,18 +70,30 @@ function PostCard({ post, onToggle, onToggleFeatured, onDelete }: {
 export default function BlogAdminPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'live' | 'draft'>('all');
+  const [search, setSearch] = useState('');
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/blog');
+      const params = new URLSearchParams();
+      if (category) params.set('category', category);
+      if (activeFilter !== 'all') params.set('active', activeFilter === 'live' ? 'true' : 'false');
+      if (search.trim()) params.set('search', search.trim());
+      const res = await fetch(`/api/admin/blog?${params.toString()}`);
       const d = await res.json();
       if (d.success) setPosts(d.data);
     } catch {}
     setLoading(false);
-  }, []);
+  }, [category, activeFilter, search]);
 
-  useEffect(() => { fetchPosts(); }, [fetchPosts]);
+  // Debounced re-fetch on search typing (400ms, matching Bookings' pattern);
+  // category/active changes re-fetch immediately via the effect below.
+  useEffect(() => {
+    const t = setTimeout(() => { fetchPosts(); }, search ? 400 : 0);
+    return () => clearTimeout(t);
+  }, [fetchPosts, search]);
 
   const toggle = async (id: string, val: boolean) => {
     setPosts((p) => p.map((x) => x._id === id ? { ...x, active: val } : x));
@@ -110,6 +123,50 @@ export default function BlogAdminPage() {
         </Link>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search title..."
+            className="pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 w-48"
+          />
+        </div>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+        >
+          <option value="">All Categories</option>
+          {BLOG_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+          {(['all', 'live', 'draft'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setActiveFilter(v)}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition capitalize ${
+                activeFilter === v ? 'bg-white text-[#0B2560] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+        {(category || activeFilter !== 'all' || search) && (
+          <button
+            onClick={() => { setCategory(''); setActiveFilter('all'); setSearch(''); }}
+            className="text-xs text-gray-400 hover:text-[#0B2560] font-semibold underline"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1,2,3].map((i) => (
@@ -123,9 +180,24 @@ export default function BlogAdminPage() {
       ) : posts.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-5xl mb-4">✍️</p>
-          <p className="text-gray-500 font-semibold mb-1">No posts yet</p>
-          <p className="text-gray-400 text-sm mb-6">Create your first blog post to appear on the website.</p>
-          <Link href="/admin/blog/new" className="bg-[#0B2560] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#0d2d73] transition">+ New Post</Link>
+          <p className="text-gray-500 font-semibold mb-1">
+            {category || activeFilter !== 'all' || search ? 'No posts match these filters' : 'No posts yet'}
+          </p>
+          <p className="text-gray-400 text-sm mb-6">
+            {category || activeFilter !== 'all' || search
+              ? 'Try clearing a filter or searching a different term.'
+              : 'Create your first blog post to appear on the website.'}
+          </p>
+          {category || activeFilter !== 'all' || search ? (
+            <button
+              onClick={() => { setCategory(''); setActiveFilter('all'); setSearch(''); }}
+              className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-200 transition"
+            >
+              Clear filters
+            </button>
+          ) : (
+            <Link href="/admin/blog/new" className="bg-[#0B2560] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#0d2d73] transition">+ New Post</Link>
+          )}
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
