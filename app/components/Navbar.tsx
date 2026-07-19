@@ -54,11 +54,12 @@ export default function Navbar() {
   const isHomepage = !currentLocation || CITY_SLUGS.includes(currentLocation);
 
   // Services only exists as a real page once a location is picked (e.g. /bangalore/services).
-  // On the plain "/" homepage there's no location-less services listing, so fall back to
-  // scrolling to that page's own Services teaser section instead.
+  // There's no location-less services listing, so on the plain "/" domain default to
+  // Chennai — same default the homepage's own Services section already uses server-side
+  // (app/(public)/page.tsx) when no preferred_location cookie is set.
   const servicesHref = CITY_SLUGS.includes(currentLocation)
     ? `/${currentLocation}/services`
-    : `${homeLink}#services`;
+    : "/chennai/services";
 
   const navItems = [
     { name: "Home",     id: "home",      href: homeLink },
