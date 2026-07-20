@@ -16,6 +16,20 @@ export default function Navbar() {
   const pathname = usePathname();
   const currentLocation = pathname.split("/")[1] || "";
 
+  // middleware.ts sets this from the visitor's IP region (Karnataka -> bangalore,
+  // Tamil Nadu -> chennai, Kerala -> kochi) on their first visit to "/". Read it
+  // client-side so the Services link on the plain domain sends visitors to their
+  // own city instead of always defaulting to Chennai — same cookie the homepage's
+  // Services section already trusts server-side (app/(public)/page.tsx).
+  const [detectedLocation, setDetectedLocation] = useState("chennai");
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
+    const value = match ? decodeURIComponent(match[1]) : "";
+    if (["chennai", "bangalore", "coimbatore", "kochi"].includes(value)) {
+      setDetectedLocation(value);
+    }
+  }, []);
+
   // On route change, reset active to "home" so the scroll tracker takes over cleanly
   useEffect(() => { setActive("home"); }, [pathname]);
 
@@ -54,12 +68,11 @@ export default function Navbar() {
   const isHomepage = !currentLocation || CITY_SLUGS.includes(currentLocation);
 
   // Services only exists as a real page once a location is picked (e.g. /bangalore/services).
-  // There's no location-less services listing, so on the plain "/" domain default to
-  // Chennai — same default the homepage's own Services section already uses server-side
-  // (app/(public)/page.tsx) when no preferred_location cookie is set.
+  // There's no location-less services listing, so on the plain "/" domain fall back to
+  // the visitor's detected/preferred city (see detectedLocation above), Chennai by default.
   const servicesHref = CITY_SLUGS.includes(currentLocation)
     ? `/${currentLocation}/services`
-    : "/chennai/services";
+    : `/${detectedLocation}/services`;
 
   const navItems = [
     { name: "Home",     id: "home",      href: homeLink },
