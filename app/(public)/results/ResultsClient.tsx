@@ -14,7 +14,7 @@ const FALLBACK_PAIRS = [
   { title: 'Laser Acne Scar Removal', description: 'Precise fractional laser for smooth, scar-free skin.', category: 'Laser' },
 ];
 
-const CATEGORIES = ['All', 'Skin Care', 'Hair', 'Laser', 'Acne & Scars'];
+const FALLBACK_CATEGORIES = ['Skin Care', 'Hair', 'Laser'];
 
 const FALLBACK_STATS = [
   { value: '98%', label: 'Patient satisfaction' },
@@ -33,6 +33,8 @@ interface Props {
 export default function ResultsClient({ pairs, headline, subheadline, stats }: Props) {
   const allPairs = pairs.length > 0 ? pairs : FALLBACK_PAIRS;
   const STATS = stats && stats.length > 0 ? stats : FALLBACK_STATS;
+  const usedCategories = Array.from(new Set(allPairs.map((p: any) => p.category).filter(Boolean)));
+  const CATEGORIES = ['All', ...(usedCategories.length > 0 ? usedCategories : FALLBACK_CATEGORIES)];
   const [activeCategory, setActiveCategory] = useState('All');
 
   const filtered = activeCategory === 'All'

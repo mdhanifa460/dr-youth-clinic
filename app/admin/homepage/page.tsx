@@ -762,6 +762,16 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                   <textarea rows={2} placeholder="Description" value={p.description}
                     onChange={(e) => setArr('pairs', i, 'description', e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                  <div>
+                    <input type="text" placeholder="Category (e.g. Skin Care, Hair, Laser)" value={p.category || ''}
+                      list="before-after-categories"
+                      onChange={(e) => setArr('pairs', i, 'category', e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Controls the filter tab this result shows under on the <a href="/results" target="_blank" rel="noopener noreferrer" className="underline">/results</a> page.
+                      Type a new category to create it — no code change needed.
+                    </p>
+                  </div>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <ImgField label="Before Image" value={p.before}
                       onChange={(v) => { const next = JSON.parse(JSON.stringify(d)); next.pairs[i].before = v; onChange(next); }} />
@@ -771,7 +781,12 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                 </div>
               </div>
             ))}
-            <button type="button" onClick={() => addArrItem('pairs', { title: '', description: '', before: { url: '', publicId: '' }, after: { url: '', publicId: '' } })}
+            <datalist id="before-after-categories">
+              {Array.from(new Set((d.pairs || []).map((p: any) => p.category).filter(Boolean))).map((c: any) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+            <button type="button" onClick={() => addArrItem('pairs', { title: '', description: '', category: '', before: { url: '', publicId: '' }, after: { url: '', publicId: '' } })}
               className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
               <Plus size={12} /> Add pair
             </button>
