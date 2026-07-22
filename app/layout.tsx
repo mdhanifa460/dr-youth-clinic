@@ -4,7 +4,7 @@ import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
 import { getAnalyticsConfig } from "@/app/lib/analyticsConfig";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL || 'https://dr-youth-clinic.vercel.app'),
