@@ -747,49 +747,18 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
         <div className="space-y-4">
           <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
           <TextField label="Sub-headline" value={d.subheadline} onChange={(v) => set('subheadline', v)} multiline />
-          <div>
-            <p className="text-xs font-semibold text-gray-600 mb-3">Before / After Pairs</p>
-            {(d.pairs || []).map((p: any, i: number) => (
-              <div key={i} className="border border-gray-200 rounded-xl p-4 mb-3">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-bold text-gray-500">Pair {i + 1}</span>
-                  <button type="button" onClick={() => removeArrItem('pairs', i)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
-                </div>
-                <div className="space-y-3">
-                  <input type="text" placeholder="Title" value={p.title}
-                    onChange={(e) => setArr('pairs', i, 'title', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                  <textarea rows={2} placeholder="Description" value={p.description}
-                    onChange={(e) => setArr('pairs', i, 'description', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                  <div>
-                    <input type="text" placeholder="Category (e.g. Skin Care, Hair, Laser)" value={p.category || ''}
-                      list="before-after-categories"
-                      onChange={(e) => setArr('pairs', i, 'category', e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      Controls the filter tab this result shows under on the <a href="/results" target="_blank" rel="noopener noreferrer" className="underline">/results</a> page.
-                      Type a new category to create it — no code change needed.
-                    </p>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <ImgField label="Before Image" value={p.before}
-                      onChange={(v) => { const next = JSON.parse(JSON.stringify(d)); next.pairs[i].before = v; onChange(next); }} />
-                    <ImgField label="After Image" value={p.after}
-                      onChange={(v) => { const next = JSON.parse(JSON.stringify(d)); next.pairs[i].after = v; onChange(next); }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-            <datalist id="before-after-categories">
-              {Array.from(new Set((d.pairs || []).map((p: any) => p.category).filter(Boolean))).map((c: any) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-            <button type="button" onClick={() => addArrItem('pairs', { title: '', description: '', category: '', before: { url: '', publicId: '' }, after: { url: '', publicId: '' } })}
-              className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
-              <Plus size={12} /> Add pair
-            </button>
+          <div className="rounded-xl border border-blue-100 bg-[#f6faff] p-4 flex items-start gap-3">
+            <span className="text-lg shrink-0">📸</span>
+            <div>
+              <p className="text-xs font-bold text-[#0B2560] mb-1">Before / After photos are managed separately</p>
+              <p className="text-xs text-gray-500 mb-2">
+                Add, edit, reorder, and delete individual results (title, category, before/after images) from
+                the dedicated Results page — changes there show up on <a href="/results" target="_blank" rel="noopener noreferrer" className="underline">/results</a> immediately.
+              </p>
+              <a href="/admin/results" className="text-xs font-semibold text-[#3B82C4] hover:underline">
+                Go to Admin → Results →
+              </a>
+            </div>
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-600 mb-1">Stats Row</p>

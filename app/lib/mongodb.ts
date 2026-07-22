@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || 'clinicDB';
 
 // Global cache survives across serverless function invocations in the same process.
 // Without this, every cold start creates a new TCP connection to MongoDB.
@@ -14,7 +15,7 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (!cached.promise) {
     cached.promise = mongoose
       .connect(MONGODB_URI, {
-        dbName: 'clinicDB',
+        dbName: MONGODB_DB_NAME,
         bufferCommands: false,
         serverSelectionTimeoutMS: 10000, // Atlas free tier can take up to 8s to select server
         socketTimeoutMS: 45000,

@@ -93,6 +93,25 @@ export function buildLocationChunk(doc: any): ChunkInput {
   };
 }
 
+// title + description + category + sessions/duration — feeds the AI chatbot
+// with real patient-result context (e.g. "how many sessions for hair PRP?").
+export function buildResultChunk(doc: any): ChunkInput {
+  const facts = [
+    doc.sessions ? `Sessions: ${doc.sessions}` : '',
+    doc.duration ? `Duration: ${doc.duration}` : '',
+    doc.patientAge ? `Patient age: ${doc.patientAge}` : '',
+  ].filter(Boolean).join('\n');
+  const text = [doc.description, facts].filter(Boolean).join('\n\n');
+
+  return {
+    title: doc.title,
+    text: text || doc.title,
+    category: doc.category,
+    location: doc.branch && doc.branch !== 'all' ? doc.branch : undefined,
+    url: doc.slug ? `/results/${doc.slug}` : '/results',
+  };
+}
+
 export function buildFaqChunk(faq: { question: string; answer: string; category?: string }): ChunkInput {
   return {
     title: faq.question,
@@ -116,6 +135,7 @@ const BUILDERS: Partial<Record<IKnowledgeChunk['sourceType'], (doc: any) => Chun
   doctor: buildDoctorChunk,
   blog: buildBlogChunk,
   location: buildLocationChunk,
+  result: buildResultChunk,
 };
 
 export async function upsertChunk(

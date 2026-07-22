@@ -10,7 +10,9 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
+import { Result } from '@/app/models/Result';
 import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
+import SliderCard from '@/app/components/SliderCard';
 import { cloudGalleryThumb, cloudHero } from '@/app/lib/cloudinary-url';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
@@ -40,6 +42,18 @@ export async function generateMetadata({ params }: { params: { location: string 
       locale: 'en_IN',
     },
   };
+}
+
+async function getBranchResults(city: string) {
+  try {
+    await connectDB();
+    const docs = await (Result as any)
+      .find({ branch: { $in: [city, 'all'] }, status: 'published' })
+      .sort({ order: 1, createdAt: -1 })
+      .limit(3)
+      .lean();
+    return JSON.parse(JSON.stringify(docs));
+  } catch { return []; }
 }
 
 async function getLocationContent(city: string) {
@@ -95,9 +109,10 @@ export default async function LocationPage({ params }: { params: { location: str
   const loc = locations[cityKey];
   if (!loc) notFound();
 
-  const [content, locationBanner] = await Promise.all([
+  const [content, locationBanner, branchResults] = await Promise.all([
     getLocationContent(cityKey),
     resolveBanner({ page: 'location', location: cityKey }),
+    getBranchResults(cityKey),
   ]);
   const otherCities = Object.entries(locations).filter(([k]) => k !== cityKey);
   const hasHero    = !!(content?.heroImage?.url);
@@ -316,6 +331,31 @@ export default async function LocationPage({ params }: { params: { location: str
               })),
             }}
           />
+        )}
+
+        {/* ── DOCUMENTED RESULTS from Admin → Results, filtered to this branch ── */}
+        {branchResults.length > 0 && (
+          <section className="py-16 px-6 md:px-10 bg-[#f6faff]">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
+                <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">
+                  Patient Results at {loc.name}
+                </h2>
+                <Link href="/results" className="text-sm font-semibold text-[#0B2560] hover:text-[#3b82f6] transition flex items-center gap-1.5">
+                  View all <ChevronRight size={14} />
+                </Link>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {branchResults.map((r: any) => (
+                  r.slug ? (
+                    <Link key={String(r._id)} href={`/results/${r.slug}`} className="block">
+                      <SliderCard pair={r} />
+                    </Link>
+                  ) : <SliderCard key={String(r._id)} pair={r} />
+                ))}
+              </div>
+            </div>
+          </section>
         )}
 
         {/* ── CLINIC GALLERY ───────────────────────────────────────────────── */}

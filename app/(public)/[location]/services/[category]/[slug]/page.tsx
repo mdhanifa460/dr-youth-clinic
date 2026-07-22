@@ -11,6 +11,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
+import { Result } from '@/app/models/Result';
+import SliderCard from '@/app/components/SliderCard';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
@@ -93,6 +95,18 @@ async function getLocationDoctors(location: string) {
     await connectDB();
     return Doctor.find({ location: { $in: [location.toLowerCase(), 'all'] }, active: true } as any)
       .sort({ order: 1 }).limit(3).lean() as Promise<any[]>;
+  } catch { return []; }
+}
+
+async function getServiceResults(serviceId: string) {
+  try {
+    await connectDB();
+    const docs = await (Result as any)
+      .find({ service: serviceId, status: 'published' })
+      .sort({ order: 1, createdAt: -1 })
+      .limit(3)
+      .lean();
+    return JSON.parse(JSON.stringify(docs));
   } catch { return []; }
 }
 
@@ -266,7 +280,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos, serviceBanner] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos, serviceBanner, documentedResults] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
@@ -276,6 +290,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     resolveRelatedLinks(svc.narrativeBlocks),
     resolveReferencedVideos(svc.narrativeBlocks),
     resolveBanner({ page: 'service', location: params.location, service: svc.urlSlug || params.slug }),
+    getServiceResults(svc._id),
   ]);
 
   const cityName = loc.name;
@@ -574,6 +589,27 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border hidden sm:block">Unretouched photos</span>
                 </div>
                 <BeforeAfterGallery pairs={beforeAfterPairs} serviceName={svc.name} />
+              </div>
+            )}
+
+            {/* Documented Results — full Result entries (Admin → Results) tagged to this service */}
+            {documentedResults.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Documented Patient Results</h2>
+                  <Link href="/results" className="text-sm font-semibold text-[#0B2560] hover:text-[#3b82f6] transition flex items-center gap-1.5">
+                    View all <ChevronRight size={14} />
+                  </Link>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-5">
+                  {documentedResults.map((r: any) => (
+                    r.slug ? (
+                      <Link key={String(r._id)} href={`/results/${r.slug}`} className="block">
+                        <SliderCard pair={r} />
+                      </Link>
+                    ) : <SliderCard key={String(r._id)} pair={r} />
+                  ))}
+                </div>
               </div>
             )}
 

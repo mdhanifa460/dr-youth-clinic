@@ -122,9 +122,15 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((pair: any, i: number) => (
-              <SliderCard key={i} pair={pair} />
-            ))}
+            {filtered.map((pair: any, i: number) =>
+              pair.slug ? (
+                <Link key={i} href={`/results/${pair.slug}`} className="block">
+                  <SliderCard pair={pair} />
+                </Link>
+              ) : (
+                <SliderCard key={i} pair={pair} />
+              )
+            )}
           </div>
         )}
 

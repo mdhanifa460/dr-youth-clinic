@@ -8,6 +8,7 @@ import { Doctor } from '@/app/models/Doctor';
 import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
+import { Result } from '@/app/models/Result';
 import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
@@ -224,6 +225,28 @@ const getCachedBlogPosts = unstable_cache(
   { revalidate: 300, tags: ['blog'] }
 );
 
+// Feeds the homepage's before_after carousel — Result docs replaced the old
+// embedded HomepageSection.data.pairs as the source of truth (admin now
+// manages these from Admin → Results), so the carousel must read from here
+// or it's frozen on whatever pairs existed at the time of that migration.
+const getCachedResultPairs = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await (Result as any)
+        .find({ active: true })
+        .sort({ order: 1, createdAt: -1 })
+        .limit(6)
+        .lean();
+      return JSON.parse(JSON.stringify(docs));
+    } catch {
+      return [];
+    }
+  },
+  ['homepage-result-pairs'],
+  { revalidate: 60, tags: ['results'] }
+);
+
 const getCachedFeaturedVideos = unstable_cache(
   async () => {
     try {
@@ -333,7 +356,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -344,6 +367,7 @@ export default async function Home() {
     getCachedTrustStats(),
     resolveBanner({ page: 'homepage' }),
     getCachedServiceCategoryCounts(),
+    getCachedResultPairs(),
   ]);
 
   const enriched = {
@@ -362,6 +386,10 @@ export default async function Home() {
     blog: {
       ...(sectionData['blog'] ?? {}),
       posts: liveBlogPosts.length > 0 ? liveBlogPosts : (sectionData['blog']?.posts ?? []),
+    },
+    before_after: {
+      ...(sectionData['before_after'] ?? {}),
+      pairs: liveResultPairs.length > 0 ? liveResultPairs : (sectionData['before_after']?.pairs ?? []),
     },
     trust_timeline: {
       ...(sectionData['trust_timeline'] ?? {}),

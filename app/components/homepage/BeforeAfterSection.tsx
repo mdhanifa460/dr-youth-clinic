@@ -87,7 +87,13 @@ export default function BeforeAfterSection({ data }: { data: any }) {
         >
           {/* Card — max width on desktop, full width on mobile */}
           <div className="max-w-xl mx-auto md:max-w-2xl">
-            <SliderCard pair={displayPairs[idx]} />
+            {displayPairs[idx]?.slug ? (
+              <Link href={`/results/${displayPairs[idx].slug}`} className="block">
+                <SliderCard pair={displayPairs[idx]} />
+              </Link>
+            ) : (
+              <SliderCard pair={displayPairs[idx]} />
+            )}
           </div>
 
           {/* Side arrows — only on desktop */}

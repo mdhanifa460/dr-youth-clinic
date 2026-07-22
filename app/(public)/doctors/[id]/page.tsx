@@ -7,7 +7,9 @@ import { Calendar, MapPin, Award, ArrowLeft, GraduationCap, Languages, Stethosco
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
 import { HomepageSection } from '@/app/models/HomepageSection';
+import { Result } from '@/app/models/Result';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import SliderCard from '@/app/components/SliderCard';
 
 export const revalidate = 300;
 
@@ -26,6 +28,18 @@ const getCachedPageContent = unstable_cache(
   ['doctors-page-content'],
   { revalidate: 300, tags: ['doctors-page'] }
 );
+
+async function getDoctorResults(doctorId: string) {
+  try {
+    await connectDB();
+    const docs = await (Result as any)
+      .find({ doctor: doctorId, status: 'published' })
+      .sort({ order: 1, createdAt: -1 })
+      .limit(3)
+      .lean();
+    return JSON.parse(JSON.stringify(docs));
+  } catch { return []; }
+}
 
 async function getDoctor(id: string) {
   try {
@@ -50,7 +64,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function DoctorDetailPage({ params }: { params: { id: string } }) {
-  const [doctor, pc, siteConfig] = await Promise.all([getDoctor(params.id), getCachedPageContent(), getSiteConfig()]);
+  const [doctor, pc, siteConfig, doctorResults] = await Promise.all([
+    getDoctor(params.id), getCachedPageContent(), getSiteConfig(), getDoctorResults(params.id),
+  ]);
   if (!doctor) notFound();
 
   const locationLabel = doctor.locations?.includes('all')
@@ -201,6 +217,25 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                   <span key={i} className="text-sm bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-medium">
                     {l}
                   </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Patient Results by this doctor */}
+          {doctorResults.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Patient Results by {doctor.name}</h2>
+                <Link href="/results" className="text-xs font-semibold text-[#3B82C4] hover:underline">View all</Link>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {doctorResults.map((r: any) => (
+                  r.slug ? (
+                    <Link key={String(r._id)} href={`/results/${r.slug}`} className="block">
+                      <SliderCard pair={r} />
+                    </Link>
+                  ) : <SliderCard key={String(r._id)} pair={r} />
                 ))}
               </div>
             </div>

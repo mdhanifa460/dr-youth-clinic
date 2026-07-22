@@ -43,6 +43,10 @@ export default function SliderCard({ pair }: { pair: any }) {
             <input
               type="range" min={0} max={100} value={pos}
               onChange={(e) => setPos(Number(e.target.value))}
+              // Cards are sometimes wrapped in a Link to the result's detail
+              // page — stop the click from bubbling to it, or dragging the
+              // slider to compare would also navigate away on release.
+              onClick={(e) => e.stopPropagation()}
               className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-10"
               style={{ margin: 0 }}
               aria-label={`Compare before and after for ${pair.title}`}
