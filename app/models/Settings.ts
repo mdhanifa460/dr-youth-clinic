@@ -86,6 +86,21 @@ export interface ISettings extends Document {
   adminUi: {
     analyticsStripEnabled: boolean;
   };
+  ai: {
+    enabled: boolean;
+    greeting: string;
+    welcomeMessage: string;
+    systemPrompt: string;
+    recommendationPrompt: string;
+    model: string;
+    temperature: number;
+    theme: 'luxury' | 'minimal' | 'vibrant';
+    suggestedQuestions: string[];
+    quickActions: Array<{ label: string; action: string }>;
+    enableRecommendations: boolean;
+    enableBooking: boolean;
+    enableWhatsappHandoff: boolean;
+  };
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -177,6 +192,37 @@ const SettingsSchema = new Schema<ISettings>(
     },
     adminUi: {
       analyticsStripEnabled: { type: Boolean, default: true },
+    },
+    ai: {
+      enabled:      { type: Boolean, default: true },
+      greeting:     { type: String, default: "Hi! I'm the DR Youth Clinic assistant 👋" },
+      welcomeMessage: { type: String, default: "Ask me about treatments, doctors, offers, or book a consultation." },
+      // Appended to CLINICAL_AI_GUARDRAILS (app/lib/ai/clinicalGuardrails.ts) —
+      // never replaces it, so the safety preamble can't be edited away from admin.
+      systemPrompt: { type: String, default: "You are the DR Youth Clinic assistant. Be warm, concise, and helpful. Ground every factual claim in the provided context — never invent prices, doctor names, or availability." },
+      recommendationPrompt: { type: String, default: "Given the patient's concern and the retrieved context, suggest the most relevant treatment, doctor, or offer. Explain briefly why it fits." },
+      model:        { type: String, default: 'claude-haiku-4-5-20251001' },
+      temperature:  { type: Number, default: 0.4, min: 0, max: 1 },
+      theme:        { type: String, enum: ['luxury', 'minimal', 'vibrant'], default: 'luxury' },
+      suggestedQuestions: {
+        type: [String],
+        default: [
+          'What treatments do you offer for acne scars?',
+          'Do you have any current offers?',
+          'How do I book a consultation?',
+        ],
+      },
+      quickActions: {
+        type: [{ label: String, action: String }],
+        default: [
+          { label: '📅 Book Appointment', action: '/book' },
+          { label: '🧪 Take Skin Quiz', action: '/skin-quiz' },
+          { label: '🏷️ View Offers', action: '/offers' },
+        ],
+      },
+      enableRecommendations:  { type: Boolean, default: true },
+      enableBooking:          { type: Boolean, default: true },
+      enableWhatsappHandoff:  { type: Boolean, default: true },
     },
   },
   { timestamps: true }

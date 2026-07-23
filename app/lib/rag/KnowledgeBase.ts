@@ -112,6 +112,35 @@ export function buildResultChunk(doc: any): ChunkInput {
   };
 }
 
+// title + description + features + terms — feeds the AI chatbot/RAG with
+// live offer context (e.g. "what packages do you have for hair loss?").
+export function buildOfferChunk(doc: any): ChunkInput {
+  const featuresText = (doc.features || []).join('\n');
+  const priceText = doc.originalPrice && doc.discountedPrice
+    ? `Original price: ₹${doc.originalPrice}, Offer price: ₹${doc.discountedPrice}`
+    : '';
+  const text = [doc.description, featuresText, priceText, doc.terms].filter(Boolean).join('\n\n');
+
+  return {
+    title: doc.title,
+    text: text || doc.title,
+    category: doc.category,
+    url: '/offers',
+  };
+}
+
+// Admin-authored policies/treatment guides/research notes/internal notes —
+// one flexible content type instead of four near-identical models, since
+// they're all "title + free text, embed it" from the knowledge base's
+// point of view.
+export function buildDocumentChunk(doc: any): ChunkInput {
+  return {
+    title: doc.title,
+    text: doc.body || doc.title,
+    category: doc.docType,
+  };
+}
+
 export function buildFaqChunk(faq: { question: string; answer: string; category?: string }): ChunkInput {
   return {
     title: faq.question,
@@ -136,6 +165,8 @@ const BUILDERS: Partial<Record<IKnowledgeChunk['sourceType'], (doc: any) => Chun
   blog: buildBlogChunk,
   location: buildLocationChunk,
   result: buildResultChunk,
+  offer: buildOfferChunk,
+  document: buildDocumentChunk,
 };
 
 export async function upsertChunk(

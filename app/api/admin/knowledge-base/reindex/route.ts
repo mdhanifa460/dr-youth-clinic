@@ -4,19 +4,20 @@ import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Blog } from '@/app/models/Blog';
 import { LocationContent } from '@/app/models/LocationContent';
+import { Result } from '@/app/models/Result';
+import { Offer } from '@/app/models/Offer';
+import { KnowledgeDocument } from '@/app/models/KnowledgeDocument';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { IKnowledgeChunk } from '@/app/models/KnowledgeChunk';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { syncKnowledgeChunk, syncFaqChunks } from '@/app/lib/rag/KnowledgeBase';
 import { flattenStaticFaqs } from '@/app/lib/rag/staticFaqs';
 
-// Bulk backfill for content that existed before the sync hooks did (Steps
-// 2-5 already keep new saves in sync incrementally — this just catches up
-// anything created earlier). Reuses the 'seo' admin module rather than adding
-// a new AdminModule enum value + touching all 8 role rows for a single
-// internal tool.
+// Bulk backfill for content that existed before the sync hooks did — new
+// saves already stay in sync incrementally via each model's own hooks, this
+// just catches up anything created earlier (or bulk-imported).
 export async function POST() {
-  const denied = await requirePermission('seo', 'full');
+  const denied = await requirePermission('ai', 'full');
   if (denied) return denied;
 
   if (!process.env.GEMINI_API_KEY) {
@@ -50,11 +51,14 @@ export async function POST() {
     }
   }
 
-  const [services, doctors, blogs, locations, faqSection] = await Promise.all([
-    Service.find({}).lean(),
-    Doctor.find({}).lean(),
-    Blog.find({}).lean(),
-    LocationContent.find({}).lean(),
+  const [services, doctors, blogs, locations, resultDocs, offers, documents, faqSection] = await Promise.all([
+    (Service as any).find({}).lean(),
+    (Doctor as any).find({}).lean(),
+    (Blog as any).find({}).lean(),
+    (LocationContent as any).find({}).lean(),
+    (Result as any).find({}).lean(),
+    (Offer as any).find({}).lean(),
+    (KnowledgeDocument as any).find({ active: true }).lean(),
     HomepageSection.findOne({ sectionKey: 'faq' } as any).lean(),
   ]);
 
@@ -62,6 +66,9 @@ export async function POST() {
   await reindexAll('doctor', doctors);
   await reindexAll('blog', blogs);
   await reindexAll('location', locations);
+  await reindexAll('result', resultDocs);
+  await reindexAll('offer', offers);
+  await reindexAll('document', documents);
 
   const cmsFaqs = (faqSection as any)?.data?.faqs ?? [];
   const faqResult = await syncFaqChunks(flattenStaticFaqs(), cmsFaqs);

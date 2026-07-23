@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
 
 export interface IOffer extends Document {
   title: string;
@@ -35,5 +36,12 @@ const OfferSchema = new Schema<IOffer>({
 }, { timestamps: true });
 
 OfferSchema.index({ active: 1, order: 1 });
+
+OfferSchema.post('save', function (doc) {
+  syncKnowledgeChunk('offer', doc).catch((e) => console.error('[KB] offer sync failed', e));
+});
+OfferSchema.post('findOneAndUpdate', function (doc) {
+  if (doc) syncKnowledgeChunk('offer', doc).catch((e) => console.error('[KB] offer sync failed', e));
+});
 
 export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);

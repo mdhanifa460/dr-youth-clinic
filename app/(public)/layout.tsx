@@ -3,12 +3,28 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import TopBar from "@/app/components/homepage/TopBar";
 import MobileStickyBar from "@/app/components/MobileStickyBar";
+import AiChatWidget from "@/app/components/ai/AiChatWidget";
 import { OrganizationSchema } from "@/app/components/SchemaMarkup";
 import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
+import { getSettings } from "@/app/models/Settings";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
 import { getSiteConfig } from "@/app/lib/siteConfig";
 import { SiteConfigProvider } from "@/app/components/SiteConfigContext";
+
+const getCachedAiConfig = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const settings = await getSettings();
+      return settings.ai ?? null;
+    } catch {
+      return null;
+    }
+  },
+  ["public-ai-config"],
+  { revalidate: 60, tags: ["settings"] }
+);
 
 // Single query for both topbar + footer — avoids two round-trips per page
 const getLayoutSections = unstable_cache(
@@ -43,9 +59,10 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [{ topbar, footer }, siteConfig] = await Promise.all([
+  const [{ topbar, footer }, siteConfig, aiConfig] = await Promise.all([
     getLayoutSections(),
     getSiteConfig(),
+    getCachedAiConfig(),
   ]);
 
   const whatsappLink = topbar.data?.socialLinks?.find(
@@ -65,6 +82,7 @@ export default async function PublicLayout({
       <div className="mobile-sticky-offset lg:pb-0">{children}</div>
       <Footer data={footer} siteConfig={siteConfig} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
+      <AiChatWidget config={aiConfig as any} whatsapp={siteConfig.publicWhatsApp} />
     </SiteConfigProvider>
   );
 }

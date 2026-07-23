@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone } from "lucide-react";
+import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone, Bot } from "lucide-react";
 
 const GROUPS = [
   {
@@ -136,6 +136,21 @@ const GROUPS = [
         title: "Admin Dashboard",
         desc: "Controls for the admin panel itself, not the public site — toggle the persistent Analytics Strip shown to staff.",
         tags: ["Analytics Strip", "Staff-only"],
+      },
+    ],
+  },
+  {
+    label: "AI",
+    color: "text-[#0B2560]",
+    items: [
+      {
+        href: "/admin/settings/ai",
+        icon: Bot,
+        color: "bg-blue-50 text-[#0B2560]",
+        border: "border-blue-100 hover:border-blue-300",
+        title: "AI Assistant",
+        desc: "Configure the site-wide AI chat widget — greeting, prompts, model, temperature, theme, suggested questions, and quick actions.",
+        tags: ["Greeting", "Prompts", "Model", "Theme"],
       },
     ],
   },

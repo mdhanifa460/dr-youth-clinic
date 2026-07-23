@@ -27,6 +27,7 @@ export type AdminModule =
   | 'team'
   | 'videos'
   | 'ai-assessment'
+  | 'ai'
   | 'banners';
 
 export type AccessLevel = 'full' | 'view' | 'none';
@@ -38,6 +39,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     locations: 'full', offers: 'full', results: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', banners: 'full',
+    ai: 'full',
   },
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
@@ -45,6 +47,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     locations: 'full', offers: 'full', results: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', banners: 'full',
+    ai: 'full',
   },
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
@@ -52,6 +55,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     locations: 'view', offers: 'full', results: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', banners: 'full',
+    ai: 'full',
   },
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -59,6 +63,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     locations: 'none', offers: 'none', results: 'none', reviews: 'view',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', banners: 'none',
+    ai: 'none',
   },
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
@@ -69,6 +74,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // quiz page was reachable at that level, so 'none' here would be a
     // silent access regression, not an intentional policy change.
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', banners: 'none',
+    ai: 'none',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
@@ -78,6 +84,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // Was 'services: full' before this feature had its own module — content
     // editors could already edit quiz content at that level.
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', banners: 'full',
+    ai: 'full',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -85,6 +92,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     locations: 'none', offers: 'none', results: 'none', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', banners: 'none',
+    ai: 'none',
   },
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -93,6 +101,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     // Was 'services: view' before this feature had its own module.
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', banners: 'none',
+    ai: 'none',
   },
 };
 
