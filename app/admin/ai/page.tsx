@@ -12,7 +12,7 @@ const DOC_TYPES = ['policy', 'treatment_guide', 'research', 'admin_note'] as con
 const DOC_TYPE_LABELS: Record<string, string> = {
   policy: '📋 Policy', treatment_guide: '🩺 Treatment Guide', research: '🔬 Research', admin_note: '📝 Admin Note',
 };
-const SOURCE_TYPES = ['service', 'doctor', 'blog', 'location', 'faq', 'result', 'offer', 'document'];
+const SOURCE_TYPES = ['service', 'doctor', 'blog', 'location', 'faq', 'result', 'offer', 'document', 'story'];
 
 // ── Knowledge Base tab ──────────────────────────────────────────────────
 function KnowledgeBaseTab() {

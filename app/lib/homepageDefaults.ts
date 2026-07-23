@@ -257,6 +257,15 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       subheadline: 'Learn directly from our specialists.',
     },
   },
+  web_stories: {
+    label: 'Web Stories',
+    order: 9.2,
+    visible: true,
+    data: {
+      headline: 'Web Stories',
+      subheadline: 'Quick visual stories on treatments, transformations, and offers.',
+    },
+  },
   locations: {
     label: 'Locations',
     order: 10,

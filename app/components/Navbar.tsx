@@ -80,6 +80,7 @@ export default function Navbar() {
     { name: "Doctors",  id: "expertise", href: "/doctors" },
     { name: "About",    id: "about",     href: "/about" },
     { name: "Results",  id: "results",   href: "/results" },
+    { name: "Stories",  id: "stories",   href: "/web-stories" },
     { name: "Blog",     id: "blog",      href: "/blog" },
     { name: "Offers",   id: "offers",    href: "/offers" },
     { name: "Contact",  id: "contact",   href: null },

@@ -141,6 +141,26 @@ export function buildDocumentChunk(doc: any): ChunkInput {
   };
 }
 
+// Flattens visible slide text (title/subtitle/description/quote elements)
+// into one blob — enough for the AI assistant to answer "what stories do
+// you have about X" without needing to render the story itself.
+export function buildStoryChunk(doc: any): ChunkInput {
+  const slideText = (doc.slides || [])
+    .flatMap((s: any) => (s.elements || [])
+      .filter((e: any) => e.visible)
+      .map((e: any) => e.data?.text || e.data?.title || e.data?.label || ''))
+    .filter(Boolean)
+    .join('\n');
+  const text = [doc.description, slideText].filter(Boolean).join('\n\n');
+
+  return {
+    title: doc.title,
+    text: text || doc.title,
+    category: doc.tags?.[0],
+    url: doc.slug ? `/web-stories/${doc.slug}` : '/web-stories',
+  };
+}
+
 export function buildFaqChunk(faq: { question: string; answer: string; category?: string }): ChunkInput {
   return {
     title: faq.question,
@@ -167,6 +187,8 @@ const BUILDERS: Partial<Record<IKnowledgeChunk['sourceType'], (doc: any) => Chun
   result: buildResultChunk,
   offer: buildOfferChunk,
   document: buildDocumentChunk,
+  story: buildStoryChunk,
+  faq: buildFaqChunk,
 };
 
 export async function upsertChunk(

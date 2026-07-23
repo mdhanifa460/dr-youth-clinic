@@ -7,7 +7,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 // each model) so Atlas Vector Search has one flat collection to query instead
 // of a 5-way fan-out across differently-shaped collections.
 export interface IKnowledgeChunk extends Document {
-  sourceType: 'service' | 'doctor' | 'blog' | 'location' | 'faq' | 'result' | 'offer' | 'document';
+  sourceType: 'service' | 'doctor' | 'blog' | 'location' | 'faq' | 'result' | 'offer' | 'document' | 'story';
   sourceId: string;
   title: string;
   text: string;
@@ -26,7 +26,7 @@ const KnowledgeChunkSchema = new Schema<IKnowledgeChunk>(
     sourceType: {
       type: String,
       required: true,
-      enum: ['service', 'doctor', 'blog', 'location', 'faq', 'result', 'offer', 'document'],
+      enum: ['service', 'doctor', 'blog', 'location', 'faq', 'result', 'offer', 'document', 'story'],
     },
     sourceId: {
       type: String,

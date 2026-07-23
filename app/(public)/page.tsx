@@ -9,6 +9,7 @@ import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
 import { Result } from '@/app/models/Result';
+import { Story } from '@/app/models/Story';
 import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
@@ -33,6 +34,7 @@ import FAQAccordion from '@/app/components/homepage/FAQAccordion';
 import { FAQSchema } from '@/app/components/SchemaMarkup';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
 import VideoAcademySection from '@/app/components/homepage/VideoAcademySection';
+import WebStoriesSection from '@/app/components/homepage/WebStoriesSection';
 export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
@@ -318,6 +320,26 @@ const getCachedServiceCategoryCounts = unstable_cache(
   { revalidate: 300, tags: ['services'] }
 );
 
+const getCachedStories = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await (Story as any)
+        .find({ status: 'published' } as any)
+        .select('-slides')
+        .populate('storyType', 'name icon')
+        .sort({ featured: -1, order: 1, publishedAt: -1 })
+        .limit(10)
+        .lean();
+      return JSON.parse(JSON.stringify(docs));
+    } catch {
+      return [];
+    }
+  },
+  ['homepage-web-stories'],
+  { revalidate: 60, tags: ['stories'] }
+);
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   hero: HeroSection,
   stats: StatsBar,
@@ -328,6 +350,7 @@ const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   trust_timeline: TrustTimeline,
   doctors: DoctorsSection,
   video_academy: VideoAcademySection,
+  web_stories: WebStoriesSection,
   locations: HomepageLocations,
   cta_strip: CTAStrip,
   testimonials: TestimonialsSlider,
@@ -356,7 +379,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -368,6 +391,7 @@ export default async function Home() {
     resolveBanner({ page: 'homepage' }),
     getCachedServiceCategoryCounts(),
     getCachedResultPairs(),
+    getCachedStories(),
   ]);
 
   const enriched = {
@@ -382,6 +406,10 @@ export default async function Home() {
     video_academy: {
       ...(sectionData['video_academy'] ?? {}),
       videos: liveVideos,
+    },
+    web_stories: {
+      ...(sectionData['web_stories'] ?? {}),
+      stories: liveStories,
     },
     blog: {
       ...(sectionData['blog'] ?? {}),

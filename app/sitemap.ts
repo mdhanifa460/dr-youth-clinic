@@ -4,6 +4,8 @@ import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Blog } from '@/app/models/Blog';
 import { LandingPage } from '@/app/models/LandingPage';
+import { Story } from '@/app/models/Story';
+import { Result } from '@/app/models/Result';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 
 export const dynamic = 'force-dynamic';
@@ -66,6 +68,12 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     priority: 0.8,
   },
   {
+    url: `${SITE_URL}/web-stories`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.8,
+  },
+  {
     url: `${SITE_URL}/privacy-policy`,
     lastModified: new Date(),
     changeFrequency: 'yearly',
@@ -109,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     await connectDB();
 
-    const [services, doctors, blogPosts, landingPages] = await Promise.all([
+    const [services, doctors, blogPosts, landingPages, stories, results] = await Promise.all([
       Service.find({ status: 'active' } as any)
         .select('urlSlug location targetLocations category updatedAt locationSeo')
         .lean() as Promise<any[]>,
@@ -120,6 +128,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .select('slug updatedAt')
         .lean() as Promise<any[]>,
       LandingPage.find({ status: 'published' } as any)
+        .select('slug updatedAt')
+        .lean() as Promise<any[]>,
+      (Story as any).find({ status: 'published' })
+        .select('slug updatedAt')
+        .lean() as Promise<any[]>,
+      (Result as any).find({ status: 'published' })
         .select('slug updatedAt')
         .lean() as Promise<any[]>,
     ]);
@@ -165,7 +179,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }));
 
-    return [...STATIC_ROUTES, ...serviceUrls, ...doctorUrls, ...blogUrls, ...landingPageUrls];
+    const storyUrls: MetadataRoute.Sitemap = stories
+      .filter((s) => s.slug)
+      .map((s) => ({
+        url: `${SITE_URL}/web-stories/${s.slug}`,
+        lastModified: s.updatedAt ? new Date(s.updatedAt) : new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }));
+
+    const resultUrls: MetadataRoute.Sitemap = results
+      .filter((r) => r.slug)
+      .map((r) => ({
+        url: `${SITE_URL}/results/${r.slug}`,
+        lastModified: r.updatedAt ? new Date(r.updatedAt) : new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }));
+
+    return [...STATIC_ROUTES, ...serviceUrls, ...doctorUrls, ...blogUrls, ...landingPageUrls, ...storyUrls, ...resultUrls];
   } catch {
     return STATIC_ROUTES;
   }

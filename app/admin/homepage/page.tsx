@@ -38,6 +38,7 @@ const SECTION_ICONS: Record<string, string> = {
   founder: '👤',
   doctors: '👨‍⚕️',
   video_academy: '🎬',
+  web_stories: '📱',
   locations: '📍',
   testimonials: '💬',
   faq: '❓',
@@ -889,6 +890,27 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
           <p className="text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2">
             Videos themselves are managed in Admin → Video Academy — add, categorise, and feature videos there.
           </p>
+        </div>
+      );
+
+    case 'web_stories':
+      return (
+        <div className="space-y-4">
+          <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <TextField label="Subheadline" value={d.subheadline} onChange={(v) => set('subheadline', v)} />
+          <div className="rounded-xl border border-blue-100 bg-[#f6faff] p-4 flex items-start gap-3">
+            <span className="text-lg shrink-0">📱</span>
+            <div>
+              <p className="text-xs font-bold text-[#0B2560] mb-1">Stories are managed separately</p>
+              <p className="text-xs text-gray-500 mb-2">
+                Create, edit, and publish stories from the dedicated Web Stories builder. Featured/published
+                stories appear here automatically, newest first.
+              </p>
+              <a href="/admin/stories" className="text-xs font-semibold text-[#3B82C4] hover:underline">
+                Go to Admin → Web Stories →
+              </a>
+            </div>
+          </div>
         </div>
       );
 

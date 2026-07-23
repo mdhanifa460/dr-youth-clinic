@@ -7,6 +7,8 @@ import { LocationContent } from '@/app/models/LocationContent';
 import { Result } from '@/app/models/Result';
 import { Offer } from '@/app/models/Offer';
 import { KnowledgeDocument } from '@/app/models/KnowledgeDocument';
+import { Story } from '@/app/models/Story';
+import { Faq } from '@/app/models/Faq';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { IKnowledgeChunk } from '@/app/models/KnowledgeChunk';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -51,7 +53,7 @@ export async function POST() {
     }
   }
 
-  const [services, doctors, blogs, locations, resultDocs, offers, documents, faqSection] = await Promise.all([
+  const [services, doctors, blogs, locations, resultDocs, offers, documents, stories, faqDocs, faqSection] = await Promise.all([
     (Service as any).find({}).lean(),
     (Doctor as any).find({}).lean(),
     (Blog as any).find({}).lean(),
@@ -59,6 +61,8 @@ export async function POST() {
     (Result as any).find({}).lean(),
     (Offer as any).find({}).lean(),
     (KnowledgeDocument as any).find({ active: true }).lean(),
+    (Story as any).find({ status: 'published' }).lean(),
+    (Faq as any).find({ active: true }).lean(),
     HomepageSection.findOne({ sectionKey: 'faq' } as any).lean(),
   ]);
 
@@ -69,6 +73,8 @@ export async function POST() {
   await reindexAll('result', resultDocs);
   await reindexAll('offer', offers);
   await reindexAll('document', documents);
+  await reindexAll('story', stories);
+  await reindexAll('faq', faqDocs);
 
   const cmsFaqs = (faqSection as any)?.data?.faqs ?? [];
   const faqResult = await syncFaqChunks(flattenStaticFaqs(), cmsFaqs);
