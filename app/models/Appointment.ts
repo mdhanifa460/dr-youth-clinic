@@ -14,7 +14,8 @@ export type AppointmentStatus =
   | "no_show";
 
 export type AppointmentType = "consultation" | "treatment" | "follow_up" | "patch_test";
-export type BookingSource   = "walk_in" | "website" | "phone" | "whatsapp" | "instagram" | "referral" | "other";
+// Admin-configurable (Settings.booking.sources) — not a fixed union.
+export type BookingSource   = string;
 export type RescheduleReason = "patient_requested" | "doctor_unavailable" | "clinic_holiday" | "emergency" | "equipment_maintenance" | "weather" | "other";
 
 const AppointmentSchema = new mongoose.Schema(
@@ -59,9 +60,10 @@ const AppointmentSchema = new mongoose.Schema(
     },
 
     // Source
+    // Not an enum — the list of valid sources is admin-configurable
+    // (Settings.booking.sources), not fixed in code.
     bookingSource: {
       type:    String,
-      enum:    ["walk_in", "website", "phone", "whatsapp", "instagram", "referral", "other"],
       default: "phone",
     },
 

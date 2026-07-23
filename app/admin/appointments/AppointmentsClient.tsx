@@ -7,6 +7,20 @@ import type { AdminRole } from "@/app/lib/permissions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+// Fallback list shown before Settings loads (and if an admin hasn't
+// customized it yet) — Settings.booking.sources is the actual source of
+// truth, fetched by NewAppointmentModal.
+const DEFAULT_BOOKING_SOURCES = ["Website", "Instagram", "Facebook", "Google", "WhatsApp", "Referral", "Walk-in", "Phone", "Just Dial", "Other"];
+
+// bookingSource is a free-text field (admin-configurable list, not a fixed
+// enum) — this formats both new Title-Case values ("Just Dial") and legacy
+// snake_case ones ("walk_in") into consistent display text without needing
+// an exhaustive lookup map.
+function formatSourceLabel(value?: string): string {
+  if (!value?.trim()) return "—";
+  return value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 type Doctor = { _id: string; name: string; locations: string[]; specializations: string[] };
 
 type Appointment = {
@@ -176,11 +190,6 @@ function AppointmentModal({
     }
   };
 
-  const SOURCE_LABELS: Record<string, string> = {
-    walk_in: "Walk-in", website: "Website", phone: "Phone",
-    whatsapp: "WhatsApp", instagram: "Instagram", referral: "Referral", other: "Other",
-  };
-
   const TYPE_LABELS: Record<string, string> = {
     consultation: "Consultation", treatment: "Treatment",
     follow_up: "Follow-up", patch_test: "Patch Test",
@@ -235,7 +244,7 @@ function AppointmentModal({
                 <Field label="Doctor"   value={appt.doctorName} />
                 <Field label="Branch"   value={appt.branch} />
                 <Field label="Type"     value={TYPE_LABELS[appt.appointmentType] || appt.appointmentType} />
-                <Field label="Source"   value={SOURCE_LABELS[appt.bookingSource || ""] || "—"} />
+                <Field label="Source"   value={formatSourceLabel(appt.bookingSource)} />
                 <Field label="Duration" value={`${appt.durationMinutes} min (${fmtTime(appt.startTime)} – ${fmtTime(appt.endTime)})`} />
                 {appt.skinConcern && <Field label="Concern"  value={appt.skinConcern} />}
                 {appt.sessionNumber && <Field label="Session" value={`${appt.sessionNumber} of ${appt.totalSessions || "?"}`} />}
@@ -522,7 +531,7 @@ function NewAppointmentModal({
     doctorId: "", doctorName: "",
     service: "", appointmentType: "consultation", durationMinutes: "30",
     date: "", startTime: "",
-    skinConcern: "", bookingSource: "phone",
+    skinConcern: "", bookingSource: "Phone",
     patchTestRequired: false, consentFormSigned: false,
     sessionNumber: "", totalSessions: "", packageName: "",
     internalNotes: "",
@@ -532,6 +541,14 @@ function NewAppointmentModal({
   const [conflict,  setConflict]  = useState("");
   const [checking,  setChecking]  = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);
+  const [sourceOptions, setSourceOptions] = useState<string[]>(DEFAULT_BOOKING_SOURCES);
+
+  useEffect(() => {
+    fetch("/api/admin/settings").then((r) => r.json()).then((d) => {
+      const sources = d?.data?.booking?.sources;
+      if (Array.isArray(sources) && sources.length > 0) setSourceOptions(sources);
+    }).catch(() => {});
+  }, []);
 
   const setF = (k: string, v: any) => { setForm((f) => ({ ...f, [k]: v })); setAvailable(null); setConflict(""); };
 
@@ -612,7 +629,7 @@ function NewAppointmentModal({
               <Input label="Phone *" value={form.patientPhone} onChange={(v) => setF("patientPhone", v)} type="tel" />
               <Input label="Email"   value={form.patientEmail} onChange={(v) => setF("patientEmail", v)} type="email" />
               <Select label="Source" value={form.bookingSource} onChange={(v) => setF("bookingSource", v)}
-                options={[["walk_in","Walk-in"],["phone","Phone"],["website","Website"],["whatsapp","WhatsApp"],["instagram","Instagram"],["referral","Referral"],["other","Other"]]} />
+                options={sourceOptions.map((s) => [s, s] as [string, string])} />
             </div>
           </Section>
 

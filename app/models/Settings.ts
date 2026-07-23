@@ -23,6 +23,11 @@ export interface ISettings extends Document {
     consultationDuration: number;
     consultationFee: number;
     emiBankPartners: string;
+    // Lead/appointment source options — shown in the "New Appointment"
+    // source picker and the Booking Leads source filter. Admin-configurable
+    // so a clinic can add e.g. "Just Dial" without a code change; the
+    // underlying field is a plain string, not a fixed enum, to match.
+    sources: string[];
   };
   display: {
     showPriceOnCards: boolean;
@@ -127,6 +132,10 @@ const SettingsSchema = new Schema<ISettings>(
       consultationDuration:    { type: Number,  default: 30 },
       consultationFee:         { type: Number,  default: 500 },
       emiBankPartners:         { type: String,  default: 'HDFC, ICICI, Axis Bank' },
+      sources: {
+        type: [String],
+        default: ['Website', 'Instagram', 'Facebook', 'Google', 'WhatsApp', 'Referral', 'Walk-in', 'Phone', 'Just Dial', 'Other'],
+      },
     },
     display: {
       showPriceOnCards:        { type: Boolean, default: true },

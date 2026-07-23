@@ -92,7 +92,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     startTime,
     endTime,
     skinConcern:      booking.concern || "",
-    bookingSource:    "website",
+    // Carry over the lead's real source instead of hardcoding "website" —
+    // a booking that came in via Instagram/WhatsApp/etc. must not lose that
+    // attribution just because it went through the conversion flow.
+    bookingSource:    booking.source || "website",
     status:           "confirmed",
     createdBy:        user._id,
     lastUpdatedBy:    user._id,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save, Plus, Trash2 } from "lucide-react";
 
 type BookingSettings = {
   collectEmail: boolean;
@@ -15,6 +15,7 @@ type BookingSettings = {
   consultationDuration: number;
   consultationFee: number;
   emiBankPartners: string;
+  sources: string[];
 };
 
 const DEFAULTS: BookingSettings = {
@@ -28,6 +29,7 @@ const DEFAULTS: BookingSettings = {
   consultationDuration: 30,
   consultationFee: 500,
   emiBankPartners: "HDFC, ICICI, Axis Bank",
+  sources: ["Website", "Instagram", "Facebook", "Google", "WhatsApp", "Referral", "Walk-in", "Phone", "Just Dial", "Other"],
 };
 
 const PATIENT_FIELDS: { key: keyof BookingSettings; label: string; desc: string; badge?: string }[] = [
@@ -204,6 +206,27 @@ export default function BookingSettingsPage() {
           </div>
         </div>
 
+        {/* Lead / Appointment Sources */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-50">
+            <h2 className="font-bold text-[#0B2560] text-sm">Lead Sources</h2>
+            <p className="text-gray-400 text-xs mt-0.5">Shown in the "New Appointment" Source picker and the Booking Leads filter. Add your own — e.g. Just Dial, a specific ad campaign, or a referral partner.</p>
+          </div>
+          <div className="px-6 py-5">
+            <div className="flex flex-wrap gap-2 mb-3">
+              {form.sources.map((s, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 bg-[#f6faff] border border-blue-50 text-[#0B2560] text-xs font-semibold px-3 py-1.5 rounded-full">
+                  {s}
+                  <button type="button" onClick={() => set("sources", form.sources.filter((_, idx) => idx !== i))} className="text-gray-300 hover:text-red-500">
+                    <Trash2 size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <AddSourceInput onAdd={(v) => set("sources", [...form.sources, v])} existing={form.sources} />
+          </div>
+        </div>
+
         {/* WhatsApp notifications */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-50">
@@ -241,6 +264,31 @@ export default function BookingSettingsPage() {
         </div>
 
       </div>
+    </div>
+  );
+}
+
+function AddSourceInput({ onAdd, existing }: { onAdd: (v: string) => void; existing: string[] }) {
+  const [value, setValue] = useState("");
+  const add = () => {
+    const v = value.trim();
+    if (!v || existing.some((s) => s.toLowerCase() === v.toLowerCase())) return;
+    onAdd(v);
+    setValue("");
+  };
+  return (
+    <div className="flex gap-2">
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+        placeholder="Add a source, e.g. Just Dial"
+        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]"
+      />
+      <button type="button" onClick={add}
+        className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-2 rounded-xl transition">
+        <Plus size={13} /> Add
+      </button>
     </div>
   );
 }

@@ -11,9 +11,8 @@ export type BookingStatus =
   | "no_show"      // confirmed but didn't show
   | "cancelled";   // explicitly cancelled
 
-export type BookingSource =
-  | "website" | "instagram" | "facebook" | "google"
-  | "referral" | "walk_in" | "phone" | "whatsapp" | "other";
+// Admin-configurable (Settings.booking.sources) — not a fixed union.
+export type BookingSource = string;
 
 const BookingSchema = new mongoose.Schema(
   {
@@ -37,10 +36,11 @@ const BookingSchema = new mongoose.Schema(
       default: "new",
     },
 
-    // Where did this lead come from?
+    // Where did this lead come from? Not an enum — the list of valid
+    // sources is admin-configurable (Settings.booking.sources), not fixed
+    // in code.
     source: {
       type: String,
-      enum: ["website","instagram","facebook","google","referral","walk_in","phone","whatsapp","other"],
       default: "website",
     },
 

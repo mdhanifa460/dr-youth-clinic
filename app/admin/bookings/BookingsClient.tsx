@@ -84,6 +84,7 @@ const SOURCE_META: Record<string, { label: string; icon: string; color: string }
   walk_in:   { label: "Walk-in",    icon: "🚶", color: "bg-orange-50 text-orange-600"},
   phone:     { label: "Phone Call", icon: "📞", color: "bg-gray-50 text-gray-600"    },
   whatsapp:  { label: "WhatsApp",   icon: "💬", color: "bg-emerald-50 text-emerald-600"},
+  just_dial: { label: "Just Dial",  icon: "📇", color: "bg-red-50 text-red-600"       },
   other:     { label: "Other",      icon: "📌", color: "bg-gray-50 text-gray-500"    },
 };
 
