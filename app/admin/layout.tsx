@@ -30,6 +30,7 @@ const MODULE_MAP: [string, AdminModule][] = [
   ["/admin/videos",        "videos"],
   ["/admin/quiz",          "ai-assessment"],
   ["/admin/ai-assessment", "ai-assessment"],
+  ["/admin/ai",            "ai"],
   ["/admin/media",         "services"],
   ["/admin/cloudinary-test", "settings"],
   ["/admin/settings",      "settings"],

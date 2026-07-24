@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 import { callClaudeMessages } from "@/app/lib/ai/anthropic";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
+import { connectDB } from "@/app/lib/mongodb";
+import { getSettings } from "@/app/models/Settings";
 
 // Public, unauthenticated — like app/api/journey-simulator, this hits a paid
 // AI API with no auth wall, so it's rate-limited per IP rather than sitting
@@ -63,9 +65,14 @@ export async function POST(req: NextRequest) {
       )
       .join("\n");
 
+    await connectDB();
+    const settings = await getSettings();
+    const clinicName = settings.clinicProfile?.name || "DR Youth Clinic";
+    const clinicCountry = settings.clinicProfile?.country || "India";
+
     const systemPrompt = `${CLINICAL_AI_GUARDRAILS}
 
-You are a patient-education assistant for DR Youth Clinic, a dermatology and aesthetic clinic in India.
+You are a patient-education assistant for ${clinicName}, a dermatology and aesthetic clinic in ${clinicCountry}.
 
 A patient just completed a clinical intake. Their main concern: "${primaryConcern || "not specified"}".
 

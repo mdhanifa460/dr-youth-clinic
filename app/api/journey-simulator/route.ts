@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import { Service } from "@/app/models/Service";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
+import { callClaude } from "@/app/lib/ai/anthropic";
 
 export async function POST(req: Request) {
   // 5 simulations per hour per IP — this hits a paid AI API with no auth wall,
@@ -63,26 +64,7 @@ Return ONLY valid JSON, no other text, in this exact shape:
 
 The 4 sessionRange values must divide ${sessions} total sessions sensibly (e.g. roughly 25%/50%/100%/post-treatment), matching the style "Session 1-2", "Session 3-4", etc.`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 900,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`AI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data.content?.[0]?.text ?? "";
+    const text = await callClaude(prompt, 900);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in AI response");

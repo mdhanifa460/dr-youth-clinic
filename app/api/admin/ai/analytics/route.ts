@@ -15,12 +15,15 @@ export async function GET() {
   try {
     await connectDB();
 
-    const [totals, dailyVolume, cardTypeBreakdown, recentQuestions] = await Promise.all([
+    const [totals, dailyVolume, cardTypeBreakdown, recentQuestions, feedbackBreakdown] = await Promise.all([
       (Conversation as any).aggregate([
         {
           $project: {
             messageCount: { $size: '$messages' },
             handedOffToWhatsApp: 1,
+            escalatedCount: {
+              $size: { $filter: { input: '$messages', as: 'm', cond: { $eq: ['$$m.escalated', true] } } },
+            },
           },
         },
         {
@@ -29,6 +32,7 @@ export async function GET() {
             totalConversations: { $sum: 1 },
             totalMessages: { $sum: '$messageCount' },
             whatsappHandoffs: { $sum: { $cond: ['$handedOffToWhatsApp', 1, 0] } },
+            escalations: { $sum: '$escalatedCount' },
           },
         },
       ]),
@@ -58,9 +62,16 @@ export async function GET() {
         { $limit: 15 },
         { $project: { question: '$messages.content', askedAt: '$messages.createdAt' } },
       ]),
+      (Conversation as any).aggregate([
+        { $unwind: '$messages' },
+        { $match: { 'messages.feedback': { $in: ['up', 'down'] } } },
+        { $group: { _id: '$messages.feedback', count: { $sum: 1 } } },
+      ]),
     ]);
 
-    const t = totals[0] || { totalConversations: 0, totalMessages: 0, whatsappHandoffs: 0 };
+    const t = totals[0] || { totalConversations: 0, totalMessages: 0, whatsappHandoffs: 0, escalations: 0 };
+    const fb = { up: 0, down: 0 };
+    for (const row of feedbackBreakdown) if (row._id === 'up' || row._id === 'down') fb[row._id as 'up' | 'down'] = row.count;
 
     return NextResponse.json({
       success: true,
@@ -68,10 +79,12 @@ export async function GET() {
         totalConversations: t.totalConversations,
         totalMessages: t.totalMessages,
         whatsappHandoffs: t.whatsappHandoffs,
+        escalations: t.escalations,
         avgMessagesPerConversation: t.totalConversations > 0 ? Math.round((t.totalMessages / t.totalConversations) * 10) / 10 : 0,
         dailyVolume,
         cardTypeBreakdown,
         recentQuestions,
+        feedback: fb,
       },
     });
   } catch {

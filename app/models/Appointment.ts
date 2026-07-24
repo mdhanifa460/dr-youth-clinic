@@ -100,6 +100,21 @@ const AppointmentSchema = new mongoose.Schema(
     // Notification tracking
     notificationsSent: [{ type: { type: String }, channel: String, sentAt: Date }],
 
+    // Staff assignment — distinct from createdBy (who logged the lead into
+    // the CRM, immutable) and from bookingSource (where the PATIENT came
+    // from). These say who is WORKING the lead, and unlike createdBy they
+    // can be reassigned later. Name is a denormalized display cache
+    // refreshed on every assignment — the id is the source of truth.
+    assignedReceptionistId:   { type: mongoose.Schema.Types.ObjectId, ref: "AdminUser", default: null },
+    assignedReceptionistName: { type: String, default: "" },
+    assignedCounselorId:      { type: mongoose.Schema.Types.ObjectId, ref: "AdminUser", default: null },
+    assignedCounselorName:    { type: String, default: "" },
+
+    // Reserved for future campaign-level attribution (e.g. a specific ad
+    // set or referral partner code) — unused today, kept nullable so
+    // wiring it in later doesn't need a schema migration.
+    campaignId: { type: String, default: "" },
+
     // Audit
     createdBy:     { type: mongoose.Schema.Types.ObjectId, ref: "AdminUser" },
     lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "AdminUser" },

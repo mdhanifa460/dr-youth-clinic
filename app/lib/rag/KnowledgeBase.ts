@@ -3,6 +3,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { KnowledgeChunk, IKnowledgeChunk } from '@/app/models/KnowledgeChunk';
 import { embedText } from './EmbeddingService';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
+import { getSettings } from '@/app/models/Settings';
 
 export interface ChunkInput {
   title: string;
@@ -76,7 +77,7 @@ export function buildBlogChunk(doc: any): ChunkInput {
 
 // clinicInfo.description + specialties + whyUs — the per-city public page
 // content (app/(public)/[location]/page.tsx).
-export function buildLocationChunk(doc: any): ChunkInput {
+export async function buildLocationChunk(doc: any): Promise<ChunkInput> {
   const info = doc.clinicInfo || {};
   const whyUsText = (info.whyUs || [])
     .map((w: any) => [w.title, w.desc].filter(Boolean).join(': '))
@@ -85,8 +86,11 @@ export function buildLocationChunk(doc: any): ChunkInput {
     .filter(Boolean)
     .join('\n\n');
 
+  const settings = await getSettings();
+  const clinicName = settings.clinicProfile?.name || 'DR Youth Clinic';
+
   return {
-    title: `DR Youth Clinic — ${doc.location}`,
+    title: `${clinicName} — ${doc.location}`,
     text: text || doc.location,
     location: doc.location,
     url: doc.location ? `/${doc.location}` : undefined,
@@ -114,10 +118,12 @@ export function buildResultChunk(doc: any): ChunkInput {
 
 // title + description + features + terms — feeds the AI chatbot/RAG with
 // live offer context (e.g. "what packages do you have for hair loss?").
-export function buildOfferChunk(doc: any): ChunkInput {
+export async function buildOfferChunk(doc: any): Promise<ChunkInput> {
+  const settings = await getSettings();
+  const currency = settings.clinicProfile?.currencySymbol || '₹';
   const featuresText = (doc.features || []).join('\n');
   const priceText = doc.originalPrice && doc.discountedPrice
-    ? `Original price: ₹${doc.originalPrice}, Offer price: ₹${doc.discountedPrice}`
+    ? `Original price: ${currency}${doc.originalPrice}, Offer price: ${currency}${doc.discountedPrice}`
     : '';
   const text = [doc.description, featuresText, priceText, doc.terms].filter(Boolean).join('\n\n');
 
@@ -179,7 +185,7 @@ function faqSourceId(question: string): string {
 
 // Builders are looked up by sourceType so syncKnowledgeChunk stays a single
 // entry point as more source types are wired in later steps.
-const BUILDERS: Partial<Record<IKnowledgeChunk['sourceType'], (doc: any) => ChunkInput>> = {
+const BUILDERS: Partial<Record<IKnowledgeChunk['sourceType'], (doc: any) => ChunkInput | Promise<ChunkInput>>> = {
   service: buildServiceChunk,
   doctor: buildDoctorChunk,
   blog: buildBlogChunk,
@@ -223,7 +229,8 @@ export async function removeChunk(sourceType: IKnowledgeChunk['sourceType'], sou
 export async function syncKnowledgeChunk(sourceType: IKnowledgeChunk['sourceType'], doc: any): Promise<void> {
   const builder = BUILDERS[sourceType];
   if (!builder || !doc?._id) return;
-  const chunk = builder(doc);
+  await connectDB();
+  const chunk = await builder(doc);
   await upsertChunk(sourceType, String(doc._id), chunk);
 }
 

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { callGeminiText } from '@/app/lib/ai/gemini';
 
 export const dynamic = 'force-dynamic';
 
 // ── Gemini REST call (no SDK dependency) — mirrors /api/admin/keyword-suggestions ──
 async function callGemini(title: string, template: string, existingDescription: string) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+  if (!process.env.GEMINI_API_KEY) return null;
 
   const prompt = `You are a senior SEO strategist for DR Youth Clinic, a premium aesthetic dermatology clinic in India competing with top clinics like Oliva Clinic, Kaya Clinic, and Dermacos.
 
@@ -22,35 +22,8 @@ Write SEO metadata for this landing page:
 Return ONLY valid JSON, no explanation, no markdown:
 {"title": "...", "description": "...", "keywords": ["kw1","kw2","kw3","kw4","kw5","kw6","kw7","kw8","kw9","kw10","kw11","kw12"]}`;
 
-  const res = await fetch(
-    // gemini-2.5-flash-lite 404s as "no longer available to new users" on
-    // current API keys — switched to the alias verified working live.
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 500,
-          responseMimeType: 'application/json',
-        },
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    console.error('[Gemini] SEO keywords API error', res.status, errText.slice(0, 300));
-    return null;
-  }
-
-  const json = await res.json();
-  const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) return null;
-
   try {
+    const raw = await callGeminiText(prompt, { temperature: 0.4, maxTokens: 500, jsonMode: true });
     const parsed = JSON.parse(raw);
     if (
       typeof parsed.title === 'string' &&

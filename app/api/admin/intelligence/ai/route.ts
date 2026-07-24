@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { callClaude } from '@/app/lib/ai/anthropic';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,28 +55,8 @@ Return ONLY valid JSON:
   }
 }`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key':         apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type':      'application/json',
-      },
-      body: JSON.stringify({
-        model:      'claude-haiku-4-5-20251001',
-        max_tokens: 1800,
-        messages:   [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Anthropic ${res.status}: ${err}`);
-    }
-
-    const data    = await res.json();
-    const text    = data.content?.[0]?.text || '';
-    const match   = text.match(/\{[\s\S]*\}/);
+    const text = await callClaude(prompt, 1800);
+    const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('AI returned unexpected format');
 
     const parsed = JSON.parse(match[0]);

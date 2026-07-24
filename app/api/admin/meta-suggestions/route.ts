@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { connectDB } from '@/app/lib/mongodb';
 import { MetaSuggestionCache } from '@/app/models/MetaSuggestionCache';
+import { callGeminiText } from '@/app/lib/ai/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,7 @@ function makeCacheKey(name: string, category: string, location: string) {
 
 // ── Gemini REST call (no SDK dependency) ─────────────────────────────────────
 async function callGemini(serviceName: string, category: string, city: string) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+  if (!process.env.GEMINI_API_KEY) return null;
 
   const isAllLocations = city === 'All';
   // An 'all'-location service is the SAME document rendered at every city's
@@ -50,35 +50,8 @@ Return ONLY valid JSON, no explanation, no markdown:
   ]
 }`;
 
-  const res = await fetch(
-    // gemini-2.5-flash-lite 404s as "no longer available to new users" on
-    // current API keys — switched to the alias verified working live.
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 500,
-          responseMimeType: 'application/json',
-        },
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    console.error('[Gemini] meta-suggestions API error', res.status, errText.slice(0, 300));
-    return null;
-  }
-
-  const json = await res.json();
-  const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) return null;
-
   try {
+    const raw = await callGeminiText(prompt, { temperature: 0.4, maxTokens: 500, jsonMode: true });
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.options)) return null;
     const options = parsed.options

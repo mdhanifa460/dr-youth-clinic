@@ -6,7 +6,7 @@ const AppointmentAuditLogSchema = new mongoose.Schema(
     appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: "Appointment", required: true, index: true },
     action: {
       type: String,
-      enum: ["created", "status_changed", "rescheduled", "cancelled", "doctor_changed", "note_added", "notification_sent"],
+      enum: ["created", "status_changed", "rescheduled", "cancelled", "doctor_changed", "note_added", "notification_sent", "assigned"],
       required: true,
     },
     performedBy: {

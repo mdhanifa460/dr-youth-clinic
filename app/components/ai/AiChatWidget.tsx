@@ -4,13 +4,28 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   MessageCircle, X, Send, Loader2, Sparkles, Stethoscope, Tag, Camera, Calendar,
-  ChevronRight, ArrowLeft, CheckCircle, IndianRupee,
+  ChevronRight, ArrowLeft, CheckCircle, IndianRupee, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
 import { markdownToHtml } from '@/app/lib/blogMarkdown';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
-type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean };
+type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
 type View = 'chat' | 'book' | 'offers' | 'assessment';
+
+type GreetingRule = {
+  id: string;
+  enabled: boolean;
+  type: 'time_of_day' | 'date_range' | 'returning_visitor' | 'new_visitor' | 'branch';
+  startHour?: number;
+  endHour?: number;
+  startDate?: string;
+  endDate?: string;
+  campaignParam?: string;
+  branch?: string;
+  greeting: string;
+  welcomeMessage?: string;
+  priority: number;
+};
 
 export type AiConfig = {
   enabled: boolean;
@@ -18,10 +33,63 @@ export type AiConfig = {
   welcomeMessage: string;
   theme: 'luxury' | 'minimal' | 'vibrant';
   suggestedQuestions: string[];
-  quickActions: { label: string; action: string }[];
+  suggestedQuestionsByBranch?: Record<string, string[]>;
+  quickActions: { label: string; action: string; branch?: string }[];
   enableBooking: boolean;
   enableWhatsappHandoff: boolean;
+  greetingRules?: GreetingRule[];
 };
+
+// The only branch signal available without a real intent/geo layer — reuses
+// the ?location=/?clinic= convention the skin-quiz's campaign attribution
+// already reads, rather than inventing a new one.
+function getUrlBranch(): string {
+  if (typeof window === 'undefined') return '';
+  const params = new URLSearchParams(window.location.search);
+  return (params.get('location') || params.get('clinic') || '').toLowerCase();
+}
+
+function getUrlCampaign(): string {
+  if (typeof window === 'undefined') return '';
+  return new URLSearchParams(window.location.search).get('campaign') || '';
+}
+
+// Highest-`priority` enabled rule whose condition matches wins; ties break
+// by array order (first match found). `isReturning` is the ONE signal that
+// must be read before getSessionId() creates a fresh id, since that call
+// itself makes every subsequent read look like a returning visitor.
+function resolveGreeting(rules: GreetingRule[] | undefined, isReturning: boolean): { greeting: string; welcomeMessage?: string } | null {
+  if (!rules?.length) return null;
+  const now = new Date();
+  const hour = now.getHours();
+  const today = now.toISOString().slice(0, 10);
+  const branch = getUrlBranch();
+  const campaign = getUrlCampaign();
+
+  const matches = rules.filter(r => {
+    if (!r.enabled) return false;
+    switch (r.type) {
+      case 'time_of_day':
+        return r.startHour !== undefined && r.endHour !== undefined &&
+          (r.startHour <= r.endHour ? hour >= r.startHour && hour < r.endHour : hour >= r.startHour || hour < r.endHour);
+      case 'date_range':
+        if (!r.startDate || !r.endDate || today < r.startDate || today > r.endDate) return false;
+        return !r.campaignParam || r.campaignParam.toLowerCase() === campaign.toLowerCase();
+      case 'returning_visitor':
+        return isReturning;
+      case 'new_visitor':
+        return !isReturning;
+      case 'branch':
+        return !!r.branch && !!branch && r.branch.toLowerCase() === branch;
+      default:
+        return false;
+    }
+  });
+  if (matches.length === 0) return null;
+
+  const best = matches.reduce((a, b) => (b.priority > a.priority ? b : a));
+  return { greeting: best.greeting, welcomeMessage: best.welcomeMessage };
+}
 
 // Quick actions pointing at these three paths render as an inline panel
 // inside the widget instead of navigating away — better on mobile, and it
@@ -31,7 +99,15 @@ export type AiConfig = {
 const INLINE_VIEWS: Record<string, View> = { '/book': 'book', '/offers': 'offers', '/skin-quiz': 'assessment' };
 
 function visibleQuickActions(config: AiConfig) {
-  return config.enableBooking ? config.quickActions : config.quickActions.filter(a => a.action !== '/book');
+  const branch = getUrlBranch();
+  const branchScoped = config.quickActions.filter(a => !a.branch || a.branch.toLowerCase() === branch);
+  return config.enableBooking ? branchScoped : branchScoped.filter(a => a.action !== '/book');
+}
+
+function visibleSuggestedQuestions(config: AiConfig) {
+  const branch = getUrlBranch();
+  const override = branch ? config.suggestedQuestionsByBranch?.[branch] : undefined;
+  return override?.length ? override : config.suggestedQuestions;
 }
 
 const CARD_ICON: Record<Card['type'], any> = {
@@ -46,14 +122,13 @@ const THEME_ACCENT: Record<AiConfig['theme'], string> = {
 
 const CONCERNS = ['Acne & Scars', 'Hair Fall', 'Pigmentation', 'Anti-Aging', 'Unwanted Hair', 'Something else'];
 
-function getSessionId() {
-  if (typeof window === 'undefined') return '';
-  let id = window.localStorage.getItem('ai_chat_session_id');
-  if (!id) {
-    id = (window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    window.localStorage.setItem('ai_chat_session_id', id);
-  }
-  return id;
+function getSessionId(): { id: string; isReturning: boolean } {
+  if (typeof window === 'undefined') return { id: '', isReturning: false };
+  const existing = window.localStorage.getItem('ai_chat_session_id');
+  if (existing) return { id: existing, isReturning: true };
+  const id = (window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  window.localStorage.setItem('ai_chat_session_id', id);
+  return { id, isReturning: false };
 }
 
 function CardChip({ card }: { card: Card }) {
@@ -226,10 +301,13 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
   const sessionIdRef = useRef('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const loadedHistory = useRef(false);
+  const [resolvedGreeting, setResolvedGreeting] = useState<{ greeting: string; welcomeMessage?: string } | null>(null);
 
   useEffect(() => {
-    sessionIdRef.current = getSessionId();
-  }, []);
+    const { id, isReturning } = getSessionId();
+    sessionIdRef.current = id;
+    setResolvedGreeting(resolveGreeting(config?.greetingRules, isReturning));
+  }, [config]);
 
   useEffect(() => {
     if (!open || loadedHistory.current || !sessionIdRef.current) return;
@@ -288,6 +366,13 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
               if (last?.role === 'assistant') last.cards = evt.cards;
               return next;
             });
+          } else if (evt.type === 'meta') {
+            setMessages(prev => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === 'assistant') last.createdAt = evt.createdAt;
+              return next;
+            });
           } else if (evt.type === 'disabled') {
             setDisabled(true);
           } else if (evt.type === 'error') {
@@ -307,6 +392,15 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
       });
     }
   }, [streaming]);
+
+  const sendFeedback = useCallback((createdAt: string, feedback: 'up' | 'down') => {
+    setMessages(prev => prev.map(m => (m.createdAt === createdAt ? { ...m, feedback } : m)));
+    fetch('/api/ai-chat/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: sessionIdRef.current, createdAt, feedback }),
+    }).catch(() => {});
+  }, []);
 
   if (!config || !config.enabled) return null;
   const accent = THEME_ACCENT[config.theme] || THEME_ACCENT.luxury;
@@ -339,8 +433,8 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
                 <Sparkles size={16} />
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-sm leading-snug truncate">{config.greeting}</p>
-                <p className="text-white/60 text-[11px] leading-snug truncate">{config.welcomeMessage}</p>
+                <p className="font-bold text-sm leading-snug truncate">{resolvedGreeting?.greeting || config.greeting}</p>
+                <p className="text-white/60 text-[11px] leading-snug truncate">{resolvedGreeting?.welcomeMessage || config.welcomeMessage}</p>
               </div>
             </div>
           )}
@@ -366,7 +460,7 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
                 {messages.length === 0 && !disabled && (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-400 px-1">Try asking:</p>
-                    {config.suggestedQuestions.map((q, i) => (
+                    {visibleSuggestedQuestions(config).map((q, i) => (
                       <button key={i} onClick={() => send(q)}
                         className="w-full text-left text-xs bg-[#f6faff] hover:bg-blue-50 border border-blue-50 text-[#0B2560] px-3.5 py-2.5 rounded-xl transition font-medium">
                         {q}
@@ -393,6 +487,18 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
                       {m.cards && m.cards.length > 0 && (
                         <div className="flex gap-2 mt-2 overflow-x-auto pb-1 scrollbar-hide">
                           {m.cards.map((c, ci) => <CardChip key={ci} card={c} />)}
+                        </div>
+                      )}
+                      {m.role === 'assistant' && !m.streaming && m.createdAt && (
+                        <div className="flex items-center gap-1.5 mt-1.5 px-1">
+                          <button onClick={() => sendFeedback(m.createdAt!, 'up')}
+                            className={`p-1 rounded-md transition ${m.feedback === 'up' ? 'text-green-600 bg-green-50' : 'text-gray-300 hover:text-gray-500'}`}>
+                            <ThumbsUp size={11} />
+                          </button>
+                          <button onClick={() => sendFeedback(m.createdAt!, 'down')}
+                            className={`p-1 rounded-md transition ${m.feedback === 'down' ? 'text-red-500 bg-red-50' : 'text-gray-300 hover:text-gray-500'}`}>
+                            <ThumbsDown size={11} />
+                          </button>
                         </div>
                       )}
                     </div>

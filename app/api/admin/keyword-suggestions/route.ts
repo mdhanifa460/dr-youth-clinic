@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { connectDB } from '@/app/lib/mongodb';
 import { KeywordCache } from '@/app/models/KeywordCache';
+import { callGeminiText } from '@/app/lib/ai/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,7 @@ const ALL_CITIES = ['Chennai', 'Bangalore', 'Coimbatore', 'Kochi'];
 
 // ── Gemini REST call (no SDK dependency) ─────────────────────────────────────
 async function callGemini(serviceName: string, category: string, city: string) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+  if (!process.env.GEMINI_API_KEY) return null;
 
   // 'all' means this service is genuinely offered at every clinic — the SEO
   // keywords should spread real city-tagged search queries across all 4
@@ -50,35 +50,10 @@ Return ONLY valid JSON, no explanation, no markdown:
 
 Rules: all lowercase, no duplicates, specific not generic, commercially relevant.`;
 
-  const res = await fetch(
-    // gemini-2.5-flash-lite 404s as "no longer available to new users" on
-    // current API keys — switched to the alias verified working live.
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,       // low temp = consistent, repeatable keyword output
-          maxOutputTokens: 400,   // 18 short keywords fit well under 300 tokens
-          responseMimeType: 'application/json',
-        },
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    console.error('[Gemini] API error', res.status, errText.slice(0, 300));
-    return null;
-  }
-
-  const json = await res.json();
-  const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) return null;
-
   try {
+    // low temp = consistent, repeatable keyword output; 18 short keywords
+    // fit well under 300 tokens.
+    const raw = await callGeminiText(prompt, { temperature: 0.3, maxTokens: 400, jsonMode: true });
     const parsed = JSON.parse(raw);
     // Validate shape — must have seo/geo/aeo arrays
     if (

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { callClaude } from '@/app/lib/ai/anthropic';
 
 type AiType = 'headline' | 'cta' | 'faq' | 'seo' | 'benefits' | 'problem';
 
@@ -38,41 +39,8 @@ export async function POST(
   try {
     const { type, context } = await req.json() as { type: AiType; context: string };
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { success: false, message: 'AI service not configured' },
-        { status: 503 }
-      );
-    }
-
     const prompt = buildPrompt(type, context || 'skin and hair treatments');
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('Anthropic API error:', err);
-      return NextResponse.json(
-        { success: false, message: 'AI generation failed' },
-        { status: 502 }
-      );
-    }
-
-    const data = await response.json();
-    const result = data.content?.[0]?.text ?? '';
+    const result = await callClaude(prompt, 1024);
 
     return NextResponse.json({ success: true, result });
   } catch (error) {

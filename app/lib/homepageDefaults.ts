@@ -432,6 +432,8 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         { label: 'Procedures', href: '/#services' },
         { label: 'Results', href: '/results' },
         { label: 'Blog', href: '/blog' },
+        { label: 'Web Stories', href: '/web-stories' },
+        { label: 'FAQs', href: '/faqs' },
         { label: 'Contact Us', href: '/#contact' },
       ],
       proceduresHeading: 'Our Procedures',

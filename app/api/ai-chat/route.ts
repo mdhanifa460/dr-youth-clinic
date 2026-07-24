@@ -5,6 +5,8 @@ import { getSettings } from '@/app/models/Settings';
 import { embedQuery } from '@/app/lib/rag/EmbeddingService';
 import { vectorSearchKnowledgeBase } from '@/app/lib/rag/VectorSearchService';
 import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
+import { anthropicStreamRequest } from '@/app/lib/ai/anthropic';
+import { scoreHitsToCards, type RecommendationType } from '@/app/lib/rag/RecommendationService';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -25,12 +27,24 @@ export async function GET(req: NextRequest) {
   }
 }
 
-const CARD_TYPES = ['doctor', 'service', 'offer', 'result'];
+const CARD_TYPES: RecommendationType[] = ['doctor', 'service', 'offer', 'result'];
 const MAX_HISTORY_MESSAGES = 8; // last 4 turns of context
 const MAX_STORED_MESSAGES = 60; // per conversation, oldest trimmed beyond this
 
 function ndjson(obj: unknown) {
   return new TextEncoder().encode(JSON.stringify(obj) + '\n');
+}
+
+// Highest-priority enabled rule whose matchKeywords substring-match the
+// message wins (case-insensitive) — ties break by array order.
+function matchRule<T extends { enabled: boolean; matchKeywords: string[]; priority: number }>(
+  rules: T[] | undefined, message: string
+): T | null {
+  if (!rules?.length) return null;
+  const lower = message.toLowerCase();
+  const matches = rules.filter(r => r.enabled && r.matchKeywords?.some(k => k && lower.includes(k.toLowerCase())));
+  if (matches.length === 0) return null;
+  return matches.reduce((a, b) => (b.priority > a.priority ? b : a));
 }
 
 export async function POST(req: NextRequest) {
@@ -85,16 +99,21 @@ export async function POST(req: NextRequest) {
   let cards: any[] = [];
   try {
     const embedding = await embedQuery(message);
-    const hits = await vectorSearchKnowledgeBase(embedding, { limit: 6, location: location || undefined });
+    const rawHits = await vectorSearchKnowledgeBase(embedding, { limit: 6, location: location || undefined });
+    // admin_note documents are internal-only (e.g. staff SOPs) — never let them
+    // leak into a patient-facing answer just because they scored well semantically.
+    const hits = rawHits.filter((h: any) => !(h.sourceType === 'document' && h.category === 'admin_note'));
     contextBlock = hits
       .map((h: any) => `[${h.sourceType}] ${h.title}\n${String(h.text || '').slice(0, 500)}${h.url ? `\n(link: ${h.url})` : ''}`)
       .join('\n\n---\n\n');
 
     if (aiConfig.enableRecommendations) {
-      cards = hits
-        .filter((h: any) => CARD_TYPES.includes(h.sourceType) && (h.score ?? 0) >= 0.72)
+      const matchedRecRule = matchRule(aiConfig.recommendationRules, message);
+      const types = (matchedRecRule?.preferredTypes?.length ? matchedRecRule.preferredTypes : CARD_TYPES) as RecommendationType[];
+      const minScore = matchedRecRule?.minScore;
+      cards = scoreHitsToCards(hits, { types, minScore })
         .slice(0, 3)
-        .map((h: any) => ({ type: h.sourceType, id: h.sourceId, title: h.title, subtitle: h.category || h.location || '', href: h.url }));
+        .map((c) => ({ type: c.type, id: c.sourceId, title: c.title, subtitle: c.subtitle, href: c.href }));
     }
   } catch (e) {
     console.error('[ai-chat] retrieval failed', e);
@@ -105,16 +124,19 @@ export async function POST(req: NextRequest) {
   const quickActionsText = (aiConfig.quickActions || [])
     .map((a: any) => `${a.label} -> ${a.action}`).join(', ');
 
+  const matchedEscalationRule = matchRule(aiConfig.escalationRules, message);
+
   const systemPrompt = [
     CLINICAL_AI_GUARDRAILS,
     aiConfig.systemPrompt,
     contextBlock ? `Context from the clinic's knowledge base (ground your answer in this; if the answer isn't here, say you're not certain and suggest booking a consultation):\n\n${contextBlock}` : '',
+    contextBlock && aiConfig.enableRecommendations && aiConfig.recommendationPrompt ? aiConfig.recommendationPrompt : '',
     quickActionsText ? `Available quick actions you may mention: ${quickActionsText}.` : '',
     aiConfig.enableWhatsappHandoff ? 'If the patient wants a human, offer to continue on WhatsApp.' : '',
+    matchedEscalationRule ? `This message touches a sensitive topic the clinic wants handled carefully: ${matchedEscalationRule.message}` : '',
   ].filter(Boolean).join('\n\n');
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(ndjson({ type: 'error', message: 'AI service is not configured.' }));
@@ -124,21 +146,12 @@ export async function POST(req: NextRequest) {
     return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   }
 
-  const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: aiConfig.model || 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      temperature: aiConfig.temperature ?? 0.4,
-      system: systemPrompt,
-      messages: [...priorMessages, { role: 'user', content: message }],
-      stream: true,
-    }),
+  const upstream = await anthropicStreamRequest({
+    model: aiConfig.model || 'claude-haiku-4-5-20251001',
+    max_tokens: 500,
+    temperature: aiConfig.temperature ?? 0.4,
+    system: systemPrompt,
+    messages: [...priorMessages, { role: 'user', content: message }],
   });
 
   if (!upstream.ok) {
@@ -190,7 +203,8 @@ export async function POST(req: NextRequest) {
           }
         }
       } finally {
-        conversation.messages.push({ role: 'assistant', content: fullText || '(no response)', cards, createdAt: new Date() });
+        const assistantCreatedAt = new Date();
+        conversation.messages.push({ role: 'assistant', content: fullText || '(no response)', cards, escalated: !!matchedEscalationRule, createdAt: assistantCreatedAt });
         if (conversation.messages.length > MAX_STORED_MESSAGES) {
           conversation.messages = conversation.messages.slice(-MAX_STORED_MESSAGES);
         }
@@ -198,6 +212,7 @@ export async function POST(req: NextRequest) {
         await conversation.save().catch((e: any) => console.error('[ai-chat] failed to persist conversation', e));
 
         controller.enqueue(ndjson({ type: 'cards', cards }));
+        controller.enqueue(ndjson({ type: 'meta', createdAt: assistantCreatedAt.toISOString() }));
         controller.enqueue(ndjson({ type: 'done' }));
         controller.close();
       }

@@ -15,7 +15,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const user = await getAdminUser();
   if (!user) return NextResponse.json({ success: false }, { status: 401 });
 
-  const appt = await (Appointment as any).findById(params.id).lean() as any;
+  const appt = await (Appointment as any).findById(params.id)
+    .populate("createdBy", "name role")
+    .populate("lastUpdatedBy", "name role")
+    .lean() as any;
   if (!appt) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
   // Branch / doctor scoping

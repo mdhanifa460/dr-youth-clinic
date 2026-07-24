@@ -10,6 +10,7 @@ import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
 import { Result } from '@/app/models/Result';
 import { Story } from '@/app/models/Story';
+import { Faq } from '@/app/models/Faq';
 import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
@@ -340,6 +341,29 @@ const getCachedStories = unstable_cache(
   { revalidate: 60, tags: ['stories'] }
 );
 
+// Feeds the homepage FAQ accordion from the reusable Faq model (Admin →
+// FAQs) instead of the old CMS-embedded array — featured first, falls back
+// to whatever's in sectionData['faq'].faqs if no Faq documents exist yet
+// (a fresh site that hasn't added any).
+const getCachedHomepageFaqs = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await (Faq as any)
+        .find({ active: true })
+        .sort({ featured: -1, order: 1, createdAt: -1 })
+        .limit(8)
+        .select('question answer category')
+        .lean();
+      return JSON.parse(JSON.stringify(docs)).map((d: any) => ({ question: d.question, answer: d.answer }));
+    } catch {
+      return [];
+    }
+  },
+  ['homepage-faqs'],
+  { revalidate: 60, tags: ['faqs'] }
+);
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   hero: HeroSection,
   stats: StatsBar,
@@ -379,7 +403,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -392,6 +416,7 @@ export default async function Home() {
     getCachedServiceCategoryCounts(),
     getCachedResultPairs(),
     getCachedStories(),
+    getCachedHomepageFaqs(),
   ]);
 
   const enriched = {
@@ -424,6 +449,10 @@ export default async function Home() {
       todayCount: trustStats?.todayCount ?? null,
       weekCount: trustStats?.weekCount ?? null,
       monthCount: trustStats?.monthCount ?? null,
+    },
+    faq: {
+      ...(sectionData['faq'] ?? {}),
+      faqs: liveFaqs.length > 0 ? liveFaqs : (sectionData['faq']?.faqs ?? []),
     },
   };
 

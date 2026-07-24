@@ -12,6 +12,13 @@ import type { AdminRole } from "@/app/lib/permissions";
 // truth, fetched by NewAppointmentModal.
 const DEFAULT_BOOKING_SOURCES = ["Website", "Instagram", "Facebook", "Google", "WhatsApp", "Referral", "Walk-in", "Phone", "Just Dial", "Other"];
 
+// Same 4 city keys used sitewide (Navbar, Doctor.locations, Service.location)
+// — `branch` must be one of these lowercase keys for doctor-filtering and
+// conflict-check queries to match, so it's a picker, not free text.
+const BRANCH_OPTIONS: [string, string][] = [
+  ["chennai", "Chennai"], ["bangalore", "Bangalore"], ["coimbatore", "Coimbatore"], ["kochi", "Kochi"],
+];
+
 // bookingSource is a free-text field (admin-configurable list, not a fixed
 // enum) — this formats both new Title-Case values ("Just Dial") and legacy
 // snake_case ones ("walk_in") into consistent display text without needing
@@ -156,11 +163,24 @@ function AppointmentModal({
   const [transitioning, setTransitioning] = useState(false);
   const [statusNote, setStatusNote] = useState("");
   const [tab, setTab]             = useState<"details" | "timeline" | "notify">("details");
+  // The list view's cached `appt` prop never has createdBy populated (or
+  // the assignment fields refreshed) — re-fetch the single-appointment
+  // detail so Created By / Assigned Receptionist / Assigned Counselor
+  // reflect the current state, not whatever was true when the list loaded.
+  const [detail, setDetail] = useState<any>(appt);
+  const [staff, setStaff] = useState<{ _id: string; name: string; role: string }[]>([]);
 
   useEffect(() => {
     fetch(`/api/admin/appointments/${appt._id}`)
       .then((r) => r.json())
-      .then((d) => { if (d.auditLog) setAuditLog(d.auditLog); });
+      .then((d) => {
+        if (d.auditLog) setAuditLog(d.auditLog);
+        if (d.data) setDetail(d.data);
+      });
+
+    fetch("/api/admin/appointments/staff")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setStaff(d.data); });
 
     fetch(`/api/admin/notifications?appointmentId=${appt._id}`)
       .then((r) => r.json())
@@ -205,6 +225,11 @@ function AppointmentModal({
             <p className="text-blue-300 text-xs font-mono">{appt.appointmentId || appt._id.slice(-8).toUpperCase()}</p>
             <h2 className="text-white font-bold text-lg">{appt.patientName}</h2>
             <p className="text-blue-200 text-sm">{appt.service} · {fmtDate(appt.date)} {fmtTime(appt.startTime)} · {appt.branch}</p>
+            {detail.createdBy?.name && (
+              <p className="text-blue-300/70 text-xs mt-1">
+                👤 Created by {detail.createdBy.name}{detail.createdBy.role ? ` (${formatSourceLabel(detail.createdBy.role)})` : ""}
+              </p>
+            )}
           </div>
           <div className="flex flex-col items-end gap-2">
             <StatusBadge status={appt.status} />
@@ -258,6 +283,16 @@ function AppointmentModal({
                 <Checkbox label="Patch Test Done"     checked={appt.patchTestDone} />
                 <Checkbox label="Consent Form Signed" checked={appt.consentFormSigned} />
               </div>
+
+              {/* Staff assignment — who is working this lead. Reassignable,
+                  unlike Created By above. */}
+              <AssignmentBox appointmentId={appt._id} detail={detail} staff={staff} onAssigned={(patch) => {
+                setDetail((d: any) => ({ ...d, ...patch }));
+                // Refetch — the audit log state above was fetched once on
+                // mount and won't otherwise pick up the new "assigned"
+                // entry this action just wrote.
+                fetch(`/api/admin/appointments/${appt._id}`).then((r) => r.json()).then((d) => { if (d.auditLog) setAuditLog(d.auditLog); });
+              }} />
 
               {appt.internalNotes && (
                 <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-4">
@@ -321,6 +356,10 @@ function AppointmentModal({
                       {e.action === "rescheduled"    && `Rescheduled: ${e.details.oldDate} ${e.details.oldStartTime} → ${e.details.newDate} ${e.details.newStartTime}`}
                       {e.action === "created"        && "Appointment created"}
                       {e.action === "note_added"     && "Notes updated"}
+                      {e.action === "cancelled"      && "Appointment cancelled"}
+                      {e.action === "doctor_changed" && `Doctor changed${e.details.oldDoctorName ? `: ${e.details.oldDoctorName} → ${e.details.newDoctorName}` : ""}`}
+                      {e.action === "assigned"       && [e.details.receptionist && `Receptionist → ${e.details.receptionist}`, e.details.counselor && `Counselor → ${e.details.counselor}`].filter(Boolean).join(" · ")}
+                      {e.action === "notification_sent" && "Notification sent"}
                     </p>
                     {e.action === "rescheduled" && (
                       <p className="text-gray-500 text-xs">Reason: {e.details.reason} {e.details.reasonDetail ? `— ${e.details.reasonDetail}` : ""}</p>
@@ -356,6 +395,66 @@ function Checkbox({ label, checked }: { label: string; checked?: boolean }) {
     <div className="flex items-center gap-2 text-sm">
       <span className={checked ? "text-green-600" : "text-gray-300"}>{checked ? "☑" : "☐"}</span>
       <span className={checked ? "text-gray-800" : "text-gray-400"}>{label}</span>
+    </div>
+  );
+}
+
+function AssignmentBox({
+  appointmentId, detail, staff, onAssigned,
+}: {
+  appointmentId: string;
+  detail: any;
+  staff: { _id: string; name: string; role: string }[];
+  onAssigned: (patch: Record<string, any>) => void;
+}) {
+  const [receptionistId, setReceptionistId] = useState(detail.assignedReceptionistId?._id || detail.assignedReceptionistId || "");
+  const [counselorId, setCounselorId]       = useState(detail.assignedCounselorId?._id || detail.assignedCounselorId || "");
+  const [saving, setSaving] = useState(false);
+
+  const dirty = receptionistId !== (detail.assignedReceptionistId?._id || detail.assignedReceptionistId || "")
+    || counselorId !== (detail.assignedCounselorId?._id || detail.assignedCounselorId || "");
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/appointments/${appointmentId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receptionistId: receptionistId || null, counselorId: counselorId || null }),
+      });
+      const data = await res.json();
+      if (data.success) onAssigned(data.data);
+      else alert(data.message || "Failed to save assignment");
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assigned To</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-gray-400 mb-1 block">Receptionist</label>
+          <select value={receptionistId} onChange={(e) => setReceptionistId(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm">
+            <option value="">— Unassigned —</option>
+            {staff.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs text-gray-400 mb-1 block">Counselor</label>
+          <select value={counselorId} onChange={(e) => setCounselorId(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm">
+            <option value="">— Unassigned —</option>
+            {staff.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+          </select>
+        </div>
+      </div>
+      {dirty && (
+        <button onClick={save} disabled={saving}
+          className="text-xs font-semibold bg-[#0B2545] text-white px-3 py-1.5 rounded-lg disabled:opacity-50">
+          {saving ? "Saving…" : "Save Assignment"}
+        </button>
+      )}
     </div>
   );
 }
@@ -637,7 +736,8 @@ function NewAppointmentModal({
           <Section title="Clinic & Doctor">
             <div className="grid grid-cols-2 gap-3">
               {assignedClinics.includes("all") ? (
-                <Input label="Branch *" value={form.branch} onChange={(v) => setF("branch", v)} placeholder="e.g. Anna Nagar" />
+                <Select label="Branch *" value={form.branch} onChange={(v) => setF("branch", v)}
+                  options={[["", "Select branch…"] as [string, string], ...BRANCH_OPTIONS]} />
               ) : (
                 <Select label="Branch *" value={form.branch} onChange={(v) => setF("branch", v)}
                   options={assignedClinics.map((c) => [c, c] as [string, string])} />
@@ -746,6 +846,90 @@ function CheckboxInput({ label, checked, onChange }: { label: string; checked: b
   );
 }
 
+// ─── Reports modal ──────────────────────────────────────────────────────────────
+
+function ReportGroup({ title, rows }: { title: string; rows: { label: string; count: number }[] }) {
+  const max = Math.max(1, ...rows.map((r) => r.count));
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-4">
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{title}</p>
+      {rows.length === 0 ? (
+        <p className="text-xs text-gray-400">No data yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {rows.slice(0, 8).map((r, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm">
+              <span className="w-28 truncate text-gray-600 text-xs shrink-0" title={r.label}>{r.label}</span>
+              <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                <div className="h-full bg-[#0B2545]" style={{ width: `${(r.count / max) * 100}%` }} />
+              </div>
+              <span className="w-8 text-right text-xs font-bold text-gray-700 shrink-0">{r.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportsModal({ onClose }: { onClose: () => void }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/appointments/reports").then((r) => r.json()).then((d) => {
+      if (d.success) setData(d.data);
+      setLoading(false);
+    });
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
+      <div className="bg-gray-50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-[#0B2545] px-6 py-4 sticky top-0 z-10 flex items-center justify-between">
+          <h2 className="text-white font-bold text-lg">📊 Appointment Reports</h2>
+          <button onClick={onClose} className="text-blue-300 hover:text-white text-sm transition">✕ Close</button>
+        </div>
+        <div className="p-6">
+          {loading ? (
+            <p className="text-sm text-gray-400 text-center py-10">Loading…</p>
+          ) : !data ? (
+            <p className="text-sm text-gray-400 text-center py-10">Failed to load reports.</p>
+          ) : (
+            <div className="space-y-5">
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: "Total", value: data.total },
+                  { label: "Converted", value: data.convertedCount },
+                  { label: "No-Show", value: data.noShowCount },
+                  { label: "Cancelled", value: data.cancelledCount },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+                    <p className="text-2xl font-bold text-[#0B2545]">{s.value}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <ReportGroup title="By Receptionist (Created By)" rows={data.byReceptionist} />
+                <ReportGroup title="By Counselor" rows={data.byCounselor} />
+                <ReportGroup title="By Doctor" rows={data.byDoctor} />
+                <ReportGroup title="By Branch" rows={data.byBranch} />
+                <ReportGroup title="By Lead Source" rows={data.bySource} />
+                <ReportGroup title="By Service" rows={data.byService} />
+                <ReportGroup title="By Status" rows={data.byStatus} />
+              </div>
+              <p className="text-[11px] text-gray-400 text-center">
+                Revenue reporting isn't included — appointments don't yet carry a price field, so any revenue figure here would be a guess, not a fact.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function AppointmentsClient({
@@ -772,6 +956,7 @@ export default function AppointmentsClient({
   const [selectedAppt,  setSelectedAppt]  = useState<Appointment | null>(null);
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const [showNew,       setShowNew]       = useState(false);
+  const [showReports,   setShowReports]   = useState(false);
   const [statusFilter,  setStatusFilter]  = useState("");
   const [doctorFilter,  setDoctorFilter]  = useState("");
   const [dateFilter,    setDateFilter]    = useState("");
@@ -834,6 +1019,10 @@ export default function AppointmentsClient({
               📋 All
             </button>
           </div>
+          <button onClick={() => setShowReports(true)}
+            className="border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition flex items-center gap-2">
+            📊 Reports
+          </button>
           {canCreate && (
             <button onClick={() => setShowNew(true)}
               className="bg-[#0B2545] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#1a3a6e] transition flex items-center gap-2">
@@ -842,6 +1031,8 @@ export default function AppointmentsClient({
           )}
         </div>
       </div>
+
+      {showReports && <ReportsModal onClose={() => setShowReports(false)} />}
 
       {/* Filters (All tab only) */}
       {activeTab === "all" && (

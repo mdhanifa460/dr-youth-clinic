@@ -144,13 +144,13 @@ const GROUPS = [
     color: "text-[#0B2560]",
     items: [
       {
-        href: "/admin/settings/ai",
+        href: "/admin/ai",
         icon: Bot,
         color: "bg-blue-50 text-[#0B2560]",
         border: "border-blue-100 hover:border-blue-300",
-        title: "AI Assistant",
-        desc: "Configure the site-wide AI chat widget — greeting, prompts, model, temperature, theme, suggested questions, and quick actions.",
-        tags: ["Greeting", "Prompts", "Model", "Theme"],
+        title: "AI Management",
+        desc: "The full AI Assistant module — chatbot settings, greetings, prompts, recommendation rules, knowledge base, conversations, analytics, and feedback.",
+        tags: ["Greeting", "Prompts", "Knowledge Base", "Analytics"],
       },
     ],
   },

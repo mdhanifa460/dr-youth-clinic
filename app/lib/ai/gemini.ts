@@ -1,17 +1,9 @@
-// Shared Gemini call for the RAG/knowledge-base feature only (embedding text
-// for the Atlas Vector Search index, and grounded answer generation for the
-// FAQ assistant). Mirrors app/lib/ai/anthropic.ts's structure (one internal
-// request fn per endpoint shape, thin exported wrappers, a friendly-error
-// classifier) but is a NEW, separate file — the 4 existing admin SEO routes
-// (keyword-suggestions, meta-suggestions, blog/[id]/seo-keywords,
-// landing-pages/[id]/seo-keywords) each keep their own local callGemini()
-// untouched; consolidating those is out of scope for this feature.
-// NOTE: the 4 existing SEO routes hardcode "gemini-2.5-flash-lite" — verified
-// live against the current GEMINI_API_KEY that this model id now 404s
-// ("no longer available to new users"), so those routes are currently broken
-// independent of this feature. Out of scope to fix here (see file header),
-// flagged to the user separately. This file uses models verified working
-// live against the current key.
+// Shared Gemini call for the RAG/knowledge-base feature (embedding text for
+// the Atlas Vector Search index, grounded answer generation for the FAQ
+// assistant) and for the 5 admin SEO-suggestion routes (keyword-suggestions,
+// meta-suggestions, blog/story/landing-page seo-keywords), which previously
+// each hand-rolled their own fetch to the (now-404ing) "gemini-2.5-flash-lite"
+// model — all consolidated onto this file's callGeminiText/embedGeminiText.
 const GEMINI_TEXT_MODEL = "gemini-flash-lite-latest";
 const GEMINI_EMBED_MODEL = "gemini-embedding-001"; // outputs 3072-dim vectors — the Atlas Vector Search index must be created with numDimensions: 3072
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -47,11 +39,15 @@ async function geminiRequest(model: string, path: string, body: Record<string, u
   return response.json();
 }
 
-export async function callGeminiText(prompt: string, opts?: { system?: string; maxTokens?: number }): Promise<string> {
+export async function callGeminiText(prompt: string, opts?: { system?: string; maxTokens?: number; temperature?: number; jsonMode?: boolean }): Promise<string> {
   const data = await geminiRequest(GEMINI_TEXT_MODEL, "generateContent", {
     contents: [{ parts: [{ text: prompt }] }],
     ...(opts?.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}),
-    generationConfig: { maxOutputTokens: opts?.maxTokens ?? 500 },
+    generationConfig: {
+      maxOutputTokens: opts?.maxTokens ?? 500,
+      ...(opts?.temperature !== undefined ? { temperature: opts.temperature } : {}),
+      ...(opts?.jsonMode ? { responseMimeType: "application/json" } : {}),
+    },
   });
 
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();

@@ -68,6 +68,27 @@ export async function callClaude(prompt: string, maxTokens = 800): Promise<strin
   return anthropicRequest({ max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] });
 }
 
+// Returns the raw upstream Response (stream: true) for callers that need to
+// forward Anthropic's own SSE stream to their client (e.g. the AI chat
+// widget's token-by-token typing effect) rather than waiting for the full
+// completion — anthropicRequest() above always awaits a complete response,
+// which would remove that streaming UX, so this is a separate entry point
+// rather than a mode flag on the same function.
+export async function anthropicStreamRequest(body: Record<string, unknown>): Promise<Response> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("AI not configured");
+
+  return fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ model: ANTHROPIC_MODEL, ...body, stream: true }),
+  });
+}
+
 export type AnthropicContentBlock =
   | { type: "text"; text: string }
   | { type: "image"; source: { type: "base64"; media_type: string; data: string } };

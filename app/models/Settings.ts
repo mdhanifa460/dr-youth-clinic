@@ -91,6 +91,17 @@ export interface ISettings extends Document {
   adminUi: {
     analyticsStripEnabled: boolean;
   };
+  // Single source of truth for clinic identity strings that used to be
+  // hardcoded directly into AI prompts and knowledge-base chunk text
+  // (assessment-chat's system prompt, location chunk titles, offer chunk
+  // pricing text) — extracted here so those AI surfaces can be reused for a
+  // different clinic/brand without a source change, not because anything
+  // else in the app currently reads this yet.
+  clinicProfile: {
+    name: string;
+    country: string;
+    currencySymbol: string;
+  };
   ai: {
     enabled: boolean;
     greeting: string;
@@ -101,10 +112,61 @@ export interface ISettings extends Document {
     temperature: number;
     theme: 'luxury' | 'minimal' | 'vibrant';
     suggestedQuestions: string[];
-    quickActions: Array<{ label: string; action: string }>;
+    // Per-branch override — when the visitor's detected branch (see
+    // quickActions.branch below) has a non-empty entry here, the widget uses
+    // that list instead of `suggestedQuestions` above. Kept as a separate map
+    // rather than adding a `branch` field per-item (like quickActions) so the
+    // existing string[] shape — already read/written throughout the admin UI
+    // and the widget — never has to change to an object array.
+    suggestedQuestionsByBranch: Record<string, string[]>;
+    // Optional branch scoping — empty/unset means "show for every branch",
+    // matching the existing ?location=/?clinic= URL convention used by the
+    // skin-quiz's campaign attribution rather than inventing a new signal.
+    quickActions: Array<{ label: string; action: string; branch?: string }>;
     enableRecommendations: boolean;
     enableBooking: boolean;
     enableWhatsappHandoff: boolean;
+    // Resolved client-side in AiChatWidget (only the client knows local time,
+    // URL params, and returning-visitor state) — highest `priority` among
+    // matching, enabled rules wins; falls back to `greeting`/`welcomeMessage`
+    // above when none match. Defaults to [], so behavior is unchanged until
+    // an admin adds a rule.
+    greetingRules: Array<{
+      id: string;
+      enabled: boolean;
+      type: 'time_of_day' | 'date_range' | 'returning_visitor' | 'new_visitor' | 'branch';
+      startHour?: number;
+      endHour?: number;
+      startDate?: string;
+      endDate?: string;
+      campaignParam?: string;
+      branch?: string;
+      greeting: string;
+      welcomeMessage?: string;
+      priority: number;
+    }>;
+    // Resolved server-side in /api/ai-chat against the incoming message text
+    // (case-insensitive substring match on matchKeywords) — the
+    // highest-priority enabled match overrides the default card
+    // types/threshold for that turn only. Defaults to [].
+    recommendationRules: Array<{
+      id: string;
+      enabled: boolean;
+      matchKeywords: string[];
+      preferredTypes: Array<'doctor' | 'service' | 'offer' | 'result'>;
+      minScore?: number;
+      priority: number;
+    }>;
+    // Resolved server-side the same way — a match nudges that turn's system
+    // prompt to acknowledge the topic and proactively offer a human handoff,
+    // rather than silently trying to fully resolve it in-chat. Defaults to [].
+    escalationRules: Array<{
+      id: string;
+      enabled: boolean;
+      matchKeywords: string[];
+      message: string;
+      priority: number;
+    }>;
   };
 }
 
@@ -202,6 +264,11 @@ const SettingsSchema = new Schema<ISettings>(
     adminUi: {
       analyticsStripEnabled: { type: Boolean, default: true },
     },
+    clinicProfile: {
+      name:           { type: String, default: 'DR Youth Clinic' },
+      country:        { type: String, default: 'India' },
+      currencySymbol: { type: String, default: '₹' },
+    },
     ai: {
       enabled:      { type: Boolean, default: true },
       greeting:     { type: String, default: "Hi! I'm the DR Youth Clinic assistant 👋" },
@@ -221,8 +288,9 @@ const SettingsSchema = new Schema<ISettings>(
           'How do I book a consultation?',
         ],
       },
+      suggestedQuestionsByBranch: { type: Schema.Types.Mixed, default: {} },
       quickActions: {
-        type: [{ label: String, action: String }],
+        type: [{ label: String, action: String, branch: { type: String, default: '' } }],
         default: [
           { label: '📅 Book Appointment', action: '/book' },
           { label: '🧪 Take Skin Quiz', action: '/skin-quiz' },
@@ -232,6 +300,44 @@ const SettingsSchema = new Schema<ISettings>(
       enableRecommendations:  { type: Boolean, default: true },
       enableBooking:          { type: Boolean, default: true },
       enableWhatsappHandoff:  { type: Boolean, default: true },
+      greetingRules: {
+        type: [{
+          id: String,
+          enabled: { type: Boolean, default: true },
+          type: { type: String, enum: ['time_of_day', 'date_range', 'returning_visitor', 'new_visitor', 'branch'] },
+          startHour: Number,
+          endHour: Number,
+          startDate: String,
+          endDate: String,
+          campaignParam: String,
+          branch: String,
+          greeting: String,
+          welcomeMessage: String,
+          priority: { type: Number, default: 0 },
+        }],
+        default: [],
+      },
+      recommendationRules: {
+        type: [{
+          id: String,
+          enabled: { type: Boolean, default: true },
+          matchKeywords: [String],
+          preferredTypes: [{ type: String, enum: ['doctor', 'service', 'offer', 'result'] }],
+          minScore: Number,
+          priority: { type: Number, default: 0 },
+        }],
+        default: [],
+      },
+      escalationRules: {
+        type: [{
+          id: String,
+          enabled: { type: Boolean, default: true },
+          matchKeywords: [String],
+          message: String,
+          priority: { type: Number, default: 0 },
+        }],
+        default: [],
+      },
     },
   },
   { timestamps: true }
