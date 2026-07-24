@@ -66,6 +66,10 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       yearsExperience,
       showPriceOnCards: settings.display?.showPriceOnCards ?? true,
       showDurationOnCards: settings.display?.showDurationOnCards ?? true,
+      relatedServicesCount: settings.display?.relatedServicesCount ?? 3,
+      showBeforeAfterOnPublic: settings.display?.showBeforeAfterOnPublic ?? true,
+      schemaType: settings.content?.schemaType || 'MedicalClinic',
+      defaultAuthorName: settings.content?.defaultAuthorName || 'DR Youth Clinic',
     };
   } catch {
     return SITE_CONFIG_DEFAULTS;

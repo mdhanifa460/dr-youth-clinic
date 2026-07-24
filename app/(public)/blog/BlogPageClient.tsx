@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, Clock, ArrowRight, Play } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import SearchInput from '@/app/components/ui/SearchInput';
 import CategoryPill from '@/app/components/ui/CategoryPill';
 import NewsletterSignup from '@/app/components/NewsletterSignup';
@@ -83,14 +83,17 @@ export default function BlogPageClient({
   posts,
   trendingServices,
   videos,
+  postsPerPage = 9,
 }: {
   posts: Post[];
+  postsPerPage?: number;
   trendingServices: TrendingService[];
   videos: VideoItem[];
 }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [videoCategory, setVideoCategory] = useState('All');
+  const [page, setPage] = useState(1);
 
   const popularSearches = useMemo(() => {
     const freq: Record<string, number> = {};
@@ -114,6 +117,16 @@ export default function BlogPageClient({
 
   const featured = !isFiltering ? posts.find((p) => p.featured) || posts[0] : null;
   const gridPosts = featured ? filtered.filter((p) => p._id !== featured._id) : filtered;
+  const totalPages = Math.max(1, Math.ceil(gridPosts.length / postsPerPage));
+  const pagedPosts = gridPosts.slice((page - 1) * postsPerPage, page * postsPerPage);
+
+  const goToPage = (p: number) => {
+    setPage(p);
+    document.getElementById('latest-articles')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Reset to page 1 whenever the visible set changes underneath the pager.
+  useEffect(() => { setPage(1); }, [search, activeCategory]);
 
   const doctorRecommended = useMemo(
     () => posts.filter((p) => p.reviewedByDoctorId?.name).slice(0, 3),
@@ -234,11 +247,45 @@ export default function BlogPageClient({
 
             {/* ── Latest / filtered articles ── */}
             {gridPosts.length > 0 ? (
-              <section className="mb-16">
+              <section id="latest-articles" className="mb-16">
                 <h2 className="text-lg font-bold text-[#0B2560] mb-6">{isFiltering ? 'Results' : 'Latest Articles'}</h2>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {gridPosts.map((p) => <ArticleCard key={p._id} post={p} />)}
+                  {pagedPosts.map((p) => <ArticleCard key={p._id} post={p} />)}
                 </div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-4 mt-10">
+                    <button
+                      onClick={() => goToPage(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                      aria-label="Previous page"
+                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#0B2560] disabled:opacity-30 hover:border-[#0B2560]/40 transition"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {Array.from({ length: totalPages }).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => goToPage(i + 1)}
+                          className={`w-8 h-8 rounded-full text-xs font-bold transition ${
+                            page === i + 1 ? 'bg-[#0B2560] text-white' : 'text-gray-500 hover:bg-gray-100'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => goToPage(Math.min(totalPages, page + 1))}
+                      disabled={page === totalPages}
+                      aria-label="Next page"
+                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#0B2560] disabled:opacity-30 hover:border-[#0B2560]/40 transition"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
               </section>
             ) : isFiltering ? (
               <div className="text-center py-16 mb-8">

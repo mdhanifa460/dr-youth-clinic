@@ -12,6 +12,14 @@ export interface ISettings extends Document {
     defaultDuration: number;
     defaultCurrency: string;
   };
+  // Mirrors serviceForm's provisioning pattern for the Landing Page builder —
+  // which section types (from the LP builder's SECTION_LABELS) must be
+  // present before a landing page can be published. Enforced in the admin
+  // LP builder's publish action, not at the DB layer, so existing published
+  // pages that predate a rule change are never silently broken.
+  landingPageForm: {
+    requiredSections: string[];
+  };
   booking: {
     collectEmail: boolean;
     collectAge: boolean;
@@ -42,7 +50,6 @@ export interface ISettings extends Document {
     facebook: string;
     youtube: string;
     googleBusiness: string;
-    whatsappCta: string;
   };
   analytics: {
     ga4Id: string;
@@ -62,18 +69,13 @@ export interface ISettings extends Document {
   content: {
     blogPostsPerPage: number;
     defaultAuthorName: string;
-    beforeAfterWatermark: string;
     testimonialMinRating: number;
     testimonialsRotateMs: number;
     schemaType: string;
   };
   promotions: {
-    referralEnabled: boolean;
-    referralReward: number;
     promoCode: string;
     promoDiscount: number;
-    birthdayCampaign: boolean;
-    birthdayDiscount: number;
   };
   freeLabels: {
     consultationFree: boolean;
@@ -183,6 +185,9 @@ const SettingsSchema = new Schema<ISettings>(
       defaultDuration:         { type: Number,  default: 60 },
       defaultCurrency:         { type: String,  default: 'INR' },
     },
+    landingPageForm: {
+      requiredSections: { type: [String], default: ['hero', 'form'] },
+    },
     booking: {
       collectEmail:            { type: Boolean, default: true },
       collectAge:              { type: Boolean, default: false },
@@ -212,7 +217,6 @@ const SettingsSchema = new Schema<ISettings>(
       facebook:       { type: String, default: '' },
       youtube:        { type: String, default: '' },
       googleBusiness: { type: String, default: '' },
-      whatsappCta:    { type: String, default: '' },
     },
     analytics: {
       ga4Id:           { type: String, default: '' },
@@ -232,18 +236,13 @@ const SettingsSchema = new Schema<ISettings>(
     content: {
       blogPostsPerPage:     { type: Number, default: 9 },
       defaultAuthorName:    { type: String, default: 'DR Youth Clinic' },
-      beforeAfterWatermark: { type: String, default: 'DR Youth Clinic' },
       testimonialMinRating: { type: Number, default: 4 },
       testimonialsRotateMs: { type: Number, default: 4000 },
       schemaType:           { type: String, default: 'MedicalClinic' },
     },
     promotions: {
-      referralEnabled:  { type: Boolean, default: false },
-      referralReward:   { type: Number,  default: 500 },
       promoCode:        { type: String,  default: '' },
       promoDiscount:    { type: Number,  default: 10 },
-      birthdayCampaign: { type: Boolean, default: false },
-      birthdayDiscount: { type: Number,  default: 20 },
     },
     freeLabels: {
       consultationFree: { type: Boolean, default: true },

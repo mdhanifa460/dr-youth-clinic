@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
 import { requirePermission } from '@/app/lib/adminAuth';
+
+const BRANCHES = ['chennai', 'bangalore', 'coimbatore', 'kochi'] as const;
 
 export const dynamic = 'force-dynamic';
 
@@ -19,12 +21,15 @@ function pd(d: any): Date {
   return new Date(0);
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const denied = await requirePermission('intelligence', 'view');
   if (denied) return denied;
 
   try {
     await connectDB();
+
+    const branch = (req.nextUrl.searchParams.get('branch') || 'all').toLowerCase();
+    const isBranchFiltered = branch !== 'all' && (BRANCHES as readonly string[]).includes(branch);
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -39,16 +44,29 @@ export async function GET() {
       Review.find().lean(),
     ]);
 
-    const bs = allBookings as any[];
-    const svcs = allServices as any[];
-    const docs = allDoctors as any[];
-    const revs = allReviews as any[];
+    const allBs   = allBookings as any[];
+    const allSvcs = allServices as any[];
+    const allDocsArr = allDoctors as any[];
+    const allRevs = allReviews as any[];
 
-    // price + category + SEO score lookup by normalized service name
+    // Branch-scoped working sets — every metric below (except `byLocation`,
+    // which exists specifically to compare branches side by side and always
+    // uses the "all*" arrays) is computed from these, so picking a branch
+    // scopes the entire dashboard consistently rather than just one panel.
+    const bs   = isBranchFiltered ? allBs.filter(b => (b.location || '').toLowerCase() === branch) : allBs;
+    const svcs = isBranchFiltered ? allSvcs.filter((s: any) => (s.location || '').toLowerCase() === branch || (s.location || '').toLowerCase() === 'all') : allSvcs;
+    const docs = isBranchFiltered ? allDocsArr.filter((d: any) => d.locations?.includes(branch) || d.locations?.includes('all')) : allDocsArr;
+    const revs = isBranchFiltered ? allRevs.filter((r: any) => (r.location || '').toLowerCase() === branch) : allRevs;
+
+    // price + category + SEO score lookup by normalized service name — kept
+    // global (from the full, unfiltered catalogue) so a booking's price
+    // still resolves even when the branch filter excludes that city's copy
+    // of the named service; a price/category is a property of the service,
+    // not of which branch booked it.
     const priceMap    = new Map<string, number>();
     const catMap      = new Map<string, string>();
     const seoScoreMap = new Map<string, number>();
-    for (const s of svcs) {
+    for (const s of allSvcs) {
       const key = (s.name || '').toLowerCase().trim();
       priceMap.set(key, s.price || 0);
       catMap.set(key,   s.category || 'Other');
@@ -153,21 +171,24 @@ export async function GET() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 20);
 
-    // ── Location breakdown ───────────────────────────────────────────────────
+    // ── Location breakdown — always compares ALL branches (uses the "all*"
+    // arrays, not the branch-filtered ones above) regardless of the selected
+    // branch filter, since a single-branch view of a branch-comparison table
+    // would defeat its purpose.
     const locMap = new Map<string, { count: number; revenue: number }>();
-    for (const b of bs) {
+    for (const b of allBs) {
       const loc = (b.location || 'unknown').toLowerCase();
       if (!locMap.has(loc)) locMap.set(loc, { count: 0, revenue: 0 });
       const e = locMap.get(loc)!;
       e.count++;
       if (b.status !== 'cancelled') e.revenue += getPrice(b.service || '');
     }
-    const activeDocs = docs.filter((d: any) => d.active);
+    const activeDocsGlobal = allDocsArr.filter((d: any) => d.active);
     const byLocation = Array.from(locMap.entries())
       .map(([location, e]) => {
-        const lRevs = revs.filter((r: any) => (r.location || '').toLowerCase() === location);
-        const lDocs = activeDocs.filter((d: any) => d.locations?.includes(location) || d.locations?.includes('all'));
-        const lSvcs = svcs.filter((s: any) => s.location === location && s.status === 'active');
+        const lRevs = allRevs.filter((r: any) => (r.location || '').toLowerCase() === location);
+        const lDocs = activeDocsGlobal.filter((d: any) => d.locations?.includes(location) || d.locations?.includes('all'));
+        const lSvcs = allSvcs.filter((s: any) => s.location === location && s.status === 'active');
         const avgR  = lRevs.length ? lRevs.reduce((s: number, r: any) => s + (r.rating || 0), 0) / lRevs.length : 0;
         return {
           location,
@@ -309,6 +330,8 @@ export async function GET() {
     return NextResponse.json({
       success:       true,
       generatedAt:   now.toISOString(),
+      branch:        isBranchFiltered ? branch : 'all',
+      branches:      BRANCHES,
       overview: {
         todayBookings, weekBookings, monthBookings, totalBookings,
         completedBookings, cancelledBookings, pendingBookings,
@@ -317,7 +340,7 @@ export async function GET() {
         vipPatients: vipCount, inactivePatients: inactiveCount,
         activeServices:  svcs.filter((s: any) => s.status === 'active').length,
         totalServices:   svcs.length,
-        activeDoctors:   activeDocs.length,
+        activeDoctors:   docs.filter((d: any) => d.active).length,
         totalDoctors:    docs.length,
         totalReviews:    revs.length,
         avgRating:       Math.round(avgRating * 10) / 10,

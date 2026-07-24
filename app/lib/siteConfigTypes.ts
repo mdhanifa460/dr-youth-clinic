@@ -35,6 +35,14 @@ export interface SiteConfig {
   showPriceOnCards: boolean;
   /** Whether to show the duration pill on service listing/category cards (Settings → Display) */
   showDurationOnCards: boolean;
+  /** How many related services show per page of the Related Treatments pager on a service detail page (Settings → Display) */
+  relatedServicesCount: number;
+  /** Whether to render the before/after image gallery on service detail pages (Settings → Display) */
+  showBeforeAfterOnPublic: boolean;
+  /** Schema.org @type used for the clinic entity in structured data (Settings → Content) */
+  schemaType: string;
+  /** Fallback byline shown when a blog post has no author set (Settings → Content) */
+  defaultAuthorName: string;
 }
 
 export const SITE_CONFIG_DEFAULTS: SiteConfig = {
@@ -58,4 +66,8 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   yearsExperience: '22+',
   showPriceOnCards: true,
   showDurationOnCards: true,
+  relatedServicesCount: 3,
+  showBeforeAfterOnPublic: true,
+  schemaType: 'MedicalClinic',
+  defaultAuthorName: 'DR Youth Clinic',
 };

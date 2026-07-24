@@ -11,7 +11,6 @@ type BrandSettings = {
   facebook: string;
   youtube: string;
   googleBusiness: string;
-  whatsappCta: string;
 };
 
 const DEFAULTS: BrandSettings = {
@@ -21,7 +20,6 @@ const DEFAULTS: BrandSettings = {
   facebook: "",
   youtube: "",
   googleBusiness: "",
-  whatsappCta: "",
 };
 
 const SOCIAL_FIELDS: { key: keyof BrandSettings; label: string; placeholder: string; icon: string }[] = [
@@ -179,28 +177,6 @@ export default function BrandSettingsPage() {
           </div>
         </div>
 
-        {/* WhatsApp CTA */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-50">
-            <h2 className="font-bold text-[#0B2560] text-sm">WhatsApp CTA</h2>
-            <p className="text-gray-400 text-xs mt-0.5">Phone number for the floating WhatsApp button.</p>
-          </div>
-          <div className="px-6 py-5">
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-              WhatsApp Number <span className="font-normal">(with country code)</span>
-            </label>
-            <input
-              type="tel"
-              value={form.whatsappCta}
-              onChange={(e) => set("whatsappCta", e.target.value)}
-              placeholder="919876543210"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] focus:ring-1 focus:ring-[#0B2560]/20 font-mono"
-            />
-            <p className="text-[11px] text-gray-400 mt-1.5">
-              This number appears on the floating WhatsApp button across the entire website. No spaces, no + sign — e.g. 919876543210
-            </p>
-          </div>
-        </div>
 
       </div>
     </div>

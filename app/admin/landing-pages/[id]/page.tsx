@@ -1238,6 +1238,8 @@ export default function LandingPageBuilder() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeTab, setActiveTab] = useState<SideTab>('details');
+  const [requiredSections, setRequiredSections] = useState<string[]>([]);
+  const [publishError, setPublishError] = useState('');
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Gallery state
@@ -1265,6 +1267,13 @@ export default function LandingPageBuilder() {
       .then((data) => { if (data.success) setLp(data.data); })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((d) => { if (d.success && d.data?.landingPageForm?.requiredSections) setRequiredSections(d.data.landingPageForm.requiredSections); })
+      .catch(() => {});
+  }, []);
 
   const scheduleSave = useCallback((updated: LandingPage) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -1297,6 +1306,16 @@ export default function LandingPageBuilder() {
   const togglePublish = async () => {
     if (!lp) return;
     const newStatus = lp.status === 'published' ? 'draft' : 'published';
+
+    if (newStatus === 'published') {
+      const presentTypes = new Set(lp.sections.map((s) => s.type));
+      const missing = requiredSections.filter((t) => !presentTypes.has(t));
+      if (missing.length > 0) {
+        setPublishError(`Add these required sections before publishing: ${missing.map((t) => SECTION_LABELS[t]?.label || t).join(', ')}`);
+        return;
+      }
+    }
+    setPublishError('');
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/landing-pages/${id}`, {
@@ -1434,6 +1453,13 @@ export default function LandingPageBuilder() {
           </button>
         </div>
       </div>
+
+      {publishError && (
+        <div className="flex items-center justify-between gap-3 px-5 py-2.5 bg-red-50 border-b border-red-100 text-red-700 text-xs font-semibold shrink-0">
+          <span>⚠️ {publishError}</span>
+          <button onClick={() => setPublishError('')} className="text-red-400 hover:text-red-600 shrink-0"><X size={13} /></button>
+        </div>
+      )}
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">

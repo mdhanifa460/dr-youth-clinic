@@ -3,11 +3,12 @@ import { CLOUDINARY_LOGO_URL } from "@/app/lib/legacyImageUrls";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUrl }: {
+export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUrl, schemaType }: {
   phone?: string;
   instagramUrl?: string;
   facebookUrl?: string;
   youtubeUrl?: string;
+  schemaType?: string;
 }) {
   const sameAs = [
     facebookUrl  || "https://www.facebook.com/dryouthclinic",
@@ -17,7 +18,7 @@ export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUr
 
   const schema = {
     "@context": "https://schema.org",
-    "@type": "MedicalBusiness",
+    "@type": schemaType || "MedicalClinic",
     name: "DR Youth Clinic",
     url: SITE_URL,
     logo: CLOUDINARY_LOGO_URL,
@@ -52,9 +53,10 @@ interface LocalBusinessProps {
   phone?: string;
   rating?: number;
   reviewCount?: number;
+  schemaType?: string;
 }
 
-export function LocalBusinessSchema({ location, city, address, phone, rating, reviewCount }: LocalBusinessProps) {
+export function LocalBusinessSchema({ location, city, address, phone, rating, reviewCount, schemaType }: LocalBusinessProps) {
   const locationData = locations[location];
   if (!locationData) return null;
 
@@ -65,7 +67,7 @@ export function LocalBusinessSchema({ location, city, address, phone, rating, re
 
   const schema: Record<string, any> = {
     "@context": "https://schema.org",
-    "@type": "MedicalBusiness",
+    "@type": schemaType || "MedicalClinic",
     name: `DR Youth Clinic - ${city}`,
     url: `${SITE_URL}/${location}`,
     address: {

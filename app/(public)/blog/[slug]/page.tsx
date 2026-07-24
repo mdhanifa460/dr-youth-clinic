@@ -54,6 +54,7 @@ async function getReviewingDoctor(doctorId?: string) {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getPost(params.slug);
   if (!post) return { title: 'Post Not Found' };
+  const siteConfig = await getSiteConfig();
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
   const title = post.metaTitle || post.title;
   const description = post.metaDescription || post.excerpt || post.title;
@@ -69,7 +70,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       images: ogImage ? [ogImage] : [],
       type: 'article',
       publishedTime: post.publishedAt,
-      authors: [post.author || 'DR Youth Clinic'],
+      authors: [post.author || siteConfig.defaultAuthorName],
     },
   };
 }
@@ -110,7 +111,7 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
         description={post.excerpt || post.title}
         slug={post.slug}
         image={post.coverImage?.url}
-        authorName={reviewingDoctor?.name || post.author || 'DR Youth Clinic'}
+        authorName={reviewingDoctor?.name || post.author || siteConfig.defaultAuthorName}
         authorCredential={reviewingDoctor?.qualifications}
         datePublished={post.publishedAt}
         dateModified={post.updatedAt}

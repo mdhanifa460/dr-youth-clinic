@@ -76,6 +76,7 @@ export default async function PublicLayout({
         instagramUrl={siteConfig.instagramUrl || undefined}
         facebookUrl={siteConfig.facebookUrl   || undefined}
         youtubeUrl={siteConfig.youtubeUrl     || undefined}
+        schemaType={siteConfig.schemaType}
       />
       {topbar.visible && <TopBar data={topbar.data} siteConfig={siteConfig} />}
       <Navbar />

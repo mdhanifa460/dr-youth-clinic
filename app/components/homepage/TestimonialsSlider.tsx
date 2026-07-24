@@ -123,6 +123,8 @@ export default function TestimonialsSlider({ data }: { data: any }) {
     // Server-prefetched reviews injected by the server component (page.tsx).
     // When present, skip the client-side fetch entirely — zero extra HTTP request.
     _reviews,
+    // Settings → Content → "Auto-rotate speed" (ms), injected by page.tsx alongside _reviews.
+    _rotateMs = 4000,
   } = data || {};
 
   const [reviews, setReviews] = useState<any[]>(_reviews ?? []);
@@ -148,6 +150,15 @@ export default function TestimonialsSlider({ data }: { data: any }) {
 
   const prev = useCallback(() => setIdx((i) => (i - 1 + reviews.length) % reviews.length), [reviews.length]);
   const next = useCallback(() => setIdx((i) => (i + 1) % reviews.length), [reviews.length]);
+
+  // Auto-rotate — paused while the visitor is actively swiping/dragging isn't
+  // needed here since touch handlers already call next()/prev() directly;
+  // the interval just resets naturally on the next tick either way.
+  useEffect(() => {
+    if (layout !== 'slider' || reviews.length <= 1 || !_rotateMs) return;
+    const timer = setInterval(next, _rotateMs);
+    return () => clearInterval(timer);
+  }, [layout, reviews.length, _rotateMs, next]);
 
   if (!loading && reviews.length === 0) return null;
 

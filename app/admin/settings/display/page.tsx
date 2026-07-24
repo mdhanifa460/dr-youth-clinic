@@ -152,21 +152,23 @@ export default function DisplaySettingsPage() {
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-50">
             <h2 className="font-bold text-[#0B2560] text-sm">Related Services</h2>
-            <p className="text-gray-400 text-xs mt-0.5">How many related services to show at the bottom of each service detail page.</p>
+            <p className="text-gray-400 text-xs mt-0.5">How many related services show per page of the Related Treatments pager at the bottom of each service detail page. The pager paginates through however many related services exist, this many at a time.</p>
           </div>
           <div className="px-6 py-5">
-            <div className="flex items-center gap-2">
-              {[2, 3, 4, 6].map((n) => (
-                <button key={n} type="button"
-                  onClick={() => set("relatedServicesCount", n)}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
-                    form.relatedServicesCount === n
-                      ? "bg-[#0B2560] text-white border-[#0B2560]"
-                      : "bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300"
-                  }`}>{n}</button>
-              ))}
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={2}
+                max={12}
+                value={form.relatedServicesCount}
+                onChange={(e) => {
+                  const n = Math.max(2, Math.min(12, Number(e.target.value) || 2));
+                  set("relatedServicesCount", n);
+                }}
+                className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-[#0B2560] focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+              />
+              <span className="text-xs text-gray-400">per page (2–12)</span>
             </div>
-            <p className="text-xs text-gray-400 mt-2">Current: {form.relatedServicesCount} related services shown per page</p>
           </div>
         </div>
 

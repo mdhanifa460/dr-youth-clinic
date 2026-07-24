@@ -16,6 +16,7 @@ import SliderCard from '@/app/components/SliderCard';
 import { cloudGalleryThumb, cloudHero } from '@/app/lib/cloudinary-url';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -109,10 +110,11 @@ export default async function LocationPage({ params }: { params: { location: str
   const loc = locations[cityKey];
   if (!loc) notFound();
 
-  const [content, locationBanner, branchResults] = await Promise.all([
+  const [content, locationBanner, branchResults, siteConfig] = await Promise.all([
     getLocationContent(cityKey),
     resolveBanner({ page: 'location', location: cityKey }),
     getBranchResults(cityKey),
+    getSiteConfig(),
   ]);
   const otherCities = Object.entries(locations).filter(([k]) => k !== cityKey);
   const hasHero    = !!(content?.heroImage?.url);
@@ -142,6 +144,7 @@ export default async function LocationPage({ params }: { params: { location: str
         phone={phone}
         rating={rating}
         reviewCount={reviewCount}
+        schemaType={siteConfig.schemaType}
       />
       <main>
 

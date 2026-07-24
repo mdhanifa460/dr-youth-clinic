@@ -78,6 +78,15 @@ function DataSkeleton() {
 type Period = 'Today' | '7 Days' | '30 Days' | 'Quarter';
 const PERIODS: Period[] = ['Today', '7 Days', '30 Days', 'Quarter'];
 
+type Branch = 'all' | 'chennai' | 'bangalore' | 'coimbatore' | 'kochi';
+const BRANCHES: [Branch, string][] = [
+  ['all', 'All Branches'],
+  ['chennai', 'Chennai'],
+  ['bangalore', 'Bangalore'],
+  ['coimbatore', 'Coimbatore'],
+  ['kochi', 'Kochi'],
+];
+
 export default function IntelligenceDashboard() {
   const [active, setActive]   = useState('overview');
   const [data, setData]       = useState<any>(null);
@@ -86,12 +95,13 @@ export default function IntelligenceDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30 Days');
+  const [selectedBranch, setSelectedBranch] = useState<Branch>('all');
 
-  const fetchData = async () => {
+  const fetchData = async (branch: Branch) => {
     setLoading(true);
     setError('');
     try {
-      const res  = await fetch('/api/admin/intelligence');
+      const res  = await fetch(`/api/admin/intelligence?branch=${branch}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
       setData(json);
@@ -103,7 +113,7 @@ export default function IntelligenceDashboard() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(selectedBranch); }, [selectedBranch]);
 
   const ActiveSection = SECTIONS[active];
   const activeNav     = NAV_ITEMS.find(n => n.id === active);
@@ -165,7 +175,7 @@ export default function IntelligenceDashboard() {
           <p className="text-[10px] text-gray-400">
             {lastUpdated ? `Updated ${lastUpdated}` : 'Loading…'}
           </p>
-          <button onClick={fetchData} disabled={loading}
+          <button onClick={() => fetchData(selectedBranch)} disabled={loading}
             className="mt-1 text-[10px] font-semibold text-[#3B82C4] hover:underline disabled:opacity-40">
             ↻ Refresh data
           </button>
@@ -189,6 +199,18 @@ export default function IntelligenceDashboard() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Branch selector — scopes every panel's numbers to one clinic
+                (except Clinic Performance's branch-comparison table, which
+                always shows all branches by design). */}
+            <select
+              value={selectedBranch}
+              onChange={e => setSelectedBranch(e.target.value as Branch)}
+              disabled={loading}
+              className="text-[11px] font-semibold text-[#0B2560] bg-gray-100 rounded-lg px-2 py-1.5 border-none focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 disabled:opacity-50"
+            >
+              {BRANCHES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+            </select>
+
             {/* Period selector */}
             <div className="hidden sm:flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
               {PERIODS.map(p => (
@@ -212,7 +234,7 @@ export default function IntelligenceDashboard() {
                 🚨 {criticalCount} alert{criticalCount > 1 ? 's' : ''}
               </button>
             )}
-            <button onClick={fetchData} disabled={loading}
+            <button onClick={() => fetchData(selectedBranch)} disabled={loading}
               className={`w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition ${loading ? 'animate-spin' : ''}`}
               title="Refresh">
               ↻
@@ -229,12 +251,12 @@ export default function IntelligenceDashboard() {
               <span className="text-3xl">⚠️</span>
               <p className="text-sm font-bold text-red-800 mt-2">Failed to load intelligence data</p>
               <p className="text-xs text-red-600 mt-1">{error}</p>
-              <button onClick={fetchData} className="mt-4 text-xs font-bold text-red-700 bg-red-100 px-4 py-2 rounded-xl hover:bg-red-200 transition">
+              <button onClick={() => fetchData(selectedBranch)} className="mt-4 text-xs font-bold text-red-700 bg-red-100 px-4 py-2 rounded-xl hover:bg-red-200 transition">
                 Retry
               </button>
             </div>
           ) : (
-            <ActiveSection data={{ ...data, selectedPeriod }} />
+            <ActiveSection data={{ ...data, selectedPeriod, selectedBranch }} />
           )}
         </div>
       </main>

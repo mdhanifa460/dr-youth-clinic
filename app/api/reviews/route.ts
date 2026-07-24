@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Review } from '@/app/models/Review';
+import { getSettings } from '@/app/models/Settings';
 
 export const revalidate = 60;
 
@@ -8,10 +9,13 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = req.nextUrl;
+    const settings = await getSettings();
+    const minRating = settings.content?.testimonialMinRating ?? 1;
 
     const filter: Record<string, any> = {
       isVisible: true,
       showOnHomepage: true,
+      rating: { $gte: minRating },
     };
 
     const source = searchParams.get('source');

@@ -5,6 +5,7 @@ import { Service } from '@/app/models/Service';
 import { Video } from '@/app/models/Video';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 import BlogPageClient from './BlogPageClient';
+import { getSettings } from '@/app/models/Settings';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
@@ -58,12 +59,21 @@ async function getVideos() {
   } catch { return []; }
 }
 
+async function getBlogPostsPerPage() {
+  try {
+    await connectDB();
+    const settings = await getSettings();
+    return settings.content?.blogPostsPerPage ?? 9;
+  } catch { return 9; }
+}
+
 export default async function BlogPage() {
-  const [posts, trendingServices, videos] = await Promise.all([
+  const [posts, trendingServices, videos, postsPerPage] = await Promise.all([
     getPosts(),
     getTrendingServices(),
     getVideos(),
+    getBlogPostsPerPage(),
   ]);
 
-  return <BlogPageClient posts={posts} trendingServices={trendingServices} videos={videos} />;
+  return <BlogPageClient posts={posts} trendingServices={trendingServices} videos={videos} postsPerPage={postsPerPage} />;
 }

@@ -5,6 +5,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
 import { HomepageSection } from '@/app/models/HomepageSection';
+import { getSettings } from '@/app/models/Settings';
 import { makeDefaultAboutSections, type AboutSection } from '@/app/lib/aboutPageDefaults';
 
 import HeroSection from '@/app/components/about/sections/HeroSection';
@@ -67,7 +68,9 @@ const getCachedReviews = unstable_cache(
   async (count: number, source: string, location: string, service: string) => {
     try {
       await connectDB();
-      const filter: Record<string, any> = { isVisible: true, showOnHomepage: true };
+      const settings = await getSettings();
+      const minRating = settings.content?.testimonialMinRating ?? 1;
+      const filter: Record<string, any> = { isVisible: true, showOnHomepage: true, rating: { $gte: minRating } };
       if (source) filter.source = source;
       if (location) filter.location = location;
       if (service) filter.services = service;

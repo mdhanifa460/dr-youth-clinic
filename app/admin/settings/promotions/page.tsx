@@ -5,33 +5,14 @@ import Link from "next/link";
 import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save } from "lucide-react";
 
 type PromotionsSettings = {
-  referralEnabled: boolean;
-  referralReward: number;
   promoCode: string;
   promoDiscount: number;
-  birthdayCampaign: boolean;
-  birthdayDiscount: number;
 };
 
 const DEFAULTS: PromotionsSettings = {
-  referralEnabled: false,
-  referralReward: 500,
   promoCode: "",
   promoDiscount: 10,
-  birthdayCampaign: false,
-  birthdayDiscount: 20,
 };
-
-function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
-  return (
-    <button type="button" onClick={onChange}
-      className={`relative inline-flex shrink-0 items-center rounded-full transition-colors ${on ? "bg-[#0B2560]" : "bg-gray-200"}`}
-      style={{ width: 44, height: 24 }}>
-      <span className="inline-block bg-white rounded-full shadow transition-transform"
-        style={{ width: 18, height: 18, transform: on ? "translateX(22px)" : "translateX(3px)" }} />
-    </button>
-  );
-}
 
 export default function PromotionsSettingsPage() {
   const [form, setForm] = useState<PromotionsSettings>(DEFAULTS);
@@ -90,7 +71,7 @@ export default function PromotionsSettingsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-[#0B2560]">Promotions</h1>
-            <p className="text-gray-400 text-sm mt-0.5">Manage referrals, promo codes, and birthday campaigns.</p>
+            <p className="text-gray-400 text-sm mt-0.5">Manage the active promo code shown on the booking form.</p>
           </div>
           <button onClick={save} disabled={saving}
             className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#0d2d72] transition disabled:opacity-50 shadow-sm">
@@ -109,48 +90,6 @@ export default function PromotionsSettingsPage() {
             <AlertCircle size={14} /> {error}
           </div>
         )}
-
-        {/* Patient Referral Programme */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-            <div>
-              <h2 className="font-bold text-[#0B2560] text-sm">Patient Referral Programme</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Reward existing patients for bringing in new patients.</p>
-            </div>
-            <Toggle on={form.referralEnabled} onChange={() => set("referralEnabled", !form.referralEnabled)} />
-          </div>
-
-          <div className="px-6 py-5">
-            {form.referralEnabled ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Reward Amount</label>
-                  <div className="flex items-center gap-0">
-                    <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-200 rounded-l-xl">
-                      ₹
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={form.referralReward}
-                      onChange={(e) => set("referralReward", +e.target.value)}
-                      className="w-full border border-gray-200 rounded-r-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
-                      placeholder="500"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-gray-400 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                  Existing patients get this credit when they refer a friend who completes a treatment.
-                </p>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl px-5 py-4">
-                <span className="text-2xl">🎁</span>
-                <p className="text-sm text-gray-400">Enable to reward patients for bringing new patients.</p>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Promo Code */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
@@ -205,68 +144,6 @@ export default function PromotionsSettingsPage() {
             <p className="text-xs text-gray-400 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
               The promo code can be entered on the booking form for a percentage discount.
             </p>
-          </div>
-        </div>
-
-        {/* Birthday Campaign */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-            <div>
-              <h2 className="font-bold text-[#0B2560] text-sm">Birthday Campaign</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Send patients a birthday discount via WhatsApp.</p>
-            </div>
-            <Toggle on={form.birthdayCampaign} onChange={() => set("birthdayCampaign", !form.birthdayCampaign)} />
-          </div>
-
-          <div className="px-6 py-5">
-            {form.birthdayCampaign ? (
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Birthday Discount</label>
-                  <div className="flex items-center gap-2 flex-wrap mb-3">
-                    {[10, 15, 20, 25].map((d) => (
-                      <button key={d} type="button"
-                        onClick={() => set("birthdayDiscount", d)}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${
-                          form.birthdayDiscount === d
-                            ? "bg-[#0B2560] text-white border-[#0B2560]"
-                            : "bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300"
-                        }`}>{d}%</button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-0">
-                    <input
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={form.birthdayDiscount}
-                      onChange={(e) => set("birthdayDiscount", +e.target.value)}
-                      className="w-24 border border-gray-200 rounded-l-xl px-4 py-2.5 text-sm text-center focus:outline-none focus:border-[#0B2560]"
-                    />
-                    <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-l-0 border-gray-200 rounded-r-xl">
-                      %
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-400 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                  Patients receive a birthday WhatsApp message with this discount 3 days before their birthday. Requires date of birth collection in booking settings.
-                </p>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Message Preview</label>
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-400 select-none cursor-default leading-relaxed">
-                    🎂 Happy Birthday {"{{"} name {"}}"}! Treat yourself — enjoy{" "}
-                    <span className="font-semibold text-[#0B2560]">{form.birthdayDiscount}%</span> off your next visit at DR Youth Clinic. Valid for 7 days. Reply <span className="font-mono">BIRTHDAY</span> to redeem.
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl px-5 py-4">
-                <span className="text-2xl">🎂</span>
-                <p className="text-sm text-gray-400">Enable to send patients a birthday WhatsApp message with a special discount.</p>
-              </div>
-            )}
           </div>
         </div>
 

@@ -15,6 +15,7 @@ import { Result } from '@/app/models/Result';
 import SliderCard from '@/app/components/SliderCard';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import { getSettings } from '@/app/models/Settings';
 import BlockRenderer from '@/app/components/contentblocks/BlockRenderer';
 import { blocksToPlainText, hasVisibleBlockType } from '@/app/lib/contentBlocks/types';
 import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
@@ -22,6 +23,7 @@ import EligibilityChecker from '@/app/components/EligibilityChecker';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import CostEstimator from '@/app/components/CostEstimator';
+import RelatedServicesPager from '@/app/components/RelatedServicesPager';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
 import EMICalculator from '@/app/components/EMICalculator';
 import SocialProofBar from '@/app/components/SocialProofBar';
@@ -79,6 +81,12 @@ async function getService(location: string, slug: string) {
   } catch { return null; }
 }
 
+// Cap at 24 — enough to fill several pages of the Related Treatments pager
+// (Settings → Display's relatedServicesCount controls the per-page size,
+// this just bounds the total pool fetched) without pulling in every service
+// in the category on a large catalogue.
+const MAX_RELATED_SERVICES = 24;
+
 async function getRelatedServices(location: string, category: string, excludeSlug: string) {
   try {
     await connectDB();
@@ -86,7 +94,7 @@ async function getRelatedServices(location: string, category: string, excludeSlu
     const candidates = await getServiceCandidates(location, { category });
     return candidates
       .filter((s) => getEffectiveSlug(s, loc) !== excludeSlug)
-      .slice(0, 3);
+      .slice(0, MAX_RELATED_SERVICES);
   } catch { return []; }
 }
 
@@ -113,8 +121,11 @@ async function getServiceResults(serviceId: string) {
 async function getServiceReviews(location: string, serviceName: string) {
   try {
     await connectDB();
+    const settings = await getSettings();
+    const minRating = settings.content?.testimonialMinRating ?? 1;
     return Review.find({
       isVisible: true,
+      rating: { $gte: minRating },
       $or: [
         { services: { $regex: serviceName, $options: 'i' } },
         { location: location.toLowerCase() },
@@ -198,7 +209,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-function ServiceSchemas({ svc, cityName, params }: { svc: any; cityName: string; params: PageProps['params'] }) {
+function ServiceSchemas({ svc, cityName, params, schemaType }: { svc: any; cityName: string; params: PageProps['params']; schemaType: string }) {
   const catSlug = params.category.toLowerCase();
   const pageUrl = `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}`;
   const seo = getEffectiveSeo(svc, params.location.toLowerCase());
@@ -220,7 +231,7 @@ function ServiceSchemas({ svc, cityName, params }: { svc: any; cityName: string;
         availability: 'https://schema.org/InStock',
       },
       provider: {
-        '@type': 'MedicalClinic',
+        '@type': schemaType,
         name: `DR Youth Clinic ${cityName}`,
         url: `${SITE_URL}/${params.location}`,
       },
@@ -296,7 +307,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const cityName = loc.name;
   const catLabel = CATEGORY_LABEL[catSlug] ?? svc.category;
   const beforeAfterPairs = svc.beforeAfterImages?.filter((p: any) => p.before?.url && p.after?.url) ?? [];
-  const hasBeforeAfter = beforeAfterPairs.length > 0;
+  const hasBeforeAfter = siteConfig.showBeforeAfterOnPublic && beforeAfterPairs.length > 0;
   const hasJourney = svc.treatmentSteps?.length > 0;
   const hasFAQ = svc.faq?.length > 0;
   const hasIdealFor = svc.idealFor?.length > 0;
@@ -312,7 +323,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <ServiceSchemas svc={svc} cityName={cityName} params={params} />
+      <ServiceSchemas svc={svc} cityName={cityName} params={params} schemaType={siteConfig.schemaType} />
 
       <main className="bg-white">
 
@@ -874,64 +885,15 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
         {/* ── RELATED TREATMENTS ── */}
         {related.length > 0 && (
-          <section className="bg-white py-14 border-t border-gray-50">
-            <div className="max-w-7xl mx-auto px-6 md:px-10">
-              <div className="flex items-center justify-between mb-7 flex-wrap gap-3">
-                <div>
-                  <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Related Treatments</h2>
-                  <p className="text-gray-500 text-sm mt-1">More {catLabel.toLowerCase()} services at our {cityName} clinic</p>
-                </div>
-                <Link href={`/${params.location}/services/${catSlug}`} className="text-sm font-semibold text-[#0B2560] hover:text-[#3b82f6] transition flex items-center gap-1.5">
-                  View all <ChevronRight size={14} />
-                </Link>
-              </div>
-
-              {/* Mobile: horizontal scroll */}
-              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3 sm:hidden -mx-6 px-6 scrollbar-hide">
-                {related.map((r: any) => (
-                  <Link key={String(r._id)} href={`/${r.location}/services/${r.category.toLowerCase()}/${r.urlSlug}`} className="snap-start shrink-0 w-64 group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all">
-                    {r.heroImage?.url ? (
-                      <div className="relative h-36 overflow-hidden">
-                        <Image src={r.heroImage.url} alt={r.name} fill sizes="256px" className="object-cover group-hover:scale-105 transition duration-500" />
-                      </div>
-                    ) : (
-                      <div className="h-36 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] flex items-center justify-center text-4xl">{CATEGORY_ICON[r.category] ?? '🏥'}</div>
-                    )}
-                    <div className="p-4">
-                      <h3 className="font-bold text-[#0B2560] text-sm leading-snug mb-2">{r.name}</h3>
-                      <div className="flex items-center justify-between text-xs text-gray-400">
-                        {siteConfig.showPriceOnCards && <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>}
-                        <span>{r.duration} min</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-
-              {/* Desktop: grid */}
-              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {related.map((r: any) => (
-                  <Link key={String(r._id)} href={`/${r.location}/services/${r.category.toLowerCase()}/${r.urlSlug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all hover:-translate-y-1">
-                    {r.heroImage?.url ? (
-                      <div className="relative h-44 overflow-hidden">
-                        <Image src={r.heroImage.url} alt={r.name} fill sizes="33vw" className="object-cover group-hover:scale-105 transition duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                      </div>
-                    ) : (
-                      <div className="h-44 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] flex items-center justify-center text-4xl">{CATEGORY_ICON[r.category] ?? '🏥'}</div>
-                    )}
-                    <div className="p-5">
-                      <h3 className="font-bold text-[#0B2560] mb-2 text-sm leading-snug group-hover:text-[#3B82C4] transition">{r.name}</h3>
-                      <div className="flex items-center justify-between text-sm">
-                        {siteConfig.showPriceOnCards && <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>}
-                        <span className="text-gray-400 text-xs">{r.duration} min</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
+          <RelatedServicesPager
+            related={related}
+            pageSize={siteConfig.relatedServicesCount}
+            catLabel={catLabel}
+            cityName={cityName}
+            location={params.location}
+            catSlug={catSlug}
+            showPriceOnCards={siteConfig.showPriceOnCards}
+          />
         )}
 
         {/* ── BOTTOM CTA ── */}

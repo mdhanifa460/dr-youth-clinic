@@ -7,7 +7,6 @@ import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save } from "lucide-react
 type ContentSettings = {
   blogPostsPerPage: number;
   defaultAuthorName: string;
-  beforeAfterWatermark: string;
   testimonialMinRating: number;
   testimonialsRotateMs: number;
   schemaType: string;
@@ -16,7 +15,6 @@ type ContentSettings = {
 const DEFAULTS: ContentSettings = {
   blogPostsPerPage: 9,
   defaultAuthorName: "DR Youth Clinic",
-  beforeAfterWatermark: "DR Youth Clinic",
   testimonialMinRating: 4,
   testimonialsRotateMs: 4000,
   schemaType: "MedicalClinic",
@@ -161,27 +159,6 @@ export default function ContentSettingsPage() {
               />
               <p className="text-[11px] text-gray-400 mt-1">Used when a blog post has no author set.</p>
             </div>
-
-          </div>
-        </div>
-
-        {/* Before & After Gallery */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-50">
-            <h2 className="font-bold text-[#0B2560] text-sm">Before &amp; After Gallery</h2>
-            <p className="text-gray-400 text-xs mt-0.5">Protect your gallery images with a subtle watermark.</p>
-          </div>
-          <div className="px-6 py-5">
-
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Watermark text</label>
-            <input
-              type="text"
-              value={form.beforeAfterWatermark}
-              onChange={(e) => set("beforeAfterWatermark", e.target.value)}
-              placeholder="DR Youth Clinic"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
-            />
-            <p className="text-[11px] text-gray-400 mt-2">This text appears as a subtle watermark on before/after images to protect your content.</p>
 
           </div>
         </div>

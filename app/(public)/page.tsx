@@ -11,6 +11,7 @@ import { Service } from '@/app/models/Service';
 import { Result } from '@/app/models/Result';
 import { Story } from '@/app/models/Story';
 import { Faq } from '@/app/models/Faq';
+import { getSettings } from '@/app/models/Settings';
 import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
@@ -175,7 +176,9 @@ const getCachedReviews = unstable_cache(
   async (count: number, source: string, location: string, service: string) => {
     try {
       await connectDB();
-      const filter: Record<string, any> = { isVisible: true, showOnHomepage: true };
+      const settings = await getSettings();
+      const minRating = settings.content?.testimonialMinRating ?? 1;
+      const filter: Record<string, any> = { isVisible: true, showOnHomepage: true, rating: { $gte: minRating } };
       if (source) filter.source = source;
       if (location) filter.location = location;
       if (service) filter.services = service;
@@ -364,6 +367,20 @@ const getCachedHomepageFaqs = unstable_cache(
   { revalidate: 60, tags: ['faqs'] }
 );
 
+const getCachedTestimonialsRotateMs = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const settings = await getSettings();
+      return settings.content?.testimonialsRotateMs ?? 4000;
+    } catch {
+      return 4000;
+    }
+  },
+  ['testimonials-rotate-ms'],
+  { revalidate: 60, tags: ['settings'] }
+);
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   hero: HeroSection,
   stats: StatsBar,
@@ -403,7 +420,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -417,11 +434,12 @@ export default async function Home() {
     getCachedResultPairs(),
     getCachedStories(),
     getCachedHomepageFaqs(),
+    getCachedTestimonialsRotateMs(),
   ]);
 
   const enriched = {
     ...sectionData,
-    testimonials: { ...td, _reviews: initialReviews },
+    testimonials: { ...td, _reviews: initialReviews, _rotateMs: testimonialsRotateMs },
     locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds, _detectedCity: detectedCity },
     doctors: {
       ...(sectionData['doctors'] ?? {}),
