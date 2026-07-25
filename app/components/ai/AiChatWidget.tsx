@@ -7,6 +7,7 @@ import {
   ChevronRight, ArrowLeft, CheckCircle, IndianRupee, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
 import { markdownToHtml } from '@/app/lib/blogMarkdown';
+import { trackBookingConversion } from '@/app/lib/trackConversion';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
@@ -185,7 +186,10 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
         body: JSON.stringify({ ...form, source: 'ai_chat' }),
       });
       const data = await res.json();
-      if (data.success) setDone(true); else setError(data.message || 'Could not book — please try again.');
+      if (data.success) {
+        setDone(true);
+        trackBookingConversion({ bookingId: data.bookingId, service: form.service });
+      } else setError(data.message || 'Could not book — please try again.');
     } catch { setError('Network error — please try again.'); }
     finally { setSaving(false); }
   };

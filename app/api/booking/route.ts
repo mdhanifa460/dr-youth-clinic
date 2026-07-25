@@ -25,7 +25,13 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { name, phone, email, service, location, date, time, concern, promoCode, promoDiscount, source } = parsed.data;
+    const { name, phone, email, service, location, concern, promoCode, promoDiscount, source } = parsed.data;
+    // Not every entry point collects a slot (see bookingSchema) — fall back
+    // to a placeholder for display/template purposes rather than sending a
+    // blank line in the clinic's WhatsApp text or an empty template
+    // parameter, which WhatsApp's template API rejects outright.
+    const date = parsed.data.date || "To be scheduled";
+    const time = parsed.data.time || "To be scheduled";
 
     const formattedPhone = formatPhone(phone);
     if (!formattedPhone || formattedPhone.length < 10) {

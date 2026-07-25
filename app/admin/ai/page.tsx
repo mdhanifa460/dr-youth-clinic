@@ -6,13 +6,13 @@ import {
   Bot, Database, MessageSquare, BarChart3, RefreshCw, Plus, Trash2,
   ChevronRight, Loader2, CheckCircle, AlertCircle, X, MessageCircle,
   Save, Sparkles, Sliders, Palette, Building2, Gauge, Compass,
-  ThumbsUp, ThumbsDown, LayoutDashboard, Stethoscope,
+  ThumbsUp, ThumbsDown, LayoutDashboard, Stethoscope, Activity,
 } from 'lucide-react';
 
 type Tab =
   | 'dashboard' | 'chatbot' | 'greetings' | 'questions' | 'knowledge'
   | 'prompts' | 'recommendations' | 'actions' | 'assessment' | 'model'
-  | 'conversations' | 'analytics' | 'feedback';
+  | 'conversations' | 'analytics' | 'usage' | 'feedback';
 
 // ── Shared AI config types (mirrors app/models/Settings.ts's `ai` + `clinicProfile`) ──
 type ClinicProfile = { name: string; country: string; currencySymbol: string };
@@ -793,6 +793,85 @@ function ConversationsTab() {
 }
 
 // ── Analytics tab (extended with escalations + feedback) ─────────────────
+// ── AI Usage tab ─────────────────────────────────────────────────────────
+// Raw provider call volume/success-rate across every AI feature on the
+// platform (video generation, SEO suggestions, patient reports, the
+// chatbot — anything routed through app/lib/ai/anthropic.ts or gemini.ts),
+// not just chatbot conversations (see AnalyticsTab below for that). Exists
+// to catch "something is calling AI far more than expected" or "every call
+// has failed since Tuesday" before a bill or an outage is the first sign —
+// deliberately just counts and a failure list, not a cost estimate, since
+// provider pricing changes too often to keep an accurate $-figure honest.
+function AiUsageTab() {
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/ai/usage').then(r => r.json()).then(d => { if (d.success) setData(d.data); });
+  }, []);
+
+  if (!data) return <p className="text-xs text-gray-400 text-center py-10">Loading…</p>;
+
+  const providers = Object.entries(data.last30dByProvider) as [string, { total: number; success: number; failed: number }][];
+  const maxDaily = Math.max(1, ...data.dailyBreakdown.map((d: any) => d.total));
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+          <p className="text-2xl font-bold text-[#0B2560]">{data.last24h.total}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">AI calls — last 24h</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+          <p className={`text-2xl font-bold ${data.last24h.failed > 0 ? 'text-red-500' : 'text-[#0B2560]'}`}>{data.last24h.failed}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Failed — last 24h</p>
+        </div>
+        {providers.map(([provider, s]) => (
+          <div key={provider} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <p className="text-2xl font-bold text-[#0B2560]">{s.total}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5 capitalize">{provider} — last 30d {s.failed > 0 && <span className="text-red-500">({s.failed} failed)</span>}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <h2 className="text-sm font-bold text-[#0B2560] mb-4">Call Volume — Last 7 Days</h2>
+        {data.dailyBreakdown.length === 0 ? (
+          <p className="text-xs text-gray-400">No AI calls logged yet.</p>
+        ) : (
+          <div className="flex items-end gap-1.5 h-32">
+            {data.dailyBreakdown.map((d: any) => (
+              <div key={d._id} className="flex-1 h-full flex flex-col items-center justify-end gap-1" title={`${d._id}: ${d.total} calls, ${d.failed} failed`}>
+                <div className="w-full rounded-t flex flex-col justify-end" style={{ height: `${Math.max(4, (d.total / maxDaily) * 100)}%` }}>
+                  <div className="w-full bg-[#0B2560] rounded-t" style={{ height: d.failed > 0 ? `${Math.max(15, (d.failed / d.total) * 100)}%` : '100%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <h2 className="text-sm font-bold text-[#0B2560] mb-4">Recent Failures</h2>
+        {data.recentFailures.length === 0 ? (
+          <p className="text-xs text-gray-400">No failures logged — everything's calling through cleanly.</p>
+        ) : (
+          <div className="space-y-2">
+            {data.recentFailures.map((f: any, i: number) => (
+              <div key={i} className="flex items-start justify-between gap-3 py-1.5 border-b border-gray-50 text-xs">
+                <div className="min-w-0">
+                  <span className="font-semibold text-gray-700 capitalize">{f.provider}</span>
+                  <span className="text-gray-500 ml-2">{f.errorMessage}</span>
+                </div>
+                <span className="text-gray-400 shrink-0">{new Date(f.createdAt).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AnalyticsTab() {
   const [data, setData] = useState<any>(null);
 
@@ -829,7 +908,7 @@ function AnalyticsTab() {
         ) : (
           <div className="flex items-end gap-1.5 h-32">
             {data.dailyVolume.map((d: any) => (
-              <div key={d._id} className="flex-1 flex flex-col items-center gap-1" title={`${d._id}: ${d.count}`}>
+              <div key={d._id} className="flex-1 h-full flex flex-col items-center justify-end gap-1" title={`${d._id}: ${d.count}`}>
                 <div className="w-full bg-[#0B2560] rounded-t" style={{ height: `${Math.max(4, (d.count / maxDaily) * 100)}%` }} />
               </div>
             ))}
@@ -1030,6 +1109,7 @@ export default function AiManagementPage() {
     { key: 'model', label: 'Model & Embeddings', icon: Sliders },
     { key: 'conversations', label: 'Conversation History', icon: MessageSquare },
     { key: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { key: 'usage', label: 'AI Usage', icon: Activity },
     { key: 'feedback', label: 'Feedback', icon: ThumbsUp },
   ];
 
@@ -1089,6 +1169,7 @@ export default function AiManagementPage() {
       {tab === 'assessment' && <ClinicalAssessmentTab />}
       {tab === 'model' && <ModelEmbeddingsTab form={form} set={set} />}
       {tab === 'conversations' && <ConversationsTab />}
+      {tab === 'usage' && <AiUsageTab />}
       {tab === 'analytics' && <AnalyticsTab />}
       {tab === 'feedback' && <FeedbackTab />}
     </div>

@@ -1,3 +1,5 @@
+import { logAiUsage } from './usageLog';
+
 // Shared Anthropic call for the Content Block Builder's AI-generate actions
 // (generate-summary, generate-faq, generate-benefits, etc.) and the Clinical
 // Intake AI routes — each route still owns its own prompt/response-shape
@@ -56,11 +58,19 @@ async function anthropicRequest(body: Record<string, unknown>): Promise<string> 
     body: JSON.stringify({ model: ANTHROPIC_MODEL, ...body }),
   });
 
-  if (!response.ok) throw new Error(await friendlyAnthropicError(response));
+  if (!response.ok) {
+    const message = await friendlyAnthropicError(response);
+    logAiUsage("anthropic", false, message);
+    throw new Error(message);
+  }
 
   const data = await response.json();
   const text = (data.content?.[0]?.text ?? "").trim();
-  if (!text) throw new Error("Empty AI response");
+  if (!text) {
+    logAiUsage("anthropic", false, "Empty AI response");
+    throw new Error("Empty AI response");
+  }
+  logAiUsage("anthropic", true);
   return text;
 }
 
@@ -78,7 +88,7 @@ export async function anthropicStreamRequest(body: Record<string, unknown>): Pro
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("AI not configured");
 
-  return fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
@@ -87,6 +97,20 @@ export async function anthropicStreamRequest(body: Record<string, unknown>): Pro
     },
     body: JSON.stringify({ model: ANTHROPIC_MODEL, ...body, stream: true }),
   });
+
+  // Only the initial handshake is logged here — the caller streams the body
+  // token-by-token to its own client, so a per-token success/failure isn't
+  // observable from this side without consuming (and thus breaking) that
+  // stream. A failed handshake (bad key, rate limit, overload) is exactly
+  // the failure mode this log exists to catch, so it's still worth logging.
+  if (!response.ok) {
+    const message = await friendlyAnthropicError(response.clone());
+    logAiUsage("anthropic", false, message);
+  } else {
+    logAiUsage("anthropic", true);
+  }
+
+  return response;
 }
 
 export type AnthropicContentBlock =

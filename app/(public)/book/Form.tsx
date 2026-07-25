@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, CheckCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-react';
 import { locations } from '@/app/data/locations';
+import { trackBookingConversion } from '@/app/lib/trackConversion';
 
 const SERVICES = [
   { id: 'Skin', icon: '✨', label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
@@ -98,7 +99,11 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         }),
       });
       const data = await res.json();
-      if (data.success) { setBookingId(data.bookingId); setSuccess(true); }
+      if (data.success) {
+        setBookingId(data.bookingId);
+        setSuccess(true);
+        trackBookingConversion({ bookingId: data.bookingId, service: form.service, location: form.location });
+      }
       else setError(data.message || 'Booking failed. Please try again.');
     } catch { setError('An error occurred. Please try again.'); }
     finally { setLoading(false); }

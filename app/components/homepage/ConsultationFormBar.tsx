@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { trackBookingConversion } from '@/app/lib/trackConversion';
 
 export default function ConsultationFormBar({ data }: { data: any }) {
   const {
@@ -17,19 +18,28 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !service || !city) return;
-    setLoading(true);
+    setLoading(true); setError('');
     try {
-      await fetch('/api/booking', {
+      const res = await fetch('/api/booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, service, location: city.toLowerCase() }),
       });
-      setSent(true);
-      setName(''); setPhone(''); setService(''); setCity('');
+      const data = await res.json();
+      if (data.success) {
+        setSent(true);
+        trackBookingConversion({ bookingId: data.bookingId, service, location: city });
+        setName(''); setPhone(''); setService(''); setCity('');
+      } else {
+        setError(data.message || 'Booking failed. Please try again.');
+      }
+    } catch {
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -57,6 +67,9 @@ export default function ConsultationFormBar({ data }: { data: any }) {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 items-end">
+                {error && (
+                  <p className="sm:col-span-2 lg:col-span-5 text-red-600 text-sm font-medium">{error}</p>
+                )}
                 <input
                   type="text"
                   placeholder="Full Name"

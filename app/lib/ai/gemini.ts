@@ -1,3 +1,5 @@
+import { logAiUsage } from './usageLog';
+
 // Shared Gemini call for the RAG/knowledge-base feature (embedding text for
 // the Atlas Vector Search index, grounded answer generation for the FAQ
 // assistant) and for the 5 admin SEO-suggestion routes (keyword-suggestions,
@@ -33,9 +35,12 @@ async function geminiRequest(model: string, path: string, body: Record<string, u
 
   if (!response.ok) {
     const errText = await response.text().catch(() => "");
-    throw new Error(friendlyGeminiError(response.status, errText));
+    const message = friendlyGeminiError(response.status, errText);
+    logAiUsage("gemini", false, message);
+    throw new Error(message);
   }
 
+  logAiUsage("gemini", true);
   return response.json();
 }
 

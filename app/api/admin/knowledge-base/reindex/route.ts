@@ -42,15 +42,29 @@ export async function POST() {
   // abort the rest of the batch (same lesson as the admin Reviews page's
   // save-failure fix earlier this project: never let one failure hide behind
   // a blanket try/catch with no visibility).
+  //
+  // Processed in bounded-concurrency batches rather than one document at a
+  // time — a full reindex across every content type used to make its
+  // embedding-API calls fully sequentially, which is both slow (wall-clock
+  // time scales linearly with total document count) and wastes the latency
+  // headroom most APIs have for concurrent requests. 5 at a time is
+  // conservative enough not to trip a provider's own rate limit on a bulk
+  // backfill while still meaningfully cutting reindex time.
+  const CONCURRENCY = 5;
   async function reindexAll(sourceType: IKnowledgeChunk['sourceType'], docs: any[]) {
-    for (const doc of docs) {
-      results.total++;
-      try {
-        await syncKnowledgeChunk(sourceType, doc);
-        results.upserted++;
-      } catch (e: any) {
-        results.failed.push({ sourceType, sourceId: String(doc._id), error: e.message || String(e) });
-      }
+    for (let i = 0; i < docs.length; i += CONCURRENCY) {
+      const batch = docs.slice(i, i + CONCURRENCY);
+      results.total += batch.length;
+      const outcomes = await Promise.allSettled(batch.map((doc) => syncKnowledgeChunk(sourceType, doc)));
+      outcomes.forEach((outcome, idx) => {
+        if (outcome.status === 'fulfilled') {
+          results.upserted++;
+        } else {
+          const doc = batch[idx];
+          const error = outcome.reason;
+          results.failed.push({ sourceType, sourceId: String(doc._id), error: error?.message || String(error) });
+        }
+      });
     }
   }
 
