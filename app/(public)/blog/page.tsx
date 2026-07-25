@@ -3,6 +3,10 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
 import { Video } from '@/app/models/Video';
+// Registers Doctor with Mongoose for the .populate('doctor') /
+// .populate('reviewedByDoctorId') calls below — see the note in
+// app/api/admin/results/route.ts for why this import can't be dropped.
+import '@/app/models/Doctor';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 import BlogPageClient from './BlogPageClient';
 import { getSettings } from '@/app/models/Settings';

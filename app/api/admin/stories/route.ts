@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Story } from '@/app/models/Story';
+// Registers StoryType with Mongoose for the .populate() call below — see
+// app/api/admin/results/route.ts for why this import can't be dropped.
+import '@/app/models/StoryType';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { revalidateTag } from 'next/cache';
 

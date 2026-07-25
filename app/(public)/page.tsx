@@ -10,6 +10,11 @@ import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
 import { Result } from '@/app/models/Result';
 import { Story } from '@/app/models/Story';
+// Registers StoryType with Mongoose for the .populate('storyType') call
+// below — each API route/page is bundled as its own isolated serverless
+// function in production, so this model is never registered here unless
+// imported directly (unlike `next dev`'s one shared, already-warmed process).
+import '@/app/models/StoryType';
 import { Faq } from '@/app/models/Faq';
 import { getSettings } from '@/app/models/Settings';
 import { CATEGORY_MAP } from '@/app/lib/serviceCategories';

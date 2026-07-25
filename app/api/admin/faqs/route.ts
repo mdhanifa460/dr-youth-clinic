@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Faq } from '@/app/models/Faq';
+// Registers Doctor/Service with Mongoose for the .populate() calls below —
+// production bundles each API route as its own isolated serverless
+// function, so these models are never registered here unless imported
+// directly (unlike `next dev`'s one shared process, warmed by other pages).
+import '@/app/models/Doctor';
+import '@/app/models/Service';
 import { requirePermission } from '@/app/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';

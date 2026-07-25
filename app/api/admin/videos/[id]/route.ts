@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
+// Registers Doctor/Service with Mongoose for the .populate() calls below —
+// see app/api/admin/results/route.ts for why this import can't be dropped.
+import '@/app/models/Doctor';
+import '@/app/models/Service';
 import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {

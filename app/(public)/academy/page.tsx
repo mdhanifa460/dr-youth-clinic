@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { Calendar } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
+// Registers Doctor with Mongoose for the .populate('doctor') call below —
+// see the note in app/api/admin/results/route.ts for why this is required.
+import '@/app/models/Doctor';
 import AcademyClient from './AcademyClient';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 

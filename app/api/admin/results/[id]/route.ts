@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Result } from '@/app/models/Result';
+// Registers Service/Doctor with Mongoose for the .populate() call in GET —
+// see app/api/admin/results/route.ts for why this import can't be dropped.
+import '@/app/models/Service';
+import '@/app/models/Doctor';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { revalidateTag } from 'next/cache';
 

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Result } from '@/app/models/Result';
+// Registers the Service/Doctor schemas with Mongoose — required for the
+// .populate() calls below. In production each API route is bundled into
+// its own isolated serverless function, so unlike `next dev` (one shared
+// process warmed by every other admin page), these models are never
+// registered here unless imported directly, and populate() throws.
+import '@/app/models/Service';
+import '@/app/models/Doctor';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { revalidateTag } from 'next/cache';
 

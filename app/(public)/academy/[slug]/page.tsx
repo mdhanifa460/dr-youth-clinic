@@ -4,6 +4,10 @@ import type { Metadata } from 'next';
 import { ChevronRight, Award, Calendar, Play } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
+// Registers Doctor/Service with Mongoose for the .populate() calls below —
+// see the note in app/api/admin/results/route.ts for why this is required.
+import '@/app/models/Doctor';
+import '@/app/models/Service';
 import VideoPlayer from './VideoPlayer';
 import { VideoObjectSchema } from '@/app/components/SchemaMarkup';
 

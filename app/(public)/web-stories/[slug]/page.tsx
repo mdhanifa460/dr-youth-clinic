@@ -6,6 +6,10 @@ import { Doctor } from '@/app/models/Doctor';
 import { Service } from '@/app/models/Service';
 import { Offer } from '@/app/models/Offer';
 import { Result } from '@/app/models/Result';
+// Registers StoryType with Mongoose for the .populate('storyType') calls
+// below — see the note in app/api/admin/results/route.ts for why this
+// import can't be dropped.
+import '@/app/models/StoryType';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { recommend } from '@/app/lib/rag/RecommendationService';
 import { BreadcrumbSchema } from '@/app/components/SchemaMarkup';
