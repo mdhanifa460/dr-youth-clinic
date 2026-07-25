@@ -104,6 +104,37 @@ export interface ISettings extends Document {
     country: string;
     currencySymbol: string;
   };
+  // Drives the public Navbar (app/components/Navbar.tsx) instead of its old
+  // hardcoded navItems array. `linkType` covers the two links whose target
+  // depends on runtime state the admin can't express as a plain string:
+  // 'services' resolves to the visitor's current/detected city's services
+  // page, 'locations' renders as the existing 4-city dropdown. Everything
+  // else ('custom'/'anchor') just uses `href` as-is. Defaults below mirror
+  // the previous hardcoded nav exactly, so nothing changes until an admin
+  // edits it.
+  navigation: {
+    items: Array<{
+      id: string;
+      label: string;
+      linkType: 'custom' | 'services' | 'locations' | 'anchor';
+      href: string;
+      order: number;
+      visible: boolean;
+      children: Array<{ id: string; label: string; href: string; order: number }>;
+    }>;
+  };
+  // Per-clinic on/off switches for the Video module's on-demand AI actions
+  // (Level 2) — every "Generate ..." button in the admin Video form checks
+  // its matching flag here first, so a clinic controls its own AI spend
+  // instead of every generator always being available. Nothing here ever
+  // triggers automatically; these only gate whether the button is usable.
+  videoAI: {
+    generateSeoEnabled: boolean;
+    generateSummaryEnabled: boolean;
+    generateFaqEnabled: boolean;
+    generateBlogEnabled: boolean;
+    generateStoryEnabled: boolean;
+  };
   ai: {
     enabled: boolean;
     greeting: string;
@@ -267,6 +298,41 @@ const SettingsSchema = new Schema<ISettings>(
       name:           { type: String, default: 'DR Youth Clinic' },
       country:        { type: String, default: 'India' },
       currencySymbol: { type: String, default: '₹' },
+    },
+    navigation: {
+      items: {
+        type: [{
+          id: String,
+          label: String,
+          linkType: { type: String, enum: ['custom', 'services', 'locations', 'anchor'], default: 'custom' },
+          href: { type: String, default: '' },
+          order: { type: Number, default: 0 },
+          visible: { type: Boolean, default: true },
+          children: {
+            type: [{ id: String, label: String, href: String, order: { type: Number, default: 0 } }],
+            default: [],
+          },
+        }],
+        default: [
+          { id: 'home',     label: 'Home',     linkType: 'custom',    href: '/',              order: 0, visible: true, children: [] },
+          { id: 'services', label: 'Services',  linkType: 'services',  href: '',               order: 1, visible: true, children: [] },
+          { id: 'doctors',  label: 'Doctors',   linkType: 'custom',    href: '/doctors',       order: 2, visible: true, children: [] },
+          { id: 'about',    label: 'About',     linkType: 'custom',    href: '/about',         order: 3, visible: true, children: [] },
+          { id: 'results',  label: 'Results',   linkType: 'custom',    href: '/results',       order: 4, visible: true, children: [] },
+          { id: 'stories',  label: 'Stories',   linkType: 'custom',    href: '/web-stories',   order: 5, visible: true, children: [] },
+          { id: 'blog',     label: 'Blog',      linkType: 'custom',    href: '/blog',          order: 6, visible: true, children: [] },
+          { id: 'offers',   label: 'Offers',    linkType: 'custom',    href: '/offers',        order: 7, visible: true, children: [] },
+          { id: 'contact',  label: 'Contact',   linkType: 'anchor',    href: 'contact',        order: 8, visible: true, children: [] },
+          { id: 'locations', label: 'Locations', linkType: 'locations', href: '',              order: 9, visible: true, children: [] },
+        ],
+      },
+    },
+    videoAI: {
+      generateSeoEnabled:     { type: Boolean, default: true },
+      generateSummaryEnabled: { type: Boolean, default: true },
+      generateFaqEnabled:     { type: Boolean, default: false },
+      generateBlogEnabled:    { type: Boolean, default: false },
+      generateStoryEnabled:   { type: Boolean, default: false },
     },
     ai: {
       enabled:      { type: Boolean, default: true },

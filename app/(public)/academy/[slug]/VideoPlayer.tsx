@@ -92,6 +92,15 @@ export default function VideoPlayer({ youtubeId, title, chapters }: VideoPlayerP
     }
   };
 
+  if (!youtubeId) {
+    return (
+      <div className="relative aspect-video rounded-2xl md:rounded-3xl overflow-hidden bg-gray-100 flex flex-col items-center justify-center text-center px-6">
+        <p className="text-gray-500 font-semibold text-sm">Video unavailable</p>
+        <p className="text-gray-400 text-xs mt-1">This video's link needs to be updated in the admin panel.</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="relative aspect-video rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] bg-[#0B2560]">

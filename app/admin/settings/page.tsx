@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone, Bot } from "lucide-react";
+import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone, Bot, Menu } from "lucide-react";
 
 const GROUPS = [
   {
@@ -74,8 +74,17 @@ const GROUPS = [
         color: "bg-blue-50 text-blue-600",
         border: "border-blue-100 hover:border-blue-300",
         title: "Content & Blog",
-        desc: "Control blog pagination, default author, before/after watermark text, testimonial rating filter, carousel speed, and schema markup type.",
-        tags: ["Blog", "Before/After", "Schema"],
+        desc: "Control blog pagination, default author, testimonial rating filter, carousel speed, and schema markup type.",
+        tags: ["Blog", "Testimonials", "Schema"],
+      },
+      {
+        href: "/admin/settings/navigation",
+        icon: Menu,
+        color: "bg-indigo-50 text-indigo-600",
+        border: "border-indigo-100 hover:border-indigo-300",
+        title: "Navigation Menu",
+        desc: "Control the header menu — order, labels, links, and dropdown submenus.",
+        tags: ["Header", "Dropdowns", "Menu order"],
       },
     ],
   },
@@ -160,6 +169,15 @@ const GROUPS = [
         title: "AI Management",
         desc: "The full AI Assistant module — chatbot settings, greetings, prompts, recommendation rules, knowledge base, conversations, analytics, and feedback.",
         tags: ["Greeting", "Prompts", "Knowledge Base", "Analytics"],
+      },
+      {
+        href: "/admin/settings/video-ai",
+        icon: Bot,
+        color: "bg-cyan-50 text-cyan-600",
+        border: "border-cyan-100 hover:border-cyan-300",
+        title: "Video AI",
+        desc: "Turn on-demand AI generation (SEO, Summary, FAQ, Blog Draft, Web Story Draft) on or off for the Video module — nothing runs automatically.",
+        tags: ["On-demand", "Per-feature toggle"],
       },
     ],
   },

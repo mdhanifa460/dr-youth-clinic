@@ -8,10 +8,10 @@ import { Plus, X } from 'lucide-react';
 // import from here instead of adding another local copy.
 
 export function FieldInput({
-  label, value, onChange, type = 'text', placeholder = '',
+  label, value, onChange, type = 'text', placeholder = '', onBlur,
 }: {
   label: string; value: any; onChange: (v: any) => void;
-  type?: string; placeholder?: string;
+  type?: string; placeholder?: string; onBlur?: () => void;
 }) {
   return (
     <div>
@@ -20,6 +20,7 @@ export function FieldInput({
         <textarea
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
           rows={3}
           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 resize-none"
@@ -29,6 +30,7 @@ export function FieldInput({
           type={type}
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
         />

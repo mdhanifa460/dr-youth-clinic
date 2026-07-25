@@ -5,6 +5,7 @@ import { ChevronRight, Award, Calendar, Play } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
 import VideoPlayer from './VideoPlayer';
+import { VideoObjectSchema } from '@/app/components/SchemaMarkup';
 
 export const revalidate = 300;
 
@@ -58,19 +59,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const video = await getVideo(params.slug);
   if (!video) return {};
 
-  const description = video.transcript
+  const fallbackDescription = video.aiSummary || (video.transcript
     ? video.transcript.slice(0, 155).trim() + (video.transcript.length > 155 ? '…' : '')
-    : `Watch "${video.title}" — expert insights from DR Youth Clinic on ${video.category.toLowerCase()} treatments.`;
+    : `Watch "${video.title}" — expert insights from DR Youth Clinic on ${video.category.toLowerCase()} treatments.`);
+  const title = video.metaTitle || video.title;
+  const description = video.metaDescription || fallbackDescription;
 
   return {
-    title: video.title,
+    title,
     description,
-    alternates: { canonical: `${SITE_URL}/academy/${video.slug}` },
+    keywords: video.keywords?.length ? video.keywords : undefined,
+    alternates: { canonical: video.canonicalUrl || `${SITE_URL}/academy/${video.slug}` },
     openGraph: {
-      title: video.title,
+      title,
       description,
       url: `${SITE_URL}/academy/${video.slug}`,
-      images: video.thumbnail?.url ? [{ url: video.thumbnail.url, width: 1200, height: 630 }] : [],
+      images: (video.ogImage?.url || video.thumbnail?.url) ? [{ url: video.ogImage?.url || video.thumbnail.url, width: 1200, height: 630 }] : [],
       type: 'video.other',
     },
   };
@@ -93,6 +97,17 @@ export default async function VideoDetailPage({ params }: PageProps) {
 
   return (
     <main className="bg-[#f6faff] min-h-screen pb-24 lg:pb-16">
+      {video.thumbnail?.url && (
+        <VideoObjectSchema
+          title={video.title}
+          description={video.metaDescription || video.aiSummary || video.title}
+          slug={video.slug}
+          thumbnailUrl={video.thumbnail.url}
+          uploadDate={new Date(video.createdAt).toISOString()}
+          duration={video.duration}
+          embedUrl={`https://www.youtube.com/embed/${video.youtubeId}`}
+        />
+      )}
       {/* Breadcrumb */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-2">
         <nav className="flex items-center gap-1.5 text-xs text-gray-400">

@@ -26,6 +26,20 @@ const getCachedAiConfig = unstable_cache(
   { revalidate: 60, tags: ["settings"] }
 );
 
+const getCachedNavItems = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const settings = await getSettings();
+      return settings.navigation?.items ?? [];
+    } catch {
+      return [];
+    }
+  },
+  ["public-nav-items"],
+  { revalidate: 60, tags: ["settings"] }
+);
+
 // Single query for both topbar + footer — avoids two round-trips per page
 const getLayoutSections = unstable_cache(
   async () => {
@@ -59,10 +73,11 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [{ topbar, footer }, siteConfig, aiConfig] = await Promise.all([
+  const [{ topbar, footer }, siteConfig, aiConfig, navItems] = await Promise.all([
     getLayoutSections(),
     getSiteConfig(),
     getCachedAiConfig(),
+    getCachedNavItems(),
   ]);
 
   const whatsappLink = topbar.data?.socialLinks?.find(
@@ -79,7 +94,7 @@ export default async function PublicLayout({
         schemaType={siteConfig.schemaType}
       />
       {topbar.visible && <TopBar data={topbar.data} siteConfig={siteConfig} />}
-      <Navbar />
+      <Navbar navItems={navItems as any} />
       <div className="mobile-sticky-offset lg:pb-0">{children}</div>
       <Footer data={footer} siteConfig={siteConfig} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />

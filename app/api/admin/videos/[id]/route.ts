@@ -24,8 +24,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     await connectDB();
     const body = await req.json();
-    const video = await (Video as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    // findByIdAndUpdate bypasses document middleware (pre('save')) — using
+    // it here meant editing a video's YouTube URL never recomputed
+    // youtubeId/thumbnail, silently leaving the old (or empty) id in place.
+    // Loading the document and calling .save() runs that hook every time.
+    const video = await (Video as any).findById(params.id);
     if (!video) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    Object.assign(video, body);
+    await video.save();
     return NextResponse.json({ success: true, data: video, message: 'Video updated successfully' });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to update video' }, { status: 500 });

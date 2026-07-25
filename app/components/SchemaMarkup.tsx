@@ -169,6 +169,56 @@ export function BreadcrumbSchema({ items }: { items: BreadcrumbItem[] }) {
   );
 }
 
+interface VideoObjectProps {
+  title: string;
+  description: string;
+  slug: string;
+  thumbnailUrl: string;
+  uploadDate: string;
+  duration?: string; // free text (e.g. "12 min") — not converted to ISO 8601 since it's admin-entered prose, not a parsed value
+  embedUrl: string;
+}
+
+// Video's `duration` field is admin-entered free text ("12 min", "1h 5m")
+// for display, not a structured value — schema.org's duration property
+// requires ISO 8601 ("PT12M"). Best-effort parse common patterns; if it
+// doesn't match, omit the field entirely rather than guess or stuff
+// unstructured text into an unrelated property.
+function toIso8601Duration(text?: string): string | null {
+  if (!text) return null;
+  const h = text.match(/(\d+)\s*h/i)?.[1];
+  const m = text.match(/(\d+)\s*m(?!s)/i)?.[1];
+  const s = text.match(/(\d+)\s*s/i)?.[1];
+  if (!h && !m && !s) return null;
+  return `PT${h ? `${h}H` : ''}${m ? `${m}M` : ''}${s ? `${s}S` : ''}`;
+}
+
+// Google's Video rich-result eligibility only needs name/description/
+// thumbnailUrl/uploadDate — contentUrl/embedUrl and duration are optional
+// but included when available since we already have them for free (embed
+// URL from the youtubeId already stored, duration when it parses cleanly).
+export function VideoObjectSchema({ title, description, slug, thumbnailUrl, uploadDate, duration, embedUrl }: VideoObjectProps) {
+  const isoDuration = toIso8601Duration(duration);
+  const schema: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: title,
+    description: description || title,
+    thumbnailUrl: [thumbnailUrl],
+    uploadDate,
+    embedUrl,
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/academy/${slug}` },
+    ...(isoDuration ? { duration: isoDuration } : {}),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 interface BlogPostingProps {
   title: string;
   description: string;

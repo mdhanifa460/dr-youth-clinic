@@ -30,6 +30,10 @@ export interface IBlog extends Document {
   // section and the Article Intelligence checklist.
   reviewedByDoctorId?: mongoose.Types.ObjectId;
   medicalReferences?: Array<{ label: string; url: string }>;
+  // Set only when this post was created via a Video's "Generate Blog Draft"
+  // action — lets the Video's Related Content tab show what it produced.
+  // Never required, never read by any existing query.
+  sourceVideoId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +70,7 @@ const BlogSchema = new Schema<IBlog>({
   keywords:         [String],
   reviewedByDoctorId: { type: Schema.Types.ObjectId, ref: 'Doctor' },
   medicalReferences:  [{ label: { type: String, required: true }, url: { type: String, required: true }, _id: false }],
+  sourceVideoId: { type: Schema.Types.ObjectId, ref: 'Video' },
 }, { timestamps: true });
 
 BlogSchema.index({ slug: 1 }, { unique: true });

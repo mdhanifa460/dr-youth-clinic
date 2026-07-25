@@ -167,6 +167,26 @@ export function buildStoryChunk(doc: any): ChunkInput {
   };
 }
 
+// title + AI summary + transcript + chapter labels + inline FAQ — whichever
+// of these exist; a freshly-added video with only free (Level 1) metadata
+// still gets a usable chunk from just its title/category.
+export function buildVideoChunk(doc: any): ChunkInput {
+  const chapterText = (doc.chapters || []).map((c: any) => c.label).filter(Boolean).join(', ');
+  const faqText = (doc.faq || []).map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join('\n');
+  const text = [doc.aiSummary, doc.transcript, chapterText && `Chapters: ${chapterText}`, faqText]
+    .filter(Boolean)
+    .join('\n\n');
+
+  return {
+    title: doc.title,
+    text: text || doc.title,
+    category: doc.category,
+    // /shorts/[slug] doesn't have a public route yet (a later phase per the
+    // Academy migration plan) — every video links to /academy/[slug] for now.
+    url: doc.slug ? `/academy/${doc.slug}` : '/academy',
+  };
+}
+
 export function buildFaqChunk(faq: { question: string; answer: string; category?: string }): ChunkInput {
   return {
     title: faq.question,
@@ -195,6 +215,7 @@ const BUILDERS: Partial<Record<IKnowledgeChunk['sourceType'], (doc: any) => Chun
   document: buildDocumentChunk,
   story: buildStoryChunk,
   faq: buildFaqChunk,
+  video: buildVideoChunk,
 };
 
 export async function upsertChunk(

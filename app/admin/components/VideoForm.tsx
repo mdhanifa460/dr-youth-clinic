@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle, Save, Loader } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, CheckCircle, Save, Loader, Sparkles, ExternalLink } from 'lucide-react';
 import MediaGalleryModal from './MediaGalleryModal';
+import SeoAiAssistant from './SeoAiAssistant';
 import { FieldInput, StringArrayEditor, ObjectArrayEditor, ImagePicker } from './FormControls';
 
 const CATEGORIES = [
@@ -14,6 +16,8 @@ const CATEGORIES = [
 interface FormData {
   title: string;
   youtubeUrl: string;
+  channel: string;
+  format: 'video' | 'short';
   thumbnail: string;
   category: string;
   doctor: string;
@@ -29,12 +33,19 @@ interface FormData {
   displayOrder: number;
   status: 'draft' | 'published';
   transcript: string;
+  metaTitle: string;
+  metaDescription: string;
+  canonicalUrl: string;
+  keywords: string;
+  aiSummary: string;
+  keyTakeaways: string[];
 }
 
 const DEFAULTS: FormData = {
-  title: '', youtubeUrl: '', thumbnail: '', category: 'Hair', doctor: '', service: '',
+  title: '', youtubeUrl: '', channel: '', format: 'video', thumbnail: '', category: 'Hair', doctor: '', service: '',
   duration: '', featured: false, chapters: [], tags: [], language: 'English',
   faq: [], journeyKey: '', journeyOrder: 0, displayOrder: 0, status: 'draft', transcript: '',
+  metaTitle: '', metaDescription: '', canonicalUrl: '', keywords: '', aiSummary: '', keyTakeaways: [],
 };
 
 function toSlug(title: string) {
@@ -46,6 +57,13 @@ function youtubeThumb(url: string) {
   return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : '';
 }
 
+function detectFormat(url: string): 'video' | 'short' {
+  return /youtube\.com\/shorts\//.test(url) ? 'short' : 'video';
+}
+
+type VideoAiFlags = { generateSeoEnabled: boolean; generateSummaryEnabled: boolean; generateFaqEnabled: boolean; generateBlogEnabled: boolean; generateStoryEnabled: boolean };
+const AI_FLAGS_DEFAULT: VideoAiFlags = { generateSeoEnabled: true, generateSummaryEnabled: true, generateFaqEnabled: false, generateBlogEnabled: false, generateStoryEnabled: false };
+
 export default function VideoForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -53,6 +71,8 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
   const [success, setSuccess] = useState(false);
   const [doctors, setDoctors] = useState<{ _id: string; name: string }[]>([]);
   const [services, setServices] = useState<{ _id: string; name: string }[]>([]);
+  const [aiFlags, setAiFlags] = useState<VideoAiFlags>(AI_FLAGS_DEFAULT);
+  const [oembedLoading, setOembedLoading] = useState(false);
 
   const [form, setForm] = useState<FormData>(
     initialData
@@ -65,6 +85,8 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
           chapters: initialData.chapters ?? [],
           tags: initialData.tags ?? [],
           faq: initialData.faq ?? [],
+          keyTakeaways: initialData.keyTakeaways ?? [],
+          keywords: Array.isArray(initialData.keywords) ? initialData.keywords.join(', ') : (initialData.keywords ?? ''),
         }
       : DEFAULTS
   );
@@ -74,7 +96,34 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
   useEffect(() => {
     fetch('/api/admin/doctors').then((r) => r.json()).then((d) => { if (d.success) setDoctors(d.data ?? []); }).catch(() => {});
     fetch('/api/admin/services').then((r) => r.json()).then((d) => { if (d.success) setServices(d.data ?? []); }).catch(() => {});
+    fetch('/api/admin/settings').then((r) => r.json()).then((d) => { if (d.success && d.data?.videoAI) setAiFlags({ ...AI_FLAGS_DEFAULT, ...d.data.videoAI }); }).catch(() => {});
   }, []);
+
+  // Level 1 (free): fires when the admin finishes editing the URL field —
+  // fetches title + channel from YouTube's public oEmbed endpoint (no API
+  // key, no quota) and detects Shorts from the URL shape. Title is only
+  // overwritten if still empty, so it never clobbers a manual edit.
+  const handleUrlBlur = useCallback(async () => {
+    if (!form.youtubeUrl.trim()) return;
+    updateForm({ format: detectFormat(form.youtubeUrl) });
+    setOembedLoading(true);
+    try {
+      const res = await fetch(`/api/admin/videos/oembed?url=${encodeURIComponent(form.youtubeUrl)}`);
+      const data = await res.json();
+      if (data.success) {
+        setForm((f) => ({
+          ...f,
+          title: f.title.trim() ? f.title : data.data.title,
+          channel: data.data.channel || f.channel,
+        }));
+      }
+    } catch {
+      // Silent — this is a convenience auto-fill, not a required step; the
+      // admin can still type the title/channel in manually.
+    } finally {
+      setOembedLoading(false);
+    }
+  }, [form.youtubeUrl]);
 
   // Gallery modal wiring (shared with landing-page / about builders)
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -103,6 +152,7 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
         thumbnail: form.thumbnail ? { url: form.thumbnail } : undefined,
         doctor: form.doctor || undefined,
         service: form.service || undefined,
+        keywords: form.keywords.split(',').map((k) => k.trim()).filter(Boolean),
       };
       const res = await fetch(url, {
         method,
@@ -139,7 +189,10 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
         <h2 className="text-2xl font-bold text-[#0B2560]">Video Details</h2>
 
         <FieldInput label="Title" value={form.title} onChange={(v) => updateForm({ title: v })} placeholder="e.g., Hair PRP Explained" />
-        <FieldInput label="YouTube URL" value={form.youtubeUrl} onChange={(v) => updateForm({ youtubeUrl: v })} placeholder="https://www.youtube.com/watch?v=..." />
+        <div>
+          <FieldInput label="YouTube URL" value={form.youtubeUrl} onChange={(v) => updateForm({ youtubeUrl: v })} onBlur={handleUrlBlur} placeholder="https://www.youtube.com/watch?v=..." />
+          {oembedLoading && <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1"><Loader size={10} className="animate-spin" /> Looking up video info…</p>}
+        </div>
 
         {previewThumb && (
           <div className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 max-w-xs">
@@ -148,6 +201,18 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
         )}
 
         <ImagePicker label="Custom Thumbnail (optional — defaults to YouTube's)" value={form.thumbnail} onChange={(v) => updateForm({ thumbnail: v })} openGallery={openGallery} />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FieldInput label="Channel (auto-filled)" value={form.channel} onChange={(v) => updateForm({ channel: v })} placeholder="Auto-filled from YouTube" />
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Format</label>
+            <select value={form.format} onChange={(e) => updateForm({ format: e.target.value as 'video' | 'short' })}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20">
+              <option value="video">Video</option>
+              <option value="short">Short</option>
+            </select>
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -192,8 +257,44 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <div>
+          <h2 className="text-2xl font-bold text-[#0B2560]">SEO</h2>
+          <p className="text-sm text-gray-500 mt-1">Controls how this video's page appears in Google and when shared.</p>
+        </div>
+        <FieldInput label="Meta Title" value={form.metaTitle} onChange={(v) => updateForm({ metaTitle: v })} placeholder="Falls back to the video title if left blank" />
+        <FieldInput label="Meta Description" value={form.metaDescription} onChange={(v) => updateForm({ metaDescription: v })} type="textarea" placeholder="Under 155 characters" />
+        <FieldInput label="Canonical URL (optional)" value={form.canonicalUrl} onChange={(v) => updateForm({ canonicalUrl: v })} placeholder="Leave blank unless this video is duplicated elsewhere" />
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Keywords</label>
+          <input value={form.keywords} onChange={(e) => updateForm({ keywords: e.target.value })} placeholder="hair prp, hair restoration chennai"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm" />
+        </div>
+        {initialData?._id && aiFlags.generateSeoEnabled && (
+          <SeoAiAssistant
+            lpId={initialData._id}
+            endpoint={`/api/admin/videos/${initialData._id}/seo-keywords`}
+            pageTitle={form.title}
+            template={form.category}
+            description={form.metaDescription}
+            keywords={form.keywords}
+            onApplyDescription={(v) => updateForm({ metaDescription: v.slice(0, 160) })}
+            onKeywordsChange={(v) => updateForm({ keywords: v })}
+          />
+        )}
+      </div>
+
+      {initialData?._id && (
+        <AiGenerateCard
+          videoId={initialData._id}
+          flags={aiFlags}
+          form={form}
+          updateForm={updateForm}
+        />
+      )}
+
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+        <div>
           <h2 className="text-2xl font-bold text-[#0B2560]">Chapters</h2>
-          <p className="text-sm text-gray-500 mt-1">Timestamps patients can jump to directly (e.g. 00:00 Introduction, 02:30 Procedure).</p>
+          <p className="text-sm text-gray-500 mt-1">Timestamps patients can jump to directly (e.g. 00:00 Introduction, 02:30 Procedure). Entered manually — reliable and free.</p>
         </div>
         <ObjectArrayEditor
           label="Chapters"
@@ -227,8 +328,9 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
       </div>
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-        <h2 className="text-2xl font-bold text-[#0B2560]">Transcript (optional)</h2>
-        <FieldInput label="Transcript" value={form.transcript} onChange={(v) => updateForm({ transcript: v })} type="textarea" placeholder="Paste a transcript — used for future AI features (blog/FAQ/SEO generation)." />
+        <h2 className="text-2xl font-bold text-[#0B2560]">Transcript (optional, premium)</h2>
+        <p className="text-sm text-gray-500 -mt-4">Paste a transcript to improve every AI generator above (Summary, FAQ, Blog, Story) — none of them require it, but all of them get more accurate with one.</p>
+        <FieldInput label="Transcript" value={form.transcript} onChange={(v) => updateForm({ transcript: v })} type="textarea" placeholder="Paste a transcript (optional)." />
       </div>
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
@@ -257,6 +359,95 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
         onClose={() => { setGalleryOpen(false); galleryCallbackRef.current = null; }}
         onSelect={handleGallerySelect}
       />
+    </div>
+  );
+}
+
+// ─── AI Generate (Level 2 — on-demand only, gated by Settings → Video AI) ──
+function AiGenerateCard({ videoId, flags, form, updateForm }: {
+  videoId: string;
+  flags: VideoAiFlags;
+  form: FormData;
+  updateForm: (data: Partial<FormData>) => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [genError, setGenError] = useState('');
+  const [draftLinks, setDraftLinks] = useState<{ blog?: string; story?: string }>({});
+
+  const anyEnabled = flags.generateSummaryEnabled || flags.generateFaqEnabled || flags.generateBlogEnabled || flags.generateStoryEnabled;
+  if (!anyEnabled) return null;
+
+  async function run(action: string, endpoint: string, onSuccess: (data: any) => void) {
+    setBusy(action); setGenError('');
+    try {
+      const res = await fetch(endpoint, { method: 'POST' });
+      const data = await res.json();
+      if (!data.success) { setGenError(data.message || 'Generation failed'); return; }
+      onSuccess(data.data);
+    } catch {
+      setGenError('Network error — please try again');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-5">
+      <div>
+        <h2 className="text-2xl font-bold text-[#0B2560] flex items-center gap-2"><Sparkles size={20} className="text-[#F5A623]" /> AI Generate</h2>
+        <p className="text-sm text-gray-500 mt-1">On-demand only — nothing here runs automatically. Each result is added to the form for you to review and edit before Save.</p>
+      </div>
+
+      {genError && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{genError}</p>}
+
+      <div className="flex flex-wrap gap-2.5">
+        {flags.generateSummaryEnabled && (
+          <button disabled={busy !== null} onClick={() => run('summary', `/api/admin/videos/${videoId}/generate-summary`, (data) => updateForm({ aiSummary: data.summary, keyTakeaways: data.keyTakeaways }))}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#0B2560] bg-[#f6faff] hover:bg-blue-50 border border-blue-100 px-3.5 py-2 rounded-xl transition disabled:opacity-50">
+            {busy === 'summary' ? <Loader size={12} className="animate-spin" /> : <Sparkles size={12} />} Generate Summary
+          </button>
+        )}
+        {flags.generateFaqEnabled && (
+          <button disabled={busy !== null} onClick={() => run('faq', `/api/admin/videos/${videoId}/generate-faq`, (data) => updateForm({ faq: [...form.faq, ...data] }))}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#0B2560] bg-[#f6faff] hover:bg-blue-50 border border-blue-100 px-3.5 py-2 rounded-xl transition disabled:opacity-50">
+            {busy === 'faq' ? <Loader size={12} className="animate-spin" /> : <Sparkles size={12} />} Generate FAQ
+          </button>
+        )}
+        {flags.generateBlogEnabled && (
+          <button disabled={busy !== null} onClick={() => run('blog', `/api/admin/videos/${videoId}/generate-blog`, (data) => setDraftLinks((l) => ({ ...l, blog: data._id })))}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#0B2560] bg-[#f6faff] hover:bg-blue-50 border border-blue-100 px-3.5 py-2 rounded-xl transition disabled:opacity-50">
+            {busy === 'blog' ? <Loader size={12} className="animate-spin" /> : <Sparkles size={12} />} Generate Blog Draft
+          </button>
+        )}
+        {flags.generateStoryEnabled && (
+          <button disabled={busy !== null} onClick={() => run('story', `/api/admin/videos/${videoId}/generate-story`, (data) => setDraftLinks((l) => ({ ...l, story: data._id })))}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#0B2560] bg-[#f6faff] hover:bg-blue-50 border border-blue-100 px-3.5 py-2 rounded-xl transition disabled:opacity-50">
+            {busy === 'story' ? <Loader size={12} className="animate-spin" /> : <Sparkles size={12} />} Generate Web Story Draft
+          </button>
+        )}
+      </div>
+
+      {(form.aiSummary || form.keyTakeaways.length > 0) && (
+        <div className="space-y-3 pt-2 border-t border-gray-50">
+          <FieldInput label="AI Summary" value={form.aiSummary} onChange={(v) => updateForm({ aiSummary: v })} type="textarea" placeholder="Generated summary appears here — edit freely." />
+          <StringArrayEditor label="Key Takeaways" items={form.keyTakeaways} onChange={(v) => updateForm({ keyTakeaways: v })} />
+        </div>
+      )}
+
+      {(draftLinks.blog || draftLinks.story) && (
+        <div className="flex flex-col gap-1.5 pt-2 border-t border-gray-50">
+          {draftLinks.blog && (
+            <Link href={`/admin/blog/${draftLinks.blog}`} className="text-xs font-bold text-[#0B2560] flex items-center gap-1 hover:underline">
+              <ExternalLink size={12} /> Blog draft created — open it to review and publish
+            </Link>
+          )}
+          {draftLinks.story && (
+            <Link href={`/admin/stories/${draftLinks.story}`} className="text-xs font-bold text-[#0B2560] flex items-center gap-1 hover:underline">
+              <ExternalLink size={12} /> Web Story draft created — open it to review and publish
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }

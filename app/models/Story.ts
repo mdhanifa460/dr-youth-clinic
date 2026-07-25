@@ -54,6 +54,9 @@ export interface IStory extends Document {
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string[];
+  // Set only when this story was created via a Video's "Generate Web Story
+  // Draft" action — same traceability purpose as Blog.sourceVideoId.
+  sourceVideoId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -111,6 +114,7 @@ const StorySchema = new Schema<IStory>({
   seoTitle:       { type: String, default: '' },
   seoDescription: { type: String, default: '' },
   seoKeywords:    { type: [String], default: [] },
+  sourceVideoId:  { type: Schema.Types.ObjectId, ref: 'Video' },
 }, { timestamps: true });
 
 StorySchema.index({ status: 1, order: 1 });
