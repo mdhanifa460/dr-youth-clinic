@@ -32,6 +32,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (!body.service) body.service = null;
     if (!body.doctor) body.doctor = null;
     if (!body.branch) body.branch = null;
+    if (typeof body.category === 'string') body.category = body.category.trim();
 
     // findByIdAndUpdate bypasses the 'save' hook that auto-generates a slug
     // on create — regenerate here too when the admin clears it, or editing

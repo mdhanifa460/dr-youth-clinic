@@ -41,7 +41,7 @@ const ResultSchema = new Schema<IResult>({
   title:       { type: String, required: [true, 'Title is required'], trim: true },
   slug:        { type: String, lowercase: true, match: /^[a-z0-9-]+$/, index: true, unique: true, sparse: true },
   description: { type: String, default: '' },
-  category:    { type: String, default: '' },
+  category:    { type: String, default: '', trim: true },
   before:      { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
   after:       { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
   beforeImages: { type: [{ url: String, publicId: String }], default: [] },
