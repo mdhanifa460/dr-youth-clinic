@@ -19,13 +19,19 @@ const SESSION_SECRET =
   FALLBACK_SESSION_SECRET;
 
 // This string is public (it's in the source of a public repo), so signing
-// session cookies with it is equivalent to not signing them at all. Warn
-// loudly rather than silently accepting it — kept as a warning, not a throw,
-// so a misconfigured deploy doesn't hard-crash and invalidate real sessions
-// that happen to already be running on it.
-if (SESSION_SECRET === FALLBACK_SESSION_SECRET) {
+// session cookies with it is equivalent to not signing them at all. This is
+// logged at import time regardless of environment so it's visible in any
+// deploy's function logs, but the actual enforcement — refusing to issue a
+// new session — happens in loginAdmin() below, scoped to production only.
+// That's deliberately narrower than crashing the whole process at startup:
+// it blocks the one vulnerable action (creating a new, forgeable-if-anyone-
+// knew-the-secret session) while leaving the public site and any already-
+// running sessions unaffected, so a misconfigured deploy fails safely on
+// the admin login screen instead of taking the whole site down.
+const USING_FALLBACK_SESSION_SECRET = SESSION_SECRET === FALLBACK_SESSION_SECRET;
+if (USING_FALLBACK_SESSION_SECRET) {
   console.error(
-    "[SECURITY] No ADMIN_SESSION_SECRET, NEXTAUTH_SECRET, or ADMIN_PASSWORD is set — admin session cookies are being signed with a hardcoded, publicly-known secret. Set ADMIN_SESSION_SECRET immediately."
+    "[SECURITY] No ADMIN_SESSION_SECRET, NEXTAUTH_SECRET, or ADMIN_PASSWORD is set — admin session cookies would be signed with a hardcoded, publicly-known secret. Set ADMIN_SESSION_SECRET immediately. New admin logins are blocked in production until this is fixed."
   );
 }
 
@@ -153,6 +159,12 @@ export async function loginAdmin({
   userAgent?: string | null;
   ipAddress?: string | null;
 }) {
+  if (USING_FALLBACK_SESSION_SECRET && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Refusing to create an admin session in production while signed with the hardcoded fallback secret — set ADMIN_SESSION_SECRET."
+    );
+  }
+
   await connectDB();
   await ensureBootstrapAdmin();
 

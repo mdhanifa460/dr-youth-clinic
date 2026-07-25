@@ -36,6 +36,10 @@ const DoctorSchema = new Schema<IDoctor>(
   { timestamps: true }
 );
 
+// Matches the real query on every location page's doctor list:
+// { locations: { $in: [city, 'all'] }, active: true }, sorted by order.
+DoctorSchema.index({ active: 1, locations: 1 });
+
 // Keeps the RAG knowledge base (KnowledgeChunk) in sync whenever a doctor is
 // created or edited — fire-and-forget + logged, never allowed to fail the
 // actual save. .create() triggers 'save'; the admin PUT route's

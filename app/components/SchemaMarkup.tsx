@@ -219,6 +219,68 @@ export function VideoObjectSchema({ title, description, slug, thumbnailUrl, uplo
   );
 }
 
+interface PhysicianProps {
+  name: string;
+  jobTitle: string;
+  id: string;
+  image?: string;
+  qualifications?: string;
+  specializations?: string[];
+  bio?: string;
+  locations?: string[]; // city slugs, or ['all']
+}
+
+// The one E-E-A-T signal missing from the site: a credentialed-author
+// schema for doctors themselves (BlogPostingSchema already links a doctor
+// as reviewer, but the doctor's own profile page had no schema of its own).
+// medicalSpecialty must be from schema.org's closed MedicalSpecialty
+// enumeration — specializations that don't map to it are still shown to
+// users on the page, just omitted here rather than passed through as an
+// invalid enum value.
+const MEDICAL_SPECIALTY_MAP: Record<string, string> = {
+  dermatology: 'Dermatology', dermatologist: 'Dermatology', skin: 'Dermatology',
+  trichology: 'Dermatology', hair: 'Dermatology',
+  cosmetology: 'Dermatologic', aesthetic: 'Dermatologic', laser: 'Dermatologic',
+  plastic: 'PlasticSurgery', 'cosmetic surgery': 'PlasticSurgery',
+};
+
+export function PhysicianSchema({ name, jobTitle, id, image, qualifications, specializations, bio, locations }: PhysicianProps) {
+  const medicalSpecialty = Array.from(
+    new Set(
+      (specializations || [])
+        .map((s) => MEDICAL_SPECIALTY_MAP[s.toLowerCase().trim()])
+        .filter(Boolean)
+    )
+  );
+
+  const schema: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "Physician",
+    name,
+    jobTitle,
+    url: `${SITE_URL}/doctors/${id}`,
+    ...(image ? { image } : {}),
+    ...(bio ? { description: bio } : {}),
+    ...(qualifications ? { honorificSuffix: qualifications } : {}),
+    ...(medicalSpecialty.length ? { medicalSpecialty } : {}),
+    worksFor: {
+      "@type": "MedicalClinic",
+      name: "DR Youth Clinic",
+      url: SITE_URL,
+    },
+    ...(locations && locations.length && !locations.includes('all')
+      ? { areaServed: locations.map((city) => ({ "@type": "City", name: city })) }
+      : {}),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 interface BlogPostingProps {
   title: string;
   description: string;

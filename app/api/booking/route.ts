@@ -4,6 +4,7 @@ import Booking from "../../models/Booking";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 import { normalizePhone as formatPhone } from "@/app/lib/phone";
 import { getClinicNotifyNumber } from "@/app/lib/clinicNotify";
+import { bookingSchema } from "@/app/lib/validation";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -16,19 +17,15 @@ export async function POST(req: Request) {
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {
-    const body = await req.json();
-    const { name, phone, email, service, location, date, time, concern, promoCode, promoDiscount, source } = body;
-
-    // Input validation
-    if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
-      return NextResponse.json({ success: false, message: "Valid name is required" }, { status: 400 });
+    const rawBody = await req.json();
+    const parsed = bookingSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, message: parsed.error.issues[0]?.message || "Invalid booking details" },
+        { status: 400 }
+      );
     }
-    if (!phone || typeof phone !== 'string') {
-      return NextResponse.json({ success: false, message: "Phone number is required" }, { status: 400 });
-    }
-    if (!date || !time) {
-      return NextResponse.json({ success: false, message: "Date and time are required" }, { status: 400 });
-    }
+    const { name, phone, email, service, location, date, time, concern, promoCode, promoDiscount, source } = parsed.data;
 
     const formattedPhone = formatPhone(phone);
     if (!formattedPhone || formattedPhone.length < 10) {
@@ -130,8 +127,16 @@ Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscoun
       }),
     });
 
-    const customerData = await customerRes.json();
-    console.log("📲 Customer WA:", customerData);
+    // Guarded the same way as the clinic notification above — a WhatsApp
+    // API hiccup here (bad template config, transient failure, non-JSON
+    // error page) must not turn a booking that was already saved into a
+    // response that tells the customer it failed.
+    try {
+      const customerText = await customerRes.text();
+      console.log("📲 Customer WA:", JSON.parse(customerText));
+    } catch {
+      console.log("❌ Customer WhatsApp confirmation: non-JSON response");
+    }
 
     return NextResponse.json({
       success: true,

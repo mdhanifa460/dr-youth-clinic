@@ -142,6 +142,10 @@ const LandingPageSchema = new Schema<ILandingPage>(
   { timestamps: true }
 );
 
+// Matches the { status: 'published' } filter used by the sitemap and the
+// media-usage audit — slug already has its own unique index above.
+LandingPageSchema.index({ status: 1 });
+
 export const LandingPage =
   mongoose.models.LandingPage ||
   mongoose.model<ILandingPage>('LandingPage', LandingPageSchema);

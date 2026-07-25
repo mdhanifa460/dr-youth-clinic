@@ -10,6 +10,7 @@ import { HomepageSection } from '@/app/models/HomepageSection';
 import { Result } from '@/app/models/Result';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import SliderCard from '@/app/components/SliderCard';
+import { PhysicianSchema } from '@/app/components/SchemaMarkup';
 
 export const revalidate = 300;
 
@@ -88,6 +89,16 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
 
   return (
     <main className="bg-white">
+      <PhysicianSchema
+        name={doctor.name}
+        jobTitle={doctor.title}
+        id={params.id}
+        image={doctor.photo?.url}
+        qualifications={doctor.qualifications}
+        specializations={doctor.specializations}
+        bio={doctor.bio}
+        locations={doctor.locations}
+      />
 
       {/* ── HERO ── */}
       <section className="bg-[#0B2560] relative overflow-hidden">

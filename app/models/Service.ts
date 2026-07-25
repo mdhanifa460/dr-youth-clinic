@@ -301,6 +301,15 @@ const ServiceSchema = new Schema<IService>(
   }
 );
 
+// Matches the actual hot query shape used on every city/category listing
+// and service-detail page load: `{ status: 'active', category, $or: [...] }`
+// — the equality prefix (status+category) narrows via this compound index,
+// targetLocations gets its own multikey index for the array-membership half
+// of that $or (Mongo can't serve both branches of an $or from one compound
+// index when one branch touches an array field).
+ServiceSchema.index({ status: 1, category: 1 });
+ServiceSchema.index({ targetLocations: 1 });
+
 // Deterministic content-completeness score (0-100) — not a live search-ranking
 // signal, just how much of the on-page/SEO content an admin has actually filled
 // in. Recomputed on every save so it stays honest as content changes.

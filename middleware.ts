@@ -3,8 +3,14 @@ import type { NextRequest } from "next/server";
 
 const ADMIN_COOKIE = "admin_session";
 const LOCATION_COOKIE = "preferred_location";
+// Must mirror the exact fallback chain in app/lib/adminAuth.ts — that file
+// signs session cookies with this same chain, so if the two ever diverge,
+// middleware verifies against a different secret than the one sessions were
+// actually signed with, and legitimately logged-in admins get locked out.
 const ADMIN_SESSION_SECRET =
   process.env.ADMIN_SESSION_SECRET ||
+  process.env.NEXTAUTH_SECRET ||
+  process.env.ADMIN_PASSWORD ||
   "change-this-admin-session-secret";
 
 const VALID_LOCATIONS = ["chennai", "bangalore", "coimbatore", "kochi"];

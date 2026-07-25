@@ -1,8 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Manrope } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
 import { getAnalyticsConfig } from "@/app/lib/analyticsConfig";
+
+// globals.css declares --font-body/--font-headline as "Inter"/"Manrope, Inter"
+// but never actually loaded either — every browser fell through to its
+// system font, silently. next/font self-hosts and preloads these at build
+// time (no third-party request, no render-blocking Google Fonts link) and
+// exposes them under the exact same CSS variable names those files already
+// reference, so no other file needs to change.
+const bodyFont = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+const headlineFont = Manrope({ subsets: ["latin"], variable: "--font-headline", display: "swap" });
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 
@@ -50,7 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const analytics = await getAnalyticsConfig();
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${bodyFont.variable} ${headlineFont.variable}`}>
       <head>
         <meta name="theme-color" content="#002045" />
 
