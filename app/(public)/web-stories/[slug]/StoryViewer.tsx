@@ -46,7 +46,7 @@ function ElementView({ el, entities, siteConfig }: any) {
       return (
         <Link href={`/doctors/${doc._id}`} className="flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg">
           <div className="w-11 h-11 rounded-xl bg-[#0B2560]/10 flex items-center justify-center shrink-0 overflow-hidden">
-            {doc.photo?.url ? <img src={doc.photo.url} className="w-full h-full object-cover" /> : <Stethoscope size={16} className="text-[#0B2560]" />}
+            {doc.photo?.url ? <img src={doc.photo.url} alt={doc.name} className="w-full h-full object-cover" /> : <Stethoscope size={16} className="text-[#0B2560]" />}
           </div>
           <div className="min-w-0"><p className="text-xs font-bold text-[#0B2560] truncate">{doc.name}</p><p className="text-[10px] text-gray-400 truncate">{doc.title}</p></div>
         </Link>

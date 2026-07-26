@@ -223,7 +223,7 @@ export default function StoryBuilderPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase mb-2">Cover Image</p>
-            {story.coverImage?.url && <img src={story.coverImage.url} className="w-32 rounded-xl mb-2 aspect-[9/16] object-cover" />}
+            {story.coverImage?.url && <img src={story.coverImage.url} alt="Cover" className="w-32 rounded-xl mb-2 aspect-[9/16] object-cover" />}
             <ImageUpload onUpload={v => set('coverImage', v)} folder="dr-youth-clinic/web-stories" label="Upload Cover" />
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -315,7 +315,7 @@ export default function StoryBuilderPage() {
                 )}
                 {slide.background.type === 'image' && (
                   <div className="max-w-xs">
-                    {slide.background.image?.url && <img src={slide.background.image.url} className="w-full aspect-[9/16] object-cover rounded-xl mb-2" />}
+                    {slide.background.image?.url && <img src={slide.background.image.url} alt="Slide background" className="w-full aspect-[9/16] object-cover rounded-xl mb-2" />}
                     <ImageUpload onUpload={v => updateSlide(activeSlide, { background: { ...slide.background, image: v } })} folder="dr-youth-clinic/web-stories" label="Upload Background Image" />
                   </div>
                 )}

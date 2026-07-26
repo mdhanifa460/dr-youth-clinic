@@ -12,6 +12,7 @@ Add one whenever a decision would otherwise only live in a commit message, a Sla
 | [0002](0002-settings-singleton.md) | `Settings` is a single document, not one per city/tenant | Active |
 | [0003](0003-populate-requires-explicit-model-import.md) | Every `.populate()` call site must import the referenced model directly | Active — learned the hard way |
 | [0004](0004-ai-drafts-human-publishes.md) | AI-generated content is never auto-published | Active — permanent principle |
+| [0005](0005-eslint-flat-config-fix-and-warning-baseline.md) | Fixed a broken ESLint flat config; `lint:check`'s max-warnings is a ratchet, not zero | Active |
 
 ## Format
 

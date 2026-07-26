@@ -143,7 +143,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
 
         <CacheGuard />
-        <main className="flex-1">
+        {/* Visually hidden until focused — lets a keyboard user jump past the
+            navbar straight to the page content instead of tabbing through
+            every nav link and dropdown first. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-[#0B2560] focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold"
+        >
+          Skip to content
+        </a>
+        <main id="main-content" className="flex-1">
           {children}
         </main>
       </body>

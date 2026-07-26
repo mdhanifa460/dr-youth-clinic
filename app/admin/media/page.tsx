@@ -92,7 +92,7 @@ export default function MediaLibraryPage() {
   const toggleSelect = (publicId: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(publicId) ? next.delete(publicId) : next.add(publicId);
+      if (next.has(publicId)) next.delete(publicId); else next.add(publicId);
       return next;
     });
   };
@@ -113,7 +113,7 @@ export default function MediaLibraryPage() {
     setDeleting(false);
     setDeleteTarget(null);
     setSelected(new Set());
-    analyzed ? runAnalysis() : loadBasic();
+    if (analyzed) runAnalysis(); else loadBasic();
   };
 
   const suggestedCount = images.filter((i) => !i.isUsed && (i.ageInDays ?? 0) >= CLEANUP_AGE_DAYS).length;

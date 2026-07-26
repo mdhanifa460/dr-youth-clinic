@@ -109,8 +109,6 @@ export default function DoctorsSection({ data }: { data: any }) {
     _detectedCity = '',
   } = data || {};
 
-  if (doctors.length === 0) return null;
-
   // Derive available city tabs from actual doctor data, then order them to a
   // fixed city order — not doctor-scan order. Without this, Set insertion
   // order tracked whichever doctor happened to be sorted first by the admin's
@@ -173,6 +171,12 @@ export default function DoctorsSection({ data }: { data: any }) {
         ).length;
 
   const tabs = ['all', ...validKeys];
+
+  // Moved below every hook call above — an early return before them meant
+  // React saw a different number of hooks called between a render with no
+  // doctors and one with doctors, which is an actual "Rendered fewer hooks
+  // than expected" crash risk, not just a lint nitpick.
+  if (doctors.length === 0) return null;
 
   return (
     <section id="expertise" className="py-12 md:py-16 lg:py-20 bg-white">
