@@ -41,12 +41,13 @@ function checkRateLimitInMemory(key: string, limit: number, windowMs: number): {
 // manage, which is why it's the standard choice for serverless. Only
 // constructed when both env vars are present; every call site falls back
 // to the in-memory limiter otherwise, so this is safe to deploy with or
-// without a Redis instance actually provisioned (see docs/decisions —
-// add UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN, from Vercel's
-// Marketplace → Upstash for Redis integration, free tier, to activate it).
+// without a Redis instance actually provisioned. KV_REST_API_URL/TOKEN
+// (not the raw UPSTASH_REDIS_REST_* names) are what Vercel's own
+// Marketplace → "Upstash for Redis" integration actually sets — this
+// project is on that, free plan, auto-upgrade disabled.
 const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+  process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+    ? new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN })
     : null;
 
 async function checkRateLimitDistributed(key: string, limit: number, windowMs: number): Promise<{ allowed: boolean; resetAt: number }> {
