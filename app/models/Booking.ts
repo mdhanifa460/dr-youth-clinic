@@ -25,6 +25,17 @@ const BookingSchema = new mongoose.Schema(
     location:     { type: String, default: "" },
     date:         { type: String, default: "" },
     time:         { type: String, default: "" },
+    // Additive — Booking (the lead-capture model) never had a doctor field,
+    // which is the actual reason the admin Intelligence dashboard's Doctor
+    // Performance panel had to *estimate* per-doctor numbers by splitting
+    // branch totals evenly instead of measuring them. Optional, since
+    // existing/legacy bookings won't have it and a doctor isn't always
+    // chosen at the lead-capture stage.
+    doctorId:     { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
+    consultationMode: { type: String, enum: ["in_clinic", "video", "phone"], default: "in_clinic" },
+    language:     { type: String, default: "" },
+    appointmentType: { type: String, default: "" },
+    notes:        { type: String, default: "" },
     concern:      { type: String, default: "" },
     promoCode:    { type: String, default: "" },
     promoDiscount:{ type: Number, default: 0 },
@@ -81,5 +92,6 @@ const BookingSchema = new mongoose.Schema(
 BookingSchema.index({ phone: 1 });
 BookingSchema.index({ status: 1, createdAt: -1 });
 BookingSchema.index({ location: 1, createdAt: -1 });
+BookingSchema.index({ doctorId: 1, createdAt: -1 });
 
 export default mongoose.models.Booking || mongoose.model("Booking", BookingSchema);

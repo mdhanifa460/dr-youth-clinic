@@ -33,6 +33,14 @@ export const bookingSchema = z.object({
   promoCode: z.string().trim().max(50).optional().or(z.literal("")),
   promoDiscount: z.number().min(0).max(100).optional(),
   source: z.string().trim().max(50).optional(),
+  // Configurable-booking-page additions — all optional, so every existing
+  // caller (the 4-step /book form, the homepage quick form, the AI chat
+  // widget's booking form) keeps working unchanged without passing them.
+  doctorId: z.string().trim().max(50).optional().or(z.literal("")),
+  consultationMode: z.enum(["in_clinic", "video", "phone"]).optional(),
+  language: z.string().trim().max(50).optional().or(z.literal("")),
+  appointmentType: z.string().trim().max(100).optional().or(z.literal("")),
+  notes: z.string().trim().max(1000).optional().or(z.literal("")),
 });
 
 export type BookingInput = z.infer<typeof bookingSchema>;

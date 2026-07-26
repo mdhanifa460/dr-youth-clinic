@@ -5,6 +5,7 @@ import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/
 import { normalizePhone as formatPhone } from "@/app/lib/phone";
 import { getClinicNotifyNumber } from "@/app/lib/clinicNotify";
 import { bookingSchema } from "@/app/lib/validation";
+import { sendWhatsAppText, sendWhatsAppTemplate } from "@/app/lib/whatsapp";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -25,7 +26,10 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { name, phone, email, service, location, concern, promoCode, promoDiscount, source } = parsed.data;
+    const {
+      name, phone, email, service, location, concern, promoCode, promoDiscount, source,
+      doctorId, consultationMode, language, appointmentType, notes,
+    } = parsed.data;
     // Not every entry point collects a slot (see bookingSchema) — fall back
     // to a placeholder for display/template purposes rather than sending a
     // blank line in the clinic's WhatsApp text or an empty template
@@ -59,27 +63,20 @@ export async function POST(req: Request) {
       concern,
       source: source || "website",
       isReturnVisit,
+      ...(doctorId ? { doctorId } : {}),
+      ...(consultationMode ? { consultationMode } : {}),
+      ...(language ? { language } : {}),
+      ...(appointmentType ? { appointmentType } : {}),
+      ...(notes ? { notes } : {}),
       ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
     });
 
-    const API_URL = `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`;
-
-    // =========================
-    // 🟢 1. SEND TO CLINIC (TEXT OK)
-    // =========================
+    // 1. Clinic staff alert (plain text — the clinic's own number, always
+    // within the messaging window since it's the business's own account).
     const clinicNotifyNumber = await getClinicNotifyNumber(location);
-    const clinicRes = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: clinicNotifyNumber,
-        type: "text",
-        text: {
-          body: `🆕 New Booking
+    const clinicSend = await sendWhatsAppText(
+      clinicNotifyNumber,
+      `🆕 New Booking
 
 ID: ${bookingId}
 Name: ${name}
@@ -88,61 +85,22 @@ Service: ${service}
 Location: ${location}
 Date: ${date}
 Time: ${time}
-Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscount}% off)` : ""}`,
-        },
-      }),
-    });
+Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscount}% off)` : ""}`
+    );
+    if (!clinicSend.success) console.log("❌ Clinic WhatsApp alert failed:", clinicSend.error);
 
-    let clinicData;
-    try {
-      const clinicText = await clinicRes.text();
-      clinicData = JSON.parse(clinicText);
-    } catch {
-      console.log("❌ Not JSON response (HTML error)");
-    }
-    // =========================
-    // 🟢 2. SEND TO CUSTOMER (TEMPLATE REQUIRED)
-    // =========================
-    const customerRes = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: formattedPhone, // must be 91XXXXXXXXXX
-        type: "template",
-        template: {
-          name: "booking_confirmation_premium", // ✅ your template
-          language: { code: "en" }, // ⚠️ match Meta exactly (en or en_US)
-
-          components: [
-            {
-              type: "body",
-              parameters: [
-                { type: "text", text: name },
-                { type: "text", text: location },
-                { type: "text", text: service },
-                { type: "text", text: date },
-                { type: "text", text: time },
-              ],
-            },
-          ],
-        },
-      }),
-    });
-
-    // Guarded the same way as the clinic notification above — a WhatsApp
-    // API hiccup here (bad template config, transient failure, non-JSON
-    // error page) must not turn a booking that was already saved into a
-    // response that tells the customer it failed.
-    try {
-      const customerText = await customerRes.text();
-      console.log("📲 Customer WA:", JSON.parse(customerText));
-    } catch {
-      console.log("❌ Customer WhatsApp confirmation: non-JSON response");
-    }
+    // 2. Customer confirmation — must be a pre-approved template (the
+    // patient hasn't messaged in, so plain text isn't deliverable). Failure
+    // here must never turn an already-saved booking into a failure response
+    // for the customer — sendWhatsAppTemplate never throws, only returns
+    // { success: false }, which is exactly why it's safe to just log it.
+    const customerSend = await sendWhatsAppTemplate(
+      formattedPhone,
+      "booking_confirmation_premium", // Meta-approved template name
+      [name, location, service, date, time],
+      "en" // must match the template's approved language exactly — not the patient's `language` preference field, which is a separate, unrelated concept
+    );
+    if (!customerSend.success) console.log("❌ Customer WhatsApp confirmation failed:", customerSend.error);
 
     return NextResponse.json({
       success: true,

@@ -4,6 +4,7 @@ import { Lead } from '@/app/models/Lead';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 import { normalizePhone } from '@/app/lib/phone';
 import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
+import { sendWhatsAppText } from '@/app/lib/whatsapp';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -68,20 +69,10 @@ async function sendPlanEmail(email: string, concern: string, recommendations: an
 // regardless of which branch the patient actually picked.
 function notifyClinicWhatsApp(body: string, to: string | undefined) {
   // Fire-and-forget — never block the response on the clinic's own notification.
-  if (!(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID && to)) return;
-  fetch(`https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to,
-      type: 'text',
-      text: { body },
-    }),
-  }).catch(() => {});
+  if (!to) return;
+  sendWhatsAppText(to, body).then((r) => {
+    if (!r.success) console.log('❌ Lead clinic WhatsApp alert failed:', r.error);
+  });
 }
 
 // ── POST — Clinical Intake Step 2: capture the lead immediately (name,
