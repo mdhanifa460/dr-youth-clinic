@@ -90,7 +90,7 @@ function notifyClinicWhatsApp(body: string, to: string | undefined) {
 export async function POST(req: NextRequest) {
   // 5 leads per hour per IP
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`leads:${ip}`, 5, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`leads:${ip}`, 5, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
 // patient chose the non-blocking "email me a copy" option.
 export async function PATCH(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`leads-patch:${ip}`, 10, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`leads-patch:${ip}`, 10, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {

@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 // the 60-message trim in /api/ai-chat can shift indices.
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`ai-chat-feedback:${ip}`, 60, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`ai-chat-feedback:${ip}`, 60, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {

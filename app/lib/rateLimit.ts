@@ -1,27 +1,31 @@
+import { Redis } from '@upstash/redis';
+
+// In-memory fallback — the original implementation. Correct for a single
+// long-lived process (like `next dev`), but on Vercel each serverless
+// invocation can land on a different, possibly-cold instance, so this
+// Map is really "rate limit per instance," not per deployment — a
+// determined caller (or just normal traffic spread across instances)
+// can exceed the intended limit by a wide margin. Kept as the fallback
+// so rate limiting still does *something* — just not a distributed
+// guarantee — when Redis isn't configured (e.g. local dev).
 interface Entry { count: number; resetAt: number }
+const memoryStore = new Map<string, Entry>();
 
-const store = new Map<string, Entry>();
-
-// Purge expired entries every 5 minutes to prevent unbounded memory growth
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
     const now = Date.now();
-    store.forEach((entry, key) => {
-      if (now > entry.resetAt) store.delete(key);
+    memoryStore.forEach((entry, key) => {
+      if (now > entry.resetAt) memoryStore.delete(key);
     });
   }, 5 * 60 * 1000);
 }
 
-export function checkRateLimit(
-  key: string,
-  limit: number,
-  windowMs: number
-): { allowed: boolean; resetAt: number } {
+function checkRateLimitInMemory(key: string, limit: number, windowMs: number): { allowed: boolean; resetAt: number } {
   const now = Date.now();
-  const entry = store.get(key);
+  const entry = memoryStore.get(key);
 
   if (!entry || now > entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + windowMs });
+    memoryStore.set(key, { count: 1, resetAt: now + windowMs });
     return { allowed: true, resetAt: now + windowMs };
   }
 
@@ -31,6 +35,51 @@ export function checkRateLimit(
 
   entry.count++;
   return { allowed: true, resetAt: entry.resetAt };
+}
+
+// Upstash's REST client — plain HTTPS, no persistent TCP connection to
+// manage, which is why it's the standard choice for serverless. Only
+// constructed when both env vars are present; every call site falls back
+// to the in-memory limiter otherwise, so this is safe to deploy with or
+// without a Redis instance actually provisioned (see docs/decisions —
+// add UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN, from Vercel's
+// Marketplace → Upstash for Redis integration, free tier, to activate it).
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+    : null;
+
+async function checkRateLimitDistributed(key: string, limit: number, windowMs: number): Promise<{ allowed: boolean; resetAt: number }> {
+  const redisKey = `ratelimit:${key}`;
+  // INCR + a TTL set only on the first increment of the window is the
+  // standard fixed-window counter pattern — one round trip for the common
+  // (already-within-limit) case, a second only when the key is brand new.
+  const count = await redis!.incr(redisKey);
+  if (count === 1) {
+    await redis!.expire(redisKey, Math.ceil(windowMs / 1000));
+  }
+  const ttl = await redis!.ttl(redisKey);
+  const resetAt = Date.now() + Math.max(ttl, 0) * 1000;
+
+  return { allowed: count <= limit, resetAt };
+}
+
+export async function checkRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<{ allowed: boolean; resetAt: number }> {
+  if (!redis) return checkRateLimitInMemory(key, limit, windowMs);
+
+  try {
+    return await checkRateLimitDistributed(key, limit, windowMs);
+  } catch (e) {
+    // A Redis hiccup must never be the reason a real request gets
+    // rejected (or, worse, an abusive one gets waved through with no
+    // limit at all) — fall back to the in-memory check for this call.
+    console.error('[rateLimit] Redis check failed, falling back to in-memory', e);
+    return checkRateLimitInMemory(key, limit, windowMs);
+  }
 }
 
 export function getClientIp(req: Request): string {

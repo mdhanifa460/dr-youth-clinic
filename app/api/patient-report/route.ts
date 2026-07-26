@@ -15,7 +15,7 @@ import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 // dashboard and any later view of this lead see the same report.
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`patient-report:${ip}`, 20, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`patient-report:${ip}`, 20, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   if (!process.env.ANTHROPIC_API_KEY) {

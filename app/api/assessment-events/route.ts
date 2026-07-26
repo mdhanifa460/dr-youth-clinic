@@ -9,7 +9,7 @@ import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/
 // abuse without needing the heavier gating used on the AI/lead routes.
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`assessment-events:${ip}`, 30, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`assessment-events:${ip}`, 30, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {

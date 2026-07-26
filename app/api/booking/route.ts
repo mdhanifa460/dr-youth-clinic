@@ -13,7 +13,7 @@ export async function GET() {
 export async function POST(req: Request) {
   // 3 bookings per hour per IP — prevent spam
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`booking:${ip}`, 3, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`booking:${ip}`, 3, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {

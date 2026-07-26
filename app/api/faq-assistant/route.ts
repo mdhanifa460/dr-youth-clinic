@@ -9,7 +9,7 @@ const MAX_FAQS = 200; // sanity cap on the client-supplied faqs list used for pr
 // posture as app/api/assessment-chat), so it's rate-limited per IP.
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`faq-assistant:${ip}`, 20, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`faq-assistant:${ip}`, 20, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   if (!process.env.GEMINI_API_KEY) {

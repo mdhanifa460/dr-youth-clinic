@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   // 5 simulations per hour per IP — this hits a paid AI API with no auth wall,
   // unlike the admin-side AI routes which sit behind requirePermission.
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`journey-simulator:${ip}`, 5, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`journey-simulator:${ip}`, 5, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

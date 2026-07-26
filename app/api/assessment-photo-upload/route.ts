@@ -11,7 +11,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 // this is visitor-submitted, potentially sensitive biometric imagery.
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`assessment-photo-upload:${ip}`, 8, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`assessment-photo-upload:${ip}`, 8, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {

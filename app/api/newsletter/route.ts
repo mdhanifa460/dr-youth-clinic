@@ -48,7 +48,7 @@ async function sendWelcomeEmail(email: string): Promise<boolean> {
 export async function POST(req: NextRequest) {
   // 5 signups per hour per IP — same limit as /api/leads
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`newsletter:${ip}`, 5, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`newsletter:${ip}`, 5, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {

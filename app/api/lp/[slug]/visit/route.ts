@@ -13,7 +13,7 @@ export async function POST(
   { params }: { params: { slug: string } }
 ) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`lp-visit:${ip}`, 30, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`lp-visit:${ip}`, 30, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {

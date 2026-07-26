@@ -26,7 +26,7 @@ function getSafeRedirectPath(value: FormDataEntryValue | unknown) {
 export async function POST(req: Request) {
   // 5 attempts per 15 minutes per IP — brute-force protection
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
+  const rl = await checkRateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   const fromForm = isFormRequest(req);

@@ -49,7 +49,7 @@ function matchRule<T extends { enabled: boolean; matchKeywords: string[]; priori
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`ai-chat:${ip}`, 30, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`ai-chat:${ip}`, 30, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   let body: any;

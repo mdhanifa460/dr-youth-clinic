@@ -11,7 +11,7 @@ export async function POST(
   // Same 5/hour/IP limit as the equivalent app/api/leads/route.ts — this was
   // the one public lead-capture endpoint with no throttling at all.
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`lp-lead:${ip}`, 5, 60 * 60 * 1000);
+  const rl = await checkRateLimit(`lp-lead:${ip}`, 5, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {
