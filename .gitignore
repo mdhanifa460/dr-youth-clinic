@@ -41,3 +41,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# vendor reference docs auto-installed alongside marketplace integrations
+# (e.g. `vercel integration add`, `npx skills add`) — regenerable, not
+# project-authored, not meant to be tracked here
+.agents/
+.claude/skills/upstash-*
+.claude/settings.json
+skills-lock.json
