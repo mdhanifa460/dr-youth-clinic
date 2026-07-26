@@ -8,17 +8,11 @@ import { queueNotification } from "@/app/lib/appointmentQueue";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// vercel.json schedules this once daily (0 2 * * * UTC — before clinic
-// opening hours in IST) because this project is on Vercel's Hobby plan,
-// which only permits daily-or-coarser Cron schedules; Hobby also doesn't
-// guarantee the exact minute within that day. This means reminders sent
-// through this dispatcher are effectively "same-day" precision, not
-// "N hours before" precision — a same-day morning run can queue and send a
-// same-afternoon reminder, but a genuine "2 hours before" reminder needs a
-// finer-grained schedule than Hobby allows. Upgrading to Pro (or any plan
-// with sub-daily Cron) is what unlocks tighter timing — that's a plan
-// decision, not a code change; this route works identically either way,
-// only vercel.json's `schedule` needs to change.
+// vercel.json schedules this every 15 minutes (Pro plan supports sub-daily
+// Cron; Hobby would be limited to once daily). Each tick sweeps for
+// appointments happening "tomorrow" that still need a reminder queued, and
+// dispatches whatever's already due in the queue — so timing precision is
+// bounded by this 15-minute interval, not by the day.
 //
 // Vercel signs every request it makes to a scheduled Cron route with
 // `Authorization: Bearer ${CRON_SECRET}` — this is Vercel's own documented
@@ -56,9 +50,8 @@ async function sendEmailPlainText(to: string, subject: string, text: string): Pr
 }
 
 // Finds confirmed appointments happening "tomorrow" (relative to this
-// cron's own run time — see the Hobby-plan timing note above, this is
-// same-day/next-day precision, not exact-hours precision) with no
-// reminder_24h already queued, and queues one. This is the actual
+// cron's own run time, checked every 15 minutes) with no reminder_24h
+// already queued, and queues one. This is the actual
 // automation this whole dispatcher exists for: a reminder that goes out on
 // its own, with nobody having to remember to click anything, rather than
 // only firing when a staff member manually changes an appointment's status.
