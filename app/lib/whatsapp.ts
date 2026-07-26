@@ -6,17 +6,27 @@
 // uncaught exception (the exact bug fixed in booking/route.ts earlier this
 // session — the customer-confirmation call wasn't guarded the same way the
 // clinic-notification call was).
-const GRAPH_API_URL = () => `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`;
-
 type SendResult = { success: boolean; error?: string };
 
-async function post(body: Record<string, unknown>): Promise<SendResult> {
-  if (!process.env.WHATSAPP_TOKEN || !process.env.PHONE_NUMBER_ID) {
+type SendOpts = {
+  // Overrides PHONE_NUMBER_ID for this one send — for a clinic that has
+  // registered more than one WhatsApp Business phone number with Meta and
+  // set LocationContent.clinicInfo.whatsappSenderPhoneNumberId for a
+  // branch. The auth token is account-level in Meta's model, so
+  // WHATSAPP_TOKEN is still shared across numbers; only the sending number
+  // (and therefore the URL) changes. Falls back to the global
+  // PHONE_NUMBER_ID when unset — which is every call site today.
+  senderPhoneNumberId?: string;
+};
+
+async function post(body: Record<string, unknown>, opts?: SendOpts): Promise<SendResult> {
+  const phoneNumberId = opts?.senderPhoneNumberId || process.env.PHONE_NUMBER_ID;
+  if (!process.env.WHATSAPP_TOKEN || !phoneNumberId) {
     return { success: false, error: "WhatsApp not configured (WHATSAPP_TOKEN/PHONE_NUMBER_ID missing)" };
   }
 
   try {
-    const res = await fetch(GRAPH_API_URL(), {
+    const res = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
@@ -43,13 +53,13 @@ async function post(body: Record<string, unknown>): Promise<SendResult> {
 // the clinic's own staff-alert number, since that's the clinic messaging
 // itself; not reliable for arbitrary patient outreach — use sendTemplate
 // for anything sent to a patient who hasn't just messaged in).
-export async function sendWhatsAppText(to: string, body: string): Promise<SendResult> {
+export async function sendWhatsAppText(to: string, body: string, opts?: SendOpts): Promise<SendResult> {
   return post({
     messaging_product: "whatsapp",
     to,
     type: "text",
     text: { body },
-  });
+  }, opts);
 }
 
 // Template messages are the only reliable way to reach a patient outside
@@ -61,7 +71,8 @@ export async function sendWhatsAppTemplate(
   to: string,
   templateName: string,
   params: string[],
-  languageCode = "en"
+  languageCode = "en",
+  opts?: SendOpts
 ): Promise<SendResult> {
   return post({
     messaging_product: "whatsapp",
@@ -74,5 +85,5 @@ export async function sendWhatsAppTemplate(
         ? [{ type: "body", parameters: params.map((text) => ({ type: "text", text })) }]
         : undefined,
     },
-  });
+  }, opts);
 }

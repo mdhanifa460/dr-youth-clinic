@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import NotificationQueue from "@/app/models/NotificationQueue";
+import Appointment from "@/app/models/Appointment";
 import { sendWhatsAppText } from "@/app/lib/whatsapp";
+import { queueNotification } from "@/app/lib/appointmentQueue";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -53,6 +55,32 @@ async function sendEmailPlainText(to: string, subject: string, text: string): Pr
   }
 }
 
+// Finds confirmed appointments happening "tomorrow" (relative to this
+// cron's own run time — see the Hobby-plan timing note above, this is
+// same-day/next-day precision, not exact-hours precision) with no
+// reminder_24h already queued, and queues one. This is the actual
+// automation this whole dispatcher exists for: a reminder that goes out on
+// its own, with nobody having to remember to click anything, rather than
+// only firing when a staff member manually changes an appointment's status.
+async function sweepUpcomingReminders(): Promise<number> {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10); // "YYYY-MM-DD", matching Appointment.date's stored format
+
+  const upcoming = await (Appointment as any)
+    .find({ status: "confirmed", date: tomorrowStr })
+    .lean();
+
+  let queued = 0;
+  for (const appt of upcoming) {
+    const alreadyQueued = await (NotificationQueue as any).exists({ appointmentId: appt._id, trigger: "reminder_24h" });
+    if (alreadyQueued) continue;
+    await queueNotification({ ...appt, status: appt.status }, "reminder_24h", null);
+    queued++;
+  }
+  return queued;
+}
+
 // Picks up every NotificationQueue row that's due and still pending, and
 // actually sends it — this is the piece notificationTemplates.ts's own
 // comment anticipated ("when WhatsApp Cloud API credentials are added...
@@ -73,6 +101,8 @@ export async function GET(req: NextRequest) {
   }
 
   await connectDB();
+
+  const remindersQueued = await sweepUpcomingReminders();
 
   const due = await (NotificationQueue as any)
     .find({ status: "pending", scheduledAt: { $lte: new Date() } })
@@ -105,5 +135,5 @@ export async function GET(req: NextRequest) {
     if (outcome.success) results.sent++; else results.failed++;
   }
 
-  return NextResponse.json({ success: true, ...results });
+  return NextResponse.json({ success: true, remindersQueued, ...results });
 }

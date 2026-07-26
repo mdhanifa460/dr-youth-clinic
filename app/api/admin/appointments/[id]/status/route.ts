@@ -4,8 +4,8 @@ import { getAdminUser, requirePermission } from "@/app/lib/adminAuth";
 import Appointment from "@/app/models/Appointment";
 import AppointmentAuditLog from "@/app/models/AppointmentAuditLog";
 import type { AppointmentStatus } from "@/app/models/Appointment";
-import { getAllowedTransitions, STATUS_META, TRANSITION_NOTIFICATIONS } from "@/app/lib/appointmentFlow";
-import { queueNotification } from "@/app/lib/appointmentQueue";
+import { getAllowedTransitions, STATUS_META } from "@/app/lib/appointmentFlow";
+import { queueNotification, resolveAutomationTrigger } from "@/app/lib/appointmentQueue";
 
 export const dynamic = "force-dynamic";
 
@@ -65,8 +65,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     details: { oldStatus: appt.status, newStatus: toStatus, note },
   });
 
-  // Queue WhatsApp notification if this transition triggers one
-  const trigger = TRANSITION_NOTIFICATIONS[toStatus];
+  // Queue a notification if this transition triggers one — Settings.
+  // automationRules is checked first (admin-configurable), falling back to
+  // the hardcoded TRANSITION_NOTIFICATIONS map for anything not overridden.
+  const trigger = await resolveAutomationTrigger(toStatus);
   if (trigger) await queueNotification({ ...appt, status: toStatus }, trigger, user._id);
 
   return NextResponse.json({

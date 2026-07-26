@@ -90,6 +90,41 @@ export function buildMessage(
   return render(template, vars);
 }
 
+export type CommunicationTemplateItem = {
+  id: string;
+  trigger: string;
+  channel: 'whatsapp' | 'email';
+  enabled: boolean;
+  subject: string;
+  body: string;
+  order: number;
+};
+
+// Real, admin-editable resolution — replaces the DEFAULT_TEMPLATES lookup
+// above wherever Settings.communicationTemplates is available (see
+// Settings.ts for why this array is the actual source of truth now, not
+// the hardcoded object in this file). Returns every enabled template
+// matching this trigger, one per channel — a trigger can fire both a
+// WhatsApp and an Email version at once. Falls back to DEFAULT_TEMPLATES'
+// whatsapp-only behavior if the Settings array is empty/missing, so this
+// still works before any admin has saved Settings at all.
+export function resolveTemplatesForTrigger(
+  trigger: string,
+  templates: CommunicationTemplateItem[],
+  vars: TemplateVars
+): { channel: 'whatsapp' | 'email'; subject: string; body: string }[] {
+  const matches = templates.filter((t) => t.trigger === trigger && t.enabled);
+  if (matches.length === 0) {
+    const fallback = DEFAULT_TEMPLATES[trigger];
+    return fallback ? [{ channel: 'whatsapp', subject: '', body: render(fallback, vars) }] : [];
+  }
+  return matches.map((t) => ({
+    channel: t.channel,
+    subject: t.subject ? render(t.subject, vars) : '',
+    body: render(t.body, vars),
+  }));
+}
+
 export function buildWhatsAppUrl(phone: string, message: string): string {
   // Normalize Indian phone: strip leading 0, add 91 country code
   const normalized = phone.replace(/\D/g, "").replace(/^0/, "").replace(/^(?!91)/, "91");

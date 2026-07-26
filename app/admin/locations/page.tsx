@@ -17,6 +17,8 @@ const CITIES = [
   { key: 'kochi',      label: 'Kochi' },
 ];
 
+const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
 const TREATMENTS = [
   'Hair Restoration', 'PRP Therapy', 'GFC Therapy', 'Hair Transplant',
   'Skin Rejuvenation', 'Acne Treatment', 'Laser Hair Removal',
@@ -235,8 +237,13 @@ function GalleryItem({
 export default function LocationsAdminPage() {
   const [city, setCity] = useState('chennai');
   const EMPTY_CLINIC_INFO = {
-    address: '', phone: '', whatsappNotifyNumber: '',
+    address: '', phone: '', whatsappNotifyNumber: '', whatsappSenderPhoneNumberId: '',
     hours: [{ day: 'Monday - Saturday', hours: '' }, { day: 'Sunday', hours: 'Closed' }],
+    operatingHours: DAYS_OF_WEEK.map((day) => ({ day, isOpen: day !== 'sunday', openTime: '09:00', closeTime: '19:00' })),
+    holidays: [] as { date: string; label: string }[],
+    bookingRules: { consultationDuration: undefined, consultationFee: undefined, requirePhone: undefined } as any,
+    slotConfig: { slotDurationMinutes: 30, availableTimes: [] as string[] },
+    languages: [] as string[],
     rating: 0, reviewCount: 0, serviceCount: 0, doctorCount: 0,
     description: '', specialties: [] as string[], whyUs: [] as { icon: string; title: string; desc: string }[],
   };
@@ -278,7 +285,13 @@ export default function LocationsAdminPage() {
           address:      dci?.address      || loc?.address      || '',
           phone:        dci?.phone        || loc?.phone        || '',
           whatsappNotifyNumber: dci?.whatsappNotifyNumber || '',
+          whatsappSenderPhoneNumberId: dci?.whatsappSenderPhoneNumberId || '',
           hours:        dci?.hours?.length ? dci.hours : (loc?.hours ?? EMPTY_CLINIC_INFO.hours),
+          operatingHours: dci?.operatingHours?.length ? dci.operatingHours : EMPTY_CLINIC_INFO.operatingHours,
+          holidays:     dci?.holidays || [],
+          bookingRules: dci?.bookingRules || EMPTY_CLINIC_INFO.bookingRules,
+          slotConfig:   dci?.slotConfig || EMPTY_CLINIC_INFO.slotConfig,
+          languages:    dci?.languages || [],
           rating:       dci?.rating       ?? loc?.rating       ?? 0,
           reviewCount:  dci?.reviewCount  ?? loc?.reviewCount  ?? 0,
           serviceCount: dci?.serviceCount ?? loc?.serviceCount ?? 0,
@@ -622,6 +635,159 @@ export default function LocationsAdminPage() {
                     <p className="text-xs text-gray-400">No specialties added yet — the default site copy will be used.</p>
                   )}
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── BRANCH CONFIGURATION ──────────────────────────────────── */}
+          <section>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-base font-bold text-[#0B2560]">Branch Configuration — {cityLabel}</h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              Per-branch overrides. Leave a field blank/default to keep using the clinic-wide setting from Settings → Booking.
+            </p>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
+
+              {/* Operating hours */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">Operating Hours</label>
+                <div className="space-y-1.5">
+                  {data.clinicInfo.operatingHours.map((oh: any, i: number) => (
+                    <div key={oh.day} className="flex items-center gap-2">
+                      <button type="button"
+                        onClick={() => setData((d: any) => {
+                          const arr = [...d.clinicInfo.operatingHours];
+                          arr[i] = { ...arr[i], isOpen: !arr[i].isOpen };
+                          return { ...d, clinicInfo: { ...d.clinicInfo, operatingHours: arr } };
+                        })}
+                        className={`w-24 shrink-0 text-[11px] font-bold px-2 py-1.5 rounded-lg capitalize transition ${
+                          oh.isOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'
+                        }`}>
+                        {oh.day.slice(0, 3)} {oh.isOpen ? '· Open' : '· Closed'}
+                      </button>
+                      {oh.isOpen && (
+                        <>
+                          <input type="time" value={oh.openTime}
+                            onChange={(e) => setData((d: any) => {
+                              const arr = [...d.clinicInfo.operatingHours];
+                              arr[i] = { ...arr[i], openTime: e.target.value };
+                              return { ...d, clinicInfo: { ...d.clinicInfo, operatingHours: arr } };
+                            })}
+                            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B2560]" />
+                          <span className="text-gray-400 text-xs">to</span>
+                          <input type="time" value={oh.closeTime}
+                            onChange={(e) => setData((d: any) => {
+                              const arr = [...d.clinicInfo.operatingHours];
+                              arr[i] = { ...arr[i], closeTime: e.target.value };
+                              return { ...d, clinicInfo: { ...d.clinicInfo, operatingHours: arr } };
+                            })}
+                            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B2560]" />
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Holidays */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-gray-700">Holidays</label>
+                  <button type="button"
+                    onClick={() => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, holidays: [...d.clinicInfo.holidays, { date: '', label: '' }] } }))}
+                    className="text-[11px] text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
+                    <Plus size={11} /> Add Holiday
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {data.clinicInfo.holidays.map((h: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input type="date" value={h.date}
+                        onChange={(e) => setData((d: any) => {
+                          const arr = [...d.clinicInfo.holidays];
+                          arr[i] = { ...arr[i], date: e.target.value };
+                          return { ...d, clinicInfo: { ...d.clinicInfo, holidays: arr } };
+                        })}
+                        className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B2560]" />
+                      <input value={h.label} placeholder="e.g. Independence Day"
+                        onChange={(e) => setData((d: any) => {
+                          const arr = [...d.clinicInfo.holidays];
+                          arr[i] = { ...arr[i], label: e.target.value };
+                          return { ...d, clinicInfo: { ...d.clinicInfo, holidays: arr } };
+                        })}
+                        className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-[#0B2560]" />
+                      <button type="button"
+                        onClick={() => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, holidays: d.clinicInfo.holidays.filter((_: any, idx: number) => idx !== i) } }))}
+                        className="text-gray-300 hover:text-red-500"><Trash2 size={13} /></button>
+                    </div>
+                  ))}
+                  {data.clinicInfo.holidays.length === 0 && <p className="text-xs text-gray-400">No holidays configured.</p>}
+                </div>
+              </div>
+
+              {/* Booking rule overrides */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">Booking Rule Overrides <span className="font-normal text-gray-400">(optional)</span></label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Consultation Duration (min)</label>
+                    <input type="number" value={data.clinicInfo.bookingRules?.consultationDuration ?? ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, consultationDuration: e.target.value ? Number(e.target.value) : undefined } } }))}
+                      placeholder="Use global setting"
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560]" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Consultation Fee (₹)</label>
+                    <input type="number" value={data.clinicInfo.bookingRules?.consultationFee ?? ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, consultationFee: e.target.value ? Number(e.target.value) : undefined } } }))}
+                      placeholder="Use global setting"
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560]" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Require Phone</label>
+                    <select value={data.clinicInfo.bookingRules?.requirePhone === undefined ? '' : String(data.clinicInfo.bookingRules.requirePhone)}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, requirePhone: e.target.value === '' ? undefined : e.target.value === 'true' } } }))}
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560] bg-white">
+                      <option value="">Use global setting</option>
+                      <option value="true">Required</option>
+                      <option value="false">Not required</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Slot config + languages + WhatsApp sender */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Available Time Slots <span className="font-normal text-gray-400">(comma-separated)</span></label>
+                  <input
+                    value={(data.clinicInfo.slotConfig?.availableTimes || []).join(', ')}
+                    onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, slotConfig: { ...d.clinicInfo.slotConfig, availableTimes: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) } } }))}
+                    placeholder="09:00 AM, 10:00 AM, 11:00 AM..."
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Languages Spoken <span className="font-normal text-gray-400">(comma-separated)</span></label>
+                  <input
+                    value={(data.clinicInfo.languages || []).join(', ')}
+                    onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, languages: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) } }))}
+                    placeholder="English, Tamil, Hindi"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">WhatsApp Sender Phone Number ID <span className="font-normal text-gray-400">(optional — advanced)</span></label>
+                <input
+                  value={data.clinicInfo.whatsappSenderPhoneNumberId}
+                  onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, whatsappSenderPhoneNumberId: e.target.value } }))}
+                  placeholder="Leave blank to use the global WhatsApp number"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Only needed if this clinic has registered more than one WhatsApp Business phone number with Meta for this specific branch.</p>
               </div>
             </div>
           </section>

@@ -66,6 +66,19 @@ export interface ISettings extends Document {
     reviewRequest: string;
     reEngagement: string;
   };
+  // Which appointment status transition fires which communication trigger —
+  // replaces the hardcoded TRANSITION_NOTIFICATIONS map in
+  // app/lib/appointmentFlow.ts. Empty by default; the status-change route
+  // falls back to that hardcoded map for any status with no matching row
+  // here, so nothing changes in behavior until an admin adds/edits a rule.
+  automationRules: {
+    items: Array<{
+      id: string;
+      status: string; // an AppointmentStatus value
+      trigger: string; // a communicationTemplates trigger key
+      enabled: boolean;
+    }>;
+  };
   content: {
     blogPostsPerPage: number;
     defaultAuthorName: string;
@@ -121,6 +134,43 @@ export interface ISettings extends Document {
       order: number;
       visible: boolean;
       children: Array<{ id: string; label: string; href: string; order: number }>;
+    }>;
+  };
+  // Admin-configurable WhatsApp CTA buttons — same array-of-structured-
+  // items convention as navigation.items above. Rendered wherever a WhatsApp
+  // CTA is shown (chat widget quick-actions today; any future surface reads
+  // the same array rather than each place hardcoding its own button list).
+  whatsappCtaButtons: {
+    buttons: Array<{
+      id: string;
+      label: string;
+      icon: string; // emoji or a lucide-react icon name
+      action: 'link' | 'call' | 'whatsapp_chat' | 'download';
+      url: string; // href / tel: number / wa.me link / download URL, depending on `action`
+      branch: string; // '' = all branches
+      language: string; // '' = all languages
+      order: number;
+      visible: boolean;
+    }>;
+  };
+  // The real, single source of truth for patient communication content —
+  // replaces the hardcoded DEFAULT_TEMPLATES object in
+  // app/lib/notificationTemplates.ts (which an admin could never actually
+  // edit) and consolidates the previously-separate, disconnected
+  // Settings.whatsapp fixed-key templates below, which were editable but
+  // silently had zero effect on anything actually sent — see
+  // docs/decisions for the full note. One row per trigger+channel
+  // combination, so a trigger can have both a WhatsApp and an Email
+  // version active at once.
+  communicationTemplates: {
+    items: Array<{
+      id: string;
+      trigger: 'booking_confirmed' | 'rescheduled' | 'cancelled' | 'reminder_24h' | 'reminder_2h' | 'treatment_completed' | 'review_request';
+      channel: 'whatsapp' | 'email';
+      enabled: boolean;
+      subject: string; // email only — ignored for whatsapp
+      body: string; // {{name}}/{{service}}/{{branch}}/{{date}}/{{time}}/{{doctor}}/{{reason}}/{{followUp}}/{{clinicPhone}} placeholders
+      order: number;
     }>;
   };
   // Per-clinic on/off switches for the Video module's on-demand AI actions
@@ -264,6 +314,9 @@ const SettingsSchema = new Schema<ISettings>(
       reviewRequest:         { type: String, default: "Hi {{name}}! ⭐ Thank you for visiting DR Youth Clinic!\n\nCould you spare 2 minutes to leave us a Google review?\n\n👉 {{googleReviewLink}}\n\nThank you! — DR Youth Clinic ✨" },
       reEngagement:          { type: String, default: "Hi {{name}}! 💫 We miss you at DR Youth Clinic!\n\nYour skin deserves consistent care. 🎁 Reply COMEBACK for your exclusive loyalty discount.\n\n— DR Youth Clinic ✨" },
     },
+    automationRules: {
+      items: { type: [{ id: String, status: String, trigger: String, enabled: { type: Boolean, default: true } }], default: [] },
+    },
     content: {
       blogPostsPerPage:     { type: Number, default: 9 },
       defaultAuthorName:    { type: String, default: 'DR Youth Clinic' },
@@ -298,6 +351,62 @@ const SettingsSchema = new Schema<ISettings>(
       name:           { type: String, default: 'DR Youth Clinic' },
       country:        { type: String, default: 'India' },
       currencySymbol: { type: String, default: '₹' },
+    },
+    whatsappCtaButtons: {
+      buttons: {
+        type: [{
+          id: String,
+          label: String,
+          icon: { type: String, default: '💬' },
+          action: { type: String, enum: ['link', 'call', 'whatsapp_chat', 'download'], default: 'link' },
+          url: { type: String, default: '' },
+          branch: { type: String, default: '' },
+          language: { type: String, default: '' },
+          order: { type: Number, default: 0 },
+          visible: { type: Boolean, default: true },
+        }],
+        default: [
+          { id: 'book-consult', label: 'Book Consultation', icon: '📅', action: 'link', url: '/book', branch: '', language: '', order: 0, visible: true },
+          { id: 'chat-expert',  label: 'Chat with Expert',  icon: '💬', action: 'whatsapp_chat', url: '', branch: '', language: '', order: 1, visible: true },
+          { id: 'call-clinic',  label: 'Call Clinic',       icon: '📞', action: 'call', url: '', branch: '', language: '', order: 2, visible: true },
+        ],
+      },
+    },
+    communicationTemplates: {
+      items: {
+        type: [{
+          id: String,
+          trigger: {
+            type: String,
+            enum: ['booking_confirmed', 'rescheduled', 'cancelled', 'reminder_24h', 'reminder_2h', 'treatment_completed', 'review_request'],
+            required: true,
+          },
+          channel: { type: String, enum: ['whatsapp', 'email'], default: 'whatsapp' },
+          enabled: { type: Boolean, default: true },
+          subject: { type: String, default: '' },
+          body: { type: String, default: '' },
+          order: { type: Number, default: 0 },
+        }],
+        // Seeded verbatim from the previous hardcoded DEFAULT_TEMPLATES in
+        // app/lib/notificationTemplates.ts, so migrating to this array
+        // changes nothing about what gets sent until an admin edits one.
+        default: [
+          { id: 'booking-confirmed-wa', trigger: 'booking_confirmed', channel: 'whatsapp', enabled: true, subject: '', order: 0, body:
+            "Hello {{name}}! ✨\n\nYour appointment at *DR Youth Clinic* has been confirmed.\n\n📅 *Treatment:* {{service}}\n📍 *Branch:* {{branch}}\n🗓️ *Date:* {{date}} at {{time}}\n👨‍⚕️ *Doctor:* {{doctor}}\n\nPlease arrive *10 minutes early*. Avoid makeup on the treatment area.\nFor any queries, reply here or call {{clinicPhone}}.\n\n_DR Youth Clinic – Your Skin's Best Friend_ 🌿" },
+          { id: 'rescheduled-wa', trigger: 'rescheduled', channel: 'whatsapp', enabled: true, subject: '', order: 1, body:
+            "Hello {{name}},\n\nYour appointment has been rescheduled.\n\n📅 *New Date:* {{date}} at {{time}}\n📍 *Branch:* {{branch}}\n📝 *Reason:* {{reason}}\n\nApologies for any inconvenience. For queries: {{clinicPhone}}.\n\n_DR Youth Clinic_ 🌿" },
+          { id: 'cancelled-wa', trigger: 'cancelled', channel: 'whatsapp', enabled: true, subject: '', order: 2, body:
+            "Hello {{name}},\n\nYour appointment on {{date}} at {{branch}} has been cancelled.\n\n📝 *Reason:* {{reason}}\n\nTo reschedule, please call {{clinicPhone}} or reply here.\n\n_DR Youth Clinic_ 🌿" },
+          { id: 'reminder-24h-wa', trigger: 'reminder_24h', channel: 'whatsapp', enabled: true, subject: '', order: 3, body:
+            "Hi {{name}}! 👋 *Reminder — your appointment is tomorrow!*\n\n📅 *{{date}}* at *{{time}}*\n📍 *{{branch}}* – with *{{doctor}}*\n\nPlease arrive 10 minutes early and avoid sun exposure today.\nSee you tomorrow! — _DR Youth Clinic_ ✨" },
+          { id: 'reminder-2h-wa', trigger: 'reminder_2h', channel: 'whatsapp', enabled: true, subject: '', order: 4, body:
+            "Hi {{name}}! ⏰ Your appointment at DR Youth {{branch}} is *in 2 hours* ({{time}}).\n*{{doctor}}* is ready for you. See you soon! 🌿" },
+          { id: 'treatment-completed-wa', trigger: 'treatment_completed', channel: 'whatsapp', enabled: true, subject: '', order: 5, body:
+            "Thank you for visiting *DR Youth Clinic*, {{name}}! 😊\n\nHow are you feeling after your *{{service}}* session?\n\n💧 Remember your post-care routine. If you have any concerns, just reply to this message.\n{{followUp}}\n\n_DR Youth Clinic – We care beyond the clinic_ 🌿" },
+          { id: 'review-request-wa', trigger: 'review_request', channel: 'whatsapp', enabled: true, subject: '', order: 6, body:
+            "Hi {{name}}! ⭐ Thank you for choosing DR Youth Clinic!\n\nCould you spare 2 minutes to share your experience?\nYour feedback helps other patients find the right care. 🙏\n\nFor queries: {{clinicPhone}}\n\n_DR Youth Clinic_ 🌿" },
+        ],
+      },
     },
     navigation: {
       items: {

@@ -86,6 +86,15 @@ const GROUPS = [
         desc: "Control the header menu — order, labels, links, and dropdown submenus.",
         tags: ["Header", "Dropdowns", "Menu order"],
       },
+      {
+        href: "/admin/settings/communication",
+        icon: MessageCircle,
+        color: "bg-teal-50 text-teal-600",
+        border: "border-teal-100 hover:border-teal-300",
+        title: "Communication & CTAs",
+        desc: "Edit the actual content sent for booking confirmations, reminders, and follow-ups, plus the WhatsApp CTA buttons shown to patients.",
+        tags: ["WhatsApp", "Email templates", "CTA buttons"],
+      },
     ],
   },
   {

@@ -6,6 +6,7 @@ import { normalizePhone as formatPhone } from "@/app/lib/phone";
 import { getClinicNotifyNumber } from "@/app/lib/clinicNotify";
 import { bookingSchema } from "@/app/lib/validation";
 import { sendWhatsAppText, sendWhatsAppTemplate } from "@/app/lib/whatsapp";
+import { getEffectiveBranchConfig } from "@/app/lib/branchConfig";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -71,6 +72,14 @@ export async function POST(req: Request) {
       ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
     });
 
+    // Resolves this branch's outbound sender number, if one was configured
+    // (LocationContent.clinicInfo.whatsappSenderPhoneNumberId) — falls back
+    // to the global PHONE_NUMBER_ID otherwise, which is every branch today.
+    const branchConfig = await getEffectiveBranchConfig(location).catch(() => null);
+    const sendOpts = branchConfig?.whatsappSenderPhoneNumberId
+      ? { senderPhoneNumberId: branchConfig.whatsappSenderPhoneNumberId }
+      : undefined;
+
     // 1. Clinic staff alert (plain text — the clinic's own number, always
     // within the messaging window since it's the business's own account).
     const clinicNotifyNumber = await getClinicNotifyNumber(location);
@@ -85,7 +94,8 @@ Service: ${service}
 Location: ${location}
 Date: ${date}
 Time: ${time}
-Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscount}% off)` : ""}`
+Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscount}% off)` : ""}`,
+      sendOpts
     );
     if (!clinicSend.success) console.log("❌ Clinic WhatsApp alert failed:", clinicSend.error);
 
@@ -98,7 +108,8 @@ Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscoun
       formattedPhone,
       "booking_confirmation_premium", // Meta-approved template name
       [name, location, service, date, time],
-      "en" // must match the template's approved language exactly — not the patient's `language` preference field, which is a separate, unrelated concept
+      "en", // must match the template's approved language exactly — not the patient's `language` preference field, which is a separate, unrelated concept
+      sendOpts
     );
     if (!customerSend.success) console.log("❌ Customer WhatsApp confirmation failed:", customerSend.error);
 

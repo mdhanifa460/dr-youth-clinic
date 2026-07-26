@@ -33,6 +33,38 @@ export interface IClinicHour {
   hours: string;
 }
 
+// Structured hours, additive alongside the existing free-text IClinicHour
+// (which stays as-is for display copy like "Mon–Sat: 9 AM – 7 PM, Sun:
+// Closed") — this is the machine-readable version a booking/slot system
+// can actually reason about (is this branch open right now, generate valid
+// slot times, etc.), which free text can't support.
+export interface IOperatingHour {
+  day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  isOpen: boolean;
+  openTime: string;  // "09:00"
+  closeTime: string; // "19:00"
+}
+
+export interface IHoliday {
+  date: string; // "2026-08-15"
+  label: string; // "Independence Day"
+}
+
+// Per-branch overrides of the global Settings.booking fields — every field
+// optional and falling back to the global value when unset, so a branch
+// with no overrides behaves identically to today (one global rule set for
+// every city).
+export interface IBookingRules {
+  consultationDuration?: number;
+  consultationFee?: number;
+  requirePhone?: boolean;
+}
+
+export interface ISlotConfig {
+  slotDurationMinutes: number;
+  availableTimes: string[]; // e.g. ["09:00 AM", "10:00 AM", ...] — admin-editable list, not hardcoded
+}
+
 export interface IWhyUsItem {
   icon: string;
   title: string;
@@ -47,7 +79,19 @@ export interface IClinicInfo {
    *  internal booking alerts may not be the same number shown to patients.
    *  Falls back to `phone`, then to the global CLINIC_PHONE env var, if unset. */
   whatsappNotifyNumber?: string;
+  // Outbound-to-patient sender number, distinct from whatsappNotifyNumber
+  // above (which only receives the internal "new booking" alert). Only
+  // meaningful if this clinic has actually registered more than one
+  // WhatsApp Business phone number with Meta — most businesses have just
+  // one, in which case this stays empty and every branch keeps sending
+  // from the single global PHONE_NUMBER_ID, exactly like today.
+  whatsappSenderPhoneNumberId?: string;
   hours: IClinicHour[];
+  operatingHours: IOperatingHour[];
+  holidays: IHoliday[];
+  bookingRules?: IBookingRules;
+  slotConfig?: ISlotConfig;
+  languages: string[];
   rating: number;
   reviewCount: number;
   serviceCount: number;
@@ -102,6 +146,40 @@ const ClinicHourSchema = new Schema<IClinicHour>(
   { _id: false }
 );
 
+const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+const OperatingHourSchema = new Schema<IOperatingHour>(
+  {
+    day: { type: String, enum: VALID_DAYS, required: true },
+    isOpen: { type: Boolean, default: true },
+    openTime: { type: String, default: '09:00' },
+    closeTime: { type: String, default: '19:00' },
+  },
+  { _id: false }
+);
+
+const HolidaySchema = new Schema<IHoliday>(
+  { date: { type: String, required: true }, label: { type: String, default: '' } },
+  { _id: true }
+);
+
+const BookingRulesSchema = new Schema<IBookingRules>(
+  {
+    consultationDuration: { type: Number },
+    consultationFee: { type: Number },
+    requirePhone: { type: Boolean },
+  },
+  { _id: false }
+);
+
+const SlotConfigSchema = new Schema<ISlotConfig>(
+  {
+    slotDurationMinutes: { type: Number, default: 30 },
+    availableTimes: { type: [String], default: [] },
+  },
+  { _id: false }
+);
+
 const WhyUsItemSchema = new Schema<IWhyUsItem>(
   {
     icon:  { type: String, default: '' },
@@ -116,7 +194,13 @@ const ClinicInfoSchema = new Schema<IClinicInfo>(
     address:      { type: String, default: '' },
     phone:        { type: String, default: '' },
     whatsappNotifyNumber: { type: String, default: '' },
+    whatsappSenderPhoneNumberId: { type: String, default: '' },
     hours:        { type: [ClinicHourSchema], default: [] },
+    operatingHours: { type: [OperatingHourSchema], default: [] },
+    holidays:     { type: [HolidaySchema], default: [] },
+    bookingRules: { type: BookingRulesSchema, default: undefined },
+    slotConfig:   { type: SlotConfigSchema, default: undefined },
+    languages:    { type: [String], default: [] },
     rating:       { type: Number, default: 0 },
     reviewCount:  { type: Number, default: 0 },
     serviceCount: { type: Number, default: 0 },
