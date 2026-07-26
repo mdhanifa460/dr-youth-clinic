@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest) {
     await (HomepageSection as any).findOneAndUpdate(
       { sectionKey: SECTION_KEY },
       { $set: { sectionKey: SECTION_KEY, label: 'About Page', order: 99, visible: true, data } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     revalidateTag('about-page');
     return NextResponse.json({ success: true });

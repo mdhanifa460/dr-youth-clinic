@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       body.slug = slug;
     }
 
-    const result = await (Result as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const result = await (Result as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!result) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     revalidateTag('results');
     return NextResponse.json({ success: true, data: result });

@@ -381,7 +381,7 @@ ServiceSchema.post('save', function (doc) {
 // pre('findOneAndUpdate') above only has the update payload, not the full
 // resulting document — insufficient for a knowledge chunk, which needs the
 // complete name/narrative/benefits/faq. Every admin PUT route already passes
-// {new: true}, so post('findOneAndUpdate') receives the updated doc directly.
+// {returnDocument: 'after'}, so post('findOneAndUpdate') receives the updated doc directly.
 ServiceSchema.post('findOneAndUpdate', function (doc) {
   if (doc) syncKnowledgeChunk('service', doc).catch((e) => console.error('[KB] service sync failed', e));
 });

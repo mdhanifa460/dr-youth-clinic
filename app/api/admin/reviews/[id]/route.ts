@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (Object.keys(patch).length === 0) {
       return NextResponse.json({ success: false, message: 'No valid fields' }, { status: 400 });
     }
-    const review = await (Review as any).findByIdAndUpdate(params.id, { $set: patch }, { new: true }).lean();
+    const review = await (Review as any).findByIdAndUpdate(params.id, { $set: patch }, { returnDocument: 'after' }).lean();
     if (!review) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     revalidateTag('reviews');
     return NextResponse.json({ success: true, review });
@@ -62,7 +62,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const review = await (Review as any).findByIdAndUpdate(
       params.id,
       { $set: update },
-      { new: true }
+      { returnDocument: 'after' }
     ).lean();
     if (!review) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     revalidateTag('reviews');

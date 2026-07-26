@@ -23,7 +23,7 @@ export async function PUT(req: NextRequest) {
     const updated = await (Settings as any).findOneAndUpdate(
       {},
       { $set: { 'contactPrivacy.phoneMaskEnabled': enabled } },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+      { returnDocument: 'after', upsert: true, runValidators: true, setDefaultsOnInsert: true }
     );
 
     return NextResponse.json({ success: true, data: updated.contactPrivacy });

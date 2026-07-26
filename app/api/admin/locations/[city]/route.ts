@@ -19,7 +19,7 @@ export async function GET(_: NextRequest, { params }: { params: { city: string }
     const doc = await (LocationContent as any).findOneAndUpdate(
       { location: city },
       { $setOnInsert: { location: city } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     ).lean();
 
     return NextResponse.json({ success: true, data: doc });
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: { city: string
     const doc = await (LocationContent as any).findOneAndUpdate(
       { location: city },
       { $set: update },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     ).lean();
 
     return NextResponse.json({ success: true, data: doc });

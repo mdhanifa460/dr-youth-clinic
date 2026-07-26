@@ -54,7 +54,7 @@ export async function PUT(
               .filter(Boolean),
         canonicalUrl,
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true, runValidators: true }
     );
 
     return NextResponse.json({ success: true, data: entry });

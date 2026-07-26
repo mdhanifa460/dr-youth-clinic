@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     await connectDB();
     const body = await req.json();
-    const post = await (Blog as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const post = await (Blog as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!post) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: post });
   } catch (error: any) {

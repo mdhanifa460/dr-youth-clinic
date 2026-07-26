@@ -56,7 +56,7 @@ export async function PUT(
       params.id,
       body,
       {
-        new: true,
+        returnDocument: 'after',
         runValidators: true,
       }
     );

@@ -40,7 +40,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const user = await (AdminUser as any).findByIdAndUpdate(
       params.id,
       { $set: update },
-      { new: true, runValidators: true, select: "-passwordHash -passwordSalt -passwordIterations" }
+      { returnDocument: 'after', runValidators: true, select: "-passwordHash -passwordSalt -passwordIterations" }
     ).lean();
 
     if (!user) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
@@ -68,7 +68,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     const user = await (AdminUser as any).findByIdAndUpdate(
       params.id,
       { $set: { isActive: false } },
-      { new: true, select: "-passwordHash -passwordSalt -passwordIterations" }
+      { returnDocument: 'after', select: "-passwordHash -passwordSalt -passwordIterations" }
     ).lean();
 
     if (!user) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });

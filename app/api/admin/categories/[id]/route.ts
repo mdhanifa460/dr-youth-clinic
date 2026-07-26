@@ -10,7 +10,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     await connectDB();
     const body = await req.json();
-    const category = await (Category as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const category = await (Category as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!category) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: category });
   } catch (error: any) {

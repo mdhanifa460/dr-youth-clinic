@@ -11,7 +11,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     await connectDB();
     const body = await req.json();
-    const offer = await (Offer as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const offer = await (Offer as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!offer) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     revalidateTag('offers');
     return NextResponse.json({ success: true, data: offer });

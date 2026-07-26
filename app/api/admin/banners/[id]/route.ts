@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     await connectDB();
     const body = await req.json();
     body.targetPages = deriveTargetPages(body);
-    const banner = await (Banner as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const banner = await (Banner as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!banner) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
     revalidateBannerPaths(banner);

@@ -82,7 +82,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const updated = await (Booking as any).findByIdAndUpdate(
     params.id,
     { $set },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean();
 
   if (!updated) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });

@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest) {
 
     let updated;
     if (existing) {
-      updated = await (Settings as any).findByIdAndUpdate(existing._id, { $set: body }, { new: true, runValidators: true });
+      updated = await (Settings as any).findByIdAndUpdate(existing._id, { $set: body }, { returnDocument: 'after', runValidators: true });
     } else {
       updated = await Settings.create(body);
     }

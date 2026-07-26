@@ -43,7 +43,7 @@ DoctorSchema.index({ active: 1, locations: 1 });
 // Keeps the RAG knowledge base (KnowledgeChunk) in sync whenever a doctor is
 // created or edited — fire-and-forget + logged, never allowed to fail the
 // actual save. .create() triggers 'save'; the admin PUT route's
-// findByIdAndUpdate (with {new: true}) triggers 'findOneAndUpdate'.
+// findByIdAndUpdate (with {returnDocument: 'after'}) triggers 'findOneAndUpdate'.
 DoctorSchema.post('save', function (doc) {
   syncKnowledgeChunk('doctor', doc).catch((e) => console.error('[KB] doctor sync failed', e));
 });

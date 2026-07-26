@@ -12,7 +12,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = await req.json();
     if (!body.doctor) body.doctor = null;
     if (!body.service) body.service = null;
-    const faq = await (Faq as any).findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const faq = await (Faq as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!faq) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: faq });
   } catch (error: any) {

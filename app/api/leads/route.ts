@@ -174,7 +174,7 @@ export async function PATCH(req: NextRequest) {
           ...(hasIntakeData ? { primaryConcern: concern, answers: answers || {}, recommendations: recs } : {}),
         },
       },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
     if (!lead) {
       return NextResponse.json({ success: false, message: 'Lead not found' }, { status: 404 });

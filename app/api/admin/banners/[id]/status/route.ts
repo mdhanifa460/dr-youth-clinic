@@ -17,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     await connectDB();
-    const banner = await (Banner as any).findByIdAndUpdate(params.id, { $set: { status } }, { new: true });
+    const banner = await (Banner as any).findByIdAndUpdate(params.id, { $set: { status } }, { returnDocument: 'after' });
     if (!banner) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
     revalidateBannerPaths(banner);

@@ -62,7 +62,7 @@ export async function PUT(
     const page = await (LandingPage as any).findByIdAndUpdate(
       params.id,
       body,
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!page) {

@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest) {
     const config = await (QuizConfig as any).findOneAndUpdate(
       {},
       { $set: body },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     ).lean();
     revalidateTag("quiz-config");
     return NextResponse.json({ success: true, data: config });

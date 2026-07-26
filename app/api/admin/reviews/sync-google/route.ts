@@ -75,7 +75,7 @@ export async function POST() {
             location: '',
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
 
       synced++;
