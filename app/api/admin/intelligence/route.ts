@@ -359,10 +359,23 @@ export async function GET(req: NextRequest) {
         avgBookingsPerPatient: uniquePatients ? Math.round((totalBookings / uniquePatients) * 10) / 10 : 0,
         topPatients,
       },
-      doctors: docs.map((d: any) => ({
-        name: d.name, title: d.title, experience: d.experience,
-        locations: d.locations, active: d.active,
-      })),
+      // Real per-doctor booking/revenue counts from Booking.doctorId — added
+      // alongside the Doctor model this session specifically to close this
+      // gap (the Doctor Performance panel previously had no real per-doctor
+      // data to show and had to estimate by splitting branch totals evenly).
+      // Bookings created before that field existed have no doctorId, so
+      // `hasRealData` tells the panel whether to trust these numbers for a
+      // given doctor or fall back to the old estimate for one with none yet.
+      doctors: docs.map((d: any) => {
+        const docBookings = bs.filter((b: any) => b.doctorId && String(b.doctorId) === String(d._id));
+        return {
+          name: d.name, title: d.title, experience: d.experience,
+          locations: d.locations, active: d.active,
+          realBookings: docBookings.length,
+          realRevenue: revenue(docBookings),
+          hasRealData: docBookings.length > 0,
+        };
+      }),
       reviewsBySource,
       reviewsByRating,
       recentPositiveReview: recentPositiveReview ? {

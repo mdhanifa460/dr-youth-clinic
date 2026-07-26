@@ -11,7 +11,10 @@ export default function DoctorPerformance({ data }: { data: any }) {
   const activeDocs = doctors.filter((d: any) => d.active);
   const totalBookings = o.totalBookings || 1;
 
-  // Since bookings aren't linked to doctors, distribute bookings across locations
+  // Real counts from Booking.doctorId when a doctor has any (added this
+  // session specifically to close this gap) — falls back to the old
+  // location-split estimate only for a doctor with zero doctorId-tagged
+  // bookings yet (i.e. every booking they have predates that field).
   const enrichedDoctors = activeDocs.map((doc: any, i: number) => {
     const docLocs = doc.locations?.filter((l: string) => l !== 'all') || [];
     const locCount = byLoc.filter((l: any) => docLocs.includes(l.location))
@@ -24,10 +27,12 @@ export default function DoctorPerformance({ data }: { data: any }) {
       d.locations?.some((l: string) => docLocs.includes(l))
     ).length || 1;
 
+    const isReal = !!doc.hasRealData;
     return {
       ...doc,
-      estBookings: Math.round(locCount / docsInSameLocs),
-      estRevenue:  Math.round(locRevenue / docsInSameLocs),
+      isReal,
+      estBookings: isReal ? doc.realBookings : Math.round(locCount / docsInSameLocs),
+      estRevenue:  isReal ? doc.realRevenue  : Math.round(locRevenue / docsInSameLocs),
       avgRating:   Math.round((avgRating || 4.5) * 10) / 10,
       locationLabels: doc.locations?.includes('all')
         ? ['Chennai', 'Bangalore', 'Coimbatore', 'Kochi']
@@ -36,6 +41,8 @@ export default function DoctorPerformance({ data }: { data: any }) {
   }).sort((a: any, b: any) => b.estBookings - a.estBookings);
 
   const maxBookings = Math.max(...enrichedDoctors.map((d: any) => d.estBookings), 1);
+  const anyReal = enrichedDoctors.some((d: any) => d.isReal);
+  const allReal = enrichedDoctors.length > 0 && enrichedDoctors.every((d: any) => d.isReal);
   const medals = ['🥇', '🥈', '🥉'];
 
   return (
@@ -66,7 +73,13 @@ export default function DoctorPerformance({ data }: { data: any }) {
         <div className="bg-white rounded-2xl p-5 shadow-sm ring-1 ring-gray-100">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm font-bold text-[#0B2560]">Doctor Leaderboard</p>
-            <span className="text-xs text-gray-400 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">Est. from location data</span>
+            {allReal ? (
+              <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">Measured from real bookings</span>
+            ) : anyReal ? (
+              <span className="text-xs text-gray-400 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">Mixed — see per-doctor labels</span>
+            ) : (
+              <span className="text-xs text-gray-400 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">Est. from location data</span>
+            )}
           </div>
           <div className="space-y-4">
             {enrichedDoctors.map((doc: any, i: number) => (
@@ -84,7 +97,7 @@ export default function DoctorPerformance({ data }: { data: any }) {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-extrabold text-[#0B2560]">{doc.estBookings}</p>
-                    <p className="text-[10px] text-gray-400">est. bookings</p>
+                    <p className="text-[10px] text-gray-400">{doc.isReal ? 'bookings' : 'est. bookings'}</p>
                   </div>
                 </div>
 
@@ -131,9 +144,17 @@ export default function DoctorPerformance({ data }: { data: any }) {
 
       {/* Insights */}
       <div className="grid md:grid-cols-2 gap-4">
-        <InsightCard icon="📊" title="Track Doctor-Level Bookings"
-          detail="Connect bookings to doctors via the booking form to unlock per-doctor revenue, completion rate, and patient satisfaction scores."
-          pill="Enhancement" pillColor="bg-blue-50 text-blue-700" />
+        {allReal ? (
+          <InsightCard icon="📊" title="Doctor-Level Bookings Connected"
+            detail="Every active doctor now has at least one booking with a real doctor selected — the numbers above are measured, not estimated."
+            pill="Live" pillColor="bg-emerald-50 text-emerald-700" />
+        ) : (
+          <InsightCard icon="📊" title="Track Doctor-Level Bookings"
+            detail={anyReal
+              ? "Some doctors already have real booking data; the rest are still shown as estimates until a booking selects them specifically."
+              : "The booking form can now capture which doctor a patient chose — once new bookings start using it, this panel switches from estimated to measured automatically."}
+            pill="Enhancement" pillColor="bg-blue-50 text-blue-700" />
+        )}
         <InsightCard icon="🎯" title="Doctor Specialisation Mapping"
           detail={`You have ${activeDocs.length} active doctors across ${o.activeClinics ?? 0} clinics. Ensure each location has coverage for Skin, Hair, and Laser treatments.`}
           pill="Operational" pillColor="bg-purple-50 text-purple-700" />

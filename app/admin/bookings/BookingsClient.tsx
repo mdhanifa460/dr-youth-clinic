@@ -394,7 +394,7 @@ function BookingDrawer({
   const [value,      setValue]      = useState(String(booking.treatmentValue || ""));
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingNote,   setSavingNote]   = useState(false);
-  const [history,    setHistory]    = useState<{ bookings: any[]; appointments: any[]; totalVisits: number } | null>(null);
+  const [history,    setHistory]    = useState<{ bookings: any[]; appointments: any[]; timeline: any[]; totalVisits: number } | null>(null);
   const [histLoading,setHistLoading]= useState(false);
   const [showConvert,setShowConvert]= useState(false);
   const [convertedId,setConvertedId]= useState(booking.convertedToAppointmentId || "");
@@ -745,6 +745,30 @@ function BookingDrawer({
                   ))}
                   {history.totalVisits === 0 && (
                     <p className="text-sm text-gray-400 text-center py-4">First-time patient.</p>
+                  )}
+
+                  {/* Patient Timeline — every real event on record for this
+                      phone number in one chronological feed: bookings,
+                      appointments, status-change audit trail, and every
+                      WhatsApp/email notification sent or attempted. */}
+                  {history.timeline?.length > 0 && (
+                    <div className="pt-4 mt-4 border-t border-gray-100">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Patient Timeline</p>
+                      <div className="space-y-2.5">
+                        {history.timeline.map((ev: any, i: number) => (
+                          <div key={i} className="flex items-start gap-2.5">
+                            <span className="text-sm shrink-0 mt-0.5">{ev.icon}</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs font-semibold text-gray-700 capitalize">{ev.label}</p>
+                                <p className="text-[10px] text-gray-400 shrink-0">{ev.at ? new Date(ev.at).toLocaleString() : ""}</p>
+                              </div>
+                              {ev.detail && <p className="text-[11px] text-gray-500">{ev.detail}</p>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
