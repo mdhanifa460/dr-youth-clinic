@@ -225,7 +225,7 @@ export async function upsertChunk(
 ): Promise<void> {
   await connectDB();
   const embedding = await embedText(chunk.text);
-  await KnowledgeChunk.findOneAndUpdate(
+  await (KnowledgeChunk as any).findOneAndUpdate(
     { sourceType, sourceId },
     {
       $set: {
@@ -241,7 +241,7 @@ export async function upsertChunk(
 
 export async function removeChunk(sourceType: IKnowledgeChunk['sourceType'], sourceId: string): Promise<void> {
   await connectDB();
-  await KnowledgeChunk.deleteOne({ sourceType, sourceId });
+  await (KnowledgeChunk as any).deleteOne({ sourceType, sourceId });
 }
 
 // Single entry point called from each model's save/update hooks. Silently
@@ -290,14 +290,14 @@ export async function syncFaqChunks(
     }
   }
 
-  const existing = await KnowledgeChunk.find({ sourceType: 'faq' }).select('sourceId').lean();
+  const existing = await (KnowledgeChunk as any).find({ sourceType: 'faq' }).select('sourceId').lean();
   const staleIds = existing
     .map((c: any) => c.sourceId)
     .filter((id: string) => !currentIds.has(id));
 
   let removed = 0;
   if (staleIds.length > 0) {
-    const res = await KnowledgeChunk.deleteMany({ sourceType: 'faq', sourceId: { $in: staleIds } });
+    const res = await (KnowledgeChunk as any).deleteMany({ sourceType: 'faq', sourceId: { $in: staleIds } });
     removed = res.deletedCount || 0;
   }
 
