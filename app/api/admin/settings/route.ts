@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Settings, getSettings } from '@/app/models/Settings';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -32,6 +33,7 @@ export async function PUT(req: NextRequest) {
       updated = await Settings.create(body);
     }
 
+    revalidateTag('settings');
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to save settings' }, { status: 500 });

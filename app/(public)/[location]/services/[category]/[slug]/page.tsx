@@ -762,14 +762,26 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 </div>
                 <div className="p-5 space-y-1">
                   {[
-                    siteConfig.showPriceOnCards && { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, bold: true },
+                    // EMI teaser sits right under the price so financing is
+                    // visible at the very first glance, not only for a
+                    // patient who scrolls all the way to the calculator
+                    // further down — the lowest per-month figure (24
+                    // months) is the number that actually changes minds on
+                    // an expensive treatment.
+                    siteConfig.showPriceOnCards && {
+                      label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, bold: true,
+                      sub: svc.price > 3000 ? `or from ₹${Math.round(svc.price / 24).toLocaleString('en-IN')}/month` : undefined,
+                    },
                     { label: 'Duration', value: `${svc.duration} min` },
                     svc.sessionsRequired && { label: 'Sessions', value: svc.sessionsRequired },
                     svc.recoveryTime && { label: 'Recovery', value: svc.recoveryTime, color: 'text-[#3B82C4]' },
                   ].filter(Boolean).map((row: any, i, arr) => (
                     <div key={i} className={`flex justify-between items-center py-2.5 ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>
                       <span className="text-xs text-gray-400">{row.label}</span>
-                      <span className={`font-semibold text-sm ${row.bold ? 'text-2xl font-extrabold text-[#0B2560]' : row.color ?? 'text-gray-700'}`}>{row.value}</span>
+                      <span className="text-right">
+                        <span className={`block font-semibold text-sm ${row.bold ? 'text-2xl font-extrabold text-[#0B2560]' : row.color ?? 'text-gray-700'}`}>{row.value}</span>
+                        {row.sub && <span className="block text-[11px] font-semibold text-[#F5A623]">{row.sub}</span>}
+                      </span>
                     </div>
                   ))}
                   <div className="pt-4 space-y-2.5">
@@ -823,7 +835,18 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 idealFor={svc.idealFor ?? []}
               />
 
-              {siteConfig.showPriceOnCards && (
+              {/* Cost Estimator + EMI Calculator — gated on this service
+                  actually having a real price, not on showPriceOnCards.
+                  That setting's own description ("Control what visitors see
+                  on service cards") scopes it to the browsing-stage grid
+                  cards; a patient already reading a detail page in depth
+                  benefits from seeing financing options regardless of
+                  whether prices show on the cards they scrolled past to
+                  get here — those are two different moments in the
+                  decision, and conflating them under one flag was hiding
+                  this from every patient whenever an admin turned prices
+                  off on cards for an unrelated reason. */}
+              {svc.price > 0 && (
                 <>
                   {/* Cost Estimator */}
                   <CostEstimator
@@ -833,7 +856,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   />
 
                   {/* EMI Calculator */}
-                  <EMICalculator price={svc.price || 5000} />
+                  <EMICalculator price={svc.price} />
                 </>
               )}
             </div>

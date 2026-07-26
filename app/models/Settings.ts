@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { unstable_cache } from 'next/cache';
 
 export interface ISettings extends Document {
   serviceForm: {
@@ -520,11 +521,35 @@ const SettingsSchema = new Schema<ISettings>(
 export const Settings =
   mongoose.models.Settings || mongoose.model('Settings', SettingsSchema);
 
+// Cached read — getSettings() is called from dozens of places across both
+// runtime requests and, more importantly, every one of this site's ~380
+// statically-generated pages at build time. It previously did a fresh,
+// uncached MongoDB round-trip on every single call with zero
+// deduplication — tolerable when the document was small, but as
+// Settings has grown (communicationTemplates, whatsappCtaButtons,
+// automationRules, etc. all added this session) that cost compounds
+// across every one of those pages. unstable_cache is the same pattern
+// already used elsewhere in this codebase for exactly this kind of
+// shared, build-time-and-runtime config read (see getCachedNavItems,
+// getCachedAiConfig in app/(public)/layout.tsx) — one real fetch per
+// revalidate window, not one per page. The admin Settings PUT route
+// calls revalidateTag('settings') so an admin's save is reflected
+// immediately rather than waiting out the window.
+const getCachedSettingsDoc = unstable_cache(
+  async () => {
+    const doc = await Settings.findOne({} as any).lean();
+    return doc as ISettings | null;
+  },
+  ['settings-singleton'],
+  { revalidate: 60, tags: ['settings'] }
+);
+
 // Singleton helper — always returns the one settings doc, creates it if missing
 export async function getSettings(): Promise<ISettings> {
-  let doc = await Settings.findOne({} as any).lean() as ISettings | null;
-  if (!doc) {
-    doc = await Settings.create({}) as ISettings;
-  }
-  return doc;
+  const doc = await getCachedSettingsDoc();
+  if (doc) return doc;
+  // First-ever call with no document yet — a real write, deliberately kept
+  // outside the cached read above (unstable_cache is for reads, not writes
+  // with side effects) and only reachable once, ever, per deployment.
+  return (await Settings.create({})) as ISettings;
 }
