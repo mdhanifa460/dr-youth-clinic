@@ -59,6 +59,20 @@ const BookingSchema = new mongoose.Schema(
       ref: "Appointment",
       default: null,
     },
+
+    // Set by the patient-facing /my-appointments portal (phone + bookingId
+    // lookup, no separate auth system) — a request, not a direct edit, so a
+    // patient can't unilaterally move their own slot. null once there's no
+    // pending request (either never requested, or an admin has actioned it).
+    rescheduleRequest: {
+      type: {
+        requestedDate: String,
+        requestedTime: String,
+        note: { type: String, default: "" },
+        requestedAt: Date,
+      },
+      default: null,
+    },
   },
   { timestamps: true }
 );

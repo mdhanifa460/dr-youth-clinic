@@ -48,6 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const {
     status, internalNote, treatmentValue, assignedTo,
     name, phone, email, service, location, date, time, concern, source,
+    rescheduleRequest,
   } = body;
 
   if (status && !ALLOWED_STATUSES.has(status)) {
@@ -73,6 +74,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (time          !== undefined) $set.time          = time;
   if (concern       !== undefined) $set.concern       = concern;
   if (source        !== undefined) $set.source        = source;
+  // Declining just clears the request (rescheduleRequest: null); approving
+  // is the admin also passing the requested date/time in this same PATCH,
+  // which the date/time handling above already applies.
+  if (rescheduleRequest !== undefined) $set.rescheduleRequest = rescheduleRequest;
 
   const updated = await (Booking as any).findByIdAndUpdate(
     params.id,

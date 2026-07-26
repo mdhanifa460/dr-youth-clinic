@@ -39,6 +39,7 @@ interface Booking {
   assignedTo?: string;
   contactedAt?: string;
   convertedToAppointmentId?: string;
+  rescheduleRequest?: { requestedDate: string; requestedTime: string; note?: string; requestedAt: string } | null;
   promoCode?: string;
   promoDiscount?: number;
   createdAt: string;
@@ -406,6 +407,14 @@ function BookingDrawer({
   const [savingResched,  setSavingResched]  = useState(false);
   const [reschedDone,    setReschedDone]    = useState(false);
 
+  // Patient-initiated reschedule request, from /my-appointments — distinct
+  // from the admin's own "Preferred Slot" editor above: this is a request
+  // the patient made, sitting on the booking until an admin approves
+  // (applies the requested date/time) or declines (dismisses it, keeping
+  // the current slot) it.
+  const [reschedRequest, setReschedRequest] = useState(booking.rescheduleRequest || null);
+  const [actioningRequest, setActioningRequest] = useState<"approve" | "decline" | null>(null);
+
   const waNumber = (booking.phone || "").replace(/\D/g, "");
   const waHref   = waNumber ? `https://wa.me/${waNumber}?text=Hi%20${encodeURIComponent(booking.name)}%2C%20this%20is%20DR%20Youth%20Clinic%20regarding%20your%20booking.` : null;
   const telHref  = waNumber ? `tel:+${waNumber}` : null;
@@ -449,6 +458,34 @@ function BookingDrawer({
       setTimeout(() => setReschedDone(false), 3000);
     }
     setSavingResched(false);
+  }
+
+  async function approveReschedRequest() {
+    if (!reschedRequest) return;
+    setActioningRequest("approve");
+    const res = await fetch(`/api/admin/bookings/${booking._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: reschedRequest.requestedDate, time: reschedRequest.requestedTime, rescheduleRequest: null }),
+    });
+    if (res.ok) {
+      onUpdate({ date: reschedRequest.requestedDate, time: reschedRequest.requestedTime });
+      setReschedDate(reschedRequest.requestedDate);
+      setReschedTime(reschedRequest.requestedTime);
+      setReschedRequest(null);
+    }
+    setActioningRequest(null);
+  }
+
+  async function declineReschedRequest() {
+    setActioningRequest("decline");
+    const res = await fetch(`/api/admin/bookings/${booking._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rescheduleRequest: null }),
+    });
+    if (res.ok) setReschedRequest(null);
+    setActioningRequest(null);
   }
 
   async function saveNote() {
@@ -571,6 +608,28 @@ function BookingDrawer({
                   </div>
                 ))}
               </div>
+
+              {/* Patient-requested reschedule, from /my-appointments — separate
+                  from the admin's own Preferred Slot editor just below */}
+              {reschedRequest && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <Repeat2 size={11} /> Patient Requested Reschedule
+                  </p>
+                  <p className="text-sm font-semibold text-gray-700">{reschedRequest.requestedDate} · {reschedRequest.requestedTime}</p>
+                  {reschedRequest.note && <p className="text-xs text-gray-500 mt-1">"{reschedRequest.note}"</p>}
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={approveReschedRequest} disabled={actioningRequest !== null}
+                      className="flex-1 py-2 rounded-lg text-xs font-semibold bg-[#0B2560] text-white hover:bg-[#0d2d72] disabled:opacity-40 flex items-center justify-center gap-1.5">
+                      {actioningRequest === "approve" ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />} Approve
+                    </button>
+                    <button onClick={declineReschedRequest} disabled={actioningRequest !== null}
+                      className="flex-1 py-2 rounded-lg text-xs font-semibold bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 flex items-center justify-center gap-1.5">
+                      {actioningRequest === "decline" ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />} Decline
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Reschedule preferred slot */}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
@@ -973,6 +1032,11 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                                   {b.convertedToAppointmentId && (
                                     <span title="Converted to appointment" className="text-emerald-500 shrink-0">
                                       <CheckCircle size={12} />
+                                    </span>
+                                  )}
+                                  {b.rescheduleRequest && (
+                                    <span title={`Patient requested ${b.rescheduleRequest.requestedDate} · ${b.rescheduleRequest.requestedTime}`} className="text-amber-500 shrink-0">
+                                      <AlertCircle size={12} />
                                     </span>
                                   )}
                                 </div>

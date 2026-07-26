@@ -448,6 +448,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       patientCareHeading: 'Patient Care',
       patientCare: [
         { label: 'Book Appointment', href: '/book' },
+        { label: 'My Appointments', href: '/my-appointments' },
         { label: 'FAQs', href: '/faqs' },
         { label: 'Before & After Care', href: '/results' },
         { label: 'Privacy Policy', href: '/privacy-policy' },
