@@ -62,7 +62,7 @@ export default function CommunicationSettingsPage() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const addTemplate = () => setTemplates((t) => [...t, { id: uid(), trigger: 'booking_confirmed', channel: 'whatsapp', enabled: true, subject: '', body: '', order: t.length }]);
+  const addTemplate = () => setTemplates((t) => [...t, { id: uid(), trigger: 'booking_confirmed', channel: 'whatsapp', enabled: true, subject: '', body: '', order: t.length, branch: '' }]);
   const updateTemplate = (i: number, patch: any) => setTemplates((t) => t.map((row, idx) => idx === i ? { ...row, ...patch } : row));
   const removeTemplate = (i: number) => setTemplates((t) => t.filter((_, idx) => idx !== i));
 
@@ -70,7 +70,7 @@ export default function CommunicationSettingsPage() {
   const updateButton = (i: number, patch: any) => setButtons((b) => b.map((row, idx) => idx === i ? { ...row, ...patch } : row));
   const removeButton = (i: number) => setButtons((b) => b.filter((_, idx) => idx !== i));
 
-  const addRule = () => setRules((r) => [...r, { id: uid(), status: 'confirmed', trigger: 'booking_confirmed', enabled: true }]);
+  const addRule = () => setRules((r) => [...r, { id: uid(), status: 'confirmed', trigger: 'booking_confirmed', enabled: true, branch: '' }]);
   const updateRule = (i: number, patch: any) => setRules((r) => r.map((row, idx) => idx === i ? { ...row, ...patch } : row));
   const removeRule = (i: number) => setRules((r) => r.filter((_, idx) => idx !== i));
 
@@ -82,7 +82,7 @@ export default function CommunicationSettingsPage() {
         <div>
           <h1 className="text-xl font-bold text-[#0B2560]">Communication Templates & CTA Buttons</h1>
           <p className="text-gray-400 text-sm mt-0.5">
-            The real, editable content behind every automated WhatsApp/email message and CTA button — nothing here is hardcoded in code.
+            The real, editable content behind every automated WhatsApp/email message and CTA button — nothing here is hardcoded in code. Leave Branch blank to apply everywhere, or set it to override just one clinic.
           </p>
         </div>
         <button onClick={save} disabled={saving}
@@ -112,6 +112,8 @@ export default function CommunicationSettingsPage() {
                   <option value="whatsapp">WhatsApp</option>
                   <option value="email">Email</option>
                 </select>
+                <input value={t.branch} onChange={(e) => updateTemplate(i, { branch: e.target.value })} placeholder="Branch (blank = all)"
+                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none w-36" />
                 <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 ml-auto">
                   <input type="checkbox" checked={t.enabled} onChange={(e) => updateTemplate(i, { enabled: e.target.checked })} /> Enabled
                 </label>
@@ -180,7 +182,7 @@ export default function CommunicationSettingsPage() {
           </button>
         </div>
         <p className="text-xs text-gray-400 mb-3">
-          Which appointment status change fires which communication trigger. A status with no rule here falls back to the platform default.
+          Which appointment status change fires which communication trigger. A status with no rule here falls back to the platform default. Set a branch to override just that one clinic — a branch-specific rule wins over a blank (all-branches) rule for the same status.
         </p>
         <div className="space-y-2">
           {rules.map((r, i) => (
@@ -195,6 +197,9 @@ export default function CommunicationSettingsPage() {
                 className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none">
                 {TRIGGERS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
+              <span className="text-xs text-gray-400">at</span>
+              <input value={r.branch} onChange={(e) => updateRule(i, { branch: e.target.value })} placeholder="Branch (blank = all)"
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none w-36" />
               <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 ml-auto">
                 <input type="checkbox" checked={r.enabled} onChange={(e) => updateRule(i, { enabled: e.target.checked })} /> Enabled
               </label>

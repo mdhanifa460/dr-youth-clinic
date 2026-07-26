@@ -8,10 +8,16 @@ import { TRANSITION_NOTIFICATIONS } from "./appointmentFlow";
 // Settings.automationRules is the real, admin-editable source; the
 // hardcoded TRANSITION_NOTIFICATIONS map (appointmentFlow.ts) is only the
 // fallback for any status with no matching row, so behavior is unchanged
-// until an admin actually adds/edits a rule.
-export async function resolveAutomationTrigger(status: string, settingsArg?: any): Promise<string | undefined> {
+// until an admin actually adds/edits a rule. When `branch` is passed, a
+// rule scoped to that exact branch wins over a global (branch: '') rule
+// for the same status, so one clinic can fire a different trigger (or
+// disable one entirely) without changing the others.
+export async function resolveAutomationTrigger(status: string, branch?: string, settingsArg?: any): Promise<string | undefined> {
   const settings = settingsArg ?? (await getSettings());
-  const rule = settings.automationRules?.items?.find((r: any) => r.status === status && r.enabled);
+  const candidates = (settings.automationRules?.items || []).filter(
+    (r: any) => r.status === status && r.enabled && (!r.branch || r.branch === branch)
+  );
+  const rule = candidates.find((r: any) => r.branch) ?? candidates[0];
   if (rule) return rule.trigger;
   return (TRANSITION_NOTIFICATIONS as Record<string, string>)[status];
 }
@@ -41,7 +47,7 @@ export async function queueNotification(
     // one queue row per enabled channel for this trigger, so a trigger can
     // send both a WhatsApp message and an email without duplicating the
     // trigger logic per channel.
-    const resolved = resolveTemplatesForTrigger(trigger, settings.communicationTemplates?.items || [], vars);
+    const resolved = resolveTemplatesForTrigger(trigger, settings.communicationTemplates?.items || [], vars, appointment.branch);
 
     for (const t of resolved) {
       if (t.channel === "email" && !appointment.patientEmail) continue; // nothing to send it to

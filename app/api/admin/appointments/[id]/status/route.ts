@@ -68,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // Queue a notification if this transition triggers one — Settings.
   // automationRules is checked first (admin-configurable), falling back to
   // the hardcoded TRANSITION_NOTIFICATIONS map for anything not overridden.
-  const trigger = await resolveAutomationTrigger(toStatus);
+  const trigger = await resolveAutomationTrigger(toStatus, appt.branch);
   if (trigger) await queueNotification({ ...appt, status: toStatus }, trigger, user._id);
 
   return NextResponse.json({

@@ -98,6 +98,7 @@ export type CommunicationTemplateItem = {
   subject: string;
   body: string;
   order: number;
+  branch: string;
 };
 
 // Real, admin-editable resolution — replaces the DEFAULT_TEMPLATES lookup
@@ -108,17 +109,31 @@ export type CommunicationTemplateItem = {
 // WhatsApp and an Email version at once. Falls back to DEFAULT_TEMPLATES'
 // whatsapp-only behavior if the Settings array is empty/missing, so this
 // still works before any admin has saved Settings at all.
+//
+// `branch` (the appointment's branch slug, e.g. "chennai") is optional so
+// every existing caller keeps working; when provided, a template scoped to
+// that exact branch wins over a global (branch: '') template for the same
+// trigger+channel, letting one clinic customize wording without affecting
+// the others.
 export function resolveTemplatesForTrigger(
   trigger: string,
   templates: CommunicationTemplateItem[],
-  vars: TemplateVars
+  vars: TemplateVars,
+  branch?: string
 ): { channel: 'whatsapp' | 'email'; subject: string; body: string }[] {
-  const matches = templates.filter((t) => t.trigger === trigger && t.enabled);
-  if (matches.length === 0) {
+  const candidates = templates.filter(
+    (t) => t.trigger === trigger && t.enabled && (!t.branch || t.branch === branch)
+  );
+  if (candidates.length === 0) {
     const fallback = DEFAULT_TEMPLATES[trigger];
     return fallback ? [{ channel: 'whatsapp', subject: '', body: render(fallback, vars) }] : [];
   }
-  return matches.map((t) => ({
+  const byChannel = new Map<string, CommunicationTemplateItem>();
+  for (const t of candidates) {
+    const existing = byChannel.get(t.channel);
+    if (!existing || (t.branch && !existing.branch)) byChannel.set(t.channel, t);
+  }
+  return Array.from(byChannel.values()).map((t) => ({
     channel: t.channel,
     subject: t.subject ? render(t.subject, vars) : '',
     body: render(t.body, vars),

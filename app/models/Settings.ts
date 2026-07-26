@@ -78,6 +78,7 @@ export interface ISettings extends Document {
       status: string; // an AppointmentStatus value
       trigger: string; // a communicationTemplates trigger key
       enabled: boolean;
+      branch: string; // '' = all branches — same convention as whatsappCtaButtons.branch below; a branch-specific rule for this status wins over a global one
     }>;
   };
   content: {
@@ -172,6 +173,7 @@ export interface ISettings extends Document {
       subject: string; // email only — ignored for whatsapp
       body: string; // {{name}}/{{service}}/{{branch}}/{{date}}/{{time}}/{{doctor}}/{{reason}}/{{followUp}}/{{clinicPhone}} placeholders
       order: number;
+      branch: string; // '' = all branches — a branch-specific template for this trigger+channel wins over a global one
     }>;
   };
   // Per-clinic on/off switches for the Video module's on-demand AI actions
@@ -316,7 +318,10 @@ const SettingsSchema = new Schema<ISettings>(
       reEngagement:          { type: String, default: "Hi {{name}}! 💫 We miss you at DR Youth Clinic!\n\nYour skin deserves consistent care. 🎁 Reply COMEBACK for your exclusive loyalty discount.\n\n— DR Youth Clinic ✨" },
     },
     automationRules: {
-      items: { type: [{ id: String, status: String, trigger: String, enabled: { type: Boolean, default: true } }], default: [] },
+      items: {
+        type: [{ id: String, status: String, trigger: String, enabled: { type: Boolean, default: true }, branch: { type: String, default: '' } }],
+        default: [],
+      },
     },
     content: {
       blogPostsPerPage:     { type: Number, default: 9 },
@@ -387,10 +392,13 @@ const SettingsSchema = new Schema<ISettings>(
           subject: { type: String, default: '' },
           body: { type: String, default: '' },
           order: { type: Number, default: 0 },
+          branch: { type: String, default: '' },
         }],
         // Seeded verbatim from the previous hardcoded DEFAULT_TEMPLATES in
         // app/lib/notificationTemplates.ts, so migrating to this array
         // changes nothing about what gets sent until an admin edits one.
+        // branch is omitted below — the sub-schema default ('') applies, so
+        // every seed row stays global, same as before this field existed.
         default: [
           { id: 'booking-confirmed-wa', trigger: 'booking_confirmed', channel: 'whatsapp', enabled: true, subject: '', order: 0, body:
             "Hello {{name}}! ✨\n\nYour appointment at *DR Youth Clinic* has been confirmed.\n\n📅 *Treatment:* {{service}}\n📍 *Branch:* {{branch}}\n🗓️ *Date:* {{date}} at {{time}}\n👨‍⚕️ *Doctor:* {{doctor}}\n\nPlease arrive *10 minutes early*. Avoid makeup on the treatment area.\nFor any queries, reply here or call {{clinicPhone}}.\n\n_DR Youth Clinic – Your Skin's Best Friend_ 🌿" },
