@@ -6,6 +6,7 @@ import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
 import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
+import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
 
 // ─── Types ────────────────────────────────────────────────
 // id/type mirror sectionKey — homepage sections are fixed, one-per-type slots
@@ -694,40 +695,22 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
           <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
           <TextField label="Sub-headline" value={d.subheadline} onChange={(v) => set('subheadline', v)} multiline />
           <div>
-            <p className="text-xs font-semibold text-gray-600 mb-3">Service Cards</p>
-            {(d.cards || []).map((c: any, i: number) => (
-              <div key={i} className="border border-gray-200 rounded-xl p-4 mb-3">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-bold text-gray-500">Card {i + 1}</span>
-                  <button type="button" onClick={() => removeArrItem('cards', i)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
-                </div>
-                <div className="space-y-3">
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    <input type="text" placeholder="Icon (emoji)" value={c.icon}
-                      onChange={(e) => setArr('cards', i, 'icon', e.target.value)}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                    <input type="text" placeholder="Tag label (e.g. Dermatology)" value={c.tag || ''}
-                      onChange={(e) => setArr('cards', i, 'tag', e.target.value)}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                    <input type="text" placeholder="Title" value={c.title}
-                      onChange={(e) => setArr('cards', i, 'title', e.target.value)}
-                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                  </div>
-                  <textarea rows={2} placeholder="Description" value={c.description}
-                    onChange={(e) => setArr('cards', i, 'description', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                  <input type="text" placeholder="Link URL" value={c.href}
-                    onChange={(e) => setArr('cards', i, 'href', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
-                  <ImgField label="Card Image (optional — shows behind gradient overlay)" value={c.image}
-                    onChange={(v) => { const next = JSON.parse(JSON.stringify(d)); next.cards[i].image = v; onChange(next); }} />
-                </div>
+            <p className="text-xs font-semibold text-gray-600 mb-1">Category Card Images</p>
+            <p className="text-xs text-gray-400 mb-3">
+              These 4 cards always link to the real category pages with live treatment counts —
+              titles/tags/links aren't editable here. Add an optional photo per category; it renders
+              behind the gradient overlay. Leave blank to keep the plain gradient + icon.
+            </p>
+            {Object.entries(CATEGORY_MAP).map(([slug, label]) => (
+              <div key={slug} className="border border-gray-200 rounded-xl p-4 mb-3">
+                <p className="text-xs font-bold text-gray-500 mb-2">{label}</p>
+                <ImgField
+                  label={`${label} card image (optional)`}
+                  value={d.categoryImages?.[slug] || { url: '', publicId: '' }}
+                  onChange={(v) => set(`categoryImages.${slug}`, v)}
+                />
               </div>
             ))}
-            <button type="button" onClick={() => addArrItem('cards', { icon: '🩺', tag: '', title: '', description: '', href: '/services', image: { url: '', publicId: '' } })}
-              className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
-              <Plus size={12} /> Add card
-            </button>
           </div>
           <div className="border border-gray-200 rounded-xl p-4">
             <p className="text-xs font-bold text-gray-500 mb-3">Diagnosis Panel</p>
@@ -868,15 +851,16 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
           <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
           <TextField label="Sub-headline" value={d.subheadline} onChange={(v) => set('subheadline', v)} />
           <StringListField label="Cities List" value={d.cities} onChange={(v) => set('cities', v)} />
-          <TextField label="View All Text" value={d.viewAllText} onChange={(v) => set('viewAllText', v)} />
-          <div className="border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-bold text-gray-500 mb-3">Featured City</p>
-            <div className="space-y-3">
-              <TextField label="City Name" value={d.featuredCity?.name} onChange={(v) => set('featuredCity.name', v)} />
-              <TextField label="Address" value={d.featuredCity?.address} onChange={(v) => set('featuredCity.address', v)} multiline />
-              <TextField label="Hours" value={d.featuredCity?.hours} onChange={(v) => set('featuredCity.hours', v)} />
-              <TextField label="Phone" value={d.featuredCity?.phone} onChange={(v) => set('featuredCity.phone', v)} />
-              <TextField label="Directions Link" value={d.featuredCity?.directionsHref} onChange={(v) => set('featuredCity.directionsHref', v)} />
+          <div className="rounded-xl border border-blue-100 bg-[#f6faff] p-4 flex items-start gap-3">
+            <span className="text-lg shrink-0">📍</span>
+            <div>
+              <p className="text-xs font-bold text-[#0B2560] mb-1">Per-city details are managed separately</p>
+              <p className="text-xs text-gray-500">
+                Address, hours, phone, map embed, and directions for each city come live from{' '}
+                <a href="/admin/locations" className="underline">Admin → Locations</a> — this block now shows
+                every city as an interactive selector with its own real detail card, not a single static
+                "featured" one.
+              </p>
             </div>
           </div>
         </div>

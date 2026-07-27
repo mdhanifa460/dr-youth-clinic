@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Stethoscope } from 'lucide-react';
 import { CATEGORY_MAP, CATEGORY_META } from '@/app/lib/serviceCategories';
@@ -17,6 +18,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
     headline = 'Clinical-Level Beauty Services',
     subheadline = 'Experience medical precision meets aesthetic artistry across our core specializations.',
     diagnosisPanel = {},
+    categoryImages = {},
   } = data || {};
 
   const categorySlugs = Object.keys(CATEGORY_MAP);
@@ -48,14 +50,25 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
           {categorySlugs.map((slug) => {
             const meta = CATEGORY_META[slug];
             const count = categoryCounts[slug] ?? 0;
+            const image = categoryImages[slug];
             return (
               <Link
                 key={slug}
                 href={`/${location}/services/${slug}`}
                 className="group relative overflow-hidden rounded-3xl min-h-[240px] md:min-h-[300px] shadow-[0_12px_35px_rgba(11,37,96,0.1)] ring-1 ring-white/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(11,37,96,0.16)] flex flex-col justify-end"
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${meta.heroGrad}`} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                {image?.url ? (
+                  <Image
+                    src={image.url}
+                    alt={meta.label}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className={`absolute inset-0 bg-gradient-to-br ${meta.heroGrad}`} />
+                )}
+                <div className={`absolute inset-0 bg-gradient-to-t ${image?.url ? 'from-black/70 via-black/30' : 'from-black/50 via-black/10'} to-transparent`} />
                 <span className="absolute top-4 left-4 text-3xl md:text-4xl opacity-90">{meta.icon}</span>
                 <div className="relative p-4 md:p-6">
                   <span className={`inline-block ${meta.pillBg} ${meta.pillText} backdrop-blur text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-2`}>
