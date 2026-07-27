@@ -434,7 +434,7 @@ export default async function Home() {
     getCachedBlogPosts(),
     getCachedFeaturedVideos(),
     getCachedTrustStats(),
-    resolveBanner({ page: 'homepage' }),
+    resolveBanner({ page: 'homepage', location: resolvedLocation }),
     getCachedServiceCategoryCounts(),
     getCachedResultPairs(),
     getCachedStories(),

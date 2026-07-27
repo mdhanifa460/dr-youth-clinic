@@ -9,6 +9,8 @@ import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getEffectiveSlug } from '@/app/lib/serviceSeo';
 import { CATEGORY_MAP, CATEGORY_META } from '@/app/lib/serviceCategories';
+import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerRenderer from '@/app/components/banners/BannerRenderer';
 
 export const revalidate = 300;
 
@@ -100,16 +102,23 @@ export default async function CategoryPage({ params }: PageProps) {
 
   const dbCategory = CATEGORY_MAP[catSlug];
   const meta = CATEGORY_META[catSlug];
-  const [services, siteConfig] = await Promise.all([
+  const [services, siteConfig, categoryBanner] = await Promise.all([
     getServicesForCategory(params.location, dbCategory),
     getSiteConfig(),
+    resolveBanner({ page: 'category', location: params.location, category: catSlug }),
   ]);
   const city = loc.name;
 
   return (
     <main className="bg-white min-h-screen">
 
-      {/* ── HERO ── */}
+      {/* ── HERO — an active, targeted Banner takes over this slot when
+          one exists; otherwise this category's existing gradient header
+          renders exactly as before. Same override-else-fallback pattern
+          used on the homepage/location/service pages. ── */}
+      {categoryBanner ? (
+        <BannerRenderer banner={categoryBanner} />
+      ) : (
       <section className={`relative overflow-hidden bg-gradient-to-br ${meta.heroGrad} text-white`}>
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/[0.03] translate-x-1/2 -translate-y-1/2" />
@@ -164,6 +173,7 @@ export default async function CategoryPage({ params }: PageProps) {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── BREADCRUMB ── */}
       <nav className="bg-[#f6faff] border-b border-gray-100 py-3">

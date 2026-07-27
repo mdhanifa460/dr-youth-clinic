@@ -6,9 +6,13 @@ import type { BannerDoc } from "@/app/lib/banners/types";
 import "@/app/models/Doctor";
 
 export type BannerSlot =
-  | { page: "homepage" }
+  // location is optional here — when provided (the homepage already
+  // computes a "which city is this visitor" answer for ServicesCards),
+  // a banner's targetLocations is also checked, same as the location slot.
+  | { page: "homepage"; location?: string }
   | { page: "location"; location: string }
-  | { page: "service"; location: string; service: string };
+  | { page: "service"; location: string; service: string }
+  | { page: "category"; location: string; category: string };
 
 // Derives the admin-list-display-only `targetPages` field from the three
 // show*Page booleans that are the actual source of truth — called
@@ -123,9 +127,21 @@ export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc | null>
 
     if (slot.page === "homepage") {
       query.showOnHomepage = true;
+      // Only add the location filter when the caller actually has one —
+      // an unfiltered homepage slot call must keep matching every banner
+      // exactly as it did before this field existed.
+      if (slot.location) {
+        query.$or = [{ targetLocations: { $size: 0 } }, { targetLocations: slot.location }];
+      }
     } else if (slot.page === "location") {
       query.showOnLocationPage = true;
       query.$or = [{ targetLocations: { $size: 0 } }, { targetLocations: slot.location }];
+    } else if (slot.page === "category") {
+      query.showOnCategoryPage = true;
+      query.$and = [
+        { $or: [{ targetCategories: { $size: 0 } }, { targetCategories: slot.category }] },
+        { $or: [{ targetLocations: { $size: 0 } }, { targetLocations: slot.location }] },
+      ];
     } else {
       query.showOnServicePage = true;
       // Both service AND location targeting apply to a service-page banner

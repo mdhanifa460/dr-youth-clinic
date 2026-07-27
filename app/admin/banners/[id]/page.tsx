@@ -9,6 +9,7 @@ import VideoUpload from "@/app/admin/components/VideoUpload";
 import { BANNER_TEMPLATES, type BannerTemplateType } from "@/app/lib/banners/types";
 import { HERO_THEMES } from "@/app/lib/banners/heroThemes";
 import { locations } from "@/app/data/locations";
+import { CATEGORY_MAP } from "@/app/lib/serviceCategories";
 
 // ─── Small reusable inputs (same pattern as app/admin/ai-assessment/page.tsx) ──
 
@@ -437,6 +438,27 @@ export default function BannerEditPage() {
               onChange={(v) => set({ targetServices: v.split(",").map((x) => x.trim()).filter(Boolean) })}
               placeholder="e.g. prp-hair-treatment, laser-hair-removal"
             />
+          </div>
+        )}
+        <Toggle checked={!!banner.showOnCategoryPage} onChange={(v) => set({ showOnCategoryPage: v })} label="Category Listing Pages (e.g. /chennai/services/hair)" />
+        {banner.showOnCategoryPage && (
+          <div className="pl-4 space-y-1.5">
+            <p className="text-xs text-gray-400">Leave all unchecked to show on every category.</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {Object.entries(CATEGORY_MAP).map(([slug, label]) => (
+                <label key={slug} className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={(banner.targetCategories || []).includes(slug)}
+                    onChange={(e) => {
+                      const next = e.target.checked ? [...(banner.targetCategories || []), slug] : (banner.targetCategories || []).filter((x: string) => x !== slug);
+                      set({ targetCategories: next });
+                    }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
           </div>
         )}
       </div>
