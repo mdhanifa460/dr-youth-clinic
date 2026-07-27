@@ -14,11 +14,27 @@ export interface IBanner extends Document {
   overlay: { enabled: boolean; style: "dark" | "gradient"; opacity: number };
   primaryCTA: { label: string; href: string };
   secondaryCTA: { label: string; href: string };
+  // Only meaningful for templateType "glass-hero" — the 3rd fixed-role CTA
+  // ("WhatsApp Expert"). primaryCTA/secondaryCTA already cover the other
+  // two roles, so this is additive rather than a migration to a generic
+  // CTA array.
+  tertiaryCTA: { label: string; href: string };
   trustBadges: { icon: string; text: string }[];
   statBadges: { value: string; label: string }[];
   rating: { enabled: boolean; value: number; reviewCount: number };
   benefits: string[];
   achievements: string[];
+  // Everything below is only meaningful for templateType "glass-hero".
+  heroTheme: 'aurora' | 'gold' | 'ocean' | 'violet' | 'midnight';
+  lottieUrl: string;
+  lottiePlacement: 'background' | 'beside-heading' | 'floating-badge';
+  serviceChips: { label: string; icon: string; href: string }[];
+  doctorHighlight: { doctorId: mongoose.Types.ObjectId | null; tagline: string };
+  assistantTeaser: { enabled: boolean; text: string; ctaLabel: string; href: string };
+  // Admin-side animation dial — the visitor's own OS
+  // prefers-reduced-motion always overrides this, never the other way
+  // round (see GlassHeroBanner.tsx).
+  motionIntensity: 'full' | 'reduced' | 'off';
   status: "draft" | "active" | "disabled";
   priority: number;
   order: number;
@@ -32,15 +48,31 @@ export interface IBanner extends Document {
   showOnHomepage: boolean;
   showOnLocationPage: boolean;
   showOnServicePage: boolean;
-  targetPages: ("homepage" | "location" | "service")[];
+  // Own dedicated toggle rather than reusing showOnServicePage — a banner
+  // may want to target individual service pages without targeting the
+  // coarser category-listing page, or vice versa.
+  showOnCategoryPage: boolean;
+  targetPages: ("homepage" | "location" | "service" | "category")[];
   targetLocations: string[];
   targetServices: string[];
+  // Values match CATEGORY_MAP keys (app/lib/serviceCategories.ts):
+  // skin|hair|laser|other. Empty = eligible on every category page.
+  targetCategories: string[];
   smartRules?: {
     daysOfWeek: number[];
     timeWindowStart: string | null;
     timeWindowEnd: string | null;
     dateRangeStart: Date | null;
     dateRangeEnd: Date | null;
+    // "Season" as a recurring month-of-year window (1-12, e.g. summer =
+    // start:3 end:6), evaluated every year with no expiry — unlike
+    // dateRangeStart/End (a one-time window an admin must re-enter
+    // annually). Handles wraparound (e.g. start:11 end:2 for
+    // Nov-through-Feb) the same way timeWindowStart/End already does.
+    // Deliberately NOT live-weather-API-driven — see note in
+    // resolveBanner.ts on why that's a separate decision, not this field.
+    seasonStartMonth: number | null;
+    seasonEndMonth: number | null;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -56,6 +88,8 @@ const SmartRulesSchema = new Schema(
     timeWindowEnd: { type: String, default: null },
     dateRangeStart: { type: Date, default: null },
     dateRangeEnd: { type: Date, default: null },
+    seasonStartMonth: { type: Number, default: null, min: 1, max: 12 },
+    seasonEndMonth: { type: Number, default: null, min: 1, max: 12 },
   },
   { _id: false }
 );
@@ -66,7 +100,7 @@ const BannerSchema = new Schema<IBanner>(
     templateType: {
       type: String,
       required: true,
-      enum: ["premium-hero", "offer", "before-after", "service", "doctor", "clinic-experience"],
+      enum: ["premium-hero", "offer", "before-after", "service", "doctor", "clinic-experience", "glass-hero"],
     },
     headline: { type: String, default: "" },
     subtitle: { type: String, default: "" },
@@ -88,6 +122,7 @@ const BannerSchema = new Schema<IBanner>(
 
     primaryCTA: { type: CTASubSchema, required: true },
     secondaryCTA: { type: CTASubSchema, default: () => ({ label: "", href: "" }) },
+    tertiaryCTA: { type: CTASubSchema, default: () => ({ label: "", href: "" }) },
 
     trustBadges: { type: [{ icon: String, text: String }], default: [] },
     statBadges: { type: [{ value: String, label: String }], default: [] },
@@ -99,6 +134,24 @@ const BannerSchema = new Schema<IBanner>(
     // Bullet lists — Service Banner's benefits, Doctor Banner's achievements.
     benefits: { type: [String], default: [] },
     achievements: { type: [String], default: [] },
+
+    // Glass Hero-only fields — harmless/unused on every other templateType,
+    // same convention as beforeImage/video above.
+    heroTheme: { type: String, enum: ["aurora", "gold", "ocean", "violet", "midnight"], default: "aurora" },
+    lottieUrl: { type: String, default: "" },
+    lottiePlacement: { type: String, enum: ["background", "beside-heading", "floating-badge"], default: "beside-heading" },
+    serviceChips: { type: [{ label: String, icon: String, href: String }], default: [] },
+    doctorHighlight: {
+      doctorId: { type: Schema.Types.ObjectId, ref: "Doctor", default: null },
+      tagline: { type: String, default: "" },
+    },
+    assistantTeaser: {
+      enabled: { type: Boolean, default: true },
+      text: { type: String, default: "Need help choosing a treatment?" },
+      ctaLabel: { type: String, default: "Start Assessment" },
+      href: { type: String, default: "/skin-quiz" },
+    },
+    motionIntensity: { type: String, enum: ["full", "reduced", "off"], default: "full" },
 
     // draft = never shown publicly (supports Preview-before-publish);
     // active = eligible per schedule/rules; disabled = manually paused
@@ -120,13 +173,15 @@ const BannerSchema = new Schema<IBanner>(
     showOnHomepage: { type: Boolean, default: false },
     showOnLocationPage: { type: Boolean, default: false },
     showOnServicePage: { type: Boolean, default: false },
+    showOnCategoryPage: { type: Boolean, default: false },
     // Derived (see pre('save') hook below) — do not set independently from
-    // the three booleans above.
-    targetPages: { type: [String], enum: ["homepage", "location", "service"], default: [] },
+    // the four booleans above.
+    targetPages: { type: [String], enum: ["homepage", "location", "service", "category"], default: [] },
 
     // Empty array = eligible everywhere, same convention as Service.targetLocations.
     targetLocations: { type: [String], default: [] },
     targetServices: { type: [String], default: [] },
+    targetCategories: { type: [String], default: [] },
 
     // Whole subdocument optional (no default object) — its presence/absence
     // is itself the "has rules attached" signal resolveBanner() checks.
@@ -146,5 +201,6 @@ BannerSchema.index({ status: 1, priority: -1 });
 BannerSchema.index({ showOnHomepage: 1 });
 BannerSchema.index({ showOnLocationPage: 1, targetLocations: 1 });
 BannerSchema.index({ showOnServicePage: 1, targetServices: 1 });
+BannerSchema.index({ showOnCategoryPage: 1, targetCategories: 1 });
 
 export const Banner = mongoose.models.Banner || mongoose.model<IBanner>("Banner", BannerSchema);

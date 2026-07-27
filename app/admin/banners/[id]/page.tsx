@@ -7,6 +7,7 @@ import { Loader, ArrowLeft, Save, Plus, X, Eye } from "lucide-react";
 import ImageUpload from "@/app/admin/components/ImageUpload";
 import VideoUpload from "@/app/admin/components/VideoUpload";
 import { BANNER_TEMPLATES, type BannerTemplateType } from "@/app/lib/banners/types";
+import { HERO_THEMES } from "@/app/lib/banners/heroThemes";
 import { locations } from "@/app/data/locations";
 
 // ─── Small reusable inputs (same pattern as app/admin/ai-assessment/page.tsx) ──
@@ -92,6 +93,18 @@ export default function BannerEditPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [smartRulesEnabled, setSmartRulesEnabled] = useState(false);
+  const [doctors, setDoctors] = useState<{ _id: string; name: string; title: string }[]>([]);
+
+  useEffect(() => {
+    // Only the Glass Hero's doctorHighlight picker needs this, but it's
+    // cheap enough (admin-only, one small list) to just always fetch
+    // rather than gating it behind templateType, which isn't known until
+    // the banner itself has loaded.
+    fetch("/api/admin/doctors")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setDoctors(d.data); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch(`/api/admin/banners/${id}`)
@@ -125,7 +138,7 @@ export default function BannerEditPage() {
       // even though the toggle shows as off.
       if (!smartRulesEnabled) payload.smartRules = null;
       else if (!payload.smartRules) {
-        payload.smartRules = { daysOfWeek: [], timeWindowStart: null, timeWindowEnd: null, dateRangeStart: null, dateRangeEnd: null };
+        payload.smartRules = { daysOfWeek: [], timeWindowStart: null, timeWindowEnd: null, dateRangeStart: null, dateRangeEnd: null, seasonStartMonth: null, seasonEndMonth: null };
       }
       const res = await fetch(`/api/admin/banners/${id}`, {
         method: "PUT",
@@ -203,20 +216,30 @@ export default function BannerEditPage() {
       {/* CTAs */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
         <p className="text-sm font-bold text-gray-700">Call to Action</p>
-        <CTAFields label="Primary CTA" cta={banner.primaryCTA} onChange={(v) => set({ primaryCTA: v })} />
-        <CTAFields label="Secondary CTA (optional)" cta={banner.secondaryCTA} onChange={(v) => set({ secondaryCTA: v })} />
+        <CTAFields label={templateType === "glass-hero" ? "Primary CTA (e.g. Book Consultation)" : "Primary CTA"} cta={banner.primaryCTA} onChange={(v) => set({ primaryCTA: v })} />
+        <CTAFields label={templateType === "glass-hero" ? "Secondary CTA (e.g. Free AI Assessment)" : "Secondary CTA (optional)"} cta={banner.secondaryCTA} onChange={(v) => set({ secondaryCTA: v })} />
+        {templateType === "glass-hero" && (
+          <CTAFields label="Tertiary CTA (e.g. WhatsApp Expert)" cta={banner.tertiaryCTA} onChange={(v) => set({ tertiaryCTA: v })} />
+        )}
       </div>
 
       {/* Images / video */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <p className="text-sm font-bold text-gray-700">Media</p>
-        <ImageUpload label="Desktop Image" folder="dr-youth-clinic/banners" currentPublicId={banner.desktopImage?.publicId} onUpload={(img) => set({ desktopImage: img })} />
-        <ImageUpload label="Mobile Image (optional — falls back to desktop)" folder="dr-youth-clinic/banners" currentPublicId={banner.mobileImage?.publicId} onUpload={(img) => set({ mobileImage: img })} />
+        <ImageUpload
+          label={templateType === "glass-hero" ? "Background Image (optional — subtle, tinted behind the glass)" : "Desktop Image"}
+          folder="dr-youth-clinic/banners"
+          currentPublicId={banner.desktopImage?.publicId}
+          onUpload={(img) => set({ desktopImage: img })}
+        />
+        {templateType !== "glass-hero" && (
+          <ImageUpload label="Mobile Image (optional — falls back to desktop)" folder="dr-youth-clinic/banners" currentPublicId={banner.mobileImage?.publicId} onUpload={(img) => set({ mobileImage: img })} />
+        )}
         {templateType === "before-after" && (
           <ImageUpload label="Before Image" folder="dr-youth-clinic/banners" currentPublicId={banner.beforeImage?.publicId} onUpload={(img) => set({ beforeImage: img })} />
         )}
-        {templateType === "clinic-experience" && (
-          <VideoUpload label="Video (optional)" currentUrl={banner.video?.url} onUpload={(vid) => set({ video: vid })} />
+        {(templateType === "clinic-experience" || templateType === "glass-hero") && (
+          <VideoUpload label={templateType === "glass-hero" ? "Background Video (optional — overrides the background image above)" : "Video (optional)"} currentUrl={banner.video?.url} onUpload={(vid) => set({ video: vid })} />
         )}
       </div>
 
@@ -265,6 +288,104 @@ export default function BannerEditPage() {
           <p className="text-sm font-bold text-gray-700">Achievements (bullet list)</p>
           <ListEditor items={banner.achievements || []} onChange={(v) => set({ achievements: v })} placeholder="10,000+ Successful Surgeries" />
         </div>
+      )}
+
+      {templateType === "glass-hero" && (
+        <>
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <p className="text-sm font-bold text-gray-700">Background Theme & Motion</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Theme</label>
+                <select value={banner.heroTheme || "aurora"} onChange={(e) => set({ heroTheme: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
+                  {HERO_THEMES.map((t) => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Motion Intensity</label>
+                <select value={banner.motionIntensity || "full"} onChange={(e) => set({ motionIntensity: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
+                  <option value="full">Full</option>
+                  <option value="reduced">Reduced</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400">A visitor's own device "reduce motion" setting always overrides this.</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <p className="text-sm font-bold text-gray-700">Lottie Animation (optional)</p>
+            <Input value={banner.lottieUrl || ""} onChange={(v) => set({ lottieUrl: v })} placeholder="https://.../animation.json" />
+            {banner.lottieUrl && (
+              <select value={banner.lottiePlacement || "beside-heading"} onChange={(e) => set({ lottiePlacement: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
+                <option value="beside-heading">Beside the subtitle badge</option>
+                <option value="background">Full background</option>
+                <option value="floating-badge">Floating corner badge</option>
+              </select>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <p className="text-sm font-bold text-gray-700">Statistics</p>
+            {(banner.statBadges || []).map((s: any, i: number) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input value={s.value} onChange={(v) => set({ statBadges: banner.statBadges.map((x: any, idx: number) => (idx === i ? { ...x, value: v } : x)) })} placeholder="15,000+" />
+                <Input value={s.label} onChange={(v) => set({ statBadges: banner.statBadges.map((x: any, idx: number) => (idx === i ? { ...x, label: v } : x)) })} placeholder="Happy Patients" />
+                <button onClick={() => set({ statBadges: banner.statBadges.filter((_: any, idx: number) => idx !== i) })} className="text-red-400 hover:text-red-600 shrink-0"><X size={16} /></button>
+              </div>
+            ))}
+            <button onClick={() => set({ statBadges: [...(banner.statBadges || []), { value: "", label: "" }] })} className="text-xs font-semibold text-[#0B2560] flex items-center gap-1"><Plus size={13} /> Add Stat</button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <p className="text-sm font-bold text-gray-700">Service Chips</p>
+            {(banner.serviceChips || []).map((c: any, i: number) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input value={c.icon} onChange={(v) => set({ serviceChips: banner.serviceChips.map((x: any, idx: number) => (idx === i ? { ...x, icon: v } : x)) })} placeholder="💆" className="max-w-[60px]" />
+                <Input value={c.label} onChange={(v) => set({ serviceChips: banner.serviceChips.map((x: any, idx: number) => (idx === i ? { ...x, label: v } : x)) })} placeholder="Hair" />
+                <Input value={c.href} onChange={(v) => set({ serviceChips: banner.serviceChips.map((x: any, idx: number) => (idx === i ? { ...x, href: v } : x)) })} placeholder="/chennai/services/hair" />
+                <button onClick={() => set({ serviceChips: banner.serviceChips.filter((_: any, idx: number) => idx !== i) })} className="text-red-400 hover:text-red-600 shrink-0"><X size={16} /></button>
+              </div>
+            ))}
+            <button onClick={() => set({ serviceChips: [...(banner.serviceChips || []), { icon: "✨", label: "", href: "" }] })} className="text-xs font-semibold text-[#0B2560] flex items-center gap-1"><Plus size={13} /> Add Chip</button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <p className="text-sm font-bold text-gray-700">Doctor Highlight (optional)</p>
+            <select
+              value={banner.doctorHighlight?.doctorId?._id || banner.doctorHighlight?.doctorId || ""}
+              onChange={(e) => set({ doctorHighlight: { ...banner.doctorHighlight, doctorId: e.target.value || null } })}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full"
+            >
+              <option value="">None</option>
+              {doctors.map((d) => (
+                <option key={d._id} value={d._id}>{d.name} — {d.title}</option>
+              ))}
+            </select>
+            {(banner.doctorHighlight?.doctorId?._id || banner.doctorHighlight?.doctorId) && (
+              <Input
+                value={banner.doctorHighlight?.tagline || ""}
+                onChange={(v) => set({ doctorHighlight: { ...banner.doctorHighlight, tagline: v } })}
+                placeholder="Tagline override (optional — defaults to their title)"
+              />
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <Toggle checked={!!banner.assistantTeaser?.enabled} onChange={(v) => set({ assistantTeaser: { ...banner.assistantTeaser, enabled: v } })} label="👋 Show AI Assistant teaser card" />
+            {banner.assistantTeaser?.enabled && (
+              <>
+                <Input value={banner.assistantTeaser?.text || ""} onChange={(v) => set({ assistantTeaser: { ...banner.assistantTeaser, text: v } })} placeholder="Need help choosing a treatment?" />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input value={banner.assistantTeaser?.ctaLabel || ""} onChange={(v) => set({ assistantTeaser: { ...banner.assistantTeaser, ctaLabel: v } })} placeholder="Start Assessment" />
+                  <Input value={banner.assistantTeaser?.href || ""} onChange={(v) => set({ assistantTeaser: { ...banner.assistantTeaser, href: v } })} placeholder="/skin-quiz" />
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {/* Overlay */}
@@ -378,6 +499,23 @@ export default function BannerEditPage() {
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-1 block">Time Window End (optional)</label>
                 <input type="time" value={banner.smartRules?.timeWindowEnd || ""} onChange={(e) => set({ smartRules: { ...(banner.smartRules || {}), timeWindowEnd: e.target.value || null } })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Season (recurring every year — e.g. hot season = March-June)</label>
+              <div className="grid grid-cols-2 gap-3">
+                <select value={banner.smartRules?.seasonStartMonth || ""} onChange={(e) => set({ smartRules: { ...(banner.smartRules || {}), seasonStartMonth: e.target.value ? Number(e.target.value) : null } })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
+                  <option value="">Start month…</option>
+                  {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                    <option key={m} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+                <select value={banner.smartRules?.seasonEndMonth || ""} onChange={(e) => set({ smartRules: { ...(banner.smartRules || {}), seasonEndMonth: e.target.value ? Number(e.target.value) : null } })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
+                  <option value="">End month…</option>
+                  {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                    <option key={m} value={i + 1}>{m}</option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

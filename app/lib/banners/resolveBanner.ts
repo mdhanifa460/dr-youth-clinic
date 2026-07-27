@@ -1,6 +1,9 @@
 import { connectDB } from "@/app/lib/mongodb";
 import { Banner } from "@/app/models/Banner";
 import type { BannerDoc } from "@/app/lib/banners/types";
+// Registers Doctor with Mongoose for the .populate() call below — see the
+// note in app/(public)/academy/[slug]/page.tsx for why this is required.
+import "@/app/models/Doctor";
 
 export type BannerSlot =
   | { page: "homepage" }
@@ -16,11 +19,13 @@ export function deriveTargetPages(banner: {
   showOnHomepage?: boolean;
   showOnLocationPage?: boolean;
   showOnServicePage?: boolean;
-}): ("homepage" | "location" | "service")[] {
-  const pages: ("homepage" | "location" | "service")[] = [];
+  showOnCategoryPage?: boolean;
+}): ("homepage" | "location" | "service" | "category")[] {
+  const pages: ("homepage" | "location" | "service" | "category")[] = [];
   if (banner.showOnHomepage) pages.push("homepage");
   if (banner.showOnLocationPage) pages.push("location");
   if (banner.showOnServicePage) pages.push("service");
+  if (banner.showOnCategoryPage) pages.push("category");
   return pages;
 }
 
@@ -36,6 +41,15 @@ function inTimeWindow(nowMinutes: number, start: string, end: string): boolean {
   const e = timeStringToMinutes(end);
   if (s <= e) return nowMinutes >= s && nowMinutes <= e;
   return nowMinutes >= s || nowMinutes <= e;
+}
+
+// Same inclusive-range-with-wraparound logic as inTimeWindow, generalized
+// to any 1-12 month pair — lets a "summer" or "monsoon" season recur every
+// year (e.g. start:11 end:2 for Nov-through-Feb) without an admin having to
+// re-enter dateRangeStart/End annually.
+function inMonthWindow(nowMonth: number, start: number, end: number): boolean {
+  if (start <= end) return nowMonth >= start && nowMonth <= end;
+  return nowMonth >= start || nowMonth <= end;
 }
 
 // The admin's <input type="date"> submits a midnight timestamp
@@ -82,6 +96,14 @@ function matchesSmartRules(rules: any, now: Date): boolean {
     if (!inTimeWindow(nowMinutes, start, end)) return false;
   }
 
+  // Same one-sided-window tolerance as the time-window check above.
+  if (rules.seasonStartMonth || rules.seasonEndMonth) {
+    const nowMonth = now.getMonth() + 1; // getMonth() is 0-indexed
+    const start = rules.seasonStartMonth || 1;
+    const end = rules.seasonEndMonth || 12;
+    if (!inMonthWindow(nowMonth, start, end)) return false;
+  }
+
   if (rules.dateRangeStart && new Date(rules.dateRangeStart) > now) return false;
   if (rules.dateRangeEnd && endOfDayUTC(rules.dateRangeEnd) < now) return false;
 
@@ -116,7 +138,11 @@ export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc | null>
       ];
     }
 
-    const candidates = await (Banner as any).find(query).sort({ priority: -1 }).lean();
+    const candidates = await (Banner as any)
+      .find(query)
+      .sort({ priority: -1 })
+      .populate({ path: "doctorHighlight.doctorId", select: "name title photo qualifications" })
+      .lean();
     if (!candidates.length) return null;
 
     const now = new Date();

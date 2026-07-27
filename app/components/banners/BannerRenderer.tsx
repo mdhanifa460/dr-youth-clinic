@@ -5,6 +5,7 @@ import BeforeAfterBanner from "@/app/components/banners/templates/BeforeAfterBan
 import ServiceBanner from "@/app/components/banners/templates/ServiceBanner";
 import DoctorBanner from "@/app/components/banners/templates/DoctorBanner";
 import ClinicExperienceBanner from "@/app/components/banners/templates/ClinicExperienceBanner";
+import GlassHeroBanner from "@/app/components/banners/templates/GlassHeroBanner";
 import AnimatedBannerWrapper from "@/app/components/banners/AnimatedBannerWrapper";
 
 // Dispatcher — switches on templateType, wraps whichever template in one
@@ -21,12 +22,13 @@ export default function BannerRenderer({ banner }: { banner: BannerDoc | null })
     service: ServiceBanner,
     doctor: DoctorBanner,
     "clinic-experience": ClinicExperienceBanner,
+    "glass-hero": GlassHeroBanner,
   }[banner.templateType];
 
   if (!Template) return null;
 
   return (
-    <AnimatedBannerWrapper>
+    <AnimatedBannerWrapper skipEntrance={banner.templateType === "glass-hero"}>
       <Template banner={banner} />
     </AnimatedBannerWrapper>
   );

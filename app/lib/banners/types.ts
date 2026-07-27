@@ -9,7 +9,8 @@ export type BannerTemplateType =
   | "before-after"
   | "service"
   | "doctor"
-  | "clinic-experience";
+  | "clinic-experience"
+  | "glass-hero";
 
 export interface CTAData {
   label: string;
@@ -42,6 +43,34 @@ export interface BannerTemplateDef {
 }
 
 export const BANNER_TEMPLATES: BannerTemplateDef[] = [
+  {
+    type: "glass-hero",
+    label: "Glass Hero (Premium)",
+    icon: "✨",
+    description: "Glassmorphism hero — animated gradient, floating glass cards, particles, three CTAs, service chips, doctor highlight.",
+    defaultData: {
+      headline: "Healthy Skin.\nConfident You.",
+      subtitle: "AI-Powered Assessment",
+      description: "Personalised treatments, advanced technology & real results — trusted by thousands.",
+      primaryCTA: { label: "Book Consultation", href: "/book" },
+      secondaryCTA: { label: "Free AI Assessment", href: "/skin-quiz" },
+      tertiaryCTA: { label: "WhatsApp Expert", href: "" },
+      heroTheme: "aurora",
+      motionIntensity: "full",
+      statBadges: [
+        { value: "15,000+", label: "Happy Patients" },
+        { value: "20+", label: "Doctors" },
+        { value: "12+", label: "Years" },
+        { value: "98%", label: "Satisfaction" },
+      ],
+      serviceChips: [
+        { label: "Hair", icon: "💆", href: "/chennai/services/hair" },
+        { label: "Skin", icon: "✨", href: "/chennai/services/skin" },
+        { label: "Laser", icon: "⚡", href: "/chennai/services/laser" },
+      ],
+      assistantTeaser: { enabled: true, text: "Need help choosing a treatment?", ctaLabel: "Start Assessment", href: "/skin-quiz" },
+    },
+  },
   {
     type: "premium-hero",
     label: "Premium Hero",
@@ -155,11 +184,25 @@ export interface BannerDoc {
   overlay: { enabled: boolean; style: "dark" | "gradient"; opacity: number };
   primaryCTA: CTAData;
   secondaryCTA: CTAData;
+  tertiaryCTA: CTAData;
   trustBadges: TrustBadgeData[];
   statBadges: StatBadgeData[];
   rating: { enabled: boolean; value: number; reviewCount: number };
   benefits?: string[];
   achievements?: string[];
+  // Glass Hero-only fields — see app/models/Banner.ts for the same fields.
+  heroTheme: "aurora" | "gold" | "ocean" | "violet" | "midnight";
+  lottieUrl: string;
+  lottiePlacement: "background" | "beside-heading" | "floating-badge";
+  serviceChips: { label: string; icon: string; href: string }[];
+  // doctorId is always populated by resolveBanner() into the full doctor
+  // sub-document (or null) — never a raw ObjectId string on the client.
+  doctorHighlight: {
+    doctorId: { _id: string; name: string; title: string; photo: { url: string }; qualifications: string } | null;
+    tagline: string;
+  };
+  assistantTeaser: { enabled: boolean; text: string; ctaLabel: string; href: string };
+  motionIntensity: "full" | "reduced" | "off";
   status: "draft" | "active" | "disabled";
   priority: number;
   order: number;
@@ -168,13 +211,17 @@ export interface BannerDoc {
   showOnHomepage: boolean;
   showOnLocationPage: boolean;
   showOnServicePage: boolean;
+  showOnCategoryPage: boolean;
   targetLocations: string[];
   targetServices: string[];
+  targetCategories: string[];
   smartRules?: {
     daysOfWeek: number[];
     timeWindowStart: string | null;
     timeWindowEnd: string | null;
     dateRangeStart: string | null;
     dateRangeEnd: string | null;
+    seasonStartMonth: number | null;
+    seasonEndMonth: number | null;
   };
 }

@@ -255,3 +255,56 @@ p {
     transition: none !important;
   }
 }
+
+/* ===== GLASS HERO — premium glassmorphism hero (app/components/banners/
+   templates/GlassHeroBanner.tsx). Every color/gradient stop comes from
+   --hero-* custom properties set inline per heroTheme (see
+   app/lib/banners/heroThemes.ts) — this file only defines the *animation*
+   and the *glass* effect, never a literal color, so a new theme never
+   needs a CSS change here. */
+
+.glass-hero-gradient {
+  background: linear-gradient(
+    120deg,
+    var(--hero-grad-1),
+    var(--hero-grad-2),
+    var(--hero-grad-3),
+    var(--hero-grad-2)
+  );
+  background-size: 200% 200%;
+  animation: glassHeroShift 18s ease-in-out infinite;
+}
+
+@keyframes glassHeroShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.glass-hero-card {
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.25);
+}
+
+.hero-particle {
+  animation: heroParticleFloat 9s ease-in-out infinite;
+  opacity: 0;
+}
+
+@keyframes heroParticleFloat {
+  0%   { transform: translateY(0px); opacity: 0; }
+  15%  { opacity: 0.8; }
+  50%  { transform: translateY(-22px); opacity: 0.5; }
+  85%  { opacity: 0.8; }
+  100% { transform: translateY(0px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-hero-gradient {
+    animation: none;
+    background-position: 0% 50%;
+  }
+  .hero-particle {
+    animation: none;
+    opacity: 0.4;
+  }
+}
