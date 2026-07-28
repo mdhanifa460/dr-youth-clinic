@@ -1,5 +1,4 @@
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import type { BannerDoc } from "@/app/lib/banners/types";
 import { getHeroTheme } from "@/app/lib/banners/heroThemes";
 import GlassCTAButton from "@/app/components/banners/shared/GlassCTAButton";
@@ -7,14 +6,13 @@ import { AnimatedStatRow } from "@/app/components/banners/shared/AnimatedStat";
 import { ServiceChipRow } from "@/app/components/banners/shared/ServiceChipRow";
 import { FloatingAssistantTeaser } from "@/app/components/banners/shared/FloatingAssistantTeaser";
 import { HeroParticles } from "@/app/components/banners/shared/HeroParticles";
-
-// Lazy, client-only — the entire lottie-web runtime only ships when a
-// banner actually sets lottieUrl. A banner without one costs zero extra
-// bytes/work, which is the whole point of keeping Lottie "optional" here.
-const LottiePlayer = dynamic(() => import("@/app/components/banners/shared/LottiePlayer"), {
-  ssr: false,
-  loading: () => null,
-});
+// Plain import — safe now because LottiePlayer.tsx itself has no static
+// import of "lottie-react" at module scope (see that file's comment for
+// why: three different code-splitting strategies at THIS boundary all
+// still eagerly shipped lottie-web regardless). This component's own
+// chunk is now tiny; the heavy dependency only loads via a runtime
+// import() inside LottiePlayer's effect, when it actually mounts.
+import LottiePlayer from "@/app/components/banners/shared/LottiePlayer";
 
 // The premium glassmorphism hero — animated gradient + floating glass
 // cards, replacing the image-right/text-left "traditional banner" layout

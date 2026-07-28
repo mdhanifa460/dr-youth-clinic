@@ -1,37 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Lottie from "lottie-react";
+import type { ComponentType } from "react";
 
-// Thin wrapper so GlassHeroBanner.tsx can next/dynamic-import this one file
-// (ssr:false) instead of the raw lottie-react package — the entire
-// lottie-web runtime only ever ships to the client when a banner actually
-// has a lottieUrl set. Fetches+parses the JSON itself (this version's
-// types don't expose lottie-web's `path` passthrough), caching per URL for
-// the component's lifetime; renders nothing while loading/on failure
-// rather than showing a broken player.
+// No static (or next/dynamic) import of "lottie-react" anywhere in this
+// file — verified via a real network trace that a plain import, and
+// next/dynamic() both with and without ssr:false, all still shipped the
+// full ~300KB lottie-web engine on every homepage load regardless of
+// whether any banner actually used it (Next 14's App Router eagerly
+// preloads a route's whole client-reference-manifest, which a Server
+// Component's conditional render doesn't exclude a chunk from). A plain
+// runtime `import()` call inside this effect is genuinely deferred by the
+// browser/bundler until this component actually mounts — it isn't part of
+// any framework-level chunking heuristic, so it can't be silently
+// re-broken by an unrelated Next.js version/behavior change the way the
+// last three attempts were. Re-verify with a network trace
+// (page.on('request') for a chunk containing "lottie-web") if this ever
+// regresses.
 export function LottiePlayer({ url, className }: { url: string; className?: string }) {
   const [animationData, setAnimationData] = useState<object | null>(null);
+  const [LottieComp, setLottieComp] = useState<ComponentType<any> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setAnimationData(null);
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled) setAnimationData(data);
+    Promise.all([import("lottie-react"), fetch(url).then((res) => res.json())])
+      .then(([mod, data]) => {
+        if (cancelled) return;
+        setLottieComp(mod.default);
+        setAnimationData(data);
       })
       .catch(() => {
-        // A broken/unreachable Lottie URL should never break the hero
-        // around it — just render nothing.
+        // A broken/unreachable Lottie URL, or a failed chunk fetch, should
+        // never break the hero around it — just render nothing.
       });
     return () => {
       cancelled = true;
     };
   }, [url]);
 
-  if (!animationData) return null;
-  return <Lottie animationData={animationData} loop autoplay className={className} />;
+  if (!LottieComp || !animationData) return null;
+  return <LottieComp animationData={animationData} loop autoplay className={className} />;
 }
 
 export default LottiePlayer;
