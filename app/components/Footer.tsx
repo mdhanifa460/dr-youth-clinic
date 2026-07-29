@@ -192,8 +192,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
           </div>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2">
             <Link href="/about" className="text-white/60 text-xs hover:text-white/90 transition">About Us</Link>
-            <Link href="/plan-my-journey" className="text-white/60 text-xs hover:text-white/90 transition">✨ Plan My Journey</Link>
-            <Link href="/skin-quiz" className="text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium">✨ {siteConfig?.skinQuizLabel ?? 'Free Clinical Intake'}</Link>
+            <Link href="/plan-my-journey" className="text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium">✨ Plan My Journey</Link>
             <Link href="/privacy-policy" className="text-white/60 text-xs hover:text-white/90 transition">Privacy Policy</Link>
             <Link href="/terms" className="text-white/60 text-xs hover:text-white/90 transition">Terms of Service</Link>
             <Link href="/blog" className="text-white/60 text-xs hover:text-white/90 transition">Blog</Link>

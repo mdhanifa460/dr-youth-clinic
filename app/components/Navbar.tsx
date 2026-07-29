@@ -275,17 +275,16 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
 
         {/* Phone + CTA */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Single unified entry point — "Free Clinical Intake" used to be a
+              separate CTA pointing at /skin-quiz, creating a real choice
+              between two competing "tell us about yourself" flows. Clinical
+              Intake's engine now powers Plan My Journey from the inside
+              (see app/lib/assessmentFlow.ts), so this is the only CTA. */}
           <Link
             href="/plan-my-journey"
-            className="hidden 2xl:flex min-h-10 items-center gap-1.5 text-[#0B2560] px-2 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition whitespace-nowrap"
-          >
-            ✨ Plan My Journey
-          </Link>
-          <Link
-            href="/skin-quiz"
             className="hidden xl:flex min-h-10 items-center gap-1.5 border border-[#F5A623] text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/10 transition whitespace-nowrap"
           >
-            {siteConfig.skinQuizNav}
+            ✨ Plan My Journey
           </Link>
           <Link
             href="/book"
@@ -384,16 +383,9 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
             <Link
               href="/plan-my-journey"
               onClick={() => setMobileOpen(false)}
-              className="min-h-12 w-full bg-[#0B2560]/5 border border-[#0B2560]/20 text-[#0B2560] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
-            >
-              ✨ Plan My Journey
-            </Link>
-            <Link
-              href="/skin-quiz"
-              onClick={() => setMobileOpen(false)}
               className="min-h-12 w-full bg-[#F5A623]/10 border border-[#F5A623] text-[#0B2560] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
             >
-              {siteConfig.skinQuizNav} — Prepare Your Visit
+              ✨ Plan My Journey
             </Link>
             {phone && (
               <a href={phoneHref} className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">

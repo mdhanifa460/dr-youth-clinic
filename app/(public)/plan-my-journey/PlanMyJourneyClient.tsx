@@ -6,7 +6,17 @@ import Image from "next/image";
 import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
 import { SiteConfigProvider, useSiteConfig } from "@/app/components/SiteConfigContext";
 import { locations } from "@/app/data/locations";
-import { JOURNEY_GOALS, JOURNEY_GOAL_META, type JourneyGoalSlug, type JourneyGoalBundle } from "@/app/lib/journeyGoals";
+import { JOURNEY_GOALS, JOURNEY_GOAL_META, GOAL_CONCERN_TAGS, type JourneyGoalSlug, type JourneyGoalBundle } from "@/app/lib/journeyGoals";
+import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion } from "@/app/lib/quizDefaults";
+import type { AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import {
+  seedAnswersFromTags,
+  getOrderedQuestions,
+  canProceedFromQuestion,
+  resolveNextQuestionId,
+  hasNextQuestion as computeHasNextQuestion,
+} from "@/app/lib/assessmentFlow";
+import QuestionStep from "@/app/components/assessment/QuestionStep";
 import TreatmentComparison from "@/app/components/TreatmentComparison";
 import TreatmentJourney from "@/app/components/TreatmentJourney";
 import TreatmentJourneyExplorer from "@/app/components/TreatmentJourneyExplorer";
@@ -16,7 +26,7 @@ import CostEstimator from "@/app/components/CostEstimator";
 import EMICalculator from "@/app/components/EMICalculator";
 import SliderCard from "@/app/components/SliderCard";
 
-type Screen = "intro" | "goal-pick" | "lead" | "results";
+type Screen = "intro" | "goal-pick" | "question" | "lead" | "results";
 type LeadStatus = "idle" | "sending" | "sent" | "error";
 
 interface LeadForm {
@@ -42,33 +52,86 @@ function useClinicParam(): string {
 export default function PlanMyJourneyClient({
   bundles,
   siteConfig,
+  quizConfig,
 }: {
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
   siteConfig: any;
+  quizConfig?: AssessmentConfigData;
 }) {
   return (
     <SiteConfigProvider initial={siteConfig}>
-      <PlanMyJourneyFlow bundles={bundles} />
+      <PlanMyJourneyFlow bundles={bundles} quizConfig={quizConfig || DEFAULT_QUIZ_CONFIG} />
     </SiteConfigProvider>
   );
 }
 
-function PlanMyJourneyFlow({ bundles }: { bundles: Record<JourneyGoalSlug, JourneyGoalBundle> }) {
+function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoalSlug, JourneyGoalBundle>; quizConfig: AssessmentConfigData }) {
   const clinic = useClinicParam();
   const [screen, setScreen] = useState<Screen>("intro");
   const [goal, setGoal] = useState<JourneyGoalSlug | null>(null);
   const [serviceId, setServiceId] = useState<string>("");
   const [lead, setLead] = useState<LeadForm>({ name: "", phone: "", preferredClinic: clinic });
   const [leadStatus, setLeadStatus] = useState<LeadStatus>("idle");
+  // Goal-filtered intake questions (Clinical Intake's engine, reused rather
+  // than duplicated — see seedAnswersFromTags in assessmentFlow.ts).
+  const [path, setPath] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<AssessmentAnswers>({});
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     if (clinic) setLead((l) => ({ ...l, preferredClinic: clinic }));
   }, [clinic]);
 
+  const transition = (fn: () => void) => {
+    setVisible(false);
+    setTimeout(() => { fn(); setVisible(true); }, 150);
+  };
+
   const pickGoal = (g: JourneyGoalSlug) => {
     setGoal(g);
     setServiceId(String(bundles[g]?.services?.[0]?._id || ""));
-    setScreen("lead");
+    const seeded = seedAnswersFromTags(quizConfig.questions, GOAL_CONCERN_TAGS[g]);
+    if (Object.keys(seeded).length > 0) {
+      const ordered = getOrderedQuestions(quizConfig.questions, seeded, quizConfig.settings);
+      const firstUnanswered = ordered.find((q) => !(q.id in seeded));
+      if (firstUnanswered) {
+        setAnswers(seeded);
+        transition(() => { setPath([firstUnanswered.id]); setScreen("question"); });
+        return;
+      }
+    }
+    // No mapped concern questions for this goal yet (e.g. weight-loss,
+    // until real content lands) — go straight to lead capture, same as
+    // before this bridging existed.
+    setAnswers({});
+    setPath([]);
+    transition(() => setScreen("lead"));
+  };
+
+  const orderedQuestions = getOrderedQuestions(quizConfig.questions, answers, quizConfig.settings);
+  const currentQuestionId = path[path.length - 1];
+  const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
+  const currentIndex = orderedQuestions.findIndex((q) => q.id === currentQuestionId);
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
+  const canProceed = canProceedFromQuestion(currentQuestion, currentAnswer);
+  const hasNext = computeHasNextQuestion(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
+
+  const handleQuestionNext = () => {
+    if (!currentQuestion) return;
+    const nextId = resolveNextQuestionId(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
+    if (nextId) {
+      transition(() => setPath((p) => [...p, nextId]));
+    } else {
+      transition(() => setScreen("lead"));
+    }
+  };
+
+  const handleQuestionBack = () => {
+    if (path.length > 1) {
+      transition(() => setPath((p) => p.slice(0, -1)));
+    } else {
+      transition(() => { setPath([]); setScreen("goal-pick"); });
+    }
   };
 
   const submitLead = async (e: React.FormEvent) => {
@@ -90,9 +153,22 @@ function PlanMyJourneyFlow({ bundles }: { bundles: Record<JourneyGoalSlug, Journ
 
   return (
     <main className="bg-[#f6faff] min-h-screen">
-      <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <div className={`max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
         {screen === "intro" && <IntroScreen onStart={() => setScreen("goal-pick")} />}
         {screen === "goal-pick" && <GoalPickScreen bundles={bundles} onPick={pickGoal} />}
+        {screen === "question" && currentQuestion && (
+          <QuestionScreen
+            question={currentQuestion}
+            value={currentAnswer}
+            onChange={(v) => setAnswers((a) => ({ ...a, [currentQuestion.id]: v }))}
+            canProceed={canProceed}
+            hasNext={hasNext}
+            stepNumber={path.length}
+            goalLabel={goal ? JOURNEY_GOAL_META[goal].label : ""}
+            onNext={handleQuestionNext}
+            onBack={handleQuestionBack}
+          />
+        )}
         {screen === "lead" && (
           <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} onSubmit={submitLead} goalLabel={goal ? JOURNEY_GOAL_META[goal].label : ""} />
         )}
@@ -177,6 +253,59 @@ function GoalPickScreen({ bundles, onPick }: { bundles: Record<JourneyGoalSlug, 
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// Renders one Clinical Intake question, goal-filtered — same QuestionStep
+// component and branching engine skin-quiz uses (see assessmentFlow.ts),
+// just wrapped in Plan My Journey's own visual chrome/copy.
+function QuestionScreen({
+  question,
+  value,
+  onChange,
+  canProceed,
+  hasNext,
+  stepNumber,
+  goalLabel,
+  onNext,
+  onBack,
+}: {
+  question: AssessmentQuestion;
+  value: string | string[] | number | undefined;
+  onChange: (v: string | string[] | number) => void;
+  canProceed: boolean;
+  hasNext: boolean;
+  stepNumber: number;
+  goalLabel: string;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="py-6 md:py-10">
+      <div className="mb-7">
+        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
+          {goalLabel} · Question {stepNumber}
+        </span>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">{question.title}</h2>
+        {question.subtitle && <p className="text-gray-500 text-sm md:text-base">{question.subtitle}</p>}
+      </div>
+
+      <QuestionStep key={question.id} question={question} value={value} onChange={onChange} />
+
+      <div className="mt-8 flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-gray-500 hover:text-[#0B2560] transition-colors text-sm font-medium">
+          ← Back
+        </button>
+        <button
+          onClick={onNext}
+          disabled={!canProceed}
+          className="group flex items-center gap-2 px-8 py-3 bg-[#0B2560] text-white font-bold rounded-xl shadow-md shadow-[#0B2560]/20 hover:bg-[#0d2d72] hover:shadow-lg hover:shadow-[#0B2560]/25 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md transition-all duration-200 active:translate-y-0"
+        >
+          {hasNext ? "Next" : "Continue →"}
+          <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+        </button>
       </div>
     </div>
   );

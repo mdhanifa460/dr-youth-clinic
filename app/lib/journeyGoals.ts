@@ -55,3 +55,19 @@ export interface JourneyGoalBundle {
   doctors: any[];
   results: any[];
 }
+
+// Bridges a Plan My Journey goal to the Clinical Intake "concern" tags it
+// corresponds to (see app/lib/quizDefaults.ts's DEFAULT_TREATMENT_MAP
+// concernTag buckets) — picking a goal card seeds the intake engine's
+// answers.concern directly, so the visitor is never asked the redundant
+// "what's your concern?" question a second time. "weight-loss" has no
+// Clinical Intake concern bucket yet (see Phase 3 of the journey-merge
+// plan) — left empty until real content exists, at which point the intake
+// question flow simply won't branch for this goal (an empty array matches
+// nothing, same as today's behavior with no bridging at all).
+export const GOAL_CONCERN_TAGS: Record<JourneyGoalSlug, string[]> = {
+  hair: ["hair"],
+  skin: ["acne", "pigmentation", "ageing", "glow"],
+  laser: ["hair-removal", "tattoo-removal"],
+  "weight-loss": [],
+};

@@ -3,9 +3,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
-import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion, type TreatmentRecommendation } from "@/app/lib/quizDefaults";
+import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type TreatmentRecommendation } from "@/app/lib/quizDefaults";
 import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, hasNextQuestion as computeHasNextQuestion, postAssessmentEvent } from "@/app/lib/assessmentFlow";
 import { locations } from "@/app/data/locations";
+import QuestionStep from "@/app/components/assessment/QuestionStep";
 import AssessmentChat from "./AssessmentChat";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
@@ -19,14 +21,6 @@ function slugToLabel(slug: string): string {
     .filter(Boolean)
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join(" ");
-}
-
-function CheckIcon() {
-  return (
-    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-    </svg>
-  );
 }
 
 function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabel: string }) {
@@ -152,219 +146,6 @@ function LeadCaptureScreen({
         )}
         <p className="text-center text-xs text-gray-500">We'll never share your details. No spam, ever.</p>
       </form>
-    </div>
-  );
-}
-
-function SelectionCheck({ selected }: { selected: boolean }) {
-  return (
-    <span className={`absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
-      selected ? "bg-[#0B2560] scale-100 opacity-100" : "bg-gray-100 scale-90 opacity-0"
-    }`}>
-      <CheckIcon />
-    </span>
-  );
-}
-
-// Uploads straight to Cloudinary via a dedicated, rate-limited public route
-// (app/api/assessment-photo-upload) — never blocks progress: skipping is
-// always allowed regardless of the question's Required setting, since asking
-// a visitor to mandatorily upload a photo of their face/skin is bad practice.
-function PhotoUploadField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleFile = async (file: File) => {
-    setError("");
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/assessment-photo-upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Upload failed");
-      onChange(data.data.secure_url);
-    } catch (err: any) {
-      setError(err.message || "Upload failed — please try again or skip this step.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 px-6 py-10 text-center">
-      {value ? (
-        <div className="flex flex-col items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="Uploaded photo" className="w-32 h-32 rounded-xl object-cover shadow-sm" />
-          <button
-            type="button"
-            onClick={() => { onChange(""); if (inputRef.current) inputRef.current.value = ""; }}
-            className="text-xs font-semibold text-red-500 hover:text-red-700"
-          >
-            Remove photo
-          </button>
-        </div>
-      ) : (
-        <label className="cursor-pointer flex flex-col items-center gap-3">
-          <span className="text-4xl">📷</span>
-          <span className="text-sm font-bold text-[#0B2560]">{uploading ? "Uploading…" : "Tap to add a photo"}</span>
-          <span className="text-xs text-gray-500">Optional — you can skip this step</span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-          />
-        </label>
-      )}
-      {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
-    </div>
-  );
-}
-
-// One generic renderer for every question type — replaces the 5 bespoke
-// per-step components the old fixed-question quiz had, since questions are
-// now admin-defined and their number/order isn't fixed at build time.
-function QuestionStep({
-  question,
-  value,
-  onChange,
-}: {
-  question: AssessmentQuestion;
-  value: string | string[] | number | undefined;
-  onChange: (v: string | string[] | number) => void;
-}) {
-  if (question.type === "photo") {
-    return <PhotoUploadField value={typeof value === "string" ? value : ""} onChange={onChange} />;
-  }
-
-  if (question.type === "text") {
-    const text = typeof value === "string" ? value : "";
-    return (
-      <div className="bg-white rounded-2xl border-2 border-gray-100 px-5 py-4 focus-within:border-[#0B2560]/40 transition">
-        <textarea
-          value={text}
-          onChange={(e) => onChange(e.target.value.slice(0, 500))}
-          maxLength={500}
-          rows={5}
-          placeholder="Type here… (optional)"
-          className="w-full resize-none border-none outline-none text-gray-800 text-sm placeholder-gray-400"
-        />
-        <p className="text-right text-xs text-gray-300 mt-1">{text.length}/500</p>
-      </div>
-    );
-  }
-
-  if (question.type === "slider" || question.type === "number") {
-    const num = typeof value === "number" ? value : question.sliderMin;
-    return (
-      <div className="bg-white rounded-2xl border-2 border-gray-100 px-6 py-8">
-        <div className="flex items-baseline justify-between mb-4">
-          <span className="text-3xl font-extrabold text-[#0B2560]">{num}</span>
-          {question.sliderUnit && <span className="text-sm text-gray-500">{question.sliderUnit}</span>}
-        </div>
-        <input
-          type="range"
-          min={question.sliderMin}
-          max={question.sliderMax}
-          step={question.sliderStep || 1}
-          value={num}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full accent-[#0B2560]"
-        />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>{question.sliderMin}</span>
-          <span>{question.sliderMax}</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (question.type === "dropdown") {
-    return (
-      <select
-        value={typeof value === "string" ? value : ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 font-semibold focus:outline-none focus:border-[#0B2560]"
-      >
-        <option value="">Select an option</option>
-        {question.answers.map((a) => (
-          <option key={a.id} value={a.id}>{a.title}</option>
-        ))}
-      </select>
-    );
-  }
-
-  if (question.type === "yesno") {
-    return (
-      <div className="flex gap-3">
-        {question.answers.map((a) => {
-          const selected = value === a.id;
-          return (
-            <button
-              key={a.id}
-              onClick={() => onChange(a.id)}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-2xl border-2 px-6 py-6 font-bold text-lg transition-all duration-200 ${
-                selected ? "border-[#0B2560] bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/25" : "border-gray-100 bg-white text-gray-700 hover:border-[#0B2560]/30"
-              }`}
-            >
-              {a.icon && <span className="text-2xl">{a.icon}</span>}
-              {a.title}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // single / multi / image / emoji — same card-grid visual language
-  const isMulti = question.type === "multi";
-  const selectedIds = isMulti ? (Array.isArray(value) ? value : []) : [];
-  const singleId = !isMulti && typeof value === "string" ? value : "";
-
-  const toggle = (id: string) => {
-    if (isMulti) {
-      const next = selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
-      onChange(next);
-    } else {
-      onChange(id);
-    }
-  };
-
-  const hasDescriptions = question.answers.some((a) => a.description);
-
-  return (
-    <div className={hasDescriptions ? "flex flex-col gap-3" : "grid grid-cols-2 md:grid-cols-3 gap-3"}>
-      {question.answers.map((a) => {
-        const selected = isMulti ? selectedIds.includes(a.id) : singleId === a.id;
-        return (
-          <button
-            key={a.id}
-            onClick={() => toggle(a.id)}
-            className={`relative flex items-center gap-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer ${
-              hasDescriptions ? "px-5 py-4" : "flex-col justify-center gap-2 px-3 py-5 text-center"
-            } ${
-              selected ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10" : "border-gray-100 bg-white hover:border-[#0B2560]/30 hover:shadow-sm"
-            }`}
-          >
-            <SelectionCheck selected={selected} />
-            {a.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={a.image} alt={a.title} className="w-12 h-12 rounded-xl object-cover shrink-0" />
-            ) : (
-              <span className={hasDescriptions ? "text-2xl flex-shrink-0" : "text-3xl leading-none"}>{a.icon}</span>
-            )}
-            <div>
-              <p className={`font-bold text-sm ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>{a.title}</p>
-              {a.description && <p className="text-xs text-gray-500 mt-0.5">{a.description}</p>}
-            </div>
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -687,20 +468,6 @@ function ResultsScreen({
 // already uses, rather than special-casing "the concern question" by id, so
 // any question's tags can steer which follow-ups appear, consistent with how
 // scoring already works.
-function collectAnsweredTags(questions: AssessmentQuestion[], answers: AssessmentAnswers): Set<string> {
-  const tags = new Set<string>();
-  for (const q of questions) {
-    const given = answers[q.id];
-    if (given === undefined || given === null || given === "") continue;
-    const ids = Array.isArray(given) ? given : [String(given)];
-    for (const id of ids) {
-      const ans = q.answers.find((a) => a.id === id);
-      ans?.tags.forEach((t) => tags.add(t));
-    }
-  }
-  return tags;
-}
-
 export default function SkinQuizPage() {
   // Read directly from window.location instead of next/navigation's
   // useSearchParams() — that hook requires a <Suspense> boundary during
@@ -742,11 +509,7 @@ export default function SkinQuizPage() {
   }, []);
 
   const trackEvent = useCallback((event: "started" | "completed", primaryConcern?: string) => {
-    fetch("/api/assessment-events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event, primaryConcern: primaryConcern || "", campaign, qrSource, clinicLocation, channel }),
-    }).catch(() => {});
+    postAssessmentEvent({ event, primaryConcern: primaryConcern || "", campaign, qrSource, clinicLocation, channel });
   }, [campaign, qrSource, clinicLocation, channel]);
 
   // The "Enable 'Anything else for your doctor?' Note" Settings toggle only
@@ -756,11 +519,7 @@ export default function SkinQuizPage() {
   // conditionTags filtering (Dynamic Question Engine): a question with tags
   // only shows once the visitor's answers so far have collected at least one
   // matching tag — empty conditionTags = universal, always shown.
-  const answeredTags = collectAnsweredTags(quizConfig.questions, answers);
-  const orderedQuestions = [...quizConfig.questions]
-    .filter((q) => !(q.type === "text" && q.id === "notes" && quizConfig.settings?.enableNotes === false))
-    .filter((q) => !q.conditionTags?.length || q.conditionTags.some((t) => answeredTags.has(t)))
-    .sort((a, b) => a.order - b.order);
+  const orderedQuestions = getOrderedQuestions(quizConfig.questions, answers, quizConfig.settings);
   const currentQuestionId = path[path.length - 1];
   const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
   const currentIndex = orderedQuestions.findIndex((q) => q.id === currentQuestionId);
@@ -839,31 +598,13 @@ export default function SkinQuizPage() {
   }, [currentQuestion]);
 
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
-  const canProceed = !currentQuestion?.required || currentQuestion.type === "photo" || (
-    Array.isArray(currentAnswer) ? currentAnswer.length > 0 : currentAnswer !== undefined && currentAnswer !== ""
-  );
+  const canProceed = canProceedFromQuestion(currentQuestion, currentAnswer);
 
   const handleNext = () => {
     if (!currentQuestion) return;
-    // Branching: a chosen single-select answer can point to a specific next
-    // question; otherwise fall through to the next question in order.
-    let nextId: string | undefined;
-    if (typeof currentAnswer === "string") {
-      const chosen = currentQuestion.answers.find((a) => a.id === currentAnswer);
-      if (chosen?.nextQuestionId) nextId = chosen.nextQuestionId;
-    }
-    if (!nextId) nextId = orderedQuestions[currentIndex + 1]?.id;
-
-    // Guard against a misconfigured branch: a dangling nextQuestionId (its
-    // question was deleted after the branch was set) or a cycle (points back
-    // to an already-visited question) would otherwise strand the visitor on
-    // a blank page or in an infinite loop — treat both as "no more questions".
-    if (nextId && (!orderedQuestions.some((q) => q.id === nextId) || path.includes(nextId))) {
-      nextId = undefined;
-    }
-
+    const nextId = resolveNextQuestionId(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
     if (nextId) {
-      transition(() => setPath((p) => [...p, nextId!]));
+      transition(() => setPath((p) => [...p, nextId]));
     } else {
       goToResults();
     }
@@ -936,13 +677,7 @@ export default function SkinQuizPage() {
   // understates progress and desyncs the label from what's actually being
   // asked. Estimate the path length instead: what's been visited, plus one
   // more if there's a next question to go to from here.
-  const hasNextQuestion = !!currentQuestion && (() => {
-    if (typeof currentAnswer === "string") {
-      const chosen = currentQuestion.answers.find((a) => a.id === currentAnswer);
-      if (chosen?.nextQuestionId) return orderedQuestions.some((q) => q.id === chosen.nextQuestionId) && !path.includes(chosen.nextQuestionId);
-    }
-    return !!orderedQuestions[currentIndex + 1];
-  })();
+  const hasNextQuestion = computeHasNextQuestion(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
   const estimatedTotal = Math.max(path.length + (hasNextQuestion ? 1 : 0), path.length, 1);
   const progressPct = screen === "intro" || screen === "lead" ? 0 : screen !== "question" ? 100 : Math.round((path.length / estimatedTotal) * 100);
   const stepLabel = screen === "intro" ? "Welcome" : screen === "lead" ? "Your Details" : screen === "question" ? `Question ${path.length} of ${estimatedTotal}` : "Your Report";
