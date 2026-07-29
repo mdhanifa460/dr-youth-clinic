@@ -79,7 +79,7 @@ function BlockItem({
         <figure className="mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={data.url} alt={data.alt || ""} className="w-full rounded-2xl object-cover" />
-          {data.caption && <figcaption className="text-xs text-gray-400 text-center mt-2">{data.caption}</figcaption>}
+          {data.caption && <figcaption className="text-xs text-gray-500 text-center mt-2">{data.caption}</figcaption>}
         </figure>
       ) : null;
 
@@ -87,7 +87,7 @@ function BlockItem({
       return data.text ? (
         <blockquote className="border-l-4 border-[#F5A623] pl-6 pr-4 py-4 my-8 bg-[#fffbf0] rounded-r-2xl text-gray-600 italic text-lg">
           <p>{data.text}</p>
-          {data.attribution && <footer className="text-sm text-gray-400 mt-2 not-italic">— {data.attribution}</footer>}
+          {data.attribution && <footer className="text-sm text-gray-500 mt-2 not-italic">— {data.attribution}</footer>}
         </blockquote>
       ) : null;
 
@@ -167,7 +167,7 @@ function BlockItem({
           <div>
             <p className="text-gray-600 text-sm italic leading-relaxed mb-2">&ldquo;{data.quote}&rdquo;</p>
             <p className="font-bold text-[#0B2560] text-sm">{doctor.name}</p>
-            {doctor.title && <p className="text-gray-400 text-xs">{doctor.title}</p>}
+            {doctor.title && <p className="text-gray-500 text-xs">{doctor.title}</p>}
           </div>
         </div>
       );
@@ -252,7 +252,7 @@ function BlockItem({
         >
           <div>
             <p className="font-bold text-[#0B2560] text-sm">{data.label || info.title}</p>
-            {info.subtitle && <p className="text-gray-400 text-xs mt-0.5">{info.subtitle}</p>}
+            {info.subtitle && <p className="text-gray-500 text-xs mt-0.5">{info.subtitle}</p>}
           </div>
           <span className="text-[#3B82C4] group-hover:translate-x-1 transition-transform shrink-0">→</span>
         </Link>
@@ -298,7 +298,7 @@ function BlockItem({
               allowFullScreen
             />
           </div>
-          {data.caption && <p className="text-xs text-gray-400 text-center mt-2">{data.caption}</p>}
+          {data.caption && <p className="text-xs text-gray-500 text-center mt-2">{data.caption}</p>}
         </div>
       );
     }
@@ -317,7 +317,7 @@ function BlockItem({
               allowFullScreen
             />
           </div>
-          {video.title && <p className="text-xs text-gray-400 text-center mt-2">{video.title}</p>}
+          {video.title && <p className="text-xs text-gray-500 text-center mt-2">{video.title}</p>}
         </div>
       );
     }
@@ -333,7 +333,7 @@ function BlockItem({
           <span className="text-2xl shrink-0">📄</span>
           <div>
             <p className="font-bold text-[#0B2560] text-sm">{data.label || "Download PDF"}</p>
-            <p className="text-gray-400 text-xs">Opens in a new tab</p>
+            <p className="text-gray-500 text-xs">Opens in a new tab</p>
           </div>
         </a>
       ) : null;
@@ -392,7 +392,7 @@ function BlockItem({
               <div className={i < steps.length - 1 ? "pb-6" : ""}>
                 <div className="flex items-center gap-2">
                   <p className="font-headline font-bold text-[#0B2560] text-sm">{step.label}</p>
-                  {step.duration && <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{step.duration}</span>}
+                  {step.duration && <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{step.duration}</span>}
                 </div>
                 {step.description && <p className="text-sm text-gray-500 leading-relaxed mt-1">{step.description}</p>}
               </div>
@@ -488,7 +488,7 @@ function BlockItem({
       if (citations.length === 0) return null;
       return (
         <div className="mb-8 p-5 rounded-2xl bg-gray-50 border border-gray-100">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Sources & References</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Sources & References</p>
           <ol className="space-y-1.5">
             {citations.map((c: any, i: number) => (
               <li key={i} className="text-xs text-gray-500 leading-relaxed">

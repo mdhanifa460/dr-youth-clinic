@@ -18,7 +18,7 @@ export default function AwardsSection({ data }: { data: AwardsData }) {
               <span className="text-4xl mb-3">{a.icon}</span>
               {a.year && <p className="text-[#F5A623] font-headline font-extrabold text-sm mb-1">{a.year}</p>}
               <p className="font-headline font-bold text-[#0B2560] text-sm">{a.title}</p>
-              {a.desc && <p className="text-gray-400 text-xs mt-1">{a.desc}</p>}
+              {a.desc && <p className="text-gray-500 text-xs mt-1">{a.desc}</p>}
             </div>
           ))}
         </div>

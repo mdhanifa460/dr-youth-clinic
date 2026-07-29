@@ -141,7 +141,7 @@ export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) 
         )}
 
         {disclaimer && (
-          <p className="text-center text-xs text-gray-400 mt-8">*{disclaimer}</p>
+          <p className="text-center text-xs text-gray-500 mt-8">*{disclaimer}</p>
         )}
       </div>
     </section>

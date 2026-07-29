@@ -69,7 +69,7 @@ export default function SliderCard({ pair }: { pair: any }) {
       <div className="px-5 sm:px-6 py-5">
         <h3 className="font-bold text-[#0B2560] text-base leading-snug">{pair.title}</h3>
         {pair.description && (
-          <p className="text-gray-400 text-sm mt-1.5 leading-relaxed">{pair.description}</p>
+          <p className="text-gray-500 text-sm mt-1.5 leading-relaxed">{pair.description}</p>
         )}
         {pair.category && (
           <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-[#f6faff] text-[#3B82C4] text-xs font-semibold">

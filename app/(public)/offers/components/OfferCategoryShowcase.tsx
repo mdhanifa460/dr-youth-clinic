@@ -71,7 +71,7 @@ export default function OfferCategoryShowcase({ summaries }: { summaries: Catego
                       {summary!.count} offer{summary!.count !== 1 ? 's' : ''} · From <span className="font-bold text-[#0B2560]">₹{summary!.startingFrom?.toLocaleString('en-IN')}</span>
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-400 mb-3">Ask about pricing at your consultation</p>
+                    <p className="text-xs text-gray-500 mb-3">Ask about pricing at your consultation</p>
                   )}
                   <div className="flex-1" />
                   <span className="inline-flex items-center gap-1 text-[#3B82C4] text-xs font-bold group-hover:text-[#0B2560] transition-colors">

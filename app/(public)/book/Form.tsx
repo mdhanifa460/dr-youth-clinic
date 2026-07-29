@@ -25,7 +25,7 @@ const TIME_SLOTS = [
   '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
 ];
 
-const inputCls = 'w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition placeholder:text-gray-400 bg-[#f6faff]';
+const inputCls = 'w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition placeholder:text-gray-500 bg-[#f6faff]';
 
 export default function ConsultationForm({ step, setStep }: { step: number; setStep: (n: number) => void }) {
   const [loading, setLoading] = useState(false);
@@ -127,27 +127,27 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         </div>
         <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-5 space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-400">Booking ID</span>
+            <span className="text-gray-500">Booking ID</span>
             <span className="font-bold text-[#0B2560]">{bookingId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Name</span>
+            <span className="text-gray-500">Name</span>
             <span className="font-semibold text-gray-700">{form.name}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Service</span>
+            <span className="text-gray-500">Service</span>
             <span className="font-semibold text-gray-700">{form.service}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Location</span>
+            <span className="text-gray-500">Location</span>
             <span className="font-semibold text-gray-700">{form.location}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Date & Time</span>
+            <span className="text-gray-500">Date & Time</span>
             <span className="font-semibold text-gray-700">{form.date} · {form.time}</span>
           </div>
         </div>
-        <p className="text-xs text-gray-400">Screenshot or note your Booking ID for reference.</p>
+        <p className="text-xs text-gray-500">Screenshot or note your Booking ID for reference.</p>
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <Link href="/" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
             Back to Home
@@ -184,7 +184,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
+          <div role="alert" className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
             <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
             <p className="text-red-600 text-sm">{error}</p>
           </div>
@@ -193,18 +193,22 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         {/* ── STEP 1: Personal Info ── */}
         {step === 1 && (
           <div className="space-y-4">
-            <input name="name" value={form.name} onChange={e => set('name', e.target.value)}
+            <label htmlFor="book-name" className="sr-only">Full Name</label>
+            <input id="book-name" name="name" value={form.name} onChange={e => set('name', e.target.value)}
               placeholder="Full Name *" className={inputCls} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">+91</span>
-                <input name="phone" value={form.phone} onChange={e => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                <label htmlFor="book-phone" className="sr-only">Phone Number</label>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-semibold">+91</span>
+                <input id="book-phone" name="phone" value={form.phone} onChange={e => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="Phone Number *" className={`${inputCls} pl-12`} maxLength={10} />
               </div>
-              <input name="email" type="email" value={form.email} onChange={e => set('email', e.target.value)}
+              <label htmlFor="book-email" className="sr-only">Email (optional)</label>
+              <input id="book-email" name="email" type="email" value={form.email} onChange={e => set('email', e.target.value)}
                 placeholder="Email (optional)" className={inputCls} />
             </div>
-            <textarea name="concern" value={form.concern} onChange={e => set('concern', e.target.value)}
+            <label htmlFor="book-concern" className="sr-only">Describe your skin / hair concern</label>
+            <textarea id="book-concern" name="concern" value={form.concern} onChange={e => set('concern', e.target.value)}
               placeholder="Describe your skin / hair concern *"
               className={`${inputCls} h-28 resize-none`} />
           </div>
@@ -223,7 +227,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
                 <span className="text-3xl shrink-0">{s.icon}</span>
                 <div>
                   <p className={`font-bold text-sm ${form.service === s.id ? 'text-[#0B2560]' : 'text-gray-800'}`}>{s.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{s.desc}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
                 </div>
               </button>
             ))}
@@ -243,7 +247,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
                 <span className="text-2xl shrink-0">📍</span>
                 <div>
                   <p className={`font-bold text-sm ${form.location === l.id ? 'text-[#0B2560]' : 'text-gray-800'}`}>{l.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{l.address}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{l.address}</p>
                 </div>
               </button>
             ))}
@@ -322,7 +326,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
             {/* Summary */}
             {form.date && form.time && (
               <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-5">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Booking Summary</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Booking Summary</p>
                 <div className="grid grid-cols-2 gap-y-2 text-sm">
                   {[
                     ['Name', form.name],
@@ -334,7 +338,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
                     ...(promoStatus === 'valid' ? [['Promo', `${promoCode} (${promoDiscount}% off)`]] : []),
                   ].map(([label, val]) => (
                     <div key={label}>
-                      <span className="text-gray-400 text-xs">{label}</span>
+                      <span className="text-gray-500 text-xs">{label}</span>
                       <p className="font-semibold text-[#0B2560] text-xs">{val}</p>
                     </div>
                   ))}

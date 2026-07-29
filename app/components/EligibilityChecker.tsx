@@ -68,7 +68,7 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
               ))}
             </div>
 
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
               Question {step + 1} of {questions.length}
             </p>
             <p className="font-semibold text-[#0B2560] text-[15px] leading-snug mb-5">{current.text}</p>
@@ -99,7 +99,7 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
             </p>
             {idealFor.length > 0 && (
               <div className="text-left bg-[#f6faff] rounded-2xl p-4 mt-2">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">This treatment is ideal for</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">This treatment is ideal for</p>
                 <div className="flex flex-wrap gap-1.5">
                   {idealFor.map((tag, i) => (
                     <span key={i} className="text-xs bg-white border border-blue-50 text-[#0B2560] px-2.5 py-1 rounded-full">{tag}</span>
@@ -111,7 +111,7 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
               <a href="/book" className="flex-1 flex items-center justify-center gap-1.5 bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
                 Book Now <ChevronRight size={13} />
               </a>
-              <button onClick={reset} className="flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-100 text-gray-400 hover:bg-gray-50 transition">
+              <button onClick={reset} className="flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-100 text-gray-500 hover:bg-gray-50 transition">
                 <RotateCcw size={14} />
               </button>
             </div>
@@ -129,7 +129,7 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
               <a href="/book" className="flex-1 flex items-center justify-center gap-1.5 bg-[#F5A623] text-[#0B2560] py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
                 {consultationBadge} <ChevronRight size={13} />
               </a>
-              <button onClick={reset} className="flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-100 text-gray-400 hover:bg-gray-50 transition">
+              <button onClick={reset} className="flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-100 text-gray-500 hover:bg-gray-50 transition">
                 <RotateCcw size={14} />
               </button>
             </div>

@@ -203,7 +203,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
             ].map((s) => (
               <div key={s.label}>
                 <div className="text-2xl font-extrabold text-[#0B2560] leading-none">{s.value}</div>
-                <div className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mt-0.5">{s.label}</div>
+                <div className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
@@ -222,7 +222,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
           <h2 className="text-4xl md:text-5xl font-headline font-extrabold text-[#0B2560] mb-4 tracking-tight">
             Choose Your Treatment
           </h2>
-          <p className="text-gray-400 text-lg max-w-lg mx-auto">
+          <p className="text-gray-500 text-lg max-w-lg mx-auto">
             Select a category to explore all available procedures, pricing, and what to expect.
           </p>
         </div>
@@ -271,7 +271,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
                         </li>
                       ))}
                       {count > 3 && (
-                        <li className="text-xs text-gray-400 pl-4">+{count - 3} more treatments</li>
+                        <li className="text-xs text-gray-500 pl-4">+{count - 3} more treatments</li>
                       )}
                     </ul>
                   )}

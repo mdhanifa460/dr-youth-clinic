@@ -48,7 +48,7 @@ function ElementView({ el, entities, siteConfig }: any) {
           <div className="w-11 h-11 rounded-xl bg-[#0B2560]/10 flex items-center justify-center shrink-0 overflow-hidden">
             {doc.photo?.url ? <img src={doc.photo.url} alt={doc.name} className="w-full h-full object-cover" /> : <Stethoscope size={16} className="text-[#0B2560]" />}
           </div>
-          <div className="min-w-0"><p className="text-xs font-bold text-[#0B2560] truncate">{doc.name}</p><p className="text-[10px] text-gray-400 truncate">{doc.title}</p></div>
+          <div className="min-w-0"><p className="text-xs font-bold text-[#0B2560] truncate">{doc.name}</p><p className="text-[10px] text-gray-500 truncate">{doc.title}</p></div>
         </Link>
       );
     }
@@ -107,7 +107,7 @@ function CountdownEl({ target, label }: { target?: string; label?: string }) {
   if (!target) return null;
   return (
     <div className="bg-white/90 rounded-2xl px-4 py-2.5 text-center shadow-lg">
-      {label && <p className="text-[10px] text-gray-400 font-semibold uppercase">{label}</p>}
+      {label && <p className="text-[10px] text-gray-500 font-semibold uppercase">{label}</p>}
       <p className="text-sm font-extrabold text-[#0B2560]">{left}</p>
     </div>
   );
@@ -189,7 +189,7 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
     }
   };
 
-  if (!slide) return <div className="p-10 text-center text-gray-400">This story has no slides yet.</div>;
+  if (!slide) return <div className="p-10 text-center text-gray-500">This story has no slides yet.</div>;
 
   return (
     <main className="bg-[#0a0a0a] min-h-screen">

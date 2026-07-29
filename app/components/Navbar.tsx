@@ -127,7 +127,7 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 border-b border-gray-100 shadow-sm">
 
       {/* ── MOBILE ROW: [hamburger] [logo center] [photo icon] ── */}
-      <div className="lg:hidden flex items-center justify-between px-4 py-3">
+      <div className="xl:hidden flex items-center justify-between px-4 py-3">
 
         {/* Left: hamburger */}
         <button
@@ -161,7 +161,7 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
       </div>
 
       {/* ── DESKTOP ROW: [logo] [nav] [phone + CTA] ── */}
-      <div className="hidden lg:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-4 gap-3 xl:gap-5">
+      <div className="hidden xl:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-4 gap-3 xl:gap-5">
 
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
@@ -277,7 +277,7 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/plan-my-journey"
-            className="hidden xl:flex min-h-10 items-center gap-1.5 text-[#0B2560] px-2 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition whitespace-nowrap"
+            className="hidden 2xl:flex min-h-10 items-center gap-1.5 text-[#0B2560] px-2 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition whitespace-nowrap"
           >
             ✨ Plan My Journey
           </Link>
@@ -287,15 +287,6 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
           >
             {siteConfig.skinQuizNav}
           </Link>
-          {phone && (
-            <a
-              href={phoneHref}
-              className="hidden xl:flex min-h-10 items-center gap-1.5 border border-gray-200 text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition"
-            >
-              <MdPhone size={15} />
-              {phone}
-            </a>
-          )}
           <Link
             href="/book"
             className="min-h-10 bg-[#0B2560] text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-[0_6px_20px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-lg transition flex items-center justify-center whitespace-nowrap"
@@ -309,13 +300,13 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
       {mobileOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="lg:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1 max-h-[calc(100vh-64px)] overflow-y-auto"
+          className="xl:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1 max-h-[calc(100vh-64px)] overflow-y-auto"
         >
           {navItems.map((item) => {
             if (item.linkType === "locations") {
               return (
                 <div key={item.id} className="pt-2 pb-1">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1">{item.label}</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-3 mb-1">{item.label}</p>
                   {CITIES.map((city) => (
                     <Link
                       key={city}

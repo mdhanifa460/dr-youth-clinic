@@ -72,7 +72,7 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
         <div className="min-w-0">
           <p className="text-[#0B2560] font-bold text-sm truncate">{review.authorName}</p>
           <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-            {review.location && <span className="text-gray-400 text-xs capitalize">{review.location}</span>}
+            {review.location && <span className="text-gray-500 text-xs capitalize">{review.location}</span>}
             {review.services?.[0] && <span className="text-[#3B82C4] text-xs">{review.services[0]}</span>}
             {showDate && review.reviewDate && (
               <span className="text-gray-300 text-xs">

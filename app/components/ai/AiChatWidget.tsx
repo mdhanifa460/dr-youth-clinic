@@ -140,7 +140,7 @@ function CardChip({ card }: { card: Card }) {
         <Icon size={13} className="text-[#0B2560]" />
       </div>
       <p className="text-xs font-bold text-[#0B2560] leading-snug line-clamp-2">{card.title}</p>
-      {card.subtitle && <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">{card.subtitle}</p>}
+      {card.subtitle && <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">{card.subtitle}</p>}
       <span className="text-[10px] font-semibold text-[#3B82C4] flex items-center gap-0.5 mt-1.5">View <ChevronRight size={10} /></span>
     </div>
   );
@@ -160,7 +160,7 @@ function TypingDots() {
 function PanelHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 shrink-0">
-      <button onClick={onBack} className="text-gray-400 hover:text-[#0B2560]"><ArrowLeft size={16} /></button>
+      <button onClick={onBack} className="text-gray-500 hover:text-[#0B2560]"><ArrowLeft size={16} /></button>
       <p className="text-sm font-bold text-[#0B2560]">{title}</p>
     </div>
   );
@@ -199,7 +199,7 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
       <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-3">
         <CheckCircle size={36} className="text-green-500" />
         <p className="font-bold text-[#0B2560] text-sm">Request received!</p>
-        <p className="text-xs text-gray-400">Our team will call you shortly to confirm your slot.</p>
+        <p className="text-xs text-gray-500">Our team will call you shortly to confirm your slot.</p>
         <button onClick={onBack} className={`mt-2 bg-gradient-to-br ${accent} text-white text-xs font-bold px-5 py-2.5 rounded-xl`}>Back to Chat</button>
       </div>
     );
@@ -247,16 +247,16 @@ function OffersPanel({ onBack }: { onBack: () => void }) {
       <PanelHeader title="Current Offers" onBack={onBack} />
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading ? (
-          <p className="text-xs text-gray-400 text-center py-8">Loading…</p>
+          <p className="text-xs text-gray-500 text-center py-8">Loading…</p>
         ) : offers.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-8">No active offers right now — check back soon!</p>
+          <p className="text-xs text-gray-500 text-center py-8">No active offers right now — check back soon!</p>
         ) : offers.map(o => (
           <div key={o._id} className="border border-gray-100 rounded-2xl p-3.5">
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-bold text-[#0B2560] leading-snug">{o.title}</p>
               {o.badge && <span className="shrink-0 text-[9px] font-bold bg-amber-50 text-[#F5A623] px-2 py-0.5 rounded-full">{o.badge}</span>}
             </div>
-            {o.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{o.description}</p>}
+            {o.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{o.description}</p>}
             {o.discountedPrice && (
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-gray-300 line-through flex items-center"><IndianRupee size={10} />{o.originalPrice}</span>
@@ -276,7 +276,7 @@ function AssessmentPanel({ onBack, onPickConcern, accent }: { onBack: () => void
     <>
       <PanelHeader title="Quick Clinical Assessment" onBack={onBack} />
       <div className="flex-1 overflow-y-auto p-4">
-        <p className="text-xs text-gray-400 mb-3">What's your main concern? I'll give you tailored guidance right here.</p>
+        <p className="text-xs text-gray-500 mb-3">What's your main concern? I'll give you tailored guidance right here.</p>
         <div className="grid grid-cols-2 gap-2">
           {CONCERNS.map(c => (
             <button key={c} onClick={() => onPickConcern(c)}
@@ -285,7 +285,7 @@ function AssessmentPanel({ onBack, onPickConcern, accent }: { onBack: () => void
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-gray-400 mt-4 text-center">
+        <p className="text-[11px] text-gray-500 mt-4 text-center">
           Want a full photo-based assessment with detailed scoring?{' '}
           <Link href="/skin-quiz" className={`font-bold bg-gradient-to-br ${accent} bg-clip-text text-transparent`}>Take the full quiz →</Link>
         </p>
@@ -458,12 +458,12 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
               {/* Messages */}
               <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                 {disabled && (
-                  <p className="text-xs text-gray-400 text-center py-6">The AI assistant is currently unavailable. Please call or WhatsApp us instead.</p>
+                  <p className="text-xs text-gray-500 text-center py-6">The AI assistant is currently unavailable. Please call or WhatsApp us instead.</p>
                 )}
 
                 {messages.length === 0 && !disabled && (
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-400 px-1">Try asking:</p>
+                    <p className="text-xs text-gray-500 px-1">Try asking:</p>
                     {visibleSuggestedQuestions(config).map((q, i) => (
                       <button key={i} onClick={() => send(q)}
                         className="w-full text-left text-xs bg-[#f6faff] hover:bg-blue-50 border border-blue-50 text-[#0B2560] px-3.5 py-2.5 rounded-xl transition font-medium">

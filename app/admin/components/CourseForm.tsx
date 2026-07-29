@@ -80,13 +80,13 @@ function CurriculumEditor({ items, onChange }: { items: CourseModuleForm[]; onCh
             </div>
             <div className="grid grid-cols-2 gap-2">
               <input value={m.title} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], title: e.target.value }; onChange(n); }}
-                placeholder="Module title" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                placeholder="Module title" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
               <input value={m.duration} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], duration: e.target.value }; onChange(n); }}
-                placeholder="Duration (e.g. Day 1)" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                placeholder="Duration (e.g. Day 1)" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
             </div>
             <textarea value={m.topics} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], topics: e.target.value }; onChange(n); }}
               placeholder="One topic per line" rows={3}
-              className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none resize-none" />
+              className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 resize-none" />
           </div>
         ))}
       </div>
@@ -113,20 +113,20 @@ function BatchEditor({ items, onChange }: { items: CourseBatchForm[]; onChange: 
                 className="text-gray-300 hover:text-red-500"><X size={13} /></button>
             </div>
             <input value={b.label} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
-              placeholder="Label (e.g. Batch 12 — Sep 2026)" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+              placeholder="Label (e.g. Batch 12 — Sep 2026)" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
             <div className="grid grid-cols-2 gap-2">
               <input type="date" value={b.startDate} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], startDate: e.target.value }; onChange(n); }}
-                className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
               <input type="date" value={b.endDate} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], endDate: e.target.value }; onChange(n); }}
-                className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <input type="number" value={b.seatsTotal} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], seatsTotal: e.target.value }; onChange(n); }}
-                placeholder="Total seats" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                placeholder="Total seats" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
               <input type="number" value={b.seatsFilled} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], seatsFilled: e.target.value }; onChange(n); }}
-                placeholder="Seats filled" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                placeholder="Seats filled" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
               <select value={b.status} onChange={(e) => { const n = [...items]; n[i] = { ...n[i], status: e.target.value }; onChange(n); }}
-                className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none bg-white">
+                className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 bg-white">
                 <option value="upcoming">Upcoming</option>
                 <option value="open">Open</option>
                 <option value="closed">Closed</option>

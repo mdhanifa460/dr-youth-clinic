@@ -62,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${bodyFont.variable} ${headlineFont.variable}`}>
       <head>
-        <meta name="theme-color" content="#002045" />
+        <meta name="theme-color" content="#0B2560" />
 
         {/* Primary image CDN */}
         <link rel="preconnect" href="https://res.cloudinary.com" />

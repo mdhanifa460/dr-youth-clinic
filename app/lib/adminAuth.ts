@@ -302,7 +302,7 @@ export async function requirePermission(
   if (!user) return unauthorized();
   if (!canAccess(user.role, module, minLevel)) {
     return NextResponse.json(
-      { error: "Forbidden: insufficient permissions" },
+      { success: false, message: "You don't have permission to do this. Contact your admin if you need access." },
       { status: 403 }
     );
   }

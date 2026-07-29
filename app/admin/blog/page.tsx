@@ -96,19 +96,22 @@ export default function BlogAdminPage() {
   }, [fetchPosts, search]);
 
   const toggle = async (id: string, val: boolean) => {
-    setPosts((p) => p.map((x) => x._id === id ? { ...x, active: val } : x));
-    await fetch(`/api/admin/blog/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: val }) });
+    const res = await fetch(`/api/admin/blog/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: val }) });
+    const data = await res.json();
+    if (data.success) setPosts((p) => p.map((x) => x._id === id ? { ...x, active: val } : x));
   };
 
   const toggleFeatured = async (id: string, val: boolean) => {
-    setPosts((p) => p.map((x) => x._id === id ? { ...x, featured: val } : x));
-    await fetch(`/api/admin/blog/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ featured: val }) });
+    const res = await fetch(`/api/admin/blog/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ featured: val }) });
+    const data = await res.json();
+    if (data.success) setPosts((p) => p.map((x) => x._id === id ? { ...x, featured: val } : x));
   };
 
   const deletePost = async (id: string) => {
     if (!confirm('Delete this post?')) return;
-    setPosts((p) => p.filter((x) => x._id !== id));
-    await fetch(`/api/admin/blog/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/admin/blog/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) setPosts((p) => p.filter((x) => x._id !== id));
   };
 
   return (

@@ -106,7 +106,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
               {cat}
             </button>
           ))}
-          <span className="ml-auto text-xs text-gray-400 self-center">
+          <span className="ml-auto text-xs text-gray-500 self-center">
             {filtered.length} result{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>

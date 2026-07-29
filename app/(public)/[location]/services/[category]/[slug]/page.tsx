@@ -332,7 +332,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
         {/* ── BREADCRUMB ── */}
         <nav className="bg-[#f6faff] border-b border-gray-100 py-3">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
             <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
             <ChevronRight size={13} />
             <Link href={`/${params.location}`} className="hover:text-[#0B2560] transition capitalize">{cityName}</Link>
@@ -479,7 +479,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     <div key={fact.label} className="flex-shrink-0 w-40 md:w-auto bg-[#f6faff] rounded-2xl px-4 py-3 text-center border border-blue-50">
                       <div className="text-xl mb-1">{fact.icon}</div>
                       <div className="font-bold text-[#0B2560] text-sm">{fact.value}</div>
-                      <div className="text-gray-400 text-[10px] mt-0.5">{fact.label}</div>
+                      <div className="text-gray-500 text-[10px] mt-0.5">{fact.label}</div>
                     </div>
                   ))}
                 </div>
@@ -600,7 +600,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div>
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Real Patient Results</h2>
-                  <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border hidden sm:block">Unretouched photos</span>
+                  <span className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border hidden sm:block">Unretouched photos</span>
                 </div>
                 <BeforeAfterGallery pairs={beforeAfterPairs} serviceName={svc.name} />
               </div>
@@ -780,7 +780,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     svc.recoveryTime && { label: 'Recovery', value: svc.recoveryTime, color: 'text-[#3B82C4]' },
                   ].filter(Boolean).map((row: any, i, arr) => (
                     <div key={i} className={`flex justify-between items-center py-2.5 ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                      <span className="text-xs text-gray-400">{row.label}</span>
+                      <span className="text-xs text-gray-500">{row.label}</span>
                       <span className="text-right">
                         <span className={`block font-semibold text-sm ${row.bold ? 'text-2xl font-extrabold text-[#0B2560]' : row.color ?? 'text-gray-700'}`}>{row.value}</span>
                         {row.sub && <span className="block text-[11px] font-semibold text-[#F5A623]">{row.sub}</span>}
@@ -796,20 +796,20 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     <a href={`tel:${loc.phone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition">
                       <Phone size={13} /> Call to Book
                     </a>
-                    <p className="text-center text-xs text-gray-400 pt-1">{siteConfig.consultationSub}</p>
+                    <p className="text-center text-xs text-gray-500 pt-1">{siteConfig.consultationSub}</p>
                   </div>
                 </div>
               </div>
 
               {/* Clinic info */}
               <div className="rounded-3xl border border-gray-100 p-5 bg-[#f6faff] space-y-3">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.18em]">Our {cityName} Clinic</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.18em]">Our {cityName} Clinic</p>
                 <div className="flex items-start gap-2 text-sm text-gray-600">
                   <MapPin size={13} className="text-[#3B82C4] mt-0.5 shrink-0" />
                   <span className="text-xs">{loc.address}</span>
                 </div>
                 {loc.hours?.[0] && (
-                  <div className="flex items-start gap-2 text-gray-400">
+                  <div className="flex items-start gap-2 text-gray-500">
                     <Clock size={13} className="text-[#3B82C4] mt-0.5 shrink-0" />
                     <span className="text-xs">{loc.hours[0].day}: {loc.hours[0].hours}</span>
                   </div>
@@ -822,7 +822,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               {/* Available at other locations */}
               {otherLocations.length > 0 && (
                 <div className="rounded-3xl border border-gray-100 p-5 space-y-3">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.18em]">Also available at</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.18em]">Also available at</p>
                   {otherLocations.map((o: any) => (
                     <Link key={o.location} href={`/${o.location}/services/${catSlug}/${o.urlSlug}`} className="flex items-center justify-between hover:bg-[#f6faff] rounded-xl p-2 -mx-2 transition group">
                       <span className="text-sm font-semibold text-[#0B2560] capitalize">{locations[o.location]?.name ?? o.location}</span>
@@ -892,7 +892,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                       <h3 className="font-bold text-[#0B2560] text-sm">{doc.name}</h3>
                       <p className="text-[#3B82C4] text-xs mt-0.5">{doc.title}</p>
                       {doc.experience > 0 && (
-                        <p className="text-gray-400 text-xs mt-1">{doc.experience}+ years experience</p>
+                        <p className="text-gray-500 text-xs mt-1">{doc.experience}+ years experience</p>
                       )}
                       {doc.specializations?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">

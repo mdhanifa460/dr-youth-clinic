@@ -26,7 +26,7 @@ export default function OfferCategoryTabs({
           }`}
         >
           {cat}
-          <span className={`ml-1.5 text-[10px] font-bold ${active === cat ? 'text-white/70' : 'text-gray-400'}`}>
+          <span className={`ml-1.5 text-[10px] font-bold ${active === cat ? 'text-white/70' : 'text-gray-500'}`}>
             ({counts[cat] || 0})
           </span>
         </button>

@@ -110,8 +110,10 @@ function OfferForm({ offer, onSaved, onDeleted, onCancel }: {
     if (!confirm(`Delete "${form.title}"?`)) return;
     setDeleting(true);
     try {
-      await fetch(`/api/admin/offers/${offer._id}`, { method: 'DELETE' });
-      onDeleted(offer._id);
+      const res = await fetch(`/api/admin/offers/${offer._id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) onDeleted(offer._id);
+      else setError(data.message || 'Delete failed');
     } catch { setError('Delete failed'); }
     finally { setDeleting(false); }
   };

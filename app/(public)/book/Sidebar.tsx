@@ -12,13 +12,13 @@ const STEPS = [
 const CITIES = ['Chennai', 'Bangalore', 'Kochi', 'Coimbatore'];
 
 export default function Sidebar({ step }: { step: number }) {
-  const { publicPhone } = useSiteConfig();
+  const { publicPhone, yearsExperience } = useSiteConfig();
   return (
     <div className="space-y-5">
 
       {/* Step tracker — desktop only; mobile already shows progress at the top of the form card */}
       <div className="hidden lg:block bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-5">Your Progress</p>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-5">Your Progress</p>
         <div className="space-y-1">
           {STEPS.map((s, i) => {
             const done = step > s.n;
@@ -27,7 +27,7 @@ export default function Sidebar({ step }: { step: number }) {
               <div key={s.n} className="flex gap-3">
                 <div className="flex flex-col items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
-                    done ? 'bg-green-500 text-white' : active ? 'bg-[#0B2560] text-white ring-4 ring-[#0B2560]/10' : 'bg-gray-100 text-gray-400'
+                    done ? 'bg-green-500 text-white' : active ? 'bg-[#0B2560] text-white ring-4 ring-[#0B2560]/10' : 'bg-gray-100 text-gray-500'
                   }`}>
                     {done ? <CheckCircle size={14} /> : s.n}
                   </div>
@@ -36,7 +36,7 @@ export default function Sidebar({ step }: { step: number }) {
                   )}
                 </div>
                 <div className="pb-6">
-                  <p className={`font-semibold text-sm leading-tight ${active ? 'text-[#0B2560]' : done ? 'text-green-600' : 'text-gray-400'}`}>{s.label}</p>
+                  <p className={`font-semibold text-sm leading-tight ${active ? 'text-[#0B2560]' : done ? 'text-green-600' : 'text-gray-500'}`}>{s.label}</p>
                   <p className={`text-xs mt-0.5 ${active ? 'text-gray-500' : 'text-gray-300'}`}>{s.desc}</p>
                 </div>
               </div>
@@ -51,7 +51,7 @@ export default function Sidebar({ step }: { step: number }) {
         <ul className="space-y-3">
           {[
             'Free initial consultation — zero commitment',
-            'Expert dermatologists with 10+ years experience',
+            `Expert dermatologists with ${yearsExperience} years experience`,
             'FDA-approved treatments & technology',
             'Personalised plan before any procedure',
             'WhatsApp confirmation within minutes',
@@ -66,12 +66,12 @@ export default function Sidebar({ step }: { step: number }) {
 
       {/* Clinic hours */}
       <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Clinic Hours</p>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Clinic Hours</p>
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
           <Clock size={13} className="text-[#3B82C4]" />
           <span>Mon – Sat: 9:00 AM – 7:00 PM</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
           <Clock size={13} className="text-gray-300" />
           <span>Sunday: By Appointment</span>
         </div>

@@ -99,7 +99,7 @@ export default function FounderSection({ data }: { data: FounderData }) {
               {stats.map((s, i) => (
                 <div key={i}>
                   <p className="text-2xl font-extrabold text-[#0B2560]">{s.value}</p>
-                  <p className="text-gray-400 text-xs mt-0.5">{s.label}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{s.label}</p>
                 </div>
               ))}
             </div>

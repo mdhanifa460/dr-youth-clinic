@@ -78,7 +78,7 @@ export default function TreatmentComparison({
         </table>
       </div>
 
-      <div className="flex items-start gap-2 mt-3 text-xs text-gray-400">
+      <div className="flex items-start gap-2 mt-3 text-xs text-gray-500">
         <CheckCircle size={13} className="text-[#3B82C4] mt-0.5 shrink-0" />
         <span>Every treatment plan is finalised by your doctor based on your specific skin/hair assessment — figures above are typical ranges.</span>
       </div>

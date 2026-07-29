@@ -20,7 +20,7 @@ export default function FaqSection({ data, faqs }: { data: FaqData; faqs: FaqIte
             <details key={i} className="group bg-[#f6faff] rounded-2xl px-5 py-4 ring-1 ring-[#e8eff7]">
               <summary className="flex items-center justify-between cursor-pointer font-semibold text-[#0B2560] text-sm">
                 {f.question}
-                <span className="text-gray-400 group-open:rotate-45 transition-transform ml-3 shrink-0">+</span>
+                <span className="text-gray-500 group-open:rotate-45 transition-transform ml-3 shrink-0">+</span>
               </summary>
               <p className="text-gray-500 text-sm mt-3 leading-relaxed">{f.answer}</p>
             </details>

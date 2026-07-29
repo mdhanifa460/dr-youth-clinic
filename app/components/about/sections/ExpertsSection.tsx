@@ -38,7 +38,7 @@ export default function ExpertsSection({ data, doctors }: { data: ExpertsData; d
                   <h3 className="font-headline font-bold text-[#0B2560] text-base">{doc.name}</h3>
                   <p className="text-[#F5A623] text-xs font-bold uppercase tracking-wider mt-1">{doc.title}</p>
                   {doc.experience > 0 && (
-                    <p className="text-gray-400 text-xs mt-1">{doc.experience} Years Experience</p>
+                    <p className="text-gray-500 text-xs mt-1">{doc.experience} Years Experience</p>
                   )}
                   {doc.specializations?.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-gray-100 w-full">

@@ -75,7 +75,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                   placeholder="Full Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="min-h-12 border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#0B2560] placeholder:text-gray-400 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#0B2560] placeholder:text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
                   required
                 />
                 <input
@@ -83,13 +83,13 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                   placeholder="Mobile Number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="min-h-12 border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#0B2560] placeholder:text-gray-400 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#0B2560] placeholder:text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
                   required
                 />
                 <select
                   value={service}
                   onChange={(e) => setService(e.target.value)}
-                  className="min-h-12 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
                   required
                 >
                   <option value="">Select Service</option>
@@ -100,7 +100,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="min-h-12 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
                   required
                 >
                   <option value="">Select City</option>

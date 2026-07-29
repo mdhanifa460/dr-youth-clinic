@@ -127,7 +127,7 @@ export default function FAQPageClient({
           <div className="relative max-w-xl mx-auto">
             <Search
               size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
             />
             <input
               type="text"
@@ -173,7 +173,7 @@ export default function FAQPageClient({
                 >
                   {cat && <span>{cat.icon}</span>}
                   {tab}
-                  <span className={`text-[10px] font-bold ml-0.5 ${activeCategory === tab ? 'text-white/60' : 'text-gray-400'}`}>
+                  <span className={`text-[10px] font-bold ml-0.5 ${activeCategory === tab ? 'text-white/60' : 'text-gray-500'}`}>
                     {tab === 'All' ? allItems.length : categories.find((c) => c.category === tab)?.items.length ?? 0}
                   </span>
                 </button>
@@ -240,7 +240,7 @@ export default function FAQPageClient({
 
                 {assistantResult.type === 'predefined' && (
                   <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">
                       📋 Matched FAQ — did you mean:
                     </p>
                     <p className="font-semibold text-[#0B2560] text-sm mb-2">{assistantResult.matchedQuestion}</p>
@@ -262,7 +262,7 @@ export default function FAQPageClient({
                               {s.title}
                             </Link>
                           ) : (
-                            <span key={i} className="text-[11px] text-gray-400">{s.title}</span>
+                            <span key={i} className="text-[11px] text-gray-500">{s.title}</span>
                           )
                         ))}
                       </div>
@@ -288,7 +288,7 @@ export default function FAQPageClient({
                       <span className="shrink-0 mt-0.5">{item.icon}</span>
                       <span className="font-semibold text-[#0B2560] text-sm leading-snug">{item.question}</span>
                     </div>
-                    {isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0 mt-0.5" /> : <ChevronDown size={16} className="text-gray-400 shrink-0 mt-0.5" />}
+                    {isOpen ? <ChevronUp size={16} className="text-gray-500 shrink-0 mt-0.5" /> : <ChevronDown size={16} className="text-gray-500 shrink-0 mt-0.5" />}
                   </button>
                   {isOpen && (
                     <div className="px-5 pb-5 pt-0">
@@ -310,7 +310,7 @@ export default function FAQPageClient({
                   <div className="flex items-center gap-2.5 mb-4">
                     <span className="text-2xl">{cat.icon}</span>
                     <h2 className="text-lg font-bold text-[#0B2560]">{cat.category}</h2>
-                    <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                       {cat.items.length}
                     </span>
                   </div>
@@ -403,7 +403,7 @@ export default function FAQPageClient({
         {/* ── Quick topic links ── */}
         <div className="mt-10 border border-gray-100 rounded-2xl p-6 bg-gray-50">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Browse by topic</p>
-          <p className="text-[11px] text-gray-400 mb-4">Click a topic to jump straight to those questions</p>
+          <p className="text-[11px] text-gray-500 mb-4">Click a topic to jump straight to those questions</p>
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
               <button
@@ -416,7 +416,7 @@ export default function FAQPageClient({
                 }`}
               >
                 <span>{cat.icon}</span> {cat.category}
-                <span className={`text-[9px] font-bold ${activeCategory === cat.category ? 'text-white/60' : 'text-gray-400'}`}>
+                <span className={`text-[9px] font-bold ${activeCategory === cat.category ? 'text-white/60' : 'text-gray-500'}`}>
                   {cat.items.length}
                 </span>
               </button>

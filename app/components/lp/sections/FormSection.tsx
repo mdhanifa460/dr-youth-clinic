@@ -197,7 +197,7 @@ export default function FormSection({
               </form>
 
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-5">
-                <p className="flex items-center gap-1.5 text-xs text-gray-400">
+                <p className="flex items-center gap-1.5 text-xs text-gray-500">
                   <ShieldCheck size={13} className="text-[#3B82C4]" />
                   100% secure &amp; never shared
                 </p>

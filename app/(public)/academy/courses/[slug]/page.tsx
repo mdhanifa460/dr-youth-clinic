@@ -62,8 +62,8 @@ function formatDate(d?: string) {
 const BATCH_STATUS_STYLES: Record<string, string> = {
   upcoming: 'bg-blue-50 text-blue-600',
   open: 'bg-green-50 text-green-600',
-  closed: 'bg-gray-100 text-gray-400',
-  completed: 'bg-gray-100 text-gray-400',
+  closed: 'bg-gray-100 text-gray-500',
+  completed: 'bg-gray-100 text-gray-500',
 };
 
 export default async function CourseDetailPage({ params }: PageProps) {
@@ -76,7 +76,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
     <main className="bg-[#f6faff] min-h-screen pb-24 lg:pb-16">
       {/* Breadcrumb */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-        <nav className="flex items-center gap-1.5 text-xs text-gray-400">
+        <nav className="flex items-center gap-1.5 text-xs text-gray-500">
           <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
           <ChevronRight size={12} />
           <Link href="/academy#certification-programs" className="hover:text-[#0B2560] transition">Certification Programs</Link>
@@ -96,7 +96,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               {course.title}
             </h1>
             <p className="text-gray-500 text-sm mt-2 leading-relaxed">{course.shortDescription}</p>
-            <p className="text-gray-400 text-sm mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="text-gray-500 text-sm mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="flex items-center gap-1"><Clock size={13} /> {course.durationLabel}</span>
               <span className="flex items-center gap-1"><MapPin size={13} /> {course.format}</span>
               <span className="capitalize">· {course.level}</span>
@@ -192,10 +192,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     <div>
                       <p className="font-semibold text-gray-700">{b.label}</p>
                       {(b.startDate || b.endDate) && (
-                        <p className="text-gray-400 text-xs mt-0.5">{formatDate(b.startDate)}{b.endDate ? ` – ${formatDate(b.endDate)}` : ''}</p>
+                        <p className="text-gray-500 text-xs mt-0.5">{formatDate(b.startDate)}{b.endDate ? ` – ${formatDate(b.endDate)}` : ''}</p>
                       )}
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase shrink-0 ${BATCH_STATUS_STYLES[b.status] || 'bg-gray-100 text-gray-400'}`}>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase shrink-0 ${BATCH_STATUS_STYLES[b.status] || 'bg-gray-100 text-gray-500'}`}>
                       {b.status}
                     </span>
                   </div>
@@ -218,10 +218,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 <p className="font-bold text-lg">
                   {course.fee.discountedAmount ? course.fee.discountedAmount.toLocaleString('en-IN') : course.fee.amount.toLocaleString('en-IN')}
                   {course.fee.discountedAmount && (
-                    <span className="text-gray-400 text-sm font-normal line-through ml-2">{course.fee.amount.toLocaleString('en-IN')}</span>
+                    <span className="text-gray-500 text-sm font-normal line-through ml-2">{course.fee.amount.toLocaleString('en-IN')}</span>
                   )}
                 </p>
-                {course.fee.installmentsAvailable && <span className="text-xs text-gray-400">(installments available)</span>}
+                {course.fee.installmentsAvailable && <span className="text-xs text-gray-500">(installments available)</span>}
               </div>
             )}
             {course.highlights?.length > 0 && (

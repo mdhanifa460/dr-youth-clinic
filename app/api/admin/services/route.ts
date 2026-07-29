@@ -15,19 +15,31 @@ export async function GET(req: NextRequest) {
     const location = searchParams.get('location');
     const status = searchParams.get('status');
     const category = searchParams.get('category');
+    const search = searchParams.get('search')?.trim();
 
     const query: any = {};
+    // Combined via $and (not a second top-level $or) since the location
+    // filter below already needs its own $or — a second top-level $or key
+    // would silently overwrite the first rather than combining with it.
+    const andConditions: any[] = [];
     // A city filter should also surface services that target it via the
     // newer `targetLocations` list, or the legacy 'all' value.
     if (location) {
       const loc = location.toLowerCase();
-      query.$or = [
-        { targetLocations: loc },
-        { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
-      ];
+      andConditions.push({
+        $or: [
+          { targetLocations: loc },
+          { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
+        ],
+      });
     }
     if (status) query.status = status;
     if (category) query.category = category;
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      andConditions.push({ name: new RegExp(escaped, 'i') });
+    }
+    if (andConditions.length > 0) query.$and = andConditions;
 
     const services = await Service.find(query as any).sort({ createdAt: -1 });
 

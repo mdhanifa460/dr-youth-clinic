@@ -88,14 +88,14 @@ export default function EMICalculator({ price }: Props) {
                 key={months}
                 className="bg-[#f6faff] rounded-2xl p-4 border border-blue-50 text-center hover:border-[#3B82C4]/30 hover:shadow-sm transition-all"
               >
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                   {label}
                 </p>
                 <p className="flex items-center justify-center gap-0.5 font-extrabold text-[#0B2560] text-lg leading-none">
                   <IndianRupee size={13} />
                   {fmt(selected / months)}
                 </p>
-                <p className="text-[10px] text-gray-400 mt-1">/month</p>
+                <p className="text-[10px] text-gray-500 mt-1">/month</p>
               </div>
             ))}
           </div>
@@ -109,7 +109,7 @@ export default function EMICalculator({ price }: Props) {
             </p>
           </div>
 
-          <p className="text-center text-[10px] text-gray-400 leading-relaxed">
+          <p className="text-center text-[10px] text-gray-500 leading-relaxed">
             EMI availability subject to bank approval. Speak to our team for details.
           </p>
         </div>

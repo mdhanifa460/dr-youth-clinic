@@ -96,7 +96,7 @@ export default function VideoPlayer({ youtubeId, title, chapters }: VideoPlayerP
     return (
       <div className="relative aspect-video rounded-2xl md:rounded-3xl overflow-hidden bg-gray-100 flex flex-col items-center justify-center text-center px-6">
         <p className="text-gray-500 font-semibold text-sm">Video unavailable</p>
-        <p className="text-gray-400 text-xs mt-1">This video's link needs to be updated in the admin panel.</p>
+        <p className="text-gray-500 text-xs mt-1">This video's link needs to be updated in the admin panel.</p>
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function VideoPlayer({ youtubeId, title, chapters }: VideoPlayerP
 
       {chapters.length > 0 && (
         <div className="mt-5 bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50 overflow-hidden">
-          <p className="px-4 sm:px-5 py-3 text-xs font-extrabold text-gray-400 uppercase tracking-widest">
+          <p className="px-4 sm:px-5 py-3 text-xs font-extrabold text-gray-500 uppercase tracking-widest">
             Chapters
           </p>
           {chapters.map((chapter, i) => (

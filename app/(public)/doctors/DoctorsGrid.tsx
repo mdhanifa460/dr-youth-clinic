@@ -135,7 +135,7 @@ export default function DoctorsGrid({ doctors }: { doctors: any[] }) {
               )}
             </button>
           ))}
-          <p className="ml-auto self-center text-xs text-gray-400 hidden sm:block">
+          <p className="ml-auto self-center text-xs text-gray-500 hidden sm:block">
             Showing <span className="font-bold text-[#0B2560]">{filtered.length}</span> specialist{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>

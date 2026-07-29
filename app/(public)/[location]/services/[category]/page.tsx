@@ -177,7 +177,7 @@ export default async function CategoryPage({ params }: PageProps) {
 
       {/* ── BREADCRUMB ── */}
       <nav className="bg-[#f6faff] border-b border-gray-100 py-3">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center gap-1.5 text-sm text-gray-400">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center gap-1.5 text-sm text-gray-500">
           <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
           <span>/</span>
           <Link href={`/${params.location}`} className="hover:text-[#0B2560] transition capitalize">{city}</Link>
@@ -197,7 +197,7 @@ export default async function CategoryPage({ params }: PageProps) {
             <h2 className="text-2xl font-headline font-bold text-[#0B2560]">
               {meta.label} treatments coming soon
             </h2>
-            <p className="text-gray-400 max-w-md mx-auto">
+            <p className="text-gray-500 max-w-md mx-auto">
               We're preparing specialised treatments for this category in {city}. Book a
               consultation and our specialists will guide you.
             </p>
@@ -236,7 +236,7 @@ export default async function CategoryPage({ params }: PageProps) {
                 <div className="text-center mb-6">
                   <p className="text-[#3B82C4] text-xs font-bold uppercase tracking-widest mb-1">Treatment Comparison Center</p>
                   <h3 className="text-2xl font-headline font-bold text-[#0B2560]">Compare {meta.label} Treatments</h3>
-                  <p className="text-gray-400 text-sm mt-1">Side-by-side overview to help you find the right fit</p>
+                  <p className="text-gray-500 text-sm mt-1">Side-by-side overview to help you find the right fit</p>
                 </div>
 
                 {/* Comparison table — horizontal scroll on mobile */}
@@ -259,14 +259,14 @@ export default async function CategoryPage({ params }: PageProps) {
                         { label: 'Ideal for', getValue: (s: any) => s.idealFor?.slice(0, 2).join(', ') || '—' },
                       ].filter(Boolean).map((row: any, ri) => (
                         <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-[#f6faff]'}>
-                          <td className="py-3 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">{row.label}</td>
+                          <td className="py-3 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{row.label}</td>
                           {services.slice(0, 4).map((s: any) => (
                             <td key={String(s._id)} className="py-3 px-4 text-gray-700 font-medium">{row.getValue(s)}</td>
                           ))}
                         </tr>
                       ))}
                       <tr className="bg-[#f6faff]">
-                        <td className="py-3 px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Book</td>
+                        <td className="py-3 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Book</td>
                         {services.slice(0, 4).map((s: any) => (
                           <td key={String(s._id)} className="py-3 px-4">
                             <Link

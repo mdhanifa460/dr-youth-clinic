@@ -69,12 +69,12 @@ export default function AssessmentChat({
     <div className="bg-white rounded-2xl border-2 border-[#0B2560]/10 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 bg-[#f6faff] border-b border-[#0B2560]/10">
         <p className="text-sm font-bold text-[#0B2560]">💬 Ask about your results</p>
-        <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+        <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-600 text-lg leading-none">×</button>
       </div>
 
       <div className="max-h-80 overflow-y-auto px-5 py-4 space-y-3">
         {messages.length === 0 && (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             Ask anything about your {primaryConcern ? `${primaryConcern} ` : ""}treatment plan — cost, recovery, sessions, or how it compares to alternatives.
           </p>
         )}
@@ -87,7 +87,7 @@ export default function AssessmentChat({
         ))}
         {sending && (
           <div className="flex justify-start">
-            <div className="bg-gray-50 text-gray-400 rounded-2xl px-4 py-2.5 text-sm">Typing…</div>
+            <div className="bg-gray-50 text-gray-500 rounded-2xl px-4 py-2.5 text-sm">Typing…</div>
           </div>
         )}
         <div ref={bottomRef} />

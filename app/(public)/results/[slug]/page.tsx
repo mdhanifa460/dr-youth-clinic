@@ -131,7 +131,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
       <main className="bg-white">
         {/* ── BREADCRUMB ── */}
         <nav className="bg-[#f6faff] border-b border-gray-100 py-3">
-          <div className="max-w-6xl mx-auto px-6 flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
+          <div className="max-w-6xl mx-auto px-6 flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
             <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
             <ChevronRight size={13} />
             <Link href="/results" className="hover:text-[#0B2560] transition">Results</Link>
@@ -271,7 +271,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                       )}
                       <div>
                         <p className="font-bold text-[#0B2560] text-sm">Dr. {result.doctor.name}</p>
-                        {result.doctor.title && <p className="text-gray-400 text-xs">{result.doctor.title}</p>}
+                        {result.doctor.title && <p className="text-gray-500 text-xs">{result.doctor.title}</p>}
                       </div>
                     </div>
                   )}
@@ -286,7 +286,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                       Chat on WhatsApp
                     </a>
                   )}
-                  <p className="text-center text-xs text-gray-400 pt-1">{siteConfig.consultationSub}</p>
+                  <p className="text-center text-xs text-gray-500 pt-1">{siteConfig.consultationSub}</p>
                 </div>
               </div>
             </div>
@@ -318,7 +318,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                     </div>
                     <div className="p-4">
                       <h3 className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{r.title}</h3>
-                      {r.category && <p className="text-gray-400 text-xs mt-1.5">{r.category}</p>}
+                      {r.category && <p className="text-gray-500 text-xs mt-1.5">{r.category}</p>}
                     </div>
                   </Link>
                 ))}

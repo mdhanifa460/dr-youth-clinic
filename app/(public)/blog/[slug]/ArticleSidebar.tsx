@@ -40,7 +40,7 @@ function TocNav({ headings, activeId, onNavigate }: { headings: Heading[]; activ
           } ${
             activeId === h.id
               ? 'border-[#F5A623] text-[#0B2560] font-semibold'
-              : 'border-transparent text-gray-400 hover:text-[#0B2560] hover:border-gray-200'
+              : 'border-transparent text-gray-500 hover:text-[#0B2560] hover:border-gray-200'
           }`}
         >
           {h.text}
@@ -60,7 +60,7 @@ export default function ArticleSidebar({ headings }: { headings: Heading[] }) {
     <div className="space-y-4">
       {headings.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">In This Article</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-4">In This Article</p>
           <TocNav headings={headings} activeId={activeId} />
         </div>
       )}
@@ -96,7 +96,7 @@ export function MobileArticleToc({ headings }: { headings: Heading[] }) {
         className="w-full flex items-center justify-between px-5 py-3.5 text-left"
       >
         <span className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500">In This Article</span>
-        <ChevronDown size={16} className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="px-5 pb-4">

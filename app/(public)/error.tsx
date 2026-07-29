@@ -36,7 +36,7 @@ export default function PublicError({ error, reset }: { error: Error & { digest?
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-100">
-          <p className="text-xs text-gray-400 mb-3">Or reach us directly</p>
+          <p className="text-xs text-gray-500 mb-3">Or reach us directly</p>
           <div className="flex items-center justify-center gap-4 text-xs">
             <Link href="/book" className="flex items-center gap-1 text-[#3B82C4] hover:underline font-semibold">
               <Calendar size={11} /> Book Consultation

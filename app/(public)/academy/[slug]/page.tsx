@@ -114,7 +114,7 @@ export default async function VideoDetailPage({ params }: PageProps) {
       )}
       {/* Breadcrumb */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-        <nav className="flex items-center gap-1.5 text-xs text-gray-400">
+        <nav className="flex items-center gap-1.5 text-xs text-gray-500">
           <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
           <ChevronRight size={12} />
           <Link href="/academy" className="hover:text-[#0B2560] transition">Video Academy</Link>
@@ -133,7 +133,7 @@ export default async function VideoDetailPage({ params }: PageProps) {
             <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] mt-3 leading-tight">
               {video.title}
             </h1>
-            <p className="text-gray-400 text-sm mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="text-gray-500 text-sm mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
               {video.duration && <span>{video.duration}</span>}
               {doctor?.name && <span>· {doctor.name}</span>}
               {video.language && <span>· {video.language}</span>}
@@ -239,7 +239,7 @@ export default async function VideoDetailPage({ params }: PageProps) {
                         {v.title}
                       </span>
                       {v.duration && (
-                        <span className={`text-xs shrink-0 ${isCurrent ? 'text-white/70' : 'text-gray-400'}`}>
+                        <span className={`text-xs shrink-0 ${isCurrent ? 'text-white/70' : 'text-gray-500'}`}>
                           {v.duration}
                         </span>
                       )}

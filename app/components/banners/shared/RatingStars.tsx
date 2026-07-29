@@ -15,7 +15,7 @@ export default function RatingStars({ value, reviewCount }: { value: number; rev
         ))}
       </div>
       <span className="text-sm font-semibold text-[#0B2560]">{value.toFixed(1)}</span>
-      {!!reviewCount && <span className="text-xs text-gray-400">({reviewCount.toLocaleString()})</span>}
+      {!!reviewCount && <span className="text-xs text-gray-500">({reviewCount.toLocaleString()})</span>}
     </div>
   );
 }

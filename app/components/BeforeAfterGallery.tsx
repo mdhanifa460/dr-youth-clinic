@@ -128,7 +128,7 @@ export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
       )}
 
       {/* Drag hint */}
-      <div className="flex items-center gap-2 text-xs text-gray-400">
+      <div className="flex items-center gap-2 text-xs text-gray-500">
         <svg width="13" height="9" viewBox="0 0 15 10" fill="none">
           <path d="M1 5H14M1 5L3.5 2.5M1 5L3.5 7.5M14 5L11.5 2.5M14 5L11.5 7.5" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -171,7 +171,7 @@ export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
         </div>
       )}
 
-      <p className="text-xs text-gray-400 text-center">Real patient results · Unretouched · Individual results may vary</p>
+      <p className="text-xs text-gray-500 text-center">Real patient results · Unretouched · Individual results may vary</p>
     </div>
   );
 }

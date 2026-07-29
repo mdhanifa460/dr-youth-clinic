@@ -428,18 +428,20 @@ export default function ReviewsAdminPage() {
   useEffect(() => { fetchReviews(); }, [fetchReviews]);
 
   const toggle = async (id: string, field: 'isVisible' | 'isFeatured' | 'showOnHomepage', val: boolean) => {
-    setReviews((prev) => prev.map((r) => r._id === id ? { ...r, [field]: val } : r));
-    await fetch(`/api/admin/reviews/${id}`, {
+    const res = await fetch(`/api/admin/reviews/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [field]: val }),
     });
+    const data = await res.json();
+    if (data.success) setReviews((prev) => prev.map((r) => r._id === id ? { ...r, [field]: val } : r));
   };
 
   const deleteReview = async (id: string) => {
     if (!confirm('Delete this review?')) return;
-    setReviews((prev) => prev.filter((r) => r._id !== id));
-    await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) setReviews((prev) => prev.filter((r) => r._id !== id));
   };
 
   const saveReview = async (data: any) => {

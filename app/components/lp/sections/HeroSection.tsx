@@ -329,7 +329,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                       </button>
                     </form>
 
-                    <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-400 mt-4">
+                    <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-500 mt-4">
                       <ShieldCheck size={13} className="text-[#3B82C4]" />
                       Trusted by {patientCount} Patients
                     </p>

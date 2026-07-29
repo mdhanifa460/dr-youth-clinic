@@ -175,7 +175,7 @@ export default function HomepageLocations({ data }: { data: any }) {
           {/* ── LEFT: city list ── */}
           <div className="bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between gap-2">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select a location</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select a location</p>
               {autoDetected && (
                 <span className="flex items-center gap-1 text-[10px] font-bold text-[#0B2560] bg-[#e8f0fe] px-2 py-0.5 rounded-full shrink-0">
                   <LocateFixed size={9} /> Near you
@@ -235,12 +235,12 @@ export default function HomepageLocations({ data }: { data: any }) {
                           {status.text}
                         </span>
                       </div>
-                      <p className="text-[10px] text-gray-400">
+                      <p className="text-[10px] text-gray-500">
                         {csvc > 0 ? `${csvc}+` : '—'} Services &nbsp;·&nbsp; {cdoc > 0 ? cdoc : '—'} Doctors
                       </p>
                     </div>
 
-                    <ChevronRight size={14} className={`shrink-0 transition-colors ${active ? 'text-[#0B2560]' : 'text-gray-300 group-hover:text-gray-400'}`} />
+                    <ChevronRight size={14} className={`shrink-0 transition-colors ${active ? 'text-[#0B2560]' : 'text-gray-300 group-hover:text-gray-500'}`} />
                   </button>
                 );
               })}
@@ -273,7 +273,7 @@ export default function HomepageLocations({ data }: { data: any }) {
               <div className="h-full min-h-[420px] flex flex-col items-center justify-center bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] gap-3">
                 <MapPin size={32} className="text-[#0B2560]/30" />
                 <p className="text-[#0B2560]/50 text-sm font-semibold">Map not configured</p>
-                <p className="text-gray-400 text-xs">Add embed URL in Admin → Locations</p>
+                <p className="text-gray-500 text-xs">Add embed URL in Admin → Locations</p>
               </div>
             )}
           </div>
@@ -306,7 +306,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                     <div className="flex items-center gap-1.5">
                       <Star size={13} className="text-[#F5A623] fill-[#F5A623]" />
                       <span className="font-bold text-sm text-gray-800">{rating}</span>
-                      {reviewCount > 0 && <span className="text-xs text-gray-400">({reviewCount} Google reviews)</span>}
+                      {reviewCount > 0 && <span className="text-xs text-gray-500">({reviewCount} Google reviews)</span>}
                     </div>
                   )}
                 </div>
@@ -384,12 +384,12 @@ export default function HomepageLocations({ data }: { data: any }) {
                 </div>
                 <div>
                   <p className="font-extrabold text-[#0B2560] text-base leading-none">{value}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{label}</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">{label}</p>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-center text-xs text-gray-400 mt-4 pt-4 border-t border-gray-50">
+          <p className="text-center text-xs text-gray-500 mt-4 pt-4 border-t border-gray-50">
             Trusted by thousands of patients for safe, effective &amp; personalized care.
           </p>
         </div>

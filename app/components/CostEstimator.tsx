@@ -55,7 +55,7 @@ export default function CostEstimator({ basePrice, sessionsRequired, serviceName
             <span>1</span><span>5</span><span>10</span>
           </div>
           {sessionsRequired && (
-            <p className="text-[10px] text-gray-400 mt-1.5">Recommended: {sessionsRequired}</p>
+            <p className="text-[10px] text-gray-500 mt-1.5">Recommended: {sessionsRequired}</p>
           )}
         </div>
 
@@ -109,7 +109,7 @@ export default function CostEstimator({ basePrice, sessionsRequired, serviceName
         >
           Book & Confirm Cost <ChevronRight size={14} />
         </a>
-        <p className="text-center text-[10px] text-gray-400">Final cost confirmed at your {siteConfig.consultationFree ? 'free ' : ''}consultation</p>
+        <p className="text-center text-[10px] text-gray-500">Final cost confirmed at your {siteConfig.consultationFree ? 'free ' : ''}consultation</p>
       </div>
     </div>
   );

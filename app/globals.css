@@ -7,7 +7,7 @@
    <html> (see app/layout.tsx) — declaring them again here would fight that
    with an unpredictable cascade order instead of actually loading a font. */
 :root {
-  --primary: #1A365D;
+  --primary: #0B2560;
   --secondary: #3182CE;
   --tertiary: #63B3ED;
   --natural: #F0F7FF;

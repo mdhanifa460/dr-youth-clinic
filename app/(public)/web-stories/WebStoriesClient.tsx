@@ -89,7 +89,7 @@ export default function WebStoriesClient({ stories, types }: { stories: any[]; t
       {featured.length > 0 && (
         <section className="py-8 border-b border-gray-50">
           <div className="max-w-6xl mx-auto px-6">
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Featured</h2>
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Featured</h2>
             <div className="flex gap-4 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
               {featured.map(s => (
                 <div key={s._id} className="w-36 shrink-0"><StoryCard story={s} /></div>

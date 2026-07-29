@@ -41,7 +41,7 @@ export default function OfferFAQSection() {
         <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-1 flex items-center gap-2">
           <CheckCircle size={18} className="text-[#3B82C4]" /> Terms & Frequently Asked Questions
         </h2>
-        <p className="text-sm text-gray-400 mb-6">Everything you should know before booking an offer.</p>
+        <p className="text-sm text-gray-500 mb-6">Everything you should know before booking an offer.</p>
 
         <div className="space-y-2.5">
           {FAQ_ITEMS.map((item, i) => {
@@ -53,7 +53,7 @@ export default function OfferFAQSection() {
                   className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
                 >
                   <span className="font-semibold text-[#0B2560] text-sm leading-snug">{item.q}</span>
-                  <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={16} className={`text-gray-500 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isOpen && (
                   <div className="px-5 pb-4">

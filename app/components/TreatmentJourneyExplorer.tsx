@@ -102,7 +102,7 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
 
         {!!current.faqs?.length && (
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Common Questions at This Stage</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Common Questions at This Stage</p>
             {current.faqs.map((f, i) => (
               <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
                 <button
@@ -110,7 +110,7 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
                   className="w-full flex items-center justify-between px-4 py-3 text-left text-xs font-semibold text-[#0B2560]"
                 >
                   {f.question}
-                  <ChevronDown size={14} className={`text-gray-400 transition-transform shrink-0 ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`text-gray-500 transition-transform shrink-0 ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 {openFaq === i && (
                   <p className="px-4 pb-3 text-xs text-gray-500 leading-relaxed">{f.answer}</p>

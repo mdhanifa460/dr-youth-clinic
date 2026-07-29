@@ -109,7 +109,7 @@ export default function AdminSidebar({ user }: { user: AdminUserPublic }) {
         href={href}
         className={`flex items-center justify-between gap-2 px-3 py-2 rounded border-l-2 transition-colors ${
           isActive
-            ? "bg-white text-[#0B2545] font-semibold border-[#F5A623]"
+            ? "bg-white text-gray-900 font-semibold border-[#F5A623]"
             : "border-transparent hover:bg-white/10"
         }`}
       >
@@ -161,7 +161,7 @@ export default function AdminSidebar({ user }: { user: AdminUserPublic }) {
         <Link
           href="/admin/profile"
           className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition ${
-            path === "/admin/profile" ? "bg-white text-[#0B2545] font-semibold" : "hover:bg-white/10"
+            path === "/admin/profile" ? "bg-white text-gray-900 font-semibold" : "hover:bg-white/10"
           }`}
         >
           <span className="text-base">👤</span>

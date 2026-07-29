@@ -125,7 +125,7 @@ export default function VideoAcademySection({ data }: { data: Data }) {
               <div className="p-4">
                 <span className="text-[10px] font-bold text-[#3B82C4] uppercase tracking-wider">{v.category}</span>
                 <h3 className="font-headline font-bold text-[#0B2560] text-sm mt-1 leading-snug line-clamp-2">{v.title}</h3>
-                {v.doctor?.name && <p className="text-gray-400 text-xs mt-1.5">{v.doctor.name}</p>}
+                {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}
               </div>
             </Link>
           ))}

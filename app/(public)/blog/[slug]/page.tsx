@@ -224,7 +224,7 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
                 {/* Tags */}
                 {post.tags?.length > 0 && (
                   <div className="mt-12 pt-8 border-t border-gray-100 flex flex-wrap items-center gap-2">
-                    <Tag size={14} className="text-gray-400 shrink-0" />
+                    <Tag size={14} className="text-gray-500 shrink-0" />
                     {post.tags.map((t: string) => (
                       <span key={t} className="text-xs bg-[#f6faff] border border-blue-50 text-[#0B2560] px-3 py-1.5 rounded-full font-medium">{t}</span>
                     ))}
@@ -270,8 +270,8 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
                     </div>
                     <div className="p-5">
                       <h3 className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{r.title}</h3>
-                      <p className="text-gray-400 text-xs mt-2 line-clamp-2">{r.excerpt}</p>
-                      <div className="flex items-center gap-2 mt-3 text-[11px] text-gray-400">
+                      <p className="text-gray-500 text-xs mt-2 line-clamp-2">{r.excerpt}</p>
+                      <div className="flex items-center gap-2 mt-3 text-[11px] text-gray-500">
                         <Clock size={10} /> {r.readTime}
                       </div>
                     </div>

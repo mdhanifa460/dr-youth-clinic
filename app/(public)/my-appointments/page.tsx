@@ -102,7 +102,7 @@ export default function MyAppointmentsPage() {
               <input type="text" value={bookingId} onChange={(e) => setBookingId(e.target.value)} required
                 placeholder="e.g. DR-1234567890"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560]" />
-              <p className="text-[11px] text-gray-400 mt-1.5">Sent to you on WhatsApp right after you booked.</p>
+              <p className="text-[11px] text-gray-500 mt-1.5">Sent to you on WhatsApp right after you booked.</p>
             </div>
             <button type="submit" disabled={loading}
               className="w-full min-h-12 bg-[#0B2560] text-white rounded-xl font-bold text-sm hover:bg-[#12345c] transition disabled:opacity-60">
@@ -125,7 +125,7 @@ export default function MyAppointmentsPage() {
             <div className="bg-white rounded-2xl border border-[#EBE8E3] p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <div>
-                  <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Booking ID</p>
+                  <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Booking ID</p>
                   <p className="text-sm font-bold text-[#0B2560]">{data.current.bookingId}</p>
                 </div>
                 <StatusPill status={data.current.status} />
@@ -184,7 +184,7 @@ export default function MyAppointmentsPage() {
                           Cancel
                         </button>
                       </div>
-                      <p className="text-[11px] text-gray-400">This sends a request to our team — your slot won't change until they confirm it.</p>
+                      <p className="text-[11px] text-gray-500">This sends a request to our team — your slot won't change until they confirm it.</p>
                     </form>
                   )}
                 </div>
@@ -200,7 +200,7 @@ export default function MyAppointmentsPage() {
                     <div key={h.bookingId} className="bg-white rounded-xl border border-[#EBE8E3] px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
                       <div>
                         <p className="text-sm font-semibold text-gray-700">{h.service || 'Not specified'}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-500 mt-0.5">
                           {LOCATION_LABELS[h.location] || h.location} · {h.date || 'No date'} {h.time && `· ${h.time}`}
                         </p>
                       </div>

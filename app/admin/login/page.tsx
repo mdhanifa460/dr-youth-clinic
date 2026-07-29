@@ -114,7 +114,7 @@ export default function AdminLogin() {
               <span className="text-xs font-bold text-[#0B2545]">
                 Email or Username
               </span>
-              <div className="mt-2 flex h-12 items-center gap-3 rounded-xl bg-[#e9eff6] px-4 text-[#8290a0]">
+              <div className="mt-2 flex h-12 items-center gap-3 rounded-xl bg-[#e9eff6] px-4 text-[#8290a0] focus-within:ring-2 focus-within:ring-[#0B2560]/30">
                 <Mail className="h-4 w-4 shrink-0" />
                 <input
                   name="email"
@@ -140,7 +140,7 @@ export default function AdminLogin() {
                 </span>
               </div>
 
-              <div className="mt-2 flex h-12 items-center gap-3 rounded-xl bg-[#e9eff6] px-4 text-[#8290a0]">
+              <div className="mt-2 flex h-12 items-center gap-3 rounded-xl bg-[#e9eff6] px-4 text-[#8290a0] focus-within:ring-2 focus-within:ring-[#0B2560]/30">
                 <Lock className="h-4 w-4 shrink-0" />
                 <input
                   name="password"

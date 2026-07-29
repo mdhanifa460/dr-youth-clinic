@@ -63,7 +63,7 @@ function ServiceCard({ r, showPriceOnCards, arrows }: {
         <h3 className="font-bold text-[#0B2560] mb-2 text-sm leading-snug group-hover:text-[#3B82C4] transition">{r.name}</h3>
         <div className="flex items-center justify-between text-sm">
           {showPriceOnCards && <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>}
-          <span className="text-gray-400 text-xs">{r.duration} min</span>
+          <span className="text-gray-500 text-xs">{r.duration} min</span>
         </div>
       </div>
     </Link>

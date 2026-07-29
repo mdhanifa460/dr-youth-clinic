@@ -43,7 +43,7 @@ export default function NewsletterSignup({ source = 'blog' }: { source?: string 
       ) : (
         <form onSubmit={submit} className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto">
           <div className="relative flex-1 w-full">
-            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               type="email"
               required

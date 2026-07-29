@@ -29,7 +29,7 @@ export default function OfferDoctorNote({ doctors }: { doctors: any[] }) {
                 )}
               </div>
               <p className="text-xs font-bold text-[#0B2560] text-center leading-tight">{doc.name}</p>
-              <p className="text-[10px] text-gray-400 text-center leading-tight mt-0.5">{doc.title}</p>
+              <p className="text-[10px] text-gray-500 text-center leading-tight mt-0.5">{doc.title}</p>
             </div>
           ))}
         </div>

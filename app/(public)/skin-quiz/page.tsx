@@ -60,7 +60,7 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
           <div key={badge.text} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4 flex flex-col items-center gap-1">
             <span className="text-2xl">{badge.icon}</span>
             <span className="text-xs font-bold text-[#0B2560] text-center leading-snug">{badge.text}</span>
-            <span className="text-xs text-gray-400 text-center">{badge.sub}</span>
+            <span className="text-xs text-gray-500 text-center">{badge.sub}</span>
           </div>
         ))}
       </div>
@@ -73,7 +73,7 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
         <span className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200">→</span>
       </button>
 
-      <p className="mt-4 text-xs text-gray-400">No sign-up required. Takes about 30-60 seconds.</p>
+      <p className="mt-4 text-xs text-gray-500">No sign-up required. Takes about 30-60 seconds.</p>
     </div>
   );
 }
@@ -150,7 +150,7 @@ function LeadCaptureScreen({
         {status === "error" && (
           <p className="text-xs text-red-500 text-center">Something went wrong — please check your details and try again.</p>
         )}
-        <p className="text-center text-xs text-gray-400">We'll never share your details. No spam, ever.</p>
+        <p className="text-center text-xs text-gray-500">We'll never share your details. No spam, ever.</p>
       </form>
     </div>
   );
@@ -210,7 +210,7 @@ function PhotoUploadField({ value, onChange }: { value: string; onChange: (v: st
         <label className="cursor-pointer flex flex-col items-center gap-3">
           <span className="text-4xl">📷</span>
           <span className="text-sm font-bold text-[#0B2560]">{uploading ? "Uploading…" : "Tap to add a photo"}</span>
-          <span className="text-xs text-gray-400">Optional — you can skip this step</span>
+          <span className="text-xs text-gray-500">Optional — you can skip this step</span>
           <input
             ref={inputRef}
             type="file"
@@ -245,7 +245,7 @@ function QuestionStep({
   if (question.type === "text") {
     const text = typeof value === "string" ? value : "";
     return (
-      <div className="bg-white rounded-2xl border-2 border-gray-100 px-5 py-4">
+      <div className="bg-white rounded-2xl border-2 border-gray-100 px-5 py-4 focus-within:border-[#0B2560]/40 transition">
         <textarea
           value={text}
           onChange={(e) => onChange(e.target.value.slice(0, 500))}
@@ -265,7 +265,7 @@ function QuestionStep({
       <div className="bg-white rounded-2xl border-2 border-gray-100 px-6 py-8">
         <div className="flex items-baseline justify-between mb-4">
           <span className="text-3xl font-extrabold text-[#0B2560]">{num}</span>
-          {question.sliderUnit && <span className="text-sm text-gray-400">{question.sliderUnit}</span>}
+          {question.sliderUnit && <span className="text-sm text-gray-500">{question.sliderUnit}</span>}
         </div>
         <input
           type="range"
@@ -276,7 +276,7 @@ function QuestionStep({
           onChange={(e) => onChange(Number(e.target.value))}
           className="w-full accent-[#0B2560]"
         />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
           <span>{question.sliderMin}</span>
           <span>{question.sliderMax}</span>
         </div>
@@ -383,7 +383,7 @@ function AnalysingScreen() {
       </div>
       <div className="flex gap-3 mt-2 flex-wrap justify-center">
         {["Matching treatments", "Comparing protocols", "Preparing your plan"].map((label, i) => (
-          <div key={label} className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500">
             <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
             {label}
           </div>
@@ -454,7 +454,7 @@ function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation
               <p key={i} className="text-xs text-green-700 flex items-start gap-1.5"><span>✓</span>{a}</p>
             ))}
             {treatment.disadvantages?.slice(0, 1).map((d, i) => (
-              <p key={i} className="text-xs text-gray-400 flex items-start gap-1.5"><span>–</span>{d}</p>
+              <p key={i} className="text-xs text-gray-500 flex items-start gap-1.5"><span>–</span>{d}</p>
             ))}
           </div>
         ) : null}
@@ -616,7 +616,7 @@ function ResultsScreen({
       )}
 
       {visibleRecommendations.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 mb-10">
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 mb-10">
           We couldn't match a discussion topic to your answers — a specialist will review your responses personally.
         </div>
       ) : (
@@ -652,7 +652,7 @@ function ResultsScreen({
         </div>
       )}
 
-      <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Next Steps</p>
+      <p className="text-center text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Next Steps</p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         {showBookCta && waQuizHref && (
           <a
@@ -665,12 +665,12 @@ function ResultsScreen({
             Speak to a doctor now
           </a>
         )}
-        <button onClick={onRetake} className="text-sm text-gray-400 hover:text-[#0B2560] underline underline-offset-4 transition-colors">
+        <button onClick={onRetake} className="text-sm text-gray-500 hover:text-[#0B2560] underline underline-offset-4 transition-colors">
           Retake the assessment
         </button>
       </div>
 
-      <p className="text-center text-xs text-gray-400 mt-8 max-w-md mx-auto leading-relaxed">
+      <p className="text-center text-xs text-gray-500 mt-8 max-w-md mx-auto leading-relaxed">
         This report is educational and does not replace a doctor's consultation. Every topic above is
         something your doctor may discuss with you after their own evaluation — not a diagnosis,
         prescription, or guaranteed outcome.
@@ -972,7 +972,7 @@ export default function SkinQuizPage() {
             </svg>
             DR Youth Clinic
           </Link>
-          <span className="text-xs text-gray-400 font-medium">{stepLabel}</span>
+          <span className="text-xs text-gray-500 font-medium">{stepLabel}</span>
         </div>
         <div className="max-w-2xl mx-auto px-4 pb-2.5">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -990,7 +990,7 @@ export default function SkinQuizPage() {
         {screen === "intro" && !configReady && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-10 h-10 rounded-full border-4 border-[#0B2560]/20 border-t-[#0B2560] animate-spin" />
-            <p className="text-sm text-gray-400">Loading your personalised assessment…</p>
+            <p className="text-sm text-gray-500">Loading your personalised assessment…</p>
           </div>
         )}
         {screen === "intro" && configReady && <IntroScreen onStart={startAssessment} clinicLabel={clinicLocation ? slugToLabel(clinicLocation) : ""} />}
@@ -1026,7 +1026,7 @@ export default function SkinQuizPage() {
             />
 
             <div className="mt-8 flex items-center justify-between">
-              <button onClick={handleBack} className="flex items-center gap-2 text-gray-400 hover:text-[#0B2560] transition-colors text-sm font-medium group">
+              <button onClick={handleBack} className="flex items-center gap-2 text-gray-500 hover:text-[#0B2560] transition-colors text-sm font-medium group">
                 <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>

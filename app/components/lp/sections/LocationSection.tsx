@@ -50,7 +50,7 @@ export default function LocationSection({ data }: { data: LocationData }) {
                   </span>
                   <div className="min-w-0">
                     <p className="font-bold text-[#0B2560] text-sm truncate">{branch}</p>
-                    <p className="text-[11px] text-gray-400">{city}</p>
+                    <p className="text-[11px] text-gray-500">{city}</p>
                   </div>
                 </div>
               ))}

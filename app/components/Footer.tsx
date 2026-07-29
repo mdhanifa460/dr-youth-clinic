@@ -33,7 +33,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
     patientCare = [],
     contactHeading = "Contact Us",
     contact = {},
-    copyright = "© 2024 DR Youth Clinic. All Rights Reserved.",
+    copyright = `© ${new Date().getFullYear()} DR Youth Clinic. All Rights Reserved.`,
     socialLinks = [],
   } = resolvedData;
 
@@ -90,7 +90,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
                 <li key={i}>
                   <Link
                     href={l.href}
-                    className="text-white/60 text-sm hover:text-white transition"
+                    className="block py-1.5 text-white/60 text-sm hover:text-white transition"
                   >
                     {l.label}
                   </Link>
@@ -107,7 +107,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
                 <li key={i}>
                   <Link
                     href={p.href}
-                    className="text-white/60 text-sm hover:text-white transition"
+                    className="block py-1.5 text-white/60 text-sm hover:text-white transition"
                   >
                     {p.label}
                   </Link>
@@ -124,7 +124,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
                 <li key={i}>
                   <Link
                     href={p.href}
-                    className="text-white/60 text-sm hover:text-white transition"
+                    className="block py-1.5 text-white/60 text-sm hover:text-white transition"
                   >
                     {p.label}
                   </Link>
@@ -188,16 +188,16 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
                 </a>
               ))}
             </div>
-            <p className="text-white/40 text-xs">{copyright}</p>
+            <p className="text-white/60 text-xs">{copyright}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2">
-            <Link href="/about" className="text-white/35 text-xs hover:text-white/70 transition">About Us</Link>
-            <Link href="/plan-my-journey" className="text-white/35 text-xs hover:text-white/70 transition">✨ Plan My Journey</Link>
+            <Link href="/about" className="text-white/60 text-xs hover:text-white/90 transition">About Us</Link>
+            <Link href="/plan-my-journey" className="text-white/60 text-xs hover:text-white/90 transition">✨ Plan My Journey</Link>
             <Link href="/skin-quiz" className="text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium">✨ {siteConfig?.skinQuizLabel ?? 'Free Clinical Intake'}</Link>
-            <Link href="/privacy-policy" className="text-white/35 text-xs hover:text-white/70 transition">Privacy Policy</Link>
-            <Link href="/terms" className="text-white/35 text-xs hover:text-white/70 transition">Terms of Service</Link>
-            <Link href="/blog" className="text-white/35 text-xs hover:text-white/70 transition">Blog</Link>
-            <Link href="/offers" className="text-white/35 text-xs hover:text-white/70 transition">Offers</Link>
+            <Link href="/privacy-policy" className="text-white/60 text-xs hover:text-white/90 transition">Privacy Policy</Link>
+            <Link href="/terms" className="text-white/60 text-xs hover:text-white/90 transition">Terms of Service</Link>
+            <Link href="/blog" className="text-white/60 text-xs hover:text-white/90 transition">Blog</Link>
+            <Link href="/offers" className="text-white/60 text-xs hover:text-white/90 transition">Offers</Link>
           </div>
         </div>
       </div>

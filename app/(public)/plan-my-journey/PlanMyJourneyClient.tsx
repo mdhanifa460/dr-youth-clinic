@@ -146,7 +146,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         <ArrowRight size={18} className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200" />
       </button>
 
-      <p className="mt-4 text-xs text-gray-400">Takes about a minute. No sign-up required to start.</p>
+      <p className="mt-4 text-xs text-gray-500">Takes about a minute. No sign-up required to start.</p>
     </div>
   );
 }
@@ -246,7 +246,7 @@ function LeadCaptureScreen({
         {status === "error" && (
           <p className="text-xs text-red-500 text-center">Something went wrong — please check your details and try again.</p>
         )}
-        <p className="text-center text-xs text-gray-400">We'll never share your details. No spam, ever.</p>
+        <p className="text-center text-xs text-gray-500">We'll never share your details. No spam, ever.</p>
       </form>
     </div>
   );
@@ -278,7 +278,7 @@ function ResultsScreen({
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16 text-center">
         <span className="text-5xl">{meta.icon}</span>
         <h2 className="text-2xl font-headline font-bold text-[#0B2560] mt-4">{meta.label} treatments coming soon</h2>
-        <p className="text-gray-400 max-w-md mx-auto mt-2">We're preparing options for this goal. Book a consultation and our specialists will guide you directly.</p>
+        <p className="text-gray-500 max-w-md mx-auto mt-2">We're preparing options for this goal. Book a consultation and our specialists will guide you directly.</p>
         <Link href="/book" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-6">
           {consultationCta || "Book a Consultation"} <ArrowRight size={15} />
         </Link>
@@ -351,7 +351,7 @@ function ResultsScreen({
                     <span className="w-16 h-16 rounded-full bg-[#0B2560]/10 flex items-center justify-center mx-auto mb-2 font-bold text-[#0B2560]">{d.name?.[0]}</span>
                   )}
                   <p className="text-xs font-bold text-[#0B2560] leading-snug">{d.name}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{d.title}</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{d.title}</p>
                 </Link>
               ))}
             </div>
@@ -369,7 +369,7 @@ function ResultsScreen({
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-              <p className="text-sm text-gray-400">Photos for this goal are being curated.</p>
+              <p className="text-sm text-gray-500">Photos for this goal are being curated.</p>
               <Link href="/results" className="text-xs font-semibold text-[#3B82C4] hover:underline mt-1 inline-block">See all patient results →</Link>
             </div>
           )}
@@ -393,7 +393,7 @@ function ResultsScreen({
           )}
         </div>
 
-        <p className="text-center text-[11px] text-gray-400 max-w-lg mx-auto">
+        <p className="text-center text-[11px] text-gray-500 max-w-lg mx-auto">
           This journey is AI-personalised guidance based on typical cases, not a diagnosis. Your doctor confirms the right plan for you at consultation.
         </p>
       </div>

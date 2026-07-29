@@ -105,12 +105,12 @@ export function ObjectArrayEditor({
                   <textarea key={f.key} value={item[f.key] || ''} rows={2}
                     onChange={(e) => { const n = [...items]; n[i] = { ...n[i], [f.key]: e.target.value }; onChange(n); }}
                     placeholder={f.placeholder}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none resize-none" />
+                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 resize-none" />
                 ) : (
                   <input key={f.key} value={item[f.key] || ''}
                     onChange={(e) => { const n = [...items]; n[i] = { ...n[i], [f.key]: e.target.value }; onChange(n); }}
                     placeholder={f.placeholder}
-                    className={`border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none ${f.width === 'sm' ? 'w-20' : 'flex-1'}`} />
+                    className={`border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 ${f.width === 'sm' ? 'w-20' : 'flex-1'}`} />
                 )
               ))}
             </div>

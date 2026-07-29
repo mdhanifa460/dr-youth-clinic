@@ -45,12 +45,12 @@ export default function CertificationProgramsSection({ courses, siteConfig }: { 
                   </div>
                   <div className="p-4">
                     <h3 className="font-headline font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 mb-2">{c.title}</h3>
-                    <p className="text-gray-400 text-xs flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <p className="text-gray-500 text-xs flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="flex items-center gap-1"><Clock size={11} /> {c.durationLabel}</span>
                       <span className="flex items-center gap-1"><MapPin size={11} /> {c.format}</span>
                     </p>
                     {c.instructors?.length > 0 && (
-                      <p className="text-gray-400 text-[11px] mt-2 flex items-center gap-1">
+                      <p className="text-gray-500 text-[11px] mt-2 flex items-center gap-1">
                         <Award size={11} className="text-[#F5A623]" /> {c.instructors.map((i: any) => i.name).filter(Boolean).join(', ')}
                       </p>
                     )}

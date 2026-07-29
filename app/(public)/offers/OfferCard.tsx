@@ -113,7 +113,7 @@ export function OfferCard({ offer }: { offer: any }) {
         {/* Pricing */}
         <div className="border-t border-gray-100 pt-4 mt-2">
           <div className="flex items-end gap-3 mb-1">
-            <span className="text-gray-400 text-sm line-through">₹{offer.originalPrice?.toLocaleString('en-IN')}</span>
+            <span className="text-gray-500 text-sm line-through">₹{offer.originalPrice?.toLocaleString('en-IN')}</span>
             <span className="text-2xl font-extrabold text-[#0B2560] leading-none">₹{offer.discountedPrice?.toLocaleString('en-IN')}</span>
           </div>
           {savings > 0 && (
@@ -136,7 +136,7 @@ export function OfferCard({ offer }: { offer: any }) {
             <Calendar size={14} /> Book This Offer
           </Link>
           {offer.terms && (
-            <p className="text-[10px] text-gray-400 leading-relaxed mt-3">*{offer.terms}</p>
+            <p className="text-[10px] text-gray-500 leading-relaxed mt-3">*{offer.terms}</p>
           )}
         </div>
       </div>

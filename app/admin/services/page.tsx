@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Eye, EyeOff, Loader } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Loader, Search } from 'lucide-react';
 import Image from 'next/image';
 import { getServiceCities } from '@/app/lib/serviceSeo';
 
@@ -28,11 +28,15 @@ export default function ServicesPage() {
   const [filter, setFilter] = useState('');
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
+  const [search, setSearch] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchServices();
-  }, [filter, category, status]);
+    // Debounced re-fetch on search typing (400ms, matching Blog's/Bookings'
+    // pattern); location/category/status changes re-fetch immediately.
+    const t = setTimeout(() => { fetchServices(); }, search ? 400 : 0);
+    return () => clearTimeout(t);
+  }, [filter, category, status, search]);
 
   const fetchServices = async () => {
     try {
@@ -41,6 +45,7 @@ export default function ServicesPage() {
       if (filter) params.set('location', filter);
       if (category) params.set('category', category);
       if (status) params.set('status', status);
+      if (search.trim()) params.set('search', search.trim());
       const qs = params.toString();
       const res = await fetch(`/api/admin/services${qs ? `?${qs}` : ''}`);
       const data = await res.json();
@@ -149,9 +154,19 @@ export default function ServicesPage() {
           <option value="active">Active</option>
           <option value="hidden">Hidden</option>
         </select>
-        {(category || status) && (
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name..."
+            className="pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 w-48"
+          />
+        </div>
+        {(category || status || search) && (
           <button
-            onClick={() => { setCategory(''); setStatus(''); }}
+            onClick={() => { setCategory(''); setStatus(''); setSearch(''); }}
             className="text-xs text-gray-400 hover:text-blue-600 font-semibold underline"
           >
             Clear filters

@@ -70,8 +70,8 @@ export default function TrustSection({
       {references && references.length > 0 && (
         <div className="pt-4 border-t border-blue-100/60">
           <div className="flex items-center gap-1.5 mb-2.5">
-            <BookOpen size={13} className="text-gray-400" />
-            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Sources & References</p>
+            <BookOpen size={13} className="text-gray-500" />
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Sources & References</p>
           </div>
           <ul className="space-y-1">
             {references.map((ref, i) => (

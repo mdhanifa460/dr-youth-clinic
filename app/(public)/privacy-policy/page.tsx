@@ -166,7 +166,7 @@ const SECTIONS = [
           <span className="font-semibold text-[#0B2560]">Clinics: </span>
           Chennai · Bangalore · Kochi · Coimbatore
         </p>
-        <p className="text-xs text-gray-400 mt-4">
+        <p className="text-xs text-gray-500 mt-4">
           DR Youth Clinic reserves the right to update this policy periodically. Material changes will be notified via our website.
         </p>
       </div>

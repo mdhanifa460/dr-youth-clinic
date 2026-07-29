@@ -170,7 +170,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
                   <Stethoscope size={11} className="text-[#0B2560]" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">About</h2>
+                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">About</h2>
               </div>
               <p className="text-gray-600 text-sm md:text-base leading-relaxed whitespace-pre-line">{doctor.bio}</p>
             </div>
@@ -183,7 +183,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
                   <GraduationCap size={11} className="text-[#0B2560]" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Qualifications</h2>
+                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Qualifications</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {doctor.qualifications.split(',').map((q: string, i: number) => (
@@ -202,7 +202,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
                   <Award size={11} className="text-[#0B2560]" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Specializations</h2>
+                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Specializations</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {doctor.specializations.map((s: string, i: number) => (
@@ -221,7 +221,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
                   <Languages size={11} className="text-[#0B2560]" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Languages</h2>
+                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Languages</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {doctor.languages.map((l: string, i: number) => (
@@ -237,7 +237,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           {doctorResults.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Patient Results by {doctor.name}</h2>
+                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Patient Results by {doctor.name}</h2>
                 <Link href="/results" className="text-xs font-semibold text-[#3B82C4] hover:underline">View all</Link>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -256,7 +256,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
         {/* RIGHT — sticky CTA */}
         <div className="space-y-4">
           <div className="bg-[#f6faff] border border-blue-50 rounded-3xl p-6 space-y-4 md:sticky md:top-6">
-            <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{sidebarHeading}</p>
+            <p className="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest">{sidebarHeading}</p>
             <p className="text-sm text-gray-500 leading-relaxed">
               {sidebarBody}
             </p>
@@ -264,7 +264,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
               className="flex items-center justify-center gap-2 bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm hover:bg-[#0d2d73] hover:-translate-y-0.5 transition-all shadow-md shadow-[#0B2560]/20">
               <Calendar size={14} /> {siteConfig.consultationCta}
             </Link>
-            <p className="text-[10px] text-gray-400 text-center">No fees · No obligation</p>
+            <p className="text-[10px] text-gray-500 text-center">No fees · No obligation</p>
           </div>
 
           {/* Quick stats card */}
@@ -274,7 +274,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 <div className="flex items-center gap-3 px-4 py-3">
                   <Award size={14} className="text-[#F5A623] shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400">Experience</p>
+                    <p className="text-xs text-gray-500">Experience</p>
                     <p className="text-sm font-bold text-[#0B2560]">{doctor.experience}+ Years</p>
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 <div className="flex items-center gap-3 px-4 py-3">
                   <MapPin size={14} className="text-[#F5A623] shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400">Available At</p>
+                    <p className="text-xs text-gray-500">Available At</p>
                     <p className="text-sm font-bold text-[#0B2560] capitalize">{locationLabel}</p>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 <div className="flex items-center gap-3 px-4 py-3">
                   <Languages size={14} className="text-[#F5A623] shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400">Languages</p>
+                    <p className="text-xs text-gray-500">Languages</p>
                     <p className="text-sm font-bold text-[#0B2560]">{doctor.languages.join(' · ')}</p>
                   </div>
                 </div>

@@ -193,7 +193,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
         </motion.div>
 
         {caption && (
-          <p className="text-center text-xs text-gray-400 mt-3 md:mt-4">{caption}</p>
+          <p className="text-center text-xs text-gray-500 mt-3 md:mt-4">{caption}</p>
         )}
       </div>
 

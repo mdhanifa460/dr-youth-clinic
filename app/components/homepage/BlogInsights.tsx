@@ -53,7 +53,7 @@ export default function BlogInsights({ data }: { data: any }) {
                   <h3 className="font-bold text-[#0B2560] text-base leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{post.title}</h3>
                   <p className="text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>
                   <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-2 text-gray-400 text-xs">
+                    <div className="flex items-center gap-2 text-gray-500 text-xs">
                       {date && <span>{date}</span>}
                       {post.readTime && <><span>·</span><span>{post.readTime}</span></>}
                     </div>

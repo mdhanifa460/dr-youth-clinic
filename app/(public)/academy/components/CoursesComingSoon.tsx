@@ -24,7 +24,7 @@ export default function CoursesComingSoon({ contactUrl }: { contactUrl: string }
       <div className="text-center mb-10">
         <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-2">🚧 Coming Soon</p>
         <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">Certification Programs</h2>
-        <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">Not live yet — batches and curriculum are on the way. Ask us for the latest.</p>
+        <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">Not live yet — batches and curriculum are on the way. Ask us for the latest.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -32,7 +32,7 @@ export default function CoursesComingSoon({ contactUrl }: { contactUrl: string }
           <div key={t.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
             <span className="text-2xl block mb-2">{t.icon}</span>
             <p className="font-bold text-[#0B2560] text-xs mb-1">{t.title}</p>
-            <p className="text-gray-400 text-[11px] leading-relaxed">{t.copy}</p>
+            <p className="text-gray-500 text-[11px] leading-relaxed">{t.copy}</p>
           </div>
         ))}
       </div>

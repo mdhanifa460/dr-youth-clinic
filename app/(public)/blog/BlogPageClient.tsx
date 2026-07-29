@@ -66,7 +66,7 @@ function ArticleCard({ post }: { post: Post }) {
         <h3 className="font-bold text-[#0B2560] text-base leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{post.title}</h3>
         {post.excerpt && <p className="text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>}
         <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-3 text-gray-400 text-xs">
+          <div className="flex items-center gap-3 text-gray-500 text-xs">
             <span className="flex items-center gap-1"><Calendar size={10} />{formatDate(post.publishedAt)}</span>
             <span className="flex items-center gap-1"><Clock size={10} />{post.readTime}</span>
           </div>
@@ -203,7 +203,7 @@ export default function BlogPageClient({
           <div className="text-center py-20">
             <p className="text-5xl mb-3">📝</p>
             <p className="text-gray-500 font-semibold">No articles published yet.</p>
-            <p className="text-gray-400 text-sm mt-1">Check back soon for expert insights.</p>
+            <p className="text-gray-500 text-sm mt-1">Check back soon for expert insights.</p>
           </div>
         ) : (
           <>
@@ -230,7 +230,7 @@ export default function BlogPageClient({
                       {featured.title}
                     </h2>
                     {featured.excerpt && <p className="text-gray-500 mt-3 text-sm leading-relaxed line-clamp-3">{featured.excerpt}</p>}
-                    <div className="flex items-center gap-4 mt-5 text-xs text-gray-400">
+                    <div className="flex items-center gap-4 mt-5 text-xs text-gray-500">
                       <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(featured.publishedAt)}</span>
                       <span className="flex items-center gap-1"><Clock size={11} />{featured.readTime}</span>
                       {featured.reviewedByDoctorId?.name && (
@@ -334,7 +334,7 @@ export default function BlogPageClient({
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-1 group-hover:text-[#3B82C4] transition">{s.name}</p>
-                    {s.heroDescription && <p className="text-gray-400 text-xs mt-0.5 line-clamp-1">{s.heroDescription}</p>}
+                    {s.heroDescription && <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{s.heroDescription}</p>}
                   </div>
                 </Link>
               ))}
@@ -370,7 +370,7 @@ export default function BlogPageClient({
                   </div>
                   <div className="p-4">
                     <p className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2">{v.title}</p>
-                    {v.doctor?.name && <p className="text-gray-400 text-xs mt-1.5">{v.doctor.name}</p>}
+                    {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}
                   </div>
                 </Link>
               ))}

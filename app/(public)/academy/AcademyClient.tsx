@@ -43,7 +43,7 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
               }`}
             >
               {cat}
-              <span className={`ml-1.5 text-[10px] font-bold ${active === cat ? 'text-white/70' : 'text-gray-400'}`}>
+              <span className={`ml-1.5 text-[10px] font-bold ${active === cat ? 'text-white/70' : 'text-gray-500'}`}>
                 ({counts[cat] || 0})
               </span>
             </button>
@@ -53,7 +53,7 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-500">
           <p className="text-4xl mb-3">🔍</p>
           <p className="font-semibold">No {active} videos right now</p>
         </div>
@@ -91,7 +91,7 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
                 <h3 className="font-headline font-bold text-[#0B2560] text-sm mt-1 leading-snug line-clamp-2">
                   {v.title}
                 </h3>
-                {v.doctor?.name && <p className="text-gray-400 text-xs mt-1.5">{v.doctor.name}</p>}
+                {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}
               </div>
             </Link>
           ))}
