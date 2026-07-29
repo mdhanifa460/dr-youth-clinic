@@ -58,13 +58,21 @@ const nextConfig = {
             // for Fast Refresh / source maps, and without it the CSP silently blocks
             // all client JS from executing, so the app never hydrates (no onClick
             // handlers attach anywhere). Production bundles don't use eval().
-            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' "}https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com`,
+            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' "}https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com https://www.youtube.com`,
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com",
+            // img.youtube.com/i.ytimg.com serve the hotlinked thumbnail Video.ts
+            // auto-generates from a youtubeId (see the pre('save') hook) whenever
+            // an admin hasn't uploaded a custom Cloudinary thumbnail — without
+            // these origins, any video relying on that default silently shows
+            // a broken image.
+            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
             "font-src 'self' data:",
             "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
             "media-src 'self' https://res.cloudinary.com",
-            "frame-src https://www.google.com https://maps.google.com",
+            // youtube-nocookie.com is the privacy-enhanced embed domain some
+            // browsers/extensions rewrite youtube.com embeds to — allow both so
+            // a visitor's own privacy settings can't reintroduce this block.
+            "frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://www.youtube-nocookie.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
