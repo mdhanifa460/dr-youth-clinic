@@ -101,7 +101,10 @@ async function getRelatedServices(location: string, category: string, excludeSlu
 async function getLocationDoctors(location: string) {
   try {
     await connectDB();
-    return Doctor.find({ location: { $in: [location.toLowerCase(), 'all'] }, active: true } as any)
+    // Was querying a non-existent `location` field (Doctor's real field is
+    // the plural `locations` array) — matched zero documents ever, so this
+    // always silently returned an empty list.
+    return Doctor.find({ locations: { $in: [location.toLowerCase(), 'all'] }, active: true } as any)
       .sort({ order: 1 }).limit(3).lean() as Promise<any[]>;
   } catch { return []; }
 }

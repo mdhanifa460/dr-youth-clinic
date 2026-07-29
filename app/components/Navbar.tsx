@@ -276,6 +276,12 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
         {/* Phone + CTA */}
         <div className="flex items-center gap-2 shrink-0">
           <Link
+            href="/plan-my-journey"
+            className="hidden xl:flex min-h-10 items-center gap-1.5 text-[#0B2560] px-2 py-2 rounded-xl text-sm font-semibold hover:bg-[#f6faff] transition whitespace-nowrap"
+          >
+            ✨ Plan My Journey
+          </Link>
+          <Link
             href="/skin-quiz"
             className="hidden xl:flex min-h-10 items-center gap-1.5 border border-[#F5A623] text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/10 transition whitespace-nowrap"
           >
@@ -384,6 +390,13 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
 
           {/* CTA buttons */}
           <div className="pt-3 flex flex-col gap-2">
+            <Link
+              href="/plan-my-journey"
+              onClick={() => setMobileOpen(false)}
+              className="min-h-12 w-full bg-[#0B2560]/5 border border-[#0B2560]/20 text-[#0B2560] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
+            >
+              ✨ Plan My Journey
+            </Link>
             <Link
               href="/skin-quiz"
               onClick={() => setMobileOpen(false)}
