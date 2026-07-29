@@ -13,7 +13,7 @@ type NavItem = {
   label: string;
   module: Parameters<typeof canAccess>[1];
   exact?: boolean;
-  countKey?: "services" | "landingPages" | "videos";
+  countKey?: "services" | "landingPages" | "videos" | "courses";
 };
 
 type NavGroup = {
@@ -42,6 +42,8 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/blog", label: "✍️ Blog Posts", module: "blog" },
       { href: "/admin/stories", label: "📱 Web Stories", module: "stories" },
       { href: "/admin/videos", label: "🎥 Video Academy", module: "videos", countKey: "videos" },
+      { href: "/admin/courses", label: "🎓 Certification Programs", module: "courses", countKey: "courses" },
+      { href: "/admin/courses/enquiries", label: "📩 Program Enquiries", module: "courses" },
       { href: "/admin/offers", label: "🏷️ Offers", module: "offers" },
       { href: "/admin/results", label: "📸 Results", module: "results" },
       { href: "/admin/faqs", label: "❓ FAQs", module: "faqs" },

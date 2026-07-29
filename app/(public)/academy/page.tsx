@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { Calendar } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
-// Registers Doctor with Mongoose for the .populate('doctor') call below —
+import { Course } from '@/app/models/Course';
+// Registers Doctor with Mongoose for the .populate('doctor')/.populate('instructors') calls below —
 // see the note in app/api/admin/results/route.ts for why this is required.
 import '@/app/models/Doctor';
 import AcademyClient from './AcademyClient';
+import CertificationProgramsSection from './CertificationProgramsSection';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 300;
@@ -38,8 +40,26 @@ const getVideos = unstable_cache(
   { revalidate: 300, tags: ['academy-videos'] }
 );
 
+const getCourses = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const courses = await (Course as any)
+        .find({ status: 'published' })
+        .sort({ displayOrder: 1, createdAt: -1 })
+        .populate('instructors', 'name photo title')
+        .lean();
+      return JSON.parse(JSON.stringify(courses));
+    } catch {
+      return [];
+    }
+  },
+  ['public-academy-courses'],
+  { revalidate: 300, tags: ['academy-courses'] }
+);
+
 export default async function AcademyPage() {
-  const [videos, siteConfig] = await Promise.all([getVideos(), getSiteConfig()]);
+  const [videos, courses, siteConfig] = await Promise.all([getVideos(), getCourses(), getSiteConfig()]);
 
   return (
     <main>
@@ -104,6 +124,9 @@ export default async function AcademyPage() {
           )}
         </div>
       </section>
+
+      {/* ── CERTIFICATION PROGRAMS ── */}
+      <CertificationProgramsSection courses={courses} siteConfig={siteConfig} />
 
       {/* ── BOTTOM CTA ── */}
       <section className="bg-[#0B2560] py-14">

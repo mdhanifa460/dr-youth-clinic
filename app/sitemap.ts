@@ -7,6 +7,7 @@ import { LandingPage } from '@/app/models/LandingPage';
 import { Story } from '@/app/models/Story';
 import { Result } from '@/app/models/Result';
 import { Video } from '@/app/models/Video';
+import { Course } from '@/app/models/Course';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,12 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   },
   {
     url: `${SITE_URL}/results`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  },
+  {
+    url: `${SITE_URL}/academy`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.7,
@@ -118,7 +125,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     await connectDB();
 
-    const [services, doctors, blogPosts, landingPages, stories, results, videos] = await Promise.all([
+    const [services, doctors, blogPosts, landingPages, stories, results, videos, courses] = await Promise.all([
       Service.find({ status: 'active' } as any)
         .select('urlSlug location targetLocations category updatedAt locationSeo')
         .lean() as Promise<any[]>,
@@ -138,6 +145,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .select('slug updatedAt')
         .lean() as Promise<any[]>,
       (Video as any).find({ status: 'published' })
+        .select('slug updatedAt')
+        .lean() as Promise<any[]>,
+      (Course as any).find({ status: 'published' })
         .select('slug updatedAt')
         .lean() as Promise<any[]>,
     ]);
@@ -210,7 +220,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }));
 
-    return [...STATIC_ROUTES, ...serviceUrls, ...doctorUrls, ...blogUrls, ...landingPageUrls, ...storyUrls, ...resultUrls, ...videoUrls];
+    const courseUrls: MetadataRoute.Sitemap = courses
+      .filter((c) => c.slug)
+      .map((c) => ({
+        url: `${SITE_URL}/academy/courses/${c.slug}`,
+        lastModified: c.updatedAt ? new Date(c.updatedAt) : new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }));
+
+    return [...STATIC_ROUTES, ...serviceUrls, ...doctorUrls, ...blogUrls, ...landingPageUrls, ...storyUrls, ...resultUrls, ...videoUrls, ...courseUrls];
   } catch {
     return STATIC_ROUTES;
   }

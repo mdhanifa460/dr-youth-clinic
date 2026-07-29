@@ -5,6 +5,7 @@ import { canAccess } from '@/app/lib/permissions';
 import { Service } from '@/app/models/Service';
 import { LandingPage } from '@/app/models/LandingPage';
 import { Video } from '@/app/models/Video';
+import { Course } from '@/app/models/Course';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,13 +15,14 @@ export async function GET() {
 
   try {
     await connectDB();
-    const [services, landingPages, videos] = await Promise.all([
+    const [services, landingPages, videos, courses] = await Promise.all([
       canAccess(user.role, 'services') ? (Service as any).countDocuments({ status: 'draft' }) : 0,
       canAccess(user.role, 'landing-pages') ? (LandingPage as any).countDocuments({ status: 'draft' }) : 0,
       canAccess(user.role, 'videos') ? (Video as any).countDocuments({ status: 'draft' }) : 0,
+      canAccess(user.role, 'courses') ? (Course as any).countDocuments({ status: 'draft' }) : 0,
     ]);
-    return NextResponse.json({ services, landingPages, videos });
+    return NextResponse.json({ services, landingPages, videos, courses });
   } catch {
-    return NextResponse.json({ services: 0, landingPages: 0, videos: 0 });
+    return NextResponse.json({ services: 0, landingPages: 0, videos: 0, courses: 0 });
   }
 }
