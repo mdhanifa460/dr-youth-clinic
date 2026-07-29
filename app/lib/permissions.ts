@@ -31,7 +31,8 @@ export type AdminModule =
   | 'stories'
   | 'faqs'
   | 'banners'
-  | 'courses';
+  | 'courses'
+  | 'animation-library';
 
 export type AccessLevel = 'full' | 'view' | 'none';
 
@@ -43,7 +44,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
@@ -52,7 +53,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
@@ -61,7 +62,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -70,7 +71,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'view', courses: 'view',
+    stories: 'none', faqs: 'view', courses: 'view', 'animation-library': 'none',
   },
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
@@ -82,7 +83,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // silent access regression, not an intentional policy change.
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'view', courses: 'none',
+    stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
@@ -93,7 +94,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // editors could already edit quiz content at that level.
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -102,7 +103,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'none', courses: 'none',
+    stories: 'none', faqs: 'none', courses: 'none', 'animation-library': 'none',
   },
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -112,7 +113,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // Was 'services: view' before this feature had its own module.
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'view', courses: 'none',
+    stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none',
   },
 };
 

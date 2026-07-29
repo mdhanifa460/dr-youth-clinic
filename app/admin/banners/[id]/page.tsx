@@ -8,6 +8,7 @@ import ImageUpload from "@/app/admin/components/ImageUpload";
 import VideoUpload from "@/app/admin/components/VideoUpload";
 import { BANNER_TEMPLATES, type BannerTemplateType } from "@/app/lib/banners/types";
 import { HERO_THEMES } from "@/app/lib/banners/heroThemes";
+import { EXPERIENCE_PRESET_LIST } from "@/app/lib/banners/experiencePresets";
 import { locations } from "@/app/data/locations";
 import { CATEGORY_MAP } from "@/app/lib/serviceCategories";
 
@@ -69,6 +70,51 @@ function ListEditor({ items, onChange, placeholder }: { items: string[]; onChang
   );
 }
 
+// Tri-state select for an Advanced Mode override field that can also
+// legitimately be "unset" (inherit the Experience Preset's own value) —
+// a plain Toggle can't express that third state, only on/off.
+function PresetOverrideSelect({
+  label, value, onChange, options,
+}: {
+  label: string; value: string | null | undefined; onChange: (v: string | null) => void; options: { value: string; label: string }[];
+}) {
+  return (
+    <div>
+      <label className="text-xs font-semibold text-gray-500 mb-1 block">{label}</label>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full"
+      >
+        <option value="">Preset default</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// Same tri-state idea as PresetOverrideSelect, for boolean override fields
+// (parallax/scrollEffects) where "inherit from preset" must be
+// distinguishable from an explicit "off".
+function BoolOverrideSelect({ label, value, onChange }: { label: string; value: boolean | null | undefined; onChange: (v: boolean | null) => void }) {
+  return (
+    <div>
+      <label className="text-xs font-semibold text-gray-500 mb-1 block">{label}</label>
+      <select
+        value={value === null || value === undefined ? "" : String(value)}
+        onChange={(e) => onChange(e.target.value === "" ? null : e.target.value === "true")}
+        className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full"
+      >
+        <option value="">Preset default</option>
+        <option value="true">On</option>
+        <option value="false">Off</option>
+      </select>
+    </div>
+  );
+}
+
 function CTAFields({ label, cta, onChange }: { label: string; cta: { label: string; href: string }; onChange: (v: { label: string; href: string }) => void }) {
   return (
     <div>
@@ -94,6 +140,11 @@ export default function BannerEditPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [smartRulesEnabled, setSmartRulesEnabled] = useState(false);
+  const [experienceAdvanced, setExperienceAdvanced] = useState(false);
+  const [assetPickerOpen, setAssetPickerOpen] = useState(false);
+  const [assetPickerType, setAssetPickerType] = useState<"lottie" | "rive">("lottie");
+  const [libraryAssetsRaw, setLibraryAssetsRaw] = useState<any[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
   const [doctors, setDoctors] = useState<{ _id: string; name: string; title: string }[]>([]);
 
   useEffect(() => {
@@ -114,6 +165,8 @@ export default function BannerEditPage() {
         if (d.success) {
           setBanner(d.data);
           setSmartRulesEnabled(!!d.data.smartRules);
+          const ov = d.data.experienceOverrides || {};
+          setExperienceAdvanced(Object.values(ov).some((v) => v !== null && v !== undefined));
         } else {
           setError(d.message || "Banner not found");
         }
@@ -121,6 +174,19 @@ export default function BannerEditPage() {
       .catch(() => setError("Failed to load banner"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const openAssetPicker = (assetType: "lottie" | "rive") => {
+    setAssetPickerType(assetType);
+    setAssetPickerOpen(true);
+    if (libraryAssetsRaw.length === 0) {
+      setLibraryLoading(true);
+      fetch("/api/admin/animation-assets")
+        .then((r) => r.json())
+        .then((d) => { if (d.success) setLibraryAssetsRaw(d.data.filter((a: any) => a.status === "active")); })
+        .finally(() => setLibraryLoading(false));
+    }
+  };
+  const libraryAssets = libraryAssetsRaw.filter((a: any) => a.type === assetPickerType);
 
   const set = (patch: Record<string, any>) => {
     setBanner((prev: any) => ({ ...prev, ...patch }));
@@ -293,38 +359,124 @@ export default function BannerEditPage() {
 
       {templateType === "glass-hero" && (
         <>
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-            <p className="text-sm font-bold text-gray-700">Background Theme & Motion</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Theme</label>
-                <select value={banner.heroTheme || "aurora"} onChange={(e) => set({ heroTheme: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
-                  {HERO_THEMES.map((t) => (
-                    <option key={t.id} value={t.id}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Motion Intensity</label>
-                <select value={banner.motionIntensity || "full"} onChange={(e) => set({ motionIntensity: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
-                  <option value="full">Full</option>
-                  <option value="reduced">Reduced</option>
-                  <option value="off">Off</option>
-                </select>
-              </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <p className="text-sm font-bold text-gray-700">✨ Experience Preset</p>
+            <p className="text-xs text-gray-400">One choice sets the color palette, glass effect, glow, and motion together — no need to know how any of it works underneath.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {EXPERIENCE_PRESET_LIST.map((p) => {
+                const active = (banner.experiencePreset || "luxury-glass") === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => set({ experiencePreset: p.id, motionIntensity: p.suggestedMotionIntensity })}
+                    className={`text-left rounded-xl border p-3 transition ${active ? "border-[#0B2560] bg-[#0B2560]/5 ring-1 ring-[#0B2560]" : "border-gray-200 hover:border-gray-300"}`}
+                  >
+                    <p className="text-xs font-bold text-gray-800">{p.label}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">{p.description}</p>
+                  </button>
+                );
+              })}
             </div>
-            <p className="text-[11px] text-gray-400">A visitor's own device "reduce motion" setting always overrides this.</p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
-            <p className="text-sm font-bold text-gray-700">Lottie Animation (optional)</p>
-            <Input value={banner.lottieUrl || ""} onChange={(v) => set({ lottieUrl: v })} placeholder="https://.../animation.json" />
-            {banner.lottieUrl && (
-              <select value={banner.lottiePlacement || "beside-heading"} onChange={(e) => set({ lottiePlacement: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
-                <option value="beside-heading">Beside the subtitle badge</option>
-                <option value="background">Full background</option>
-                <option value="floating-badge">Floating corner badge</option>
-              </select>
+            <Toggle checked={experienceAdvanced} onChange={setExperienceAdvanced} label="⚙️ Advanced Customization" />
+            {experienceAdvanced && (
+              <div className="space-y-3 pt-1">
+                <p className="text-[11px] text-amber-600 bg-amber-50 rounded-lg px-3 py-2">Every field below is optional — leave on "Preset default" unless you specifically need to override it.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <PresetOverrideSelect
+                    label="Color Theme"
+                    value={banner.experienceOverrides?.colorThemeOverride}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), colorThemeOverride: v } })}
+                    options={HERO_THEMES.map((t) => ({ value: t.id, label: t.label }))}
+                  />
+                  <PresetOverrideSelect
+                    label="Glass Blur"
+                    value={banner.experienceOverrides?.glassBlur}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), glassBlur: v } })}
+                    options={[{ value: "none", label: "None (flat card)" }, { value: "md", label: "Medium" }, { value: "xl", label: "Full glass" }]}
+                  />
+                  <PresetOverrideSelect
+                    label="Glow Intensity"
+                    value={banner.experienceOverrides?.glowIntensity}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), glowIntensity: v } })}
+                    options={[{ value: "none", label: "None" }, { value: "soft", label: "Soft" }, { value: "strong", label: "Strong" }]}
+                  />
+                  <PresetOverrideSelect
+                    label="Entrance Animation"
+                    value={banner.experienceOverrides?.entranceAnimation}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), entranceAnimation: v } })}
+                    options={[{ value: "none", label: "None" }, { value: "fade", label: "Fade" }, { value: "fade-rise", label: "Fade + Rise" }]}
+                  />
+                  <PresetOverrideSelect
+                    label="Idle Animation"
+                    value={banner.experienceOverrides?.idleAnimation}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), idleAnimation: v } })}
+                    options={[{ value: "none", label: "None (static)" }, { value: "drift", label: "Gradient Drift" }, { value: "pulse", label: "Glow Pulse" }]}
+                  />
+                  <PresetOverrideSelect
+                    label="Animation Speed"
+                    value={banner.experienceOverrides?.animationSpeed}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), animationSpeed: v } })}
+                    options={[{ value: "slow", label: "Slow" }, { value: "normal", label: "Normal" }, { value: "fast", label: "Fast" }]}
+                  />
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block">Particle Density</label>
+                    <select value={banner.motionIntensity || "full"} onChange={(e) => set({ motionIntensity: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full">
+                      <option value="full">Full</option>
+                      <option value="reduced">Reduced</option>
+                      <option value="off">Off</option>
+                    </select>
+                  </div>
+                  <BoolOverrideSelect
+                    label="Parallax"
+                    value={banner.experienceOverrides?.parallax}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), parallax: v } })}
+                  />
+                  <BoolOverrideSelect
+                    label="Scroll Effects"
+                    value={banner.experienceOverrides?.scrollEffects}
+                    onChange={(v) => set({ experienceOverrides: { ...(banner.experienceOverrides || {}), scrollEffects: v } })}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400">A visitor's own device "reduce motion" setting always overrides every animation above.</p>
+
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold text-gray-500">Lottie Animation (optional)</p>
+                    <button type="button" onClick={() => openAssetPicker("lottie")} className="text-[11px] font-bold text-[#0B2560] hover:text-[#1a3a6e]">
+                      📚 Pick from Library
+                    </button>
+                  </div>
+                  <Input value={banner.lottieUrl || ""} onChange={(v) => set({ lottieUrl: v })} placeholder="https://.../animation.json" />
+                  {banner.lottieUrl && (
+                    <select value={banner.lottiePlacement || "beside-heading"} onChange={(e) => set({ lottiePlacement: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full mt-2">
+                      <option value="beside-heading">Beside the subtitle badge</option>
+                      <option value="background">Full background</option>
+                      <option value="floating-badge">Floating corner badge</option>
+                    </select>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold text-gray-500">Rive Animation (optional)</p>
+                    <button type="button" onClick={() => openAssetPicker("rive")} className="text-[11px] font-bold text-[#0B2560] hover:text-[#1a3a6e]">
+                      📚 Pick from Library
+                    </button>
+                  </div>
+                  <Input value={banner.riveUrl || ""} onChange={(v) => set({ riveUrl: v })} placeholder="https://.../animation.riv" />
+                  {banner.riveUrl && (
+                    <select value={banner.rivePlacement || "beside-heading"} onChange={(e) => set({ rivePlacement: e.target.value })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full mt-2">
+                      <option value="beside-heading">Beside the subtitle badge</option>
+                      <option value="background">Full background</option>
+                      <option value="floating-badge">Floating corner badge</option>
+                    </select>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
@@ -539,6 +691,16 @@ export default function BannerEditPage() {
                   ))}
                 </select>
               </div>
+              {templateType === "glass-hero" && (
+                <div className="mt-2">
+                  <PresetOverrideSelect
+                    label="Seasonal Experience Preset (applies only during the season window above)"
+                    value={banner.smartRules?.seasonalPresetOverride}
+                    onChange={(v) => set({ smartRules: { ...(banner.smartRules || {}), seasonalPresetOverride: v } })}
+                    options={EXPERIENCE_PRESET_LIST.map((p) => ({ value: p.id, label: p.label }))}
+                  />
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -550,9 +712,62 @@ export default function BannerEditPage() {
                 <input type="date" value={banner.smartRules?.dateRangeEnd ? banner.smartRules.dateRangeEnd.slice(0, 10) : ""} onChange={(e) => set({ smartRules: { ...(banner.smartRules || {}), dateRangeEnd: e.target.value || null } })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full" />
               </div>
             </div>
+            {templateType === "glass-hero" && (
+              <PresetOverrideSelect
+                label="Campaign Experience Preset (applies only during the Festival/Offer dates above — wins over the seasonal preset if both are active)"
+                value={banner.smartRules?.campaignPreset}
+                onChange={(v) => set({ smartRules: { ...(banner.smartRules || {}), campaignPreset: v } })}
+                options={EXPERIENCE_PRESET_LIST.map((p) => ({ value: p.id, label: p.label }))}
+              />
+            )}
           </div>
         )}
       </div>
+
+      {assetPickerOpen && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setAssetPickerOpen(false)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-[#0B2560] text-lg">Pick from Animation Library</h2>
+              <button onClick={() => setAssetPickerOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            </div>
+            {libraryLoading ? (
+              <div className="flex justify-center py-10"><Loader className="animate-spin text-gray-300" size={22} /></div>
+            ) : libraryAssets.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-10">
+                No active {assetPickerType === "lottie" ? "Lottie" : "Rive"} assets yet. Add one in the{" "}
+                <a href="/admin/animation-library/new" target="_blank" rel="noopener noreferrer" className="text-[#0B2560] font-semibold underline">Animation Library</a>.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {libraryAssets.map((a) => (
+                  <button
+                    key={a._id}
+                    type="button"
+                    onClick={() => {
+                      if (assetPickerType === "lottie") set({ lottieUrl: a.file.url });
+                      else set({ riveUrl: a.file.url });
+                      setAssetPickerOpen(false);
+                    }}
+                    className="text-left rounded-xl border border-gray-200 hover:border-[#0B2560]/40 overflow-hidden transition"
+                  >
+                    <div className="relative aspect-video bg-gray-100">
+                      {a.previewImage?.url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={a.previewImage.url} alt={a.name} className="absolute inset-0 w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-semibold text-gray-700 truncate">{a.name}</p>
+                      <p className="text-[10px] text-gray-400">{a.category} · {a.usageCount} use{a.usageCount !== 1 ? "s" : ""}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

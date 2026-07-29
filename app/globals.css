@@ -272,7 +272,11 @@ p {
     var(--hero-grad-2)
   );
   background-size: 200% 200%;
-  animation: glassHeroShift 18s ease-in-out infinite;
+  /* Duration driven by --hero-anim-duration (set inline per-banner from
+     the resolved experience's animationSpeed — see experienceEngine.ts's
+     getAnimationDurations()); 18s is the "normal" speed's own value, so an
+     experiencePreset-less legacy banner (no inline var) is unaffected. */
+  animation: glassHeroShift var(--hero-anim-duration, 18s) ease-in-out infinite;
 }
 
 @keyframes glassHeroShift {
@@ -285,8 +289,29 @@ p {
   box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.25);
 }
 
+/* Entrance — plays once on mount (a plain CSS animation, not an
+   IntersectionObserver-gated one) since the Glass Hero is always the LCP
+   element and is never actually below the fold on first paint; see
+   AnimatedBannerWrapper.tsx's skipEntrance comment for why glass-hero
+   deliberately opts out of that shared whileInView wrapper instead of
+   reusing it here. */
+.glass-hero-entrance-fade {
+  animation: glassHeroFadeIn 0.6s ease-out both;
+}
+.glass-hero-entrance-fade-rise {
+  animation: glassHeroFadeRiseIn 0.6s ease-out both;
+}
+@keyframes glassHeroFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes glassHeroFadeRiseIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .hero-particle {
-  animation: heroParticleFloat 9s ease-in-out infinite;
+  animation: heroParticleFloat var(--hero-particle-duration, 9s) ease-in-out infinite;
   opacity: 0;
 }
 
@@ -298,6 +323,18 @@ p {
   100% { transform: translateY(0px); opacity: 0; }
 }
 
+/* Idle "pulse" mode (Skin Glow, etc.) — a gentle breathing glow instead of
+   the gradient's own drift; applied to the glow-orb divs in
+   GlassHeroBanner.tsx via the .hero-glow-pulse class when
+   idleAnimation === 'pulse'. */
+.hero-glow-pulse {
+  animation: heroGlowPulse var(--hero-pulse-duration, 6s) ease-in-out infinite;
+}
+@keyframes heroGlowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .glass-hero-gradient {
     animation: none;
@@ -306,5 +343,14 @@ p {
   .hero-particle {
     animation: none;
     opacity: 0.4;
+  }
+  .hero-glow-pulse {
+    animation: none;
+  }
+  .glass-hero-entrance-fade,
+  .glass-hero-entrance-fade-rise {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

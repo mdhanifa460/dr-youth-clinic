@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import type { BannerTemplateType } from "@/app/lib/banners/types";
+import type { ExperiencePresetId } from "@/app/lib/banners/experiencePresets";
 
 export interface IBanner extends Document {
   title: string;
@@ -28,13 +29,47 @@ export interface IBanner extends Document {
   heroTheme: 'aurora' | 'gold' | 'ocean' | 'violet' | 'midnight';
   lottieUrl: string;
   lottiePlacement: 'background' | 'beside-heading' | 'floating-badge';
+  // Independent of lottieUrl/lottiePlacement above — a banner can use
+  // either technology (or, in principle, both at different placements)
+  // per Phase 3 of the Experience Engine. See RivePlayer.tsx for why this
+  // needed its own runtime-import discipline separate from LottiePlayer.
+  riveUrl: string;
+  rivePlacement: 'background' | 'beside-heading' | 'floating-badge';
   serviceChips: { label: string; icon: string; href: string }[];
   doctorHighlight: { doctorId: mongoose.Types.ObjectId | null; tagline: string };
   assistantTeaser: { enabled: boolean; text: string; ctaLabel: string; href: string };
   // Admin-side animation dial — the visitor's own OS
   // prefers-reduced-motion always overrides this, never the other way
-  // round (see GlassHeroBanner.tsx).
+  // round (see GlassHeroBanner.tsx). Kept as the single always-effective
+  // source of truth for particle density; experiencePreset only *suggests*
+  // a starting value for this field when first picked in the admin UI
+  // (app/lib/banners/experiencePresets.ts's suggestedMotionIntensity).
   motionIntensity: 'full' | 'reduced' | 'off';
+  // Experience Engine (Task 2 of the Enterprise Experience & Theme Engine
+  // design) — the business-friendly preset an admin picks in Simple Mode.
+  // Resolved by resolveExperience() (app/lib/banners/experienceEngine.ts)
+  // into the full color/glass/glow/animation token set GlassHeroBanner.tsx
+  // renders. A banner with no experiencePreset falls back to the legacy
+  // heroTheme-only rendering (zero migration needed for pre-existing
+  // banners) — see resolveExperience()'s legacyExperience() branch.
+  experiencePreset: ExperiencePresetId;
+  // Advanced Mode overrides — sparse and optional; every field falls back
+  // to the preset's own value when unset (`??` in resolveExperience()).
+  // This is deliberately a SEPARATE new field from heroTheme/motionIntensity
+  // rather than repurposing those (which already carry non-null schema
+  // defaults, making "admin explicitly chose this" indistinguishable from
+  // "never touched" — colorThemeOverride avoids that ambiguity entirely by
+  // defaulting to undefined/null).
+  experienceOverrides?: {
+    colorThemeOverride: 'aurora' | 'gold' | 'ocean' | 'violet' | 'midnight' | null;
+    glassBlur: 'none' | 'md' | 'xl' | null;
+    glowIntensity: 'none' | 'soft' | 'strong' | null;
+    entranceAnimation: 'none' | 'fade' | 'fade-rise' | null;
+    idleAnimation: 'none' | 'drift' | 'pulse' | null;
+    animationSpeed: 'slow' | 'normal' | 'fast' | null;
+    parallax: boolean | null;
+    scrollEffects: boolean | null;
+  };
   status: "draft" | "active" | "disabled";
   priority: number;
   order: number;
@@ -73,6 +108,15 @@ export interface IBanner extends Document {
     // resolveBanner.ts on why that's a separate decision, not this field.
     seasonStartMonth: number | null;
     seasonEndMonth: number | null;
+    // Phase 4 of the Experience Engine — reuses the season/date-range
+    // windows above (already proven for banner *visibility*) to also
+    // drive which Experience Preset applies while that window is active,
+    // on the SAME banner document, with no second banner needed. Resolved
+    // by resolveExperience() in experienceEngine.ts; campaignPreset wins
+    // over seasonalPresetOverride when both windows happen to overlap
+    // (a short-lived campaign is more specific than a recurring season).
+    seasonalPresetOverride: ExperiencePresetId | null;
+    campaignPreset: ExperiencePresetId | null;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -90,6 +134,16 @@ const SmartRulesSchema = new Schema(
     dateRangeEnd: { type: Date, default: null },
     seasonStartMonth: { type: Number, default: null, min: 1, max: 12 },
     seasonEndMonth: { type: Number, default: null, min: 1, max: 12 },
+    seasonalPresetOverride: {
+      type: String,
+      enum: ["luxury-glass", "skin-glow", "hair-luxury", "minimal-medical", "corporate", "weight-wellness", "premium-beauty", null],
+      default: null,
+    },
+    campaignPreset: {
+      type: String,
+      enum: ["luxury-glass", "skin-glow", "hair-luxury", "minimal-medical", "corporate", "weight-wellness", "premium-beauty", null],
+      default: null,
+    },
   },
   { _id: false }
 );
@@ -140,6 +194,8 @@ const BannerSchema = new Schema<IBanner>(
     heroTheme: { type: String, enum: ["aurora", "gold", "ocean", "violet", "midnight"], default: "aurora" },
     lottieUrl: { type: String, default: "" },
     lottiePlacement: { type: String, enum: ["background", "beside-heading", "floating-badge"], default: "beside-heading" },
+    riveUrl: { type: String, default: "" },
+    rivePlacement: { type: String, enum: ["background", "beside-heading", "floating-badge"], default: "beside-heading" },
     serviceChips: { type: [{ label: String, icon: String, href: String }], default: [] },
     doctorHighlight: {
       doctorId: { type: Schema.Types.ObjectId, ref: "Doctor", default: null },
@@ -152,6 +208,26 @@ const BannerSchema = new Schema<IBanner>(
       href: { type: String, default: "/skin-quiz" },
     },
     motionIntensity: { type: String, enum: ["full", "reduced", "off"], default: "full" },
+    experiencePreset: {
+      type: String,
+      enum: ["luxury-glass", "skin-glow", "hair-luxury", "minimal-medical", "corporate", "weight-wellness", "premium-beauty"],
+      default: "luxury-glass",
+    },
+    experienceOverrides: {
+      type: {
+        colorThemeOverride: { type: String, enum: ["aurora", "gold", "ocean", "violet", "midnight", null], default: null },
+        glassBlur: { type: String, enum: ["none", "md", "xl", null], default: null },
+        glowIntensity: { type: String, enum: ["none", "soft", "strong", null], default: null },
+        entranceAnimation: { type: String, enum: ["none", "fade", "fade-rise", null], default: null },
+        idleAnimation: { type: String, enum: ["none", "drift", "pulse", null], default: null },
+        animationSpeed: { type: String, enum: ["slow", "normal", "fast", null], default: null },
+        parallax: { type: Boolean, default: null },
+        scrollEffects: { type: Boolean, default: null },
+      },
+      required: false,
+      default: () => ({}),
+      _id: false,
+    },
 
     // draft = never shown publicly (supports Preview-before-publish);
     // active = eligible per schedule/rules; disabled = manually paused

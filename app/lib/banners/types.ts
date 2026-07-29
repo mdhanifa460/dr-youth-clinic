@@ -57,6 +57,7 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       tertiaryCTA: { label: "WhatsApp Expert", href: "" },
       heroTheme: "aurora",
       motionIntensity: "full",
+      experiencePreset: "luxury-glass",
       statBadges: [
         { value: "15,000+", label: "Happy Patients" },
         { value: "20+", label: "Doctors" },
@@ -194,6 +195,8 @@ export interface BannerDoc {
   heroTheme: "aurora" | "gold" | "ocean" | "violet" | "midnight";
   lottieUrl: string;
   lottiePlacement: "background" | "beside-heading" | "floating-badge";
+  riveUrl?: string;
+  rivePlacement?: "background" | "beside-heading" | "floating-badge";
   serviceChips: { label: string; icon: string; href: string }[];
   // doctorId is always populated by resolveBanner() into the full doctor
   // sub-document (or null) — never a raw ObjectId string on the client.
@@ -203,6 +206,17 @@ export interface BannerDoc {
   };
   assistantTeaser: { enabled: boolean; text: string; ctaLabel: string; href: string };
   motionIntensity: "full" | "reduced" | "off";
+  experiencePreset?: string;
+  experienceOverrides?: {
+    colorThemeOverride?: "aurora" | "gold" | "ocean" | "violet" | "midnight" | null;
+    glassBlur?: "none" | "md" | "xl" | null;
+    glowIntensity?: "none" | "soft" | "strong" | null;
+    entranceAnimation?: "none" | "fade" | "fade-rise" | null;
+    idleAnimation?: "none" | "drift" | "pulse" | null;
+    animationSpeed?: "slow" | "normal" | "fast" | null;
+    parallax?: boolean | null;
+    scrollEffects?: boolean | null;
+  };
   status: "draft" | "active" | "disabled";
   priority: number;
   order: number;
@@ -223,5 +237,7 @@ export interface BannerDoc {
     dateRangeEnd: string | null;
     seasonStartMonth: number | null;
     seasonEndMonth: number | null;
+    seasonalPresetOverride?: string | null;
+    campaignPreset?: string | null;
   };
 }

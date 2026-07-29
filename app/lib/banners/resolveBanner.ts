@@ -50,8 +50,12 @@ function inTimeWindow(nowMinutes: number, start: string, end: string): boolean {
 // Same inclusive-range-with-wraparound logic as inTimeWindow, generalized
 // to any 1-12 month pair — lets a "summer" or "monsoon" season recur every
 // year (e.g. start:11 end:2 for Nov-through-Feb) without an admin having to
-// re-enter dateRangeStart/End annually.
-function inMonthWindow(nowMonth: number, start: number, end: number): boolean {
+// re-enter dateRangeStart/End annually. Exported for reuse by
+// experienceEngine.ts's Phase 4 seasonal/campaign preset override — same
+// season window that already drives banner *visibility* here now also
+// drives which preset applies while active, per the Experience Engine
+// design doc's Task 10 ("no code change" scalability argument).
+export function inMonthWindow(nowMonth: number, start: number, end: number): boolean {
   if (start <= end) return nowMonth >= start && nowMonth <= end;
   return nowMonth >= start || nowMonth <= end;
 }
@@ -60,8 +64,9 @@ function inMonthWindow(nowMonth: number, start: number, end: number): boolean {
 // ("YYYY-MM-DDT00:00:00.000Z"); comparing that directly against `now` for an
 // END bound would make the banner disappear at the START of its last day
 // instead of running through it. Every *End* comparison below uses this to
-// mean "through the end of that calendar day."
-function endOfDayUTC(date: Date | string): Date {
+// mean "through the end of that calendar day." Exported for the same
+// reason as inMonthWindow above.
+export function endOfDayUTC(date: Date | string): Date {
   const d = new Date(date);
   d.setUTCHours(23, 59, 59, 999);
   return d;

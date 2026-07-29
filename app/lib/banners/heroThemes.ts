@@ -7,6 +7,24 @@
 
 export type HeroThemeId = 'aurora' | 'gold' | 'ocean' | 'violet' | 'midnight';
 
+// Exported standalone so app/lib/banners/experiencePresets.ts can reuse the
+// exact same 12-key shape for its own (richer) preset objects — one
+// definition of "what a hero color bundle looks like," not two.
+export interface HeroThemeVars {
+  '--hero-grad-1': string;
+  '--hero-grad-2': string;
+  '--hero-grad-3': string;
+  '--hero-glow-a': string;
+  '--hero-glow-b': string;
+  '--hero-particle': string;
+  '--hero-text': string;
+  '--hero-text-muted': string;
+  '--hero-glass-bg': string;
+  '--hero-glass-border': string;
+  '--hero-accent': string;
+  '--hero-accent-text': string;
+}
+
 export interface HeroTheme {
   id: HeroThemeId;
   label: string;
@@ -15,20 +33,7 @@ export interface HeroTheme {
   // globals.css's .glass-hero rules consume these vars, so the animated
   // gradient / glow orbs / particle tint are all themeable without any
   // per-theme CSS class duplication.
-  vars: {
-    '--hero-grad-1': string;
-    '--hero-grad-2': string;
-    '--hero-grad-3': string;
-    '--hero-glow-a': string;
-    '--hero-glow-b': string;
-    '--hero-particle': string;
-    '--hero-text': string;
-    '--hero-text-muted': string;
-    '--hero-glass-bg': string;
-    '--hero-glass-border': string;
-    '--hero-accent': string;
-    '--hero-accent-text': string;
-  };
+  vars: HeroThemeVars;
 }
 
 export const HERO_THEMES: HeroTheme[] = [
