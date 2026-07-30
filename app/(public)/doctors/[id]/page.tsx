@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { unstable_cache } from 'next/cache';
@@ -42,7 +43,7 @@ async function getDoctorResults(doctorId: string) {
   } catch { return []; }
 }
 
-async function getDoctor(id: string) {
+const getDoctor = cache(async (id: string) => {
   try {
     await connectDB();
     const doc = await (Doctor as any).findById(id).lean();
@@ -51,7 +52,7 @@ async function getDoctor(id: string) {
   } catch {
     return null;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const doctor = await getDoctor(params.id);

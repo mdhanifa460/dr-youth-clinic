@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
 // Registers Doctor/Service with Mongoose for the .populate() calls below —
@@ -36,6 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (!video) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     Object.assign(video, body);
     await video.save();
+    revalidateTag('videos');
     return NextResponse.json({ success: true, data: video, message: 'Video updated successfully' });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to update video' }, { status: 500 });
@@ -50,6 +52,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     await connectDB();
     const video = await (Video as any).findByIdAndDelete(params.id);
     if (!video) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    revalidateTag('videos');
     return NextResponse.json({ success: true, message: 'Video deleted successfully' });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to delete video' }, { status: 500 });

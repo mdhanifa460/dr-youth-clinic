@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Trash2, Edit2, Eye, EyeOff, BookOpen, Star, Search } from 'lucide-react';
 import { BLOG_CATEGORIES } from '@/app/lib/blogCategories';
@@ -74,26 +74,31 @@ export default function BlogAdminPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'live' | 'draft'>('all');
   const [search, setSearch] = useState('');
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (category) params.set('category', category);
-      if (activeFilter !== 'all') params.set('active', activeFilter === 'live' ? 'true' : 'false');
-      if (search.trim()) params.set('search', search.trim());
-      const res = await fetch(`/api/admin/blog?${params.toString()}`);
-      const d = await res.json();
-      if (d.success) setPosts(d.data);
-    } catch {}
-    setLoading(false);
-  }, [category, activeFilter, search]);
-
-  // Debounced re-fetch on search typing (400ms, matching Bookings' pattern);
-  // category/active changes re-fetch immediately via the effect below.
+  // Fetch the full (bounded CMS-size) post list once — category/status/
+  // search used to each trigger their own fresh server round trip on every
+  // keystroke/click, when this dataset is small enough to filter in memory.
   useEffect(() => {
-    const t = setTimeout(() => { fetchPosts(); }, search ? 400 : 0);
-    return () => clearTimeout(t);
-  }, [fetchPosts, search]);
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/admin/blog');
+        const d = await res.json();
+        if (d.success) setPosts(d.data);
+      } catch {}
+      setLoading(false);
+    })();
+  }, []);
+
+  const filteredPosts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return posts.filter((p) => {
+      if (category && p.category !== category) return false;
+      if (activeFilter === 'live' && !p.active) return false;
+      if (activeFilter === 'draft' && p.active) return false;
+      if (q && !(p.title?.toLowerCase().includes(q) || p.excerpt?.toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }, [posts, category, activeFilter, search]);
 
   const toggle = async (id: string, val: boolean) => {
     const res = await fetch(`/api/admin/blog/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: val }) });
@@ -180,7 +185,7 @@ export default function BlogAdminPage() {
             </div>
           ))}
         </div>
-      ) : posts.length === 0 ? (
+      ) : filteredPosts.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-5xl mb-4">✍️</p>
           <p className="text-gray-500 font-semibold mb-1">
@@ -204,7 +209,7 @@ export default function BlogAdminPage() {
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {posts.map((p) => (
+          {filteredPosts.map((p) => (
             <PostCard key={p._id} post={p}
               onToggle={toggle} onToggleFeatured={toggleFeatured} onDelete={deletePost} />
           ))}

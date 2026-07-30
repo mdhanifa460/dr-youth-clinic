@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { deleteImage } from '@/app/lib/cloudinary';
@@ -28,6 +29,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = await req.json();
     const post = await (Blog as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!post) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    revalidateTag('blog');
     return NextResponse.json({ success: true, data: post });
   } catch (error: any) {
     if (error.name === 'ValidationError') {
@@ -52,6 +54,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     if (post.coverImage?.publicId) await deleteImage(post.coverImage.publicId).catch(console.error);
     await (Blog as any).findByIdAndDelete(params.id);
     removeChunk('blog', params.id).catch(console.error);
+    revalidateTag('blog');
     return NextResponse.json({ success: true, message: 'Post deleted' });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to delete post' }, { status: 500 });

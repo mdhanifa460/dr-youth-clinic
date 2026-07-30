@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Star, Loader } from 'lucide-react';
 
@@ -31,19 +31,26 @@ export default function CoursesPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [category, setCategory] = useState('');
 
-  useEffect(() => { fetchCourses(); }, [category]);
+  // Fetch the full (small, curated) course catalogue once — the category
+  // filter used to re-fetch from the server on every dropdown change even
+  // though it's just filtering this same small list.
+  useEffect(() => { fetchCourses(); }, []);
 
   async function fetchCourses() {
     try {
       setLoading(true);
-      const qs = category ? `?category=${encodeURIComponent(category)}` : '';
-      const res = await fetch(`/api/admin/courses${qs}`);
+      const res = await fetch('/api/admin/courses');
       const data = await res.json();
       if (data.success) setCourses(data.data);
     } finally {
       setLoading(false);
     }
   }
+
+  const filteredCourses = useMemo(
+    () => (category ? courses.filter((c) => c.category === category) : courses),
+    [courses, category]
+  );
 
   async function deleteCourse(id: string) {
     if (!confirm('Delete this course?')) return;
@@ -92,7 +99,7 @@ export default function CoursesPage() {
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader className="animate-spin text-gray-300" size={24} /></div>
-      ) : courses.length === 0 ? (
+      ) : filteredCourses.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
           <p className="text-4xl mb-3">🎓</p>
           <p className="text-gray-500 font-semibold">
@@ -113,7 +120,7 @@ export default function CoursesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {courses.map((c) => (
+              {filteredCourses.map((c) => (
                 <tr key={c._id} className="hover:bg-gray-50/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">

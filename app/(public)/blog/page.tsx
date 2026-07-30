@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
@@ -18,19 +19,36 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/blog` },
 };
 
-async function getPosts() {
-  try {
+// This page previously had no `revalidate` export and no cache wrapper on
+// any of its three queries — every single visit ran three fresh, uncached
+// Mongo round trips, and getPosts() had no .limit() at all (fetched the
+// entire blog). unstable_cache here matches the pattern already used
+// throughout app/(public)/page.tsx (getCachedBlogPosts, etc.) and
+// app/lib/siteConfig.ts — one real fetch per 5-minute window, not one per
+// visitor. Tags reuse 'services'/'videos' where the admin write routes
+// already (or now also) call revalidateTag, so an edit shows up immediately
+// rather than waiting out the window.
+export const revalidate = 300;
+
+const getCachedPosts = unstable_cache(
+  async () => {
     await connectDB();
     const posts = await Blog.find({ active: true } as any)
       .sort({ featured: -1, publishedAt: -1 })
+      .limit(200) // admin-authored content, not user-generated — a generous cap, not a real pagination limit (BlogPageClient paginates this list client-side)
       .populate('reviewedByDoctorId', 'name title photo')
       .lean();
     return JSON.parse(JSON.stringify(posts));
-  } catch { return []; }
+  },
+  ['blog-posts'],
+  { revalidate: 300, tags: ['blog'] }
+);
+async function getPosts() {
+  try { return await getCachedPosts(); } catch { return []; }
 }
 
-async function getTrendingServices() {
-  try {
+const getCachedTrendingServices = unstable_cache(
+  async () => {
     await connectDB();
     const services = await Service.find({ status: 'active' } as any)
       .sort({ publishedAt: -1 })
@@ -48,11 +66,16 @@ async function getTrendingServices() {
         href: `/${city}/services/${(s.category || '').toLowerCase()}/${slug}`,
       };
     });
-  } catch { return []; }
+  },
+  ['blog-trending-services'],
+  { revalidate: 300, tags: ['services'] }
+);
+async function getTrendingServices() {
+  try { return await getCachedTrendingServices(); } catch { return []; }
 }
 
-async function getVideos() {
-  try {
+const getCachedBlogVideos = unstable_cache(
+  async () => {
     await connectDB();
     const videos = await Video.find({ status: 'published' } as any)
       .sort({ featured: -1, displayOrder: 1, createdAt: -1 })
@@ -60,9 +83,16 @@ async function getVideos() {
       .populate('doctor', 'name')
       .lean();
     return JSON.parse(JSON.stringify(videos));
-  } catch { return []; }
+  },
+  ['blog-videos'],
+  { revalidate: 300, tags: ['videos'] }
+);
+async function getVideos() {
+  try { return await getCachedBlogVideos(); } catch { return []; }
 }
 
+// getSettings() is already unstable_cache-wrapped internally (see
+// app/models/Settings.ts) — no additional wrapper needed here.
 async function getBlogPostsPerPage() {
   try {
     await connectDB();

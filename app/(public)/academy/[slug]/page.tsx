@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -19,7 +20,10 @@ interface PageProps {
   params: { slug: string };
 }
 
-async function getVideo(slug: string) {
+// cache() dedupes this within one request — generateMetadata and the page
+// component both call getVideo() with the same slug; without this, that's
+// the same query run twice every time this page actually regenerates.
+const getVideo = cache(async (slug: string) => {
   try {
     await connectDB();
     return await (Video as any)
@@ -30,7 +34,7 @@ async function getVideo(slug: string) {
   } catch {
     return null;
   }
-}
+});
 
 async function getJourneyVideos(journeyKey: string) {
   try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Eye, ExternalLink, Loader, Rocket } from 'lucide-react';
 
@@ -37,17 +37,17 @@ export default function LandingPagesAdminPage() {
   const [status, setStatus] = useState<'' | 'draft' | 'published'>('');
   const [template, setTemplate] = useState('');
 
+  // Fetch the full (small, campaign-scale) landing-page list once —
+  // status/template used to each trigger their own fresh server round trip
+  // on every click.
   useEffect(() => {
     fetchPages();
-  }, [status, template]);
+  }, []);
 
   const fetchPages = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (status) params.set('status', status);
-      if (template) params.set('template', template);
-      const res = await fetch(`/api/admin/landing-pages?${params.toString()}`);
+      const res = await fetch('/api/admin/landing-pages');
       const data = await res.json();
       if (data.success) setPages(data.data);
     } catch (error) {
@@ -56,6 +56,14 @@ export default function LandingPagesAdminPage() {
       setLoading(false);
     }
   };
+
+  const filteredPages = useMemo(() => {
+    return pages.filter((p) => {
+      if (status && p.status !== status) return false;
+      if (template && p.template !== template) return false;
+      return true;
+    });
+  }, [pages, status, template]);
 
   const deletePage = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -136,7 +144,7 @@ export default function LandingPagesAdminPage() {
         <div className="flex justify-center py-16">
           <Loader className="w-8 h-8 text-[#3B82C4] animate-spin" />
         </div>
-      ) : pages.length === 0 ? (
+      ) : filteredPages.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="text-5xl mb-4">🚀</div>
           <p className="text-gray-700 font-bold text-lg mb-2">
@@ -191,7 +199,7 @@ export default function LandingPagesAdminPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {pages.map((page) => (
+              {filteredPages.map((page) => (
                 <tr key={page._id} className="hover:bg-[#f6faff] transition-colors">
                   <td className="px-6 py-4">
                     <div>

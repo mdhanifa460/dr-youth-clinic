@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Star, Loader } from 'lucide-react';
 
@@ -30,19 +30,26 @@ export default function VideosPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [category, setCategory] = useState('');
 
-  useEffect(() => { fetchVideos(); }, [category]);
+  // Fetch the full (small, curated) video library once — the category
+  // filter used to re-fetch from the server on every dropdown change even
+  // though it's just filtering this same small list.
+  useEffect(() => { fetchVideos(); }, []);
 
   async function fetchVideos() {
     try {
       setLoading(true);
-      const qs = category ? `?category=${encodeURIComponent(category)}` : '';
-      const res = await fetch(`/api/admin/videos${qs}`);
+      const res = await fetch('/api/admin/videos');
       const data = await res.json();
       if (data.success) setVideos(data.data);
     } finally {
       setLoading(false);
     }
   }
+
+  const filteredVideos = useMemo(
+    () => (category ? videos.filter((v) => v.category === category) : videos),
+    [videos, category]
+  );
 
   async function deleteVideo(id: string) {
     if (!confirm('Delete this video?')) return;
@@ -85,7 +92,7 @@ export default function VideosPage() {
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader className="animate-spin text-gray-300" size={24} /></div>
-      ) : videos.length === 0 ? (
+      ) : filteredVideos.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
           <p className="text-4xl mb-3">🎬</p>
           <p className="text-gray-500 font-semibold">
@@ -106,7 +113,7 @@ export default function VideosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {videos.map((v) => (
+              {filteredVideos.map((v) => (
                 <tr key={v._id} className="hover:bg-gray-50/50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">

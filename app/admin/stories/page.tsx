@@ -75,20 +75,30 @@ export default function StoriesAdminPage() {
   const [showTypes, setShowTypes] = useState(false);
   const [creating, setCreating] = useState(false);
 
+  // Fetch the full story list once — this page already proved the whole
+  // filtered set is small enough to hold in memory (it paginates `stories`
+  // client-side below), so status/type/search re-fetching from the server
+  // on every click/keystroke was pure overhead on top of that.
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (statusFilter) params.set('status', statusFilter);
-      if (typeFilter) params.set('storyType', typeFilter);
-      if (search) params.set('search', search);
-      const res = await fetch(`/api/admin/stories?${params}`);
+      const res = await fetch('/api/admin/stories');
       const data = await res.json();
       if (data.success) setStories(data.data);
     } finally { setLoading(false); }
-  }, [statusFilter, typeFilter, search]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const filteredStories = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return stories.filter((s) => {
+      if (statusFilter && s.status !== statusFilter) return false;
+      if (typeFilter && String(s.storyType?._id) !== typeFilter) return false;
+      if (q && !(s.title?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q) || (s.tags || []).some((t: string) => t.toLowerCase().includes(q)))) return false;
+      return true;
+    });
+  }, [stories, statusFilter, typeFilter, search]);
   useEffect(() => {
     fetch('/api/admin/story-types').then(r => r.json()).then(d => { if (d.success) setTypes(d.data); });
   }, [showTypes]);
@@ -118,9 +128,9 @@ export default function StoriesAdminPage() {
     load();
   };
 
-  const totalPages = Math.max(1, Math.ceil(stories.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredStories.length / PAGE_SIZE));
   const pageSafe = Math.min(page, totalPages);
-  const paged = stories.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE);
+  const paged = filteredStories.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE);
 
   const STATUS_COLORS: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-500', scheduled: 'bg-amber-50 text-amber-600',

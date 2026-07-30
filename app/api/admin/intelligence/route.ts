@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import { Service } from '@/app/models/Service';
@@ -21,13 +22,36 @@ function pd(d: any): Date {
   return new Date(0);
 }
 
+// This dashboard's own metrics (12-month trend, patient segmentation, VIP/
+// inactive counts, the linear forecast) are only meaningful computed over
+// the FULL booking/review history — unlike app/api/admin/bookings/stats or
+// appointments/reports, there's no date-range fix here that wouldn't
+// silently change what these numbers mean. The two things that ARE safe to
+// cut: (1) field projection — every downstream computation only reads a
+// handful of fields per document, not the full Booking/Service/Doctor/
+// Review shape; (2) a short cache — an admin refreshing/re-opening this
+// dashboard shouldn't re-scan all four collections every time, and this
+// data doesn't need second-level freshness for a business-intelligence view.
+const getCachedRawData = unstable_cache(
+  async () => {
+    await connectDB();
+    const [allBookings, allServices, allDoctors, allReviews] = await Promise.all([
+      Booking.find().select('createdAt status phone formattedPhone service location doctorId').lean(),
+      Service.find().select('name price category seoScore location status').lean(),
+      Doctor.find().select('name title experience locations active').lean(),
+      Review.find().select('location rating source reviewText authorName isVisible createdAt').lean(),
+    ]);
+    return { allBookings, allServices, allDoctors, allReviews };
+  },
+  ['admin-intelligence-raw'],
+  { revalidate: 60 }
+);
+
 export async function GET(req: NextRequest) {
   const denied = await requirePermission('intelligence', 'view');
   if (denied) return denied;
 
   try {
-    await connectDB();
-
     const branch = (req.nextUrl.searchParams.get('branch') || 'all').toLowerCase();
     const isBranchFiltered = branch !== 'all' && (BRANCHES as readonly string[]).includes(branch);
 
@@ -37,12 +61,7 @@ export async function GET(req: NextRequest) {
     const monthStart = new Date(todayStart.getTime() - 30 * MS_DAY);
     const day90Start = new Date(todayStart.getTime() - 90 * MS_DAY);
 
-    const [allBookings, allServices, allDoctors, allReviews] = await Promise.all([
-      Booking.find().lean(),
-      Service.find().lean(),
-      Doctor.find().lean(),
-      Review.find().lean(),
-    ]);
+    const { allBookings, allServices, allDoctors, allReviews } = await getCachedRawData();
 
     const allBs   = allBookings as any[];
     const allSvcs = allServices as any[];

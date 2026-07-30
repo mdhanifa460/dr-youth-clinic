@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
 import { FaGoogle, FaPlay } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
@@ -395,7 +395,6 @@ function ReviewModal({
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ReviewsAdminPage() {
   const [reviews, setReviews] = useState<any[]>([]);
-  const [sourceCounts, setSourceCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'all' | 'manual' | 'google' | 'video'>('all');
   const [locationFilter, setLocationFilter] = useState('');
@@ -406,26 +405,46 @@ export default function ReviewsAdminPage() {
   const [syncMsg, setSyncMsg] = useState('');
   const [modal, setModal] = useState<any | null>(null); // null = closed, {} = new, {...} = edit
 
-  const fetchReviews = useCallback(async () => {
+  // Fetch the full (bounded — API already caps at 200) review list once.
+  // Five independent filters (tab/location/rating/featured/homepage) used
+  // to each trigger their own fresh server round trip; all five are simple
+  // equality/boolean checks, straightforward to filter client-side instead.
+  const fetchReviews = async () => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (tab !== 'all') params.set('source', tab);
-    if (locationFilter) params.set('location', locationFilter);
-    if (ratingFilter) params.set('rating', ratingFilter);
-    if (featuredOnly) params.set('featured', 'true');
-    if (homepageOnly) params.set('homepage', 'true');
     try {
-      const res = await fetch(`/api/admin/reviews?${params}`);
+      const res = await fetch('/api/admin/reviews');
       const d = await res.json();
-      if (d.success) {
-        setReviews(d.reviews);
-        setSourceCounts(d.counts || {});
-      }
+      if (d.success) setReviews(d.reviews);
     } catch {}
     setLoading(false);
-  }, [tab, locationFilter, ratingFilter, featuredOnly, homepageOnly]);
+  };
 
-  useEffect(() => { fetchReviews(); }, [fetchReviews]);
+  useEffect(() => { fetchReviews(); }, []);
+
+  // Scoped by locationFilter only, same semantic the API previously
+  // enforced server-side ("counts must reflect the location filter only,
+  // otherwise selecting a source tab makes every OTHER tab's count read
+  // wrong") — computed here from the full fetched list instead.
+  const sourceCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const r of reviews) {
+      if (locationFilter && r.location !== locationFilter) continue;
+      const key = r.source || 'unknown';
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, [reviews, locationFilter]);
+
+  const filteredReviews = useMemo(() => {
+    return reviews.filter((r) => {
+      if (tab !== 'all' && r.source !== tab) return false;
+      if (locationFilter && r.location !== locationFilter) return false;
+      if (ratingFilter && r.rating !== Number(ratingFilter)) return false;
+      if (featuredOnly && !r.isFeatured) return false;
+      if (homepageOnly && !r.showOnHomepage) return false;
+      return true;
+    });
+  }, [reviews, tab, locationFilter, ratingFilter, featuredOnly, homepageOnly]);
 
   const toggle = async (id: string, field: 'isVisible' | 'isFeatured' | 'showOnHomepage', val: boolean) => {
     const res = await fetch(`/api/admin/reviews/${id}`, {
@@ -622,13 +641,13 @@ export default function ReviewsAdminPage() {
             </div>
           ))}
         </div>
-      ) : reviews.length === 0 ? (
+      ) : filteredReviews.length === 0 ? (
         <div className="grid">
           <EmptyState tab={tab} onAdd={() => setModal({})} />
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reviews.map((r) => (
+          {filteredReviews.map((r) => (
             <ReviewCard
               key={r._id}
               review={r}

@@ -36,7 +36,7 @@ export async function PUT(req: NextRequest) {
     }
 
     await connectDB();
-    const existing = await Settings.findOne({} as any);
+    const existing = await Settings.findOne({} as any).lean();
     const updated = existing
       ? await (Settings as any).findByIdAndUpdate(existing._id, { $set: patch }, { returnDocument: 'after', runValidators: true })
       : await Settings.create(patch);

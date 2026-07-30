@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
     const post = await Blog.create(body);
+    revalidateTag('blog');
     return NextResponse.json({ success: true, data: post }, { status: 201 });
   } catch (error: any) {
     if (error.name === 'ValidationError') {

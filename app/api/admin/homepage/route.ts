@@ -31,8 +31,13 @@ export async function GET() {
         visible: val.visible,
         data: val.data,
       }));
-      await HomepageSection.insertMany(defaults as any, { ordered: false }).catch(() => {});
-      sections = await HomepageSection.find({} as any).sort({ order: 1 }).lean();
+      // insertMany's own resolved value already has everything a second
+      // find() would (including generated _id/createdAt) — merge it into
+      // the list already fetched above instead of re-querying the whole
+      // collection a second time just to pick up what we already know we
+      // just inserted. On error, next load's existingKeys check retries.
+      const inserted = await HomepageSection.insertMany(defaults as any, { ordered: false, lean: true }).catch(() => []);
+      sections = [...sections, ...(inserted as any[])].sort((a: any, b: any) => a.order - b.order);
     }
 
     return NextResponse.json({

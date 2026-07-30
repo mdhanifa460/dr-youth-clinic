@@ -38,25 +38,29 @@ export async function GET(req: NextRequest) {
       })),
     };
 
-    const collides = async (candidateSlug: string) => {
-      const candidates = await Service.find({
-        status: 'active',
-        ...cityFilter,
-        ...(excludeId ? { _id: { $ne: excludeId } } : {}),
-      } as any).select('location targetLocations urlSlug locationSeo').lean() as any[];
-      return candidates.some((s) =>
-        targetCities.some((c) => getServiceCities(s).includes(c) && getEffectiveSlug(s, c) === candidateSlug)
-      );
-    };
+    // One query for the whole candidate set — collides() used to re-run
+    // this exact same query (it never depended on candidateSlug) on every
+    // while-loop iteration just to test a different candidate slug.
+    const candidates = await Service.find({
+      status: 'active',
+      ...cityFilter,
+      ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+    } as any).select('location targetLocations urlSlug locationSeo').lean() as any[];
+    const existingSlugs = new Set<string>();
+    for (const s of candidates) {
+      for (const c of targetCities) {
+        if (getServiceCities(s).includes(c)) existingSlugs.add(getEffectiveSlug(s, c));
+      }
+    }
 
-    if (!(await collides(slug))) {
+    if (!existingSlugs.has(slug)) {
       return NextResponse.json({ success: true, available: true });
     }
 
     // Find a non-conflicting slug suggestion
     let counter = 1;
     let suggestion = `${slug}-${counter}`;
-    while (await collides(suggestion)) {
+    while (existingSlugs.has(suggestion)) {
       counter++;
       suggestion = `${slug}-${counter}`;
     }

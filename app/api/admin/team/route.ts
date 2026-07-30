@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Invalid role" }, { status: 400 });
     }
 
-    const existing = await AdminUser.findOne({ email: email.toLowerCase().trim() } as any);
+    const existing = await AdminUser.findOne({ email: email.toLowerCase().trim() } as any).lean();
     if (existing) {
       return NextResponse.json({ success: false, message: "Email already in use" }, { status: 409 });
     }

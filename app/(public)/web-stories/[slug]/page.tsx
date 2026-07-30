@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { connectDB } from '@/app/lib/mongodb';
@@ -17,14 +18,14 @@ import StoryViewer from './StoryViewer';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-async function getStory(slug: string) {
+const getStory = cache(async (slug: string) => {
   try {
     await connectDB();
     const story = await (Story as any).findOne({ slug, status: 'published' }).populate('storyType', 'name icon slug').lean();
     if (!story) return null;
     return JSON.parse(JSON.stringify(story));
   } catch { return null; }
-}
+});
 
 async function getRelatedStories(excludeId: string, storyTypeId: string) {
   try {

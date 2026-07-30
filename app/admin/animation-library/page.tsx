@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Loader, Film, Sparkles } from 'lucide-react';
 
@@ -36,19 +36,26 @@ export default function AnimationLibraryPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [category, setCategory] = useState('');
 
-  useEffect(() => { fetchAssets(); }, [category]);
+  // Fetch the full (small, curated) asset library once — the category
+  // filter used to re-fetch from the server on every dropdown change even
+  // though it's just filtering this same small list.
+  useEffect(() => { fetchAssets(); }, []);
 
   async function fetchAssets() {
     try {
       setLoading(true);
-      const qs = category ? `?category=${encodeURIComponent(category)}` : '';
-      const res = await fetch(`/api/admin/animation-assets${qs}`);
+      const res = await fetch('/api/admin/animation-assets');
       const data = await res.json();
       if (data.success) setAssets(data.data);
     } finally {
       setLoading(false);
     }
   }
+
+  const filteredAssets = useMemo(
+    () => (category ? assets.filter((a) => a.category === category) : assets),
+    [assets, category]
+  );
 
   async function deleteAsset(id: string, usageCount: number) {
     if (usageCount > 0 && !confirm(`This asset is used by ${usageCount} banner${usageCount !== 1 ? 's' : ''}. Delete anyway?`)) return;
@@ -92,7 +99,7 @@ export default function AnimationLibraryPage() {
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader className="animate-spin text-gray-300" size={24} /></div>
-      ) : assets.length === 0 ? (
+      ) : filteredAssets.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
           <p className="text-4xl mb-3">🎞️</p>
           <p className="text-gray-500 font-semibold">
@@ -101,7 +108,7 @@ export default function AnimationLibraryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {assets.map((a) => (
+          {filteredAssets.map((a) => (
             <div key={a._id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
               <div className="relative aspect-video bg-gray-100 flex items-center justify-center">
                 {a.previewImage?.url ? (

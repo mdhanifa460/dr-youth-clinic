@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -18,7 +19,7 @@ import ArticleCtaBand from '@/app/(public)/blog/[slug]/ArticleCtaBand';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-async function getResult(slug: string) {
+const getResult = cache(async (slug: string) => {
   try {
     await connectDB();
     const result = await (Result as any)
@@ -29,7 +30,7 @@ async function getResult(slug: string) {
     if (!result) return null;
     return JSON.parse(JSON.stringify(result));
   } catch { return null; }
-}
+});
 
 async function getRelatedResults(excludeId: string, category: string) {
   try {

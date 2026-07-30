@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -16,7 +17,7 @@ interface PageProps {
   params: { slug: string };
 }
 
-async function getCourse(slug: string) {
+const getCourse = cache(async (slug: string) => {
   try {
     await connectDB();
     return await (Course as any)
@@ -26,7 +27,7 @@ async function getCourse(slug: string) {
   } catch {
     return null;
   }
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const course = await getCourse(params.slug);

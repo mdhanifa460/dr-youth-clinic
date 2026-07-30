@@ -82,24 +82,29 @@ export async function POST(req: NextRequest) {
         ? body.targetLocations
         : body.location === 'all' ? [...ALL_SERVICE_CITIES] : [body.location];
 
-      const collides = async (slug: string) => {
-        const candidates = await Service.find({
-          status: 'active',
-          $or: targetCities.map((c) => ({
-            $or: [
-              { targetLocations: c },
-              { targetLocations: { $exists: false }, location: { $in: [c, 'all'] } },
-            ],
-          })),
-        } as any).select('location targetLocations urlSlug locationSeo').lean() as any[];
-        return candidates.some((s) =>
-          targetCities.some((c) => getServiceCities(s).includes(c) && getEffectiveSlug(s, c) === slug)
-        );
-      };
+      // The candidate set (which services exist at these cities) doesn't
+      // depend on which slug we're testing — collides() used to re-run this
+      // exact same query on every while-loop iteration just to check a
+      // different candidate slug against it. Fetch once, then loop in JS.
+      const candidates = await Service.find({
+        status: 'active',
+        $or: targetCities.map((c) => ({
+          $or: [
+            { targetLocations: c },
+            { targetLocations: { $exists: false }, location: { $in: [c, 'all'] } },
+          ],
+        })),
+      } as any).select('location targetLocations urlSlug locationSeo').lean() as any[];
+      const existingSlugs = new Set<string>();
+      for (const s of candidates) {
+        for (const c of targetCities) {
+          if (getServiceCities(s).includes(c)) existingSlugs.add(getEffectiveSlug(s, c));
+        }
+      }
 
       let slug = baseSlug;
       let counter = 1;
-      while (await collides(slug)) {
+      while (existingSlugs.has(slug)) {
         slug = `${baseSlug}-${counter}`;
         counter++;
       }

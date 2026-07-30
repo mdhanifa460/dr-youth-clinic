@@ -25,13 +25,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, available: true });
     }
 
+    // One query for every slug this counter loop could possibly land on
+    // (`slug`, `slug-1`, `slug-2`, ...) instead of one sequential findOne
+    // per candidate suffix — a real round trip either way, but now exactly
+    // one instead of N.
+    const escaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const conflicting = await Video.find({
+      slug: { $regex: `^${escaped}(-\\d+)?$` },
+      ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+    } as any).select('slug').lean() as any[];
+    const takenSlugs = new Set(conflicting.map((v: any) => v.slug));
+
     let counter = 1;
     let suggestion = `${slug}-${counter}`;
-    while (
-      await Video.findOne({ slug: suggestion, ...(excludeId ? { _id: { $ne: excludeId } } : {}) } as any)
-        .select('_id')
-        .lean()
-    ) {
+    while (takenSlugs.has(suggestion)) {
       counter++;
       suggestion = `${slug}-${counter}`;
     }

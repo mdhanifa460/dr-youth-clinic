@@ -48,11 +48,20 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    // Generate and ensure unique slug
+    // Generate and ensure unique slug — one query covering every slug this
+    // counter loop could land on (`baseSlug`, `baseSlug-1`, `baseSlug-2`,
+    // ...) instead of one sequential findOne per candidate suffix.
     const baseSlug = body.slug ? toSlug(body.slug) : toSlug(body.title || 'landing-page');
+    const escapedBase = baseSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const conflictingPages = await (LandingPage as any)
+      .find({ slug: { $regex: `^${escapedBase}(-\\d+)?$` } })
+      .select('slug')
+      .lean();
+    const takenSlugs = new Set((conflictingPages as any[]).map((p) => p.slug));
+
     let slug = baseSlug;
     let counter = 1;
-    while (await (LandingPage as any).findOne({ slug }).select('_id').lean()) {
+    while (takenSlugs.has(slug)) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }

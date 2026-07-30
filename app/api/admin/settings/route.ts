@@ -24,7 +24,7 @@ export async function PUT(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
-    const existing = await Settings.findOne({} as any);
+    const existing = await Settings.findOne({} as any).lean();
 
     let updated;
     if (existing) {

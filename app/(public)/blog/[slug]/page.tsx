@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -18,14 +19,23 @@ import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos 
 import { CATEGORY_COLOR } from '@/app/lib/blogCategories';
 import { BreadcrumbSchema, BlogPostingSchema, FAQSchema } from '@/app/components/SchemaMarkup';
 
-async function getPost(slug: string) {
+// No `revalidate` export existed before this fix — this page had zero
+// caching at any level and ran three uncached queries on every single
+// visitor request. `revalidate` below turns that into ISR (one real fetch
+// per post per 5-minute window). React's cache() additionally dedupes
+// getPost() specifically within one regeneration — generateMetadata and
+// the page component both call it, and without cache() that's the same
+// query run twice every time this page actually regenerates.
+export const revalidate = 300;
+
+const getPost = cache(async (slug: string) => {
   try {
     await connectDB();
     const post = await Blog.findOne({ slug, active: true } as any).lean();
     if (!post) return null;
     return JSON.parse(JSON.stringify(post));
   } catch { return null; }
-}
+});
 
 async function getRelatedPosts(slug: string, category: string) {
   try {

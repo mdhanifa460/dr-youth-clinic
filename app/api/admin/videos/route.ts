@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Video } from '@/app/models/Video';
 // Registers Doctor/Service with Mongoose for the .populate() calls below —
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
     const video = await Video.create(body);
+    revalidateTag('videos');
     return NextResponse.json({ success: true, data: video, message: 'Video created successfully' }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to create video' }, { status: 500 });
