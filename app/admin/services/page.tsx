@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader, Search } from 'lucide-react';
 import Image from 'next/image';
@@ -31,23 +31,20 @@ export default function ServicesPage() {
   const [search, setSearch] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  // The whole catalogue is small enough (well under a hundred documents)
+  // to fetch once and filter entirely client-side — location/category/
+  // status/search used to each trigger their own fresh server round trip
+  // (plus a non-.lean() Mongoose hydration on the API side), so every tab
+  // click cost a real network+DB delay even though nothing about the
+  // dataset actually changed between clicks.
   useEffect(() => {
-    // Debounced re-fetch on search typing (400ms, matching Blog's/Bookings'
-    // pattern); location/category/status changes re-fetch immediately.
-    const t = setTimeout(() => { fetchServices(); }, search ? 400 : 0);
-    return () => clearTimeout(t);
-  }, [filter, category, status, search]);
+    fetchServices();
+  }, []);
 
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (filter) params.set('location', filter);
-      if (category) params.set('category', category);
-      if (status) params.set('status', status);
-      if (search.trim()) params.set('search', search.trim());
-      const qs = params.toString();
-      const res = await fetch(`/api/admin/services${qs ? `?${qs}` : ''}`);
+      const res = await fetch('/api/admin/services');
       const data = await res.json();
       if (data.success) {
         setServices(data.data);
@@ -58,6 +55,17 @@ export default function ServicesPage() {
       setLoading(false);
     }
   };
+
+  const filteredServices = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return services.filter((s) => {
+      if (filter && !getServiceCities(s).includes(filter)) return false;
+      if (category && s.category !== category) return false;
+      if (status && s.status !== status) return false;
+      if (q && !s.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [services, filter, category, status, search]);
 
   const deleteService = async (id: string) => {
     if (!confirm('Are you sure?')) return;
@@ -179,7 +187,7 @@ export default function ServicesPage() {
         <div className="flex justify-center py-12">
           <Loader className="w-8 h-8 text-blue-600 animate-spin" />
         </div>
-      ) : services.length === 0 ? (
+      ) : filteredServices.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg">
           <p className="text-gray-500 mb-4">
             {category || status || filter ? 'No services match these filters' : 'No services found'}
@@ -212,7 +220,7 @@ export default function ServicesPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {services.map((service) => (
+              {filteredServices.map((service) => (
                 <tr key={service._id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4">
                     <div className="flex gap-3 items-center">

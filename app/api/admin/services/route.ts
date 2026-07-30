@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     }
     if (andConditions.length > 0) query.$and = andConditions;
 
-    const services = await Service.find(query as any).sort({ createdAt: -1 });
+    const services = await Service.find(query as any).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({ success: true, data: services });
   } catch (error) {
