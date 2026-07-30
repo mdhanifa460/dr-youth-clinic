@@ -7,7 +7,7 @@
 //
 // This is a pure, read-time transform — it does not write to the database.
 // The next admin Save persists the new shape naturally.
-import { DEFAULT_QUESTIONS, DEFAULT_RESULT_SECTIONS, DEFAULT_ASSESSMENT_SETTINGS, DEFAULT_AI_PROMPT, DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion, type TreatmentMapEntry } from "./quizDefaults";
+import { DEFAULT_QUESTIONS, DEFAULT_RESULT_SECTIONS, DEFAULT_ASSESSMENT_SETTINGS, DEFAULT_AI_PROMPT, DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion, type TreatmentMapEntry, type ResultSectionConfig } from "./quizDefaults";
 import { deriveConfidenceLevel } from "./confidenceLevel";
 
 function isLegacyShape(config: any): boolean {
@@ -106,9 +106,24 @@ export function migrateLegacyQuizConfig(config: any): AssessmentConfigData {
 // isLegacyShape(). Fills in confidenceLevel/conditionTags for documents
 // saved before the Clinical Intake data model extension, purely read-time
 // (no DB write); the next admin Save persists these fields naturally.
+// Adds any DEFAULT_RESULT_SECTIONS entries an already-saved config doesn't
+// have yet (e.g. the Plan My Journey blocks added after that clinic last
+// saved) — appended after the admin's existing sections/order so their
+// prior customization is untouched; the new sections just need one drag in
+// the Settings tab to move if the defaults' position isn't right for them.
+function backfillResultSections(sections: ResultSectionConfig[] | undefined): ResultSectionConfig[] {
+  const existing = Array.isArray(sections) ? sections : [];
+  const existingKeys = new Set(existing.map((s) => s.key));
+  const missing = DEFAULT_RESULT_SECTIONS.filter((s) => !existingKeys.has(s.key));
+  if (!missing.length) return existing;
+  const maxOrder = existing.reduce((max, s) => Math.max(max, s.order || 0), 0);
+  return [...existing, ...missing.map((s, i) => ({ ...s, order: maxOrder + i + 1 }))];
+}
+
 export function backfillClinicalFields(config: AssessmentConfigData): AssessmentConfigData {
   return {
     ...config,
+    resultSections: backfillResultSections(config.resultSections),
     settings: {
       ...DEFAULT_ASSESSMENT_SETTINGS,
       ...(config.settings || {}),

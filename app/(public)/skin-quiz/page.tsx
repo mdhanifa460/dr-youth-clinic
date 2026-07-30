@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
-import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type TreatmentRecommendation } from "@/app/lib/quizDefaults";
+import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData } from "@/app/lib/quizDefaults";
 import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, hasNextQuestion as computeHasNextQuestion, postAssessmentEvent } from "@/app/lib/assessmentFlow";
 import { locations } from "@/app/data/locations";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
-import AssessmentChat from "./AssessmentChat";
+import UnifiedJourneyResults, { type PatientReport } from "@/app/components/assessment/UnifiedJourneyResults";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -174,291 +174,12 @@ function AnalysingScreen() {
   );
 }
 
-// High/Medium/Low only — the numeric `confidence` field still exists (used
-// internally by the scoring engine's ranking) but is never shown to a
-// patient: this system must never claim a precise match percentage or
-// certainty of outcome.
-const CONFIDENCE_BADGE: Record<string, string> = {
-  High: "bg-[#0B2560]/8 text-[#0B2560]",
-  Medium: "bg-[#F5A623]/15 text-[#c47e00]",
-  Low: "bg-gray-100 text-gray-500",
-};
-
-function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation; rank: number }) {
-  const { consultationCta } = useSiteConfig();
-  const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}`;
-  const confidenceLevel = treatment.confidenceLevel || "Medium";
-
-  return (
-    <div className={`bg-white rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
-      rank === 0 ? "border-[#0B2560] shadow-md shadow-[#0B2560]/10" : "border-gray-100 shadow-sm"
-    }`}>
-      {rank === 0 && (
-        <div className="bg-[#0B2560] text-white text-xs font-bold uppercase tracking-widest text-center py-1.5 px-4">
-          Most Relevant Discussion Topic
-        </div>
-      )}
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{treatment.icon}</span>
-            <h3 className="font-bold text-[#0B2560] text-base leading-tight">{treatment.name}</h3>
-          </div>
-          <span className={`flex-shrink-0 text-xs font-bold rounded-full px-3 py-1 ${CONFIDENCE_BADGE[confidenceLevel] || CONFIDENCE_BADGE.Medium}`}>
-            {confidenceLevel} Confidence
-          </span>
-        </div>
-
-        <p className="text-sm text-gray-600 leading-relaxed mb-4">{treatment.description}</p>
-
-        <div className="flex flex-wrap gap-2 mb-3">
-          {treatment.sessions && (
-            <span className="inline-flex items-center gap-1 text-xs bg-[#f6faff] text-[#0B2560] rounded-lg px-3 py-1.5 font-medium border border-[#0B2560]/10">
-              📅 {treatment.sessions}
-            </span>
-          )}
-          {treatment.price && (
-            <span className="inline-flex items-center gap-1 text-xs bg-[#F5A623]/10 text-[#c47e00] rounded-lg px-3 py-1.5 font-medium border border-[#F5A623]/20">
-              ₹ {treatment.price}
-            </span>
-          )}
-          {treatment.recovery && (
-            <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 rounded-lg px-3 py-1.5 font-medium border border-green-100">
-              ⏱ {treatment.recovery}
-            </span>
-          )}
-        </div>
-
-        {(treatment.advantages?.length || treatment.disadvantages?.length) ? (
-          <div className="mb-4 space-y-1">
-            {treatment.advantages?.slice(0, 2).map((a, i) => (
-              <p key={i} className="text-xs text-green-700 flex items-start gap-1.5"><span>✓</span>{a}</p>
-            ))}
-            {treatment.disadvantages?.slice(0, 1).map((d, i) => (
-              <p key={i} className="text-xs text-gray-500 flex items-start gap-1.5"><span>–</span>{d}</p>
-            ))}
-          </div>
-        ) : null}
-
-        <Link
-          href={bookUrl}
-          className="block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200 bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
-        >
-          {treatment.cta || consultationCta}
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 // Step 2 — captured immediately, before the concern/question screens. No
 // email here (see app/(public)/skin-quiz's flow-restructuring notes) —
 // email is only ever collected later, as a non-blocking affordance on the
 // Results screen for patients who want a copy sent to their inbox.
 type LeadCaptureForm = { name: string; phone: string; preferredClinic: string };
 type LeadCaptureStatus = "idle" | "sending" | "error";
-type PatientReport = {
-  summary: string;
-  contributingFactors: string[];
-  lifestyleFindings: string[];
-  questionsForDoctor: string[];
-  treatmentOptionsDiscussed: string[];
-};
-
-// Small, self-contained "email me a copy" affordance shown on Results — not
-// a gate (the report is already unlocked once a Step-2 lead exists), purely
-// an optional convenience. Calls the same PATCH endpoint that persisted the
-// completed answers, this time with an email attached.
-function EmailCopyForm({ leadId }: { leadId: string | null }) {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!leadId || !email.trim()) return;
-    setStatus("sending");
-    try {
-      const res = await fetch("/api/leads", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId, email: email.trim() }),
-      });
-      const data = await res.json();
-      setStatus(data.success ? "sent" : "error");
-    } catch {
-      setStatus("error");
-    }
-  };
-
-  if (status === "sent") {
-    return (
-      <div className="bg-green-50 border border-green-100 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm text-green-800">
-        <span className="text-lg">✅</span> Sent — check your inbox (and spam folder).
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={submit} className="flex flex-col sm:flex-row items-stretch gap-2">
-      <input
-        type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email me a copy of this report (optional)"
-        className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-100 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0B2560]/40"
-      />
-      <button
-        type="submit" disabled={status === "sending" || !email.trim()}
-        className="px-5 py-3 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-sm rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-      >
-        {status === "sending" ? "Sending…" : "Email Me a Copy"}
-      </button>
-      {status === "error" && <p className="text-xs text-red-500 sm:self-center">Something went wrong — please try again.</p>}
-    </form>
-  );
-}
-
-function ReportList({ title, icon, items }: { title: string; icon: string; items: string[] }) {
-  if (items.length === 0) return null;
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5">
-      <p className="text-xs font-bold text-[#0B2560] mb-2.5 flex items-center gap-1.5">
-        <span>{icon}</span> {title}
-      </p>
-      <ul className="space-y-1.5">
-        {items.map((item, i) => (
-          <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
-            <span className="text-[#F5A623] mt-1 shrink-0">•</span> {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ResultsScreen({
-  recommendations,
-  doctorMessage,
-  primaryConcern,
-  patientReport,
-  showDoctorMessage,
-  showTopRecommendation,
-  showAllRecommendations,
-  showBookCta,
-  showChat,
-  showEmailForm,
-  leadId,
-  onRetake,
-}: {
-  recommendations: TreatmentRecommendation[];
-  doctorMessage: string;
-  primaryConcern: string;
-  patientReport: PatientReport | null;
-  showDoctorMessage: boolean;
-  showTopRecommendation: boolean;
-  showAllRecommendations: boolean;
-  showBookCta: boolean;
-  showChat: boolean;
-  showEmailForm: boolean;
-  leadId: string | null;
-  onRetake: () => void;
-}) {
-  const { publicWhatsApp } = useSiteConfig();
-  const waQuizHref = publicWhatsApp
-    ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}?text=Hi%2C%20I%20just%20completed%20my%20clinical%20intake%20and%20would%20like%20to%20know%20more%20before%20my%20consultation.`
-    : null;
-
-  // 'allRecommendations' shows the full ranked list; 'topRecommendation' alone
-  // narrows it down to just the #1 match — same data, different Settings toggle.
-  const visibleRecommendations = showAllRecommendations
-    ? recommendations
-    : showTopRecommendation
-    ? recommendations.slice(0, 1)
-    : [];
-
-  return (
-    <div className="py-2">
-      <div className="text-center mb-8">
-        <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
-          Your Clinical Intake Is Complete
-        </span>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-3 tracking-tight">
-          Possible Discussion Topics for Your Consultation
-        </h2>
-        <p className="text-sm text-gray-500 max-w-md mx-auto">
-          {patientReport?.summary || "Based on what you shared — your doctor will confirm what's right for you after a full evaluation."}
-        </p>
-      </div>
-
-      {patientReport && (patientReport.contributingFactors.length > 0 || patientReport.lifestyleFindings.length > 0) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <ReportList title="Contributing Factors" icon="🔎" items={patientReport.contributingFactors} />
-          <ReportList title="Lifestyle Findings" icon="🌿" items={patientReport.lifestyleFindings} />
-        </div>
-      )}
-
-      {visibleRecommendations.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 mb-10">
-          We couldn't match a discussion topic to your answers — a specialist will review your responses personally.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {visibleRecommendations.map((rec, i) => (
-            <TreatmentCard key={rec.id} treatment={rec} rank={i} />
-          ))}
-        </div>
-      )}
-
-      {showEmailForm && (
-        <div className="mb-8">
-          <EmailCopyForm leadId={leadId} />
-        </div>
-      )}
-
-      {patientReport && patientReport.questionsForDoctor.length > 0 && (
-        <div className="mb-8">
-          <ReportList title="Questions to Ask Your Doctor" icon="💬" items={patientReport.questionsForDoctor} />
-        </div>
-      )}
-
-      {showDoctorMessage && doctorMessage && (
-        <div className="bg-[#f6faff] border border-[#0B2560]/10 rounded-2xl p-5 mb-8 flex items-start gap-3">
-          <span className="text-2xl shrink-0">👨‍⚕️</span>
-          <p className="text-sm text-gray-600 leading-relaxed">{doctorMessage}</p>
-        </div>
-      )}
-
-      {showChat && recommendations.length > 0 && (
-        <div className="mb-8">
-          <AssessmentChat primaryConcern={primaryConcern} recommendations={recommendations} doctorMessage={doctorMessage} />
-        </div>
-      )}
-
-      <p className="text-center text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Next Steps</p>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        {showBookCta && waQuizHref && (
-          <a
-            href={waQuizHref} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2.5 px-6 py-3 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold rounded-xl text-sm transition-all duration-200 shadow-sm hover:shadow-md"
-          >
-            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-            </svg>
-            Speak to a doctor now
-          </a>
-        )}
-        <button onClick={onRetake} className="text-sm text-gray-500 hover:text-[#0B2560] underline underline-offset-4 transition-colors">
-          Retake the assessment
-        </button>
-      </div>
-
-      <p className="text-center text-xs text-gray-500 mt-8 max-w-md mx-auto leading-relaxed">
-        This report is educational and does not replace a doctor's consultation. Every topic above is
-        something your doctor may discuss with you after their own evaluation — not a diagnosis,
-        prescription, or guaranteed outcome.
-      </p>
-    </div>
-  );
-}
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -683,7 +404,6 @@ export default function SkinQuizPage() {
   const stepLabel = screen === "intro" ? "Welcome" : screen === "lead" ? "Your Details" : screen === "question" ? `Question ${path.length} of ${estimatedTotal}` : "Your Report";
 
   const resultSections = quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections;
-  const sectionVisible = (key: string) => resultSections.find((s) => s.key === key)?.visible !== false;
 
   if (configReady && quizConfig.settings && quizConfig.settings.enabled === false) {
     return (
@@ -784,17 +504,14 @@ export default function SkinQuizPage() {
         {screen === "analysing" && <AnalysingScreen />}
 
         {screen === "results" && (
-          <ResultsScreen
+          <UnifiedJourneyResults
+            resultSections={resultSections}
             recommendations={recommendations}
             doctorMessage={quizConfig.doctorMessage}
             primaryConcern={primaryConcernLabel}
             patientReport={patientReport}
-            showDoctorMessage={sectionVisible("doctorMessage")}
-            showTopRecommendation={sectionVisible("topRecommendation")}
-            showAllRecommendations={sectionVisible("allRecommendations")}
-            showBookCta={sectionVisible("bookCta")}
-            showChat={quizConfig.settings?.enableChat !== false}
-            showEmailForm={sectionVisible("emailForm") && quizConfig.settings?.enableEmail !== false}
+            enableChat={quizConfig.settings?.enableChat !== false}
+            enableEmail={quizConfig.settings?.enableEmail !== false}
             leadId={leadId}
             onRetake={handleRetake}
           />

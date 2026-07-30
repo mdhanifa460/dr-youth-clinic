@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
-import { SiteConfigProvider, useSiteConfig } from "@/app/components/SiteConfigContext";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { SiteConfigProvider } from "@/app/components/SiteConfigContext";
 import { locations } from "@/app/data/locations";
 import { JOURNEY_GOALS, JOURNEY_GOAL_META, GOAL_CONCERN_TAGS, type JourneyGoalSlug, type JourneyGoalBundle } from "@/app/lib/journeyGoals";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion } from "@/app/lib/quizDefaults";
-import type { AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import {
   seedAnswersFromTags,
   getOrderedQuestions,
@@ -17,14 +15,7 @@ import {
   hasNextQuestion as computeHasNextQuestion,
 } from "@/app/lib/assessmentFlow";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
-import TreatmentComparison from "@/app/components/TreatmentComparison";
-import TreatmentJourney from "@/app/components/TreatmentJourney";
-import TreatmentJourneyExplorer from "@/app/components/TreatmentJourneyExplorer";
-import RecoveryTimeline from "@/app/components/RecoveryTimeline";
-import AiJourneySimulator from "@/app/components/AiJourneySimulator";
-import CostEstimator from "@/app/components/CostEstimator";
-import EMICalculator from "@/app/components/EMICalculator";
-import SliderCard from "@/app/components/SliderCard";
+import UnifiedJourneyResults, { type PatientReport } from "@/app/components/assessment/UnifiedJourneyResults";
 
 type Screen = "intro" | "goal-pick" | "question" | "lead" | "results";
 type LeadStatus = "idle" | "sending" | "sent" | "error";
@@ -77,6 +68,9 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
   const [path, setPath] = useState<string[]>([]);
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [visible, setVisible] = useState(true);
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [patientReport, setPatientReport] = useState<PatientReport | null>(null);
+  const resultsPatched = useRef(false);
 
   useEffect(() => {
     if (clinic) setLead((l) => ({ ...l, preferredClinic: clinic }));
@@ -143,13 +137,56 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...lead, source: "plan-my-journey", city: lead.preferredClinic, clinicLocation: lead.preferredClinic }),
       });
-      if (!res.ok) throw new Error("failed");
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.leadId) throw new Error("failed");
+      setLeadId(data.leadId);
       setLeadStatus("sent");
       setScreen("results");
     } catch {
       setLeadStatus("error");
     }
   };
+
+  // Same scoring engine skin-quiz uses — only produces real recommendations
+  // when goal-filtered intake questions were actually answered (see
+  // GOAL_CONCERN_TAGS bridging); empty for goals with no mapped questions
+  // yet, in which case UnifiedJourneyResults falls back to the matched
+  // Service data alone.
+  const recommendations = scoreRecommendations(
+    quizConfig.questions,
+    answers,
+    quizConfig.treatmentMap,
+    { maxRecommendations: quizConfig.settings?.maxRecommendations, confidenceThreshold: quizConfig.settings?.confidenceThreshold }
+  );
+  const primaryConcernTag = getPrimaryConcernTag(quizConfig.questions, answers);
+  const primaryConcernLabel = quizConfig.treatmentMap.find((e) => e.concernTag === primaryConcernTag)?.concernLabel || primaryConcernTag;
+
+  // Mirrors skin-quiz's own results-patch effect exactly — attach the
+  // completed answers/recommendations to the lead already captured, then
+  // generate a patient report, but only when there's an actual clinical
+  // intake to report on (recommendations.length > 0).
+  useEffect(() => {
+    if (screen !== "results" || !leadId || resultsPatched.current || recommendations.length === 0) return;
+    resultsPatched.current = true;
+    fetch("/api/leads", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId, answers, recommendations, primaryConcern: primaryConcernTag }),
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`PATCH failed (${res.status})`))))
+      .then((data) => {
+        if (!data.success) throw new Error(data.message || "PATCH failed");
+        return fetch("/api/patient-report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId }),
+        });
+      })
+      .then((res) => res.json())
+      .then((data) => { if (data.success) setPatientReport(data.data); })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, leadId]);
 
   return (
     <main className="bg-[#f6faff] min-h-screen">
@@ -174,15 +211,53 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
         )}
       </div>
 
-      {screen === "results" && goal && (
-        <ResultsScreen
-          bundles={bundles}
-          goal={goal}
-          serviceId={serviceId}
-          onSwitchGoal={(g) => { setGoal(g); setServiceId(String(bundles[g]?.services?.[0]?._id || "")); }}
-          onSwitchService={setServiceId}
-        />
-      )}
+      {screen === "results" && goal && (() => {
+        const bundle = bundles[goal];
+        const services = bundle?.services || [];
+        const svc = services.find((s: any) => String(s._id) === serviceId) || services[0];
+        const alternatives = services.filter((s: any) => String(s._id) !== String(svc?._id));
+        const meta = JOURNEY_GOAL_META[goal];
+        return (
+          <div>
+            {/* Sticky goal switcher */}
+            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100 py-3">
+              <div className="max-w-4xl mx-auto px-4 flex items-center gap-2 overflow-x-auto">
+                {JOURNEY_GOALS.map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => { setGoal(g); setServiceId(String(bundles[g]?.services?.[0]?._id || "")); }}
+                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${g === goal ? "bg-[#0B2560] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                  >
+                    {JOURNEY_GOAL_META[g].icon} {JOURNEY_GOAL_META[g].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-10">
+              <UnifiedJourneyResults
+                resultSections={quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections}
+                recommendations={recommendations}
+                doctorMessage={quizConfig.doctorMessage}
+                primaryConcern={primaryConcernLabel}
+                patientReport={patientReport}
+                enableChat={quizConfig.settings?.enableChat !== false}
+                enableEmail={quizConfig.settings?.enableEmail !== false}
+                leadId={leadId}
+                journey={{
+                  service: svc,
+                  alternatives,
+                  doctors: bundle?.doctors || [],
+                  results: bundle?.results || [],
+                  goalIcon: meta.icon,
+                  goalLabel: meta.label,
+                  onSwitchService: setServiceId,
+                }}
+              />
+            </div>
+          </div>
+        );
+      })()}
     </main>
   );
 }
@@ -381,151 +456,3 @@ function LeadCaptureScreen({
   );
 }
 
-function ResultsScreen({
-  bundles,
-  goal,
-  serviceId,
-  onSwitchGoal,
-  onSwitchService,
-}: {
-  bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
-  goal: JourneyGoalSlug;
-  serviceId: string;
-  onSwitchGoal: (g: JourneyGoalSlug) => void;
-  onSwitchService: (id: string) => void;
-}) {
-  const { showPriceOnCards, consultationCta, publicWhatsApp } = useSiteConfig() as any;
-  const bundle = bundles[goal];
-  const services = bundle?.services || [];
-  const svc = services.find((s: any) => String(s._id) === serviceId) || services[0];
-  const alternatives = services.filter((s: any) => String(s._id) !== String(svc?._id));
-  const meta = JOURNEY_GOAL_META[goal];
-  const waHref = publicWhatsApp ? `https://wa.me/${String(publicWhatsApp).replace(/\D/g, "")}` : "";
-
-  if (!svc) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 md:px-6 py-16 text-center">
-        <span className="text-5xl">{meta.icon}</span>
-        <h2 className="text-2xl font-headline font-bold text-[#0B2560] mt-4">{meta.label} treatments coming soon</h2>
-        <p className="text-gray-500 max-w-md mx-auto mt-2">We're preparing options for this goal. Book a consultation and our specialists will guide you directly.</p>
-        <Link href="/book" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-6">
-          {consultationCta || "Book a Consultation"} <ArrowRight size={15} />
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {/* Sticky goal switcher */}
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100 py-3">
-        <div className="max-w-4xl mx-auto px-4 flex items-center gap-2 overflow-x-auto">
-          {JOURNEY_GOALS.map((g) => (
-            <button
-              key={g}
-              onClick={() => onSwitchGoal(g)}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${g === goal ? "bg-[#0B2560] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-            >
-              {JOURNEY_GOAL_META[g].icon} {JOURNEY_GOAL_META[g].label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-10 space-y-10">
-        {/* Primary service + alternates */}
-        <div>
-          <h2 className="text-2xl md:text-3xl font-headline font-bold text-[#0B2560]">{svc.name}</h2>
-          {alternatives.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {alternatives.map((alt: any) => (
-                <button
-                  key={String(alt._id)}
-                  onClick={() => onSwitchService(String(alt._id))}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-[#0B2560]/30"
-                >
-                  Compare: {alt.name}
-                </button>
-              ))}
-            </div>
-          )}
-          {alternatives.length > 0 && (
-            <div className="mt-5">
-              <TreatmentComparison current={svc} alternatives={alternatives} showPrice={showPriceOnCards} />
-            </div>
-          )}
-        </div>
-
-        {/* Journey */}
-        {svc.journeyExplorer?.length ? (
-          <TreatmentJourneyExplorer stages={svc.journeyExplorer} serviceName={svc.name} />
-        ) : (
-          <TreatmentJourney sessions={svc.sessionsCount || 6} treatmentName={svc.name} phases={svc.journeyPhases} />
-        )}
-
-        <RecoveryTimeline recoveryTime={svc.recoveryTime} stages={svc.recoveryStages} />
-
-        <AiJourneySimulator key={String(svc._id)} serviceId={String(svc._id)} serviceName={svc.name} />
-
-        {/* Matched doctors */}
-        {bundle.doctors?.length > 0 && (
-          <div>
-            <h3 className="text-xl font-headline font-bold text-[#0B2560] mb-4">Doctors For This Goal</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {bundle.doctors.slice(0, 3).map((d: any) => (
-                <Link key={String(d._id)} href={`/doctors/${d._id}`} className="bg-white rounded-2xl border border-gray-100 p-3 text-center hover:shadow-md transition">
-                  {d.photo?.url ? (
-                    <Image src={d.photo.url} alt={d.name} width={64} height={64} className="rounded-full w-16 h-16 object-cover mx-auto mb-2" />
-                  ) : (
-                    <span className="w-16 h-16 rounded-full bg-[#0B2560]/10 flex items-center justify-center mx-auto mb-2 font-bold text-[#0B2560]">{d.name?.[0]}</span>
-                  )}
-                  <p className="text-xs font-bold text-[#0B2560] leading-snug">{d.name}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{d.title}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Real results */}
-        <div>
-          <h3 className="text-xl font-headline font-bold text-[#0B2560] mb-4">Real Patient Results</h3>
-          {bundle.results?.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {bundle.results.slice(0, 4).map((r: any) => (
-                <SliderCard key={String(r._id)} pair={r} />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-              <p className="text-sm text-gray-500">Photos for this goal are being curated.</p>
-              <Link href="/results" className="text-xs font-semibold text-[#3B82C4] hover:underline mt-1 inline-block">See all patient results →</Link>
-            </div>
-          )}
-        </div>
-
-        {/* Cost + EMI */}
-        <div className="grid sm:grid-cols-2 gap-6">
-          <CostEstimator basePrice={svc.price} sessionsRequired={svc.sessionsRequired} serviceName={svc.name} />
-          <EMICalculator price={svc.price} />
-        </div>
-
-        {/* Book CTA */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link href="/book" className="flex-1 flex items-center justify-center gap-2 bg-[#0B2560] text-white px-6 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition">
-            {consultationCta || "Book Consultation"} <ArrowRight size={15} />
-          </Link>
-          {waHref && (
-            <a href={waHref} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 border border-[#25D366]/40 bg-[#25D366]/10 text-[#128C4A] px-6 py-3.5 rounded-xl font-bold text-sm hover:bg-[#25D366]/20 transition">
-              <MessageCircle size={15} /> WhatsApp an Expert
-            </a>
-          )}
-        </div>
-
-        <p className="text-center text-[11px] text-gray-500 max-w-lg mx-auto">
-          This journey is AI-personalised guidance based on typical cases, not a diagnosis. Your doctor confirms the right plan for you at consultation.
-        </p>
-      </div>
-    </div>
-  );
-}

@@ -108,8 +108,18 @@ export interface AssessmentSettings {
   doctorNoteTemplates: string[];
 }
 
+// journeyExplorer/costEstimator/doctors/realResults are Plan My Journey's
+// blocks (real matched Service/Doctor/Results data) — they only render when
+// that data is present (see UnifiedJourneyResults.tsx), same as skin-quiz's
+// own sections only render when their underlying data exists. One shared
+// admin-configurable list drives ordering/visibility for both engines'
+// sections, so a clinic only has one results layout to manage, not two.
+export type ResultSectionKey =
+  | "topRecommendation" | "allRecommendations" | "journeyExplorer" | "costEstimator"
+  | "doctors" | "realResults" | "doctorMessage" | "bookCta" | "emailForm";
+
 export interface ResultSectionConfig {
-  key: "topRecommendation" | "allRecommendations" | "doctorMessage" | "bookCta" | "emailForm";
+  key: ResultSectionKey;
   label: string;
   visible: boolean;
   order: number;
@@ -126,12 +136,28 @@ export interface AssessmentConfigData {
   doctorMessage: string;
 }
 
+export const RESULT_SECTION_LABELS: Record<ResultSectionKey, string> = {
+  topRecommendation: "Top Recommendation",
+  allRecommendations: "All Recommendations",
+  journeyExplorer: "Treatment Journey & Timeline",
+  costEstimator: "Cost & EMI Estimator",
+  doctors: "Matched Doctors",
+  realResults: "Real Patient Results",
+  doctorMessage: "Doctor's Message",
+  bookCta: "Book Consultation Button",
+  emailForm: "Email My Plan Form",
+};
+
 export const DEFAULT_RESULT_SECTIONS: ResultSectionConfig[] = [
-  { key: "topRecommendation", label: "Top Recommendation", visible: true, order: 1 },
-  { key: "allRecommendations", label: "All Recommendations", visible: true, order: 2 },
-  { key: "doctorMessage", label: "Doctor's Message", visible: true, order: 3 },
-  { key: "bookCta", label: "Book Consultation Button", visible: true, order: 4 },
-  { key: "emailForm", label: "Email My Plan Form", visible: true, order: 5 },
+  { key: "topRecommendation", label: RESULT_SECTION_LABELS.topRecommendation, visible: true, order: 1 },
+  { key: "allRecommendations", label: RESULT_SECTION_LABELS.allRecommendations, visible: true, order: 2 },
+  { key: "journeyExplorer", label: RESULT_SECTION_LABELS.journeyExplorer, visible: true, order: 3 },
+  { key: "costEstimator", label: RESULT_SECTION_LABELS.costEstimator, visible: true, order: 4 },
+  { key: "doctors", label: RESULT_SECTION_LABELS.doctors, visible: true, order: 5 },
+  { key: "realResults", label: RESULT_SECTION_LABELS.realResults, visible: true, order: 6 },
+  { key: "doctorMessage", label: RESULT_SECTION_LABELS.doctorMessage, visible: true, order: 7 },
+  { key: "bookCta", label: RESULT_SECTION_LABELS.bookCta, visible: true, order: 8 },
+  { key: "emailForm", label: RESULT_SECTION_LABELS.emailForm, visible: true, order: 9 },
 ];
 
 export const DEFAULT_ASSESSMENT_SETTINGS: AssessmentSettings = {

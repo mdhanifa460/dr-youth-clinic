@@ -1200,6 +1200,15 @@ export default function AiAssessmentAdminPage() {
     updateConfig({ questions: ordered.map((q, i) => ({ ...q, order: i + 1 })) });
   };
 
+  const moveResultSection = (key: string, dir: -1 | 1) => {
+    const ordered = [...config.resultSections].sort((a, b) => a.order - b.order);
+    const idx = ordered.findIndex((s) => s.key === key);
+    const target = idx + dir;
+    if (target < 0 || target >= ordered.length) return;
+    [ordered[idx], ordered[target]] = [ordered[target], ordered[idx]];
+    updateConfig({ resultSections: ordered.map((s, i) => ({ ...s, order: i + 1 })) });
+  };
+
   const updateTreatmentMap = (concernTag: string, entry: TreatmentMapEntry) => {
     setConfig((prev) => ({ ...prev, treatmentMap: prev.treatmentMap.map((e) => e.concernTag === concernTag ? entry : e) }));
     setSaved(false);
@@ -1367,11 +1376,20 @@ export default function AiAssessmentAdminPage() {
             />
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-2">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-1">
             <p className="text-sm font-bold text-gray-700 mb-1">Results Screen Sections</p>
-            {config.resultSections.map((s, i) => (
-              <Toggle key={s.key} checked={s.visible} label={s.label}
-                onChange={(v) => updateConfig({ resultSections: config.resultSections.map((x, idx) => idx === i ? { ...x, visible: v } : x) })} />
+            <p className="text-xs text-gray-400 mb-2">Order and visibility apply to both Free Clinical Intake and Plan My Journey's results screen — one shared layout for both.</p>
+            {[...config.resultSections].sort((a, b) => a.order - b.order).map((s, i, sorted) => (
+              <div key={s.key} className="flex items-center gap-3 py-1">
+                <div className="flex flex-col shrink-0">
+                  <button onClick={() => moveResultSection(s.key, -1)} disabled={i === 0} className="text-gray-300 hover:text-gray-600 disabled:opacity-20 text-xs leading-none py-0.5">▲</button>
+                  <button onClick={() => moveResultSection(s.key, 1)} disabled={i === sorted.length - 1} className="text-gray-300 hover:text-gray-600 disabled:opacity-20 text-xs leading-none py-0.5">▼</button>
+                </div>
+                <div className="flex-1">
+                  <Toggle checked={s.visible} label={s.label}
+                    onChange={(v) => updateConfig({ resultSections: config.resultSections.map((x) => x.key === s.key ? { ...x, visible: v } : x) })} />
+                </div>
+              </div>
             ))}
           </div>
         </div>
