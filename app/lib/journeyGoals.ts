@@ -60,14 +60,14 @@ export interface JourneyGoalBundle {
 // corresponds to (see app/lib/quizDefaults.ts's DEFAULT_TREATMENT_MAP
 // concernTag buckets) — picking a goal card seeds the intake engine's
 // answers.concern directly, so the visitor is never asked the redundant
-// "what's your concern?" question a second time. "weight-loss" has no
-// Clinical Intake concern bucket yet (see Phase 3 of the journey-merge
-// plan) — left empty until real content exists, at which point the intake
-// question flow simply won't branch for this goal (an empty array matches
-// nothing, same as today's behavior with no bridging at all).
+// "what's your concern?" question a second time. If an already-configured
+// clinic's saved QuizConfig doesn't have a "weight-loss" concern yet (an
+// admin hasn't run "+ Add Weight Loss Questions" in /admin/ai-assessment),
+// seedAnswersFromTags naturally finds no matches and the question flow is
+// skipped for this goal — same graceful fallback as before this tag existed.
 export const GOAL_CONCERN_TAGS: Record<JourneyGoalSlug, string[]> = {
   hair: ["hair"],
   skin: ["acne", "pigmentation", "ageing", "glow"],
   laser: ["hair-removal", "tattoo-removal"],
-  "weight-loss": [],
+  "weight-loss": ["weight-loss"],
 };

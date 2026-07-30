@@ -216,6 +216,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
       { id: "hair-thinning", title: "Hair Thinning", description: "", icon: "💇", image: "", score: 0, tags: ["hair-thinning", "hair"], weight: 100, nextQuestionId: "" },
       { id: "baldness", title: "Baldness", description: "", icon: "👨‍🦲", image: "", score: 0, tags: ["baldness", "hair"], weight: 100, nextQuestionId: "" },
       { id: "hair-transplant", title: "Hair Transplant", description: "", icon: "🌱", image: "", score: 0, tags: ["hair-transplant", "hair"], weight: 100, nextQuestionId: "" },
+      { id: "weight-loss", title: "Weight Loss", description: "", icon: "🔥", image: "", score: 0, tags: ["weight-loss"], weight: 100, nextQuestionId: "" },
       { id: "acne", title: "Acne", description: "", icon: "🔴", image: "", score: 0, tags: ["acne"], weight: 100, nextQuestionId: "" },
       { id: "pigmentation", title: "Pigmentation", description: "", icon: "🟫", image: "", score: 0, tags: ["pigmentation"], weight: 100, nextQuestionId: "" },
       { id: "melasma", title: "Melasma", description: "", icon: "🟤", image: "", score: 0, tags: ["melasma", "pigmentation"], weight: 100, nextQuestionId: "" },
@@ -311,6 +312,44 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
   { id: "pigmentation-laser-history", title: "Have you had any laser treatment before?", subtitle: "", description: "", icon: "⚡", image: "", type: "yesno", order: 34, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-laser-history") },
   { id: "pigmentation-skin-sensitivity", title: "Would you describe your skin as sensitive or easily irritated?", subtitle: "", description: "", icon: "🌹", image: "", type: "yesno", order: 35, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-skin-sensitivity") },
 
+  // ── Weight Loss follow-ups ── goal-type answers double as a
+  // Recommendation Rule input: the two real weight-loss treatments below
+  // (DEFAULT_TREATMENT_MAP) gate on "weight-loss-targeted"/"weight-loss-
+  // fullbody" via requiredTags, so the scoring engine naturally favors
+  // whichever real service (see app/models/Service, "Weight Loss (Particular
+  // Area)" vs "Full body weight loss") actually matches the visitor's goal.
+  { id: "wl-goal-type", title: "What best describes your weight-loss goal?", subtitle: "", description: "", icon: "🎯", image: "", type: "single", order: 36, required: true, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: [
+    // weight is intentionally 10, not 100 — enough to register as "collected"
+    // for the treatments' requiredTags gate below (any value > 0 qualifies),
+    // but under the admin's >= 50 auto-derive threshold that would otherwise
+    // create two spurious empty treatmentMap buckets for these sub-tags
+    // (they're eligibility filters within the "weight-loss" concern, not
+    // concerns of their own).
+    { id: "targeted-area", title: "Reduce fat in a specific area", description: "e.g. belly, thighs, double chin", icon: "🎯", image: "", score: 0, tags: ["weight-loss-targeted"], weight: 10, nextQuestionId: "" },
+    { id: "full-body", title: "Lose weight all over", description: "Overall body composition", icon: "🔥", image: "", score: 0, tags: ["weight-loss-fullbody"], weight: 10, nextQuestionId: "" },
+    { id: "both-goal-types", title: "Both", description: "", icon: "✨", image: "", score: 0, tags: ["weight-loss-targeted", "weight-loss-fullbody"], weight: 10, nextQuestionId: "" },
+  ] },
+  { id: "wl-duration", title: "How long have you been trying to lose this weight?", subtitle: "", description: "", icon: "🕒", image: "", type: "single", order: 37, required: true, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: durationAnswers() },
+  { id: "wl-medical-conditions", title: "Any of these medical conditions apply to you?", subtitle: "Select all that apply — helps your doctor assess safely", description: "", icon: "🩺", image: "", type: "multi", order: 38, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: [
+    { id: "thyroid", title: "Thyroid condition", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "pcos-pcod", title: "PCOS / PCOD", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "diabetes", title: "Diabetes", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "none-medical", title: "None of these", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+  ] },
+  { id: "wl-activity-level", title: "How would you describe your current activity level?", subtitle: "", description: "", icon: "🏃", image: "", type: "single", order: 39, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: [
+    { id: "sedentary", title: "Sedentary", description: "Little to no exercise", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "lightly-active", title: "Lightly active", description: "1–2 days/week", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "moderately-active", title: "Moderately active", description: "3–5 days/week", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "very-active", title: "Very active", description: "6–7 days/week", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+  ] },
+  { id: "wl-previous-attempts", title: "Have you tried any of these before?", subtitle: "Select all that apply", description: "", icon: "🧪", image: "", type: "multi", order: 44, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: [
+    { id: "diet-plans", title: "Diet plans", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "gym-exercise", title: "Gym / exercise programs", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "weight-medications", title: "Medications", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+    { id: "none-tried-wl", title: "None so far", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+  ] },
+  { id: "wl-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 45, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: yesNo("wl-pregnancy") },
+
   // Demographic + photo questions — informational for the doctor's review,
   // not scoring inputs (no tags/weight), so they never change which
   // treatments get recommended. All optional by default (required: false);
@@ -320,7 +359,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     id: "gender", title: "What's your gender?",
     subtitle: "Helps your doctor tailor their assessment",
     description: "", icon: "🧑", image: "",
-    type: "single", order: 40, required: false,
+    type: "single", order: 50, required: false,
     sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
     conditionTags: [],
     answers: [
@@ -332,7 +371,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     id: "age", title: "What's your age?",
     subtitle: "Helps your doctor tailor their assessment",
     description: "", icon: "🎂", image: "",
-    type: "number", order: 41, required: false,
+    type: "number", order: 51, required: false,
     sliderMin: 12, sliderMax: 80, sliderStep: 1, sliderUnit: "years",
     conditionTags: [],
     answers: [],
@@ -341,7 +380,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     id: "photo", title: "Add a photo",
     subtitle: "Optional — helps your doctor give a more accurate assessment",
     description: "", icon: "📷", image: "",
-    type: "photo", order: 42, required: false,
+    type: "photo", order: 52, required: false,
     sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
     conditionTags: [],
     answers: [],
@@ -350,7 +389,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     id: "notes", title: "Anything else you'd like your doctor to know?",
     subtitle: "Optional — describe your concern in your own words",
     description: "", icon: "📝", image: "",
-    type: "text", order: 43, required: false,
+    type: "text", order: 53, required: false,
     sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
     conditionTags: [],
     answers: [],
@@ -433,6 +472,19 @@ const RAW_DEFAULT_TREATMENT_MAP: RawTreatmentMapEntry[] = [
     treatments: [
       { id: "qswitch-tattoo", name: "Q-Switch Laser Tattoo Removal", icon: "🎯", description: "Breaks down tattoo ink particles for the body to clear naturally, session by session", confidence: 90, priority: 1, sessions: "6–10 sessions, 6–8 weeks apart", duration: "20–40 min", recovery: "Minimal, mild scabbing possible", price: "₹3,000 – ₹10,000/session", advantages: [], disadvantages: [], cta: "Book Consultation", requiredTags: [], ...CLINICAL_FIELDS_PLACEHOLDER },
       { id: "picosecond-tattoo", name: "Picosecond Laser", icon: "⚡", description: "Faster pulses target stubborn or multi-coloured ink with fewer sessions than standard Q-switch", confidence: 85, priority: 2, sessions: "4–8 sessions", duration: "20–40 min", recovery: "Minimal", price: "₹5,000 – ₹15,000/session", advantages: [], disadvantages: [], cta: "Book Consultation", requiredTags: [], ...CLINICAL_FIELDS_PLACEHOLDER },
+    ],
+  },
+  // Names/prices/sessions/recovery mirror the real, active Service documents
+  // ("Weight Loss (Particular Area)" / "Full body weight loss") rather than
+  // inventing figures — matches this project's no-fabrication convention.
+  // requiredTags gate each to the matching wl-goal-type answer (see that
+  // question above) so the scoring engine surfaces the one the visitor
+  // actually asked for, both if they said "Both".
+  {
+    concernTag: "weight-loss", concernLabel: "Weight Loss",
+    treatments: [
+      { id: "weight-loss-targeted", name: "Weight Loss (Particular Area)", icon: "🎯", description: "Targeted fat reduction for one stubborn area — a doctor-assessed method suited to your body, not a generic workout plan", confidence: 90, priority: 1, sessions: "1–3 sessions", duration: "45 min", recovery: "Minimal", price: "₹8,000/session", advantages: [], disadvantages: [], cta: "Book Consultation", requiredTags: ["weight-loss-targeted"], ...CLINICAL_FIELDS_PLACEHOLDER },
+      { id: "weight-loss-fullbody", name: "Full Body Weight Loss", icon: "🔥", description: "A whole-body program combining guided movement, metabolic support, and steady tracking rather than isolated spot treatment", confidence: 90, priority: 1, sessions: "1–6 sessions", duration: "45 min", recovery: "Minimal", price: "₹15,000", advantages: [], disadvantages: [], cta: "Book Consultation", requiredTags: ["weight-loss-fullbody"], ...CLINICAL_FIELDS_PLACEHOLDER },
     ],
   },
 ];

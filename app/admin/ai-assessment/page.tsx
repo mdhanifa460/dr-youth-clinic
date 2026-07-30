@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   DEFAULT_QUIZ_CONFIG,
   DEFAULT_QUESTIONS,
+  DEFAULT_TREATMENT_MAP,
   type AssessmentConfigData,
   type AssessmentQuestion,
   type AssessmentAnswer,
@@ -1186,6 +1187,32 @@ export default function AiAssessmentAdminPage() {
     updateConfig({ questions: [...config.questions, ...withOrder] });
   };
 
+  // Idempotent backfill for the Weight Loss branch (Plan My Journey's
+  // "weight-loss" goal, see GOAL_CONCERN_TAGS in journeyGoals.ts) into an
+  // already-configured live QuizConfig — deliberately a manual, admin-
+  // triggered button rather than an automatic backfill (unlike
+  // backfillResultSections' layout-only backfill), since this injects a
+  // whole new clinical question branch into a doctor-curated intake form.
+  // Safe to click more than once: no-ops once the branch already exists.
+  const hasWeightLossBranch = config.treatmentMap.some((e) => e.concernTag === "weight-loss");
+  const addWeightLossBranch = () => {
+    if (hasWeightLossBranch) return;
+    const wlAnswer = DEFAULT_QUESTIONS.find((q) => q.id === "concern")?.answers.find((a) => a.id === "weight-loss");
+    const updatedQuestions = config.questions.map((q) =>
+      q.id === "concern" && wlAnswer && !q.answers.some((a) => a.id === "weight-loss")
+        ? { ...q, answers: [...q.answers, wlAnswer] }
+        : q
+    );
+    const toAdd = DEFAULT_QUESTIONS.filter((q) => q.conditionTags?.includes("weight-loss") && !config.questions.some((x) => x.id === q.id));
+    const maxOrder = updatedQuestions.reduce((m, q) => Math.max(m, q.order), 0);
+    const withOrder = toAdd.map((q, i) => ({ ...q, order: maxOrder + i + 1 }));
+    const wlTreatmentEntry = DEFAULT_TREATMENT_MAP.find((e) => e.concernTag === "weight-loss");
+    updateConfig({
+      questions: [...updatedQuestions, ...withOrder],
+      treatmentMap: wlTreatmentEntry ? [...config.treatmentMap, wlTreatmentEntry] : config.treatmentMap,
+    });
+  };
+
   const updateQuestion = (id: string, q: AssessmentQuestion) => updateConfig({ questions: config.questions.map((x) => x.id === id ? q : x) });
   const removeQuestion = (id: string) => {
     if (!confirm("Remove this question?")) return;
@@ -1262,6 +1289,11 @@ export default function AiAssessmentAdminPage() {
           {missingQuickAddIds.length > 0 && (
             <button onClick={addQuickAddQuestions} className="w-full py-3 border-2 border-dashed border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:border-purple-400 hover:bg-purple-50 transition">
               + Add Gender / Age / Photo / Notes
+            </button>
+          )}
+          {!hasWeightLossBranch && (
+            <button onClick={addWeightLossBranch} className="w-full py-3 border-2 border-dashed border-green-200 rounded-xl text-sm font-semibold text-green-700 hover:border-green-400 hover:bg-green-50 transition">
+              + Add Weight Loss Questions
             </button>
           )}
         </div>
