@@ -127,3 +127,25 @@ export function postAssessmentEvent(payload: Record<string, unknown>) {
     body: JSON.stringify(payload),
   }).catch(() => {});
 }
+
+const SESSION_ID_KEY = "assessmentSessionId";
+
+// A random, non-identifying id scoped to sessionStorage (cleared when the
+// tab closes) — lets Analytics group one visitor's own events (e.g. how
+// many distinct steps they reached, or pair their "started" with their own
+// "completed") without collecting anything that could identify them.
+export function getOrCreateSessionId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let id = sessionStorage.getItem(SESSION_ID_KEY);
+    if (!id) {
+      id = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      sessionStorage.setItem(SESSION_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}

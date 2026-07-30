@@ -18,6 +18,7 @@ import Image from "next/image";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import type { TreatmentRecommendation, ResultSectionConfig, ResultSectionKey } from "@/app/lib/quizDefaults";
+import { postAssessmentEvent } from "@/app/lib/assessmentFlow";
 import TreatmentComparison from "@/app/components/TreatmentComparison";
 import TreatmentJourney from "@/app/components/TreatmentJourney";
 import TreatmentJourneyExplorer from "@/app/components/TreatmentJourneyExplorer";
@@ -52,7 +53,7 @@ const CONFIDENCE_BADGE: Record<string, string> = {
   Low: "bg-gray-100 text-gray-500",
 };
 
-function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation; rank: number }) {
+function TreatmentCard({ treatment, rank, goal, sessionId }: { treatment: TreatmentRecommendation; rank: number; goal?: string; sessionId?: string }) {
   const { consultationCta } = useSiteConfig();
   const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}`;
   const confidenceLevel = treatment.confidenceLevel || "Medium";
@@ -110,6 +111,7 @@ function TreatmentCard({ treatment, rank }: { treatment: TreatmentRecommendation
 
         <Link
           href={bookUrl}
+          onClick={() => postAssessmentEvent({ event: "consultation_booked", goal: goal || "", sessionId: sessionId || "", primaryConcern: treatment.name })}
           className="block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200 bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
         >
           {treatment.cta || consultationCta}
@@ -199,6 +201,8 @@ export default function UnifiedJourneyResults({
   leadId,
   onRetake,
   journey,
+  goal,
+  sessionId,
 }: {
   resultSections: ResultSectionConfig[];
   recommendations: TreatmentRecommendation[];
@@ -210,6 +214,10 @@ export default function UnifiedJourneyResults({
   leadId: string | null;
   onRetake?: () => void;
   journey?: JourneyPresentationData;
+  // Analytics only (Phase 4) — empty string is a valid, expected value for
+  // skin-quiz, which has no goal concept of its own.
+  goal?: string;
+  sessionId?: string;
 }) {
   const { publicWhatsApp, consultationCta, showPriceOnCards } = useSiteConfig() as any;
 
@@ -261,7 +269,7 @@ export default function UnifiedJourneyResults({
       node: (
         <div key="recommendations" className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {visibleRecommendations.map((rec, i) => (
-            <TreatmentCard key={rec.id} treatment={rec} rank={i} />
+            <TreatmentCard key={rec.id} treatment={rec} rank={i} goal={goal} sessionId={sessionId} />
           ))}
         </div>
       ),
@@ -403,7 +411,11 @@ export default function UnifiedJourneyResults({
       order: orderOf("bookCta"),
       node: (
         <div key="book-cta" className="flex flex-col sm:flex-row gap-3">
-          <Link href={bookUrl} className="flex-1 flex items-center justify-center gap-2 bg-[#0B2560] text-white px-6 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition">
+          <Link
+            href={bookUrl}
+            onClick={() => postAssessmentEvent({ event: "consultation_booked", goal: goal || "", sessionId: sessionId || "", primaryConcern })}
+            className="flex-1 flex items-center justify-center gap-2 bg-[#0B2560] text-white px-6 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition"
+          >
             {consultationCta || "Book Consultation"} <ArrowRight size={15} />
           </Link>
           {waHref && (

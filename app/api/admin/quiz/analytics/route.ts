@@ -16,12 +16,78 @@ export async function GET() {
     const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const [events, leads, bookingPhones] = await Promise.all([
-      AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel").lean() as Promise<any[]>,
+      AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel goal stepId sessionId createdAt").lean() as Promise<any[]>,
       Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern recommendations campaign qrSource clinicLocation channel preferredClinic createdAt").lean() as Promise<any[]>,
       (Booking as any).distinct("phone"),
     ]);
     const started = events.filter((e) => e.event === "started").length;
     const completed = events.filter((e) => e.event === "completed").length;
+    const consultationBookedClicks = events.filter((e) => e.event === "consultation_booked").length;
+
+    // Per-step drop-off: for each sessionId, how many DISTINCT step_completed
+    // events it has — the visitor's actual "depth" reached, independent of
+    // which concern branch they took (hair vs acne ask different questions,
+    // so aggregating by literal stepId wouldn't generalize). Depth d's count
+    // is "sessions that got at least this far," a standard funnel shape.
+    const stepEvents = events.filter((e) => e.event === "step_completed" && e.sessionId);
+    const stepsBySession = new Map<string, Set<string>>();
+    for (const e of stepEvents) {
+      if (!stepsBySession.has(e.sessionId)) stepsBySession.set(e.sessionId, new Set());
+      stepsBySession.get(e.sessionId)!.add(e.stepId);
+    }
+    const depths = Array.from(stepsBySession.values()).map((s) => s.size).filter((d) => d > 0);
+    const maxDepth = depths.reduce((m, d) => Math.max(m, d), 0);
+    const dropoffByStep = Array.from({ length: maxDepth }, (_, i) => {
+      const stepNumber = i + 1;
+      const reached = depths.filter((d) => d >= stepNumber).length;
+      return { step: stepNumber, sessions: reached };
+    });
+
+    // Median time-to-complete: pair each sessionId's earliest "started" with
+    // its earliest "completed" — only sessions with both count. Median
+    // (not mean) so one abandoned-then-resumed outlier session can't skew
+    // the whole number.
+    const startedBySession = new Map<string, number>();
+    const completedBySession = new Map<string, number>();
+    for (const e of events) {
+      if (!e.sessionId) continue;
+      const t = new Date(e.createdAt).getTime();
+      if (e.event === "started" && (!startedBySession.has(e.sessionId) || t < startedBySession.get(e.sessionId)!)) {
+        startedBySession.set(e.sessionId, t);
+      }
+      if (e.event === "completed" && (!completedBySession.has(e.sessionId) || t < completedBySession.get(e.sessionId)!)) {
+        completedBySession.set(e.sessionId, t);
+      }
+    }
+    const durations: number[] = [];
+    for (const [sid, startTs] of Array.from(startedBySession.entries())) {
+      const endTs = completedBySession.get(sid);
+      if (endTs !== undefined && endTs > startTs) durations.push(endTs - startTs);
+    }
+    durations.sort((a, b) => a - b);
+    const medianCompletionMs = durations.length
+      ? durations.length % 2 === 1
+        ? durations[(durations.length - 1) / 2]
+        : (durations[durations.length / 2 - 1] + durations[durations.length / 2]) / 2
+      : null;
+
+    // Goal-selected funnel — Plan My Journey only (skin-quiz's events carry
+    // no goal); shows how many visitors picked each goal vs how many of
+    // those sessions went on to complete the intake.
+    const goalSelectedEvents = events.filter((e) => e.event === "goal_selected" && e.goal);
+    const goalCounts: Record<string, { selected: number; completedSessions: Set<string> }> = {};
+    for (const e of goalSelectedEvents) {
+      if (!goalCounts[e.goal]) goalCounts[e.goal] = { selected: 0, completedSessions: new Set() };
+      goalCounts[e.goal].selected++;
+    }
+    for (const e of events) {
+      if (e.event === "completed" && e.goal && e.sessionId && goalCounts[e.goal]) {
+        goalCounts[e.goal].completedSessions.add(e.sessionId);
+      }
+    }
+    const goalFunnel = Object.entries(goalCounts)
+      .map(([goal, c]) => ({ goal, selected: c.selected, completed: c.completedSessions.size }))
+      .sort((a, b) => b.selected - a.selected);
 
     // Normalize both sides — leads saved before the phone.ts fix still have
     // raw, unformatted numbers, so a straight string comparison against
@@ -133,6 +199,15 @@ export async function GET() {
         locationBreakdown,
         channelBreakdown,
         preferredClinicBreakdown,
+        // Phase 4 — Journey Engine funnel additions. bookedCount above stays
+        // the phone-cross-reference proxy for an actual confirmed booking;
+        // consultationBookedClicks is the new, more immediate signal (a
+        // visitor clicking through to /book), shown alongside it, not
+        // replacing it.
+        consultationBookedClicks,
+        dropoffByStep,
+        medianCompletionSeconds: medianCompletionMs !== null ? Math.round(medianCompletionMs / 1000) : null,
+        goalFunnel,
       },
     });
   } catch (err: any) {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData } from "@/app/lib/quizDefaults";
 import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
-import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, hasNextQuestion as computeHasNextQuestion, postAssessmentEvent } from "@/app/lib/assessmentFlow";
+import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, hasNextQuestion as computeHasNextQuestion, postAssessmentEvent, getOrCreateSessionId } from "@/app/lib/assessmentFlow";
 import { locations } from "@/app/data/locations";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
 import UnifiedJourneyResults, { type PatientReport } from "@/app/components/assessment/UnifiedJourneyResults";
@@ -198,12 +198,14 @@ export default function SkinQuizPage() {
   const [qrSource, setQrSource] = useState(false);
   const [clinicLocation, setClinicLocation] = useState("");
   const [channel, setChannel] = useState("");
+  const [sessionId, setSessionId] = useState("");
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setCampaign(params.get("campaign") || "");
     setQrSource(params.get("qr") === "1");
     setClinicLocation(params.get("clinic") || "");
     setChannel(params.get("channel") || "");
+    setSessionId(getOrCreateSessionId());
   }, []);
 
   const [quizConfig, setQuizConfig] = useState<AssessmentConfigData>(DEFAULT_QUIZ_CONFIG);
@@ -230,8 +232,8 @@ export default function SkinQuizPage() {
   }, []);
 
   const trackEvent = useCallback((event: "started" | "completed", primaryConcern?: string) => {
-    postAssessmentEvent({ event, primaryConcern: primaryConcern || "", campaign, qrSource, clinicLocation, channel });
-  }, [campaign, qrSource, clinicLocation, channel]);
+    postAssessmentEvent({ event, primaryConcern: primaryConcern || "", campaign, qrSource, clinicLocation, channel, sessionId });
+  }, [campaign, qrSource, clinicLocation, channel, sessionId]);
 
   // The "Enable 'Anything else for your doctor?' Note" Settings toggle only
   // controls the specific quick-add "notes" question (id "notes"), not every
@@ -283,6 +285,13 @@ export default function SkinQuizPage() {
       if (!data.success || !data.leadId) { setLeadCaptureStatus("error"); return; }
       setLeadId(data.leadId);
       setLeadCaptureStatus("idle");
+      // Reuses the clinicLocation field, but with a different meaning here:
+      // for started/completed it's QR/link attribution (?clinic=), for
+      // branch_selected it's the patient's own choice — both answer "which
+      // physical clinic is this event about," just from different sources.
+      if (leadForm.preferredClinic) {
+        postAssessmentEvent({ event: "branch_selected", clinicLocation: leadForm.preferredClinic, sessionId });
+      }
       const first = orderedQuestions[0];
       if (!first) { transition(() => setScreen("results")); return; }
       transition(() => { setPath([first.id]); setScreen("question"); });
@@ -323,6 +332,7 @@ export default function SkinQuizPage() {
 
   const handleNext = () => {
     if (!currentQuestion) return;
+    postAssessmentEvent({ event: "step_completed", stepId: currentQuestion.id, sessionId });
     const nextId = resolveNextQuestionId(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
     if (nextId) {
       transition(() => setPath((p) => [...p, nextId]));
@@ -514,6 +524,7 @@ export default function SkinQuizPage() {
             enableEmail={quizConfig.settings?.enableEmail !== false}
             leadId={leadId}
             onRetake={handleRetake}
+            sessionId={sessionId}
           />
         )}
       </div>

@@ -13,6 +13,8 @@ import {
   canProceedFromQuestion,
   resolveNextQuestionId,
   hasNextQuestion as computeHasNextQuestion,
+  postAssessmentEvent,
+  getOrCreateSessionId,
 } from "@/app/lib/assessmentFlow";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
 import UnifiedJourneyResults, { type PatientReport } from "@/app/components/assessment/UnifiedJourneyResults";
@@ -71,6 +73,11 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
   const [leadId, setLeadId] = useState<string | null>(null);
   const [patientReport, setPatientReport] = useState<PatientReport | null>(null);
   const resultsPatched = useRef(false);
+  const [sessionId, setSessionId] = useState("");
+
+  useEffect(() => {
+    setSessionId(getOrCreateSessionId());
+  }, []);
 
   useEffect(() => {
     if (clinic) setLead((l) => ({ ...l, preferredClinic: clinic }));
@@ -84,6 +91,12 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
   const pickGoal = (g: JourneyGoalSlug) => {
     setGoal(g);
     setServiceId(String(bundles[g]?.services?.[0]?._id || ""));
+    // Fired alongside goal_selected (not instead of it) so the top-line
+    // Intakes Started / Completed funnel — previously skin-quiz-only —
+    // reflects Plan My Journey traffic too, and the goal funnel can pair
+    // each goal's "completed" sessions against how many started it.
+    postAssessmentEvent({ event: "started", goal: g, sessionId });
+    postAssessmentEvent({ event: "goal_selected", goal: g, sessionId });
     const seeded = seedAnswersFromTags(quizConfig.questions, GOAL_CONCERN_TAGS[g]);
     if (Object.keys(seeded).length > 0) {
       const ordered = getOrderedQuestions(quizConfig.questions, seeded, quizConfig.settings);
@@ -112,6 +125,7 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
 
   const handleQuestionNext = () => {
     if (!currentQuestion) return;
+    postAssessmentEvent({ event: "step_completed", stepId: currentQuestion.id, goal, sessionId });
     const nextId = resolveNextQuestionId(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
     if (nextId) {
       transition(() => setPath((p) => [...p, nextId]));
@@ -141,6 +155,14 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
       if (!res.ok || !data.success || !data.leadId) throw new Error("failed");
       setLeadId(data.leadId);
       setLeadStatus("sent");
+      if (lead.preferredClinic) {
+        postAssessmentEvent({ event: "branch_selected", clinicLocation: lead.preferredClinic, goal, sessionId });
+      }
+      // Mirrors skin-quiz's "completed" — reaching results counts as
+      // finishing the funnel here too, whether or not intake questions were
+      // asked for this goal (e.g. weight-loss's straight-to-lead path still
+      // ends in a real results screen).
+      postAssessmentEvent({ event: "completed", goal, sessionId });
       setScreen("results");
     } catch {
       setLeadStatus("error");
@@ -251,8 +273,13 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
                   results: bundle?.results || [],
                   goalIcon: meta.icon,
                   goalLabel: meta.label,
-                  onSwitchService: setServiceId,
+                  onSwitchService: (id: string) => {
+                    setServiceId(id);
+                    postAssessmentEvent({ event: "service_selected", goal, sessionId });
+                  },
                 }}
+                goal={goal}
+                sessionId={sessionId}
               />
             </div>
           </div>

@@ -846,6 +846,14 @@ function AnalyticsTab() {
     </div>
   );
 
+  const formatDuration = (seconds: number | null) => {
+    if (seconds === null) return "—";
+    if (seconds < 60) return `${seconds}s`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+  };
+
   return (
     <div className="space-y-6">
       <p className="text-xs text-gray-400">Last {data.rangeDays} days</p>
@@ -855,10 +863,52 @@ function AnalyticsTab() {
         {stat("Conversion", `${data.conversionRate}%`, "started → completed")}
         {stat("Leads Captured", data.leadsCapture)}
         {stat("Booking Rate", `${data.bookingRate}%`, `${data.bookedCount} booked`)}
+        {stat("Consultation Clicks", data.consultationBookedClicks ?? 0, "clicked \"Book Consultation\"")}
+        {stat("Median Time to Complete", formatDuration(data.medianCompletionSeconds ?? null))}
         {stat("Most Common Concern", data.mostCommonConcern || "—")}
         {stat("Most Recommended", data.mostRecommendedTreatment || "—")}
         {stat("Most Accepted", data.mostAcceptedTreatment || "—")}
       </div>
+
+      {data.goalFunnel?.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <p className="text-sm font-bold text-gray-700 mb-1">Plan My Journey — Goal Funnel</p>
+          <p className="text-xs text-gray-400 mb-3">How many visitors picked each goal, and how many of those sessions went on to complete the intake questions.</p>
+          <div className="space-y-2">
+            {data.goalFunnel.map((g: any) => (
+              <div key={g.goal} className="flex items-center justify-between gap-3 border border-gray-50 bg-gray-50/60 rounded-xl px-4 py-2.5">
+                <span className="text-sm font-semibold text-gray-800 capitalize">{g.goal.replace(/-/g, " ")}</span>
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <span>{g.selected} selected</span>
+                  <span className="font-bold text-[#0B2560]">{g.completed} completed intake</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.dropoffByStep?.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <p className="text-sm font-bold text-gray-700 mb-1">Drop-off by Question</p>
+          <p className="text-xs text-gray-400 mb-3">How many sessions reached at least this many questions into the intake — a real, question-by-question funnel across all concern branches.</p>
+          <div className="space-y-2">
+            {data.dropoffByStep.map((d: any) => {
+              const first = data.dropoffByStep[0]?.sessions || 1;
+              const pct = first ? Math.round((d.sessions / first) * 100) : 0;
+              return (
+                <div key={d.step} className="flex items-center gap-3">
+                  <span className="text-xs text-gray-600 w-20 shrink-0">Question {d.step}</span>
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#0B2560] rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-xs font-semibold text-gray-500 w-24 text-right">{d.sessions} sessions</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <p className="text-sm font-bold text-gray-700 mb-3">Concern Heatmap</p>
