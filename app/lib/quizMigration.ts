@@ -120,6 +120,19 @@ function backfillResultSections(sections: ResultSectionConfig[] | undefined): Re
   return [...existing, ...missing.map((s, i) => ({ ...s, order: maxOrder + i + 1 }))];
 }
 
+// Pregnancy/breastfeeding was originally buried near the end of each
+// concern's question block (order 18/31/45) — a real clinic that already
+// saved a QuizConfig before this fix has those stale orders baked into
+// their doc, so DEFAULT_QUESTIONS' corrected order: 4 alone won't reach
+// them. Corrects only these 3 known ids' order, leaving every other
+// admin customization (including a doctor's own deliberate reordering of
+// anything else) untouched.
+const PRIORITY_ORDER_FIXES: Record<string, number> = {
+  "hair-pregnancy": 4,
+  "pigmentation-pregnancy": 4,
+  "wl-pregnancy": 4,
+};
+
 export function backfillClinicalFields(config: AssessmentConfigData): AssessmentConfigData {
   return {
     ...config,
@@ -134,6 +147,7 @@ export function backfillClinicalFields(config: AssessmentConfigData): Assessment
     questions: (config.questions || []).map((q) => ({
       ...q,
       conditionTags: Array.isArray((q as any).conditionTags) ? (q as any).conditionTags : [],
+      order: PRIORITY_ORDER_FIXES[q.id] ?? q.order,
     })),
     treatmentMap: (config.treatmentMap || []).map((entry) => ({
       ...entry,

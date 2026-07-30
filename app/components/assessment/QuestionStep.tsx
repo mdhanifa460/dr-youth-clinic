@@ -184,10 +184,23 @@ export default function QuestionStep({
   const selectedIds = isMulti ? (Array.isArray(value) ? value : []) : [];
   const singleId = !isMulti && typeof value === "string" ? value : "";
 
+  // "None of the above"-style answers (every one in this codebase's content
+  // is titled starting with "None") are mutually exclusive with every other
+  // option in the same multi-select: picking one clears the rest, and
+  // picking anything else clears it — matches how a real "none" checkbox
+  // should behave, instead of letting "None so far" sit selected alongside
+  // "PRP" as if both were true.
+  const isNoneAnswer = (id: string) => /^none\b/i.test(question.answers.find((a) => a.id === id)?.title || "");
+
   const toggle = (id: string) => {
     if (isMulti) {
-      const next = selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
-      onChange(next);
+      if (selectedIds.includes(id)) {
+        onChange(selectedIds.filter((x) => x !== id));
+      } else if (isNoneAnswer(id)) {
+        onChange([id]);
+      } else {
+        onChange([...selectedIds.filter((x) => !isNoneAnswer(x)), id]);
+      }
     } else {
       onChange(id);
     }

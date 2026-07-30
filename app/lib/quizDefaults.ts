@@ -115,7 +115,7 @@ export interface AssessmentSettings {
 // admin-configurable list drives ordering/visibility for both engines'
 // sections, so a clinic only has one results layout to manage, not two.
 export type ResultSectionKey =
-  | "topRecommendation" | "allRecommendations" | "journeyExplorer" | "costEstimator"
+  | "topRecommendation" | "allRecommendations" | "rootCauseAnalysis" | "journeyExplorer" | "costEstimator"
   | "doctors" | "realResults" | "doctorMessage" | "bookCta" | "emailForm";
 
 export interface ResultSectionConfig {
@@ -139,6 +139,7 @@ export interface AssessmentConfigData {
 export const RESULT_SECTION_LABELS: Record<ResultSectionKey, string> = {
   topRecommendation: "Top Recommendation",
   allRecommendations: "All Recommendations",
+  rootCauseAnalysis: "Root Cause Analysis",
   journeyExplorer: "Treatment Journey & Timeline",
   costEstimator: "Cost & EMI Estimator",
   doctors: "Matched Doctors",
@@ -151,13 +152,14 @@ export const RESULT_SECTION_LABELS: Record<ResultSectionKey, string> = {
 export const DEFAULT_RESULT_SECTIONS: ResultSectionConfig[] = [
   { key: "topRecommendation", label: RESULT_SECTION_LABELS.topRecommendation, visible: true, order: 1 },
   { key: "allRecommendations", label: RESULT_SECTION_LABELS.allRecommendations, visible: true, order: 2 },
-  { key: "journeyExplorer", label: RESULT_SECTION_LABELS.journeyExplorer, visible: true, order: 3 },
-  { key: "costEstimator", label: RESULT_SECTION_LABELS.costEstimator, visible: true, order: 4 },
-  { key: "doctors", label: RESULT_SECTION_LABELS.doctors, visible: true, order: 5 },
-  { key: "realResults", label: RESULT_SECTION_LABELS.realResults, visible: true, order: 6 },
-  { key: "doctorMessage", label: RESULT_SECTION_LABELS.doctorMessage, visible: true, order: 7 },
-  { key: "bookCta", label: RESULT_SECTION_LABELS.bookCta, visible: true, order: 8 },
-  { key: "emailForm", label: RESULT_SECTION_LABELS.emailForm, visible: true, order: 9 },
+  { key: "rootCauseAnalysis", label: RESULT_SECTION_LABELS.rootCauseAnalysis, visible: true, order: 3 },
+  { key: "journeyExplorer", label: RESULT_SECTION_LABELS.journeyExplorer, visible: true, order: 4 },
+  { key: "costEstimator", label: RESULT_SECTION_LABELS.costEstimator, visible: true, order: 5 },
+  { key: "doctors", label: RESULT_SECTION_LABELS.doctors, visible: true, order: 6 },
+  { key: "realResults", label: RESULT_SECTION_LABELS.realResults, visible: true, order: 7 },
+  { key: "doctorMessage", label: RESULT_SECTION_LABELS.doctorMessage, visible: true, order: 8 },
+  { key: "bookCta", label: RESULT_SECTION_LABELS.bookCta, visible: true, order: 9 },
+  { key: "emailForm", label: RESULT_SECTION_LABELS.emailForm, visible: true, order: 10 },
 ];
 
 export const DEFAULT_ASSESSMENT_SETTINGS: AssessmentSettings = {
@@ -276,7 +278,13 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     { id: "none-tried", title: "None so far", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
   ] },
   { id: "hair-scalp-itching", title: "Is your scalp itchy or irritated?", subtitle: "", description: "", icon: "🤚", image: "", type: "yesno", order: 17, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["hair"], answers: yesNo("hair-scalp-itching") },
-  { id: "hair-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 18, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["hair"], answers: yesNo("hair-pregnancy") },
+  // Pregnancy/breastfeeding is a common contraindication check across every
+  // concern, not a hair-specific detail — order 4 puts it right after the
+  // universal concern/skin-type/experience questions (1-3) and ahead of
+  // every concern's own deep-dive questions, same priority tier as gender,
+  // while conditionTags keeps the wording tailored per concern (see the
+  // matching pigmentation/weight-loss versions below).
+  { id: "hair-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["hair"], answers: yesNo("hair-pregnancy") },
   { id: "hair-medications", title: "Are you currently on any medications?", subtitle: "List any you're currently taking, if relevant", description: "", icon: "💊", image: "", type: "text", order: 19, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["hair"], answers: [] },
 
   // ── Acne follow-ups ──
@@ -306,7 +314,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     { id: "moderate", title: "Moderate (some outdoor time)", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
     { id: "high", title: "High (outdoors most of the day)", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
   ] },
-  { id: "pigmentation-pregnancy", title: "Are you currently pregnant, or was this pigmentation pregnancy-related?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 31, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-pregnancy") },
+  { id: "pigmentation-pregnancy", title: "Are you currently pregnant, or was this pigmentation pregnancy-related?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-pregnancy") },
   { id: "pigmentation-hormonal-history", title: "Any known hormonal history relevant to this?", subtitle: "e.g. contraceptive use, thyroid, PCOS", description: "", icon: "⚖️", image: "", type: "yesno", order: 32, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-hormonal-history") },
   { id: "pigmentation-previous-creams", title: "Which creams or products have you already tried?", subtitle: "Optional", description: "", icon: "🧴", image: "", type: "text", order: 33, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: [] },
   { id: "pigmentation-laser-history", title: "Have you had any laser treatment before?", subtitle: "", description: "", icon: "⚡", image: "", type: "yesno", order: 34, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-laser-history") },
@@ -348,7 +356,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     { id: "weight-medications", title: "Medications", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
     { id: "none-tried-wl", title: "None so far", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
   ] },
-  { id: "wl-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 45, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: yesNo("wl-pregnancy") },
+  { id: "wl-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: yesNo("wl-pregnancy") },
 
   // Demographic + photo questions — informational for the doctor's review,
   // not scoring inputs (no tags/weight), so they never change which

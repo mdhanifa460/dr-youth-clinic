@@ -139,6 +139,70 @@ function ReportList({ title, icon, items }: { title: string; icon: string; items
   );
 }
 
+// Surfaces the doctor/AI-drafted-then-doctor-reviewed clinical content that
+// already exists on every TreatmentRecommendation (see the admin's Treatment
+// Mapping tab + "AI Suggest") but was never shown to the patient before —
+// the "why is this happening to you" narrative, not just a treatment card.
+// Deliberately excludes `doctorNotes`: that field is internal guidance for
+// the doctor reviewing the entry, never patient-facing (see the AI Suggest
+// prompt in app/api/admin/quiz/ai-suggest). Honest empty state: renders
+// nothing if a concern's content hasn't been authored yet, rather than
+// showing an empty shell.
+function RootCauseRow({ icon, title, items, tint, caution }: { icon: string; title: string; items: string[]; tint?: boolean; caution?: boolean }) {
+  return (
+    <div className={`rounded-xl p-4 border ${caution ? "bg-amber-50 border-amber-100" : tint ? "bg-[#f6faff] border-[#0B2560]/10" : "border-gray-100"}`}>
+      <p className="text-xs font-bold text-[#0B2560] mb-2 flex items-center gap-1.5">
+        <span>{icon}</span> {title}
+      </p>
+      <ul className="space-y-1">
+        {items.map((item, i) => (
+          <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
+            <span className={`mt-1 shrink-0 ${caution ? "text-amber-500" : "text-[#F5A623]"}`}>•</span> {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function RootCauseAnalysis({ treatment }: { treatment: TreatmentRecommendation }) {
+  const hasContent =
+    treatment.clinicalIndicators.length > 0 ||
+    treatment.possibleCauses.length > 0 ||
+    treatment.suggestedEvaluation.length > 0 ||
+    treatment.patientEducation.length > 0;
+  if (!hasContent) return null;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-[#0B2560] px-5 py-3.5 flex items-center gap-2.5">
+        <span className="text-lg">🔬</span>
+        <div>
+          <p className="text-white font-bold text-sm leading-tight">Your Root Cause Analysis</p>
+          <p className="text-white/60 text-[11px] leading-tight">Based on your answers — confirmed by your doctor at consultation</p>
+        </div>
+      </div>
+      <div className="p-5 space-y-3">
+        {treatment.clinicalIndicators.length > 0 && (
+          <RootCauseRow icon="🔍" title="What we noticed in your answers" items={treatment.clinicalIndicators} />
+        )}
+        {treatment.possibleCauses.length > 0 && (
+          <RootCauseRow icon="🧭" title="Possible causes to explore with your doctor" items={treatment.possibleCauses} tint />
+        )}
+        {treatment.suggestedEvaluation.length > 0 && (
+          <RootCauseRow icon="🩺" title="What your doctor will likely check" items={treatment.suggestedEvaluation} />
+        )}
+        {treatment.contraindications.length > 0 && (
+          <RootCauseRow icon="⚠️" title="Worth mentioning to your doctor" items={treatment.contraindications} caution />
+        )}
+        {treatment.patientEducation.length > 0 && (
+          <RootCauseRow icon="📘" title="In plain terms" items={treatment.patientEducation} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Small, self-contained "email me a copy" affordance — not a gate (the
 // report is already unlocked once a lead exists), purely an optional
 // convenience. Calls the same PATCH endpoint that persists completed
@@ -285,6 +349,14 @@ export default function UnifiedJourneyResults({
           We couldn't match a discussion topic to your answers — a specialist will review your responses personally.
         </div>
       ),
+    });
+  }
+
+  if (sectionVisible("rootCauseAnalysis") && recommendations[0]) {
+    blocks.push({
+      key: "rootCauseAnalysis",
+      order: orderOf("rootCauseAnalysis"),
+      node: <RootCauseAnalysis key="root-cause" treatment={recommendations[0]} />,
     });
   }
 
