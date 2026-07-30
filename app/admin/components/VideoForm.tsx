@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle, Save, Loader, Sparkles, ExternalLink } from 'lucide-react';
+import { AlertCircle, CheckCircle, Save, Loader, Sparkles, ExternalLink, X } from 'lucide-react';
+import { FaYoutube } from 'react-icons/fa';
 import MediaGalleryModal from './MediaGalleryModal';
 import SeoAiAssistant from './SeoAiAssistant';
 import { FieldInput, StringArrayEditor, ObjectArrayEditor, ImagePicker } from './FormControls';
@@ -17,7 +18,7 @@ interface FormData {
   title: string;
   youtubeUrl: string;
   channel: string;
-  format: 'video' | 'short';
+  format: 'video' | 'short' | 'reel';
   thumbnail: string;
   category: string;
   doctor: string;
@@ -73,12 +74,17 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
   const [services, setServices] = useState<{ _id: string; name: string }[]>([]);
   const [aiFlags, setAiFlags] = useState<VideoAiFlags>(AI_FLAGS_DEFAULT);
   const [oembedLoading, setOembedLoading] = useState(false);
+  const [syncBannerDismissed, setSyncBannerDismissed] = useState(false);
 
   const [form, setForm] = useState<FormData>(
     initialData
       ? {
           ...DEFAULTS,
           ...initialData,
+          // A synced draft is created with no category at all (left for a
+          // reviewer to pick) — without this, the DEFAULTS fallback above
+          // would silently show "Hair" as if it had already been reviewed.
+          category: initialData.category || '',
           thumbnail: initialData.thumbnail?.url ?? '',
           doctor: initialData.doctor?._id ?? initialData.doctor ?? '',
           service: initialData.service?._id ?? initialData.service ?? '',
@@ -171,6 +177,10 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
   }
 
   const previewThumb = form.thumbnail || youtubeThumb(form.youtubeUrl);
+  const showSyncBanner = initialData?.status === 'draft' && initialData?.syncedFromApi && !syncBannerDismissed;
+  const syncedDateLabel = initialData?.createdAt
+    ? new Date(initialData.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '';
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -188,6 +198,18 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <h2 className="text-2xl font-bold text-[#0B2560]">Video Details</h2>
 
+        {showSyncBanner && (
+          <div className="flex items-start gap-2.5 bg-red-50/60 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl">
+            <FaYoutube size={16} className="mt-0.5 shrink-0 text-red-600" />
+            <span className="flex-1">
+              Pulled from YouTube on {syncedDateLabel} — review Category and Doctor, then publish.
+            </span>
+            <button type="button" onClick={() => setSyncBannerDismissed(true)} className="text-red-400 hover:text-red-600 shrink-0">
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         <FieldInput label="Title" value={form.title} onChange={(v) => updateForm({ title: v })} placeholder="e.g., Hair PRP Explained" />
         <div>
           <FieldInput label="YouTube URL" value={form.youtubeUrl} onChange={(v) => updateForm({ youtubeUrl: v })} onBlur={handleUrlBlur} placeholder="https://www.youtube.com/watch?v=..." />
@@ -202,6 +224,28 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
 
         <ImagePicker label="Custom Thumbnail (optional — defaults to YouTube's)" value={form.thumbnail} onChange={(v) => updateForm({ thumbnail: v })} openGallery={openGallery} />
 
+        {/* Category + Doctor lead the form — the two fields a reviewer
+            actually needs to fill in for a synced draft (left blank by the
+            YouTube sync job on purpose, since it has no way to know either). */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Category</label>
+            <select value={form.category} onChange={(e) => updateForm({ category: e.target.value })}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20">
+              <option value="">— Select Category —</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Doctor</label>
+            <select value={form.doctor} onChange={(e) => updateForm({ doctor: e.target.value })}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20">
+              <option value="">— None —</option>
+              {doctors.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+            </select>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <FieldInput label="Channel (auto-filled)" value={form.channel} onChange={(v) => updateForm({ channel: v })} placeholder="Auto-filled from YouTube" />
           <div>
@@ -215,25 +259,7 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Category</label>
-            <select value={form.category} onChange={(e) => updateForm({ category: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20">
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <FieldInput label="Duration (e.g. 12 min)" value={form.duration} onChange={(v) => updateForm({ duration: v })} placeholder="12 min" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Doctor</label>
-            <select value={form.doctor} onChange={(e) => updateForm({ doctor: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20">
-              <option value="">— None —</option>
-              {doctors.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
-            </select>
-          </div>
+          <FieldInput label="Duration (e.g. 1.29)" value={form.duration} onChange={(v) => updateForm({ duration: v })} placeholder="1.29" />
           <div>
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Related Treatment</label>
             <select value={form.service} onChange={(e) => updateForm({ service: e.target.value })}
@@ -291,19 +317,23 @@ export default function VideoForm({ initialData }: { initialData?: any }) {
         />
       )}
 
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-[#0B2560]">Chapters</h2>
-          <p className="text-sm text-gray-500 mt-1">Timestamps patients can jump to directly (e.g. 00:00 Introduction, 02:30 Procedure). Entered manually — reliable and free.</p>
+      {/* Chapters are meaningless on a Short/Reel — there's nothing long
+          enough to jump around in. */}
+      {form.format !== 'short' && form.format !== 'reel' && (
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-[#0B2560]">Chapters</h2>
+            <p className="text-sm text-gray-500 mt-1">Timestamps patients can jump to directly (e.g. 00:00 Introduction, 02:30 Procedure). Entered manually — reliable and free.</p>
+          </div>
+          <ObjectArrayEditor
+            label="Chapters"
+            items={form.chapters}
+            onChange={(v) => updateForm({ chapters: v as any })}
+            fields={[{ key: 'time', placeholder: '02:30', width: 'sm' }, { key: 'label', placeholder: 'Chapter title' }]}
+            defaultItem={{ time: '', label: '' }}
+          />
         </div>
-        <ObjectArrayEditor
-          label="Chapters"
-          items={form.chapters}
-          onChange={(v) => updateForm({ chapters: v as any })}
-          fields={[{ key: 'time', placeholder: '02:30', width: 'sm' }, { key: 'label', placeholder: 'Chapter title' }]}
-          defaultItem={{ time: '', label: '' }}
-        />
-      </div>
+      )}
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <h2 className="text-2xl font-bold text-[#0B2560]">FAQ</h2>

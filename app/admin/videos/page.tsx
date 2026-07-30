@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Star, Loader } from 'lucide-react';
+import { Plus, Edit, Trash2, Star, Loader, RefreshCw } from 'lucide-react';
+import { FaYoutube, FaInstagram } from 'react-icons/fa';
 
 // Mirrors VIDEO_CATEGORIES in app/models/Video.ts — not imported directly
 // since that file pulls in mongoose, unsafe to bundle into a client component
@@ -21,7 +22,19 @@ interface VideoRow {
   status: 'draft' | 'published';
   thumbnail?: { url: string };
   doctor?: { name: string };
+  platform?: 'youtube' | 'instagram';
   createdAt: string;
+}
+
+function PlatformIcon({ platform }: { platform?: 'youtube' | 'instagram' }) {
+  if (platform === 'instagram') {
+    return (
+      <span className="inline-flex items-center justify-center rounded p-0.5 bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 shrink-0">
+        <FaInstagram size={9} className="text-white" />
+      </span>
+    );
+  }
+  return <FaYoutube size={14} className="text-red-600 shrink-0" />;
 }
 
 export default function VideosPage() {
@@ -29,6 +42,10 @@ export default function VideosPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [category, setCategory] = useState('');
+  const [status, setStatus] = useState('');
+  const [statusTouched, setStatusTouched] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
 
   // Fetch the full (small, curated) video library once — the category
   // filter used to re-fetch from the server on every dropdown change even
@@ -40,15 +57,45 @@ export default function VideosPage() {
       setLoading(true);
       const res = await fetch('/api/admin/videos');
       const data = await res.json();
-      if (data.success) setVideos(data.data);
+      if (data.success) {
+        setVideos(data.data);
+        // Default the Status filter to Draft so new syncs surface
+        // immediately — but only on first load, never overriding a
+        // selection the admin already made (e.g. after a sync refetch).
+        if (!statusTouched && data.data.some((v: VideoRow) => v.status === 'draft')) {
+          setStatus('draft');
+        }
+      }
     } finally {
       setLoading(false);
     }
   }
 
+  function changeStatus(v: string) {
+    setStatusTouched(true);
+    setStatus(v);
+  }
+
+  const draftCount = useMemo(() => videos.filter((v) => v.status === 'draft').length, [videos]);
+
+  async function syncFromYoutube() {
+    setSyncing(true);
+    setSyncMessage('');
+    try {
+      const res = await fetch('/api/admin/videos/sync-youtube', { method: 'POST' });
+      const data = await res.json();
+      setSyncMessage(data.message || (data.success ? 'Sync complete.' : 'Sync failed.'));
+      if (data.success && data.added > 0) await fetchVideos();
+    } catch {
+      setSyncMessage('Sync failed — network error.');
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const filteredVideos = useMemo(
-    () => (category ? videos.filter((v) => v.category === category) : videos),
-    [videos, category]
+    () => videos.filter((v) => (category ? v.category === category : true) && (status ? v.status === status : true)),
+    [videos, category, status]
   );
 
   async function deleteVideo(id: string) {
@@ -70,24 +117,52 @@ export default function VideosPage() {
           <h1 className="text-3xl font-bold text-gray-800">🎥 Video Academy</h1>
           <p className="text-gray-500 text-sm mt-1">Manage the Skin &amp; Hair Academy video library.</p>
         </div>
-        <Link href="/admin/videos/new"
-          className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#0d2d72] transition">
-          <Plus size={15} /> Add Video
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={syncFromYoutube}
+            disabled={syncing}
+            className="inline-flex items-center gap-2 bg-white border border-gray-200 text-[#0B2560] px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50"
+          >
+            {syncing ? <Loader size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            Sync from YouTube
+          </button>
+          <Link href="/admin/videos/new"
+            className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#0d2d72] transition">
+            <Plus size={15} /> Add Video
+          </Link>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <label className="text-xs font-semibold text-gray-500">Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
-        >
-          <option value="">All Categories</option>
-          {VIDEO_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+      {syncMessage && (
+        <p className="text-xs font-semibold text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">{syncMessage}</p>
+      )}
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-semibold text-gray-500">Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+          >
+            <option value="">All Categories</option>
+            {VIDEO_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-semibold text-gray-500">Status</label>
+          <select
+            value={status}
+            onChange={(e) => changeStatus(e.target.value)}
+            className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+          >
+            <option value="">All</option>
+            <option value="draft">Draft{draftCount > 0 ? ` (${draftCount})` : ''}</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -96,7 +171,9 @@ export default function VideosPage() {
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
           <p className="text-4xl mb-3">🎬</p>
           <p className="text-gray-500 font-semibold">
-            {category ? `No videos in "${category}" yet.` : 'No videos yet — add your first one.'}
+            {category || status
+              ? `No ${status || ''} videos${category ? ` in "${category}"` : ''} yet.`
+              : 'No videos yet — add your first one.'}
           </p>
         </div>
       ) : (
@@ -114,14 +191,19 @@ export default function VideosPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredVideos.map((v) => (
-                <tr key={v._id} className="hover:bg-gray-50/50">
+                <tr key={v._id} className={`hover:bg-gray-50/50 ${v.status === 'draft' ? 'bg-[#FFFBF0] border-l-2 border-l-[#F5A623]' : ''}`}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      {v.thumbnail?.url ? (
-                        <img src={v.thumbnail.url} alt="" className="w-16 h-10 object-cover rounded-lg shrink-0" />
-                      ) : (
-                        <div className="w-16 h-10 bg-gray-100 rounded-lg shrink-0" />
-                      )}
+                      <div className="relative shrink-0">
+                        {v.thumbnail?.url ? (
+                          <img src={v.thumbnail.url} alt="" className="w-16 h-10 object-cover rounded-lg" />
+                        ) : (
+                          <div className="w-16 h-10 bg-gray-100 rounded-lg" />
+                        )}
+                        <div className="absolute -bottom-1 -right-1 bg-white rounded p-0.5 shadow-sm">
+                          <PlatformIcon platform={v.platform} />
+                        </div>
+                      </div>
                       <span className="font-semibold text-gray-700 flex items-center gap-1.5">
                         {v.featured && <Star size={12} className="text-[#F5A623] fill-[#F5A623]" />}
                         {v.title}

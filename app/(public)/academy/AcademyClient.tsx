@@ -10,9 +10,12 @@ interface VideoItem {
   slug: string;
   category: string;
   duration?: string;
+  format?: 'video' | 'short' | 'reel';
   thumbnail?: { url: string };
   doctor?: { name: string };
 }
+
+const FORMAT_LABELS: Record<string, string> = { video: 'Video', short: 'Short', reel: 'Reel' };
 
 export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
   const [active, setActive] = useState('All');
@@ -26,6 +29,16 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
   for (const v of videos) counts[v.category] = (counts[v.category] || 0) + 1;
 
   const filtered = active === 'All' ? videos : videos.filter((v) => v.category === active);
+
+  // A 3-column grid with only 1-2 cards leaves obvious dead space on the
+  // right — cap the grid's own width (and column count) to match, instead
+  // of stretching a near-empty row across the full section.
+  const gridClass =
+    filtered.length === 1
+      ? 'grid grid-cols-1 max-w-sm mx-auto gap-6'
+      : filtered.length === 2
+      ? 'grid grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto gap-6'
+      : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
 
   return (
     <div>
@@ -58,7 +71,7 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
           <p className="font-semibold">No {active} videos right now</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={gridClass}>
           {filtered.map((v) => (
             <Link
               key={v._id}
@@ -80,6 +93,11 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
                     <Play size={16} className="text-[#0B2560] ml-0.5" fill="currentColor" />
                   </div>
                 </div>
+                {v.format && (
+                  <span className="absolute top-2 left-2 bg-white/90 text-[#0B2560] text-[10px] font-bold px-2 py-1 rounded-lg">
+                    {FORMAT_LABELS[v.format] || v.format}
+                  </span>
+                )}
                 {v.duration && (
                   <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
                     {v.duration}

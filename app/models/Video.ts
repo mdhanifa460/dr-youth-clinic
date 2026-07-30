@@ -14,7 +14,18 @@ export interface IVideo extends Document {
   // Short is the same underlying YouTube object as a Video, just a
   // different aspect ratio/length, so this is a flag on one model rather
   // than a second collection (see Video module architecture discussion).
-  format: 'video' | 'short';
+  // 'reel' is reserved for a future Instagram sync (platform: 'instagram')
+  // — no code path sets it yet, but the type/enum already allow it so that
+  // sync won't need a migration when it lands.
+  format: 'video' | 'short' | 'reel';
+  // Every video today is a YouTube upload (youtubeUrl is required below);
+  // this exists so the source can be told apart once other platforms are
+  // synced too, without a migration at that point.
+  platform: 'youtube' | 'instagram';
+  // Set by the YouTube sync job, never by the manual Add Video form — lets
+  // the Edit form show a "pulled from YouTube, please review" banner for
+  // videos nobody has hand-entered yet.
+  syncedFromApi: boolean;
   channel: string;
   thumbnail?: { url: string; publicId?: string };
   category: string;
@@ -67,11 +78,19 @@ const VideoSchema = new Schema<IVideo>(
     title: { type: String, required: [true, 'Title is required'], trim: true, minlength: 3 },
     slug: { type: String, lowercase: true, match: /^[a-z0-9-]+$/, index: true, unique: true, sparse: true },
     youtubeUrl: { type: String, required: [true, 'YouTube URL is required'] },
-    youtubeId: { type: String },
-    format: { type: String, enum: ['video', 'short'], default: 'video' },
+    youtubeId: { type: String, index: true },
+    format: { type: String, enum: ['video', 'short', 'reel'], default: 'video' },
+    platform: { type: String, enum: ['youtube', 'instagram'], default: 'youtube' },
+    syncedFromApi: { type: Boolean, default: false },
     channel: { type: String, default: '' },
     thumbnail: { url: String, publicId: String },
-    category: { type: String, required: true, enum: VIDEO_CATEGORIES },
+    // Not required for a freshly-synced draft (left empty for a reviewer to
+    // fill in) — only enforced once a video is actually published.
+    category: {
+      type: String,
+      enum: VIDEO_CATEGORIES,
+      required: [function (this: IVideo) { return this.status === 'published'; }, 'Category is required before publishing'],
+    },
     doctor: { type: Schema.Types.ObjectId, ref: 'Doctor' },
     service: { type: Schema.Types.ObjectId, ref: 'Service' },
     duration: { type: String, default: '' },
