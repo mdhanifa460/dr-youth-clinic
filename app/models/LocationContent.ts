@@ -110,6 +110,8 @@ export interface ILocationContent extends Document {
   beforeAfterPairs: IBeforeAfterPair[];
   galleryImages: IGalleryImage[];
   localDoctors: ILocationDoctor[];
+  // Content Layout Engine opt-in — same pattern as Service/Blog/LandingPage.
+  layoutEngineEnabled?: boolean;
   updatedAt: Date;
   createdAt: Date;
 }
@@ -222,6 +224,7 @@ const LocationContentSchema = new Schema<ILocationContent>(
     beforeAfterPairs: { type: [BeforeAfterSchema], default: [] },
     galleryImages:    { type: [GalleryImageSchema], default: [] },
     localDoctors:     { type: [LocalDoctorSchema], default: [] },
+    layoutEngineEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

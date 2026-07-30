@@ -42,6 +42,9 @@ import { FAQSchema } from '@/app/components/SchemaMarkup';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
 import VideoAcademySection from '@/app/components/homepage/VideoAcademySection';
 import WebStoriesSection from '@/app/components/homepage/WebStoriesSection';
+import VideoReelsSection from '@/app/components/homepage/VideoReelsSection';
+import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
+import { HOME_PAGE_ID } from '@/app/lib/layoutEngine/pseudoPageId';
 export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
@@ -425,7 +428,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -440,7 +443,17 @@ export default async function Home() {
     getCachedStories(),
     getCachedHomepageFaqs(),
     getCachedTestimonialsRotateMs(),
+    getSettings(),
   ]);
+
+  // Content Layout Engine — additive zone, opt-in site-wide via
+  // Settings.homepageLayoutEngineEnabled. The SECTION_COMPONENTS map above
+  // and HomepageSection-driven sectionOrder are untouched; this only adds
+  // extra registry sections after them, before the still-hardcoded
+  // VideoReelsSection.
+  const layoutEngineExtra = settings.homepageLayoutEngineEnabled
+    ? await renderZoneSections({ pageType: 'home', pageId: HOME_PAGE_ID, context: { page: {} }, zone: 'main' })
+    : null;
 
   const enriched = {
     ...sectionData,
@@ -515,6 +528,18 @@ export default async function Home() {
             </div>
           );
         })}
+
+      {layoutEngineExtra && layoutEngineExtra.length > 0 && (
+        <div className="space-y-0">{layoutEngineExtra}</div>
+      )}
+
+      {/* "Watch & Learn" — placed directly here (not yet in the admin
+          section-order system above) since it's still running on sample
+          data pending real YouTube/Instagram content. Once real data and
+          the modal design are confirmed, move this into SECTION_COMPONENTS
+          + HomepageSection (sectionKey: "watch_and_learn") the same way
+          every section above it works, so an admin can reorder/hide it too. */}
+      <VideoReelsSection />
     </main>
   );
 }

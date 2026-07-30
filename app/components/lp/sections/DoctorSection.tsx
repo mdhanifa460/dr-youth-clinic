@@ -16,7 +16,13 @@ interface DoctorData {
   ctaText?: string;
 }
 
-export default function DoctorSection({ data }: { data: DoctorData }) {
+export default function DoctorSection({
+  data,
+  formAnchorId = 'lp-form',
+}: {
+  data: DoctorData;
+  formAnchorId?: string;
+}) {
   const {
     photo,
     name = 'Dr. Expert',
@@ -201,7 +207,7 @@ export default function DoctorSection({ data }: { data: DoctorData }) {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              onClick={() => document.getElementById('lp-form')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById(formAnchorId)?.scrollIntoView({ behavior: 'smooth' })}
               className="mt-6 flex items-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-7 py-3.5 rounded-2xl text-sm shadow-xl shadow-[#F5A623]/20 hover:-translate-y-0.5 transition-all duration-200"
             >
               <CalendarCheck size={18} />

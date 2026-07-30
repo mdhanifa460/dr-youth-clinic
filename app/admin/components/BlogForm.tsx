@@ -9,6 +9,7 @@ import SeoAiAssistant from './SeoAiAssistant';
 import ContentBlockEditor from './contentblocks/ContentBlockEditor';
 import BlogAiAssistantPanel from './BlogAiAssistantPanel';
 import ArticleIntelligenceCard from './ArticleIntelligenceCard';
+import LayoutEngineSectionBuilder from './builder/LayoutEngineSectionBuilder';
 import { markdownToBlocks, blocksToPlainText } from '@/app/lib/contentBlocks/types';
 import { BLOG_CATEGORIES } from '@/app/lib/blogCategories';
 
@@ -39,6 +40,7 @@ interface FormData {
   canonicalUrl: string;
   keywords: string;
   ogImage: { url: string; publicId: string };
+  layoutEngineEnabled: boolean;
 }
 
 function slugify(text: string) {
@@ -55,6 +57,7 @@ const EMPTY_FORM: FormData = {
   reviewedByDoctorId: '', medicalReferences: [],
   metaTitle: '', metaDescription: '', canonicalUrl: '', keywords: '',
   ogImage: { url: '', publicId: '' },
+  layoutEngineEnabled: false,
 };
 
 export default function BlogForm({ initialData }: { initialData?: any }) {
@@ -460,6 +463,40 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
               category: form.category,
             }}
           />
+
+          {/* Content Layout Engine — additive main/sidebar zones. Article
+              body, TOC, related posts, and CTA band keep rendering exactly
+              as before; this only adds registry sections around them. */}
+          <div className="border-t border-gray-100 pt-6 space-y-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => updateForm({ layoutEngineEnabled: !form.layoutEngineEnabled })}
+                className="rounded-full transition-colors shrink-0"
+                style={{ width: '40px', height: '22px', background: form.layoutEngineEnabled ? '#0B2560' : '#d1d5db' }}
+              >
+                <div
+                  className="bg-white rounded-full shadow transition-transform"
+                  style={{ width: '18px', height: '18px', margin: '2px', transform: form.layoutEngineEnabled ? 'translateX(18px)' : 'translateX(0)' }}
+                />
+              </div>
+              <span className="font-bold text-[#0B2560] text-sm">Use Content Layout Engine sections</span>
+            </label>
+            <p className="text-xs text-gray-500">
+              When on, extra sections can be added to the main content column and the sidebar (Offer Banner, Doctor Card, Treatment CTA, Newsletter, FAQ, Related Services, Related Blogs, Video) alongside the fixed article body and table of contents.
+            </p>
+            {form.layoutEngineEnabled && initialData?._id && (
+              <LayoutEngineSectionBuilder
+                pageType="blog"
+                pageId={initialData._id}
+                zones={[{ name: 'main', label: 'Main Content' }, { name: 'sidebar', label: 'Sidebar' }]}
+              />
+            )}
+            {form.layoutEngineEnabled && !initialData?._id && (
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                Save this post first, then reopen it here to add sections.
+              </p>
+            )}
+          </div>
         </div>
       )}
 

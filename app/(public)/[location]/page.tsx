@@ -17,6 +17,8 @@ import { cloudGalleryThumb, cloudHero } from '@/app/lib/cloudinary-url';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
+import { pseudoPageId } from '@/app/lib/layoutEngine/pseudoPageId';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -71,6 +73,7 @@ async function getLocationContent(city: string) {
       galleryImages:    doc.galleryImages
         .filter((g: any) => g.isVisible)
         .sort((a: any, b: any) => a.displayOrder - b.displayOrder),
+      layoutEngineEnabled: !!doc.layoutEngineEnabled,
     };
   } catch {
     return null;
@@ -134,6 +137,19 @@ export default async function LocationPage({ params }: { params: { location: str
   const mapEmbedUrl = content?.mapEmbedUrl   || loc.map;
   const directionsUrl = content?.googleMapsUrl ||
     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+
+  // Content Layout Engine — additive main-zone sections, opt-in per city via
+  // LocationContent.layoutEngineEnabled. Location pages have no per-city
+  // Mongo document with a real _id (locations.ts is static data), so a
+  // deterministic pseudo-ObjectId derived from the city key stands in.
+  const layoutEngineMain = content?.layoutEngineEnabled
+    ? await renderZoneSections({
+        pageType: 'location',
+        pageId: pseudoPageId(cityKey),
+        context: { page: { name: loc.name } },
+        zone: 'main',
+      })
+    : null;
 
   return (
     <>
@@ -471,6 +487,10 @@ export default async function LocationPage({ params }: { params: { location: str
             </div>
           </div>
         </section>
+
+        {layoutEngineMain && layoutEngineMain.length > 0 && (
+          <div className="space-y-0">{layoutEngineMain}</div>
+        )}
 
         {/* ── CTA ──────────────────────────────────────────────────────────── */}
         <section className="py-20 px-6 md:px-10">

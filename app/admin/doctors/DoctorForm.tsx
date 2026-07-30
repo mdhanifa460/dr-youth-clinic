@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Save, Trash2, ExternalLink, Loader, CheckCircle } from 'lucide-react';
 import ImageUpload from '@/app/admin/components/ImageUpload';
+import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
 
 const CLINIC_LOCATIONS = [
   { value: 'all',        label: 'All Clinics',   note: 'shows at every location' },
@@ -230,6 +231,32 @@ export default function DoctorForm({
           </button>
           <span className="text-sm font-medium text-gray-600">Active — visible on website</span>
         </label>
+
+        {/* Content Layout Engine — additive main/sidebar zones on this
+            doctor's profile page. */}
+        <div className="border-t border-gray-100 pt-5">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <button type="button" onClick={() => set('layoutEngineEnabled', !form.layoutEngineEnabled)}
+              className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${form.layoutEngineEnabled ? 'bg-[#0B2560]' : 'bg-gray-200'}`}>
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.layoutEngineEnabled ? 'translate-x-5' : ''}`} />
+            </button>
+            <span className="text-sm font-medium text-gray-600">Content Layout Engine sections</span>
+          </label>
+          {form.layoutEngineEnabled && doctor?._id && (
+            <div className="mt-4">
+              <LayoutEngineSectionBuilder
+                pageType="doctor"
+                pageId={doctor._id}
+                zones={[{ name: 'main', label: 'Main Content' }, { name: 'sidebar', label: 'Sidebar' }]}
+              />
+            </div>
+          )}
+          {form.layoutEngineEnabled && !doctor?._id && (
+            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mt-3">
+              Save this doctor first, then reopen it here to add sections.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Footer actions */}

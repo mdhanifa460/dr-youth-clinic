@@ -88,6 +88,13 @@ export interface ISettings extends Document {
     testimonialsRotateMs: number;
     schemaType: string;
   };
+  // Content Layout Engine opt-in for the Home page. Home is a singleton (no
+  // per-record document to hang a flag off, unlike Service/Blog/LandingPage),
+  // so this lives on the site-wide Settings singleton instead.
+  homepageLayoutEngineEnabled?: boolean;
+  // Same reasoning for the /offers listing page — a singleton with no
+  // per-record document.
+  offersPageLayoutEngineEnabled?: boolean;
   promotions: {
     promoCode: string;
     promoDiscount: number;
@@ -330,6 +337,8 @@ const SettingsSchema = new Schema<ISettings>(
       testimonialsRotateMs: { type: Number, default: 4000 },
       schemaType:           { type: String, default: 'MedicalClinic' },
     },
+    homepageLayoutEngineEnabled: { type: Boolean, default: false },
+    offersPageLayoutEngineEnabled: { type: Boolean, default: false },
     promotions: {
       promoCode:        { type: String,  default: '' },
       promoDiscount:    { type: Number,  default: 10 },

@@ -13,6 +13,9 @@ export interface IDoctor extends Document {
   locations: string[];
   order: number;
   active: boolean;
+  // Per-record Content Layout Engine opt-in — same pattern as
+  // Service/Blog/LandingPage.
+  layoutEngineEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +35,7 @@ const DoctorSchema = new Schema<IDoctor>(
     locations:       { type: [String], enum: VALID_LOCATIONS, default: ['all'] },
     order:           { type: Number, default: 0 },
     active:          { type: Boolean, default: true },
+    layoutEngineEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

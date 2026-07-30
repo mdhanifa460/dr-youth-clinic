@@ -71,7 +71,13 @@ const STYLE_CONFIG: Record<AnimStyle, {
   },
 };
 
-export default function OfferBannerSection({ data }: { data: OfferBannerData }) {
+export default function OfferBannerSection({
+  data,
+  formAnchorId = 'lp-form',
+}: {
+  data: OfferBannerData;
+  formAnchorId?: string;
+}) {
   const {
     badge    = '🔥 Limited Time',
     headline = 'Book Your Free Consultation Today',
@@ -261,7 +267,7 @@ export default function OfferBannerSection({ data }: { data: OfferBannerData }) 
 
           {/* CTA button */}
           <button
-            onClick={() => document.getElementById('lp-form')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => document.getElementById(formAnchorId)?.scrollIntoView({ behavior: 'smooth' })}
             className={`mt-7 inline-flex items-center gap-2 font-extrabold px-10 py-4 rounded-2xl text-base shadow-2xl hover:-translate-y-0.5 transition-all duration-200 ${cfg.ctaCls} ${style === 'glow' ? 'glow-cta' : ''} ${style === 'urgent' ? 'animate-pulse' : ''}`}
           >
             {ctaText}

@@ -34,6 +34,11 @@ export interface IBlog extends Document {
   // action — lets the Video's Related Content tab show what it produced.
   // Never required, never read by any existing query.
   sourceVideoId?: mongoose.Types.ObjectId;
+  // Per-record Content Layout Engine opt-in — same pattern as
+  // Service.layoutEngineEnabled — lets the registry-driven main/sidebar
+  // zones roll out one post at a time, side by side with the fixed article
+  // body + TOC sidebar.
+  layoutEngineEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +76,7 @@ const BlogSchema = new Schema<IBlog>({
   reviewedByDoctorId: { type: Schema.Types.ObjectId, ref: 'Doctor' },
   medicalReferences:  [{ label: { type: String, required: true }, url: { type: String, required: true }, _id: false }],
   sourceVideoId: { type: Schema.Types.ObjectId, ref: 'Video' },
+  layoutEngineEnabled: { type: Boolean, default: false },
 }, { timestamps: true });
 
 BlogSchema.index({ slug: 1 }, { unique: true });

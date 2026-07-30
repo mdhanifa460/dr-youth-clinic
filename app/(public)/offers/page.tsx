@@ -15,6 +15,9 @@ import OfferFAQSection from './components/OfferFAQSection';
 import OfferComingSoonSection from './components/OfferComingSoonSection';
 import OfferDoctorNote from './components/OfferDoctorNote';
 import OfferTestimonials from './components/OfferTestimonials';
+import { getSettings } from '@/app/models/Settings';
+import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
+import { pseudoPageId } from '@/app/lib/layoutEngine/pseudoPageId';
 
 const CATEGORY_LIST = ['Skin Care', 'Hair Care', 'Laser', 'Body', 'Package'];
 
@@ -56,7 +59,7 @@ const getFeaturedDoctors = unstable_cache(
 
 // ── Page ────────────────────────────────────────────────────────────────────
 export default async function OffersPage() {
-  const [offers, siteConfig, doctors] = await Promise.all([getOffers(), getSiteConfig(), getFeaturedDoctors()]);
+  const [offers, siteConfig, doctors, settings] = await Promise.all([getOffers(), getSiteConfig(), getFeaturedDoctors(), getSettings()]);
   const activeOffers = offers.filter((o: any) => !o.validUntil || new Date(o.validUntil) >= new Date());
   const maxSave = activeOffers.reduce((max: number, o: any) => {
     const pct = discountPct(o.originalPrice, o.discountedPrice);
@@ -88,6 +91,13 @@ export default async function OffersPage() {
     : siteConfig.publicPhone
       ? `tel:${siteConfig.publicPhone.replace(/\s+/g, '')}`
       : '/book';
+
+  // Content Layout Engine — additive main-zone sections, opt-in site-wide via
+  // Settings.offersPageLayoutEngineEnabled. Offers is a singleton listing
+  // page with no per-record document, same as Home.
+  const layoutEngineMain = settings.offersPageLayoutEngineEnabled
+    ? await renderZoneSections({ pageType: 'offer', pageId: pseudoPageId('offers-page'), context: { page: {} }, zone: 'main' })
+    : null;
 
   return (
     <main>
@@ -126,6 +136,10 @@ export default async function OffersPage() {
       <OfferTestimonials />
       <OfferComingSoonSection contactUrl={contactUrl} />
       {activeOffers.length > 0 && <OfferFAQSection />}
+
+      {layoutEngineMain && layoutEngineMain.length > 0 && (
+        <div className="space-y-0">{layoutEngineMain}</div>
+      )}
 
       {/* ── BOTTOM CTA ── */}
       <section className="relative bg-[#0B2560] py-14 overflow-hidden">

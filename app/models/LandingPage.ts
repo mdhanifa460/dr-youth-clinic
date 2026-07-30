@@ -40,6 +40,13 @@ export interface ILandingPage extends Document {
     googleAdsId: string;
     googleAdsLabel: string;
   };
+  // Dormant: the public read path (app/lp/[slug]/page.tsx) hardcodes
+  // variant="A" and never reads variantB.sections — there is no live
+  // traffic-split logic anywhere. Formally deprecated rather than silently
+  // removed (avoids a destructive schema change against existing data) —
+  // building real variant selection is a distinct feature from the Content
+  // Layout Engine and was left undecided pending a product call on whether
+  // it's worth finishing or should be deleted outright.
   abTest: {
     enabled: boolean;
     variantB: {
@@ -52,6 +59,10 @@ export interface ILandingPage extends Document {
     visitors: number;
     leads: number;
   };
+  // Content Layout Engine opt-in — same pattern as Service/Blog. When on,
+  // extra registry-driven sections render after the existing `sections[]`
+  // (still rendered by LpRenderer, untouched) and before the footer.
+  layoutEngineEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -138,6 +149,7 @@ const LandingPageSchema = new Schema<ILandingPage>(
       visitors: { type: Number, default: 0 },
       leads: { type: Number, default: 0 },
     },
+    layoutEngineEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

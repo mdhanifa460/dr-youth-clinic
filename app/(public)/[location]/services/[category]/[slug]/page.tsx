@@ -29,6 +29,7 @@ import RelatedServicesPager from '@/app/components/RelatedServicesPager';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
 import EMICalculator from '@/app/components/EMICalculator';
 import SocialProofBar from '@/app/components/SocialProofBar';
+import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import TreatmentJourney from '@/app/components/TreatmentJourney';
 import AiJourneySimulator from '@/app/components/AiJourneySimulator';
 import TreatmentJourneyExplorer from '@/app/components/TreatmentJourneyExplorer';
@@ -346,6 +347,20 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   // any of these sections into the narrative flow — once they do, the fixed
   // position below must stand down, or the same content renders twice.
   const inBlocks = (type: string) => hasVisibleBlockType(svc.narrativeBlocks, type as any);
+
+  // Content Layout Engine — sidebar zone only, opt-in per service via
+  // `layoutEngineEnabled`. Every other zone on this page (hero, main
+  // content, related, before-footer) stays on the hardcoded renderer below
+  // until its own migration phase; this is deliberately a partial swap, not
+  // a full-page cutover, per the incremental migration plan.
+  const layoutEngineSidebar = svc.layoutEngineEnabled
+    ? await renderZoneSections({
+        pageType: 'service',
+        pageId: String(svc._id),
+        context: { page: { price: svc.price, name: svc.name } },
+        zone: 'sidebar',
+      })
+    : null;
 
   return (
     <>
@@ -776,6 +791,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           </div>
 
           {/* ── STICKY SIDEBAR ── */}
+          {layoutEngineSidebar ? (
+            <aside className="lg:col-span-1">
+              <div className="space-y-4">{layoutEngineSidebar}</div>
+            </aside>
+          ) : (
           <aside className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
 
@@ -887,6 +907,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               )}
             </div>
           </aside>
+          )}
         </section>
 
         {/* ── OUR SPECIALISTS ── */}

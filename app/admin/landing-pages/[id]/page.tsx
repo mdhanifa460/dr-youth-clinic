@@ -15,6 +15,7 @@ import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
 import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
 import TemplatePicker from '@/app/admin/components/builder/TemplatePicker';
+import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ interface LandingPage {
   form: { fields: FormField[]; submitText: string; successMessage: string; whatsappNotify: boolean };
   tracking: { gtmId: string; metaPixelId: string; googleAdsId: string; googleAdsLabel: string };
   analytics: { visitors: number; leads: number };
+  layoutEngineEnabled?: boolean;
 }
 
 // ─── Section defaults ─────────────────────────────────────────────────────────
@@ -1519,6 +1521,24 @@ export default function LandingPageBuilder() {
                     </div>
                   </div>
                 </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      onClick={() => updateLp((p) => ({ ...p, layoutEngineEnabled: !p.layoutEngineEnabled }))}
+                      className="rounded-full transition-colors shrink-0"
+                      style={{ width: '36px', height: '20px', background: lp.layoutEngineEnabled ? '#0B2560' : '#d1d5db' }}
+                    >
+                      <div
+                        className="bg-white rounded-full shadow transition-transform"
+                        style={{ width: '16px', height: '16px', margin: '2px', transform: lp.layoutEngineEnabled ? 'translateX(16px)' : 'translateX(0)' }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-[#0B2560]">Content Layout Engine sections</span>
+                  </label>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Adds extra registry sections after the sections below, before the footer.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -1668,6 +1688,19 @@ export default function LandingPageBuilder() {
                 </div>
               )}
             </div>
+
+            {lp.layoutEngineEnabled && (
+              <div className="pt-6 mt-6 border-t border-gray-100">
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">
+                  Content Layout Engine — Extra Sections
+                </p>
+                <LayoutEngineSectionBuilder
+                  pageType="landing"
+                  pageId={lp._id}
+                  zones={[{ name: 'main', label: 'Main Content' }]}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

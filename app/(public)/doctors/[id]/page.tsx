@@ -12,6 +12,7 @@ import { Result } from '@/app/models/Result';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import SliderCard from '@/app/components/SliderCard';
 import { PhysicianSchema } from '@/app/components/SchemaMarkup';
+import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 
 export const revalidate = 300;
 
@@ -87,6 +88,16 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
   const withFirstName = (tpl: string) => tpl.replace(/\{firstName\}/g, firstName);
   const sidebarBody = withFirstName(sidebarBodyTpl);
   const ctaHeading  = withFirstName(ctaHeadingTpl);
+
+  // Content Layout Engine — additive main/sidebar zones, opt-in per doctor
+  // via `layoutEngineEnabled`. Bio, qualifications, results, and the booking
+  // card are untouched; these zones only add registry sections around them.
+  const [layoutEngineMain, layoutEngineSidebar] = doctor.layoutEngineEnabled
+    ? await Promise.all([
+        renderZoneSections({ pageType: 'doctor', pageId: String(doctor._id), context: { page: {} }, zone: 'main' }),
+        renderZoneSections({ pageType: 'doctor', pageId: String(doctor._id), context: { page: {} }, zone: 'sidebar' }),
+      ])
+    : [null, null];
 
   return (
     <main className="bg-white">
@@ -252,6 +263,10 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
               </div>
             </div>
           )}
+
+          {layoutEngineMain && layoutEngineMain.length > 0 && (
+            <div className="space-y-8">{layoutEngineMain}</div>
+          )}
         </div>
 
         {/* RIGHT — sticky CTA */}
@@ -299,6 +314,10 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 </div>
               )}
             </div>
+          )}
+
+          {layoutEngineSidebar && layoutEngineSidebar.length > 0 && (
+            <div className="space-y-4">{layoutEngineSidebar}</div>
           )}
         </div>
       </section>

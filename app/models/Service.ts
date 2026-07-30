@@ -104,6 +104,11 @@ export interface IService extends Document {
   status: 'draft' | 'active' | 'hidden';
   publishedAt?: Date;
 
+  // Per-record Content Layout Engine opt-in — lets the new registry-driven
+  // sidebar (Section docs) roll out one service at a time, side by side with
+  // the existing hardcoded sidebar, instead of a single global switch.
+  layoutEngineEnabled?: boolean;
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -295,6 +300,8 @@ const ServiceSchema = new Schema<IService>(
       enum: ['draft', 'active', 'hidden'],
     },
     publishedAt: Date,
+
+    layoutEngineEnabled: { type: Boolean, default: false },
   },
   {
     timestamps: true,

@@ -28,6 +28,11 @@ interface FormSectionProps {
   successMessage?: string;
   slug: string;
   variant?: 'A' | 'B';
+  // Anchor id other sections scroll to via getElementById — defaults to the
+  // historical 'lp-form' so every existing caller is unaffected. Only needs
+  // overriding if this section is placed somewhere that isn't paired with
+  // the default-anchored CTA/Doctor/Offer sections on the same page.
+  formAnchorId?: string;
 }
 
 export default function FormSection({
@@ -37,6 +42,7 @@ export default function FormSection({
   successMessage = "Thank you! We'll call you within 2 hours.",
   slug,
   variant = 'A',
+  formAnchorId = 'lp-form',
 }: FormSectionProps) {
   const {
     headline = 'Book Your Free Consultation',
@@ -87,7 +93,7 @@ export default function FormSection({
       ];
 
   return (
-    <section id="lp-form" className="bg-[#f6faff] py-14 md:py-20">
+    <section id={formAnchorId} className="bg-[#f6faff] py-14 md:py-20">
       <div className="max-w-2xl mx-auto px-5">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

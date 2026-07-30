@@ -8,6 +8,7 @@ import LpRenderer from '@/app/components/lp/LpRenderer';
 import LpHeader from '@/app/components/lp/LpHeader';
 import LpFooter from '@/app/components/lp/LpFooter';
 import StickyCta from '@/app/components/lp/StickyCta';
+import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
 
@@ -81,6 +82,21 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
   const phone = heroData.phone || siteConfig.publicPhone;
   const whatsapp = heroData.whatsapp || siteConfig.publicWhatsApp;
 
+  // Content Layout Engine — additive main-zone sections, opt-in via
+  // `layoutEngineEnabled`. `lp.sections` keeps rendering through LpRenderer
+  // exactly as before; this only adds extra registry sections after it,
+  // before the footer. `formAnchorId` is bound to the existing hardcoded
+  // 'lp-form' id so any Treatment CTA / Doctor / Offer Banner section added
+  // here still scrolls to the real form section already in `lp.sections`.
+  const layoutEngineMain = lp.layoutEngineEnabled
+    ? await renderZoneSections({
+        pageType: 'landing',
+        pageId: String(lp._id),
+        context: { page: { slug: params.slug, formAnchorId: 'lp-form' } },
+        zone: 'main',
+      })
+    : null;
+
   return (
     <>
       {/* Draft preview banner */}
@@ -144,6 +160,10 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
           slug={params.slug}
           variant="A"
         />
+
+        {layoutEngineMain && layoutEngineMain.length > 0 && (
+          <div className="space-y-0">{layoutEngineMain}</div>
+        )}
 
         <LpFooter phone={phone} whatsapp={whatsapp} city={locationData.city} branches={locationData.branches} />
 

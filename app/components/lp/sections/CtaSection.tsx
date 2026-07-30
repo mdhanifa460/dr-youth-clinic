@@ -14,7 +14,13 @@ interface CtaData {
 
 const DEFAULT_BADGES = ['Free Consultation', 'No Hidden Charges', 'Expert Guidance', 'Safe & Effective'];
 
-export default function CtaSection({ data }: { data: CtaData }) {
+export default function CtaSection({
+  data,
+  formAnchorId = 'lp-form',
+}: {
+  data: CtaData;
+  formAnchorId?: string;
+}) {
   const {
     headline = 'Ready to Regrow Your Confidence?',
     subtext = 'Book your free consultation today and take the first step toward healthier hair.',
@@ -55,7 +61,7 @@ export default function CtaSection({ data }: { data: CtaData }) {
           {/* Right: stacked CTAs */}
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => document.getElementById('lp-form')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById(formAnchorId)?.scrollIntoView({ behavior: 'smooth' })}
               className="flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-[#F5A623]/30 hover:-translate-y-0.5 transition-all duration-200"
             >
               <CalendarCheck size={18} />

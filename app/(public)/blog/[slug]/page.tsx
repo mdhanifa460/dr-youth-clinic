@@ -18,6 +18,7 @@ import { extractHeadingsFromBlocks } from '@/app/lib/contentBlocks/types';
 import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
 import { CATEGORY_COLOR } from '@/app/lib/blogCategories';
 import { BreadcrumbSchema, BlogPostingSchema, FAQSchema } from '@/app/components/SchemaMarkup';
+import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 
 // No `revalidate` export existed before this fix — this page had zero
 // caching at any level and ran three uncached queries on every single
@@ -113,6 +114,18 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
     : '';
 
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+
+  // Content Layout Engine — additive main/sidebar zones, opt-in per post via
+  // `layoutEngineEnabled`. The article body, TOC, related posts, and CTA
+  // band are untouched; these zones only add registry sections around them
+  // (Offer Banner, Doctor Card, Treatment CTA, Newsletter, FAQ, Related
+  // Services, Related Blogs, Video), per the incremental migration plan.
+  const [layoutEngineMain, layoutEngineSidebar] = post.layoutEngineEnabled
+    ? await Promise.all([
+        renderZoneSections({ pageType: 'blog', pageId: String(post._id), context: { page: {} }, zone: 'main' }),
+        renderZoneSections({ pageType: 'blog', pageId: String(post._id), context: { page: {} }, zone: 'sidebar' }),
+      ])
+    : [null, null];
 
   return (
     <>
@@ -247,12 +260,17 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
                   author={post.author}
                   authorTitle={post.authorTitle}
                 />
+
+                {layoutEngineMain && layoutEngineMain.length > 0 && (
+                  <div className="mt-10 space-y-8">{layoutEngineMain}</div>
+                )}
               </article>
 
               {/* Sticky sidebar */}
               <aside className="hidden lg:block">
-                <div className="sticky top-24">
+                <div className="sticky top-24 space-y-4">
                   <ArticleSidebar headings={headings} />
+                  {layoutEngineSidebar}
                 </div>
               </aside>
             </div>

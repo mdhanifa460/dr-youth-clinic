@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { CLOUD_FOLDERS } from '@/app/lib/cloudinary-url';
 import { locations } from '@/app/data/locations';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
+import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
 
 const CITIES = [
   { key: 'chennai',    label: 'Chennai' },
@@ -16,6 +17,18 @@ const CITIES = [
   { key: 'coimbatore', label: 'Coimbatore' },
   { key: 'kochi',      label: 'Kochi' },
 ];
+
+// md5(city).slice(0, 24) per city — Location pages have no Mongo document
+// with a real _id (locations.ts is static data), so Section docs use this
+// fixed, deterministic pseudo-ObjectId instead (mirrors
+// app/lib/layoutEngine/pseudoPageId.ts, which uses Node's `crypto` and so
+// can't bundle into this client component — hence the precomputed literals).
+const LOCATION_PAGE_IDS: Record<string, string> = {
+  chennai: '53481967fe31ef682a32dd20',
+  bangalore: '60c7d514e20cc1bfe2d9a931',
+  coimbatore: 'd87cb84b382366b717550457',
+  kochi: '5990e6d6a8b733e3fef3d86b',
+};
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -256,6 +269,7 @@ export default function LocationsAdminPage() {
     beforeAfterPairs: [],
     galleryImages: [],
     localDoctors: [],
+    layoutEngineEnabled: false,
   });
   const WHY_US_ICONS = [
     { key: 'flask', label: 'Flask — Research' },
@@ -303,6 +317,7 @@ export default function LocationsAdminPage() {
         beforeAfterPairs: db?.beforeAfterPairs || [],
         galleryImages:    db?.galleryImages    || [],
         localDoctors:     db?.localDoctors     || [],
+        layoutEngineEnabled: !!db?.layoutEngineEnabled,
       });
     } catch {}
     setLoading(false);
@@ -1042,6 +1057,29 @@ export default function LocationsAdminPage() {
                     onRemove={() => removeGallery(i)}
                   />
                 ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── CONTENT LAYOUT ENGINE ──────────────────────────────────── */}
+          <section className="pt-4 border-t border-gray-100">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <button type="button" onClick={() => setData((d: any) => ({ ...d, layoutEngineEnabled: !d.layoutEngineEnabled }))}
+                className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${data.layoutEngineEnabled ? 'bg-[#0B2560]' : 'bg-gray-200'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${data.layoutEngineEnabled ? 'translate-x-5' : ''}`} />
+              </button>
+              <span className="text-sm font-semibold text-gray-700">Content Layout Engine sections</span>
+            </label>
+            <p className="text-xs text-gray-400 mt-1">
+              Adds extra registry sections before the &quot;Ready to Transform&quot; CTA at the bottom of the {cityLabel} page.
+            </p>
+            {data.layoutEngineEnabled && (
+              <div className="mt-4">
+                <LayoutEngineSectionBuilder
+                  pageType="location"
+                  pageId={LOCATION_PAGE_IDS[city] || LOCATION_PAGE_IDS.chennai}
+                  zones={[{ name: 'main', label: 'Main Content' }]}
+                />
               </div>
             )}
           </section>

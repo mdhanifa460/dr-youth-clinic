@@ -10,6 +10,7 @@ import MetaSuggestions from "./MetaSuggestions";
 import LocationSeoPanel from "./LocationSeoPanel";
 import { getServiceCities, ALL_SERVICE_CITIES } from "@/app/lib/serviceSeo";
 import ContentBlockEditor from "./contentblocks/ContentBlockEditor";
+import LayoutEngineSectionBuilder from "./builder/LayoutEngineSectionBuilder";
 import { plainTextToBlocks, blocksToPlainText } from "@/app/lib/contentBlocks/types";
 
 interface LocationSeoOverride {
@@ -65,6 +66,7 @@ interface FormData {
   comparisonVisible: boolean;
   aftercareGuidance: Array<{ activity: string; waitPeriod: string; guidance: string }>;
   aftercareVisible: boolean;
+  layoutEngineEnabled: boolean;
 }
 
 const ICONS = ["⚡", "🛡️", "🏥", "💎", "✨", "🔬", "💪", "👨‍⚕️", "🌿", "⭐"];
@@ -133,6 +135,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           comparisonVisible: initialData.comparisonVisible ?? true,
           aftercareGuidance: initialData.aftercareGuidance ?? [],
           aftercareVisible: initialData.aftercareVisible ?? true,
+          layoutEngineEnabled: initialData.layoutEngineEnabled ?? false,
         }
       : {
           name: "",
@@ -171,6 +174,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           comparisonVisible: true,
           aftercareGuidance: [],
           aftercareVisible: true,
+          layoutEngineEnabled: false,
         }
   );
 
@@ -1403,6 +1407,40 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             {computedSlug && (
               <p className="text-xs text-gray-400 font-mono pt-1 border-t border-blue-50">
                 URL: /{isMultiCity ? "{every selected city}" : primaryLocation}/services/{form.category?.toLowerCase() || "category"}/{computedSlug}
+              </p>
+            )}
+          </div>
+
+          {/* Content Layout Engine — sidebar zone opt-in, per service. Old
+              hardcoded sidebar keeps rendering for every service until this
+              is switched on here. */}
+          <div className="border-t border-gray-100 pt-6 space-y-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => updateForm({ layoutEngineEnabled: !form.layoutEngineEnabled })}
+                className="rounded-full transition-colors shrink-0"
+                style={{ width: "40px", height: "22px", background: form.layoutEngineEnabled ? "#0B2560" : "#d1d5db" }}
+              >
+                <div
+                  className="bg-white rounded-full shadow transition-transform"
+                  style={{ width: "18px", height: "18px", margin: "2px", transform: form.layoutEngineEnabled ? "translateX(18px)" : "translateX(0)" }}
+                />
+              </div>
+              <span className="font-bold text-[#0B2560] text-sm">Use Content Layout Engine sidebar</span>
+            </label>
+            <p className="text-xs text-gray-500">
+              When on, the sidebar below is built from registry sections instead of the fixed booking-card/eligibility-checker/EMI-calculator stack. Every other part of this page is unaffected.
+            </p>
+            {form.layoutEngineEnabled && initialData?._id && (
+              <LayoutEngineSectionBuilder
+                pageType="service"
+                pageId={initialData._id}
+                zones={[{ name: "sidebar", label: "Sidebar" }]}
+              />
+            )}
+            {form.layoutEngineEnabled && !initialData?._id && (
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                Save this service first, then reopen it here to add sidebar sections.
               </p>
             )}
           </div>

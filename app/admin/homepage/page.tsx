@@ -6,6 +6,14 @@ import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
 import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
+import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
+
+// md5('home').slice(0, 24) — Home is a singleton with no Mongo document, so
+// Section docs for it use this fixed, deterministic pseudo-ObjectId rather
+// than a real page _id (see app/lib/layoutEngine/pseudoPageId.ts, which this
+// mirrors — that helper uses Node's `crypto`, which doesn't bundle into a
+// client component, so the precomputed literal is used here instead).
+const HOME_PAGE_ID = '106a6c241b8797f52e1e7731';
 import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
 
 // ─── Types ────────────────────────────────────────────────
@@ -1174,6 +1182,25 @@ export default function HomepageBuilderPage() {
   // Landing Pages/About have it).
   const [templateModalIdx, setTemplateModalIdx] = useState<number | null>(null);
 
+  // Content Layout Engine — site-wide opt-in (Home has no per-record model
+  // to hang a flag off, unlike Service/Blog/LandingPage).
+  const [layoutEngineEnabled, setLayoutEngineEnabled] = useState(false);
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((json) => { if (json.success) setLayoutEngineEnabled(!!json.data?.homepageLayoutEngineEnabled); })
+      .catch(() => {});
+  }, []);
+  const toggleLayoutEngine = async () => {
+    const next = !layoutEngineEnabled;
+    setLayoutEngineEnabled(next);
+    await fetch('/api/admin/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ homepageLayoutEngineEnabled: next }),
+    });
+  };
+
   // Fetch sections
   useEffect(() => {
     fetch('/api/admin/homepage')
@@ -1320,6 +1347,36 @@ export default function HomepageBuilderPage() {
         onSave={saveSectionAsTemplate}
         defaultName={templateModalIdx !== null ? sections[templateModalIdx].label : ''}
       />
+
+      {/* Content Layout Engine — additive extra sections, rendered after
+          everything above, before the still-hardcoded VideoReelsSection. */}
+      <div className="mt-8 pt-6 border-t border-gray-100">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div
+            onClick={toggleLayoutEngine}
+            className="rounded-full transition-colors shrink-0"
+            style={{ width: '40px', height: '22px', background: layoutEngineEnabled ? '#0B2560' : '#d1d5db' }}
+          >
+            <div
+              className="bg-white rounded-full shadow transition-transform"
+              style={{ width: '18px', height: '18px', margin: '2px', transform: layoutEngineEnabled ? 'translateX(18px)' : 'translateX(0)' }}
+            />
+          </div>
+          <span className="font-bold text-[#0B2560] text-sm">Content Layout Engine sections</span>
+        </label>
+        <p className="text-xs text-gray-500 mt-1">
+          Adds extra registry sections after the sections above, before the hardcoded &quot;Watch &amp; Learn&quot; row.
+        </p>
+        {layoutEngineEnabled && (
+          <div className="mt-4">
+            <LayoutEngineSectionBuilder
+              pageType="home"
+              pageId={HOME_PAGE_ID}
+              zones={[{ name: 'main', label: 'Main Content' }]}
+            />
+          </div>
+        )}
+      </div>
 
       {/* BOTTOM SAVE */}
       <div className="mt-6 flex justify-end">

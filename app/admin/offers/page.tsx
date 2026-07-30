@@ -3,6 +3,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Trash2, Eye, EyeOff, Star, ChevronRight, Tag, Percent, Calendar } from 'lucide-react';
 import ImageUpload from '@/app/admin/components/ImageUpload';
+import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
+
+// md5('offers-page').slice(0, 24) — the /offers listing page is a singleton
+// with no Mongo document with a real _id, mirroring Home's pseudoPageId
+// approach (see app/lib/layoutEngine/pseudoPageId.ts).
+const OFFERS_PAGE_ID = 'dbd073dc581d3cef60427182';
 
 const CATEGORIES = ['Skin Care', 'Hair Care', 'Laser', 'Body', 'Package'];
 
@@ -320,6 +326,25 @@ export default function OffersAdminPage() {
   const [loading, setLoading] = useState(true);
   const [catFilter, setCatFilter] = useState('All');
 
+  // Content Layout Engine — site-wide opt-in for the /offers listing page
+  // (singleton, no per-record model to hang a flag off).
+  const [layoutEngineEnabled, setLayoutEngineEnabled] = useState(false);
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((json) => { if (json.success) setLayoutEngineEnabled(!!json.data?.offersPageLayoutEngineEnabled); })
+      .catch(() => {});
+  }, []);
+  const toggleLayoutEngine = async () => {
+    const next = !layoutEngineEnabled;
+    setLayoutEngineEnabled(next);
+    await fetch('/api/admin/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ offersPageLayoutEngineEnabled: next }),
+    });
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -414,16 +439,41 @@ export default function OffersAdminPage() {
               onCancel={close}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 gap-4">
-              <div className="w-20 h-20 rounded-3xl bg-gray-50 flex items-center justify-center text-4xl shadow-inner">🏷️</div>
-              <div>
-                <p className="font-semibold text-gray-500 text-base">Select an offer to edit</p>
-                <p className="text-sm mt-1">or</p>
+            <div className="h-full overflow-y-auto">
+              <div className="flex flex-col items-center justify-center text-center text-gray-400 gap-4 py-16">
+                <div className="w-20 h-20 rounded-3xl bg-gray-50 flex items-center justify-center text-4xl shadow-inner">🏷️</div>
+                <div>
+                  <p className="font-semibold text-gray-500 text-base">Select an offer to edit</p>
+                  <p className="text-sm mt-1">or</p>
+                </div>
+                <button onClick={openNew}
+                  className="flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg">
+                  <Plus size={15} /> Create New Offer
+                </button>
               </div>
-              <button onClick={openNew}
-                className="flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg">
-                <Plus size={15} /> Create New Offer
-              </button>
+
+              {/* Content Layout Engine — extra sections for the /offers page as a whole */}
+              <div className="max-w-lg mx-auto px-6 pb-10 border-t border-gray-100 pt-6">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <button type="button" onClick={toggleLayoutEngine}
+                    className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${layoutEngineEnabled ? 'bg-[#0B2560]' : 'bg-gray-200'}`}>
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${layoutEngineEnabled ? 'translate-x-5' : ''}`} />
+                  </button>
+                  <span className="text-sm font-semibold text-gray-700">Content Layout Engine sections</span>
+                </label>
+                <p className="text-xs text-gray-400 mt-1">
+                  Adds extra registry sections to the /offers page, before the bottom CTA.
+                </p>
+                {layoutEngineEnabled && (
+                  <div className="mt-4">
+                    <LayoutEngineSectionBuilder
+                      pageType="offer"
+                      pageId={OFFERS_PAGE_ID}
+                      zones={[{ name: 'main', label: 'Main Content' }]}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
