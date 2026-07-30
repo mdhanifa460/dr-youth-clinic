@@ -1,3 +1,5 @@
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -60,22 +62,44 @@ interface PageProps {
 // A service's slug can now be overridden per city (locationSeo[]), which
 // can't be resolved in a single flat Mongo query since it lives in a sparse
 // sub-array — fetch the (small, per-clinic-catalog) candidate set visible at
-// this city, then resolve the effective slug for that city in JS.
-async function getServiceCandidates(location: string, extraFilter: Record<string, any> = {}) {
-  const loc = location.toLowerCase();
-  return Service.find({
-    status: 'active',
-    $or: [
-      { targetLocations: loc },
-      { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
-    ],
-    ...extraFilter,
-  } as any).lean() as Promise<any[]>;
-}
+// this city once, then resolve the effective slug for that city in JS.
+//
+// Two cache layers, same reasoning as getSiteConfig (app/lib/siteConfig.ts):
+// - unstable_cache: cross-request/cross-build. At build time this route is
+//   statically generated for every (location, category, slug) combination —
+//   ~480 pages across just 4 distinct locations — and previously each page
+//   ran its OWN full Service.find() over every active service at that city
+//   (twice per page, see below). Sharing one cached fetch per location
+//   collapses that to 4 real queries total, not ~480 — directly reduces the
+//   concurrent-connection burst against Atlas's free-tier pool that's
+//   caused intermittent MongoNetworkError build failures this session.
+// - React cache(): generateMetadata and the page component both need this
+//   same candidate set within one request; fetch() gets this deduping
+//   automatically, arbitrary Mongoose calls don't.
+// getRelatedServices used to run its OWN second full query identical to
+// getService's — both now read from this one shared fetch instead.
+const getCachedServiceCandidates = unstable_cache(
+  async (location: string) => {
+    await connectDB();
+    const loc = location.toLowerCase();
+    return Service.find({
+      status: 'active',
+      $or: [
+        { targetLocations: loc },
+        { targetLocations: { $exists: false }, location: { $in: [loc, 'all'] } },
+      ],
+    } as any).lean();
+  },
+  ['service-candidates-by-location'],
+  { revalidate: 300, tags: ['services'] }
+);
+
+const getServiceCandidates = cache(async (location: string) => {
+  return getCachedServiceCandidates(location.toLowerCase()) as Promise<any[]>;
+});
 
 async function getService(location: string, slug: string) {
   try {
-    await connectDB();
     const candidates = await getServiceCandidates(location);
     return candidates.find((s) => getEffectiveSlug(s, location.toLowerCase()) === slug) ?? null;
   } catch { return null; }
@@ -89,11 +113,10 @@ const MAX_RELATED_SERVICES = 24;
 
 async function getRelatedServices(location: string, category: string, excludeSlug: string) {
   try {
-    await connectDB();
     const loc = location.toLowerCase();
-    const candidates = await getServiceCandidates(location, { category });
+    const candidates = await getServiceCandidates(location);
     return candidates
-      .filter((s) => getEffectiveSlug(s, loc) !== excludeSlug)
+      .filter((s) => s.category === category && getEffectiveSlug(s, loc) !== excludeSlug)
       .slice(0, MAX_RELATED_SERVICES);
   } catch { return []; }
 }
@@ -912,7 +935,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         {/* ── RELATED TREATMENTS ── */}
         {related.length > 0 && (
           <RelatedServicesPager
-            related={related}
+            related={related.map((r: any) => ({ ...r, effectiveSlug: getEffectiveSlug(r, params.location.toLowerCase()) }))}
             pageSize={siteConfig.relatedServicesCount}
             catLabel={catLabel}
             cityName={cityName}

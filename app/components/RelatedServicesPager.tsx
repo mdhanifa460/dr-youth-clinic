@@ -15,20 +15,28 @@ type RelatedService = {
   category: string;
   location: string;
   urlSlug: string;
+  effectiveSlug?: string;
   price: number;
   duration: number;
   heroImage?: { url?: string };
 };
 
-function ServiceCard({ r, showPriceOnCards, arrows }: {
+function ServiceCard({ r, location, showPriceOnCards, arrows }: {
   r: RelatedService;
+  // The page's own city, not r.location — a related service's raw
+  // `location` field is often "all" (shown at every clinic) and its raw
+  // `urlSlug` is the service-level default, not this city's override from
+  // locationSeo[]. Linking with either 404s. `effectiveSlug` (resolved
+  // server-side via getEffectiveSlug for the CURRENT city) is what actually
+  // exists at this page's URL.
+  location: string;
   showPriceOnCards: boolean;
   // Prev/Next controls rendered inside the image itself (mobile carousel) —
   // omitted on desktop, where paging controls live below the grid instead.
   arrows?: { onPrev: () => void; onNext: () => void; prevDisabled: boolean; nextDisabled: boolean };
 }) {
   return (
-    <Link href={`/${r.location}/services/${r.category.toLowerCase()}/${r.urlSlug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all hover:-translate-y-1 block">
+    <Link href={`/${location}/services/${r.category.toLowerCase()}/${r.effectiveSlug || r.urlSlug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all hover:-translate-y-1 block">
       <div className="relative h-44 overflow-hidden">
         {r.heroImage?.url ? (
           <>
@@ -119,6 +127,7 @@ export default function RelatedServicesPager({
         <div className="sm:hidden relative">
           <ServiceCard
             r={related[mobileIndex]}
+            location={location}
             showPriceOnCards={showPriceOnCards}
             arrows={{
               onPrev: () => setMobileIndex((i) => Math.max(0, i - 1)),
@@ -146,7 +155,7 @@ export default function RelatedServicesPager({
         {/* Desktop: grid of `pageSize` cards per page + Prev/Next/dots below */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {pageItems.map((r) => (
-            <ServiceCard key={String(r._id)} r={r} showPriceOnCards={showPriceOnCards} />
+            <ServiceCard key={String(r._id)} r={r} location={location} showPriceOnCards={showPriceOnCards} />
           ))}
         </div>
 

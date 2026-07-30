@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { deleteImage } from '@/app/lib/cloudinary';
 import { Service } from '@/app/models/Service';
@@ -68,6 +69,8 @@ export async function PUT(
       );
     }
 
+    revalidateTag('services');
+
     return NextResponse.json({
       success: true,
       data: service,
@@ -128,6 +131,7 @@ export async function DELETE(
 
     await (Service as any).findByIdAndDelete(params.id);
     removeChunk('service', params.id).catch(console.error);
+    revalidateTag('services');
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { Service } from '@/app/models/Service';
 import { connectDB } from '@/app/lib/mongodb';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -106,6 +107,11 @@ export async function POST(req: NextRequest) {
     }
 
     await service.save();
+    // Without this, a newly-created service wouldn't reach the public
+    // service-detail page's cached candidate list (see getServiceCandidates
+    // in app/(public)/[location]/services/[category]/[slug]/page.tsx) until
+    // that cache's 5-minute revalidate window happened to expire.
+    revalidateTag('services');
 
     return NextResponse.json(
       { success: true, data: service, message: 'Service created successfully' },
