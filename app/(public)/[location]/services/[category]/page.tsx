@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
+import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, IndianRupee, Zap } from 'lucide-react';
@@ -345,21 +345,16 @@ function ServiceCard({
       href={`/${location}/services/${category}/${svc.urlSlug}`}
       className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
-      {/* IMAGE */}
-      <div className="relative h-52 bg-[#f6faff] overflow-hidden">
-        {svc.heroImage?.url ? (
-          <Image
-            src={svc.heroImage.url}
-            alt={svc.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-6xl opacity-20">✨</span>
-          </div>
-        )}
+      {/* IMAGE — 4:5, matches the site's Service Card ratio standard */}
+      <FocalImage
+        image={svc.heroImage}
+        aspectRatio="4/5"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        alt={svc.name}
+        className="bg-[#f6faff]"
+        imgClassName="group-hover:scale-105 transition-transform duration-500"
+        fallbackEmoji="✨"
+      >
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
         {/* price pill */}
@@ -376,7 +371,7 @@ function ServiceCard({
             <span className="text-xs font-semibold">{svc.duration} min</span>
           </div>
         )}
-      </div>
+      </FocalImage>
 
       {/* CONTENT */}
       <div className="flex flex-col flex-1 p-5">

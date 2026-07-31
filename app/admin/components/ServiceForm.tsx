@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import ImageUpload from "./ImageUpload";
+import FocalPointPicker from "./FocalPointPicker";
 import SeoPreviewCard from "./SeoPreviewCard";
 import KeywordSuggestions from "./KeywordSuggestions";
 import MetaSuggestions from "./MetaSuggestions";
@@ -49,8 +50,8 @@ interface FormData {
   journeyPhases: Array<{ title: string; description: string }>;
   myths: Array<{ myth: string; fact: string }>;
   faq: Array<{ question: string; answer: string }>;
-  heroImage: { url: string; publicId: string } | null;
-  beforeAfterImages: Array<{ before: any; after: any }>;
+  heroImage: { url: string; publicId: string; focalPoint?: any } | null;
+  beforeAfterImages: Array<{ before: any; after: any; focalPoint?: any }>;
   status: "draft" | "active" | "hidden";
   journeyExplorer: Array<{
     stage: string;
@@ -706,7 +707,18 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Hero Image *</label>
-            <ImageUpload onUpload={(data) => updateForm({ heroImage: data })} label="Service Hero Image (1200×800px recommended)" folder={`dr-youth-clinic/services/${primaryLocation || "general"}`} />
+            <ImageUpload onUpload={(data) => updateForm({ heroImage: data })} label="Service Hero Image (3:2 crop on the detail page, 4:5 on listing cards)" folder={`dr-youth-clinic/services/${primaryLocation || "general"}`} />
+            {form.heroImage?.url && (
+              <div className="mt-3">
+                <label className="block text-xs font-semibold text-gray-600 mb-2">Focal Point (keep the treatment area visible in both crops)</label>
+                <FocalPointPicker
+                  imageUrl={form.heroImage.url}
+                  aspectRatio="3/2"
+                  value={(form.heroImage as any).focalPoint}
+                  onChange={(fp) => updateForm({ heroImage: { ...form.heroImage!, focalPoint: fp } as any })}
+                />
+              </div>
+            )}
           </div>
 
           {/* Technology */}
@@ -1353,6 +1365,23 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                       )}
                     </div>
                   </div>
+                  {pair.before?.url && pair.after?.url && (
+                    <div className="px-4 pb-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">
+                        Focal Point (applied identically to both photos — 1:1 crop)
+                      </label>
+                      <FocalPointPicker
+                        imageUrl={pair.after.url}
+                        aspectRatio="1/1"
+                        value={pair.focalPoint}
+                        onChange={(fp) => {
+                          const updated = [...form.beforeAfterImages];
+                          updated[idx] = { ...updated[idx], focalPoint: fp };
+                          updateForm({ beforeAfterImages: updated });
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

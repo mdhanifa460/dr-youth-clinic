@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
+import { FocalPointSchema } from '@/app/models/shared/imageSchema';
+import type { FocalPoint } from '@/app/lib/media/focalPoint';
 
 export interface ILocationSeo {
   location: string;
@@ -89,10 +91,14 @@ export interface IService extends Document {
   heroImage: {
     url: string;
     publicId: string;
+    focalPoint?: FocalPoint;
   };
   beforeAfterImages: Array<{
     before: { url: string; publicId: string };
     after: { url: string; publicId: string };
+    // One focal point per pair, not per image — before/after must use
+    // identical framing so the comparison itself isn't misleading.
+    focalPoint?: FocalPoint;
   }>;
 
   // Pricing & Duration
@@ -261,6 +267,7 @@ const ServiceSchema = new Schema<IService>(
     heroImage: {
       url: String,
       publicId: String,
+      focalPoint: { type: FocalPointSchema, default: undefined },
     },
     beforeAfterImages: [
       {
@@ -272,6 +279,7 @@ const ServiceSchema = new Schema<IService>(
           url: String,
           publicId: String,
         },
+        focalPoint: { type: FocalPointSchema, default: undefined },
       },
     ],
 

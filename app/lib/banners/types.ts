@@ -20,6 +20,7 @@ export interface CTAData {
 export interface ImageData {
   url: string;
   publicId: string;
+  focalPoint?: import("@/app/lib/media/focalPoint").FocalPoint;
 }
 
 export interface StatBadgeData {

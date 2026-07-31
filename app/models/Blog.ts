@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
+import { FocalPointSchema } from '@/app/models/shared/imageSchema';
+import type { FocalPoint } from '@/app/lib/media/focalPoint';
 
 export interface IBlog extends Document {
   title: string;
@@ -10,7 +12,7 @@ export interface IBlog extends Document {
   // present, the public page renders this instead of parsing `body` as
   // Markdown. `body` stays as the fallback for posts not yet converted.
   bodyBlocks?: Array<{ id: string; type: string; visible: boolean; data: Record<string, any> }>;
-  coverImage: { url: string; publicId: string };
+  coverImage: { url: string; publicId: string; focalPoint?: FocalPoint };
   category: string;
   tags: string[];
   author: string;
@@ -59,7 +61,7 @@ const BlogSchema = new Schema<IBlog>({
   excerpt:     { type: String, maxlength: 300 },
   body:        { type: String, default: '' },
   bodyBlocks:  { type: [ContentBlockSchema], default: undefined },
-  coverImage:  { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
+  coverImage:  { url: { type: String, default: '' }, publicId: { type: String, default: '' }, focalPoint: { type: FocalPointSchema, default: undefined } },
   category:    { type: String, enum: ['Hair Care', 'Skin Care', 'Laser', 'Aesthetics', 'General'], default: 'General' },
   tags:        [String],
   author:      { type: String, default: 'DR Youth Clinic Team' },

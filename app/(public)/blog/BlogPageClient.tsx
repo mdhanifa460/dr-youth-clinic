@@ -7,6 +7,8 @@ import { Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight, Play } from 'lu
 import SearchInput from '@/app/components/ui/SearchInput';
 import CategoryPill from '@/app/components/ui/CategoryPill';
 import NewsletterSignup from '@/app/components/NewsletterSignup';
+import FocalImage from '@/app/components/media/FocalImage';
+import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
 import { BLOG_CATEGORIES, CATEGORY_COLOR } from '@/app/lib/blogCategories';
 
 interface Post {
@@ -16,7 +18,7 @@ interface Post {
   excerpt?: string;
   category: string;
   tags?: string[];
-  coverImage?: { url: string };
+  coverImage?: { url: string; publicId?: string; focalPoint?: any };
   readTime: string;
   publishedAt: string;
   featured: boolean;
@@ -50,22 +52,29 @@ function ArticleCard({ post }: { post: Post }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]">
-        {post.coverImage?.url ? (
-          <Image src={post.coverImage.url} alt={post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition duration-500" />
-        ) : (
-          <div className="h-full flex items-center justify-center text-4xl opacity-40">📝</div>
-        )}
+      {/* 16:9 — the site's Blog Cover ratio standard (was 16:10) */}
+      <FocalImage
+        image={post.coverImage}
+        aspectRatio="16/9"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        alt={post.title}
+        className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]"
+        imgClassName="group-hover:scale-105 transition duration-500"
+        fallbackEmoji="📝"
+      >
         <span className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full ${CATEGORY_COLOR[post.category] || 'bg-[#3B82C4]'}`}>
           {post.category}
         </span>
-      </div>
-      <div className="p-5 md:p-6">
+      </FocalImage>
+      {/* flex-col + flex-1 + mt-auto footer: keeps the date/read-time row
+          pinned to the bottom regardless of title/excerpt length, so cards
+          in the same grid row line up instead of drifting per-card. */}
+      <div className="flex flex-col flex-1 p-5 md:p-6">
         <h3 className="font-bold text-[#0B2560] text-base leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{post.title}</h3>
         {post.excerpt && <p className="text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>}
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-between mt-auto pt-4">
           <div className="flex items-center gap-3 text-gray-500 text-xs">
             <span className="flex items-center gap-1"><Calendar size={10} />{formatDate(post.publishedAt)}</span>
             <span className="flex items-center gap-1"><Clock size={10} />{post.readTime}</span>
@@ -213,7 +222,14 @@ export default function BlogPageClient({
                 <div className="grid lg:grid-cols-2 gap-0 bg-white rounded-3xl overflow-hidden shadow-sm ring-1 ring-[#e8eff7] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                   <div className="relative aspect-[16/9] lg:aspect-auto lg:min-h-[360px] bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] overflow-hidden">
                     {featured.coverImage?.url ? (
-                      <Image src={featured.coverImage.url} alt={featured.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition duration-700" />
+                      <Image
+                        src={featured.coverImage.url}
+                        alt={featured.title}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        className="object-cover group-hover:scale-105 transition duration-700"
+                        style={{ objectPosition: focalPointToObjectPosition((featured.coverImage as any)?.focalPoint) }}
+                      />
                     ) : (
                       <div className="h-full flex items-center justify-center text-8xl opacity-30">📝</div>
                     )}

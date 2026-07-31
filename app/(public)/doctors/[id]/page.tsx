@@ -2,7 +2,7 @@ import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { unstable_cache } from 'next/cache';
-import Image from 'next/image';
+import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { Calendar, MapPin, Award, ArrowLeft, GraduationCap, Languages, Stethoscope } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
@@ -122,18 +122,15 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
 
           <div className="flex flex-col sm:flex-row items-start gap-6 md:gap-8">
             {/* Photo */}
-            <div className="relative w-28 sm:w-32 md:w-44 lg:w-48 aspect-[4/5] rounded-3xl overflow-hidden bg-white/10 shrink-0 ring-2 ring-white/10">
-              {doctor.photo?.url ? (
-                <Image
-                  src={doctor.photo.url}
-                  alt={doctor.name}
-                  fill
-                  sizes="(min-width: 1024px) 192px, (min-width: 768px) 176px, (min-width: 640px) 128px, 112px"
-                  className="object-cover object-top"
-                />
-              ) : (
-                <div className="h-full flex items-center justify-center text-5xl opacity-60">👨‍⚕️</div>
-              )}
+            <div className="w-28 sm:w-32 md:w-44 lg:w-48 shrink-0">
+              <FocalImage
+                image={doctor.photo}
+                aspectRatio="4/5"
+                sizes="(min-width: 1024px) 192px, (min-width: 768px) 176px, (min-width: 640px) 128px, 112px"
+                alt={doctor.name}
+                className="rounded-3xl bg-white/10 ring-2 ring-white/10"
+                fallbackEmoji="👨‍⚕️"
+              />
             </div>
 
             {/* Name block */}

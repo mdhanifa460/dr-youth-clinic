@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { Check } from "lucide-react";
 import type { BannerDoc } from "@/app/lib/banners/types";
 import CTAButton from "@/app/components/banners/shared/CTAButton";
 import ImageOverlay from "@/app/components/banners/shared/ImageOverlay";
+import BannerHeroImage from "@/app/components/banners/shared/BannerHeroImage";
 
 // Stores its own copy of the doctor's photo/name/title (not a live reference
 // to a Doctor document) so a published banner survives independently of
@@ -12,9 +12,15 @@ export default function DoctorBanner({ banner }: { banner: BannerDoc }) {
     <div className="relative bg-[#0B2560] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 grid md:grid-cols-2 gap-8 items-center py-12 sm:py-16 md:py-20">
         {banner.desktopImage?.url && (
-          <div className="relative rounded-3xl overflow-hidden h-[280px] sm:h-[400px] order-1">
-            <Image src={banner.desktopImage.url} alt={banner.headline || "Doctor"} fill sizes="(max-width: 768px) 100vw, 480px" className="object-cover hidden sm:block" />
-            <Image src={banner.mobileImage?.url || banner.desktopImage.url} alt={banner.headline || "Doctor"} fill sizes="100vw" className="object-cover sm:hidden" />
+          <div className="relative rounded-3xl overflow-hidden order-1">
+            {/* 4:5 — a doctor portrait, not a generic hero scene, so it
+                follows the site's Doctor ratio standard rather than 16:9. */}
+            <BannerHeroImage
+              desktopImage={banner.desktopImage}
+              mobileImage={banner.mobileImage}
+              alt={banner.headline || "Doctor"}
+              aspectRatio="4/5"
+            />
             <ImageOverlay overlay={banner.overlay} />
           </div>
         )}

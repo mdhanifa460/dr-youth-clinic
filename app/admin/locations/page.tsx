@@ -10,6 +10,7 @@ import { CLOUD_FOLDERS } from '@/app/lib/cloudinary-url';
 import { locations } from '@/app/data/locations';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
+import FocalPointPicker from '@/app/admin/components/FocalPointPicker';
 
 const CITIES = [
   { key: 'chennai',    label: 'Chennai' },
@@ -237,8 +238,16 @@ function GalleryItem({
         value={{ publicId: item.publicId, url: item.url }}
         onChange={(v) => onChange({ ...item, ...v })}
         folder={folder}
-        aspect="4/3"
+        aspect="1/1"
       />
+      {item.url && (
+        <FocalPointPicker
+          imageUrl={item.url}
+          aspectRatio="1/1"
+          value={item.focalPoint}
+          onChange={(fp) => onChange({ ...item, focalPoint: fp })}
+        />
+      )}
       <input value={item.caption} onChange={(e) => onChange({ ...item, caption: e.target.value })}
         placeholder="Caption (optional)"
         className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#0B2560]" />

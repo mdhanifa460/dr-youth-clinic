@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import FocalPointPicker from './FocalPointPicker';
 import SeoPreviewCard from './SeoPreviewCard';
 import SeoAiAssistant from './SeoAiAssistant';
 import ContentBlockEditor from './contentblocks/ContentBlockEditor';
@@ -24,7 +25,7 @@ interface FormData {
   excerpt: string;
   body: string;
   bodyBlocks: Array<{ id: string; type: string; visible: boolean; data: Record<string, any> }>;
-  coverImage: { url: string; publicId: string };
+  coverImage: { url: string; publicId: string; focalPoint?: any };
   category: string;
   tags: string;
   author: string;
@@ -196,13 +197,24 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
           <h2 className="text-2xl font-bold text-[#0B2560]">Basic Information</h2>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Image</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Image (16:9 crop)</label>
             <ImageUpload folder="dr-youth-clinic/blog" onUpload={(d) => updateForm({ coverImage: d })} />
             {form.coverImage?.url && (
-              <div className="flex items-center gap-2 mt-2">
-                <img src={form.coverImage.url} alt="" className="w-16 h-10 rounded-lg object-cover" />
-                <span className="text-xs text-gray-400">Current cover</span>
-              </div>
+              <>
+                <div className="flex items-center gap-2 mt-2">
+                  <img src={form.coverImage.url} alt="" className="w-16 h-10 rounded-lg object-cover" />
+                  <span className="text-xs text-gray-400">Current cover</span>
+                </div>
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">Focal Point</label>
+                  <FocalPointPicker
+                    imageUrl={form.coverImage.url}
+                    aspectRatio="16/9"
+                    value={(form.coverImage as any).focalPoint}
+                    onChange={(fp) => updateForm({ coverImage: { ...form.coverImage, focalPoint: fp } as any })}
+                  />
+                </div>
+              </>
             )}
           </div>
 

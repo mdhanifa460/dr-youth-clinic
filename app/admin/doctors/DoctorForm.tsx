@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Save, Trash2, ExternalLink, Loader, CheckCircle } from 'lucide-react';
 import ImageUpload from '@/app/admin/components/ImageUpload';
+import FocalPointPicker from '@/app/admin/components/FocalPointPicker';
 import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
 
 const CLINIC_LOCATIONS = [
@@ -124,10 +125,21 @@ export default function DoctorForm({
         {/* Photo */}
         <ImageUpload label="Profile Photo" folder="dr-youth-clinic/doctors" onUpload={(d) => set('photo', d)} />
         {form.photo?.url && (
-          <div className="flex items-center gap-3 -mt-3">
-            <img src={form.photo.url} alt="" className="w-12 h-12 rounded-xl object-cover" />
-            <span className="text-xs text-gray-400">Current photo</span>
-          </div>
+          <>
+            <div className="flex items-center gap-3 -mt-3">
+              <img src={form.photo.url} alt="" className="w-12 h-12 rounded-xl object-cover" />
+              <span className="text-xs text-gray-400">Current photo</span>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Focal Point (portrait crop is 4:5 — keep eyes in the upper third)</label>
+              <FocalPointPicker
+                imageUrl={form.photo.url}
+                aspectRatio="4/5"
+                value={form.photo.focalPoint}
+                onChange={(fp) => set('photo', { ...form.photo, focalPoint: fp })}
+              />
+            </div>
+          </>
         )}
 
         {/* Name + Title */}

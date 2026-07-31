@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { FaLinkedinIn } from 'react-icons/fa';
+import FocalImage from '@/app/components/media/FocalImage';
 
 // Extracted verbatim from homepage/DoctorsSection.tsx so it can be placed as
 // its own Section Registry entry (zone: sidebar/main widget) instead of only
@@ -13,19 +13,19 @@ export default function DoctorCard({ doc }: { doc: any }) {
 
   const inner = (
     <>
-      <div className="relative aspect-[4/3] sm:aspect-[5/4] md:aspect-[4/5] bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] overflow-hidden">
-        {doc.photo?.url ? (
-          <Image
-            src={doc.photo.url}
-            alt={doc.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover object-top transition duration-500 md:hover:scale-105"
-          />
-        ) : (
-          <div className="h-full flex items-center justify-center text-6xl">👨‍⚕️</div>
-        )}
-      </div>
+      {/* Fixed 4:5 ratio (not the old responsive 4:3/5:4/4:5 mix, which
+          silently changed crop across breakpoints) with focal-point-aware
+          cropping — defaults to face-safe center when a doctor has no
+          focal point set yet. */}
+      <FocalImage
+        image={doc.photo}
+        aspectRatio="4/5"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+        alt={doc.name}
+        className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]"
+        imgClassName="transition duration-500 md:hover:scale-105"
+        fallbackEmoji="👨‍⚕️"
+      />
       <div className="p-4 md:p-5">
         <h3 className="font-bold text-[#0B2560] text-base md:text-sm leading-snug">{doc.name}</h3>
         <p className="text-gray-500 text-sm md:text-xs mt-1">{role}</p>

@@ -2,27 +2,47 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { cloudImgFocal } from '@/app/lib/cloudinary-url';
+import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
+
+// 1:1 crop, both frames sharing the pair's one focal point (before/after
+// must line up identically or the slider comparison is misleading), same
+// mechanism as BeforeAfterGallery.tsx.
+function focalSrc(img: { url: string; publicId?: string }, focalPoint?: any) {
+  return img?.publicId
+    ? cloudImgFocal(img.publicId, { w: 1000, h: 1000, focalPoint })
+    : img?.url;
+}
 
 export default function SliderCard({ pair }: { pair: any }) {
   const [pos, setPos] = useState(50);
   if (!pair) return null;
   const hasImages = !!(pair.before?.url && pair.after?.url);
+  const objectPosition = focalPointToObjectPosition(pair.focalPoint);
 
   return (
     <div className="rounded-3xl overflow-hidden bg-white shadow-[0_8px_34px_rgba(11,37,96,0.08)] border border-[#EBE8E3] transition-all duration-300 hover:shadow-[0_16px_42px_rgba(11,37,96,0.12)]">
 
-      {/* IMAGE AREA */}
-      <div className="relative h-[260px] sm:h-[300px] overflow-hidden select-none">
+      {/* IMAGE AREA — 1:1, matches the site's Before/After ratio standard */}
+      <div className="relative aspect-square overflow-hidden select-none">
         {hasImages ? (
           <>
-            <Image src={pair.after.url} alt="After" fill sizes="(max-width: 768px) 100vw, 672px" className="object-cover" draggable={false} />
             <Image
-              src={pair.before.url}
+              src={focalSrc(pair.after, pair.focalPoint)}
+              alt="After"
+              fill
+              sizes="(max-width: 768px) 100vw, 672px"
+              className="object-cover"
+              style={{ objectPosition }}
+              draggable={false}
+            />
+            <Image
+              src={focalSrc(pair.before, pair.focalPoint)}
               alt="Before"
               fill
               sizes="(max-width: 768px) 100vw, 672px"
               className="object-cover"
-              style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+              style={{ objectPosition, clipPath: `inset(0 ${100 - pos}% 0 0)` }}
               draggable={false}
             />
 

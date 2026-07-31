@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
+import { FocalPointSchema } from '@/app/models/shared/imageSchema';
+import type { FocalPoint } from '@/app/lib/media/focalPoint';
 
 const VALID_BRANCHES = ['all', 'chennai', 'bangalore', 'coimbatore', 'kochi'];
 
@@ -13,6 +15,9 @@ export interface IResult extends Document {
   // each; multi-image galleries below are additive, not a replacement.
   before: { url: string; publicId: string };
   after: { url: string; publicId: string };
+  // One shared focal point for the before/after pair (not per-image) — the
+  // comparison is only meaningful if both frames are cropped identically.
+  focalPoint?: FocalPoint;
   beforeImages: Array<{ url: string; publicId: string }>;
   afterImages: Array<{ url: string; publicId: string }>;
   gallery: Array<{ url: string; publicId: string }>;
@@ -44,6 +49,7 @@ const ResultSchema = new Schema<IResult>({
   category:    { type: String, default: '', trim: true },
   before:      { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
   after:       { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
+  focalPoint:  { type: FocalPointSchema, default: undefined },
   beforeImages: { type: [{ url: String, publicId: String }], default: [] },
   afterImages:  { type: [{ url: String, publicId: String }], default: [] },
   gallery:      { type: [{ url: String, publicId: String }], default: [] },

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Play } from "lucide-react";
 import type { BannerDoc } from "@/app/lib/banners/types";
 import CTAButton from "@/app/components/banners/shared/CTAButton";
 import ImageOverlay from "@/app/components/banners/shared/ImageOverlay";
+import FocalImage from "@/app/components/media/FocalImage";
 
 // No lightbox/video-modal component exists elsewhere in the codebase to
 // reuse — an inline toggle (poster image → playing <video>) is sufficient
@@ -32,24 +32,16 @@ export default function ClinicExperienceBanner({ banner }: { banner: BannerDoc }
           </div>
         </div>
 
-        <div className="relative rounded-3xl overflow-hidden shadow-[0_18px_50px_rgba(11,37,96,0.12)] h-[260px] sm:h-[380px] bg-gray-100">
+        <div className="relative rounded-3xl overflow-hidden shadow-[0_18px_50px_rgba(11,37,96,0.12)] bg-gray-100" style={{ aspectRatio: '16/9' }}>
           {playing && hasVideo ? (
             <video src={banner.video.url} controls autoPlay className="absolute inset-0 w-full h-full object-cover" />
           ) : (
-            <>
-              {banner.desktopImage?.url ? (
-                <Image
-                  src={banner.desktopImage.url}
-                  alt={banner.headline || "Clinic"}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 560px"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560]/10 to-[#60A5D8]/10 flex items-center justify-center">
-                  <span className="text-5xl">🏥</span>
-                </div>
-              )}
+            <FocalImage
+              image={banner.desktopImage}
+              aspectRatio="16/9"
+              sizes="(max-width: 768px) 100vw, 560px"
+              alt={banner.headline || "Clinic"}
+            >
               {/* Rendered before the play button so it never visually
                   sits on top of it (later DOM order wins in the shared
                   absolute-positioning stacking context) — only applies to
@@ -67,7 +59,7 @@ export default function ClinicExperienceBanner({ banner }: { banner: BannerDoc }
                   </span>
                 </button>
               )}
-            </>
+            </FocalImage>
           )}
         </div>
       </div>

@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { Check } from "lucide-react";
 import type { BannerDoc } from "@/app/lib/banners/types";
 import CTAButton from "@/app/components/banners/shared/CTAButton";
 import ImageOverlay from "@/app/components/banners/shared/ImageOverlay";
+import BannerHeroImage from "@/app/components/banners/shared/BannerHeroImage";
 
 export default function ServiceBanner({ banner }: { banner: BannerDoc }) {
   return (
@@ -39,9 +39,13 @@ export default function ServiceBanner({ banner }: { banner: BannerDoc }) {
         </div>
 
         {banner.desktopImage?.url && (
-          <div className="relative rounded-3xl overflow-hidden shadow-[0_18px_50px_rgba(11,37,96,0.12)] h-[260px] sm:h-[380px]">
-            <Image src={banner.desktopImage.url} alt={banner.headline || "Service"} fill sizes="(max-width: 768px) 100vw, 560px" className="object-cover hidden sm:block" />
-            <Image src={banner.mobileImage?.url || banner.desktopImage.url} alt={banner.headline || "Service"} fill sizes="100vw" className="object-cover sm:hidden" />
+          <div className="relative rounded-3xl overflow-hidden shadow-[0_18px_50px_rgba(11,37,96,0.12)]">
+            <BannerHeroImage
+              desktopImage={banner.desktopImage}
+              mobileImage={banner.mobileImage}
+              alt={banner.headline || "Service"}
+              aspectRatio="16/9"
+            />
             <ImageOverlay overlay={banner.overlay} />
           </div>
         )}

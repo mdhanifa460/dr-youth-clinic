@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
-import Image from 'next/image';
+import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -465,22 +465,25 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {svc.heroImage?.url ? (
-              <div className="relative h-64 md:h-[420px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/10">
-                <Image src={svc.heroImage.url} alt={`${svc.name} in ${cityName}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" priority />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-4">
-                  <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur text-[#0B2560] text-xs font-bold px-4 py-2 rounded-full shadow-lg">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    {siteConfig.consultationFree ? 'Free consultation included' : 'Consultation included'}
-                  </div>
+            {/* 3:2 — the site's Service Hero ratio standard (distinct from
+                the 4:5 Service Card ratio used in listings) */}
+            <FocalImage
+              image={svc.heroImage}
+              aspectRatio="3/2"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              alt={`${svc.name} in ${cityName}`}
+              className="rounded-3xl shadow-2xl ring-1 ring-white/10 bg-white/10"
+              fallbackEmoji={CATEGORY_ICON[svc.category] ?? '🏥'}
+              priority
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4">
+                <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur text-[#0B2560] text-xs font-bold px-4 py-2 rounded-full shadow-lg">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  {siteConfig.consultationFree ? 'Free consultation included' : 'Consultation included'}
                 </div>
               </div>
-            ) : (
-              <div className="h-64 md:h-[420px] rounded-3xl bg-white/10 flex items-center justify-center text-7xl">
-                {CATEGORY_ICON[svc.category] ?? '🏥'}
-              </div>
-            )}
+            </FocalImage>
           </div>
         </section>
         )}
@@ -933,11 +936,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {doctors.map((doc: any) => (
                   <Link key={String(doc._id)} href={`/doctors/${doc._id}`} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                    <div className="shrink-0">
+                    <div className="w-16 h-16 shrink-0">
                       {doc.photo?.url ? (
-                        <div className="relative w-16 h-16 rounded-2xl overflow-hidden">
-                          <Image src={doc.photo.url} alt={doc.name} fill sizes="64px" className="object-cover" />
-                        </div>
+                        <FocalImage image={doc.photo} aspectRatio="1/1" sizes="64px" alt={doc.name} className="rounded-2xl" />
                       ) : (
                         <div className="w-16 h-16 rounded-2xl bg-[#0B2560]/10 flex items-center justify-center text-2xl font-bold text-[#0B2560]">
                           {doc.name?.[0] ?? 'D'}

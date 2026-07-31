@@ -1,5 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
+import { FocalPointSchema } from '@/app/models/shared/imageSchema';
+import type { FocalPoint } from '@/app/lib/media/focalPoint';
 
 export interface IBeforeAfterPair {
   title: string;
@@ -7,6 +9,8 @@ export interface IBeforeAfterPair {
   description?: string;
   before: { publicId: string; url: string };
   after: { publicId: string; url: string };
+  // One focal point per pair, applied identically to before and after.
+  focalPoint?: FocalPoint;
   isVisible: boolean;
   displayOrder: number;
 }
@@ -15,6 +19,7 @@ export interface IGalleryImage {
   publicId: string;
   url: string;
   caption?: string;
+  focalPoint?: FocalPoint;
   isVisible: boolean;
   displayOrder: number;
 }
@@ -122,6 +127,7 @@ const BeforeAfterSchema = new Schema<IBeforeAfterPair>({
   description:  { type: String, default: '' },
   before:       { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
   after:        { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
+  focalPoint:   { type: FocalPointSchema, default: undefined },
   isVisible:    { type: Boolean, default: true },
   displayOrder: { type: Number, default: 0 },
 }, { _id: true });
@@ -130,6 +136,7 @@ const GalleryImageSchema = new Schema<IGalleryImage>({
   publicId:     { type: String, required: true },
   url:          { type: String, required: true },
   caption:      { type: String, default: '' },
+  focalPoint:   { type: FocalPointSchema, default: undefined },
   isVisible:    { type: Boolean, default: true },
   displayOrder: { type: Number, default: 0 },
 }, { _id: true });

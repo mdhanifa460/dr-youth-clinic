@@ -13,7 +13,8 @@ import { LocationContent } from '@/app/models/LocationContent';
 import { Result } from '@/app/models/Result';
 import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
 import SliderCard from '@/app/components/SliderCard';
-import { cloudGalleryThumb, cloudHero } from '@/app/lib/cloudinary-url';
+import { cloudHero } from '@/app/lib/cloudinary-url';
+import FocalImage from '@/app/components/media/FocalImage';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import { getSiteConfig } from '@/app/lib/siteConfig';
@@ -404,19 +405,21 @@ export default async function LocationPage({ params }: { params: { location: str
                   : 'sm:grid-cols-2 lg:grid-cols-3'
               }`}>
                 {content!.galleryImages.map((img, i) => (
-                  <div key={i} className="rounded-2xl overflow-hidden shadow-sm group relative aspect-[4/3] bg-gray-100">
-                    <Image
-                      src={cloudGalleryThumb(img.publicId) || img.url}
-                      alt={img.caption || `${loc.name} clinic photo ${i + 1}`}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                  <FocalImage
+                    key={i}
+                    image={img}
+                    aspectRatio="1/1"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    alt={img.caption || `${loc.name} clinic photo ${i + 1}`}
+                    className="rounded-2xl shadow-sm group bg-gray-100"
+                    imgClassName="group-hover:scale-105 transition-transform duration-500"
+                  >
                     {img.caption && (
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3">
                         <p className="text-white text-xs font-medium">{img.caption}</p>
                       </div>
                     )}
-                  </div>
+                  </FocalImage>
                 ))}
               </div>
             </div>

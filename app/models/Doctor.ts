@@ -1,10 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
+import { ImageWithFocalPointSchema, type IImageWithFocalPoint } from '@/app/models/shared/imageSchema';
 
 export interface IDoctor extends Document {
   name: string;
   title: string;
-  photo: { url: string; publicId: string };
+  // Doctor is the proof case for the sitewide focal-point image system —
+  // photo now carries an optional focalPoint (preset or manual x/y) so
+  // DoctorCard/detail-page crops can center on the face instead of the
+  // hardcoded `object-top` every other image field still uses.
+  photo: IImageWithFocalPoint;
   qualifications: string;
   specializations: string[];
   languages: string[];
@@ -26,7 +31,7 @@ const DoctorSchema = new Schema<IDoctor>(
   {
     name:            { type: String, required: [true, 'Name is required'], trim: true },
     title:           { type: String, required: [true, 'Title is required'], trim: true },
-    photo:           { url: { type: String, default: '' }, publicId: { type: String, default: '' } },
+    photo:           { type: ImageWithFocalPointSchema, default: () => ({ url: '', publicId: '' }) },
     qualifications:  { type: String, default: '' },
     specializations: [String],
     languages:       [String],

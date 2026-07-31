@@ -1,5 +1,7 @@
 import Image from "next/image";
 import type { BannerDoc } from "@/app/lib/banners/types";
+import FocalImage from "@/app/components/media/FocalImage";
+import { focalPointToObjectPosition } from "@/app/lib/media/focalPoint";
 import { resolveExperience, getAnimationDurations } from "@/app/lib/banners/experienceEngine";
 import GlassCTAButton from "@/app/components/banners/shared/GlassCTAButton";
 import { AnimatedStatRow } from "@/app/components/banners/shared/AnimatedStat";
@@ -70,6 +72,10 @@ export default function GlassHeroBanner({ banner }: { banner: BannerDoc }) {
       aria-hidden="true"
     />
   ) : banner.desktopImage?.url ? (
+    // Deliberately full-bleed/atmospheric, not a discrete cropped card — no
+    // fixed aspect ratio here by design (see file comment above); focal
+    // point still applies so the important part of the photo stays in
+    // frame regardless of viewport shape.
     <Image
       src={banner.desktopImage.url}
       alt=""
@@ -77,6 +83,7 @@ export default function GlassHeroBanner({ banner }: { banner: BannerDoc }) {
       priority
       sizes="100vw"
       className="object-cover opacity-40"
+      style={{ objectPosition: focalPointToObjectPosition(banner.desktopImage.focalPoint) }}
       aria-hidden="true"
     />
   ) : null;
@@ -203,7 +210,9 @@ export default function GlassHeroBanner({ banner }: { banner: BannerDoc }) {
               style={{ background: "var(--hero-glass-bg)", border: "1px solid var(--hero-glass-border)" }}
             >
               {doctor.photo?.url ? (
-                <Image src={doctor.photo.url} alt={doctor.name} width={40} height={40} className="rounded-full w-10 h-10 object-cover" />
+                <div className="w-10 h-10 shrink-0">
+                  <FocalImage image={doctor.photo} aspectRatio="1/1" sizes="40px" alt={doctor.name} className="rounded-full" />
+                </div>
               ) : (
                 <span className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "var(--hero-accent)", color: "var(--hero-accent-text)" }}>
                   {doctor.name?.[0]}

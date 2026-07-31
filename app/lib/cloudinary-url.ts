@@ -1,6 +1,8 @@
 // Client-safe Cloudinary URL builder — no SDK import, no server-only code
 // Uses NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME which is inlined at build time
 
+import { focalPointToCloudinaryGravity, type FocalPoint } from '@/app/lib/media/focalPoint';
+
 const CLOUD = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? '';
 
 // ── Folder paths ──────────────────────────────────────────────────────────────
@@ -33,7 +35,13 @@ export interface CloudImgOpts {
   h?: number;
   q?: 'auto' | 'auto:best' | 'auto:good' | 'auto:low' | number;
   crop?: 'fill' | 'fit' | 'limit' | 'pad' | 'thumb' | 'scale';
-  gravity?: 'auto' | 'face' | 'center';
+  gravity?: 'auto' | 'face' | 'center' | 'north' | 'north_west' | 'north_east' | 'xy_center';
+  // Relative (0-1) offset, only used together with gravity: 'xy_center' —
+  // Cloudinary's `fl_relative` flag makes x_/y_ a fraction of the image
+  // dimensions instead of absolute pixels, which is what a 0-100 focal
+  // point percentage maps onto directly.
+  x?: number;
+  y?: number;
   format?: 'webp' | 'auto' | 'jpg' | 'png';
 }
 
@@ -45,6 +53,8 @@ export function cloudImg(publicId: string, opts: CloudImgOpts = {}): string {
     q = 'auto',
     crop = 'fill',
     gravity = 'auto',
+    x,
+    y,
     format = 'webp',
   } = opts;
 
@@ -52,11 +62,31 @@ export function cloudImg(publicId: string, opts: CloudImgOpts = {}): string {
   if (w || h) {
     parts.push(`c_${crop}`);
     if (gravity) parts.push(`g_${gravity}`);
+    if (gravity === 'xy_center' && x !== undefined && y !== undefined) {
+      parts.push(`x_${x}`, `y_${y}`, 'fl_relative');
+    }
     if (w) parts.push(`w_${w}`);
     if (h) parts.push(`h_${h}`);
   }
 
   return `https://res.cloudinary.com/${CLOUD}/image/upload/${parts.join(',')}/${publicId}`;
+}
+
+// Focal-point-aware variant — maps the stored FocalPoint (center/top/
+// top-left/top-right/face/manual) onto the right Cloudinary gravity, and
+// for 'manual' additionally passes the relative x/y offset. This is the one
+// entry point FocalImage uses; the named presets below stay as they were
+// for callers that don't have per-image focal point data yet.
+export function cloudImgFocal(
+  publicId: string,
+  opts: { w?: number; h?: number; focalPoint?: FocalPoint; crop?: CloudImgOpts['crop']; format?: CloudImgOpts['format'] } = {}
+): string {
+  const { w, h, focalPoint, crop = 'fill', format = 'webp' } = opts;
+  const gravity = focalPointToCloudinaryGravity(focalPoint) as CloudImgOpts['gravity'];
+  if (gravity === 'xy_center') {
+    return cloudImg(publicId, { w, h, crop, format, gravity, x: (focalPoint?.x ?? 50) / 100, y: (focalPoint?.y ?? 50) / 100 });
+  }
+  return cloudImg(publicId, { w, h, crop, format, gravity });
 }
 
 // SVG delivery — no format conversion

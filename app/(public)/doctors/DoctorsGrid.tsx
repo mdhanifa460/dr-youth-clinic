@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { MapPin, Award, Calendar, ChevronRight } from 'lucide-react';
 
@@ -25,31 +25,30 @@ function DoctorCard({ doc }: { doc: any }) {
     : (doc.locations?.map((l: string) => LOCATION_LABELS[l] || l).join(', ') || '');
 
   return (
-    <div className="group bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300">
+    <div className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300">
 
       {/* Photo */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]">
-        {doc.photo?.url ? (
-          <Image
-            src={doc.photo.url}
-            alt={doc.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="h-full flex items-center justify-center text-7xl opacity-40">👨‍⚕️</div>
-        )}
+      <FocalImage
+        image={doc.photo}
+        aspectRatio="4/5"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        alt={doc.name}
+        className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]"
+        imgClassName="group-hover:scale-105 transition-transform duration-500"
+        fallbackEmoji="👨‍⚕️"
+      >
         {/* Gradient overlay */}
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0B2560]/80 to-transparent" />
         {/* Location badge pinned to photo */}
         <span className="absolute bottom-3 left-3 flex items-center gap-1 text-[10px] font-bold text-white uppercase tracking-wider bg-white/15 backdrop-blur-sm px-2.5 py-1 rounded-full">
           <MapPin size={8} /> {locationLabel}
         </span>
-      </div>
+      </FocalImage>
 
-      {/* Card body */}
-      <div className="p-5 space-y-3">
+      {/* Card body — flex-col + flex-1 so the CTA row below anchors to the
+          bottom via mt-auto regardless of how much optional bio/badge/
+          specialization content renders above it. */}
+      <div className="flex flex-col flex-1 p-5 space-y-3">
         <div>
           <h3 className="text-base font-extrabold text-[#0B2560] leading-snug">{doc.name}</h3>
           <p className="text-sm text-[#3B82C4] font-medium mt-0.5 line-clamp-1">{doc.title}</p>
@@ -80,7 +79,7 @@ function DoctorCard({ doc }: { doc: any }) {
         )}
 
         {/* CTAs */}
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2 mt-auto pt-1">
           <Link
             href={`/doctors/${doc._id}`}
             className="flex-1 flex items-center justify-center gap-1.5 bg-[#0B2560] hover:bg-[#0d2d73] text-white text-xs font-bold py-2.5 rounded-xl transition"

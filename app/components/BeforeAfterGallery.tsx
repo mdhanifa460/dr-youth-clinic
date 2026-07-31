@@ -3,11 +3,16 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cloudImgFocal } from '@/app/lib/cloudinary-url';
+import { focalPointToObjectPosition, type FocalPoint } from '@/app/lib/media/focalPoint';
 
 interface Pair {
-  before: { url: string };
-  after: { url: string };
+  before: { url: string; publicId?: string };
+  after: { url: string; publicId?: string };
   concern?: string;
+  // One focal point for the whole pair — before and after must share
+  // identical framing, or the comparison itself is misleading.
+  focalPoint?: FocalPoint;
 }
 
 interface Props {
@@ -17,28 +22,41 @@ interface Props {
 
 const ALL_LABEL = 'All Results';
 
+// 1:1 crop, both frames. Server-side crop when a publicId is available,
+// same object-position fallback either way — the same identical-framing
+// mechanism FocalImage uses, applied manually here since the clip-path
+// compare technique needs two raw <Image> layers rather than one.
+function focalSrc(img: { url: string; publicId?: string }, focalPoint?: FocalPoint) {
+  return img.publicId
+    ? cloudImgFocal(img.publicId, { w: 1000, h: 1000, focalPoint })
+    : img.url;
+}
+
 function CompareSlider({ pair, serviceName }: { pair: Pair; serviceName: string }) {
   const [pos, setPos] = useState(50);
+  const objectPosition = focalPointToObjectPosition(pair.focalPoint);
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm select-none" style={{ aspectRatio: '1 / 1' }}>
       {/* After (base layer) */}
       <Image
-        src={pair.after.url}
+        src={focalSrc(pair.after, pair.focalPoint)}
         alt={`${serviceName} after`}
         fill
         sizes="(max-width: 768px) 100vw, 50vw"
         className="object-cover"
+        style={{ objectPosition }}
         draggable={false}
       />
-      {/* Before (clipped overlay) */}
+      {/* Before (clipped overlay) — same objectPosition as After, so the
+          two frames line up identically as the slider moves. */}
       <Image
-        src={pair.before.url}
+        src={focalSrc(pair.before, pair.focalPoint)}
         alt={`${serviceName} before`}
         fill
         sizes="(max-width: 768px) 100vw, 50vw"
         className="object-cover"
-        style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+        style={{ objectPosition, clipPath: `inset(0 ${100 - pos}% 0 0)` }}
         draggable={false}
       />
 

@@ -1,5 +1,5 @@
 'use client';
-import Image from 'next/image';
+import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -202,20 +202,15 @@ export default function HeroSection({ data }: { data: any }) {
         <div className="relative mt-2 md:mt-0">
           <div className="absolute -inset-4 bg-[#0B2560]/10 blur-3xl rounded-full" />
           <div className="relative bg-white p-3 sm:p-4 rounded-3xl shadow-[0_18px_50px_rgba(11,37,96,0.12)] ring-1 ring-white/80 overflow-hidden">
-            {s.image?.url ? (
-              <Image
-                src={s.image.url}
-                alt="DR Youth Clinic"
-                width={500}
-                height={500}
-                className={`rounded-2xl w-full h-[260px] sm:h-[320px] md:h-[420px] object-cover transition-transform duration-[8000ms] ease-linear ${visible ? 'scale-110' : 'scale-100'}`}
-                priority
-              />
-            ) : (
-              <div className="rounded-2xl w-full h-[260px] sm:h-[320px] md:h-[420px] bg-gradient-to-br from-[#0B2560]/20 to-[#60A5D8]/20 flex items-center justify-center">
-                <span className="text-5xl">🏥</span>
-              </div>
-            )}
+            <FocalImage
+              image={s.image}
+              aspectRatio="16/9"
+              sizes="(max-width: 768px) 100vw, 500px"
+              alt="DR Youth Clinic"
+              className="rounded-2xl"
+              imgClassName={`transition-transform duration-[8000ms] ease-linear ${visible ? 'scale-110' : 'scale-100'}`}
+              priority
+            />
             <div className="absolute bottom-3 left-3 sm:-bottom-4 sm:-left-4 bg-[#3B82C4] p-4 sm:p-5 md:p-6 rounded-2xl shadow-xl max-w-[180px] sm:max-w-[200px]">
               <p className="text-2xl sm:text-3xl md:text-4xl text-white font-extrabold block mb-0.5 sm:mb-1">10k+</p>
               <p className="text-white/90 font-semibold text-xs sm:text-sm leading-snug">Successful Procedures Completed</p>

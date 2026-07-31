@@ -1,11 +1,18 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
+import { focalPointToObjectPosition, type FocalPoint } from '@/app/lib/media/focalPoint';
 
 interface BeforeAfterPair {
   label?: string;
   before?: { url?: string };
   after?: { url?: string };
+  // One focal point for the whole pair, same convention as every other
+  // before/after component sitewide — before/after must share identical
+  // framing. Admin-side focal point picker for this LP block type is a
+  // fast-follow; the component already reads it if present.
+  focalPoint?: FocalPoint;
 }
 
 interface BeforeAfterData {
@@ -32,10 +39,12 @@ function SliderPair({ pair }: { pair: BeforeAfterPair }) {
   const onMouseUp = () => { isDragging.current = false; };
   const onTouchMove = (e: React.TouchEvent) => { updatePosition(e.touches[0].clientX); };
 
+  const objectPosition = focalPointToObjectPosition(pair.focalPoint);
+
   return (
     <div
       ref={containerRef}
-      className="relative aspect-[3/4] rounded-2xl overflow-hidden select-none cursor-col-resize shadow-xl"
+      className="relative aspect-square rounded-2xl overflow-hidden select-none cursor-col-resize shadow-xl"
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
@@ -43,22 +52,29 @@ function SliderPair({ pair }: { pair: BeforeAfterPair }) {
       onTouchMove={onTouchMove}
     >
       {/* After image (full bg) */}
-      <img
-        src={pair.after!.url}
+      <Image
+        src={pair.after!.url!}
         alt="After"
-        className="absolute inset-0 w-full h-full object-cover"
+        fill
+        sizes="(max-width: 768px) 100vw, 448px"
+        className="object-cover"
+        style={{ objectPosition }}
         draggable={false}
       />
 
-      {/* Before image (clipped to left portion) */}
+      {/* Before image (clipped to left portion) — same objectPosition as
+          After so the two frames line up as the slider moves. */}
       <div
         className="absolute inset-0"
         style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
       >
-        <img
-          src={pair.before!.url}
+        <Image
+          src={pair.before!.url!}
           alt="Before"
-          className="absolute inset-0 w-full h-full object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 448px"
+          className="object-cover"
+          style={{ objectPosition }}
           draggable={false}
         />
       </div>

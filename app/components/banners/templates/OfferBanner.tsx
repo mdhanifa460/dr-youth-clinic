@@ -1,7 +1,7 @@
-import Image from "next/image";
 import type { BannerDoc } from "@/app/lib/banners/types";
 import CTAButton from "@/app/components/banners/shared/CTAButton";
 import ImageOverlay from "@/app/components/banners/shared/ImageOverlay";
+import BannerHeroImage from "@/app/components/banners/shared/BannerHeroImage";
 
 function formatValidity(endDate: string | null): string {
   if (!endDate) return "";
@@ -49,20 +49,13 @@ export default function OfferBanner({ banner }: { banner: BannerDoc }) {
 
         {banner.desktopImage?.url && (
           <div className="relative mx-auto md:mx-0">
-            <div className="relative w-56 h-56 sm:w-72 sm:h-72 rounded-full overflow-hidden ring-4 ring-[#F5A623]/60 shadow-2xl">
-              <Image
-                src={banner.mobileImage?.url || banner.desktopImage.url}
+            <div className="relative w-56 h-56 sm:w-72 sm:h-72 rounded-full ring-4 ring-[#F5A623]/60 shadow-2xl">
+              <BannerHeroImage
+                desktopImage={banner.desktopImage}
+                mobileImage={banner.mobileImage}
                 alt={banner.headline || "Offer"}
-                fill
-                sizes="(max-width: 640px) 224px, 288px"
-                className="object-cover md:hidden"
-              />
-              <Image
-                src={banner.desktopImage.url}
-                alt={banner.headline || "Offer"}
-                fill
-                sizes="288px"
-                className="object-cover hidden md:block"
+                aspectRatio="1/1"
+                className="rounded-full w-full h-full"
               />
               <ImageOverlay overlay={banner.overlay} />
             </div>

@@ -8,6 +8,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { Doctor } from '@/app/models/Doctor';
 import { markdownToHtml, extractHeadings } from '@/app/lib/blogMarkdown';
+import FocalImage from '@/app/components/media/FocalImage';
+import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
 import ReadingProgress from './ReadingProgress';
 import ArticleSidebar, { MobileArticleToc } from './ArticleSidebar';
 import TrustSection from './TrustSection';
@@ -158,7 +160,18 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
         <section className="relative min-h-[70vh] md:min-h-[80vh] flex items-end bg-[#0B2560] overflow-hidden">
           {post.coverImage?.url ? (
             <>
-              <Image src={post.coverImage.url} alt={post.title} fill priority sizes="100vw" className="object-cover" />
+              {/* Deliberately full-bleed/cinematic, not a discrete cropped
+                  card — no fixed aspect ratio here by design, matching the
+                  same choice on GlassHeroBanner. Focal point still applies. */}
+              <Image
+                src={post.coverImage.url}
+                alt={post.title}
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover"
+                style={{ objectPosition: focalPointToObjectPosition(post.coverImage.focalPoint) }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-[#020e24]/95 via-[#020e24]/50 to-[#020e24]/20" />
             </>
           ) : (
@@ -285,21 +298,24 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {related.map((r: any) => (
                   <Link key={String(r._id)} href={`/blog/${r.slug}`}
-                    className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                    <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]">
-                      {r.coverImage?.url ? (
-                        <Image src={r.coverImage.url} alt={r.title} fill sizes="400px" className="object-cover group-hover:scale-105 transition duration-500" />
-                      ) : (
-                        <div className="h-full flex items-center justify-center text-4xl opacity-50">📝</div>
-                      )}
+                    className="flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                    <FocalImage
+                      image={r.coverImage}
+                      aspectRatio="16/9"
+                      sizes="400px"
+                      alt={r.title}
+                      className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]"
+                      imgClassName="group-hover:scale-105 transition duration-500"
+                      fallbackEmoji="📝"
+                    >
                       <span className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full ${CATEGORY_COLOR[r.category] || 'bg-[#3B82C4]'}`}>
                         {r.category}
                       </span>
-                    </div>
-                    <div className="p-5">
+                    </FocalImage>
+                    <div className="flex flex-col flex-1 p-5">
                       <h3 className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{r.title}</h3>
                       <p className="text-gray-500 text-xs mt-2 line-clamp-2">{r.excerpt}</p>
-                      <div className="flex items-center gap-2 mt-3 text-[11px] text-gray-500">
+                      <div className="flex items-center gap-2 mt-auto pt-3 text-[11px] text-gray-500">
                         <Clock size={10} /> {r.readTime}
                       </div>
                     </div>

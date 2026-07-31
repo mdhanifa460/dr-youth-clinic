@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from "mongoose";
 import type { BannerTemplateType } from "@/app/lib/banners/types";
 import type { ExperiencePresetId } from "@/app/lib/banners/experiencePresets";
+import { FocalPointSchema } from "@/app/models/shared/imageSchema";
+import type { FocalPoint } from "@/app/lib/media/focalPoint";
 
 export interface IBanner extends Document {
   title: string;
@@ -8,8 +10,8 @@ export interface IBanner extends Document {
   headline: string;
   subtitle: string;
   description: string;
-  desktopImage: { url: string; publicId: string };
-  mobileImage: { url: string; publicId: string };
+  desktopImage: { url: string; publicId: string; focalPoint?: FocalPoint };
+  mobileImage: { url: string; publicId: string; focalPoint?: FocalPoint };
   beforeImage: { url: string; publicId: string };
   video: { url: string; publicId: string };
   overlay: { enabled: boolean; style: "dark" | "gradient"; opacity: number };
@@ -123,6 +125,7 @@ export interface IBanner extends Document {
 }
 
 const ImageSubSchema = { url: { type: String, default: "" }, publicId: { type: String, default: "" } };
+const ImageWithFocalSubSchema = { ...ImageSubSchema, focalPoint: { type: FocalPointSchema, default: undefined } };
 const CTASubSchema = { label: { type: String, default: "" }, href: { type: String, default: "" } };
 
 const SmartRulesSchema = new Schema(
@@ -160,8 +163,8 @@ const BannerSchema = new Schema<IBanner>(
     subtitle: { type: String, default: "" },
     description: { type: String, default: "" },
 
-    desktopImage: ImageSubSchema,
-    mobileImage: ImageSubSchema,
+    desktopImage: ImageWithFocalSubSchema,
+    mobileImage: ImageWithFocalSubSchema,
     // Only meaningful for templateType "before-after" (paired with
     // desktopImage as the "after" image) — schema-available to every
     // template for simplicity, admin UI hides the field for other types.
