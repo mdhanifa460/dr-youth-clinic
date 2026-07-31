@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
-import { callClaude, parseClaudeJson } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   "content-block-service": "services",
@@ -28,7 +29,8 @@ Write 3-6 procedure steps relevant to this article (e.g. "how it works" / "what 
 
 Return ONLY valid JSON, no markdown: {"steps": [{"title": "...", "description": "..."}]}`;
 
-    const text = await callClaude(prompt, 600);
+    // Cached — see generate-faq/route.ts.
+    const text = await generateText(prompt, { maxTokens: 600, cacheKey: "content-blocks:generate-procedure" });
     const parsed = parseClaudeJson<{ steps: Array<{ title: string; description?: string }> }>(text);
     const steps = Array.isArray(parsed.steps) ? parsed.steps.filter((s) => s?.title?.trim()) : [];
     if (steps.length === 0) throw new Error("AI didn't return usable procedure steps");

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import { Service } from "@/app/models/Service";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
-import { callClaude } from "@/app/lib/ai/anthropic";
+import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 
 export async function POST(req: Request) {
   // 5 simulations per hour per IP — this hits a paid AI API with no auth wall,
@@ -11,8 +11,7 @@ export async function POST(req: Request) {
   const rl = await checkRateLimit(`journey-simulator:${ip}`, 5, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -64,7 +63,11 @@ Return ONLY valid JSON, no other text, in this exact shape:
 
 The 4 sessionRange values must divide ${sessions} total sessions sensibly (e.g. roughly 25%/50%/100%/post-treatment), matching the style "Session 1-2", "Session 3-4", etc.`;
 
-    const text = await callClaude(prompt, 900);
+    // Same service + same typed-in concern/goal text -> identical prompt hash
+    // -> cache hit, no second AI call. Different wording is a different
+    // hash, so this never serves a stale/mismatched journey to a patient
+    // who actually described something different.
+    const text = await generateText(prompt, { maxTokens: 900, cacheKey: "journey-simulator:generate" });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in AI response");

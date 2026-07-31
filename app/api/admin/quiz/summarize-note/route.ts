@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
-import { callClaude } from "@/app/lib/ai/anthropic";
+import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 
 // On-demand only — a doctor clicks "Summarize with AI" while reviewing a
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const denied = await requirePermission("ai-assessment", "view");
   if (denied) return denied;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -31,7 +31,7 @@ Summarize this in 1-2 short sentences for the treating doctor to skim before the
 
 Return ONLY the summary text, no preamble, no quotes.`;
 
-    const summary = await callClaude(prompt, 200);
+    const summary = await generateText(prompt, { maxTokens: 200 });
 
     return NextResponse.json({ success: true, data: { summary } });
   } catch (err: any) {

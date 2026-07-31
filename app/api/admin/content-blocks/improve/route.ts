@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
 import { stripHtml, plainTextToHtml } from "@/app/lib/contentBlocks/types";
-import { callClaude } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
 
 // Same sourceSystem -> module mapping as app/api/admin/section-templates/route.ts.
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
@@ -34,7 +34,9 @@ Improve the clarity, flow, and persuasiveness of this paragraph without changing
 
 Return ONLY the improved paragraph text, no preamble, no quotes, no markdown formatting.`;
 
-    const improved = await callClaude(prompt, 600);
+    // Cached — same paragraph resubmitted gets the same improved version
+    // back instead of another paid call.
+    const improved = await generateText(prompt, { maxTokens: 600, cacheKey: "content-blocks:improve" });
 
     return NextResponse.json({ success: true, data: { html: plainTextToHtml(improved) } });
   } catch (err: any) {

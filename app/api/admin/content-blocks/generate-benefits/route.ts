@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
-import { callClaude, parseClaudeJson } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   "content-block-service": "services",
@@ -30,7 +31,10 @@ Write 3-5 key benefits relevant to this article, each a short title (3-6 words) 
 
 Return ONLY valid JSON, no markdown: {"items": [{"icon": "⚡", "title": "...", "description": "..."}]}`;
 
-    const text = await callClaude(prompt, 700);
+    // Cached — see generate-faq/route.ts for why (same reasoning applies to
+    // every content-block generator: identical topic/context in, identical
+    // draft out, no reason to pay twice).
+    const text = await generateText(prompt, { maxTokens: 700, cacheKey: "content-blocks:generate-benefits" });
     const parsed = parseClaudeJson<{ items: Array<{ icon?: string; title: string; description?: string }> }>(text);
     const items = Array.isArray(parsed.items) ? parsed.items.filter((i) => i?.title?.trim()) : [];
     if (items.length === 0) throw new Error("AI didn't return usable benefits");

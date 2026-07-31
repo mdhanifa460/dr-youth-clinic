@@ -18,10 +18,27 @@ export async function GET() {
     const since7d = new Date(now - 7 * DAY_MS);
     const since30d = new Date(now - 30 * DAY_MS);
 
-    const [byProvider30d, recentFailures, total24h, fail24h] = await Promise.all([
+    const [byProvider30d, byModel30d, recentFailures, total24h, fail24h] = await Promise.all([
       (AiUsageLog as any).aggregate([
         { $match: { createdAt: { $gte: since30d } } },
         { $group: { _id: { provider: '$provider', success: '$success' }, count: { $sum: 1 } } },
+      ]),
+      // Grouped separately from byProvider30d because cost/tokens are only
+      // meaningful per model (see PRICING_USD_PER_1M_TOKENS in
+      // app/lib/ai/usageLog.ts) — a provider can serve more than one model.
+      (AiUsageLog as any).aggregate([
+        { $match: { createdAt: { $gte: since30d }, success: true, aiModel: { $exists: true } } },
+        {
+          $group: {
+            _id: '$aiModel',
+            calls: { $sum: 1 },
+            inputTokens: { $sum: '$inputTokens' },
+            outputTokens: { $sum: '$outputTokens' },
+            estimatedCostUsd: { $sum: '$estimatedCostUsd' },
+            avgLatencyMs: { $avg: '$latencyMs' },
+          },
+        },
+        { $sort: { estimatedCostUsd: -1 } },
       ]),
       (AiUsageLog as any)
         .find({ success: false })
@@ -43,6 +60,8 @@ export async function GET() {
       else byProvider[provider].failed += row.count;
     }
 
+    const estimatedCostUsd30d = byModel30d.reduce((sum: number, m: any) => sum + (m.estimatedCostUsd || 0), 0);
+
     const dailyBreakdown = await (AiUsageLog as any).aggregate([
       { $match: { createdAt: { $gte: since7d } } },
       {
@@ -60,6 +79,8 @@ export async function GET() {
       data: {
         last24h: { total: total24h, failed: fail24h },
         last30dByProvider: byProvider,
+        last30dByModel: byModel30d,
+        estimatedCostUsd30d,
         dailyBreakdown,
         recentFailures,
       },

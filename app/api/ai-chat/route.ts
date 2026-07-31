@@ -1,11 +1,13 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Conversation } from '@/app/models/Conversation';
+import { Faq } from '@/app/models/Faq';
 import { getSettings } from '@/app/models/Settings';
 import { embedQuery } from '@/app/lib/rag/EmbeddingService';
 import { vectorSearchKnowledgeBase } from '@/app/lib/rag/VectorSearchService';
+import { findBestPredefinedMatch } from '@/app/lib/rag/predefinedFaqMatch';
 import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
-import { anthropicStreamRequest } from '@/app/lib/ai/anthropic';
+import { generateChatStream, isConfiguredProviderReady } from '@/app/lib/ai';
 import { scoreHitsToCards, type RecommendationType } from '@/app/lib/rag/RecommendationService';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 
@@ -89,8 +91,54 @@ export async function POST(req: NextRequest) {
     role: m.role,
     content: m.content,
   }));
+  const isFirstMessage = priorMessages.length === 0;
 
   conversation.messages.push({ role: 'user', content: message, createdAt: new Date() });
+
+  const matchedEscalationRule = matchRule(aiConfig.escalationRules, message);
+
+  // Predefined-answer short-circuit — zero AI calls (no embedding, no vector
+  // search, no LLM generation) when the very first message of a session is
+  // a close match for a curated FAQ. Scoped to the first message only: once
+  // a conversation has turns of context, a canned FAQ answer would ignore
+  // that context and feel deaf to it, which the full retrieval+generation
+  // path handles correctly. Also skipped when an escalation rule matched —
+  // a sensitive-topic message should always get the careful, guardrailed
+  // full response, never a canned lookup. Reuses the same keyword-overlap
+  // matcher already proven in the FAQ assistant (app/lib/rag/RAGService.ts).
+  if (isFirstMessage && !matchedEscalationRule) {
+    try {
+      const activeFaqs = await (Faq as any)
+        .find({ active: true })
+        .select('question answer')
+        .limit(300)
+        .lean();
+      const predefined = findBestPredefinedMatch(message, activeFaqs);
+      if (predefined) {
+        const assistantCreatedAt = new Date();
+        conversation.messages.push({
+          role: 'assistant', content: predefined.answer, cards: [], escalated: false, createdAt: assistantCreatedAt,
+        });
+        conversation.lastMessageAt = assistantCreatedAt;
+        await conversation.save().catch((e: any) => console.error('[ai-chat] failed to persist conversation', e));
+
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(ndjson({ type: 'delta', text: predefined.answer }));
+            controller.enqueue(ndjson({ type: 'cards', cards: [] }));
+            controller.enqueue(ndjson({ type: 'meta', createdAt: assistantCreatedAt.toISOString() }));
+            controller.enqueue(ndjson({ type: 'done' }));
+            controller.close();
+          },
+        });
+        return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' } });
+      }
+    } catch (e) {
+      console.error('[ai-chat] predefined-match lookup failed', e);
+      // Fall through to the full retrieval+generation path below — a failed
+      // lookup should never block the patient from getting an answer.
+    }
+  }
 
   // Retrieval — one embedding + one vector search serves both the grounding
   // context for the text answer AND the recommendation cards, rather than
@@ -124,8 +172,6 @@ export async function POST(req: NextRequest) {
   const quickActionsText = (aiConfig.quickActions || [])
     .map((a: any) => `${a.label} -> ${a.action}`).join(', ');
 
-  const matchedEscalationRule = matchRule(aiConfig.escalationRules, message);
-
   const systemPrompt = [
     CLINICAL_AI_GUARDRAILS,
     aiConfig.systemPrompt,
@@ -136,7 +182,7 @@ export async function POST(req: NextRequest) {
     matchedEscalationRule ? `This message touches a sensitive topic the clinic wants handled carefully: ${matchedEscalationRule.message}` : '',
   ].filter(Boolean).join('\n\n');
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(ndjson({ type: 'error', message: 'AI service is not configured.' }));
@@ -146,18 +192,28 @@ export async function POST(req: NextRequest) {
     return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   }
 
-  const upstream = await anthropicStreamRequest({
-    model: aiConfig.model || 'claude-haiku-4-5-20251001',
-    max_tokens: 500,
-    temperature: aiConfig.temperature ?? 0.4,
+  // Goes through the provider-agnostic facade (app/lib/ai/index.ts) instead
+  // of talking to Anthropic's raw SSE shape directly — generateChatStream()
+  // normalizes whichever provider AI_PROVIDER points at into plain text
+  // deltas. `model` is Anthropic-specific (Settings.ai.model stores Claude
+  // model IDs) and is simply ignored by any other provider — see
+  // app/lib/ai/types.ts.
+  const chatMessages = [...priorMessages, { role: 'user' as const, content: message }];
+  const streamGenerator = generateChatStream(chatMessages, {
     system: systemPrompt,
-    messages: [...priorMessages, { role: 'user', content: message }],
+    maxTokens: 500,
+    temperature: aiConfig.temperature ?? 0.4,
+    model: aiConfig.model || 'claude-haiku-4-5-20251001',
   });
 
-  if (!upstream.ok) {
-    console.error('[ai-chat] Anthropic error', upstream.status, await upstream.clone().text());
-  }
-  if (!upstream.ok || !upstream.body) {
+  // Pull the first chunk before committing to the streaming Response, same
+  // as the old upstream.ok check — a connection failure surfaces as a clean
+  // error event instead of a Response that starts streaming and then dies.
+  let firstChunk: IteratorResult<string>;
+  try {
+    firstChunk = await streamGenerator.next();
+  } catch (err) {
+    console.error('[ai-chat] provider error', err);
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(ndjson({ type: 'error', message: 'AI service is temporarily unavailable — please try again.' }));
@@ -171,37 +227,23 @@ export async function POST(req: NextRequest) {
 
   const outgoing = new ReadableStream({
     async start(controller) {
-      const reader = upstream.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
       let fullText = '';
 
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const events = buffer.split('\n\n');
-          buffer = events.pop() ?? '';
-
-          for (const evt of events) {
-            const dataLine = evt.split('\n').find((l) => l.startsWith('data:'));
-            if (!dataLine) continue;
-            const jsonStr = dataLine.slice(5).trim();
-            if (!jsonStr) continue;
-            try {
-              const parsed = JSON.parse(jsonStr);
-              if (parsed.type === 'content_block_delta' && parsed.delta?.type === 'text_delta') {
-                const text = parsed.delta.text as string;
-                fullText += text;
-                controller.enqueue(ndjson({ type: 'delta', text }));
-              }
-            } catch {
-              // Skip unparseable SSE fragments (e.g. ping events) rather than aborting the stream.
-            }
-          }
+        if (!firstChunk.done) {
+          fullText += firstChunk.value;
+          controller.enqueue(ndjson({ type: 'delta', text: firstChunk.value }));
         }
+        for await (const text of streamGenerator) {
+          fullText += text;
+          controller.enqueue(ndjson({ type: 'delta', text }));
+        }
+      } catch (err) {
+        // A failure partway through the stream — whatever text already
+        // reached the visitor stays; fall through to persist/close exactly
+        // like a clean finish rather than leaving the widget hanging with
+        // no 'done' event.
+        console.error('[ai-chat] mid-stream error', err);
       } finally {
         const assistantCreatedAt = new Date();
         conversation.messages.push({ role: 'assistant', content: fullText || '(no response)', cards, escalated: !!matchedEscalationRule, createdAt: assistantCreatedAt });

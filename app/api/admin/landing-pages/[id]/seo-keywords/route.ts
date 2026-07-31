@@ -23,7 +23,7 @@ Return ONLY valid JSON, no explanation, no markdown:
 {"title": "...", "description": "...", "keywords": ["kw1","kw2","kw3","kw4","kw5","kw6","kw7","kw8","kw9","kw10","kw11","kw12"]}`;
 
   try {
-    const raw = await callGeminiText(prompt, { temperature: 0.4, maxTokens: 500, jsonMode: true });
+    const raw = await callGeminiText(prompt, { temperature: 0.4, maxTokens: 500, jsonMode: true, cacheKey: 'seo-keywords:landing-page' });
     const parsed = JSON.parse(raw);
     if (
       typeof parsed.title === 'string' &&

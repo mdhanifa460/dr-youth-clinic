@@ -3,7 +3,8 @@ import { requirePermission } from '@/app/lib/adminAuth';
 import { connectDB } from '@/app/lib/mongodb';
 import { getSettings } from '@/app/models/Settings';
 import { Video } from '@/app/models/Video';
-import { callClaude, parseClaudeJson } from '@/app/lib/ai/anthropic';
+import { generateText, getConfiguredProviderEnvKeyName, isConfiguredProviderReady } from '@/app/lib/ai';
+import { parseClaudeJson } from '@/app/lib/ai/anthropic';
 import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
 
 export const dynamic = 'force-dynamic';
@@ -24,8 +25,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const video = await (Video as any).findById(params.id).lean();
   if (!video) return NextResponse.json({ success: false, message: 'Video not found' }, { status: 404 });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ success: false, message: 'ANTHROPIC_API_KEY not set in .env.local' }, { status: 503 });
+  if (!isConfiguredProviderReady()) {
+    return NextResponse.json({ success: false, message: `${getConfiguredProviderEnvKeyName()} not set in .env.local` }, { status: 503 });
   }
 
   const chapterText = (video.chapters || []).map((c: any) => c.label).filter(Boolean).join(', ');
@@ -49,7 +50,8 @@ Return ONLY valid JSON, no explanation, no markdown:
 {"summary": "2-3 sentence summary of what this video covers", "keyTakeaways": ["takeaway 1", "takeaway 2", "takeaway 3", "takeaway 4"]}`;
 
   try {
-    const raw = await callClaude(prompt, 500);
+    // Cached (2h) — see generate-blog/route.ts.
+    const raw = await generateText(prompt, { maxTokens: 500, cacheKey: "videos:generate-summary", cacheTtlSeconds: 7200 });
     const parsed = parseClaudeJson<{ summary: string; keyTakeaways: string[] }>(raw);
     if (typeof parsed.summary !== 'string' || !Array.isArray(parsed.keyTakeaways)) {
       throw new Error('Unexpected AI response shape');

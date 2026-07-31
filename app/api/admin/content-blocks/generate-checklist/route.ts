@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
-import { callClaude, parseClaudeJson } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   "content-block-service": "services",
@@ -29,7 +30,8 @@ Write a short checklist title and 4-7 practical checklist items relevant to this
 
 Return ONLY valid JSON, no markdown: {"title": "...", "items": ["...", "..."]}`;
 
-    const text = await callClaude(prompt, 500);
+    // Cached — see generate-faq/route.ts.
+    const text = await generateText(prompt, { maxTokens: 500, cacheKey: "content-blocks:generate-checklist" });
     const parsed = parseClaudeJson<{ title?: string; items: string[] }>(text);
     const items = Array.isArray(parsed.items) ? parsed.items.filter((i) => typeof i === "string" && i.trim()) : [];
     if (items.length === 0) throw new Error("AI didn't return usable checklist items");

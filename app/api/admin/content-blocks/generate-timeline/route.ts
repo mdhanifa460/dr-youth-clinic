@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
-import { callClaude, parseClaudeJson } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   "content-block-service": "services",
@@ -32,7 +33,8 @@ Write a 3-6 step timeline relevant to this article (e.g. treatment/recovery stag
 
 Return ONLY valid JSON, no markdown: {"steps": [{"label": "...", "description": "...", "duration": "..."}]}`;
 
-    const text = await callClaude(prompt, 700);
+    // Cached — see generate-faq/route.ts.
+    const text = await generateText(prompt, { maxTokens: 700, cacheKey: "content-blocks:generate-timeline" });
     const parsed = parseClaudeJson<{ steps: Array<{ label: string; description?: string; duration?: string }> }>(text);
     const steps = Array.isArray(parsed.steps) ? parsed.steps.filter((s) => s?.label?.trim()) : [];
     if (steps.length === 0) throw new Error("AI didn't return usable timeline steps");

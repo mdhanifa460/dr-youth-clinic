@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
-import { callClaude } from "@/app/lib/ai/anthropic";
+import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 import { deriveConfidenceLevel } from "@/app/lib/confidenceLevel";
 
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const denied = await requirePermission("ai-assessment", "full");
   if (denied) return denied;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -58,7 +58,13 @@ Return ONLY valid JSON array, no other text:
   { "name": "...", "icon": "...", "description": "...", "confidence": 95, "sessions": "...", "duration": "...", "recovery": "...", "price": "₹...", "advantages": ["...","..."], "disadvantages": ["..."], "cta": "Book Consultation", "clinicalIndicators": ["..."], "possibleCauses": ["..."], "suggestedEvaluation": ["..."], "contraindications": [], "doctorNotes": "...", "patientEducation": ["..."] }
 ]`;
 
-    const text = await callClaude(prompt, 3000);
+    // Cached (24h) — concernLabel comes from a small, fixed quiz-config
+    // list ("Hair fall", "Acne", ...), not free text, so the same concern
+    // gets asked repeatedly as admins iterate on the quiz config. The
+    // underlying clinical categorization doesn't need to be regenerated
+    // every time — a day-long cache turns N identical requests for the
+    // same concern into 1 real API call.
+    const text = await generateText(prompt, { maxTokens: 3000, cacheKey: "quiz:ai-suggest", cacheTtlSeconds: 86400 });
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("No JSON in AI response");

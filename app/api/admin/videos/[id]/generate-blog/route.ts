@@ -4,7 +4,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { getSettings } from '@/app/models/Settings';
 import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
-import { callClaude, parseClaudeJson } from '@/app/lib/ai/anthropic';
+import { generateText, getConfiguredProviderEnvKeyName, isConfiguredProviderReady } from '@/app/lib/ai';
+import { parseClaudeJson } from '@/app/lib/ai/anthropic';
 import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
 
 export const dynamic = 'force-dynamic';
@@ -47,8 +48,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const video = await (Video as any).findById(params.id).lean();
   if (!video) return NextResponse.json({ success: false, message: 'Video not found' }, { status: 404 });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ success: false, message: 'ANTHROPIC_API_KEY not set in .env.local' }, { status: 503 });
+  if (!isConfiguredProviderReady()) {
+    return NextResponse.json({ success: false, message: `${getConfiguredProviderEnvKeyName()} not set in .env.local` }, { status: 503 });
   }
 
   const context = [
@@ -71,7 +72,10 @@ Return ONLY valid JSON, no explanation, no markdown:
 {"title": "article title, under 70 characters", "excerpt": "1-2 sentence summary, under 200 characters", "body": "the full article in Markdown, 400-700 words, with ## subheadings"}`;
 
   try {
-    const raw = await callClaude(prompt, 2000);
+    // Cached (2h) — the prompt is built from the video's own fields, so it
+    // only changes if the video is actually edited; a re-click on the same
+    // unedited video shouldn't pay for a second draft.
+    const raw = await generateText(prompt, { maxTokens: 2000, cacheKey: "videos:generate-blog", cacheTtlSeconds: 7200 });
     const parsed = parseClaudeJson<{ title: string; excerpt: string; body: string }>(raw);
     if (!parsed.title || !parsed.body) throw new Error('Unexpected AI response shape');
 

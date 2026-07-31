@@ -4,7 +4,7 @@ import { requirePermission } from "@/app/lib/adminAuth";
 import { Lead } from "@/app/models/Lead";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
 import { migrateLegacyQuizConfig, backfillClinicalFields } from "@/app/lib/quizMigration";
-import { callClaude } from "@/app/lib/ai/anthropic";
+import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 
 // Doctor Review Mode, step 1 — a doctor/staff member (with at least "view")
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const denied = await requirePermission("ai-assessment", "full");
   if (denied) return denied;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -108,7 +108,7 @@ Possible Treatment Categories:
 
 Keep it factual and concise. This is a draft starting point — the doctor will review and edit it before it is ever finalized or acted on.`;
 
-    const draftText = await callClaude(prompt, 900);
+    const draftText = await generateText(prompt, { maxTokens: 900 });
 
     const now = new Date();
     await (Lead as any).findByIdAndUpdate(leadId, {

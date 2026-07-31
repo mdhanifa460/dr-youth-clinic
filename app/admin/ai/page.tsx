@@ -794,14 +794,16 @@ function ConversationsTab() {
 
 // ── Analytics tab (extended with escalations + feedback) ─────────────────
 // ── AI Usage tab ─────────────────────────────────────────────────────────
-// Raw provider call volume/success-rate across every AI feature on the
-// platform (video generation, SEO suggestions, patient reports, the
-// chatbot — anything routed through app/lib/ai/anthropic.ts or gemini.ts),
-// not just chatbot conversations (see AnalyticsTab below for that). Exists
-// to catch "something is calling AI far more than expected" or "every call
-// has failed since Tuesday" before a bill or an outage is the first sign —
-// deliberately just counts and a failure list, not a cost estimate, since
-// provider pricing changes too often to keep an accurate $-figure honest.
+// Raw provider call volume/success-rate/token-usage across every AI feature
+// on the platform (video generation, SEO suggestions, patient reports, the
+// chatbot — anything routed through app/lib/ai/providers/*.ts), not just
+// chatbot conversations (see AnalyticsTab below for that). Exists to catch
+// "something is calling AI far more than expected" or "every call has
+// failed since Tuesday" before a bill or an outage is the first sign.
+// estimatedCostUsd is computed from a manually maintained price table (see
+// app/lib/ai/usageLog.ts) and clearly labeled "estimated" in the UI — it's
+// a best-effort signal for spotting cost spikes, not a substitute for the
+// provider's own billing dashboard.
 function AiUsageTab() {
   const [data, setData] = useState<any>(null);
 
@@ -813,6 +815,7 @@ function AiUsageTab() {
 
   const providers = Object.entries(data.last30dByProvider) as [string, { total: number; success: number; failed: number }][];
   const maxDaily = Math.max(1, ...data.dailyBreakdown.map((d: any) => d.total));
+  const byModel: any[] = data.last30dByModel || [];
 
   return (
     <div className="space-y-6">
@@ -825,6 +828,10 @@ function AiUsageTab() {
           <p className={`text-2xl font-bold ${data.last24h.failed > 0 ? 'text-red-500' : 'text-[#0B2560]'}`}>{data.last24h.failed}</p>
           <p className="text-[11px] text-gray-400 mt-0.5">Failed — last 24h</p>
         </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+          <p className="text-2xl font-bold text-[#0B2560]">${(data.estimatedCostUsd30d ?? 0).toFixed(2)}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Est. cost — last 30d</p>
+        </div>
         {providers.map(([provider, s]) => (
           <div key={provider} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <p className="text-2xl font-bold text-[#0B2560]">{s.total}</p>
@@ -832,6 +839,24 @@ function AiUsageTab() {
           </div>
         ))}
       </div>
+
+      {byModel.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-[#0B2560] mb-1">Cost &amp; Tokens by Model — Last 30 Days</h2>
+          <p className="text-[11px] text-gray-400 mb-4">Estimated from a manually maintained price table, not live billing — use as a directional signal.</p>
+          <div className="space-y-2">
+            {byModel.map((m: any) => (
+              <div key={m._id} className="flex items-center justify-between gap-3 py-1.5 border-b border-gray-50 text-xs">
+                <span className="font-semibold text-gray-700">{m._id}</span>
+                <span className="text-gray-400">{m.calls} calls</span>
+                <span className="text-gray-400">{((m.inputTokens || 0) + (m.outputTokens || 0)).toLocaleString()} tokens</span>
+                <span className="text-gray-400">{Math.round(m.avgLatencyMs || 0)}ms avg</span>
+                <span className="font-bold text-[#0B2560]">{m.estimatedCostUsd != null ? `~$${m.estimatedCostUsd.toFixed(3)}` : '—'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
         <h2 className="text-sm font-bold text-[#0B2560] mb-4">Call Volume — Last 7 Days</h2>

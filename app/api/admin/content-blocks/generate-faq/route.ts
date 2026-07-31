@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
-import { callClaude, parseClaudeJson } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   "content-block-service": "services",
@@ -31,7 +32,15 @@ Write 4-6 frequently asked questions a patient researching this topic would have
 
 Return ONLY valid JSON, no markdown: {"items": [{"question": "...", "answer": "..."}]}`;
 
-    const text = await callClaude(prompt, 900);
+    // Phase 1 pilot: this route is the first to call the provider-agnostic
+    // facade (app/lib/ai/index.ts) instead of callClaude() directly, so it
+    // now honors AI_PROVIDER — every other AI route still calls Claude by
+    // name. Defaults to Anthropic (unchanged behavior) unless AI_PROVIDER is
+    // explicitly set to "openai" or "gemini" with the matching key present.
+    // Cached: the same topic/context resubmitted (double-click, another
+    // admin trying the same article) shouldn't pay for a second generation
+    // of what would come back nearly identical.
+    const text = await generateText(prompt, { maxTokens: 900, cacheKey: "content-blocks:generate-faq" });
     const parsed = parseClaudeJson<{ items: Array<{ question: string; answer: string }> }>(text);
     const items = Array.isArray(parsed.items) ? parsed.items.filter((i) => i?.question?.trim() && i?.answer?.trim()) : [];
     if (items.length === 0) throw new Error("AI didn't return usable FAQ items");

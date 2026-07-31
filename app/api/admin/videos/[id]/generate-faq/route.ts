@@ -3,7 +3,8 @@ import { requirePermission } from '@/app/lib/adminAuth';
 import { connectDB } from '@/app/lib/mongodb';
 import { getSettings } from '@/app/models/Settings';
 import { Video } from '@/app/models/Video';
-import { callClaude, parseClaudeJson } from '@/app/lib/ai/anthropic';
+import { generateText, getConfiguredProviderEnvKeyName, isConfiguredProviderReady } from '@/app/lib/ai';
+import { parseClaudeJson } from '@/app/lib/ai/anthropic';
 import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
 
 export const dynamic = 'force-dynamic';
@@ -24,8 +25,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const video = await (Video as any).findById(params.id).lean();
   if (!video) return NextResponse.json({ success: false, message: 'Video not found' }, { status: 404 });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ success: false, message: 'ANTHROPIC_API_KEY not set in .env.local' }, { status: 503 });
+  if (!isConfiguredProviderReady()) {
+    return NextResponse.json({ success: false, message: `${getConfiguredProviderEnvKeyName()} not set in .env.local` }, { status: 503 });
   }
 
   const context = [
@@ -47,7 +48,8 @@ Return ONLY valid JSON, no explanation, no markdown:
 {"faq": [{"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}]}`;
 
   try {
-    const raw = await callClaude(prompt, 900);
+    // Cached (2h) — see generate-blog/route.ts.
+    const raw = await generateText(prompt, { maxTokens: 900, cacheKey: "videos:generate-faq", cacheTtlSeconds: 7200 });
     const parsed = parseClaudeJson<{ faq: { question: string; answer: string }[] }>(raw);
     if (!Array.isArray(parsed.faq)) throw new Error('Unexpected AI response shape');
     return NextResponse.json({ success: true, data: parsed.faq.slice(0, 8) });

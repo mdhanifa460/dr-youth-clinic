@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
 import { stripHtml, plainTextToHtml } from "@/app/lib/contentBlocks/types";
-import { callClaude } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
 
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   "content-block-service": "services",
@@ -34,7 +34,9 @@ Rewrite this text in a clear, clinically precise, reassuring tone appropriate fo
 
 Return ONLY the rewritten text, no preamble, no quotes, no markdown formatting.`;
 
-    const rewritten = await callClaude(prompt, 600);
+    // Cached — same paragraph resubmitted gets the same rewrite back
+    // instead of another paid call.
+    const rewritten = await generateText(prompt, { maxTokens: 600, cacheKey: "content-blocks:generate-medical-tone" });
 
     return NextResponse.json({
       success: true,

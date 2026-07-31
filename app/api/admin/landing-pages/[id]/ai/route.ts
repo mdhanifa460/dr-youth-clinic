@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
-import { callClaude } from '@/app/lib/ai/anthropic';
+import { generateText } from '@/app/lib/ai';
 
 type AiType = 'headline' | 'cta' | 'faq' | 'seo' | 'benefits' | 'problem';
 
@@ -40,7 +40,10 @@ export async function POST(
     const { type, context } = await req.json() as { type: AiType; context: string };
 
     const prompt = buildPrompt(type, context || 'skin and hair treatments');
-    const result = await callClaude(prompt, 1024);
+    // Cached — the prompt already fully encodes `type` and `context`, so
+    // identical (type, context) pairs (re-clicking the same AI action)
+    // reuse the cached copy instead of paying for it again.
+    const result = await generateText(prompt, { maxTokens: 1024, cacheKey: "landing-pages:ai" });
 
     return NextResponse.json({ success: true, result });
   } catch (error) {

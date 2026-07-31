@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
-import { callClaude } from '@/app/lib/ai/anthropic';
+import { generateText, getConfiguredProviderEnvKeyName, isConfiguredProviderReady } from '@/app/lib/ai';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,9 +8,8 @@ export async function POST(req: NextRequest) {
   const denied = await requirePermission('intelligence', 'full');
   if (denied) return denied;
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ success: false, message: 'ANTHROPIC_API_KEY not set' }, { status: 501 });
+  if (!isConfiguredProviderReady()) {
+    return NextResponse.json({ success: false, message: `${getConfiguredProviderEnvKeyName()} not set` }, { status: 501 });
   }
 
   try {
@@ -55,7 +54,11 @@ Return ONLY valid JSON:
   }
 }`;
 
-    const text = await callClaude(prompt, 1800);
+    // Cached (10 min) — the prompt encodes the live stats snapshot, so this
+    // only actually re-generates when the underlying numbers move; a
+    // dashboard refreshed twice in a few minutes reuses the same analysis
+    // instead of paying for an effectively-identical one.
+    const text = await generateText(prompt, { maxTokens: 1800, cacheKey: "admin:intelligence-ai", cacheTtlSeconds: 600 });
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('AI returned unexpected format');
 

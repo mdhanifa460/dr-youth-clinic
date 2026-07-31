@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
-import { callClaudeMessages } from "@/app/lib/ai/anthropic";
+import { generateChat, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 
 // Doctor-facing only — this is a triage aid a staff member requests on
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const denied = await requirePermission("ai-assessment", "view");
   if (denied) return denied;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -56,9 +56,8 @@ Give the doctor 2-4 short, purely observational bullet points on what's visually
 
 Return ONLY the bullet points, no preamble, no disclaimer text (the disclaimer is already shown in the UI).`;
 
-    const analysis = await callClaudeMessages({
-      maxTokens: 350,
-      messages: [
+    const analysis = await generateChat(
+      [
         {
           role: "user",
           content: [
@@ -67,7 +66,8 @@ Return ONLY the bullet points, no preamble, no disclaimer text (the disclaimer i
           ],
         },
       ],
-    });
+      { maxTokens: 350 }
+    );
 
     return NextResponse.json({ success: true, data: { analysis } });
   } catch (err: any) {

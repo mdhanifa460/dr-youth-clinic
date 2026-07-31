@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
-import { callClaudeMessages } from "@/app/lib/ai/anthropic";
+import { generateChat, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 import { connectDB } from "@/app/lib/mongodb";
 import { getSettings } from "@/app/models/Settings";
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit(`assessment-chat:${ip}`, 20, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -88,7 +88,7 @@ Rules:
 - Keep answers to 2-4 short sentences, friendly and clear, no medical jargon without explaining it.
 - End with a brief nudge toward booking a free consultation when it's a natural fit, but not on every single reply.`;
 
-    const reply = await callClaudeMessages({ system: systemPrompt, messages: cleanMessages, maxTokens: 400 });
+    const reply = await generateChat(cleanMessages, { system: systemPrompt, maxTokens: 400 });
 
     return NextResponse.json({ success: true, data: { reply } });
   } catch (err: any) {

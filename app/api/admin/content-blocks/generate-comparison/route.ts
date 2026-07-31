@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/app/lib/adminAuth";
 import type { AdminModule } from "@/app/lib/permissions";
-import { callClaude, parseClaudeJson } from "@/app/lib/ai/anthropic";
+import { generateText } from "@/app/lib/ai";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 
 const MODULE_BY_SYSTEM: Record<string, AdminModule> = {
   "content-block-service": "services",
@@ -30,7 +31,8 @@ Propose a short comparison table relevant to this article (e.g. comparing treatm
 
 Return ONLY valid JSON, no markdown: {"headers": ["...", "..."], "rows": [{"label": "...", "values": ["...", "..."]}]}`;
 
-    const text = await callClaude(prompt, 700);
+    // Cached — see generate-faq/route.ts.
+    const text = await generateText(prompt, { maxTokens: 700, cacheKey: "content-blocks:generate-comparison" });
     const parsed = parseClaudeJson<{ headers: string[]; rows: Array<{ label: string; values: string[] }> }>(text);
     const headers = Array.isArray(parsed.headers) ? parsed.headers.filter((h) => typeof h === "string") : [];
     const rows = Array.isArray(parsed.rows) ? parsed.rows.filter((r) => r?.label?.trim()) : [];

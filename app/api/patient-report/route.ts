@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import { Lead } from "@/app/models/Lead";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
-import { callClaude, parseClaudeJson } from "@/app/lib/ai/anthropic";
+import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 
 // Public, unauthenticated — fired once from the Results screen right after
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit(`patient-report:${ip}`, 20, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -61,7 +62,7 @@ Rules:
 - Never diagnose, never guarantee an outcome, never state a treatment is "needed" — frame treatmentOptionsDiscussed as things the doctor may discuss
 - questionsForDoctor should be genuinely useful questions the patient wouldn't have thought to ask`;
 
-    const raw = await callClaude(prompt, 700);
+    const raw = await generateText(prompt, { maxTokens: 700 });
     const parsed = parseClaudeJson<{
       summary?: string;
       contributingFactors?: string[];

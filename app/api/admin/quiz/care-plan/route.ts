@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import { requirePermission } from "@/app/lib/adminAuth";
 import { Lead } from "@/app/models/Lead";
-import { callClaude } from "@/app/lib/ai/anthropic";
+import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 
 // Doctor Review Mode, final step — "Generate Personalized Care Plan". The
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const denied = await requirePermission("ai-assessment", "full");
   if (denied) return denied;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
   }
 
@@ -65,7 +65,7 @@ Write a short, warm, patient-facing "Personalized Care Plan" (4-6 sentences) tha
 
 Return ONLY the care plan text, no preamble, no headings.`;
 
-    const text = await callClaude(prompt, 500);
+    const text = await generateText(prompt, { maxTokens: 500 });
     const generatedAt = new Date();
     lead.carePlan = { text, generatedAt };
     await lead.save();

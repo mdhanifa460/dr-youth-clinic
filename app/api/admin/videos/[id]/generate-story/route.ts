@@ -5,7 +5,8 @@ import { getSettings } from '@/app/models/Settings';
 import { Video } from '@/app/models/Video';
 import { Story } from '@/app/models/Story';
 import { StoryType } from '@/app/models/StoryType';
-import { callClaude, parseClaudeJson } from '@/app/lib/ai/anthropic';
+import { generateText, getConfiguredProviderEnvKeyName, isConfiguredProviderReady } from '@/app/lib/ai';
+import { parseClaudeJson } from '@/app/lib/ai/anthropic';
 import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
 
 export const dynamic = 'force-dynamic';
@@ -37,8 +38,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ success: false, message: 'Create at least one Story Type first (Admin → Web Stories → Story Types) before generating a story draft.' }, { status: 400 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ success: false, message: 'ANTHROPIC_API_KEY not set in .env.local' }, { status: 503 });
+  if (!isConfiguredProviderReady()) {
+    return NextResponse.json({ success: false, message: `${getConfiguredProviderEnvKeyName()} not set in .env.local` }, { status: 503 });
   }
 
   const context = [
@@ -58,7 +59,8 @@ Return ONLY valid JSON, no explanation, no markdown:
 {"title": "story title, under 60 characters", "description": "1 sentence description", "slides": [{"title": "slide 1 headline", "body": "1-2 sentence slide text"}, {"title": "slide 2 headline", "body": "1-2 sentence slide text"}, {"title": "slide 3 headline", "body": "1-2 sentence slide text"}]}`;
 
   try {
-    const raw = await callClaude(prompt, 900);
+    // Cached (2h) — see generate-blog/route.ts.
+    const raw = await generateText(prompt, { maxTokens: 900, cacheKey: "videos:generate-story", cacheTtlSeconds: 7200 });
     const parsed = parseClaudeJson<{ title: string; description: string; slides: { title: string; body: string }[] }>(raw);
     if (!parsed.title || !Array.isArray(parsed.slides) || parsed.slides.length === 0) {
       throw new Error('Unexpected AI response shape');
