@@ -28,6 +28,13 @@ export interface SectionRegistryEntry {
   // (or similar) animation internally — the zone wrapper must not also
   // animate it, or it double-animates.
   selfAnimates?: boolean;
+  // True if only one instance of this sectionType may exist per page (across
+  // both zones combined) — e.g. FAQ, Appointment Card, Doctor Card, Related
+  // Services, Related Blogs. The builder hides/disables it in the Section
+  // Library once one is already placed anywhere on the page. Sections like
+  // Treatment CTA, Testimonials, Video, or Newsletter are repeatable and
+  // leave this unset.
+  singleton?: boolean;
   allowedPageTypes: SectionPageType[];
   allowedZones: SectionZone[];
 }

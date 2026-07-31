@@ -1426,21 +1426,21 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                   style={{ width: "18px", height: "18px", margin: "2px", transform: form.layoutEngineEnabled ? "translateX(18px)" : "translateX(0)" }}
                 />
               </div>
-              <span className="font-bold text-[#0B2560] text-sm">Use Content Layout Engine sidebar</span>
+              <span className="font-bold text-[#0B2560] text-sm">Use Content Layout Engine</span>
             </label>
             <p className="text-xs text-gray-500">
-              When on, the sidebar below is built from registry sections instead of the fixed booking-card/eligibility-checker/EMI-calculator stack. Every other part of this page is unaffected.
+              When on, the sidebar is fully replaced by whatever you build below (instead of the fixed booking-card/eligibility-checker/EMI-calculator stack), and extra sections can be added to the main content column after the existing narrative. Every other part of this page is unaffected.
             </p>
             {form.layoutEngineEnabled && initialData?._id && (
               <LayoutEngineSectionBuilder
                 pageType="service"
                 pageId={initialData._id}
-                zones={[{ name: "sidebar", label: "Sidebar" }]}
+                zones={[{ name: "main", label: "Main Content" }, { name: "sidebar", label: "Sidebar" }]}
               />
             )}
             {form.layoutEngineEnabled && !initialData?._id && (
               <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-                Save this service first, then reopen it here to add sidebar sections.
+                Save this service first, then reopen it here to add sections.
               </p>
             )}
           </div>

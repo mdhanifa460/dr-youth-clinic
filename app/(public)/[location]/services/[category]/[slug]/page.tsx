@@ -348,19 +348,27 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   // position below must stand down, or the same content renders twice.
   const inBlocks = (type: string) => hasVisibleBlockType(svc.narrativeBlocks, type as any);
 
-  // Content Layout Engine — sidebar zone only, opt-in per service via
-  // `layoutEngineEnabled`. Every other zone on this page (hero, main
-  // content, related, before-footer) stays on the hardcoded renderer below
-  // until its own migration phase; this is deliberately a partial swap, not
-  // a full-page cutover, per the incremental migration plan.
-  const layoutEngineSidebar = svc.layoutEngineEnabled
-    ? await renderZoneSections({
-        pageType: 'service',
-        pageId: String(svc._id),
-        context: { page: { price: svc.price, name: svc.name } },
-        zone: 'sidebar',
-      })
-    : null;
+  // Content Layout Engine — sidebar is a full swap (old hardcoded widget
+  // stack replaced entirely), main content is additive (extra registry
+  // sections appended after the existing narrative, which stays untouched).
+  // Both opt in per service via `layoutEngineEnabled`. Hero/related/
+  // before-footer stay on the hardcoded renderer for now.
+  const [layoutEngineSidebar, layoutEngineMain] = svc.layoutEngineEnabled
+    ? await Promise.all([
+        renderZoneSections({
+          pageType: 'service',
+          pageId: String(svc._id),
+          context: { page: { price: svc.price, name: svc.name } },
+          zone: 'sidebar',
+        }),
+        renderZoneSections({
+          pageType: 'service',
+          pageId: String(svc._id),
+          context: { page: { price: svc.price, name: svc.name } },
+          zone: 'main',
+        }),
+      ])
+    : [null, null];
 
   return (
     <>
@@ -787,6 +795,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 ))}
               </div>
             </div>
+
+            {layoutEngineMain && layoutEngineMain.length > 0 && (
+              <div className="space-y-8">{layoutEngineMain}</div>
+            )}
 
           </div>
 

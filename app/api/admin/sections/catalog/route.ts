@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
       label: e.label,
       icon: e.icon,
       allowedZones: e.allowedZones,
+      singleton: !!e.singleton,
     }));
 
   return NextResponse.json({ success: true, data: catalog });
