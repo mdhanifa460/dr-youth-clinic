@@ -46,6 +46,8 @@ export default function VideosPage() {
   const [statusTouched, setStatusTouched] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [igSyncing, setIgSyncing] = useState(false);
+  const [igSyncMessage, setIgSyncMessage] = useState('');
 
   // Fetch the full (small, curated) video library once — the category
   // filter used to re-fetch from the server on every dropdown change even
@@ -93,6 +95,21 @@ export default function VideosPage() {
     }
   }
 
+  async function syncFromInstagram() {
+    setIgSyncing(true);
+    setIgSyncMessage('');
+    try {
+      const res = await fetch('/api/admin/videos/sync-instagram', { method: 'POST' });
+      const data = await res.json();
+      setIgSyncMessage(data.message || (data.success ? 'Sync complete.' : 'Sync failed.'));
+      if (data.success && data.added > 0) await fetchVideos();
+    } catch {
+      setIgSyncMessage('Sync failed — network error.');
+    } finally {
+      setIgSyncing(false);
+    }
+  }
+
   const filteredVideos = useMemo(
     () => videos.filter((v) => (category ? v.category === category : true) && (status ? v.status === status : true)),
     [videos, category, status]
@@ -123,8 +140,16 @@ export default function VideosPage() {
             disabled={syncing}
             className="inline-flex items-center gap-2 bg-white border border-gray-200 text-[#0B2560] px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50"
           >
-            {syncing ? <Loader size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            {syncing ? <Loader size={15} className="animate-spin" /> : <FaYoutube size={15} className="text-red-600" />}
             Sync from YouTube
+          </button>
+          <button
+            onClick={syncFromInstagram}
+            disabled={igSyncing}
+            className="inline-flex items-center gap-2 bg-white border border-gray-200 text-[#0B2560] px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50"
+          >
+            {igSyncing ? <Loader size={15} className="animate-spin" /> : <FaInstagram size={15} className="text-pink-600" />}
+            Sync from Instagram
           </button>
           <Link href="/admin/videos/new"
             className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#0d2d72] transition">
@@ -135,6 +160,9 @@ export default function VideosPage() {
 
       {syncMessage && (
         <p className="text-xs font-semibold text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">{syncMessage}</p>
+      )}
+      {igSyncMessage && (
+        <p className="text-xs font-semibold text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">{igSyncMessage}</p>
       )}
 
       <div className="flex items-center gap-4">

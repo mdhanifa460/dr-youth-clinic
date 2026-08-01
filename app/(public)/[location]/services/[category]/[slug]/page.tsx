@@ -23,6 +23,7 @@ import { blocksToPlainText, hasVisibleBlockType } from '@/app/lib/contentBlocks/
 import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos } from '@/app/lib/contentBlocks/relatedContent';
 import EligibilityChecker from '@/app/components/EligibilityChecker';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import CostEstimator from '@/app/components/CostEstimator';
 import RelatedServicesPager from '@/app/components/RelatedServicesPager';
@@ -318,7 +319,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos, serviceBanner, documentedResults] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos, serviceBanners, documentedResults] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
@@ -327,7 +328,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     resolveReferencedDoctors(svc.narrativeBlocks),
     resolveRelatedLinks(svc.narrativeBlocks),
     resolveReferencedVideos(svc.narrativeBlocks),
-    resolveBanner({ page: 'service', location: params.location, service: svc.urlSlug || params.slug }),
+    // params.slug is what an admin sees in the browser URL and types into a
+    // banner's targetServices list — svc.urlSlug is the service's *base*
+    // slug and can differ from params.slug whenever a per-city slug
+    // override exists (see getEffectiveSlug in app/lib/serviceSeo.ts), which
+    // silently broke banner matching for any service with a city override.
+    resolveBanner({ page: 'service', location: params.location, service: params.slug }),
     getServiceResults(svc._id),
   ]);
 
@@ -392,11 +398,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         </nav>
 
         {/* ── HERO ── */}
-        {/* A matching Banner (admin-configured) takes over this slot when
-            one exists; otherwise the original hardcoded hero below renders
-            unchanged. */}
-        {serviceBanner ? (
-          <BannerRenderer banner={serviceBanner} />
+        {/* Matching Banner(s) (admin-configured) take over this slot when
+            any exist — as a carousel when there's more than one; otherwise
+            the original hardcoded hero below renders unchanged. */}
+        {serviceBanners.length > 0 ? (
+          <BannerCarousel slides={serviceBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
         ) : (
         <section className="relative bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">

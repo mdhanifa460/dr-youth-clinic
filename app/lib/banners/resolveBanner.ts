@@ -119,12 +119,19 @@ function matchesSmartRules(rules: any, now: Date): boolean {
   return true;
 }
 
-// Resolves the single highest-priority banner eligible for a given slot, or
-// null when nothing matches — the caller (a homepage/location/service page
-// server component) treats null as "render the existing hardcoded hero
-// instead." Queries Mongoose directly (no public REST hop), matching how
-// these pages already fetch all their other content.
-export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc | null> {
+// Resolves every eligible banner for a given slot, ordered for carousel
+// display — an empty array when nothing matches, which the caller (a
+// homepage/location/service page server component) treats as "render the
+// existing hardcoded hero instead." Queries Mongoose directly (no public
+// REST hop), matching how these pages already fetch all their other
+// content.
+//
+// Sort order: `order` (admin drag-reorder position, see
+// app/api/admin/banners/reorder/route.ts) leads, `priority` breaks ties —
+// existing banners all default to order:0, so priority (the pre-existing
+// single-winner tiebreak) still decides which banner leads the carousel
+// until an admin actually drags to reorder.
+export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc[]> {
   try {
     await connectDB();
 
@@ -161,19 +168,19 @@ export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc | null>
 
     const candidates = await (Banner as any)
       .find(query)
-      .sort({ priority: -1 })
+      .sort({ order: 1, priority: -1 })
       .populate({ path: "doctorHighlight.doctorId", select: "name title photo qualifications" })
       .lean();
-    if (!candidates.length) return null;
+    if (!candidates.length) return [];
 
     const now = new Date();
     const eligible = candidates.filter((b: any) => matchesSchedule(b, now) && matchesSmartRules(b.smartRules, now));
 
-    return (eligible[0] as BannerDoc) ?? null;
+    return eligible as BannerDoc[];
   } catch {
     // Never let a banner-resolution failure break the page it's decorating
     // — fall back to the existing hardcoded hero exactly as if no banner
     // were configured.
-    return null;
+    return [];
   }
 }

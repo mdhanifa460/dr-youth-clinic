@@ -24,6 +24,7 @@ import Booking from '@/app/models/Booking';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 
 import HeroSection from '@/app/components/homepage/HeroSection';
@@ -42,7 +43,7 @@ import { FAQSchema } from '@/app/components/SchemaMarkup';
 import BlogInsights from '@/app/components/homepage/BlogInsights';
 import VideoAcademySection from '@/app/components/homepage/VideoAcademySection';
 import WebStoriesSection from '@/app/components/homepage/WebStoriesSection';
-import VideoReelsSection from '@/app/components/homepage/VideoReelsSection';
+import VideoReelsSection, { type WatchMediaItem } from '@/app/components/homepage/VideoReelsSection';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import { HOME_PAGE_ID } from '@/app/lib/layoutEngine/pseudoPageId';
 export const revalidate = 300;
@@ -280,6 +281,29 @@ const getCachedFeaturedVideos = unstable_cache(
   { revalidate: 300, tags: ['videos'] }
 );
 
+// Maps a Video document (app/models/Video.ts) to VideoReelsSection's
+// WatchMediaItem — 'video' format renders in the grid, 'short'/'reel' both
+// render in the "Shorts & Reels" tray (the mockup already treats those as
+// one combined section; ReelCard's own Shorts-vs-Reels badge text is
+// already correctly platform-derived, so no separate third `kind` is
+// needed). No `views` — this codebase has no real view-count data source
+// for either platform, and fabricating one would violate the same
+// no-fabricated-numbers rule the trust_timeline section follows.
+function toWatchMedia(docs: any[]): WatchMediaItem[] {
+  return docs.map((v) => ({
+    id: String(v._id),
+    kind: v.format === 'video' ? 'video' : 'reel',
+    platform: v.platform === 'instagram' ? 'instagram' : 'youtube',
+    title: v.title,
+    doctor: v.doctor?.name,
+    views: '',
+    duration: v.duration || undefined,
+    thumbnail: v.thumbnail?.url ? { url: v.thumbnail.url, alt: v.title } : undefined,
+    youtubeId: v.platform === 'youtube' ? v.youtubeId : undefined,
+    href: v.platform === 'instagram' ? v.instagramUrl : undefined,
+  }));
+}
+
 // Live counts only — never admin-editable, so this section can't show fabricated
 // numbers (see the comment on the trust_timeline default in homepageDefaults.ts).
 const getCachedTrustStats = unstable_cache(
@@ -428,7 +452,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanner, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -500,14 +524,15 @@ export default async function Home() {
       {publicSectionOrder
         .filter((s) => s.visible)
         .map((s) => {
-          // A matching Banner (admin-configured, scheduled/targeted) takes
-          // over the hero slot when one exists; otherwise the existing
-          // HomepageSection-driven HeroSection renders exactly as before —
-          // this feature never deletes the original hero, only overrides it.
-          if (s.key === 'hero' && heroBanner) {
+          // Matching Banner(s) (admin-configured, scheduled/targeted) take
+          // over the hero slot when any exist — as a carousel when there's
+          // more than one — otherwise the existing HomepageSection-driven
+          // HeroSection renders exactly as before; this feature never
+          // deletes the original hero, only overrides it.
+          if (s.key === 'hero' && heroBanners.length > 0) {
             return (
               <div key={s.key}>
-                <BannerRenderer banner={heroBanner} />
+                <BannerCarousel slides={heroBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
               </div>
             );
           }
@@ -534,12 +559,14 @@ export default async function Home() {
       )}
 
       {/* "Watch & Learn" — placed directly here (not yet in the admin
-          section-order system above) since it's still running on sample
-          data pending real YouTube/Instagram content. Once real data and
-          the modal design are confirmed, move this into SECTION_COMPONENTS
-          + HomepageSection (sectionKey: "watch_and_learn") the same way
-          every section above it works, so an admin can reorder/hide it too. */}
-      <VideoReelsSection />
+          section-order system above). Falls back to the mockup's sample
+          data only when no video has been synced/published yet (same
+          empty-state-fallback pattern as blog/results/faq above); once
+          real videos exist it renders those. Move this into
+          SECTION_COMPONENTS + HomepageSection (sectionKey: "watch_and_learn")
+          the same way every section above it works, so an admin can
+          reorder/hide it too. */}
+      <VideoReelsSection media={liveVideos.length > 0 ? toWatchMedia(liveVideos) : undefined} />
     </main>
   );
 }

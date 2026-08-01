@@ -10,6 +10,16 @@ export interface IVideo extends Document {
   slug: string;
   youtubeUrl: string;
   youtubeId: string;
+  // Instagram's counterpart to youtubeUrl/youtubeId — populated by the
+  // Instagram sync job (platform: 'instagram'), never by the YouTube one.
+  // Instagram content is embedded via its own iframe embed URL (see
+  // app/(public)/academy/[slug]/VideoPlayer.tsx), not rehosted — same
+  // "link to the platform's own player" approach youtubeUrl already uses.
+  instagramUrl?: string;
+  // The IG media id from the Graph API `/media` response — this codebase's
+  // dedupe key for Instagram sync, same role youtubeId plays for YouTube
+  // sync (see app/api/admin/videos/sync-instagram/route.ts).
+  instagramMediaId?: string;
   // 'short' is auto-detected from a /shorts/ URL but admin-editable — a
   // Short is the same underlying YouTube object as a Video, just a
   // different aspect ratio/length, so this is a flag on one model rather
@@ -77,8 +87,16 @@ const VideoSchema = new Schema<IVideo>(
   {
     title: { type: String, required: [true, 'Title is required'], trim: true, minlength: 3 },
     slug: { type: String, lowercase: true, match: /^[a-z0-9-]+$/, index: true, unique: true, sparse: true },
-    youtubeUrl: { type: String, required: [true, 'YouTube URL is required'] },
+    // Only required for a YouTube-platform video — an Instagram sync never
+    // sets this (it sets instagramUrl/instagramMediaId instead), so the
+    // constraint has to be conditional rather than unconditionally true.
+    youtubeUrl: {
+      type: String,
+      required: [function (this: IVideo) { return this.platform !== 'instagram'; }, 'YouTube URL is required'],
+    },
     youtubeId: { type: String, index: true },
+    instagramUrl: { type: String, default: '' },
+    instagramMediaId: { type: String, index: true },
     format: { type: String, enum: ['video', 'short', 'reel'], default: 'video' },
     platform: { type: String, enum: ['youtube', 'instagram'], default: 'youtube' },
     syncedFromApi: { type: Boolean, default: false },

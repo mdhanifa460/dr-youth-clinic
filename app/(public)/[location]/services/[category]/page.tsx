@@ -10,6 +10,7 @@ import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getEffectiveSlug } from '@/app/lib/serviceSeo';
 import { CATEGORY_MAP, CATEGORY_META } from '@/app/lib/serviceCategories';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 
 export const revalidate = 300;
@@ -102,7 +103,7 @@ export default async function CategoryPage({ params }: PageProps) {
 
   const dbCategory = CATEGORY_MAP[catSlug];
   const meta = CATEGORY_META[catSlug];
-  const [services, siteConfig, categoryBanner] = await Promise.all([
+  const [services, siteConfig, categoryBanners] = await Promise.all([
     getServicesForCategory(params.location, dbCategory),
     getSiteConfig(),
     resolveBanner({ page: 'category', location: params.location, category: catSlug }),
@@ -112,12 +113,13 @@ export default async function CategoryPage({ params }: PageProps) {
   return (
     <main className="bg-white min-h-screen">
 
-      {/* ── HERO — an active, targeted Banner takes over this slot when
-          one exists; otherwise this category's existing gradient header
-          renders exactly as before. Same override-else-fallback pattern
-          used on the homepage/location/service pages. ── */}
-      {categoryBanner ? (
-        <BannerRenderer banner={categoryBanner} />
+      {/* ── HERO — active, targeted Banner(s) take over this slot when any
+          exist, as a carousel when there's more than one; otherwise this
+          category's existing gradient header renders exactly as before.
+          Same override-else-fallback pattern used on the homepage/
+          location/service pages. ── */}
+      {categoryBanners.length > 0 ? (
+        <BannerCarousel slides={categoryBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
       ) : (
       <section className={`relative overflow-hidden bg-gradient-to-br ${meta.heroGrad} text-white`}>
         <div className="absolute inset-0 pointer-events-none">

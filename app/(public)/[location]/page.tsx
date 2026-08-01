@@ -16,6 +16,7 @@ import SliderCard from '@/app/components/SliderCard';
 import { cloudHero } from '@/app/lib/cloudinary-url';
 import FocalImage from '@/app/components/media/FocalImage';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
@@ -114,7 +115,7 @@ export default async function LocationPage({ params }: { params: { location: str
   const loc = locations[cityKey];
   if (!loc) notFound();
 
-  const [content, locationBanner, branchResults, siteConfig] = await Promise.all([
+  const [content, locationBanners, branchResults, siteConfig] = await Promise.all([
     getLocationContent(cityKey),
     resolveBanner({ page: 'location', location: cityKey }),
     getBranchResults(cityKey),
@@ -166,13 +167,14 @@ export default async function LocationPage({ params }: { params: { location: str
       <main>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
-        {/* A matching Banner (admin-configured) takes over this slot when
-            one exists; otherwise the original hardcoded hero below renders
-            unchanged, including its mobile-spacing fix (py-8 md:py-24 etc.
-            trims enough vertical rhythm that the CTA row clears the fixed
-            mobile WhatsApp/Call/Book bar). */}
-        {locationBanner ? (
-          <BannerRenderer banner={locationBanner} />
+        {/* Matching Banner(s) (admin-configured) take over this slot when
+            any exist — as a carousel when there's more than one; otherwise
+            the original hardcoded hero below renders unchanged, including
+            its mobile-spacing fix (py-8 md:py-24 etc. trims enough vertical
+            rhythm that the CTA row clears the fixed mobile WhatsApp/Call/
+            Book bar). */}
+        {locationBanners.length > 0 ? (
+          <BannerCarousel slides={locationBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
         ) : (
         <section id="home" className="py-8 md:py-24 px-6 md:px-10 bg-background">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-start">

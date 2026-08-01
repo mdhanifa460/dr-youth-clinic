@@ -113,7 +113,7 @@ export default async function VideoDetailPage({ params }: PageProps) {
           thumbnailUrl={video.thumbnail.url}
           uploadDate={new Date(video.createdAt).toISOString()}
           duration={video.duration}
-          embedUrl={`https://www.youtube.com/embed/${video.youtubeId}`}
+          embedUrl={video.platform === 'instagram' ? (video.instagramUrl || '') : `https://www.youtube.com/embed/${video.youtubeId}`}
         />
       )}
       {/* Breadcrumb */}
@@ -144,7 +144,13 @@ export default async function VideoDetailPage({ params }: PageProps) {
             </p>
           </div>
 
-          <VideoPlayer youtubeId={video.youtubeId} title={video.title} chapters={video.chapters || []} />
+          <VideoPlayer
+            platform={video.platform}
+            youtubeId={video.youtubeId}
+            instagramUrl={video.instagramUrl}
+            title={video.title}
+            chapters={video.chapters || []}
+          />
 
           {video.transcript && (
             <details className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 group">

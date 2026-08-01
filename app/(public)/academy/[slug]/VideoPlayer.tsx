@@ -9,9 +9,21 @@ interface Chapter {
 }
 
 interface VideoPlayerProps {
+  platform?: 'youtube' | 'instagram';
   youtubeId: string;
+  instagramUrl?: string;
   title: string;
   chapters: Chapter[];
+}
+
+// Instagram's public embed iframe takes /p/{shortcode}/embed or
+// /reel/{shortcode}/embed — both forms work for either a feed video or a
+// Reel permalink, so this only needs to grab the shortcode segment and
+// re-attach /embed, no need to know which form the permalink used.
+function toInstagramEmbedUrl(permalink: string): string | null {
+  const match = permalink.match(/instagram\.com\/(p|reel)\/([^/?]+)/);
+  if (!match) return null;
+  return `https://www.instagram.com/${match[1]}/${match[2]}/embed`;
 }
 
 declare global {
@@ -50,13 +62,14 @@ function parseTimeToSeconds(time: string): number {
     .reduce((acc, val) => acc * 60 + val, 0);
 }
 
-export default function VideoPlayer({ youtubeId, title, chapters }: VideoPlayerProps) {
+export default function VideoPlayer({ platform = 'youtube', youtubeId, instagramUrl, title, chapters }: VideoPlayerProps) {
   const playerRef = useRef<any>(null);
   const rawId = useId();
   const iframeId = `yt-player-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`;
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
 
   useEffect(() => {
+    if (platform !== 'youtube') return;
     let cancelled = false;
 
     loadYouTubeIframeApi().then(() => {
@@ -77,7 +90,7 @@ export default function VideoPlayer({ youtubeId, title, chapters }: VideoPlayerP
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [iframeId]);
+  }, [platform, iframeId]);
 
   const handleChapterClick = (chapter: Chapter, index: number) => {
     const seconds = chapter.timeSeconds && chapter.timeSeconds > 0
@@ -91,6 +104,34 @@ export default function VideoPlayer({ youtubeId, title, chapters }: VideoPlayerP
       player.playVideo?.();
     }
   };
+
+  // Instagram's iframe embed has no equivalent of the YouTube iframe API
+  // (no programmatic seek), so it's a straight embed with no chapter-click
+  // interactivity — chapters aren't populated by the Instagram sync job
+  // anyway (see app/api/admin/videos/sync-instagram/route.ts), so this
+  // never hides a feature an admin actually filled in.
+  if (platform === 'instagram') {
+    const embedUrl = instagramUrl ? toInstagramEmbedUrl(instagramUrl) : null;
+    if (!embedUrl) {
+      return (
+        <div className="relative aspect-[9/16] max-w-sm mx-auto rounded-2xl md:rounded-3xl overflow-hidden bg-gray-100 flex flex-col items-center justify-center text-center px-6">
+          <p className="text-gray-500 font-semibold text-sm">Video unavailable</p>
+          <p className="text-gray-500 text-xs mt-1">This video's Instagram link needs to be updated in the admin panel.</p>
+        </div>
+      );
+    }
+    return (
+      <div className="relative aspect-[9/16] max-w-sm mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] bg-[#0B2560]">
+        <iframe
+          className="absolute inset-0 w-full h-full"
+          src={embedUrl}
+          title={title}
+          allow="encrypted-media; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
 
   if (!youtubeId) {
     return (
