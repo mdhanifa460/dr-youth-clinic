@@ -20,8 +20,9 @@ import {
 import QuestionStep from "@/app/components/assessment/QuestionStep";
 import UnifiedJourneyResults, { type PatientReport } from "@/app/components/assessment/UnifiedJourneyResults";
 import PhotoCaptureScreen, { type CapturedPhoto } from "@/app/components/assessment/PhotoCaptureScreen";
+import AiObservationsScreen, { type AiObservationsResult } from "@/app/components/assessment/AiObservationsScreen";
 
-type Screen = "intro" | "goal-pick" | "question" | "photo-capture" | "lead" | "results";
+type Screen = "intro" | "goal-pick" | "question" | "photo-capture" | "ai-observations" | "lead" | "results";
 type LeadStatus = "idle" | "sending" | "sent" | "error";
 
 interface LeadForm {
@@ -50,16 +51,27 @@ export default function PlanMyJourneyClient({
   siteConfig,
   quizConfig,
   enablePhotoCapture,
+  enableAiObservations,
+  aiObservationsDisclaimer,
 }: {
   goals: IJourneyGoal[];
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
   siteConfig: any;
   quizConfig?: AssessmentConfigData;
   enablePhotoCapture: boolean;
+  enableAiObservations: boolean;
+  aiObservationsDisclaimer: string;
 }) {
   return (
     <SiteConfigProvider initial={siteConfig}>
-      <PlanMyJourneyFlow goals={goals} bundles={bundles} quizConfig={quizConfig || DEFAULT_QUIZ_CONFIG} enablePhotoCapture={enablePhotoCapture} />
+      <PlanMyJourneyFlow
+        goals={goals}
+        bundles={bundles}
+        quizConfig={quizConfig || DEFAULT_QUIZ_CONFIG}
+        enablePhotoCapture={enablePhotoCapture}
+        enableAiObservations={enableAiObservations}
+        aiObservationsDisclaimer={aiObservationsDisclaimer}
+      />
     </SiteConfigProvider>
   );
 }
@@ -69,11 +81,15 @@ function PlanMyJourneyFlow({
   bundles,
   quizConfig,
   enablePhotoCapture,
+  enableAiObservations,
+  aiObservationsDisclaimer,
 }: {
   goals: IJourneyGoal[];
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
   quizConfig: AssessmentConfigData;
   enablePhotoCapture: boolean;
+  enableAiObservations: boolean;
+  aiObservationsDisclaimer: string;
 }) {
   const clinic = useClinicParam();
   const goalMap = useMemo(() => Object.fromEntries(goals.map((g) => [g.slug, g])), [goals]);
@@ -118,7 +134,31 @@ function PlanMyJourneyFlow({
       fetch("/api/patient-journey", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, goal, currentModule: "lead_capture", photos: captured }),
+        body: JSON.stringify({
+          sessionId,
+          goal,
+          currentModule: captured.length > 0 && enableAiObservations ? "ai_observations" : "lead_capture",
+          photos: captured,
+        }),
+      }).catch(() => {});
+    }
+    // AI Observations needs an actual photo to look at — skip straight to
+    // lead capture if the patient skipped Photo Capture, same as the
+    // photo-capture step itself skipping when enablePhotoCapture is off.
+    transition(() => setScreen(captured.length > 0 && enableAiObservations ? "ai-observations" : "lead"));
+  };
+
+  const handleAiObservationsDone = (result: AiObservationsResult | null) => {
+    if (goal && result) {
+      fetch("/api/patient-journey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          goal,
+          currentModule: "lead_capture",
+          aiObservations: { ...result, generatedAt: new Date().toISOString() },
+        }),
       }).catch(() => {});
     }
     transition(() => setScreen("lead"));
@@ -266,6 +306,14 @@ function PlanMyJourneyFlow({
         )}
         {screen === "photo-capture" && (
           <PhotoCaptureScreen goalLabel={goal ? goalMap[goal]?.label || "" : ""} onDone={handlePhotoCaptureDone} />
+        )}
+        {screen === "ai-observations" && photos[0] && (
+          <AiObservationsScreen
+            goalLabel={goal ? goalMap[goal]?.label || "" : ""}
+            photoUrl={photos[0].url}
+            disclaimerText={aiObservationsDisclaimer}
+            onDone={handleAiObservationsDone}
+          />
         )}
         {screen === "lead" && (
           <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} onSubmit={submitLead} goalLabel={goal ? goalMap[goal]?.label || "" : ""} />

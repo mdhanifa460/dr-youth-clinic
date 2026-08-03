@@ -28,6 +28,8 @@ export default async function PlanMyJourneyPage() {
       siteConfig={siteConfig}
       quizConfig={quizConfig}
       enablePhotoCapture={journeyConfig.enablePhotoCapture}
+      enableAiObservations={journeyConfig.enableAiObservations}
+      aiObservationsDisclaimer={journeyConfig.aiObservationsDisclaimer}
     />
   );
 }
