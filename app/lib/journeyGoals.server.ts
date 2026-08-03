@@ -1,33 +1,51 @@
-// Server-only DB resolution for "Plan My Journey" — split out of
-// journeyGoals.ts specifically so this file's Mongoose/mongodb imports
-// (which transitively need Node builtins like "net") never end up in a
-// client bundle. Only import this from server components
+// Server-only DB resolution for "Plan My Journey" / the AI Beauty Journey —
+// split out of journeyGoals.ts specifically so this file's Mongoose/mongodb
+// imports (which transitively need Node builtins like "net") never end up
+// in a client bundle. Only import this from server components
 // (app/(public)/plan-my-journey/page.tsx), never from PlanMyJourneyClient.tsx.
+//
+// Goal metadata now comes from JourneyConfig (admin-editable via
+// /admin/journey) instead of the old hardcoded JOURNEY_GOAL_META constant
+// — see app/models/JourneyConfig.ts for why. journeyGoals.ts's
+// JOURNEY_GOALS/JOURNEY_GOAL_META/GOAL_CONCERN_TAGS constants still exist
+// as the DEFAULT values a fresh JourneyConfig doc is seeded with, but are
+// no longer read directly by any resolution path — resolveJourneyGoals()
+// below is the new single source of truth.
 import { connectDB } from "@/app/lib/mongodb";
 import { Service } from "@/app/models/Service";
 import { Doctor } from "@/app/models/Doctor";
 import { Result } from "@/app/models/Result";
-import { JOURNEY_GOALS, JOURNEY_GOAL_META, type JourneyGoalSlug, type JourneyGoalBundle } from "@/app/lib/journeyGoals";
+import { getJourneyConfig, type IJourneyGoal } from "@/app/models/JourneyConfig";
+import type { JourneyGoalBundle } from "@/app/lib/journeyGoals";
+
+function toRegex(source: string): RegExp | null {
+  if (!source) return null;
+  try {
+    return new RegExp(source, "i");
+  } catch {
+    // An admin-entered regex that fails to compile shouldn't 500 the page
+    // — treat it as "no filter" rather than breaking goal resolution.
+    return null;
+  }
+}
 
 // Highest-priced-first as the auto-pick proxy for "flagship" service —
 // Service has no bookingCount/featured field to rank by instead.
-export async function resolveServicesForGoal(goal: JourneyGoalSlug) {
-  const meta = JOURNEY_GOAL_META[goal];
+export async function resolveServicesForGoal(meta: IJourneyGoal) {
   const query: Record<string, any> = { status: "active", category: meta.category };
-  if (meta.nameFilter) query.name = { $regex: meta.nameFilter };
+  const nameFilter = toRegex(meta.nameFilterSource);
+  if (nameFilter) query.name = { $regex: nameFilter };
   return (Service as any).find(query).sort({ price: -1 }).limit(3).lean();
 }
 
 // No location filter at this stage — the client narrows to the visitor's
 // clinic once known (matches skin-quiz's ?clinic= convention), same
 // "pull a wider pool, narrow client-side" approach used there.
-export async function resolveDoctorsForGoal(goal: JourneyGoalSlug) {
-  const meta = JOURNEY_GOAL_META[goal];
-  const matched = await (Doctor as any)
-    .find({ active: true, specializations: { $regex: meta.doctorRegex } })
-    .sort({ order: 1 })
-    .limit(6)
-    .lean();
+export async function resolveDoctorsForGoal(meta: IJourneyGoal) {
+  const doctorRegex = toRegex(meta.doctorRegexSource);
+  const matched = doctorRegex
+    ? await (Doctor as any).find({ active: true, specializations: { $regex: doctorRegex } }).sort({ order: 1 }).limit(6).lean()
+    : [];
   if (matched.length > 0) return matched;
   // specializations is admin free-text with no controlled taxonomy — a
   // goal with no textual match falls back to the general top-doctors list
@@ -35,8 +53,7 @@ export async function resolveDoctorsForGoal(goal: JourneyGoalSlug) {
   return (Doctor as any).find({ active: true }).sort({ order: 1 }).limit(6).lean();
 }
 
-export async function resolveResultsForGoal(goal: JourneyGoalSlug, serviceIds: string[]) {
-  const meta = JOURNEY_GOAL_META[goal];
+export async function resolveResultsForGoal(meta: IJourneyGoal, serviceIds: string[]) {
   if (serviceIds.length > 0) {
     const bySvc = await (Result as any)
       .find({ active: true, service: { $in: serviceIds } })
@@ -45,9 +62,9 @@ export async function resolveResultsForGoal(goal: JourneyGoalSlug, serviceIds: s
       .lean();
     if (bySvc.length > 0) return bySvc;
   }
-  // Fall back to a category-label text match — realistic for the two
-  // niche weight-loss services, which likely have no Result docs tagged
-  // to their exact _id yet.
+  // Fall back to a category-label text match — realistic for niche goals
+  // (e.g. weight-loss), which likely have no Result docs tagged to their
+  // exact _id yet.
   return (Result as any)
     .find({ active: true, category: { $regex: meta.label, $options: "i" } })
     .sort({ order: 1, createdAt: -1 })
@@ -55,18 +72,30 @@ export async function resolveResultsForGoal(goal: JourneyGoalSlug, serviceIds: s
     .lean();
 }
 
-export async function resolveJourneyGoalBundle(goal: JourneyGoalSlug): Promise<JourneyGoalBundle> {
+export async function resolveJourneyGoalBundle(meta: IJourneyGoal): Promise<JourneyGoalBundle> {
   await connectDB();
-  const services = await resolveServicesForGoal(goal);
+  const services = await resolveServicesForGoal(meta);
   const [doctors, results] = await Promise.all([
-    resolveDoctorsForGoal(goal),
-    resolveResultsForGoal(goal, services.map((s: any) => String(s._id))),
+    resolveDoctorsForGoal(meta),
+    resolveResultsForGoal(meta, services.map((s: any) => String(s._id))),
   ]);
-  return { goal, services, doctors, results };
+  return { goal: meta.slug, services, doctors, results };
 }
 
-export async function resolveAllJourneyGoalBundles(): Promise<Record<JourneyGoalSlug, JourneyGoalBundle>> {
+// The new single entry point: resolves the admin-configured, enabled goals
+// (JourneyConfig) alongside their service/doctor/result bundles in one
+// call. Replaces resolveAllJourneyGoalBundles() — callers now get both the
+// goal metadata (label/icon/heroGrad/ctaLabel/concernTags, all
+// admin-editable) and the resolved bundles together, since the goal list
+// itself is no longer a fixed compile-time constant the client can import.
+export async function resolveJourneyGoals(): Promise<{
+  goals: IJourneyGoal[];
+  bundles: Record<string, JourneyGoalBundle>;
+}> {
   await connectDB();
-  const entries = await Promise.all(JOURNEY_GOALS.map((g) => resolveJourneyGoalBundle(g)));
-  return Object.fromEntries(entries.map((b) => [b.goal, b])) as Record<JourneyGoalSlug, JourneyGoalBundle>;
+  const config = await getJourneyConfig();
+  const goals = [...config.goals].filter((g) => g.enabled).sort((a, b) => a.order - b.order);
+  const entries = await Promise.all(goals.map((g) => resolveJourneyGoalBundle(g)));
+  const bundles = Object.fromEntries(entries.map((b) => [b.goal, b]));
+  return { goals, bundles };
 }

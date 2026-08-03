@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { SiteConfigProvider } from "@/app/components/SiteConfigContext";
 import { locations } from "@/app/data/locations";
-import { JOURNEY_GOALS, JOURNEY_GOAL_META, GOAL_CONCERN_TAGS, type JourneyGoalSlug, type JourneyGoalBundle } from "@/app/lib/journeyGoals";
+import type { JourneyGoalSlug, JourneyGoalBundle } from "@/app/lib/journeyGoals";
+import type { IJourneyGoal } from "@/app/models/JourneyConfig";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion } from "@/app/lib/quizDefaults";
 import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import {
@@ -43,23 +44,34 @@ function useClinicParam(): string {
 }
 
 export default function PlanMyJourneyClient({
+  goals,
   bundles,
   siteConfig,
   quizConfig,
 }: {
+  goals: IJourneyGoal[];
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
   siteConfig: any;
   quizConfig?: AssessmentConfigData;
 }) {
   return (
     <SiteConfigProvider initial={siteConfig}>
-      <PlanMyJourneyFlow bundles={bundles} quizConfig={quizConfig || DEFAULT_QUIZ_CONFIG} />
+      <PlanMyJourneyFlow goals={goals} bundles={bundles} quizConfig={quizConfig || DEFAULT_QUIZ_CONFIG} />
     </SiteConfigProvider>
   );
 }
 
-function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoalSlug, JourneyGoalBundle>; quizConfig: AssessmentConfigData }) {
+function PlanMyJourneyFlow({
+  goals,
+  bundles,
+  quizConfig,
+}: {
+  goals: IJourneyGoal[];
+  bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
+  quizConfig: AssessmentConfigData;
+}) {
   const clinic = useClinicParam();
+  const goalMap = useMemo(() => Object.fromEntries(goals.map((g) => [g.slug, g])), [goals]);
   const [screen, setScreen] = useState<Screen>("intro");
   const [goal, setGoal] = useState<JourneyGoalSlug | null>(null);
   const [serviceId, setServiceId] = useState<string>("");
@@ -97,7 +109,7 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
     // each goal's "completed" sessions against how many started it.
     postAssessmentEvent({ event: "started", goal: g, sessionId });
     postAssessmentEvent({ event: "goal_selected", goal: g, sessionId });
-    const seeded = seedAnswersFromTags(quizConfig.questions, GOAL_CONCERN_TAGS[g]);
+    const seeded = seedAnswersFromTags(quizConfig.questions, goalMap[g]?.concernTags || []);
     if (Object.keys(seeded).length > 0) {
       const ordered = getOrderedQuestions(quizConfig.questions, seeded, quizConfig.settings);
       const firstUnanswered = ordered.find((q) => !(q.id in seeded));
@@ -171,7 +183,7 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
 
   // Same scoring engine skin-quiz uses — only produces real recommendations
   // when goal-filtered intake questions were actually answered (see
-  // GOAL_CONCERN_TAGS bridging); empty for goals with no mapped questions
+  // goal.concernTags bridging); empty for goals with no mapped questions
   // yet, in which case UnifiedJourneyResults falls back to the matched
   // Service data alone.
   const recommendations = scoreRecommendations(
@@ -213,8 +225,8 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
   return (
     <main className="bg-[#f6faff] min-h-screen">
       <div className={`max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
-        {screen === "intro" && <IntroScreen onStart={() => setScreen("goal-pick")} />}
-        {screen === "goal-pick" && <GoalPickScreen bundles={bundles} onPick={pickGoal} />}
+        {screen === "intro" && <IntroScreen goals={goals} onStart={() => setScreen("goal-pick")} />}
+        {screen === "goal-pick" && <GoalPickScreen goals={goals} bundles={bundles} onPick={pickGoal} />}
         {screen === "question" && currentQuestion && (
           <QuestionScreen
             question={currentQuestion}
@@ -223,34 +235,34 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
             canProceed={canProceed}
             hasNext={hasNext}
             stepNumber={path.length}
-            goalLabel={goal ? JOURNEY_GOAL_META[goal].label : ""}
+            goalLabel={goal ? goalMap[goal]?.label || "" : ""}
             onNext={handleQuestionNext}
             onBack={handleQuestionBack}
           />
         )}
         {screen === "lead" && (
-          <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} onSubmit={submitLead} goalLabel={goal ? JOURNEY_GOAL_META[goal].label : ""} />
+          <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} onSubmit={submitLead} goalLabel={goal ? goalMap[goal]?.label || "" : ""} />
         )}
       </div>
 
-      {screen === "results" && goal && (() => {
+      {screen === "results" && goal && goalMap[goal] && (() => {
         const bundle = bundles[goal];
         const services = bundle?.services || [];
         const svc = services.find((s: any) => String(s._id) === serviceId) || services[0];
         const alternatives = services.filter((s: any) => String(s._id) !== String(svc?._id));
-        const meta = JOURNEY_GOAL_META[goal];
+        const meta = goalMap[goal];
         return (
           <div>
             {/* Sticky goal switcher */}
             <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100 py-3">
               <div className="max-w-4xl mx-auto px-4 flex items-center gap-2 overflow-x-auto">
-                {JOURNEY_GOALS.map((g) => (
+                {goals.map((g) => (
                   <button
-                    key={g}
-                    onClick={() => { setGoal(g); setServiceId(String(bundles[g]?.services?.[0]?._id || "")); }}
-                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${g === goal ? "bg-[#0B2560] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                    key={g.slug}
+                    onClick={() => { setGoal(g.slug); setServiceId(String(bundles[g.slug]?.services?.[0]?._id || "")); }}
+                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${g.slug === goal ? "bg-[#0B2560] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
                   >
-                    {JOURNEY_GOAL_META[g].icon} {JOURNEY_GOAL_META[g].label}
+                    {g.icon} {g.label}
                   </button>
                 ))}
               </div>
@@ -289,7 +301,7 @@ function PlanMyJourneyFlow({ bundles, quizConfig }: { bundles: Record<JourneyGoa
   );
 }
 
-function IntroScreen({ onStart }: { onStart: () => void }) {
+function IntroScreen({ goals, onStart }: { goals: IJourneyGoal[]; onStart: () => void }) {
   return (
     <div className="flex flex-col items-center text-center py-6 md:py-10">
       <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
@@ -308,10 +320,10 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10 w-full max-w-lg">
-        {JOURNEY_GOALS.map((g) => (
-          <div key={g} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-4 flex flex-col items-center gap-1">
-            <span className="text-2xl">{JOURNEY_GOAL_META[g].icon}</span>
-            <span className="text-[11px] font-bold text-[#0B2560] text-center leading-snug">{JOURNEY_GOAL_META[g].label}</span>
+        {goals.map((g) => (
+          <div key={g.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-4 flex flex-col items-center gap-1">
+            <span className="text-2xl">{g.icon}</span>
+            <span className="text-[11px] font-bold text-[#0B2560] text-center leading-snug">{g.label}</span>
           </div>
         ))}
       </div>
@@ -329,7 +341,15 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
   );
 }
 
-function GoalPickScreen({ bundles, onPick }: { bundles: Record<JourneyGoalSlug, JourneyGoalBundle>; onPick: (g: JourneyGoalSlug) => void }) {
+function GoalPickScreen({
+  goals,
+  bundles,
+  onPick,
+}: {
+  goals: IJourneyGoal[];
+  bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
+  onPick: (g: JourneyGoalSlug) => void;
+}) {
   return (
     <div className="py-6 md:py-10">
       <div className="text-center mb-8">
@@ -337,20 +357,19 @@ function GoalPickScreen({ bundles, onPick }: { bundles: Record<JourneyGoalSlug, 
         <p className="text-gray-500 text-sm md:text-base">We'll build your journey around it.</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
-        {JOURNEY_GOALS.map((g) => {
-          const meta = JOURNEY_GOAL_META[g];
-          const count = bundles[g]?.services?.length || 0;
+        {goals.map((meta) => {
+          const count = bundles[meta.slug]?.services?.length || 0;
           return (
             <button
-              key={g}
-              onClick={() => onPick(g)}
+              key={meta.slug}
+              onClick={() => onPick(meta.slug)}
               className={`relative overflow-hidden rounded-3xl p-6 text-left text-white shadow-lg transition-transform hover:-translate-y-1 bg-gradient-to-br ${meta.heroGrad}`}
             >
               <span className="text-3xl">{meta.icon}</span>
               <p className="font-headline font-extrabold text-lg mt-3">{meta.label}</p>
               <p className="text-white/70 text-xs mt-1">{count > 0 ? `${count} treatment${count !== 1 ? "s" : ""} available` : "Ask about options"}</p>
               <span className="inline-flex items-center gap-1 text-xs font-bold mt-4">
-                Choose <ArrowRight size={12} />
+                {meta.ctaLabel || "Choose"} <ArrowRight size={12} />
               </span>
             </button>
           );
