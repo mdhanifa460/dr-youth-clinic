@@ -19,8 +19,9 @@ import {
 } from "@/app/lib/assessmentFlow";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
 import UnifiedJourneyResults, { type PatientReport } from "@/app/components/assessment/UnifiedJourneyResults";
+import PhotoCaptureScreen, { type CapturedPhoto } from "@/app/components/assessment/PhotoCaptureScreen";
 
-type Screen = "intro" | "goal-pick" | "question" | "lead" | "results";
+type Screen = "intro" | "goal-pick" | "question" | "photo-capture" | "lead" | "results";
 type LeadStatus = "idle" | "sending" | "sent" | "error";
 
 interface LeadForm {
@@ -48,15 +49,17 @@ export default function PlanMyJourneyClient({
   bundles,
   siteConfig,
   quizConfig,
+  enablePhotoCapture,
 }: {
   goals: IJourneyGoal[];
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
   siteConfig: any;
   quizConfig?: AssessmentConfigData;
+  enablePhotoCapture: boolean;
 }) {
   return (
     <SiteConfigProvider initial={siteConfig}>
-      <PlanMyJourneyFlow goals={goals} bundles={bundles} quizConfig={quizConfig || DEFAULT_QUIZ_CONFIG} />
+      <PlanMyJourneyFlow goals={goals} bundles={bundles} quizConfig={quizConfig || DEFAULT_QUIZ_CONFIG} enablePhotoCapture={enablePhotoCapture} />
     </SiteConfigProvider>
   );
 }
@@ -65,10 +68,12 @@ function PlanMyJourneyFlow({
   goals,
   bundles,
   quizConfig,
+  enablePhotoCapture,
 }: {
   goals: IJourneyGoal[];
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
   quizConfig: AssessmentConfigData;
+  enablePhotoCapture: boolean;
 }) {
   const clinic = useClinicParam();
   const goalMap = useMemo(() => Object.fromEntries(goals.map((g) => [g.slug, g])), [goals]);
@@ -86,6 +91,7 @@ function PlanMyJourneyFlow({
   const [patientReport, setPatientReport] = useState<PatientReport | null>(null);
   const resultsPatched = useRef(false);
   const [sessionId, setSessionId] = useState("");
+  const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
 
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
@@ -98,6 +104,24 @@ function PlanMyJourneyFlow({
   const transition = (fn: () => void) => {
     setVisible(false);
     setTimeout(() => { fn(); setVisible(true); }, 150);
+  };
+
+  // Where the flow goes once Smart Conversation's questions are done (or
+  // skipped entirely for a goal with no mapped questions) — AI Photo
+  // Capture when the admin has it enabled, straight to lead capture
+  // otherwise, same as before this module existed.
+  const afterQuestionsScreen = (): Screen => (enablePhotoCapture ? "photo-capture" : "lead");
+
+  const handlePhotoCaptureDone = (captured: CapturedPhoto[]) => {
+    setPhotos(captured);
+    if (goal) {
+      fetch("/api/patient-journey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, goal, currentModule: "lead_capture", photos: captured }),
+      }).catch(() => {});
+    }
+    transition(() => setScreen("lead"));
   };
 
   const pickGoal = (g: JourneyGoalSlug) => {
@@ -120,11 +144,10 @@ function PlanMyJourneyFlow({
       }
     }
     // No mapped concern questions for this goal yet (e.g. weight-loss,
-    // until real content lands) — go straight to lead capture, same as
-    // before this bridging existed.
+    // until real content lands) — skip straight past Smart Conversation.
     setAnswers({});
     setPath([]);
-    transition(() => setScreen("lead"));
+    transition(() => setScreen(afterQuestionsScreen()));
   };
 
   const orderedQuestions = getOrderedQuestions(quizConfig.questions, answers, quizConfig.settings);
@@ -142,7 +165,7 @@ function PlanMyJourneyFlow({
     if (nextId) {
       transition(() => setPath((p) => [...p, nextId]));
     } else {
-      transition(() => setScreen("lead"));
+      transition(() => setScreen(afterQuestionsScreen()));
     }
   };
 
@@ -235,10 +258,14 @@ function PlanMyJourneyFlow({
             canProceed={canProceed}
             hasNext={hasNext}
             stepNumber={path.length}
+            totalSteps={orderedQuestions.length}
             goalLabel={goal ? goalMap[goal]?.label || "" : ""}
             onNext={handleQuestionNext}
             onBack={handleQuestionBack}
           />
+        )}
+        {screen === "photo-capture" && (
+          <PhotoCaptureScreen goalLabel={goal ? goalMap[goal]?.label || "" : ""} onDone={handlePhotoCaptureDone} />
         )}
         {screen === "lead" && (
           <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} onSubmit={submitLead} goalLabel={goal ? goalMap[goal]?.label || "" : ""} />
@@ -389,6 +416,7 @@ function QuestionScreen({
   canProceed,
   hasNext,
   stepNumber,
+  totalSteps,
   goalLabel,
   onNext,
   onBack,
@@ -399,16 +427,26 @@ function QuestionScreen({
   canProceed: boolean;
   hasNext: boolean;
   stepNumber: number;
+  totalSteps: number;
   goalLabel: string;
   onNext: () => void;
   onBack: () => void;
 }) {
+  // Branching means totalSteps can shift as answers change (a later
+  // question may become irrelevant and drop out of the count) — this is
+  // an approximation of "how far along", same caveat any branching quiz
+  // progress bar has, not an exact step count promise.
+  const progressPct = totalSteps > 0 ? Math.min(100, Math.round((stepNumber / totalSteps) * 100)) : 0;
+
   return (
     <div className="py-6 md:py-10">
       <div className="mb-7">
-        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
-          {goalLabel} · Question {stepNumber}
+        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+          {goalLabel} · Question {stepNumber}{totalSteps > 0 ? ` of ${totalSteps}` : ""}
         </span>
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-5">
+          <div className="h-full bg-[#0B2560] rounded-full transition-all duration-300 ease-out" style={{ width: `${progressPct}%` }} />
+        </div>
         <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">{question.title}</h2>
         {question.subtitle && <p className="text-gray-500 text-sm md:text-base">{question.subtitle}</p>}
       </div>

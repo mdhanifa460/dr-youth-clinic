@@ -1,6 +1,7 @@
 import { getSiteConfig } from "@/app/lib/siteConfig";
 import { resolveJourneyGoals } from "@/app/lib/journeyGoals.server";
 import { getCachedQuizConfig } from "@/app/lib/quizConfig.server";
+import { getJourneyConfig } from "@/app/models/JourneyConfig";
 import PlanMyJourneyClient from "./PlanMyJourneyClient";
 
 // Unlike skin-quiz (fully client-driven against an admin-config API), this
@@ -13,11 +14,20 @@ import PlanMyJourneyClient from "./PlanMyJourneyClient";
 export const revalidate = 300;
 
 export default async function PlanMyJourneyPage() {
-  const [{ goals, bundles }, siteConfig, quizConfig] = await Promise.all([
+  const [{ goals, bundles }, siteConfig, quizConfig, journeyConfig] = await Promise.all([
     resolveJourneyGoals(),
     getSiteConfig(),
     getCachedQuizConfig(),
+    getJourneyConfig(),
   ]);
 
-  return <PlanMyJourneyClient goals={goals} bundles={bundles} siteConfig={siteConfig} quizConfig={quizConfig} />;
+  return (
+    <PlanMyJourneyClient
+      goals={goals}
+      bundles={bundles}
+      siteConfig={siteConfig}
+      quizConfig={quizConfig}
+      enablePhotoCapture={journeyConfig.enablePhotoCapture}
+    />
+  );
 }
