@@ -19,9 +19,12 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
   twitter: <FaTwitter size={13} />,
 };
 
+const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
+
 // Data is fetched once in PublicLayout and passed down — no DB call here
 export default async function Footer({ data, siteConfig }: { data?: any; siteConfig?: SiteConfig }) {
   const resolvedData = data ?? HOMEPAGE_DEFAULTS.footer.data;
+  const logoUrl = siteConfig?.logoUrl || DEFAULT_LOGO_URL;
 
   const {
     tagline = "",
@@ -57,7 +60,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
           <div className="md:col-span-1 space-y-5">
             <Link href="/" className="inline-block">
               <Image
-                src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`}
+                src={logoUrl}
                 alt="DR Youth Clinic"
                 width={130}
                 height={44}

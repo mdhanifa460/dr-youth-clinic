@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save } from "lucide-react";
+import ImageUpload from "@/app/admin/components/ImageUpload";
 
 type BrandSettings = {
   tagline: string;
   primaryColor: string;
+  logoUrl: string;
+  logoPublicId: string;
   instagram: string;
   facebook: string;
   youtube: string;
@@ -16,6 +19,8 @@ type BrandSettings = {
 const DEFAULTS: BrandSettings = {
   tagline: "Your Skin's Best Friend",
   primaryColor: "#0B2560",
+  logoUrl: "",
+  logoPublicId: "",
   instagram: "",
   facebook: "",
   youtube: "",
@@ -114,6 +119,28 @@ export default function BrandSettingsPage() {
             <p className="text-gray-400 text-xs mt-0.5">Your clinic's tagline and primary brand colour.</p>
           </div>
           <div className="px-6 py-5 space-y-5">
+
+            {/* Logo */}
+            <div>
+              <ImageUpload
+                label="Site Logo"
+                folder="dr-youth-clinic/branding"
+                currentPublicId={form.logoPublicId}
+                onUpload={({ url, publicId }) => setForm((f) => ({ ...f, logoUrl: url, logoPublicId: publicId }))}
+              />
+              {form.logoUrl && (
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="bg-[#0B2560] rounded-xl px-4 py-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.logoUrl} alt="Logo preview" className="h-10 object-contain" />
+                  </div>
+                  <p className="text-[11px] text-gray-400">Preview on your brand colour — this is how it looks in the site footer.</p>
+                </div>
+              )}
+              <p className="text-[11px] text-gray-400 mt-1.5">
+                Shown in the header, footer, and landing pages. Leave empty to keep the current default logo.
+              </p>
+            </div>
 
             {/* Tagline */}
             <div>

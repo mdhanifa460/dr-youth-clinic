@@ -21,6 +21,10 @@ export interface SiteConfig {
   instagramUrl: string;
   facebookUrl:  string;
   youtubeUrl:   string;
+  /** Site logo from Settings → Brand. Empty string = not set — every consumer (Navbar,
+   *  Footer, landing-page templates) falls back to its own default asset when empty,
+   *  so an unconfigured clinic looks exactly as it did before this field existed. */
+  logoUrl: string;
   /** Consultation fee in ₹, shown by CostEstimator (Settings → Booking) */
   consultationFee: number;
   /** Comma-separated EMI bank partner names (Settings → Booking) */
@@ -59,6 +63,7 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   instagramUrl: '',
   facebookUrl:  '',
   youtubeUrl:   '',
+  logoUrl: '',
   consultationFee: 500,
   emiBankPartners: 'HDFC, ICICI, Axis Bank',
   ratingValue: '4.9',

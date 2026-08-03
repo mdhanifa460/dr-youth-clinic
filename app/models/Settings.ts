@@ -47,6 +47,8 @@ export interface ISettings extends Document {
   brand: {
     tagline: string;
     primaryColor: string;
+    logoUrl: string;
+    logoPublicId: string;
     instagram: string;
     facebook: string;
     youtube: string;
@@ -304,6 +306,8 @@ const SettingsSchema = new Schema<ISettings>(
     brand: {
       tagline:        { type: String, default: "Your Skin's Best Friend" },
       primaryColor:   { type: String, default: '#0B2560' },
+      logoUrl:        { type: String, default: '' },
+      logoPublicId:   { type: String, default: '' },
       instagram:      { type: String, default: '' },
       facebook:       { type: String, default: '' },
       youtube:        { type: String, default: '' },

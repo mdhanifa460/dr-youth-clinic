@@ -42,8 +42,11 @@ const FALLBACK_NAV_ITEMS: NavItem[] = [
   { id: "locations", label: "Locations", linkType: "locations", href: "", order: 9, visible: true, children: [] },
 ];
 
+const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
+
 export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[] }) {
   const siteConfig = useSiteConfig();
+  const logoUrl   = siteConfig.logoUrl || DEFAULT_LOGO_URL;
   const phone     = siteConfig.publicPhone    || "1800 890 9669";
   const phoneHref = `tel:${phone.replace(/\s+/g, "")}`;
   const [active, setActive] = useState("home");
@@ -141,7 +144,7 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
         {/* Center: logo */}
         <Link href={homeLink} className="flex items-center">
           <Image
-            src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`}
+            src={logoUrl}
             alt="DR Youth Clinic"
             width={130}
             height={44}
@@ -166,7 +169,7 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
           <Image
-            src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`}
+            src={logoUrl}
             alt="DR Youth Clinic"
             width={150}
             height={52}

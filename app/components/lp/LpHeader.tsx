@@ -8,9 +8,10 @@ interface LpHeaderProps {
   phone?: string;
   whatsapp?: string;
   ctaText?: string;
+  logoUrl?: string;
 }
 
-export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot' }: LpHeaderProps) {
+export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', logoUrl }: LpHeaderProps) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot' }
         {/* Logo + name */}
         <div className="flex items-center gap-2.5 shrink-0">
           <Image
-            src="/logo.png"
+            src={logoUrl || "/logo.png"}
             alt="DR Youth Clinic"
             width={36}
             height={36}

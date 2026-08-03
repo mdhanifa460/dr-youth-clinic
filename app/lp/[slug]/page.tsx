@@ -148,6 +148,7 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
           phone={phone}
           whatsapp={whatsapp}
           ctaText={heroData.ctaPrimary?.text || 'Book Free Slot'}
+          logoUrl={siteConfig.logoUrl}
         />
 
         <LpRenderer
@@ -165,7 +166,7 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
           <div className="space-y-0">{layoutEngineMain}</div>
         )}
 
-        <LpFooter phone={phone} whatsapp={whatsapp} city={locationData.city} branches={locationData.branches} />
+        <LpFooter phone={phone} whatsapp={whatsapp} city={locationData.city} branches={locationData.branches} logoUrl={siteConfig.logoUrl} />
 
         <StickyCta
           phone={phone}

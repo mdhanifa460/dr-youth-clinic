@@ -59,6 +59,7 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       instagramUrl:   settings.brand?.instagram || '',
       facebookUrl:    settings.brand?.facebook  || '',
       youtubeUrl:     settings.brand?.youtube   || '',
+      logoUrl:        settings.brand?.logoUrl   || '',
       consultationFee: settings.booking?.consultationFee ?? 500,
       emiBankPartners: settings.booking?.emiBankPartners || 'HDFC, ICICI, Axis Bank',
       ratingValue,

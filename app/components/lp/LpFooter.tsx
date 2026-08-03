@@ -6,9 +6,10 @@ interface LpFooterProps {
   whatsapp?: string;
   city?: string;
   branches?: string[];
+  logoUrl?: string;
 }
 
-export default function LpFooter({ phone, whatsapp, city, branches }: LpFooterProps) {
+export default function LpFooter({ phone, whatsapp, city, branches, logoUrl }: LpFooterProps) {
   const waLink = whatsapp
     ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Hi, I'd like to book a free consultation`
     : null;
@@ -22,7 +23,7 @@ export default function LpFooter({ phone, whatsapp, city, branches }: LpFooterPr
           {/* Brand */}
           <div className="flex items-center gap-3">
             <Image
-              src="/logo.png"
+              src={logoUrl || "/logo.png"}
               alt="DR Youth Clinic"
               width={40}
               height={40}
