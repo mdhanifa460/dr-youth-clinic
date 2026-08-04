@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Sparkles, Loader2, Calendar } from 'lucide-react';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
@@ -17,13 +17,34 @@ interface Journey {
   disclaimer: string;
 }
 
-export default function AiJourneySimulator({ serviceId, serviceName }: { serviceId: string; serviceName: string }) {
+export default function AiJourneySimulator({
+  serviceId,
+  serviceName,
+  initialConcern = '',
+  initialGoal = '',
+  autoStart = false,
+  onGenerated,
+}: {
+  serviceId: string;
+  serviceName: string;
+  // Pre-fills from data already collected earlier in a flow (e.g. AI Beauty
+  // Journey's Smart Conversation answers) so the patient never has to
+  // re-type their concern a second time. Skin Quiz passes neither and gets
+  // the original manual-entry experience unchanged.
+  initialConcern?: string;
+  initialGoal?: string;
+  // Fires the simulation automatically on mount instead of waiting for a
+  // button click — only meaningful when initialConcern is non-empty.
+  autoStart?: boolean;
+  onGenerated?: (journey: Journey) => void;
+}) {
   const siteConfig = useSiteConfig();
-  const [concern, setConcern] = useState('');
-  const [goal, setGoal] = useState('');
+  const [concern, setConcern] = useState(initialConcern);
+  const [goal, setGoal] = useState(initialGoal);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [journey, setJourney] = useState<Journey | null>(null);
+  const autoStarted = useRef(false);
 
   async function simulate() {
     if (concern.trim().length < 3) {
@@ -49,6 +70,7 @@ export default function AiJourneySimulator({ serviceId, serviceName }: { service
         return;
       }
       setJourney(data.data);
+      onGenerated?.(data.data);
     } catch {
       setError('Something went wrong — please try again.');
     } finally {
@@ -56,19 +78,37 @@ export default function AiJourneySimulator({ serviceId, serviceName }: { service
     }
   }
 
+  useEffect(() => {
+    if (autoStart && initialConcern.trim().length >= 3 && !autoStarted.current) {
+      autoStarted.current = true;
+      simulate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, initialConcern]);
+
   return (
     <div className="rounded-3xl border border-blue-50 bg-gradient-to-br from-[#f6faff] to-white p-6 md:p-8">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 rounded-xl bg-[#0B2560] flex items-center justify-center shrink-0">
           <Sparkles size={18} className="text-[#F5A623]" />
         </div>
-        <h2 className="text-xl font-headline font-bold text-[#0B2560]">Simulate Your {serviceName} Journey</h2>
+        <h2 className="text-xl font-headline font-bold text-[#0B2560]">
+          {autoStart ? `Your Personalised ${serviceName} Journey` : `Simulate Your ${serviceName} Journey`}
+        </h2>
       </div>
       <p className="text-gray-500 text-sm mb-5">
-        Describe your specific concern and our AI will sketch out a personalised journey — a starting point before your real consultation.
+        {autoStart
+          ? 'Built from what you told us — a starting point before your real consultation.'
+          : 'Describe your specific concern and our AI will sketch out a personalised journey — a starting point before your real consultation.'}
       </p>
 
-      {!journey && (
+      {loading && !journey && (
+        <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+          <Loader2 size={15} className="animate-spin" /> Building your journey…
+        </div>
+      )}
+
+      {!journey && !loading && (
         <div className="space-y-3">
           <textarea
             value={concern}

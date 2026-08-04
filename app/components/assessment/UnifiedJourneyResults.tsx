@@ -396,7 +396,34 @@ export default function UnifiedJourneyResults({
 
           <RecoveryTimeline recoveryTime={svc.recoveryTime} stages={svc.recoveryStages} />
 
-          <AiJourneySimulator key={String(svc._id)} serviceId={String(svc._id)} serviceName={svc.name} />
+          <AiJourneySimulator
+            key={String(svc._id)}
+            serviceId={String(svc._id)}
+            serviceName={svc.name}
+            initialConcern={primaryConcern}
+            initialGoal={journey?.goalLabel || ""}
+            // goal is only non-empty for AI Beauty Journey (Skin Quiz passes
+            // "" — see the prop comment above) — scopes auto-generation +
+            // persistence to that flow without changing Skin Quiz's
+            // existing manual-entry behavior.
+            autoStart={!!goal && !!primaryConcern}
+            onGenerated={
+              goal && sessionId
+                ? (result) => {
+                    fetch("/api/patient-journey", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        sessionId,
+                        goal,
+                        currentModule: "cost_planning",
+                        timeline: { ...result, generatedAt: new Date().toISOString() },
+                      }),
+                    }).catch(() => {});
+                  }
+                : undefined
+            }
+          />
         </div>
       ),
     });

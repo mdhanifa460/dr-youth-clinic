@@ -3,6 +3,7 @@ import { connectDB } from "@/app/lib/mongodb";
 import { Service } from "@/app/models/Service";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
+import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 
 export async function POST(req: Request) {
   // 5 simulations per hour per IP — this hits a paid AI API with no auth wall,
@@ -40,7 +41,9 @@ export async function POST(req: Request) {
 
     const sessions = svc.sessionsCount || 6;
 
-    const prompt = `You are a patient-education assistant for DR Youth Clinic, a dermatology and aesthetic clinic in India. You are NOT a doctor and must not make diagnoses, medical guarantees, or promise specific results.
+    const prompt = `${CLINICAL_AI_GUARDRAILS}
+
+You are a patient-education assistant for DR Youth Clinic, a dermatology and aesthetic clinic in India, generating a Personalized Journey Timeline as part of a patient's AI-guided treatment journey.
 
 A prospective patient is looking at "${svc.name}" (category: ${svc.category}, typical course: ${sessions} sessions${svc.recoveryTime ? `, recovery: ${svc.recoveryTime}` : ""}).
 
@@ -48,6 +51,8 @@ Their concern: "${concern.trim()}"
 ${goal?.trim() ? `Their goal: "${goal.trim()}"` : ""}
 
 Generate a personalised, realistic 4-phase treatment journey for THIS patient's specific situation (not a generic template) — reference their stated concern/goal naturally in the phase descriptions so it feels tailored to them.
+
+Describe what each phase of treatment typically INVOLVES (procedures, care, what to expect) — never what it WILL achieve for this specific patient. Avoid words like "will clear", "will restore", "guaranteed", "permanent fix" — use "aims to", "is designed to", "many patients notice" instead, and never attach a percentage/timeframe to an outcome.
 
 Return ONLY valid JSON, no other text, in this exact shape:
 {
@@ -58,7 +63,7 @@ Return ONLY valid JSON, no other text, in this exact shape:
     { "sessionRange": "Session Y-Z", "title": "...", "description": "..." },
     { "sessionRange": "Post-treatment", "title": "...", "description": "..." }
   ],
-  "disclaimer": "1 sentence reminding them this is an AI-generated estimate and their actual plan will be set by a doctor at consultation"
+  "disclaimer": "1 sentence reminding them this is an AI-generated estimate, not a guarantee of results, and their actual plan will be set by a doctor at consultation"
 }
 
 The 4 sessionRange values must divide ${sessions} total sessions sensibly (e.g. roughly 25%/50%/100%/post-treatment), matching the style "Session 1-2", "Session 3-4", etc.`;
