@@ -53,6 +53,7 @@ export default function PlanMyJourneyClient({
   enablePhotoCapture,
   enableAiObservations,
   aiObservationsDisclaimer,
+  costPlanningNote,
 }: {
   goals: IJourneyGoal[];
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
@@ -61,6 +62,7 @@ export default function PlanMyJourneyClient({
   enablePhotoCapture: boolean;
   enableAiObservations: boolean;
   aiObservationsDisclaimer: string;
+  costPlanningNote: string;
 }) {
   return (
     <SiteConfigProvider initial={siteConfig}>
@@ -71,6 +73,7 @@ export default function PlanMyJourneyClient({
         enablePhotoCapture={enablePhotoCapture}
         enableAiObservations={enableAiObservations}
         aiObservationsDisclaimer={aiObservationsDisclaimer}
+        costPlanningNote={costPlanningNote}
       />
     </SiteConfigProvider>
   );
@@ -83,6 +86,7 @@ function PlanMyJourneyFlow({
   enablePhotoCapture,
   enableAiObservations,
   aiObservationsDisclaimer,
+  costPlanningNote,
 }: {
   goals: IJourneyGoal[];
   bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
@@ -90,6 +94,7 @@ function PlanMyJourneyFlow({
   enablePhotoCapture: boolean;
   enableAiObservations: boolean;
   aiObservationsDisclaimer: string;
+  costPlanningNote: string;
 }) {
   const clinic = useClinicParam();
   const goalMap = useMemo(() => Object.fromEntries(goals.map((g) => [g.slug, g])), [goals]);
@@ -367,6 +372,7 @@ function PlanMyJourneyFlow({
                 }}
                 goal={goal}
                 sessionId={sessionId}
+                costPlanningNote={costPlanningNote}
               />
             </div>
           </div>

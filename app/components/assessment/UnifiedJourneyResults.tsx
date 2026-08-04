@@ -12,7 +12,7 @@
 // matched-Service presentation (`journey` prop) only renders when a real
 // Service document was matched. Neither flow fabricates the other's data —
 // a section simply doesn't render when its underlying data doesn't exist.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MessageCircle } from "lucide-react";
@@ -52,6 +52,31 @@ const CONFIDENCE_BADGE: Record<string, string> = {
   Medium: "bg-[#F5A623]/15 text-[#c47e00]",
   Low: "bg-gray-100 text-gray-500",
 };
+
+// AI Beauty Journey Module 6 (Cost Planning) — Service has only a single
+// admin-entered `price`, not a range (no priceMin/priceMax field exists on
+// the model, and adding one would ripple into every other page that shows
+// price as an exact figure, which is out of scope here). A modest ±spread
+// around that price, rounded to a clean figure, is a defensible "typical
+// range" without touching the pricing model everywhere else on the site —
+// the detailed CostEstimator/EMICalculator below still show an exact
+// calculated total for patients who want to dig into specifics.
+function computeCostRange(price: number): { min: number; max: number } {
+  const round100 = (n: number) => Math.round(n / 100) * 100;
+  return { min: round100(price * 0.85), max: round100(price * 1.25) };
+}
+
+function CostRangeCard({ min, max, currency, note }: { min: number; max: number; currency: string; note: string }) {
+  return (
+    <div className="rounded-3xl border border-blue-50 bg-gradient-to-br from-[#f6faff] to-white p-6 md:p-8 sm:col-span-2">
+      <p className="text-xs font-bold text-[#0B2560] uppercase tracking-wider mb-2">Estimated Cost Range</p>
+      <p className="text-3xl md:text-4xl font-extrabold text-[#0B2560]">
+        {currency}{min.toLocaleString("en-IN")} &ndash; {currency}{max.toLocaleString("en-IN")}
+      </p>
+      <p className="text-gray-500 text-sm mt-3 leading-relaxed">{note}</p>
+    </div>
+  );
+}
 
 function TreatmentCard({ treatment, rank, goal, sessionId }: { treatment: TreatmentRecommendation; rank: number; goal?: string; sessionId?: string }) {
   const { consultationCta } = useSiteConfig();
@@ -267,6 +292,7 @@ export default function UnifiedJourneyResults({
   journey,
   goal,
   sessionId,
+  costPlanningNote,
 }: {
   resultSections: ResultSectionConfig[];
   recommendations: TreatmentRecommendation[];
@@ -282,8 +308,34 @@ export default function UnifiedJourneyResults({
   // skin-quiz, which has no goal concept of its own.
   goal?: string;
   sessionId?: string;
+  // AI Beauty Journey only (JourneyConfig.costPlanningNote) — undefined for
+  // Skin Quiz, which falls back to a generic note inside CostRangeCard's
+  // caller below.
+  costPlanningNote?: string;
 }) {
   const { publicWhatsApp, consultationCta, showPriceOnCards } = useSiteConfig() as any;
+  const svcForCostRange = journey?.service;
+  const costRangePersisted = useRef(false);
+
+  // Fires once when a real matched Service + AI Beauty Journey session are
+  // both available — persists the computed range onto PatientJourney the
+  // same way the Journey Timeline (Module 5) persists via onGenerated,
+  // just without an AI call in between since this is a pure calculation.
+  useEffect(() => {
+    if (!svcForCostRange?.price || !goal || !sessionId || costRangePersisted.current) return;
+    costRangePersisted.current = true;
+    const { min, max } = computeCostRange(svcForCostRange.price);
+    fetch("/api/patient-journey", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        goal,
+        currentModule: "doctor_matching",
+        costRange: { min, max, currency: "₹", note: costPlanningNote || "" },
+      }),
+    }).catch(() => {});
+  }, [svcForCostRange, goal, sessionId, costPlanningNote]);
 
   // Plan My Journey with no matched Service at all (e.g. weight-loss before
   // Phase 3 content lands) — nothing clinical to show either, since no
@@ -430,11 +482,25 @@ export default function UnifiedJourneyResults({
   }
 
   if (sectionVisible("costEstimator") && svc) {
+    // The range card is AI Beauty Journey only (goal truthy — see the
+    // costPlanningNote prop comment) — it leads with "typical range,
+    // confirmed at consultation" before the exact calculator below, which
+    // both flows keep showing unchanged for patients who want to dig into
+    // session-count/EMI specifics.
+    const range = goal ? computeCostRange(svc.price) : null;
     blocks.push({
       key: "costEstimator",
       order: orderOf("costEstimator"),
       node: (
         <div key="cost" className="grid sm:grid-cols-2 gap-6">
+          {range && (
+            <CostRangeCard
+              min={range.min}
+              max={range.max}
+              currency="₹"
+              note={costPlanningNote || "This is a typical range for patients with similar needs — your exact cost is confirmed by a doctor after consultation."}
+            />
+          )}
           <CostEstimator basePrice={svc.price} sessionsRequired={svc.sessionsRequired} serviceName={svc.name} />
           <EMICalculator price={svc.price} />
         </div>

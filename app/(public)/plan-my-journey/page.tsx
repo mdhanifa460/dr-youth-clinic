@@ -30,6 +30,7 @@ export default async function PlanMyJourneyPage() {
       enablePhotoCapture={journeyConfig.enablePhotoCapture}
       enableAiObservations={journeyConfig.enableAiObservations}
       aiObservationsDisclaimer={journeyConfig.aiObservationsDisclaimer}
+      costPlanningNote={journeyConfig.costPlanningNote}
     />
   );
 }
