@@ -259,7 +259,7 @@ function GalleryItem({
 export default function LocationsAdminPage() {
   const [city, setCity] = useState('chennai');
   const EMPTY_CLINIC_INFO = {
-    address: '', phone: '', whatsappNotifyNumber: '', whatsappSenderPhoneNumberId: '',
+    address: '', phone: '', publicWhatsApp: '', whatsappNotifyNumber: '', whatsappSenderPhoneNumberId: '',
     hours: [{ day: 'Monday - Saturday', hours: '' }, { day: 'Sunday', hours: 'Closed' }],
     operatingHours: DAYS_OF_WEEK.map((day) => ({ day, isOpen: day !== 'sunday', openTime: '09:00', closeTime: '19:00' })),
     holidays: [] as { date: string; label: string }[],
@@ -307,6 +307,7 @@ export default function LocationsAdminPage() {
         clinicInfo: {
           address:      dci?.address      || loc?.address      || '',
           phone:        dci?.phone        || loc?.phone        || '',
+          publicWhatsApp: dci?.publicWhatsApp || '',
           whatsappNotifyNumber: dci?.whatsappNotifyNumber || '',
           whatsappSenderPhoneNumberId: dci?.whatsappSenderPhoneNumberId || '',
           hours:        dci?.hours?.length ? dci.hours : (loc?.hours ?? EMPTY_CLINIC_INFO.hours),
@@ -508,6 +509,16 @@ export default function LocationsAdminPage() {
                       placeholder="+91 98765 43210"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Patient WhatsApp Number <span className="font-normal text-gray-400">(optional)</span></label>
+                    <input
+                      value={data.clinicInfo.publicWhatsApp || ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, publicWhatsApp: e.target.value } }))}
+                      placeholder="Defaults to Settings → Contact → WhatsApp"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">"WhatsApp us" links site-wide open this number for visitors on/from this branch, instead of the sitewide default.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">WhatsApp Booking Alerts <span className="font-normal text-gray-400">(optional)</span></label>

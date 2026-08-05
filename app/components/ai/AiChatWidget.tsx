@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { markdownToHtml } from '@/app/lib/blogMarkdown';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
@@ -306,6 +307,11 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
   const scrollRef = useRef<HTMLDivElement>(null);
   const loadedHistory = useRef(false);
   const [resolvedGreeting, setResolvedGreeting] = useState<{ greeting: string; welcomeMessage?: string } | null>(null);
+  // Branch-aware — resolves to the visitor's actual clinic's WhatsApp
+  // number once their location is known, falling back to the sitewide
+  // `whatsapp` prop until then. Must be called unconditionally before the
+  // `!config` early return below (Rules of Hooks).
+  const branchWhatsApp = useBranchWhatsApp(whatsapp || '');
 
   useEffect(() => {
     const { id, isReturning } = getSessionId();
@@ -408,7 +414,7 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
 
   if (!config || !config.enabled) return null;
   const accent = THEME_ACCENT[config.theme] || THEME_ACCENT.luxury;
-  const waHref = whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, '')}` : null;
+  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
 
   const handleQuickAction = (action: string) => {
     const inline = INLINE_VIEWS[action];

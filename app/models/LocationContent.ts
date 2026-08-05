@@ -91,6 +91,13 @@ export interface IClinicInfo {
   // one, in which case this stays empty and every branch keeps sending
   // from the single global PHONE_NUMBER_ID, exactly like today.
   whatsappSenderPhoneNumberId?: string;
+  // The patient-facing "chat with us on WhatsApp" number for THIS branch
+  // — distinct from both fields above (neither is meant for a patient to
+  // message). Empty by default; every wa.me link site-wide falls back to
+  // Settings.contact.publicWhatsApp (the single sitewide number) until an
+  // admin fills this in per branch, so nothing breaks for an unconfigured
+  // location.
+  publicWhatsApp?: string;
   hours: IClinicHour[];
   operatingHours: IOperatingHour[];
   holidays: IHoliday[];
@@ -204,6 +211,7 @@ const ClinicInfoSchema = new Schema<IClinicInfo>(
     phone:        { type: String, default: '' },
     whatsappNotifyNumber: { type: String, default: '' },
     whatsappSenderPhoneNumberId: { type: String, default: '' },
+    publicWhatsApp: { type: String, default: '' },
     hours:        { type: [ClinicHourSchema], default: [] },
     operatingHours: { type: [OperatingHourSchema], default: [] },
     holidays:     { type: [HolidaySchema], default: [] },

@@ -2,6 +2,7 @@ import { FaFacebookF, FaInstagram, FaYoutube, FaTwitter, FaWhatsapp } from 'reac
 import { MdPhone, MdEmail } from 'react-icons/md';
 import { AiFillStar } from 'react-icons/ai';
 import type { SiteConfig } from '@/app/lib/siteConfig';
+import BranchWhatsAppLink from '@/app/components/BranchWhatsAppLink';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   facebook: <FaFacebookF size={14} />,
@@ -30,6 +31,8 @@ const MOBILE_SOCIAL: Array<{
     color: '#25D366',
     fallback: process.env.CLINIC_PHONE ? `https://wa.me/${process.env.CLINIC_PHONE}` : undefined,
   },
+  // ^ still used as mobileSocials' last-resort fallback below; the actual
+  // rendered link is now BranchWhatsAppLink (branch-aware), not a plain <a>.
   { platform: 'instagram', icon: <FaInstagram size={15} />, color: '#E1306C' },
   { platform: 'facebook',  icon: <FaFacebookF size={14} />, color: '#1877F2' },
   { platform: 'youtube',   icon: <FaYoutube size={15} />,   color: '#FF0000' },
@@ -42,6 +45,7 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
     instagram: siteConfig?.instagramUrl || '',
     facebook:  siteConfig?.facebookUrl  || '',
     youtube:   siteConfig?.youtubeUrl   || '',
+    whatsapp:  siteConfig?.publicWhatsApp || '',
   };
 
   // Merge brand URLs as fallback when homepage editor link is '#' or empty
@@ -76,19 +80,31 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
           )}
 
           {/* Right: social icon buttons */}
-          {mobileSocials.map((item) => (
-            <a
-              key={item.platform}
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={item.platform}
-              style={{ color: item.color }}
-              className="flex w-11 items-center justify-center hover:bg-white/10 active:bg-white/20 transition"
-            >
-              {item.icon}
-            </a>
-          ))}
+          {mobileSocials.map((item) =>
+            item.platform === 'whatsapp' ? (
+              <BranchWhatsAppLink
+                key={item.platform}
+                fallback={item.url}
+                ariaLabel="whatsapp"
+                style={{ color: item.color }}
+                className="flex w-11 items-center justify-center hover:bg-white/10 active:bg-white/20 transition"
+              >
+                {item.icon}
+              </BranchWhatsAppLink>
+            ) : (
+              <a
+                key={item.platform}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={item.platform}
+                style={{ color: item.color }}
+                className="flex w-11 items-center justify-center hover:bg-white/10 active:bg-white/20 transition"
+              >
+                {item.icon}
+              </a>
+            )
+          )}
         </div>
       )}
 
@@ -119,18 +135,30 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
           {resolvedSocialLinks.length > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-white/60">Follow Us:</span>
-              {resolvedSocialLinks.map((s, i) => (
-                <a
-                  key={i}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={PLATFORM_COLOR[s.platform] ? { color: PLATFORM_COLOR[s.platform] } : undefined}
-                  className={PLATFORM_COLOR[s.platform] ? 'transition opacity-90 hover:opacity-100' : 'hover:text-[#F5A623] transition'}
-                >
-                  {ICON_MAP[s.platform] ?? s.platform}
-                </a>
-              ))}
+              {resolvedSocialLinks.map((s, i) =>
+                s.platform === 'whatsapp' ? (
+                  <BranchWhatsAppLink
+                    key={i}
+                    fallback={s.url}
+                    ariaLabel="whatsapp"
+                    style={{ color: PLATFORM_COLOR.whatsapp }}
+                    className="transition opacity-90 hover:opacity-100"
+                  >
+                    {ICON_MAP.whatsapp}
+                  </BranchWhatsAppLink>
+                ) : (
+                  <a
+                    key={i}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={PLATFORM_COLOR[s.platform] ? { color: PLATFORM_COLOR[s.platform] } : undefined}
+                    className={PLATFORM_COLOR[s.platform] ? 'transition opacity-90 hover:opacity-100' : 'hover:text-[#F5A623] transition'}
+                  >
+                    {ICON_MAP[s.platform] ?? s.platform}
+                  </a>
+                )
+              )}
             </div>
           )}
         </div>
