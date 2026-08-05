@@ -75,6 +75,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "System",
     items: [
       { href: "/admin/team", label: "👥 Team", module: "team" },
+      { href: "/admin/legal", label: "📜 Legal Pages", module: "legal" },
       { href: "/admin/settings", label: "⚙ Settings", module: "settings" },
     ],
   },

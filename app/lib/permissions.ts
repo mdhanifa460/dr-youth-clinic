@@ -28,6 +28,7 @@ export type AdminModule =
   | 'videos'
   | 'ai-assessment'
   | 'journey'
+  | 'legal'
   | 'ai'
   | 'stories'
   | 'faqs'
@@ -43,7 +44,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'full', doctors: 'full', homepage: 'full',
     locations: 'full', offers: 'full', results: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', banners: 'full',
+    settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
@@ -52,7 +53,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'full', doctors: 'full', homepage: 'full',
     locations: 'full', offers: 'full', results: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', banners: 'full',
+    settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
@@ -61,7 +62,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'full', doctors: 'view', homepage: 'full',
     locations: 'view', offers: 'full', results: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
-    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', banners: 'full',
+    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
@@ -70,7 +71,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'view', doctors: 'view', homepage: 'none',
     locations: 'none', offers: 'none', results: 'none', reviews: 'view',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', journey: 'full', banners: 'none',
+    settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', journey: 'full', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'view', 'animation-library': 'none',
   },
@@ -82,7 +83,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // Was 'services: view' before this feature had its own module — the
     // quiz page was reachable at that level, so 'none' here would be a
     // silent access regression, not an intentional policy change.
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', banners: 'none',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none',
   },
@@ -93,7 +94,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     // Was 'services: full' before this feature had its own module — content
     // editors could already edit quiz content at that level.
-    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', banners: 'full',
+    settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
   },
@@ -102,7 +103,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     services: 'none', doctors: 'none', homepage: 'none',
     locations: 'none', offers: 'none', results: 'none', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', journey: 'none', banners: 'none',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', journey: 'none', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'none', courses: 'none', 'animation-library': 'none',
   },
@@ -112,7 +113,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     locations: 'view', offers: 'view', results: 'none', reviews: 'full',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     // Was 'services: view' before this feature had its own module.
-    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', banners: 'none',
+    settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none',
   },
