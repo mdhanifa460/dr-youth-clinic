@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, MapPin, Star, Check } from "lucide-react";
 import { SiteConfigProvider } from "@/app/components/SiteConfigContext";
 import { locations } from "@/app/data/locations";
 import type { JourneyGoalSlug, JourneyGoalBundle } from "@/app/lib/journeyGoals";
@@ -139,18 +139,22 @@ function PlanMyJourneyFlow({
   }, [clinic]);
 
   // Module 7 — re-fetches the doctor list scoped to the visitor's clinic
-  // once both are known. Resets to null (falls back to the wider
+  // once both are known. lead.preferredClinic (Module 8's explicit Branch
+  // Selection cards) wins over the passively auto-detected `clinic` once
+  // the patient has actually confirmed/changed a branch — falls back to
+  // `clinic` before that point. Resets to null (falls back to the wider
   // server-resolved pool) on goal change so switching goals via the
   // results screen's sticky switcher doesn't show a stale goal's doctors.
+  const effectiveClinic = lead.preferredClinic || clinic;
   useEffect(() => {
-    if (!goal || !clinic) { setLocationDoctors(null); return; }
+    if (!goal || !effectiveClinic) { setLocationDoctors(null); return; }
     let cancelled = false;
-    fetch(`/api/journey-doctors?goal=${encodeURIComponent(goal)}&location=${encodeURIComponent(clinic)}`)
+    fetch(`/api/journey-doctors?goal=${encodeURIComponent(goal)}&location=${encodeURIComponent(effectiveClinic)}`)
       .then((res) => res.json())
       .then((data) => { if (!cancelled && data.success) setLocationDoctors(data.data); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [goal, clinic]);
+  }, [goal, effectiveClinic]);
 
   const transition = (fn: () => void) => {
     setVisible(false);
@@ -267,6 +271,13 @@ function PlanMyJourneyFlow({
       setLeadStatus("sent");
       if (lead.preferredClinic) {
         postAssessmentEvent({ event: "branch_selected", clinicLocation: lead.preferredClinic, goal, sessionId });
+        if (goal) {
+          fetch("/api/patient-journey", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId, goal, currentModule: "results", matchedBranch: lead.preferredClinic }),
+          }).catch(() => {});
+        }
       }
       // Mirrors skin-quiz's "completed" — reaching results counts as
       // finishing the funnel here too, whether or not intake questions were
@@ -557,6 +568,45 @@ function QuestionScreen({
   );
 }
 
+// AI Beauty Journey Module 8 — an explicit, visible branch confirmation
+// instead of a bare <select>, pre-selected from Module 7's auto-detected
+// clinic (still changeable). Picking a card here is the same signal that
+// drives Doctor Matching's location filter (see the useClinicParam /
+// locationDoctors effect above) — so confirming a branch here immediately
+// narrows the doctor list the results screen will show.
+function BranchSelectionCards({ value, onChange }: { value: string; onChange: (key: string) => void }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {Object.entries(locations).map(([key, loc]) => {
+        const selected = value === key;
+        return (
+          <button
+            type="button"
+            key={key}
+            onClick={() => onChange(key)}
+            className={`relative text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
+              selected ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10" : "border-gray-100 bg-white hover:border-[#0B2560]/30"
+            }`}
+          >
+            {selected && (
+              <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#0B2560] flex items-center justify-center">
+                <Check size={12} className="text-white" />
+              </span>
+            )}
+            <p className={`font-bold text-sm ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>{loc.name}</p>
+            <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+              <MapPin size={11} className="shrink-0" /> {loc.address}
+            </p>
+            <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+              <Star size={11} className="fill-[#F5A623] text-[#F5A623] shrink-0" /> {loc.rating} ({loc.reviewCount} reviews) · {loc.doctorCount} specialists
+            </p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function LeadCaptureScreen({
   lead,
   setLead,
@@ -580,7 +630,7 @@ function LeadCaptureScreen({
         <p className="text-gray-500 text-sm md:text-base max-w-sm mx-auto">Just your name, number, and preferred clinic.</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 max-w-sm mx-auto">
+      <form onSubmit={onSubmit} className="space-y-4 max-w-lg mx-auto">
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Full Name</label>
           <input
@@ -600,17 +650,8 @@ function LeadCaptureScreen({
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Preferred Clinic</label>
-          <select
-            value={lead.preferredClinic}
-            onChange={(e) => setLead((l) => ({ ...l, preferredClinic: e.target.value }))}
-            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-semibold focus:outline-none focus:border-[#0B2560]/40"
-          >
-            <option value="">Select a clinic (optional)</option>
-            {Object.entries(locations).map(([key, loc]) => (
-              <option key={key} value={key}>{loc.name}</option>
-            ))}
-          </select>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Choose Your Branch</label>
+          <BranchSelectionCards value={lead.preferredClinic} onChange={(key) => setLead((l) => ({ ...l, preferredClinic: key }))} />
         </div>
         <button
           type="submit" disabled={status === "sending"}
