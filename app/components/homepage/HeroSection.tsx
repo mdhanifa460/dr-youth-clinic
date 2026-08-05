@@ -204,8 +204,8 @@ export default function HeroSection({ data }: { data: any }) {
           <div className="relative bg-white p-3 sm:p-4 rounded-3xl shadow-[0_18px_50px_rgba(11,37,96,0.12)] ring-1 ring-white/80 overflow-hidden">
             <FocalImage
               image={s.image}
-              aspectRatio="16/9"
-              sizes="(max-width: 768px) 100vw, 500px"
+              aspectRatio="4/3"
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 45vw, 580px"
               alt="DR Youth Clinic"
               className="rounded-2xl"
               imgClassName={`transition-transform duration-[8000ms] ease-linear ${visible ? 'scale-110' : 'scale-100'}`}

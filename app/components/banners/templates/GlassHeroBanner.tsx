@@ -82,7 +82,7 @@ export default function GlassHeroBanner({ banner }: { banner: BannerDoc }) {
       fill
       priority
       sizes="100vw"
-      className="object-cover opacity-40"
+      className="object-cover opacity-90"
       style={{ objectPosition: focalPointToObjectPosition(banner.desktopImage.focalPoint) }}
       aria-hidden="true"
     />
@@ -157,20 +157,24 @@ export default function GlassHeroBanner({ banner }: { banner: BannerDoc }) {
         "--hero-pulse-duration": durations.pulse,
       }}
     >
-      {/* Optional hero image/video — full-bleed background, deliberately
-          subdued (not a discrete "image card" like the traditional
-          banners) so it reads as atmosphere behind the glass, not the
-          focal point. The gradient renders on top at reduced opacity as a
-          tint rather than being replaced by it. Wrapped in ParallaxBackground
-          only when the resolved experience actually calls for it — see
+      {/* Optional hero image/video — full-bleed background, rendered at
+          near-full opacity so an admin-uploaded photo actually reads as a
+          real photo rather than a barely-visible hint (an earlier version
+          of this at opacity-40 combined with an opacity-80 gradient on top
+          effectively erased it). Wrapped in ParallaxBackground only when
+          the resolved experience actually calls for it — see
           ScrollMotion.tsx's comment on why this costs nothing otherwise. */}
       {background && (experience.parallax ? <ParallaxBackground>{background}</ParallaxBackground> : background)}
 
       {/* Animated gradient background — CSS-only, see .glass-hero in globals.css.
+          When a photo/video is present this renders as a light brand-color
+          wash on top of it (not a near-opaque cover) so the image stays the
+          dominant visual; the glass card itself carries its own background
+          for text contrast, so this tint doesn't need to do that job.
           idleAnimation 'none' pauses the drift (a static gradient) rather than
           removing the element, so the gradient's own color mix still renders. */}
       <div
-        className={`glass-hero-gradient absolute inset-0 ${hasBackground ? "opacity-80" : ""}`}
+        className={`glass-hero-gradient absolute inset-0 ${hasBackground ? "opacity-30" : ""}`}
         style={experience.idleAnimation === "none" ? { animationPlayState: "paused" } : undefined}
         aria-hidden="true"
       />

@@ -15,7 +15,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight, MessageCircle, Sparkles, Calendar, IndianRupee, Clock, Check, Minus } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import type { TreatmentRecommendation, ResultSectionConfig, ResultSectionKey } from "@/app/lib/quizDefaults";
 import { postAssessmentEvent } from "@/app/lib/assessmentFlow";
@@ -53,6 +53,12 @@ const CONFIDENCE_BADGE: Record<string, string> = {
   Low: "bg-gray-100 text-gray-500",
 };
 
+const CONFIDENCE_DOT: Record<string, string> = {
+  High: "bg-[#0B2560]",
+  Medium: "bg-[#F5A623]",
+  Low: "bg-gray-400",
+};
+
 // AI Beauty Journey Module 6 (Cost Planning) — Service has only a single
 // admin-entered `price`, not a range (no priceMin/priceMax field exists on
 // the model, and adding one would ripple into every other page that shows
@@ -82,54 +88,68 @@ function TreatmentCard({ treatment, rank, goal, sessionId }: { treatment: Treatm
   const { consultationCta } = useSiteConfig();
   const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}`;
   const confidenceLevel = treatment.confidenceLevel || "Medium";
+  const isTop = rank === 0;
+
+  const stats = [
+    treatment.sessions ? { icon: Calendar, label: treatment.sessions } : null,
+    treatment.price ? { icon: IndianRupee, label: String(treatment.price) } : null,
+    treatment.recovery ? { icon: Clock, label: treatment.recovery } : null,
+  ].filter((s): s is { icon: typeof Calendar; label: string } => s !== null);
 
   return (
-    <div className={`bg-white rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
-      rank === 0 ? "border-[#0B2560] shadow-md shadow-[#0B2560]/10" : "border-gray-100 shadow-sm"
+    <div className={`bg-white rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex flex-col ${
+      isTop ? "border-[#0B2560] shadow-md shadow-[#0B2560]/10" : "border-gray-100 shadow-sm"
     }`}>
-      {rank === 0 && (
-        <div className="bg-[#0B2560] text-white text-xs font-bold uppercase tracking-widest text-center py-1.5 px-4">
-          Most Relevant Discussion Topic
+      {isTop && (
+        <div className="bg-[#0B2560] text-white text-xs font-bold uppercase tracking-widest text-center py-1.5 px-4 flex items-center justify-center gap-1.5">
+          <Sparkles size={12} className="shrink-0" /> Most Relevant Discussion Topic
         </div>
       )}
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{treatment.icon}</span>
-            <h3 className="font-bold text-[#0B2560] text-base leading-tight">{treatment.name}</h3>
-          </div>
-          <span className={`flex-shrink-0 text-xs font-bold rounded-full px-3 py-1 ${CONFIDENCE_BADGE[confidenceLevel] || CONFIDENCE_BADGE.Medium}`}>
-            {confidenceLevel} Confidence
-          </span>
+      <div className="p-5 flex flex-col flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-2xl shrink-0 w-11 h-11 rounded-xl bg-[#f6faff] flex items-center justify-center">{treatment.icon}</span>
+          <h3 className="font-bold text-[#0B2560] text-base leading-tight min-w-0 truncate" title={treatment.name}>
+            {treatment.name}
+          </h3>
         </div>
+
+        <span
+          className={`self-start inline-flex items-center gap-1.5 whitespace-nowrap text-[11px] font-bold rounded-full px-2.5 py-1 mb-3 ${
+            CONFIDENCE_BADGE[confidenceLevel] || CONFIDENCE_BADGE.Medium
+          }`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${CONFIDENCE_DOT[confidenceLevel] || CONFIDENCE_DOT.Medium}`} />
+          {confidenceLevel} Confidence
+        </span>
 
         <p className="text-sm text-gray-600 leading-relaxed mb-4">{treatment.description}</p>
 
-        <div className="flex flex-wrap gap-2 mb-3">
-          {treatment.sessions && (
-            <span className="inline-flex items-center gap-1 text-xs bg-[#f6faff] text-[#0B2560] rounded-lg px-3 py-1.5 font-medium border border-[#0B2560]/10">
-              📅 {treatment.sessions}
-            </span>
-          )}
-          {treatment.price && (
-            <span className="inline-flex items-center gap-1 text-xs bg-[#F5A623]/10 text-[#c47e00] rounded-lg px-3 py-1.5 font-medium border border-[#F5A623]/20">
-              ₹ {treatment.price}
-            </span>
-          )}
-          {treatment.recovery && (
-            <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 rounded-lg px-3 py-1.5 font-medium border border-green-100">
-              ⏱ {treatment.recovery}
-            </span>
-          )}
-        </div>
+        {stats.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            {stats.map(({ icon: StatIcon, label }, i) => (
+              <div key={i} className="flex-1 min-w-0 rounded-lg bg-gray-50 py-2 px-1.5 text-center">
+                <StatIcon size={13} className="mx-auto mb-1 text-[#0B2560]" />
+                <p className="text-[11px] font-semibold text-gray-700 leading-tight truncate" title={label}>
+                  {label}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {(treatment.advantages?.length || treatment.disadvantages?.length) ? (
-          <div className="mb-4 space-y-1">
+          <div className="mb-4 space-y-1.5">
             {treatment.advantages?.slice(0, 2).map((a, i) => (
-              <p key={i} className="text-xs text-green-700 flex items-start gap-1.5"><span>✓</span>{a}</p>
+              <p key={i} className="text-xs text-green-700 flex items-start gap-1.5">
+                <Check size={13} className="shrink-0 mt-0.5" />
+                {a}
+              </p>
             ))}
             {treatment.disadvantages?.slice(0, 1).map((d, i) => (
-              <p key={i} className="text-xs text-gray-500 flex items-start gap-1.5"><span>–</span>{d}</p>
+              <p key={i} className="text-xs text-gray-500 flex items-start gap-1.5">
+                <Minus size={13} className="shrink-0 mt-0.5" />
+                {d}
+              </p>
             ))}
           </div>
         ) : null}
@@ -137,7 +157,7 @@ function TreatmentCard({ treatment, rank, goal, sessionId }: { treatment: Treatm
         <Link
           href={bookUrl}
           onClick={() => postAssessmentEvent({ event: "consultation_booked", goal: goal || "", sessionId: sessionId || "", primaryConcern: treatment.name })}
-          className="block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200 bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
+          className="mt-auto block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200 bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
         >
           {treatment.cta || consultationCta}
         </Link>

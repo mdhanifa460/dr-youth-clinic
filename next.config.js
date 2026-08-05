@@ -19,6 +19,11 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com', pathname: '/**' },
+      // Same host app/models/Video.ts already hotlinks for its auto-generated
+      // thumbnail (https://img.youtube.com/vi/{id}/hqdefault.jpg) — needed
+      // for next/image whenever a component's thumbnail comes straight from
+      // a YouTube video id instead of an uploaded Cloudinary asset.
+      { protocol: 'https', hostname: 'img.youtube.com', pathname: '/**' },
     ],
     formats: ['image/avif', 'image/webp'],  // avif first — ~30% smaller than webp
     minimumCacheTTL: 60 * 60 * 24 * 365,   // 1 year — Cloudinary URLs are content-addressed
