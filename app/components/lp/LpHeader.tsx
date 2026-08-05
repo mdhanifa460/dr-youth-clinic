@@ -48,7 +48,7 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', 
             className="rounded-lg object-contain"
           />
           <span
-            className={`font-extrabold text-sm md:text-base transition-colors duration-300 leading-tight ${
+            className={`hidden sm:inline-block font-extrabold text-sm md:text-base transition-colors duration-300 leading-tight ${
               scrolled ? 'text-[#0B2560]' : 'text-white'
             }`}
           >

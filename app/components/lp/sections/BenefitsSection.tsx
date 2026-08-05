@@ -59,7 +59,12 @@ export default function BenefitsSection({ data }: { data: BenefitsData }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.5, delay: i * 0.1, ease: 'easeOut' }}
-                className="group bg-white border border-gray-100 rounded-2xl p-5 md:p-6 text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                // On the mobile 2-col grid, an odd card count strands the last
+                // card alone on the left with a big empty gap on the right —
+                // span it across both columns and cap its width so it centers
+                // instead. Reset back to a normal single cell from `sm:` up,
+                // where the 3-col/5-col grids don't have this problem.
+                className="group bg-white border border-gray-100 rounded-2xl p-5 md:p-6 text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 [&:last-child:nth-child(odd)]:col-span-2 [&:last-child:nth-child(odd)]:max-w-[calc(50%-0.5rem)] [&:last-child:nth-child(odd)]:mx-auto sm:[&:last-child:nth-child(odd)]:col-span-1 sm:[&:last-child:nth-child(odd)]:max-w-none sm:[&:last-child:nth-child(odd)]:mx-0"
               >
                 <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center mb-4 bg-[#3B82C4]/10 group-hover:bg-[#F5A623] transition-colors duration-300">
                   {hasEmoji ? (

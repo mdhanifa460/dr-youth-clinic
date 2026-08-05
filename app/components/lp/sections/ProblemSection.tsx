@@ -67,7 +67,10 @@ export default function ProblemSection({ data }: { data: ProblemData }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.5, delay: i * 0.1, ease: 'easeOut' }}
-                className="group bg-[#f6faff] border border-gray-100 rounded-2xl p-5 md:p-6 hover:border-[#F5A623] hover:shadow-lg transition-all duration-300"
+                // Same odd-count fix as BenefitsSection: on the mobile 2-col
+                // grid, a lone trailing card gets centered instead of
+                // stranded on the left with empty space beside it.
+                className="group bg-[#f6faff] border border-gray-100 rounded-2xl p-5 md:p-6 hover:border-[#F5A623] hover:shadow-lg transition-all duration-300 [&:last-child:nth-child(odd)]:col-span-2 [&:last-child:nth-child(odd)]:max-w-[calc(50%-0.5rem)] [&:last-child:nth-child(odd)]:mx-auto lg:[&:last-child:nth-child(odd)]:col-span-1 lg:[&:last-child:nth-child(odd)]:max-w-none lg:[&:last-child:nth-child(odd)]:mx-0"
               >
                 <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 group-hover:bg-[#F5A623] group-hover:border-[#F5A623] flex items-center justify-center mb-4 transition-colors duration-300">
                   {card.icon ? (
