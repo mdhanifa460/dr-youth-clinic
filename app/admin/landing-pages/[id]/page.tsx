@@ -454,9 +454,26 @@ function SectionEditor({
             <FieldInput label="Form Urgency Text" value={d.formUrgencyText} onChange={(v) => set('formUrgencyText', v)} placeholder="Limited slots this week!" />
           </div>
           <FieldInput label="Form Success Message" value={d.successMessage} onChange={(v) => set('successMessage', v)} placeholder="We'll call you within 2 hours!" />
+          <FieldInput label="Form Success Subtext" value={d.successSubtext} onChange={(v) => set('successSubtext', v)} placeholder="Our team will reach out shortly to confirm your slot." />
           <div className="grid grid-cols-2 gap-3">
-            <FieldInput label="CTA Button Text" value={d.ctaPrimary?.text} onChange={(v) => set('ctaPrimary', { ...d.ctaPrimary, text: v })} />
+            <FieldInput label="CTA Button Text (top button)" value={d.ctaPrimary?.text} onChange={(v) => set('ctaPrimary', { ...d.ctaPrimary, text: v })} />
             <FieldInput label="CTA Link" value={d.ctaPrimary?.href} onChange={(v) => set('ctaPrimary', { ...d.ctaPrimary, href: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Form Submit Button Text" value={d.submitButtonText} onChange={(v) => set('submitButtonText', v)} placeholder="Book Free Consultation" />
+            <FieldInput label="Call Now Button Text" value={d.callNowText} onChange={(v) => set('callNowText', v)} placeholder="Call Now" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Years Badge Label" value={d.yearsExperienceLabel} onChange={(v) => set('yearsExperienceLabel', v)} placeholder="Years of Excellence" />
+            <FieldInput label="Trust Line Label" value={d.trustedByLabel} onChange={(v) => set('trustedByLabel', v)} placeholder="Patients (shown as 'Trusted by {count} Patients')" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Name Field Placeholder" value={d.namePlaceholder} onChange={(v) => set('namePlaceholder', v)} placeholder="Full Name *" />
+            <FieldInput label="Phone Field Placeholder" value={d.phonePlaceholder} onChange={(v) => set('phonePlaceholder', v)} placeholder="Mobile Number *" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Email Field Placeholder" value={d.emailPlaceholder} onChange={(v) => set('emailPlaceholder', v)} placeholder="Email Address" />
+            <FieldInput label="Concern Dropdown Placeholder" value={d.concernPlaceholder} onChange={(v) => set('concernPlaceholder', v)} placeholder="Select Your Concern" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <FieldInput label="Phone Number" value={d.phone} onChange={(v) => set('phone', v)} />

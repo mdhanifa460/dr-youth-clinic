@@ -26,6 +26,19 @@ interface HeroData {
   formUrgencyText?: string;
   successMessage?: string;
   showTeamAvatars?: boolean;
+  // Previously hardcoded strings in the hero's inline form — now
+  // admin-editable (Settings -> Landing Pages -> Hero section), each
+  // defaulting to exactly the text it replaces so an unedited LP looks
+  // identical to before this existed.
+  submitButtonText?: string;
+  callNowText?: string;
+  yearsExperienceLabel?: string;
+  namePlaceholder?: string;
+  phonePlaceholder?: string;
+  emailPlaceholder?: string;
+  concernPlaceholder?: string;
+  successSubtext?: string;
+  trustedByLabel?: string;
 }
 
 const DEFAULT_FEATURES = ['FDA Approved', '100% Natural', 'No Surgery No Scars', 'Minimal Downtime'];
@@ -61,6 +74,15 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
     formUrgencyText = 'Limited slots this week!',
     successMessage = "✓ We'll call you within 2 hours!",
     showTeamAvatars = false,
+    submitButtonText = 'Book Free Consultation',
+    callNowText = 'Call Now',
+    yearsExperienceLabel = 'Years of Excellence',
+    namePlaceholder = 'Full Name *',
+    phonePlaceholder = 'Mobile Number *',
+    emailPlaceholder = 'Email Address',
+    concernPlaceholder = 'Select Your Concern',
+    successSubtext = 'Our team will reach out shortly to confirm your slot.',
+    trustedByLabel = 'Patients',
   } = data;
 
   const bgStyle = backgroundImage
@@ -197,7 +219,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                 <a href={`tel:${phone.replace(/\s/g, '')}`}>
                   <button className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold px-7 py-4 rounded-2xl text-base backdrop-blur-sm hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto">
                     <Phone size={17} />
-                    Call Now
+                    {callNowText}
                   </button>
                 </a>
               )}
@@ -247,7 +269,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
               <div className="absolute -top-5 -left-5 z-20 hidden sm:flex flex-col items-center justify-center w-24 h-24 rounded-full bg-[#0B2560] border-4 border-[#F5A623] shadow-xl text-center">
                 <span className="text-[#F5A623] font-extrabold text-lg leading-none">{yearsExperience}</span>
                 <span className="text-white text-[8px] font-bold uppercase tracking-wider mt-1 leading-tight px-1">
-                  Years of Excellence
+                  {yearsExperienceLabel}
                 </span>
               </div>
 
@@ -258,7 +280,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                       <CheckCircle size={34} className="text-green-500" />
                     </div>
                     <p className="text-lg font-extrabold text-[#0B2560]">{successMessage}</p>
-                    <p className="text-sm text-gray-500 mt-2">Our team will reach out shortly to confirm your slot.</p>
+                    <p className="text-sm text-gray-500 mt-2">{successSubtext}</p>
                   </div>
                 ) : (
                   <>
@@ -282,7 +304,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                       <input
                         value={form.name}
                         onChange={(e) => set('name', e.target.value)}
-                        placeholder="Full Name *"
+                        placeholder={namePlaceholder}
                         required
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
                       />
@@ -290,7 +312,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                         type="tel"
                         value={form.phone}
                         onChange={(e) => set('phone', e.target.value)}
-                        placeholder="Mobile Number *"
+                        placeholder={phonePlaceholder}
                         required
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
                       />
@@ -298,7 +320,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                         type="email"
                         value={form.email}
                         onChange={(e) => set('email', e.target.value)}
-                        placeholder="Email Address"
+                        placeholder={emailPlaceholder}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
                       />
                       <select
@@ -306,7 +328,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                         onChange={(e) => set('concern', e.target.value)}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
                       >
-                        <option value="">Select Your Concern</option>
+                        <option value="">{concernPlaceholder}</option>
                         {concern_options.map((c) => (
                           <option key={c} value={c}>{c}</option>
                         ))}
@@ -323,7 +345,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                           </>
                         ) : (
                           <>
-                            <CalendarCheck size={18} /> Book Free Consultation
+                            <CalendarCheck size={18} /> {submitButtonText}
                           </>
                         )}
                       </button>
@@ -331,7 +353,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
 
                     <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-500 mt-4">
                       <ShieldCheck size={13} className="text-[#3B82C4]" />
-                      Trusted by {patientCount} Patients
+                      Trusted by {patientCount} {trustedByLabel}
                     </p>
                   </>
                 )}

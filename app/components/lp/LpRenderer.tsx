@@ -1,5 +1,6 @@
 'use client';
 
+import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import HeroSection from './sections/HeroSection';
 import TrustBarSection from './sections/TrustBarSection';
 import ProblemSection from './sections/ProblemSection';
@@ -102,10 +103,52 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
   }
 }
 
+// An admin adds one treatment at a time (addSection('solution') /
+// duplicateSection in the LP builder — each treatment is its own
+// standalone 'solution' section, not an array field) — several added back
+// to back used to render as a long vertical stack. Grouping consecutive
+// VISIBLE 'solution' sections into one BannerCarousel reads as a slider
+// instead, with zero change to the admin's existing add-one-at-a-time
+// workflow: a lone 'solution' section (nothing else adjacent) still
+// renders exactly as before — BannerCarousel's single-slide case is a
+// pure passthrough with no nav chrome (see BannerCarousel.tsx).
+type SectionGroup = { kind: 'solution-group'; items: LpSection[] } | { kind: 'single'; section: LpSection };
+
+function groupSections(sections: LpSection[]): SectionGroup[] {
+  const groups: SectionGroup[] = [];
+  for (const section of sections) {
+    if (!section.visible) continue;
+    const last = groups[groups.length - 1];
+    if (section.type === 'solution' && last?.kind === 'solution-group') {
+      last.items.push(section);
+    } else if (section.type === 'solution') {
+      groups.push({ kind: 'solution-group', items: [section] });
+    } else {
+      groups.push({ kind: 'single', section });
+    }
+  }
+  return groups;
+}
+
 export default function LpRenderer({ sections, form, slug, variant = 'A' }: LpRendererProps) {
+  const groups = groupSections(sections);
+
   return (
     <div>
-      {sections.map((section) => renderSection(section, form, slug, variant))}
+      {groups.map((group, i) => {
+        if (group.kind === 'solution-group') {
+          if (group.items.length === 1) {
+            return <SolutionSection key={group.items[0].id} data={group.items[0].data} />;
+          }
+          return (
+            <BannerCarousel
+              key={`solution-group-${i}`}
+              slides={group.items.map((s) => <SolutionSection key={s.id} data={s.data} />)}
+            />
+          );
+        }
+        return renderSection(group.section, form, slug, variant);
+      })}
     </div>
   );
 }
