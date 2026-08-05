@@ -34,13 +34,24 @@ interface LeadForm {
 // "Weight Loss" -> "weight-loss" already matches JourneyGoalSlug; the
 // clinic-label helper mirrors skin-quiz's ?clinic= convention exactly
 // (same query param, same locations data source) so a shared QR/link
-// campaign format works across both pages.
+// campaign format works across both pages. Falls back to the
+// preferred_location cookie (same one Navbar.tsx reads client-side,
+// middleware.ts sets from IP geolocation) when no ?clinic= is present —
+// this is the "client narrows to the visitor's clinic once known" signal
+// Doctor Matching (Module 7) uses to re-fetch a location-filtered doctor
+// list via /api/journey-doctors.
 function useClinicParam(): string {
   const [clinic, setClinic] = useState("");
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const raw = (params.get("clinic") || "").toLowerCase();
-    if (raw && locations[raw]) setClinic(raw);
+    const fromParam = (params.get("clinic") || "").toLowerCase();
+    if (fromParam && locations[fromParam]) {
+      setClinic(fromParam);
+      return;
+    }
+    const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
+    const fromCookie = match ? decodeURIComponent(match[1]).toLowerCase() : "";
+    if (fromCookie && locations[fromCookie]) setClinic(fromCookie);
   }, []);
   return clinic;
 }
@@ -113,6 +124,11 @@ function PlanMyJourneyFlow({
   const resultsPatched = useRef(false);
   const [sessionId, setSessionId] = useState("");
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
+  // Module 7 (Doctor Matching) — starts as the wider, unfiltered pool the
+  // server already resolved (bundles[goal].doctors), then narrows once the
+  // visitor's clinic is known (see useClinicParam). null = "no re-fetch
+  // has resolved yet, still showing the wider pool."
+  const [locationDoctors, setLocationDoctors] = useState<any[] | null>(null);
 
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
@@ -121,6 +137,20 @@ function PlanMyJourneyFlow({
   useEffect(() => {
     if (clinic) setLead((l) => ({ ...l, preferredClinic: clinic }));
   }, [clinic]);
+
+  // Module 7 — re-fetches the doctor list scoped to the visitor's clinic
+  // once both are known. Resets to null (falls back to the wider
+  // server-resolved pool) on goal change so switching goals via the
+  // results screen's sticky switcher doesn't show a stale goal's doctors.
+  useEffect(() => {
+    if (!goal || !clinic) { setLocationDoctors(null); return; }
+    let cancelled = false;
+    fetch(`/api/journey-doctors?goal=${encodeURIComponent(goal)}&location=${encodeURIComponent(clinic)}`)
+      .then((res) => res.json())
+      .then((data) => { if (!cancelled && data.success) setLocationDoctors(data.data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [goal, clinic]);
 
   const transition = (fn: () => void) => {
     setVisible(false);
@@ -361,7 +391,10 @@ function PlanMyJourneyFlow({
                 journey={{
                   service: svc,
                   alternatives,
-                  doctors: bundle?.doctors || [],
+                  // Location-filtered once the visitor's clinic is known
+                  // (Module 7) — falls back to the wider server-resolved
+                  // pool until that re-fetch resolves.
+                  doctors: locationDoctors ?? bundle?.doctors ?? [],
                   results: bundle?.results || [],
                   goalIcon: meta.icon,
                   goalLabel: meta.label,

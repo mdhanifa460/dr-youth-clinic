@@ -38,19 +38,31 @@ export async function resolveServicesForGoal(meta: IJourneyGoal) {
   return (Service as any).find(query).sort({ price: -1 }).limit(3).lean();
 }
 
-// No location filter at this stage — the client narrows to the visitor's
-// clinic once known (matches skin-quiz's ?clinic= convention), same
-// "pull a wider pool, narrow client-side" approach used there.
-export async function resolveDoctorsForGoal(meta: IJourneyGoal) {
+// location is optional — omitted for the initial server render (the page
+// doesn't yet know the visitor's clinic), same "pull a wider pool,
+// narrow client-side" approach the service/category pages already use for
+// banners. Once the client detects a clinic (see useClinicLocation in
+// PlanMyJourneyClient.tsx), it re-fetches through /api/journey-doctors
+// with a location, which calls this same function — the query shape here
+// (`locations: { $in: [location, 'all'] }`) matches the existing
+// precedent in getLocationDoctors (app/(public)/page.tsx) and the service
+// detail page's doctor lookup.
+export async function resolveDoctorsForGoal(meta: IJourneyGoal, location?: string) {
   const doctorRegex = toRegex(meta.doctorRegexSource);
+  const locationFilter = location ? { locations: { $in: [location, "all"] } } : {};
   const matched = doctorRegex
-    ? await (Doctor as any).find({ active: true, specializations: { $regex: doctorRegex } }).sort({ order: 1 }).limit(6).lean()
+    ? await (Doctor as any)
+        .find({ active: true, specializations: { $regex: doctorRegex }, ...locationFilter })
+        .sort({ order: 1 })
+        .limit(6)
+        .lean()
     : [];
   if (matched.length > 0) return matched;
   // specializations is admin free-text with no controlled taxonomy — a
   // goal with no textual match falls back to the general top-doctors list
-  // rather than showing nothing.
-  return (Doctor as any).find({ active: true }).sort({ order: 1 }).limit(6).lean();
+  // (still location-filtered when a location is known) rather than
+  // showing nothing.
+  return (Doctor as any).find({ active: true, ...locationFilter }).sort({ order: 1 }).limit(6).lean();
 }
 
 export async function resolveResultsForGoal(meta: IJourneyGoal, serviceIds: string[]) {
