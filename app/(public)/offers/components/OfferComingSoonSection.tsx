@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
+import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
 
 const TEASERS = [
   { icon: '💳', title: 'Membership', copy: 'Ask about ongoing treatment-plan pricing at your next consultation.' },
@@ -15,7 +16,18 @@ const TEASERS = [
 // AnimatedBannerWrapper.tsx (that component doesn't accept a className, so
 // replicated inline rather than nested). Deliberately no fabricated
 // pricing/points/dead CTAs — one real WhatsApp/phone contact channel only.
-export default function OfferComingSoonSection({ contactUrl }: { contactUrl: string }) {
+export default function OfferComingSoonSection({ whatsapp, phone }: { whatsapp?: string; phone?: string }) {
+  // Branch-aware — /offers isn't location-scoped, so this resolves purely
+  // from pathname/cookie detection (see useBranchWhatsApp), same as
+  // MobileStickyBar/TopBar/Footer.
+  const branchWhatsApp = useBranchWhatsApp(whatsapp || '');
+  const waMessage = encodeURIComponent('Hi, I would like to know more about membership, combo, loyalty, referral or festival offers at DR Youth Clinic.');
+  const contactUrl = branchWhatsApp
+    ? `${toWaLink(branchWhatsApp)}?text=${waMessage}`
+    : phone
+      ? `tel:${phone.replace(/\s+/g, '')}`
+      : '/book';
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 16 }}

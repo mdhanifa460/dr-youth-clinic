@@ -10,6 +10,7 @@ import {
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
 import type { SiteConfig } from "@/app/lib/siteConfig";
+import BranchWhatsAppLink from "@/app/components/BranchWhatsAppLink";
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
   facebook: <FaFacebookF size={13} />,
@@ -70,17 +71,28 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
             <p className="text-white/60 text-sm leading-relaxed">{tagline}</p>
             {resolvedSocialLinks.length > 0 && (
               <div className="flex items-center gap-2 pt-1">
-                {resolvedSocialLinks.map((s: any, i: number) => (
-                  <a
-                    key={i}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#F5A623] hover:text-[#0B2560] transition"
-                  >
-                    {SOCIAL_ICONS[s.platform] ?? s.platform}
-                  </a>
-                ))}
+                {resolvedSocialLinks.map((s: any, i: number) =>
+                  s.platform === "whatsapp" ? (
+                    <BranchWhatsAppLink
+                      key={i}
+                      fallback={s.url}
+                      ariaLabel="whatsapp"
+                      className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#F5A623] hover:text-[#0B2560] transition"
+                    >
+                      {SOCIAL_ICONS[s.platform]}
+                    </BranchWhatsAppLink>
+                  ) : (
+                    <a
+                      key={i}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#F5A623] hover:text-[#0B2560] transition"
+                    >
+                      {SOCIAL_ICONS[s.platform] ?? s.platform}
+                    </a>
+                  )
+                )}
               </div>
             )}
           </div>

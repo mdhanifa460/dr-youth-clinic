@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import { Sparkles, Calendar, MessageCircle } from 'lucide-react';
+import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
 
 export default function ArticleCtaBand({
   consultationFree,
@@ -10,7 +13,10 @@ export default function ArticleCtaBand({
   consultationCta: string;
   publicWhatsApp?: string;
 }) {
-  const waHref = publicWhatsApp ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}` : null;
+  // Branch-aware — /blog isn't location-scoped, resolves from pathname/
+  // cookie detection only, same as MobileStickyBar/TopBar/Footer.
+  const branchWhatsApp = useBranchWhatsApp(publicWhatsApp || '');
+  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
 
   return (
     <section className="bg-[#0B2560] py-14">

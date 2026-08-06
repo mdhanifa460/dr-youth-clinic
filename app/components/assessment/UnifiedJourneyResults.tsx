@@ -17,6 +17,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MessageCircle, Sparkles, Calendar, IndianRupee, Clock, Check, Minus } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
+import { useBranchWhatsApp, toWaLink } from "@/app/lib/useBranchWhatsApp";
 import type { TreatmentRecommendation, ResultSectionConfig, ResultSectionKey } from "@/app/lib/quizDefaults";
 import { postAssessmentEvent } from "@/app/lib/assessmentFlow";
 import TreatmentComparison from "@/app/components/TreatmentComparison";
@@ -522,8 +523,14 @@ export default function UnifiedJourneyResults({
 
   const bookServiceName = recommendations[0]?.name || svc?.name || "";
   const bookUrl = buildBookUrl(bookServiceName, { location: preferredClinic, name: leadName, phone: leadPhone, sessionId });
-  const waHref = publicWhatsApp
-    ? `https://wa.me/${String(publicWhatsApp).replace(/\D/g, "")}${bookServiceName ? `?text=${encodeURIComponent(`Hi, I just completed my clinical intake and would like to know more about ${bookServiceName} before my consultation.`)}` : ""}`
+  // Branch-aware — /plan-my-journey and /skin-quiz aren't location-scoped
+  // URLs, so the visitor's already-selected branch (Module 8) is passed
+  // explicitly rather than relying on useBranchWhatsApp's own pathname/
+  // cookie inference, which has nothing to detect here.
+  const branchWhatsApp = useBranchWhatsApp(publicWhatsApp || "", preferredClinic);
+  const waBaseHref = branchWhatsApp ? toWaLink(branchWhatsApp) : "";
+  const waHref = waBaseHref
+    ? `${waBaseHref}${bookServiceName ? `?text=${encodeURIComponent(`Hi, I just completed my clinical intake and would like to know more about ${bookServiceName} before my consultation.`)}` : ""}`
     : "";
 
   type Block = { key: ResultSectionKey; order: number; node: React.ReactNode };

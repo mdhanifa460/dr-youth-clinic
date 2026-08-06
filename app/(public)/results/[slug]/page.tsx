@@ -14,6 +14,7 @@ import { getSiteConfig } from '@/app/lib/siteConfig';
 import { locations } from '@/app/data/locations';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 import SliderCard from '@/app/components/SliderCard';
+import BranchWhatsAppLink from '@/app/components/BranchWhatsAppLink';
 import { BreadcrumbSchema } from '@/app/components/SchemaMarkup';
 import ArticleCtaBand from '@/app/(public)/blog/[slug]/ArticleCtaBand';
 
@@ -282,10 +283,13 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                     </button>
                   </Link>
                   {siteConfig.publicWhatsApp && (
-                    <a href={`https://wa.me/${siteConfig.publicWhatsApp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition">
+                    <BranchWhatsAppLink
+                      fallback={siteConfig.publicWhatsApp}
+                      explicitLocation={result.branch}
+                      className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition"
+                    >
                       Chat on WhatsApp
-                    </a>
+                    </BranchWhatsAppLink>
                   )}
                   <p className="text-center text-xs text-gray-500 pt-1">{siteConfig.consultationSub}</p>
                 </div>

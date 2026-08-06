@@ -20,13 +20,23 @@ export function toWaLink(value: string): string {
   return `https://wa.me/${value.replace(/\D/g, '')}`;
 }
 
-export function useBranchWhatsApp(fallback: string): string {
+// `explicitLocation` — when the caller already knows the visitor's branch
+// more precisely than pathname/cookie inference can (e.g. AI Beauty
+// Journey's own Branch Selection step, Module 8), it takes priority over
+// both. Neither of those two flows apply on non-location-scoped routes
+// like /plan-my-journey or /skin-quiz, so without this override those
+// pages could never resolve a branch-specific number at all.
+export function useBranchWhatsApp(fallback: string, explicitLocation?: string): string {
   const pathname = usePathname();
   const [number, setNumber] = useState(fallback);
 
   useEffect(() => {
-    const fromPath = (pathname.split('/')[1] || '').toLowerCase();
-    let location = CITY_SLUGS.includes(fromPath) ? fromPath : '';
+    const fromExplicit = (explicitLocation || '').toLowerCase();
+    let location = CITY_SLUGS.includes(fromExplicit) ? fromExplicit : '';
+    if (!location) {
+      const fromPath = (pathname.split('/')[1] || '').toLowerCase();
+      location = CITY_SLUGS.includes(fromPath) ? fromPath : '';
+    }
     if (!location) {
       const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
       const fromCookie = match ? decodeURIComponent(match[1]).toLowerCase() : '';
@@ -42,7 +52,7 @@ export function useBranchWhatsApp(fallback: string): string {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [pathname]);
+  }, [pathname, explicitLocation]);
 
   return number;
 }

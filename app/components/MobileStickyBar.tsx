@@ -4,6 +4,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { MdPhone } from "react-icons/md";
 import { CalendarCheck } from "lucide-react";
 import Link from "next/link";
+import { useBranchWhatsApp, toWaLink } from "@/app/lib/useBranchWhatsApp";
 
 interface Props {
   phone?: string;
@@ -12,7 +13,13 @@ interface Props {
 
 export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
   const callHref = phone ? `tel:${phone.replace(/\s/g, "")}` : null;
-  const waHref   = whatsappUrl || (phone ? `https://wa.me/${phone.replace(/[^0-9]/g, "")}` : null);
+  // Branch-aware — a Chennai visitor tapping this (present on every public
+  // page, mobile's most-tapped WhatsApp entry point) should reach the
+  // Chennai desk, same as TopBar/Footer/AiChatWidget. The sitewide link/
+  // phone-derived link is only the fallback until a branch is detected.
+  const fallback = whatsappUrl || (phone ? `https://wa.me/${phone.replace(/[^0-9]/g, "")}` : "");
+  const branchWhatsApp = useBranchWhatsApp(fallback);
+  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
 
   // Nothing to show if no contact info at all
   if (!callHref && !waHref) return null;

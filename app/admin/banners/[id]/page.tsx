@@ -193,11 +193,11 @@ export default function BannerEditPage() {
     setSaved(false);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (overrides?: Record<string, any>) => {
     setSaving(true);
     setError("");
     try {
-      const payload = { ...banner };
+      const payload = { ...banner, ...overrides };
       // Explicitly null out (not delete-the-key) — the PUT route passes
       // this body straight to findByIdAndUpdate, which only $sets keys
       // that are actually present; omitting the key entirely would leave
@@ -248,7 +248,7 @@ export default function BannerEditPage() {
           <Link href={`/admin/banners/${id}/preview`} target="_blank" className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50">
             <Eye size={14} /> Preview
           </Link>
-          <button onClick={handleSave} disabled={saving} className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white transition ${saved ? "bg-green-600" : "bg-[#0B2560] hover:bg-[#1a3a6e]"} disabled:opacity-50`}>
+          <button onClick={() => handleSave()} disabled={saving} className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white transition ${saved ? "bg-green-600" : "bg-[#0B2560] hover:bg-[#1a3a6e]"} disabled:opacity-50`}>
             {saving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
             {saving ? "Saving…" : saved ? "Saved" : "Save"}
           </button>
@@ -256,6 +256,45 @@ export default function BannerEditPage() {
       </div>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{error}</p>}
+
+      {/* Status — deliberately its own prominent bar right under the header,
+          not buried in the Schedule & Priority card below (where the actual
+          status dropdown still lives, for reordering/bulk edits) — a banner
+          that's fully configured but still "Draft" shows on none of the
+          pages selected below, and that was easy to miss as a small select
+          next to "Priority". */}
+      {banner.status === "draft" && (
+        <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+          <p className="text-sm text-amber-800">
+            <span className="font-bold">Draft</span> — not visible anywhere on the site yet, even on the pages selected below.
+          </p>
+          <button
+            onClick={() => handleSave({ status: "active" })}
+            disabled={saving}
+            className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+          >
+            Publish Now
+          </button>
+        </div>
+      )}
+      {banner.status === "active" && (
+        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
+          <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+          <p className="text-sm text-green-800"><span className="font-bold">Active</span> — live on every page selected below that it's eligible for.</p>
+        </div>
+      )}
+      {banner.status === "disabled" && (
+        <div className="flex items-center justify-between gap-3 bg-gray-100 border border-gray-200 rounded-2xl px-4 py-3">
+          <p className="text-sm text-gray-600"><span className="font-bold">Disabled</span> — hidden from the site until re-enabled.</p>
+          <button
+            onClick={() => handleSave({ status: "active" })}
+            disabled={saving}
+            className="shrink-0 bg-[#0B2560] hover:bg-[#1a3a6e] text-white text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+          >
+            Re-enable
+          </button>
+        </div>
+      )}
 
       {/* Shared fields */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">

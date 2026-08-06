@@ -13,14 +13,19 @@ export default function BranchWhatsAppLink({
   className,
   style,
   ariaLabel,
+  explicitLocation,
 }: {
   fallback: string;
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   ariaLabel?: string;
+  // When the caller already knows the visitor's branch more precisely than
+  // pathname/cookie inference can (e.g. this specific before/after result
+  // belongs to one branch) — see useBranchWhatsApp's own comment.
+  explicitLocation?: string;
 }) {
-  const number = useBranchWhatsApp(fallback);
+  const number = useBranchWhatsApp(fallback, explicitLocation);
   const href = toWaLink(number);
   if (!href) return null;
 

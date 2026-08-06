@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
+import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
 
 // Real category names from Course.ts's COURSE_CATEGORIES, no fabricated
 // course names/fees/dates — same honest-teaser pattern as
@@ -13,7 +14,13 @@ const TEASERS = [
   { icon: '💆', title: 'PRP & Regenerative Aesthetics', copy: 'Regenerative treatment certification for clinicians — stay tuned.' },
 ];
 
-export default function CoursesComingSoon({ contactUrl }: { contactUrl: string }) {
+export default function CoursesComingSoon({ whatsapp }: { whatsapp?: string }) {
+  // Branch-aware — /academy isn't location-scoped, resolves from
+  // pathname/cookie detection only, same as MobileStickyBar/TopBar/Footer.
+  const branchWhatsApp = useBranchWhatsApp(whatsapp || '');
+  const waMessage = encodeURIComponent('Hi, I would like to know more about the aesthetic certification programs at DR Youth Clinic.');
+  const contactUrl = branchWhatsApp ? `${toWaLink(branchWhatsApp)}?text=${waMessage}` : '';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}

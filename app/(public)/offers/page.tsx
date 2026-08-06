@@ -84,14 +84,6 @@ export default async function OffersPage() {
     return { category: cat, count: catOffers.length, startingFrom, maxDiscount };
   });
 
-  // Same real-contact-channel fallback chain MobileStickyBar already uses.
-  const waMessage = encodeURIComponent('Hi, I would like to know more about membership, combo, loyalty, referral or festival offers at DR Youth Clinic.');
-  const contactUrl = siteConfig.publicWhatsApp
-    ? `https://wa.me/${siteConfig.publicWhatsApp.replace(/\D/g, '')}?text=${waMessage}`
-    : siteConfig.publicPhone
-      ? `tel:${siteConfig.publicPhone.replace(/\s+/g, '')}`
-      : '/book';
-
   // Content Layout Engine — additive main-zone sections, opt-in site-wide via
   // Settings.offersPageLayoutEngineEnabled. Offers is a singleton listing
   // page with no per-record document, same as Home.
@@ -134,7 +126,7 @@ export default async function OffersPage() {
 
       {activeOffers.length > 0 && <OfferDoctorNote doctors={doctors} />}
       <OfferTestimonials />
-      <OfferComingSoonSection contactUrl={contactUrl} />
+      <OfferComingSoonSection whatsapp={siteConfig.publicWhatsApp} phone={siteConfig.publicPhone} />
       {activeOffers.length > 0 && <OfferFAQSection />}
 
       {layoutEngineMain && layoutEngineMain.length > 0 && (

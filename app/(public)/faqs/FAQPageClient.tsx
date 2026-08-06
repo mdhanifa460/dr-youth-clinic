@@ -4,6 +4,7 @@ import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Search, ChevronDown, ChevronUp, MessageCircle, Calendar, Phone, Sparkles } from 'lucide-react';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
+import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
 
 type AssistantResult =
   | { type: 'predefined'; answer: string; matchedQuestion: string }
@@ -42,7 +43,10 @@ export default function FAQPageClient({
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [assistantError, setAssistantError] = useState<string | null>(null);
   const faqListRef = useRef<HTMLDivElement>(null);
-  const waHref   = publicWhatsApp ? `https://wa.me/${publicWhatsApp.replace(/\D/g, '')}` : null;
+  // Branch-aware — /faqs isn't location-scoped, resolves from pathname/
+  // cookie detection only, same as MobileStickyBar/TopBar/Footer.
+  const branchWhatsApp = useBranchWhatsApp(publicWhatsApp || '');
+  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
   const telHref  = publicPhone    ? `tel:${publicPhone.replace(/\s+/g, '')}`              : null;
 
   function jumpToCategory(cat: string) {

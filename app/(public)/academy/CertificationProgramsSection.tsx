@@ -3,16 +3,11 @@ import { Award, Clock, MapPin } from 'lucide-react';
 import CoursesComingSoon from './components/CoursesComingSoon';
 
 export default function CertificationProgramsSection({ courses, siteConfig }: { courses: any[]; siteConfig: any }) {
-  const waMessage = encodeURIComponent('Hi, I would like to know more about the aesthetic certification programs at DR Youth Clinic.');
-  const contactUrl = siteConfig.publicWhatsApp
-    ? `https://wa.me/${siteConfig.publicWhatsApp.replace(/\D/g, '')}?text=${waMessage}`
-    : '';
-
   return (
     <section id="certification-programs" className="bg-white border-t border-b border-gray-100 py-14 md:py-20">
       <div className="max-w-7xl mx-auto px-6">
         {courses.length === 0 ? (
-          <CoursesComingSoon contactUrl={contactUrl} />
+          <CoursesComingSoon whatsapp={siteConfig.publicWhatsApp} />
         ) : (
           <>
             <div className="mb-8 text-center">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
 import {
   ChevronLeft, ChevronRight, X, Volume2, VolumeX, Pause, Play, Share2,
   Calendar, MessageCircle, Stethoscope, Sparkles, Tag, Camera, MapPin, Phone, ExternalLink,
@@ -28,6 +29,12 @@ function useCountdown(target?: string) {
 }
 
 function ElementView({ el, entities, siteConfig }: any) {
+  // Branch-aware — /web-stories isn't location-scoped, resolves from
+  // pathname/cookie detection only, same as MobileStickyBar/TopBar/Footer.
+  // Called unconditionally (Rules of Hooks) even though only the
+  // whatsapp_button case below actually uses it.
+  const branchWhatsApp = useBranchWhatsApp(siteConfig?.publicWhatsApp || '');
+
   if (!el.visible) return null;
   const d = el.data || {};
 
@@ -87,7 +94,7 @@ function ElementView({ el, entities, siteConfig }: any) {
     case 'website_link':
       return <a href={d.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 text-center bg-white/90 text-[#0B2560] font-bold text-sm py-3 rounded-2xl shadow-lg">{d.label || 'Learn More'} <ExternalLink size={13} /></a>;
     case 'whatsapp_button': {
-      const wa = siteConfig?.publicWhatsApp ? `https://wa.me/${siteConfig.publicWhatsApp.replace(/\D/g, '')}` : null;
+      const wa = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
       if (!wa) return null;
       return <a href={wa} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-green-500 text-white font-bold text-sm py-3 rounded-2xl shadow-lg"><MessageCircle size={15} /> {d.label || 'Chat on WhatsApp'}</a>;
     }
