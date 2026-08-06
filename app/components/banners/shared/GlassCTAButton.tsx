@@ -1,4 +1,14 @@
+"use client";
+
+// Only the `whatsapp` variant needs client-side behavior (branch-aware
+// number resolution below) — marking the whole file 'use client' is safe
+// even though GlassHeroBanner.tsx (the caller) is a server component:
+// this file has no Mongoose/server-only imports of its own, so a server
+// component rendering it as a child doesn't pull anything unwanted into
+// the client bundle, unlike BannerRenderer's own template subtree (see
+// BannerCarousel.tsx's comment on why *that* boundary is stricter).
 import Link from "next/link";
+import { useBranchWhatsApp, toWaLink } from "@/app/lib/useBranchWhatsApp";
 
 // Three-role CTA for the Glass Hero (Book / Assessment / WhatsApp) — a
 // distinct visual language from the site's other banners' CTAButton
@@ -14,6 +24,11 @@ export default function GlassCTAButton({
   href: string;
   variant?: "primary" | "glass" | "whatsapp";
 }) {
+  // Called unconditionally, before the early return below, per Rules of
+  // Hooks — a falsy href/label still needs this hook to have run so the
+  // component's hook order never changes between renders.
+  const branchWhatsApp = useBranchWhatsApp(variant === "whatsapp" ? href : "");
+
   if (!label || !href) return null;
 
   const base =
@@ -33,9 +48,14 @@ export default function GlassCTAButton({
   }
 
   if (variant === "whatsapp") {
+    // Branch-aware — a banner can target several locations at once, so a
+    // single static number here would be wrong on at least some of them.
+    // `href` (whatever the admin entered) is only the fallback until a
+    // branch is detected.
+    const waHref = toWaLink(branchWhatsApp) || href;
     return (
       <Link
-        href={href}
+        href={waHref}
         target="_blank"
         rel="noopener noreferrer"
         className={`${base} bg-[#25D366]/15 text-[#128C4A] ring-1 ring-[#25D366]/40 hover:bg-[#25D366]/25 focus-visible:ring-[#25D366] backdrop-blur-md`}
