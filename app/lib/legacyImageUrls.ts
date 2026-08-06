@@ -20,13 +20,24 @@ export function normalizeLegacyImageUrl(url: string): string {
   return '';
 }
 
-export function normalizeLegacyImageUrls<T>(value: T): T {
+// Keys whose value is a hyperlink, never an image `src` — this walker has
+// no way to tell "image src" and "plain link" apart by shape alone (both
+// are just strings, and `url` is used for both, e.g. a Cloudinary image
+// object's `.url` vs. a social link's `.url`), so specific known-link keys
+// are excluded from stripping rather than guessed at. Found via a real bug:
+// a YouTube socialLinks entry was silently wiped to '' on every read
+// because youtube.com isn't Cloudinary — the strip-non-Cloudinary rule
+// below is only ever appropriate for actual <Image> sources.
+const LINK_KEYS = new Set(['socialLinks']);
+
+export function normalizeLegacyImageUrls<T>(value: T, key?: string): T {
   if (typeof value === 'string') {
+    if (key && LINK_KEYS.has(key)) return value;
     return normalizeLegacyImageUrl(value) as T;
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => normalizeLegacyImageUrls(item)) as T;
+    return value.map((item) => normalizeLegacyImageUrls(item, key)) as T;
   }
 
   if (!value || typeof value !== 'object') {
@@ -38,10 +49,14 @@ export function normalizeLegacyImageUrls<T>(value: T): T {
     return value;
   }
 
+  if (key && LINK_KEYS.has(key)) {
+    return value;
+  }
+
   return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).map(([key, nested]) => [
-      key,
-      normalizeLegacyImageUrls(nested),
+    Object.entries(value as Record<string, unknown>).map(([entryKey, nested]) => [
+      entryKey,
+      normalizeLegacyImageUrls(nested, entryKey),
     ])
   ) as T;
 }
