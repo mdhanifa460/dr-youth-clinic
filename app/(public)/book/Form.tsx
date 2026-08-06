@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { AlertCircle, CheckCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-react';
 import { locations } from '@/app/data/locations';
@@ -43,6 +43,40 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   const [promoStatus, setPromoStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoMessage, setPromoMessage] = useState('');
+
+  // AI Beauty Journey Module 9 — a visitor arriving here from a "Book
+  // Consultation" link on their journey results already told the journey
+  // their name/phone (Lead Capture), preferred branch (Branch Selection),
+  // and matched treatment. Prefill instead of asking again. Reads
+  // window.location.search directly in an effect rather than
+  // next/navigation's useSearchParams(), matching this codebase's existing
+  // convention (see skin-quiz/page.tsx) to avoid that hook's Suspense
+  // boundary requirement for a value only ever needed post-mount anyway.
+  // sessionId isn't a form field — kept in a ref so it survives to the
+  // submit handler without becoming part of the submitted booking shape.
+  const journeySessionId = useRef('');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const service = params.get('service') || '';
+    const locationKey = (params.get('location') || '').toLowerCase();
+    const name = params.get('name') || '';
+    const phone = params.get('phone') || '';
+    journeySessionId.current = params.get('sessionId') || '';
+
+    const matchedLocation = locations[locationKey]
+      ? locationKey.charAt(0).toUpperCase() + locationKey.slice(1)
+      : '';
+
+    if (service || matchedLocation || name || phone) {
+      setForm((f) => ({
+        ...f,
+        concern: service ? service : f.concern,
+        location: matchedLocation || f.location,
+        name: name ? name : f.name,
+        phone: phone ? phone : f.phone,
+      }));
+    }
+  }, []);
 
   const set = (key: string, val: string) => { setForm(f => ({ ...f, [key]: val })); setError(''); };
 
@@ -103,6 +137,22 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         setBookingId(data.bookingId);
         setSuccess(true);
         trackBookingConversion({ bookingId: data.bookingId, service: form.service, location: form.location });
+        // AI Beauty Journey Module 9 — close the loop: this booking
+        // originated from a journey session (arrived via the prefilled
+        // link above), so mark that session converted. Fire-and-forget,
+        // same as every other non-blocking analytics call in this flow —
+        // never let this delay or fail the booking confirmation itself.
+        if (journeySessionId.current) {
+          fetch('/api/patient-journey', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: journeySessionId.current,
+              appointmentBooked: true,
+              currentModule: 'appointment_booked',
+            }),
+          }).catch(() => {});
+        }
       }
       else setError(data.message || 'Booking failed. Please try again.');
     } catch { setError('An error occurred. Please try again.'); }

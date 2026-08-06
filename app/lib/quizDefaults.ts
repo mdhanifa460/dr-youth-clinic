@@ -116,7 +116,7 @@ export interface AssessmentSettings {
 // sections, so a clinic only has one results layout to manage, not two.
 export type ResultSectionKey =
   | "topRecommendation" | "allRecommendations" | "rootCauseAnalysis" | "journeyExplorer" | "costEstimator"
-  | "doctors" | "realResults" | "doctorMessage" | "bookCta" | "emailForm";
+  | "doctors" | "realResults" | "doctorMessage" | "aiSummaryReport" | "bookCta" | "emailForm";
 
 export interface ResultSectionConfig {
   key: ResultSectionKey;
@@ -145,6 +145,7 @@ export const RESULT_SECTION_LABELS: Record<ResultSectionKey, string> = {
   doctors: "Matched Doctors",
   realResults: "Real Patient Results",
   doctorMessage: "Doctor's Message",
+  aiSummaryReport: "AI Summary Report",
   bookCta: "Book Consultation Button",
   emailForm: "Email My Plan Form",
 };
@@ -158,8 +159,9 @@ export const DEFAULT_RESULT_SECTIONS: ResultSectionConfig[] = [
   { key: "doctors", label: RESULT_SECTION_LABELS.doctors, visible: true, order: 6 },
   { key: "realResults", label: RESULT_SECTION_LABELS.realResults, visible: true, order: 7 },
   { key: "doctorMessage", label: RESULT_SECTION_LABELS.doctorMessage, visible: true, order: 8 },
-  { key: "bookCta", label: RESULT_SECTION_LABELS.bookCta, visible: true, order: 9 },
-  { key: "emailForm", label: RESULT_SECTION_LABELS.emailForm, visible: true, order: 10 },
+  { key: "aiSummaryReport", label: RESULT_SECTION_LABELS.aiSummaryReport, visible: true, order: 9 },
+  { key: "bookCta", label: RESULT_SECTION_LABELS.bookCta, visible: true, order: 10 },
+  { key: "emailForm", label: RESULT_SECTION_LABELS.emailForm, visible: true, order: 11 },
 ];
 
 export const DEFAULT_ASSESSMENT_SETTINGS: AssessmentSettings = {

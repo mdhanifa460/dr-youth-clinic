@@ -417,6 +417,9 @@ function PlanMyJourneyFlow({
                 goal={goal}
                 sessionId={sessionId}
                 costPlanningNote={costPlanningNote}
+                preferredClinic={effectiveClinic}
+                leadName={lead.name}
+                leadPhone={lead.phone}
               />
             </div>
           </div>

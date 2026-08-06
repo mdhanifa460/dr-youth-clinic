@@ -29,6 +29,27 @@ import EMICalculator from "@/app/components/EMICalculator";
 import SliderCard from "@/app/components/SliderCard";
 import AssessmentChat from "./AssessmentChat";
 
+// AI Beauty Journey Module 9 — carries the journey's already-known context
+// (matched treatment, preferred branch, the name/phone already captured at
+// Lead Capture, and the sessionId) into the booking form via URL params, so
+// /book can prefill instead of asking the patient to retype everything
+// they already told the journey. Every param is optional and additive —
+// /book still works with none of them (Skin Quiz's plainer handoff, or a
+// visitor arriving at /book directly).
+function buildBookUrl(
+  serviceName: string,
+  opts?: { location?: string; name?: string; phone?: string; sessionId?: string }
+): string {
+  const params = new URLSearchParams();
+  if (serviceName) params.set("service", serviceName);
+  if (opts?.location) params.set("location", opts.location);
+  if (opts?.name) params.set("name", opts.name);
+  if (opts?.phone) params.set("phone", opts.phone);
+  if (opts?.sessionId) params.set("sessionId", opts.sessionId);
+  const qs = params.toString();
+  return qs ? `/book?${qs}` : "/book";
+}
+
 export type PatientReport = {
   summary: string;
   contributingFactors: string[];
@@ -84,9 +105,25 @@ function CostRangeCard({ min, max, currency, note }: { min: number; max: number;
   );
 }
 
-function TreatmentCard({ treatment, rank, goal, sessionId }: { treatment: TreatmentRecommendation; rank: number; goal?: string; sessionId?: string }) {
+function TreatmentCard({
+  treatment,
+  rank,
+  goal,
+  sessionId,
+  preferredClinic,
+  leadName,
+  leadPhone,
+}: {
+  treatment: TreatmentRecommendation;
+  rank: number;
+  goal?: string;
+  sessionId?: string;
+  preferredClinic?: string;
+  leadName?: string;
+  leadPhone?: string;
+}) {
   const { consultationCta } = useSiteConfig();
-  const bookUrl = `/book?service=${encodeURIComponent(treatment.name)}`;
+  const bookUrl = buildBookUrl(treatment.name, { location: preferredClinic, name: leadName, phone: leadPhone, sessionId });
   const confidenceLevel = treatment.confidenceLevel || "Medium";
   const isTop = rank === 0;
 
@@ -299,6 +336,90 @@ function EmailCopyForm({ leadId }: { leadId: string | null }) {
   );
 }
 
+// AI Beauty Journey Module 10 — a short, AI-generated "take-home summary"
+// wrapping up the patient's concern + matched treatment, generated once per
+// session (guarded by `started` ref) and persisted onto
+// PatientJourney.aiSummaryReport the same way Module 5's Journey Timeline
+// persists via AiJourneySimulator's onGenerated. AI Beauty Journey only
+// (goal/sessionId both required) — Skin Quiz has no PatientJourney session
+// to persist onto. Renders nothing on error or while there isn't yet enough
+// journey context to summarize, rather than showing an empty/broken card.
+function AiSummaryReportCard({
+  goal,
+  sessionId,
+  goalLabel,
+  primaryConcern,
+  treatmentName,
+  category,
+  sessions,
+  costRange,
+}: {
+  goal?: string;
+  sessionId?: string;
+  goalLabel?: string;
+  primaryConcern?: string;
+  treatmentName?: string;
+  category?: string;
+  sessions?: string;
+  costRange?: { min: number; max: number; currency: string } | null;
+}) {
+  const [text, setText] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (started.current || !goal || !sessionId) return;
+    if (!goalLabel && !primaryConcern && !treatmentName) return;
+    started.current = true;
+    setStatus("loading");
+
+    fetch("/api/journey-summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goalLabel, primaryConcern, treatmentName, category, sessions, costRange }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.data?.text) {
+          setText(data.data.text);
+          setStatus("done");
+          fetch("/api/patient-journey", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId, goal, aiSummaryReport: data.data.text }),
+          }).catch(() => {});
+        } else {
+          setStatus("error");
+        }
+      })
+      .catch(() => setStatus("error"));
+    // Deliberately mount-once (see `started` ref) — re-running this on every
+    // prop change would re-bill the AI call each time cost range/whatever
+    // recomputes on re-render; the ref guard makes the dependency array's
+    // exhaustiveness moot here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goal, sessionId]);
+
+  if (status === "idle" || status === "error") return null;
+
+  return (
+    <div className="bg-gradient-to-br from-[#0B2560] to-[#1a3a7a] rounded-2xl p-6 text-white">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-3 flex items-center gap-1.5">
+        <Sparkles size={13} /> Your AI Summary
+      </p>
+      {status === "loading" ? (
+        <div className="space-y-2.5 animate-pulse" aria-label="Generating your summary">
+          <div className="h-3 bg-white/15 rounded-full w-full" />
+          <div className="h-3 bg-white/15 rounded-full w-5/6" />
+          <div className="h-3 bg-white/15 rounded-full w-4/6" />
+        </div>
+      ) : (
+        <p className="text-sm text-white/90 leading-relaxed">{text}</p>
+      )}
+    </div>
+  );
+}
+
 export default function UnifiedJourneyResults({
   resultSections,
   recommendations,
@@ -313,6 +434,9 @@ export default function UnifiedJourneyResults({
   goal,
   sessionId,
   costPlanningNote,
+  preferredClinic,
+  leadName,
+  leadPhone,
 }: {
   resultSections: ResultSectionConfig[];
   recommendations: TreatmentRecommendation[];
@@ -332,6 +456,13 @@ export default function UnifiedJourneyResults({
   // Skin Quiz, which falls back to a generic note inside CostRangeCard's
   // caller below.
   costPlanningNote?: string;
+  // AI Beauty Journey Module 9 — already known by the time the patient
+  // reaches results (Branch Selection / Lead Capture), threaded into the
+  // booking handoff so /book can prefill instead of re-asking. Undefined
+  // for Skin Quiz, which has no branch-selection step of its own.
+  preferredClinic?: string;
+  leadName?: string;
+  leadPhone?: string;
 }) {
   const { publicWhatsApp, consultationCta, showPriceOnCards } = useSiteConfig() as any;
   const svcForCostRange = journey?.service;
@@ -390,7 +521,7 @@ export default function UnifiedJourneyResults({
   const recommendationsOrder = showAll ? orderOf("allRecommendations") : orderOf("topRecommendation");
 
   const bookServiceName = recommendations[0]?.name || svc?.name || "";
-  const bookUrl = bookServiceName ? `/book?service=${encodeURIComponent(bookServiceName)}` : "/book";
+  const bookUrl = buildBookUrl(bookServiceName, { location: preferredClinic, name: leadName, phone: leadPhone, sessionId });
   const waHref = publicWhatsApp
     ? `https://wa.me/${String(publicWhatsApp).replace(/\D/g, "")}${bookServiceName ? `?text=${encodeURIComponent(`Hi, I just completed my clinical intake and would like to know more about ${bookServiceName} before my consultation.`)}` : ""}`
     : "";
@@ -405,7 +536,16 @@ export default function UnifiedJourneyResults({
       node: (
         <div key="recommendations" className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {visibleRecommendations.map((rec, i) => (
-            <TreatmentCard key={rec.id} treatment={rec} rank={i} goal={goal} sessionId={sessionId} />
+            <TreatmentCard
+              key={rec.id}
+              treatment={rec}
+              rank={i}
+              goal={goal}
+              sessionId={sessionId}
+              preferredClinic={preferredClinic}
+              leadName={leadName}
+              leadPhone={leadPhone}
+            />
           ))}
         </div>
       ),
@@ -586,6 +726,27 @@ export default function UnifiedJourneyResults({
           <span className="text-2xl shrink-0">👨‍⚕️</span>
           <p className="text-sm text-gray-600 leading-relaxed">{doctorMessage}</p>
         </div>
+      ),
+    });
+  }
+
+  if (sectionVisible("aiSummaryReport") && goal && sessionId) {
+    const costRangeForSummary = svcForCostRange?.price ? computeCostRange(svcForCostRange.price) : null;
+    blocks.push({
+      key: "aiSummaryReport",
+      order: orderOf("aiSummaryReport"),
+      node: (
+        <AiSummaryReportCard
+          key="ai-summary-report"
+          goal={goal}
+          sessionId={sessionId}
+          goalLabel={journey?.goalLabel}
+          primaryConcern={primaryConcern}
+          treatmentName={svc?.name || recommendations[0]?.name}
+          category={svc?.category}
+          sessions={svc?.sessionsCount ? `${svc.sessionsCount} sessions` : recommendations[0]?.sessions}
+          costRange={costRangeForSummary ? { ...costRangeForSummary, currency: "₹" } : null}
+        />
       ),
     });
   }
