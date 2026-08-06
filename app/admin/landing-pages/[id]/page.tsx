@@ -531,14 +531,48 @@ function SectionEditor({
       );
     }
 
-    case 'problem':
+    case 'problem': {
+      // `problems` supports either plain strings (title only, description
+      // falls back to a shared generic line — see ProblemSection.tsx's
+      // DEFAULT_DESCRIPTIONS) or { icon, title, desc } objects. Normalize to
+      // objects here so every card can get its own icon/description instead
+      // of silently sharing the same fallback text.
+      const problems = (d.problems || []).map((p: any) => (typeof p === 'string' ? { icon: '', title: p, desc: '' } : p));
       return (
         <div className="space-y-4">
           <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
           <FieldInput label="Subtitle" value={d.subtitle} onChange={(v) => set('subtitle', v)} />
-          <StringArrayEditor label="Problem Items" items={d.problems || []} onChange={(v) => set('problems', v)} />
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Problem Items</label>
+              <button type="button" onClick={() => set('problems', [...problems, { icon: '', title: '', desc: '' }])}
+                className="text-[10px] text-[#0B2560] font-bold flex items-center gap-0.5 hover:underline">
+                <Plus size={10} /> Add
+              </button>
+            </div>
+            <div className="space-y-3">
+              {problems.map((item: any, i: number) => (
+                <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">Item {i + 1}</span>
+                    <button type="button" onClick={() => set('problems', problems.filter((_: any, idx: number) => idx !== i))}
+                      className="text-gray-300 hover:text-red-500"><X size={13} /></button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input value={item.icon || ''} onChange={(e) => { const n=[...problems]; n[i]={...n[i],icon:e.target.value}; set('problems',n); }}
+                      placeholder="Icon (emoji)" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                    <input value={item.title || ''} onChange={(e) => { const n=[...problems]; n[i]={...n[i],title:e.target.value}; set('problems',n); }}
+                      placeholder="Title" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none col-span-2" />
+                  </div>
+                  <input value={item.desc || ''} onChange={(e) => { const n=[...problems]; n[i]={...n[i],desc:e.target.value}; set('problems',n); }}
+                    placeholder="Description (leave blank for a generic default)" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       );
+    }
 
     case 'solution':
       return (

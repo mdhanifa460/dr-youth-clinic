@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp, Plus, Trash2, Upload, CheckCircle, Loader, Images, Info } from 'lucide-react';
+import { locations } from '@/app/data/locations';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
@@ -561,6 +562,26 @@ function HeroSlidesEditor({ d, onChange }: { d: any; onChange: (data: any) => vo
 function SectionForm({ section, onChange }: { section: Section; onChange: (data: any) => void }) {
   const d = section.data;
 
+  // Read-only glance at each branch's own WhatsApp number, shown next to
+  // the Top Bar's single fallback field so an admin doesn't have to guess
+  // whether per-branch numbers are even set without leaving this screen.
+  // Only the Top Bar section needs this, and only fetches once it's the
+  // section actually being edited (this component re-renders once per
+  // section card, so gating on section.type avoids firing it ~15x).
+  const [branchNumbers, setBranchNumbers] = useState<Record<string, string> | null>(null);
+  useEffect(() => {
+    if (section.type !== 'topbar' || branchNumbers !== null) return;
+    Promise.all(
+      Object.keys(locations).map((city) =>
+        fetch(`/api/admin/locations/${city}`)
+          .then((r) => r.json())
+          .then((res) => [city, res?.data?.clinicInfo?.publicWhatsApp || ''] as const)
+          .catch(() => [city, ''] as const)
+      )
+    ).then((entries) => setBranchNumbers(Object.fromEntries(entries)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section.type]);
+
   const set = (path: string, value: any) => {
     const keys = path.split('.');
     const next = JSON.parse(JSON.stringify(d));
@@ -623,15 +644,27 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
             {(d.socialLinks || []).some((s: any) => s.platform === 'whatsapp') && (
               <div className="mt-3 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
                 <Info size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-700 leading-relaxed">
-                  This WhatsApp number is only the <strong>sitewide fallback</strong> — a visitor on a specific
-                  branch's pages (or who's landed there before, via cookie) sees that branch's own number instead,
-                  automatically. To set a different WhatsApp number per branch, edit each clinic's{' '}
-                  <Link href="/admin/locations" className="underline font-semibold hover:text-blue-900">
-                    Patient WhatsApp Number in Locations
-                  </Link>{' '}
-                  — only fill this in as the number to use everywhere else.
-                </p>
+                <div className="text-xs text-blue-700 leading-relaxed">
+                  <p>
+                    This WhatsApp number is only the <strong>sitewide fallback</strong> — a visitor on a specific
+                    branch's pages (or who's landed there before, via cookie) sees that branch's own number instead,
+                    automatically. To set a different WhatsApp number per branch, edit each clinic's{' '}
+                    <Link href="/admin/locations" className="underline font-semibold hover:text-blue-900">
+                      Patient WhatsApp Number in Locations
+                    </Link>{' '}
+                    — only fill this in as the number to use everywhere else.
+                  </p>
+                  <div className="mt-2 pt-2 border-t border-blue-100 grid grid-cols-2 gap-x-4 gap-y-1">
+                    {Object.entries(locations).map(([city, loc]) => (
+                      <div key={city} className="flex items-center justify-between gap-2">
+                        <span className="font-semibold">{loc.name}</span>
+                        <span className={branchNumbers?.[city] ? 'text-blue-900' : 'text-blue-400 italic'}>
+                          {branchNumbers === null ? '…' : branchNumbers[city] || 'not set'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
