@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Plus, Trash2, Upload, CheckCircle, Loader, Images } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronDown, ChevronUp, Plus, Trash2, Upload, CheckCircle, Loader, Images, Info } from 'lucide-react';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
@@ -619,6 +620,20 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
               className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
               <Plus size={12} /> Add social link
             </button>
+            {(d.socialLinks || []).some((s: any) => s.platform === 'whatsapp') && (
+              <div className="mt-3 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+                <Info size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  This WhatsApp number is only the <strong>sitewide fallback</strong> — a visitor on a specific
+                  branch's pages (or who's landed there before, via cookie) sees that branch's own number instead,
+                  automatically. To set a different WhatsApp number per branch, edit each clinic's{' '}
+                  <Link href="/admin/locations" className="underline font-semibold hover:text-blue-900">
+                    Patient WhatsApp Number in Locations
+                  </Link>{' '}
+                  — only fill this in as the number to use everywhere else.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       );
