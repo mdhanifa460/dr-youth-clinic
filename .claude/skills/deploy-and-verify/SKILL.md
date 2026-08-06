@@ -68,35 +68,52 @@ Stage only the files that actually changed for this task (never
 unrelated in-progress files). Write a commit message that explains
 *why*, not just what — see recent `git log` for this repo's style.
 
-## 5. Push and deploy — one at a time, watched to completion
+## 5. Push, then watch the auto-triggered deploy — never also run `vercel --prod --yes`
+
+This project is **Git-linked** (`.vercel/repo.json`, no `project.json`)
+— Vercel's GitHub integration auto-deploys to Production on every push
+to `main`. `git push` alone ships it; a manual `vercel --prod --yes`
+right after is a **second, fully redundant build of the identical
+commit**, not a safety net. This went unnoticed for an entire session
+before being caught — confirmed via `vercel inspect` showing two
+`Ready` deployments ~20s apart, one aliased `...-git-main-...` (the
+Git-triggered one) and one from the manual CLI call, both building the
+same commit. Decided 2026-08-06: drop the manual deploy entirely.
 
 ```bash
 git push origin main
-vercel --prod --yes
+sleep 12   # give Vercel's webhook time to create the deployment record
+vercel ls --limit 1
 ```
 
-**Run the deploy in the background and wait for its actual completion
-notification before doing anything else** — including before starting
-a second deploy. This repo has a real incident from doing otherwise:
-firing multiple `vercel --prod --yes` calls back-to-back queued them,
-and a stale (older-commit) queued deployment sat behind a newer
-"Building" one — a real risk of rolling production back to older code
-if it had run after. If you ever find a stale queued deployment behind
-a newer one, cancel the stale one: `vercel remove <deploymentId> --yes`.
+Take the newest deployment's URL from that list, then block on it:
+
+```bash
+vercel inspect <url> --wait --timeout 5m
+```
+
+**Wait for that command to actually finish before doing anything
+else** — including starting unrelated work. This repo has a real
+incident from firing overlapping deploys: a stale (older-commit)
+queued deployment once sat behind a newer "Building" one, a real risk
+of rolling production back to older code if it had run after. If you
+ever find a stale queued deployment behind a newer one, cancel it:
+`vercel remove <deploymentId> --yes`.
 
 A build failure is not automatically a code bug — this repo's MongoDB
 Atlas connection has produced transient `MongoPoolClearedError`/
 `MongoNetworkTimeoutError` failures during static generation before,
 unrelated to any code change. Before assuming a regression: check
-whether the failure is a Mongo network timeout (retry the deploy — a
-failed deploy never gets promoted, so production is never at risk
-while you investigate) versus a real build error in the log.
+whether the failure is a Mongo network timeout (a failed deploy never
+gets promoted, so production is never at risk while you investigate —
+just push an empty retry commit or re-trigger from the Vercel
+dashboard) versus a real build error in the log.
 
 ## 6. Confirm
 
 - Check the deploy's final `readyState` is `READY` and `target` is
-  `production` (the JSON output from `vercel --prod --yes` shows this
-  directly).
+  `production` (`vercel inspect <url> --wait` prints this once it
+  completes).
 - If the change touched `vercel.json` (e.g. a cron schedule), confirm
   with `vercel cron ls` — Vercel will reject a schedule the current
   plan doesn't support, so a successful `cron ls` listing is itself
