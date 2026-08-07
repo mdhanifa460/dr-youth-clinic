@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { EXPORT_ALLOWED_ROLES, type AdminRole } from "@/app/lib/permissions";
+import { EXPORT_ALLOWED_ROLES, canAccess, type AdminRole } from "@/app/lib/permissions";
+import ConvertToAppointmentModal from "@/app/admin/components/ConvertToAppointmentModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,7 +18,10 @@ type Lead = {
   status?: string;
   concern?: string;
   createdAt?: string;
+  convertedToAppointmentId?: string;
 };
+
+type Doctor = { _id: string; name: string; locations: string[] };
 
 type AuditLog = {
   _id: string;
@@ -334,14 +338,22 @@ function AuditLogTab() {
 export default function LeadsClient({
   userRole,
   assignedClinics,
+  doctors,
 }: {
   userRole: AdminRole;
   assignedClinics: string[];
+  doctors: Doctor[];
 }) {
   const canExport      = EXPORT_ALLOWED_ROLES.includes(userRole);
+  // The convert endpoint requires bookings:full — some roles (e.g.
+  // marketing_manager) have full lead-export access but only view access
+  // to bookings, so the button must stay hidden for them rather than
+  // appearing and then 403ing on click.
+  const canConvert     = canAccess(userRole, "bookings", "full");
   const branchRestricted = !assignedClinics.includes("all");
 
   const [leads,        setLeads]        = useState<Lead[]>([]);
+  const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [filters,      setFilters]      = useState<Filters>(EMPTY_FILTERS);
   const [page,         setPage]         = useState(1);
   const [totalPages,   setTotalPages]   = useState(1);
@@ -563,6 +575,7 @@ export default function LeadsClient({
                         <th className="px-4 py-3">Appointment</th>
                         <th className="px-4 py-3">Status</th>
                         <th className="px-4 py-3">Lead Date</th>
+                        {canConvert && <th className="px-4 py-3">Appointment</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -583,6 +596,20 @@ export default function LeadsClient({
                             </span>
                           </td>
                           <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(lead.createdAt)}</td>
+                          {canConvert && (
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {lead.convertedToAppointmentId ? (
+                                <span className="text-xs font-semibold text-emerald-600">✓ Converted</span>
+                              ) : (
+                                <button
+                                  onClick={() => setConvertingLead(lead)}
+                                  className="text-xs font-semibold text-[#0B2560] hover:underline"
+                                >
+                                  Convert →
+                                </button>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -612,6 +639,25 @@ export default function LeadsClient({
       {/* Export modal */}
       {showExport && (
         <ExportModal filters={filters} onClose={() => setShowExport(false)} />
+      )}
+
+      {/* Convert to appointment modal */}
+      {canConvert && convertingLead && (
+        <ConvertToAppointmentModal
+          booking={convertingLead}
+          doctors={doctors}
+          onClose={() => setConvertingLead(null)}
+          onSuccess={(appointmentId) => {
+            setLeads((prev) =>
+              prev.map((l) =>
+                l._id === convertingLead._id
+                  ? { ...l, convertedToAppointmentId: appointmentId, status: "confirmed" }
+                  : l
+              )
+            );
+            setConvertingLead(null);
+          }}
+        />
       )}
     </div>
   );

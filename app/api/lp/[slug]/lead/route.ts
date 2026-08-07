@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
-import { LandingPageLead } from '@/app/models/LandingPageLead';
+import Booking from '@/app/models/Booking';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
+import { normalizePhone } from '@/app/lib/phone';
+import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
+import { sendWhatsAppText } from '@/app/lib/whatsapp';
 
 export async function POST(
   req: NextRequest,
@@ -20,6 +23,18 @@ export async function POST(
     const body = await req.json();
     const { name, phone, email, fields, variant } = body;
 
+    if (!name || !phone) {
+      return NextResponse.json(
+        { success: false, message: 'Name and phone are required' },
+        { status: 400 }
+      );
+    }
+
+    const formattedPhone = normalizePhone(phone);
+    if (!formattedPhone || formattedPhone.length < 10) {
+      return NextResponse.json({ success: false, message: 'Invalid phone number' }, { status: 400 });
+    }
+
     const lp = await (LandingPage as any).findOne({ slug: params.slug, status: 'published' }).lean() as any;
 
     if (!lp) {
@@ -29,17 +44,42 @@ export async function POST(
       );
     }
 
-    // Save lead
-    const lead = new LandingPageLead({
-      lpId: lp._id,
-      slug: params.slug,
-      variant: variant === 'B' ? 'B' : 'A',
-      name: name || '',
-      phone: phone || '',
+    // LP forms don't collect a dedicated service/location pair the way the
+    // main /book flow does — infer sensible values so this lead lands in
+    // the same Leads/Booking Leads pipeline as everything else instead of
+    // a separate, admin-invisible collection.
+    const locationSection = (lp.sections || []).find(
+      (s: any) => s.type === 'location' && s.visible
+    );
+    const location = locationSection?.data?.city || '';
+
+    // Any custom fields beyond the standard name/phone/email get preserved
+    // as notes rather than silently dropped.
+    const extraFields = Object.entries(fields || {}).filter(
+      ([key]) => !['name', 'full-name', 'phone', 'mobile', 'tel', 'email'].includes(key)
+    );
+    const notes = extraFields.length
+      ? extraFields.map(([k, v]) => `${k}: ${v}`).join('\n')
+      : '';
+
+    const previousBookings = await (Booking as any).countDocuments({ phone: formattedPhone });
+
+    const bookingId = 'DR-' + Date.now();
+
+    await Booking.create({
+      bookingId,
+      name,
+      phone: formattedPhone,
+      formattedPhone,
       email: email || '',
-      fields: fields || {},
+      service: lp.title || 'Landing Page Enquiry',
+      location,
+      source: 'landing-page',
+      lpSlug: params.slug,
+      lpVariant: variant === 'B' ? 'B' : 'A',
+      notes,
+      isReturnVisit: previousBookings > 0,
     });
-    await lead.save();
 
     // Increment analytics.leads
     const analyticsUpdate: any = { $inc: { 'analytics.leads': 1 } };
@@ -51,16 +91,17 @@ export async function POST(
 
     await (LandingPage as any).findByIdAndUpdate(lp._id, analyticsUpdate);
 
-    // WhatsApp notification if configured
+    // Staff WhatsApp alert — fire-and-forget, same pattern as
+    // app/api/leads/route.ts, so a delivery failure never turns an
+    // already-saved lead into a failure response for the visitor.
     if (lp.form?.whatsappNotify) {
-      const whatsappNumber = process.env.WHATSAPP_NOTIFY_NUMBER;
-      if (whatsappNumber) {
-        const message = encodeURIComponent(
-          `New lead from ${lp.title}!\nName: ${name || 'N/A'}\nPhone: ${phone || 'N/A'}\nEmail: ${email || 'N/A'}`
-        );
-        // Fire-and-forget — don't block the response
-        fetch(`https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${message}`).catch(() => {});
-      }
+      getClinicNotifyNumber(location).then((to) => {
+        if (!to) return;
+        sendWhatsAppText(
+          to,
+          `🆕 New Landing Page Lead\n\nCampaign: ${lp.title}\nName: ${name}\nPhone: ${formattedPhone}${email ? `\nEmail: ${email}` : ''}${location ? `\nLocation: ${location}` : ''}`
+        ).catch(() => {});
+      }).catch(() => {});
     }
 
     return NextResponse.json({

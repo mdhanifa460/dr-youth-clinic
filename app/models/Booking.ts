@@ -55,6 +55,13 @@ const BookingSchema = new mongoose.Schema(
       default: "website",
     },
 
+    // Additive — set when source === "landing-page", so a lead captured
+    // through an LP's Hero/Form section can still be traced back to which
+    // campaign page and A/B variant it came from, without needing a
+    // separate lead-capture collection (see app/api/lp/[slug]/lead/route.ts).
+    lpSlug:    { type: String, default: "" },
+    lpVariant: { type: String, default: "" },
+
     // CRM fields
     internalNote:   { type: String, default: "" },
     assignedTo:     { type: String, default: "" },  // staff member handling this lead
