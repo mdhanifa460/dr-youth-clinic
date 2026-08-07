@@ -18,6 +18,7 @@ const SECTION_LABELS: Record<string, { label: string; icon: string }> = {
   doctor: { label: 'Doctor Profile', icon: '👨‍⚕️' },
   reviews: { label: 'Patient Reviews', icon: '💬' },
   'hair-timeline': { label: 'Hair Growth Timeline', icon: '📈' },
+  'client-journey': { label: 'Client Progress Timeline', icon: '📸' },
   location: { label: 'Branch Locations', icon: '📍' },
   'video-explainer': { label: 'Video Explainer', icon: '🎬' },
   'offer-banner': { label: 'Offer Banner', icon: '🔥' },

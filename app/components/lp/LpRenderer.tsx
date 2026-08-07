@@ -17,6 +17,7 @@ import FormSection from './sections/FormSection';
 import ComparisonSection from './sections/ComparisonSection';
 import GuaranteeSection from './sections/GuaranteeSection';
 import HairTimelineSection from './sections/HairTimelineSection';
+import ClientJourneySection from './sections/ClientJourneySection';
 import LocationSection from './sections/LocationSection';
 import VideoSection from './sections/VideoSection';
 
@@ -72,6 +73,8 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
       return <ReviewsSection key={section.id} data={section.data} />;
     case 'hair-timeline':
       return <HairTimelineSection key={section.id} data={section.data} />;
+    case 'client-journey':
+      return <ClientJourneySection key={section.id} data={section.data} />;
     case 'location':
       return <LocationSection key={section.id} data={section.data} />;
     case 'offer-banner':

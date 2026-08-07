@@ -106,6 +106,21 @@ const SECTION_DEFAULTS: Record<string, any> = {
       { period: 'Month 6', title: 'Full Results', desc: 'Complete hair restoration with natural appearance' },
     ],
   },
+  'client-journey': {
+    eyebrow: 'Real Journey',
+    headline: "One Patient's Real Transformation",
+    subheadline: "Scroll through an actual patient's journey, month by month.",
+    patientName: '',
+    patientTag: '',
+    disclaimer: 'Individual results may vary. Photos are from an actual DR Youth Clinic patient, shared with consent.',
+    stages: [
+      { label: 'Before', image: '', caption: '' },
+      { label: '1 Month', image: '', caption: '' },
+      { label: '3 Months', image: '', caption: '' },
+      { label: '6 Months', image: '', caption: '' },
+      { label: '12 Months', image: '', caption: '' },
+    ],
+  },
   location: {
     headline: 'Trusted by Patients Across Chennai',
     city: 'Chennai',
@@ -174,6 +189,7 @@ const SECTION_LABELS: Record<string, { label: string; icon: string }> = {
   doctor: { label: 'Doctor Profile', icon: '👨‍⚕️' },
   reviews: { label: 'Patient Reviews', icon: '💬' },
   'hair-timeline': { label: 'Hair Growth Timeline', icon: '📈' },
+  'client-journey': { label: 'Client Progress Timeline', icon: '📸' },
   location: { label: 'Branch Locations', icon: '📍' },
   'video-explainer': { label: 'Video Explainer', icon: '🎬' },
   'offer-banner': { label: 'Offer Banner', icon: '🔥' },
@@ -1006,6 +1022,55 @@ function SectionEditor({
                   </div>
                   <input value={m.desc || ''} onChange={(e) => { const n=[...milestones]; n[i]={...n[i],desc:e.target.value}; set('milestones',n); }}
                     placeholder="Description" className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case 'client-journey': {
+      const stages = d.stages || [];
+      return (
+        <div className="space-y-4">
+          <FieldInput label="Eyebrow" value={d.eyebrow} onChange={(v) => set('eyebrow', v)} placeholder="Real Journey" />
+          <FieldInput label="Section Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <FieldInput label="Subheadline" value={d.subheadline} onChange={(v) => set('subheadline', v)} type="textarea" />
+          <div className="grid grid-cols-2 gap-3">
+            <FieldInput label="Patient Name" value={d.patientName} onChange={(v) => set('patientName', v)} placeholder="e.g. Priya R." />
+            <FieldInput label="Patient Tag" value={d.patientTag} onChange={(v) => set('patientTag', v)} placeholder="e.g. Chennai · Hair PRP" />
+          </div>
+          <FieldInput label="Disclaimer" value={d.disclaimer} onChange={(v) => set('disclaimer', v)} type="textarea" placeholder="Individual results may vary..." />
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Journey Stages</label>
+              <button type="button"
+                onClick={() => set('stages', [...stages, { label: '', image: '', caption: '' }])}
+                className="text-[10px] text-[#0B2560] font-bold flex items-center gap-0.5 hover:underline">
+                <Plus size={10} /> Add Stage
+              </button>
+            </div>
+            <div className="space-y-4">
+              {stages.map((stage: any, i: number) => (
+                <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">Stage {i + 1}</span>
+                    <button type="button" onClick={() => set('stages', stages.filter((_: any, idx: number) => idx !== i))}
+                      className="text-gray-300 hover:text-red-500"><X size={13} /></button>
+                  </div>
+                  <FieldInput label="Stage Label" value={stage.label || ''}
+                    onChange={(v) => { const n=[...stages]; n[i]={...n[i],label:v}; set('stages',n); }}
+                    placeholder="e.g. Before / 3 Months" />
+                  <ImagePicker
+                    label="Stage Photo"
+                    value={stage.image || ''}
+                    onChange={(v) => { const n=[...stages]; n[i]={...n[i],image:v}; set('stages',n); }}
+                    openGallery={openGallery}
+                  />
+                  <FieldInput label="Caption" value={stage.caption || ''}
+                    onChange={(v) => { const n=[...stages]; n[i]={...n[i],caption:v}; set('stages',n); }}
+                    type="textarea" placeholder="What changed at this stage" />
                 </div>
               ))}
             </div>
