@@ -350,6 +350,9 @@ export default function LeadsClient({
   // to bookings, so the button must stay hidden for them rather than
   // appearing and then 403ing on click.
   const canConvert     = canAccess(userRole, "bookings", "full");
+  const isSuperAdmin   = userRole === "super_admin";
+  const [migrating,    setMigrating]    = useState(false);
+  const [migrateResult, setMigrateResult] = useState<{ total: number; migrated: number; skipped: number } | null>(null);
   const branchRestricted = !assignedClinics.includes("all");
 
   const [leads,        setLeads]        = useState<Lead[]>([]);
@@ -397,6 +400,25 @@ export default function LeadsClient({
 
   const clearFilters = () => { setFilters(EMPTY_FILTERS); setPage(1); };
 
+  const runLegacyLeadMigration = async () => {
+    if (!confirm(
+      "This backfills any pre-existing landing-page leads (from before they were routed into this pipeline) as real Booking records. Safe to run more than once — already-migrated leads are skipped. Continue?"
+    )) return;
+    setMigrating(true);
+    setMigrateResult(null);
+    try {
+      const res = await fetch("/api/admin/migrate-lp-leads", { method: "POST" });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Migration failed");
+      setMigrateResult({ total: data.total, migrated: data.migrated, skipped: data.skipped });
+      if (data.migrated > 0) loadLeads();
+    } catch (err: any) {
+      alert(err.message || "Migration failed");
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   const hasAnyFilter    = Object.values(filters).some(Boolean);
   const hasExportFilter = Boolean(filters.dateFrom || filters.dateTo || filters.location || filters.status || filters.service);
 
@@ -437,6 +459,18 @@ export default function LeadsClient({
             </button>
           </div>
 
+          {/* One-time legacy LP lead backfill — super admin only */}
+          {isSuperAdmin && activeTab === "leads" && (
+            <button
+              onClick={runLegacyLeadMigration}
+              disabled={migrating}
+              title="Backfill any landing-page leads saved before this pipeline existed"
+              className="flex items-center gap-2 border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              {migrating ? "Migrating…" : "🔁 Migrate Legacy LP Leads"}
+            </button>
+          )}
+
           {/* Export button — only for allowed roles */}
           {canExport && activeTab === "leads" && (
             <button
@@ -450,6 +484,13 @@ export default function LeadsClient({
           )}
         </div>
       </div>
+
+      {migrateResult && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl px-4 py-3">
+          Migration complete — found {migrateResult.total} legacy lead{migrateResult.total !== 1 ? "s" : ""},
+          migrated {migrateResult.migrated}, skipped {migrateResult.skipped} (already migrated).
+        </div>
+      )}
 
       {/* Audit log tab */}
       {activeTab === "audit" && <AuditLogTab />}
