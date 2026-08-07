@@ -7,16 +7,28 @@ import { getClinicNotifyNumber } from "@/app/lib/clinicNotify";
 import { bookingSchema } from "@/app/lib/validation";
 import { sendWhatsAppText, sendWhatsAppTemplate } from "@/app/lib/whatsapp";
 import { getEffectiveBranchConfig } from "@/app/lib/branchConfig";
+import { getSiteConfig } from "@/app/lib/siteConfig";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
 }
 
 export async function POST(req: Request) {
-  // 3 bookings per hour per IP — prevent spam
+  // 8 bookings per hour per IP — prevents spam while staying realistic for
+  // genuine traffic: many Indian ISPs use carrier-grade NAT, so several
+  // unrelated households can share one public IP, and a single household
+  // booking for more than one family member (or retrying after a typo)
+  // easily exceeds a lower cap. Was 3/hour — confirmed too tight when a
+  // real patient hit it on a completely ordinary first attempt.
   const ip = getClientIp(req);
-  const rl = await checkRateLimit(`booking:${ip}`, 3, 60 * 60 * 1000);
-  if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
+  const rl = await checkRateLimit(`booking:${ip}`, 8, 60 * 60 * 1000);
+  if (!rl.allowed) {
+    const clinicPhone = (await getSiteConfig().catch(() => null))?.publicPhone;
+    return tooManyRequestsResponse(
+      rl.resetAt,
+      `You've reached the booking limit for now.${clinicPhone ? ` Please call us directly at ${clinicPhone}` : ' Please try again shortly'} or try again in a little while.`
+    );
+  }
 
   try {
     const rawBody = await req.json();

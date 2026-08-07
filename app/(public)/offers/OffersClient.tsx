@@ -3,16 +3,18 @@
 import { useState } from 'react';
 import { OfferCard } from './OfferCard';
 import OfferCategoryTabs from './components/OfferCategoryTabs';
+import { useScrollOnChange } from '@/app/lib/useScrollOnChange';
 
 export default function OffersClient({ offers }: { offers: any[] }) {
   const [active, setActive] = useState('All');
+  const sectionRef = useScrollOnChange(active);
 
   const filtered = active === 'All' ? offers : offers.filter(o => o.category === active);
   const counts: Record<string, number> = { All: offers.length };
   for (const o of offers) counts[o.category] = (counts[o.category] || 0) + 1;
 
   return (
-    <div>
+    <div ref={sectionRef}>
       {/* Section heading */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>

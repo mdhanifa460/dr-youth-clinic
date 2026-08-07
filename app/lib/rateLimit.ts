@@ -91,10 +91,10 @@ export function getClientIp(req: Request): string {
   );
 }
 
-export function tooManyRequestsResponse(resetAt: number) {
+export function tooManyRequestsResponse(resetAt: number, message?: string) {
   const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
   return new Response(
-    JSON.stringify({ success: false, message: 'Too many requests. Please try again later.' }),
+    JSON.stringify({ success: false, message: message || 'Too many requests. Please try again later.' }),
     {
       status: 429,
       headers: {

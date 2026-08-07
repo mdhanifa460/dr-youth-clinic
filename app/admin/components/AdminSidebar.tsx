@@ -75,6 +75,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/bookings", label: "📋 Booking Leads", module: "bookings" },
       { href: "/admin/leads", label: "🎯 Lead Export", module: "leads" },
       { href: "/admin/doctor-availability", label: "🚫 Dr. Availability", module: "bookings" },
+      { href: "/admin/booking-success", label: "🎉 Booking Success Page", module: "booking-success" },
     ],
   },
   {

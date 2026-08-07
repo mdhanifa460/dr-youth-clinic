@@ -84,6 +84,16 @@ const BookingSchema = new mongoose.Schema(
       },
       default: null,
     },
+
+    // Uploaded from the Booking Success page's "Prepare for Your
+    // Consultation" checklist — lets the doctor review prior reports before
+    // the patient even walks in. Same Cloudinary upload pattern as
+    // assessment-photos (app/api/assessment-photo-upload), separate field
+    // since these are documents/PDFs, not skin/hair photos.
+    preVisitReports: {
+      type: [{ url: String, publicId: String, name: String, uploadedAt: Date }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

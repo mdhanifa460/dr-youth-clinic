@@ -34,7 +34,8 @@ export type AdminModule =
   | 'faqs'
   | 'banners'
   | 'courses'
-  | 'animation-library';
+  | 'animation-library'
+  | 'booking-success';
 
 export type AccessLevel = 'full' | 'view' | 'none';
 
@@ -46,7 +47,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
   },
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
@@ -55,7 +56,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
   },
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
@@ -64,7 +65,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
   },
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -73,7 +74,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', journey: 'full', legal: 'none', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'view', courses: 'view', 'animation-library': 'none',
+    stories: 'none', faqs: 'view', courses: 'view', 'animation-library': 'none', 'booking-success': 'view',
   },
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
@@ -85,7 +86,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // silent access regression, not an intentional policy change.
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none',
+    stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none', 'booking-success': 'view',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
@@ -96,7 +97,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // editors could already edit quiz content at that level.
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
-    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full',
+    stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -105,7 +106,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', journey: 'none', legal: 'none', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'none', courses: 'none', 'animation-library': 'none',
+    stories: 'none', faqs: 'none', courses: 'none', 'animation-library': 'none', 'booking-success': 'none',
   },
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -115,7 +116,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     // Was 'services: view' before this feature had its own module.
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
-    stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none',
+    stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none', 'booking-success': 'view',
   },
 };
 

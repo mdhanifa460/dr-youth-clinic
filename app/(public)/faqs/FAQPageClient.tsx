@@ -168,7 +168,7 @@ export default function FAQPageClient({
               return (
                 <button
                   key={tab}
-                  onClick={() => { setActiveCategory(tab); setOpenIndex(null); }}
+                  onClick={() => jumpToCategory(tab)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     activeCategory === tab
                       ? 'bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/20'

@@ -10,6 +10,7 @@ import NewsletterSignup from '@/app/components/NewsletterSignup';
 import FocalImage from '@/app/components/media/FocalImage';
 import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
 import { BLOG_CATEGORIES, CATEGORY_COLOR } from '@/app/lib/blogCategories';
+import { useScrollOnChange } from '@/app/lib/useScrollOnChange';
 
 interface Post {
   _id: string;
@@ -103,6 +104,7 @@ export default function BlogPageClient({
   const [activeCategory, setActiveCategory] = useState('All');
   const [videoCategory, setVideoCategory] = useState('All');
   const [page, setPage] = useState(1);
+  const gridRef = useScrollOnChange(activeCategory);
 
   const popularSearches = useMemo(() => {
     const freq: Record<string, number> = {};
@@ -190,7 +192,7 @@ export default function BlogPageClient({
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
+      <div ref={gridRef} className="max-w-7xl mx-auto px-4 md:px-6 py-10">
         {/* ── Category pills ── */}
         {!search && (
           <div className="flex flex-wrap gap-2 mb-10">

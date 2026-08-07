@@ -127,7 +127,13 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
   const isLocationActive = CITY_SLUGS.includes(currentLocation);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 border-b border-gray-100 shadow-sm">
+    // bg-white/90 (not fully opaque) let page content directly behind the
+    // sticky header "ghost" through wherever a heading sits flush against
+    // its bottom edge — backdrop-blur alone doesn't fully diffuse crisp
+    // dark text that close. Confirmed on /book's mobile "Tell us about
+    // yourself" heading; bumped to near-opaque to keep the frosted-glass
+    // look without the bleed-through.
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/98 border-b border-gray-100 shadow-sm">
 
       {/* ── MOBILE ROW: [hamburger] [logo center] [photo icon] ── */}
       <div className="xl:hidden flex items-center justify-between px-4 py-3">

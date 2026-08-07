@@ -4,6 +4,7 @@ import { useState } from 'react';
 import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { MapPin, Award, Calendar, ChevronRight } from 'lucide-react';
+import { useScrollOnChange } from '@/app/lib/useScrollOnChange';
 
 const LOCATION_LABELS: Record<string, string> = {
   all: 'All Clinics', chennai: 'Chennai', bangalore: 'Bangalore',
@@ -100,6 +101,7 @@ function DoctorCard({ doc }: { doc: any }) {
 
 export default function DoctorsGrid({ doctors }: { doctors: any[] }) {
   const [activeFilter, setActiveFilter] = useState('');
+  const gridRef = useScrollOnChange(activeFilter);
 
   const filtered = activeFilter
     ? doctors.filter((d) => d.locations?.includes(activeFilter) || d.locations?.includes('all'))
@@ -114,7 +116,7 @@ export default function DoctorsGrid({ doctors }: { doctors: any[] }) {
   );
 
   return (
-    <div>
+    <div ref={gridRef}>
       {/* Filter bar */}
       {visibleTabs.length > 1 && (
         <div className="flex flex-wrap gap-2 mb-8">

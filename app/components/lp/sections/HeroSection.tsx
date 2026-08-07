@@ -265,15 +265,21 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
               transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
               className="relative"
             >
-              {/* years badge overlay */}
-              <div className="absolute -top-5 -left-5 z-20 hidden sm:flex flex-col items-center justify-center w-24 h-24 rounded-full bg-[#0B2560] border-4 border-[#F5A623] shadow-xl text-center">
-                <span className="text-[#F5A623] font-extrabold text-lg leading-none">{yearsExperience}</span>
-                <span className="text-white text-[8px] font-bold uppercase tracking-wider mt-1 leading-tight px-1">
+              {/* years badge overlay — sized/offset so its footprint
+                  (bottom-right edge at -24px + 80px = 56px into the card)
+                  lands within the card's own top padding below, never over
+                  the headline text. Verified via real geometry, not just
+                  eyeballing: a smaller offset here was overlapping the
+                  headline on every screen width the badge shows at, not
+                  just narrow ones. */}
+              <div className="absolute -top-6 -left-6 z-20 hidden sm:flex flex-col items-center justify-center w-20 h-20 rounded-full bg-[#0B2560] border-4 border-[#F5A623] shadow-xl text-center">
+                <span className="text-[#F5A623] font-extrabold text-base leading-none">{yearsExperience}</span>
+                <span className="text-white text-[7px] font-bold uppercase tracking-wider mt-1 leading-tight px-1">
                   {yearsExperienceLabel}
                 </span>
               </div>
 
-              <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-7">
+              <div className="bg-white rounded-3xl shadow-2xl px-6 pb-6 pt-6 sm:pt-16 md:px-7 md:pb-7 md:pt-16">
                 {success ? (
                   <div className="text-center py-10">
                     <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">

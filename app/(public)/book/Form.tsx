@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { AlertCircle, CheckCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { AlertCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 
@@ -28,10 +28,21 @@ const TIME_SLOTS = [
 const inputCls = 'w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition placeholder:text-gray-500 bg-[#f6faff]';
 
 export default function ConsultationForm({ step, setStep }: { step: number; setStep: (n: number) => void }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const [bookingId, setBookingId] = useState('');
+  const formTopRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
+
+  // Scroll to the top of the form card (not window top — that would jump
+  // past the page's own hero banner above it) whenever the step changes,
+  // so a taller previous step's scroll position doesn't leave the new,
+  // often-shorter step rendering mid-content or off-screen. Skips the
+  // very first render so landing on /book doesn't itself trigger a scroll.
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [step]);
 
   const [form, setForm] = useState({
     name: '', email: '', phone: '', concern: '',
@@ -134,8 +145,6 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       });
       const data = await res.json();
       if (data.success) {
-        setBookingId(data.bookingId);
-        setSuccess(true);
         trackBookingConversion({ bookingId: data.bookingId, service: form.service, location: form.location });
         // AI Beauty Journey Module 9 — close the loop: this booking
         // originated from a journey session (arrived via the prefilled
@@ -153,6 +162,12 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
             }),
           }).catch(() => {});
         }
+        // Configurable Booking Success page (app/admin/booking-success) —
+        // replaces the old inline "thank you" div below with a dedicated,
+        // shareable/bookmarkable route carrying real appointment details,
+        // CTAs, and the pre-visit checklist.
+        router.push(`/book/success/${data.bookingId}`);
+        return;
       }
       else setError(data.message || 'Booking failed. Please try again.');
     } catch { setError('An error occurred. Please try again.'); }
@@ -164,54 +179,8 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   minDate.setDate(minDate.getDate() + 1);
   const minDateStr = minDate.toISOString().split('T')[0];
 
-  /* ── SUCCESS ── */
-  if (success) {
-    return (
-      <div className="p-8 md:p-12 text-center space-y-5">
-        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto">
-          <CheckCircle size={40} className="text-green-500" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Consultation Booked!</h2>
-          <p className="text-gray-500 text-sm mt-1">We'll confirm via WhatsApp within a few minutes.</p>
-        </div>
-        <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-5 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500">Booking ID</span>
-            <span className="font-bold text-[#0B2560]">{bookingId}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Name</span>
-            <span className="font-semibold text-gray-700">{form.name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Service</span>
-            <span className="font-semibold text-gray-700">{form.service}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Location</span>
-            <span className="font-semibold text-gray-700">{form.location}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Date & Time</span>
-            <span className="font-semibold text-gray-700">{form.date} · {form.time}</span>
-          </div>
-        </div>
-        <p className="text-xs text-gray-500">Screenshot or note your Booking ID for reference.</p>
-        <div className="flex flex-wrap justify-center gap-3 pt-2">
-          <Link href="/" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
-            Back to Home
-          </Link>
-          <Link href={`/${form.location?.toLowerCase() || 'chennai'}/services`} className="inline-flex items-center gap-2 border border-gray-200 text-[#0B2560] px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">
-            Explore Treatments
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div>
+    <div ref={formTopRef}>
       {/* Progress bar */}
       <div className="h-1.5 bg-gray-100">
         <div

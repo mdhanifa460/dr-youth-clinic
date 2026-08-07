@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import SliderCard from '@/app/components/SliderCard';
+import { useScrollOnChange } from '@/app/lib/useScrollOnChange';
 
 const FALLBACK_PAIRS = [
   { title: 'Acne Therapy & Scar Solution', description: 'Treatments that smooth, clarify & restore natural skin texture.', category: 'Skin Care' },
@@ -36,6 +37,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
   const usedCategories = Array.from(new Set(allPairs.map((p: any) => p.category).filter(Boolean)));
   const CATEGORIES = ['All', ...(usedCategories.length > 0 ? usedCategories : FALLBACK_CATEGORIES)];
   const [activeCategory, setActiveCategory] = useState('All');
+  const gridRef = useScrollOnChange(activeCategory);
 
   const filtered = activeCategory === 'All'
     ? allPairs
@@ -79,7 +81,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
       </section>
 
       {/* FILTER + GRID */}
-      <section className="max-w-7xl mx-auto px-6 md:px-10 py-12">
+      <section ref={gridRef} className="max-w-7xl mx-auto px-6 md:px-10 py-12">
 
         {/* Drag hint */}
         <div className="mb-6">

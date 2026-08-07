@@ -158,7 +158,16 @@ function PlanMyJourneyFlow({
 
   const transition = (fn: () => void) => {
     setVisible(false);
-    setTimeout(() => { fn(); setVisible(true); }, 150);
+    setTimeout(() => {
+      fn();
+      // Every screen/question change goes through here — without resetting
+      // scroll, a new (often shorter) screen renders wherever the user
+      // happened to have scrolled to on the previous one, landing mid-
+      // content instead of at the top. Same fix as skin-quiz/page.tsx's
+      // own transition() wrapper.
+      window.scrollTo({ top: 0, behavior: "auto" });
+      setVisible(true);
+    }, 150);
   };
 
   // Where the flow goes once Smart Conversation's questions are done (or
