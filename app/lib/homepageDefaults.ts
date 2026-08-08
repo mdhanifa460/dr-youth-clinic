@@ -1,4 +1,3 @@
-import { CLOUDINARY_LOGO_URL } from './legacyImageUrls';
 import { locations } from '@/app/data/locations';
 
 export interface SectionDefault {
@@ -31,7 +30,12 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     order: 2,
     visible: true,
     data: {
-      logoUrl: CLOUDINARY_LOGO_URL,
+      // The real site logo lives in Settings > Brand (app/models/Settings.ts,
+      // consumed via app/lib/siteConfig.ts) and renders live in Navbar/
+      // Footer/LP header — this section used to carry its own disconnected
+      // logoUrl that was never actually applied. Removed rather than kept
+      // as dead data (app/admin/homepage/page.tsx's 'header' case now shows
+      // a read-only preview of the real logo instead).
       navLinks: [
         { label: 'Home', href: '/' },
         { label: 'Services', href: '/services' },

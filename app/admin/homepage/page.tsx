@@ -582,6 +582,22 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section.type]);
 
+  // Same read-only glance pattern as branchNumbers above — the header
+  // section used to carry its own disconnected logoUrl text field (stored
+  // but never actually applied to the real Navbar). Replaced with a live
+  // preview of the one logo that's actually wired to the site, sourced
+  // from Settings > Brand, so there's no longer a second field to confuse
+  // admins into thinking it does something.
+  const [liveLogoUrl, setLiveLogoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (section.type !== 'header' || liveLogoUrl !== null) return;
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((json) => { if (json.success) setLiveLogoUrl(json.data?.brand?.logoUrl || ''); })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section.type]);
+
   const set = (path: string, value: any) => {
     const keys = path.split('.');
     const next = JSON.parse(JSON.stringify(d));
@@ -677,7 +693,24 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
           <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             Header/Nav is managed via the existing Navbar component. Changes here are stored but apply on next Navbar update.
           </p>
-          <TextField label="Logo URL" value={d.logoUrl} onChange={(v) => set('logoUrl', v)} />
+          <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+            {liveLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={liveLogoUrl} alt="Current site logo" className="h-8 object-contain bg-white rounded px-1.5 py-1 border border-gray-100" />
+            ) : (
+              <span className="text-xs text-gray-400">{liveLogoUrl === null ? 'Loading logo…' : 'Using default logo'}</span>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-gray-700">Site logo</p>
+              <p className="text-[11px] text-gray-500">Shown in the header, footer, and landing pages — updated from Settings.</p>
+            </div>
+            <Link
+              href="/admin/settings/brand"
+              className="shrink-0 text-xs font-semibold text-[#0B2560] hover:underline whitespace-nowrap"
+            >
+              Update logo →
+            </Link>
+          </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <TextField label="CTA Button Text" value={d.ctaText} onChange={(v) => set('ctaText', v)} />
             <TextField label="CTA Button Link" value={d.ctaHref} onChange={(v) => set('ctaHref', v)} />
