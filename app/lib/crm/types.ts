@@ -1,0 +1,42 @@
+// Internal platform domain types — the ONLY shapes the website, CMS,
+// dashboard, patient portal, and AI modules are allowed to depend on.
+// CRMConnector translates to/from whatever the actual CRM's API returns;
+// nothing outside app/lib/crm/ ever sees a raw CRM response. If the CRM
+// changes its field names, endpoints, or response format, only
+// CRMConnector.ts (and the ConnectorFieldMapping rows) change — these
+// types, and everything that imports them, stay exactly the same.
+
+export interface PlatformDoctor {
+  externalId: string;
+  name: string;
+  active: boolean;
+  locations: string[]; // branch keys, e.g. ["chennai"]
+}
+
+export interface PlatformBranch {
+  externalId: string;
+  name: string;
+  active: boolean;
+}
+
+// Outbound — website is the source, pushed to the CRM.
+export interface PlatformLead {
+  name: string;
+  phone: string;
+  email?: string;
+  service?: string;
+  location?: string;
+  source: string; // "website" | "landing-page"
+  notes?: string;
+}
+
+export interface PlatformBooking extends PlatformLead {
+  bookingId: string;
+  date?: string;
+  time?: string;
+  concern?: string;
+}
+
+export interface ConnectorPushResult {
+  externalId: string;
+}

@@ -124,6 +124,11 @@ export interface ILocationContent extends Document {
   localDoctors: ILocationDoctor[];
   // Content Layout Engine opt-in — same pattern as Service/Blog/LandingPage.
   layoutEngineEnabled?: boolean;
+  // Additive — set when this branch is linked to a CRM Connector branch
+  // record. Deliberately narrow: sync only ever writes to this subdocument,
+  // never to heroImage/beforeAfterPairs/galleryImages/localDoctors/hours —
+  // those stay admin-authored marketing content, never CRM-overwritten.
+  crmSync?: { externalCrmId: string; crmSyncedAt: Date | null; crmActive: boolean };
   updatedAt: Date;
   createdAt: Date;
 }
@@ -240,6 +245,11 @@ const LocationContentSchema = new Schema<ILocationContent>(
     galleryImages:    { type: [GalleryImageSchema], default: [] },
     localDoctors:     { type: [LocalDoctorSchema], default: [] },
     layoutEngineEnabled: { type: Boolean, default: false },
+    crmSync: {
+      externalCrmId: { type: String, default: '' },
+      crmSyncedAt:   { type: Date, default: null },
+      crmActive:     { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

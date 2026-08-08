@@ -21,6 +21,12 @@ export interface IDoctor extends Document {
   // Per-record Content Layout Engine opt-in — same pattern as
   // Service/Blog/LandingPage.
   layoutEngineEnabled?: boolean;
+  // Additive — set when this doctor is linked to a CRM Connector record.
+  // Sync only ever touches `active`/`locations` from the CRM side; photo,
+  // bio, qualifications, and order stay admin-authored even for a synced
+  // doctor, so a CRM pull can never clobber curated marketing content.
+  externalCrmId?: string;
+  crmSyncedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +47,8 @@ const DoctorSchema = new Schema<IDoctor>(
     order:           { type: Number, default: 0 },
     active:          { type: Boolean, default: true },
     layoutEngineEnabled: { type: Boolean, default: false },
+    externalCrmId:   { type: String, default: '', index: true },
+    crmSyncedAt:     { type: Date, default: null },
   },
   { timestamps: true }
 );

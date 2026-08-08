@@ -94,6 +94,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/team", label: "👥 Team", module: "team" },
       { href: "/admin/legal", label: "📜 Legal Pages", module: "legal" },
       { href: "/admin/settings", label: "⚙ Settings", module: "settings" },
+      { href: "/admin/integrations/crm", label: "🔌 CRM Sync", module: "integrations" },
     ],
   },
 ];

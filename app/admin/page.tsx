@@ -199,6 +199,55 @@ function RecentReviews({ reviews, loading }: { reviews: Review[]; loading: boole
   );
 }
 
+// ─── CRM sync status widget ───────────────────────────────────────────────────
+// Self-contained — fetches its own data and quietly renders nothing if the
+// signed-in role has no "integrations" access (the API 403s) or no CRM
+// connector has been configured yet (draft status), so it never clutters
+// the dashboard for roles/clinics that don't use this feature.
+type CrmStatus = {
+  status: "active" | "paused" | "error" | "draft";
+  health: { lastCheckOk: boolean | null; lastSyncAt: string | null; consecutiveFailures: number };
+};
+
+const CRM_STATUS_META: Record<string, { label: string; dot: string }> = {
+  active: { label: "CRM Sync: Active", dot: "bg-green-500" },
+  paused: { label: "CRM Sync: Paused", dot: "bg-gray-400" },
+  error: { label: "CRM Sync: Error", dot: "bg-red-500" },
+};
+
+function CrmSyncStatus() {
+  const [crm, setCrm] = useState<CrmStatus | null | "hidden">(null);
+
+  useEffect(() => {
+    fetch("/api/admin/integrations/crm")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((json) => {
+        if (!json.success || !json.data || json.data.status === "draft") {
+          setCrm("hidden");
+        } else {
+          setCrm(json.data);
+        }
+      })
+      .catch(() => setCrm("hidden"));
+  }, []);
+
+  if (crm === "hidden" || crm === null) return null;
+
+  const meta = CRM_STATUS_META[crm.status];
+  return (
+    <Link
+      href="/admin/integrations/crm"
+      className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
+    >
+      <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+      {meta.label}
+      {crm.health.lastSyncAt && (
+        <span className="text-gray-400">· last sync {new Date(crm.health.lastSyncAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
+      )}
+    </Link>
+  );
+}
+
 // ─── Quick actions ────────────────────────────────────────────────────────────
 const ACTIONS = [
   { label: "View Bookings",  href: "/admin/bookings",     primary: true  },
@@ -234,6 +283,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5">{today}</p>
+          <div className="mt-2"><CrmSyncStatus /></div>
         </div>
         <div className="flex gap-2">
           {ACTIONS.map((a) => (

@@ -101,6 +101,22 @@ const BookingSchema = new mongoose.Schema(
       type: [{ url: String, publicId: String, name: String, uploadedAt: Date }],
       default: [],
     },
+
+    // Additive — CRM Connector push tracking (Enterprise Connector
+    // Framework, Phase 2). A booking is always saved locally first;
+    // pushWebsiteBooking() to the CRM happens after, non-blocking.
+    // pendingSync stays true until the push succeeds, so a failed/retrying
+    // push is visible and retryable without ever affecting the booking
+    // itself.
+    externalCrmId: { type: String, default: "" },
+    crmPushedAt:   { type: Date, default: null },
+    pendingSync:   { type: Boolean, default: true },
+    // Capped at Connector.config.retryCount by the sync cron — once
+    // exceeded, the row stops being retried automatically (still
+    // pendingSync: true, still visible/retryable from Sync Manager Logs)
+    // rather than being hammered forever against a CRM that keeps
+    // rejecting it.
+    syncAttempts:  { type: Number, default: 0 },
   },
   { timestamps: true }
 );
@@ -110,5 +126,6 @@ BookingSchema.index({ phone: 1 });
 BookingSchema.index({ status: 1, createdAt: -1 });
 BookingSchema.index({ location: 1, createdAt: -1 });
 BookingSchema.index({ doctorId: 1, createdAt: -1 });
+BookingSchema.index({ pendingSync: 1, createdAt: -1 });
 
 export default mongoose.models.Booking || mongoose.model("Booking", BookingSchema);

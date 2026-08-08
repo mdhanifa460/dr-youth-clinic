@@ -6,6 +6,7 @@ import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/
 import { normalizePhone } from '@/app/lib/phone';
 import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 import { sendWhatsAppText } from '@/app/lib/whatsapp';
+import { pushBookingToCrm } from '@/app/lib/crm/pushBooking';
 
 export async function POST(
   req: NextRequest,
@@ -66,7 +67,7 @@ export async function POST(
 
     const bookingId = 'DR-' + Date.now();
 
-    await Booking.create({
+    const booking = await Booking.create({
       bookingId,
       name,
       phone: formattedPhone,
@@ -80,6 +81,11 @@ export async function POST(
       notes,
       isReturnVisit: previousBookings > 0,
     });
+
+    // CRM Connector push — non-blocking, no-ops silently if no CRM
+    // connector is configured yet. See app/api/booking/route.ts for the
+    // same pattern.
+    pushBookingToCrm(booking).catch(() => {});
 
     // Increment analytics.leads
     const analyticsUpdate: any = { $inc: { 'analytics.leads': 1 } };

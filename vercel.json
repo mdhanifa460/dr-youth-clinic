@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/dispatch-notifications",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/crm-sync",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
