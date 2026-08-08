@@ -134,7 +134,12 @@ export async function PATCH(req: NextRequest) {
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {
-    const { leadId, answers, recommendations, primaryConcern, email } = await req.json();
+    const {
+      leadId, answers, recommendations, primaryConcern, email,
+      // Pre-Consultation Assessment (Hair/Skin/Body) — additive. Never
+      // includes a treatment name; see app/lib/assessmentTypeScoring.ts.
+      assessmentType, assessmentResult,
+    } = await req.json();
     if (!leadId || typeof leadId !== 'string') {
       return NextResponse.json({ success: false, message: 'leadId is required' }, { status: 400 });
     }
@@ -145,17 +150,18 @@ export async function PATCH(req: NextRequest) {
     await connectDB();
 
     // Two distinct callers share this endpoint: the Results screen attaches
-    // the completed intake (answers/recommendations/primaryConcern) once,
-    // and the separate "email me a copy" box may PATCH again later with
-    // only { leadId, email }. Only touch the intake fields when this call
-    // actually carries them, so a later email-only PATCH can't wipe out
-    // intake data that was already saved by the first call.
+    // the completed intake (answers/recommendations/primaryConcern, or the
+    // new assessmentType/assessmentResult) once, and the separate "email me
+    // a copy" box may PATCH again later with only { leadId, email }. Only
+    // touch the intake fields when this call actually carries them, so a
+    // later email-only PATCH can't wipe out intake data already saved.
     const hasIntakeData = answers !== undefined || recommendations !== undefined || primaryConcern !== undefined;
+    const hasAssessmentResult = assessmentType !== undefined || assessmentResult !== undefined;
     const recs = Array.isArray(recommendations) ? recommendations : [];
     const concern = primaryConcern || answers?.concern || '';
 
-    const existingLead = hasIntakeData ? null : await (Lead as any).findById(leadId).lean();
-    if (!hasIntakeData && !existingLead) {
+    const existingLead = (hasIntakeData || hasAssessmentResult) ? null : await (Lead as any).findById(leadId).lean();
+    if (!hasIntakeData && !hasAssessmentResult && !existingLead) {
       return NextResponse.json({ success: false, message: 'Lead not found' }, { status: 404 });
     }
     const emailConcern = hasIntakeData ? concern : (existingLead?.primaryConcern || '');
@@ -163,6 +169,10 @@ export async function PATCH(req: NextRequest) {
 
     let emailSent = false;
     if (email) {
+      // "Email me a copy" only exists on the legacy treatment-recommendation
+      // results screen — the new Pre-Consultation Assessment results screen
+      // never offers it, so emailRecs is always [] for an assessmentResult-
+      // only PATCH and this is effectively a no-op for that flow.
       emailSent = await sendPlanEmail(email.trim(), emailConcern, emailRecs);
     }
 
@@ -172,6 +182,16 @@ export async function PATCH(req: NextRequest) {
         $set: {
           ...(email ? { email: email.trim(), emailSent } : {}),
           ...(hasIntakeData ? { primaryConcern: concern, answers: answers || {}, recommendations: recs } : {}),
+          ...(hasAssessmentResult ? {
+            assessmentType: assessmentType || '',
+            assessmentResult: assessmentResult || {},
+            answers: answers || {},
+            // Top category label (e.g. "Hair Fall Impact") — kept in the
+            // same primaryConcern field the legacy flow uses, purely so
+            // existing lead-list views show something meaningful; never a
+            // treatment name, since assessmentResult never contains one.
+            primaryConcern: [...(assessmentResult?.categoryScores || [])].sort((x: any, y: any) => y.percent - x.percent)[0]?.label || '',
+          } : {}),
         },
       },
       { returnDocument: 'after', runValidators: true }
@@ -185,6 +205,18 @@ export async function PATCH(req: NextRequest) {
       getClinicNotifyNumber(lead.preferredClinic || lead.clinicLocation).then((to) => {
         notifyClinicWhatsApp(
           `✅ Clinical Intake Completed\n\nName: ${lead.name || 'Unknown'}\nPhone: ${lead.phone || 'Unknown'}\nConcern: ${concern || 'Unknown'}\nPossible discussion topics: ${recNames || 'N/A'}`,
+          to
+        );
+      }).catch(() => {});
+    }
+
+    // Deliberately no treatment name in this alert — matches the same
+    // boundary enforced in the API response and result screen.
+    if (hasAssessmentResult) {
+      const ar = assessmentResult || {};
+      getClinicNotifyNumber(lead.preferredClinic || lead.clinicLocation).then((to) => {
+        notifyClinicWhatsApp(
+          `✅ ${(assessmentType || 'Pre-consultation').toString().replace(/^\w/, (c: string) => c.toUpperCase())} Assessment Completed\n\nName: ${lead.name || 'Unknown'}\nPhone: ${lead.phone || 'Unknown'}\nOverall Concern: ${ar.overallConcern ?? 'N/A'}% (${ar.severity || 'N/A'})\nRisk Level: ${ar.riskLevel || 'N/A'}`,
           to
         );
       }).catch(() => {});

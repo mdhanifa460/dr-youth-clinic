@@ -3,12 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
-import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData } from "@/app/lib/quizDefaults";
-import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import { scoreAssessment, type AssessmentResult } from "@/app/lib/assessmentTypeScoring";
+import type { AssessmentTypeConfig } from "@/app/lib/assessmentTypeDefaults";
 import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, hasNextQuestion as computeHasNextQuestion, postAssessmentEvent, getOrCreateSessionId } from "@/app/lib/assessmentFlow";
+import type { AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import { locations } from "@/app/data/locations";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
-import UnifiedJourneyResults, { type PatientReport } from "@/app/components/assessment/UnifiedJourneyResults";
+import TypeSelectScreen, { type AssessmentTypeOption } from "@/app/components/assessment/TypeSelectScreen";
+import AssessmentResults from "@/app/components/assessment/AssessmentResults";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -92,7 +94,7 @@ function LeadCaptureScreen({
       <div className="text-center mb-8">
         <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
           <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] inline-block" />
-          Step 1 of 2 — Your Details
+          Your Details
         </span>
         <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
           Let's get your consultation ready
@@ -160,10 +162,10 @@ function AnalysingScreen() {
       </div>
       <div>
         <p className="text-lg font-bold text-[#0B2560] mb-1">Analysing your answers…</p>
-        <p className="text-sm text-gray-500">Matching against 50,000+ patient outcomes</p>
+        <p className="text-sm text-gray-500">Preparing your assessment</p>
       </div>
       <div className="flex gap-3 mt-2 flex-wrap justify-center">
-        {["Matching treatments", "Comparing protocols", "Preparing your plan"].map((label, i) => (
+        {["Scoring your responses", "Checking your history", "Preparing your report"].map((label, i) => (
           <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500">
             <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
             {label}
@@ -183,12 +185,11 @@ type LeadCaptureStatus = "idle" | "sending" | "error";
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-// Which concern tag(s) the visitor's answers have collected so far — drives
-// the Dynamic Question Engine's per-concern filtering (Question.conditionTags).
-// Reuses the exact same tag/weight collection philosophy scoreRecommendations
-// already uses, rather than special-casing "the concern question" by id, so
-// any question's tags can steer which follow-ups appear, consistent with how
-// scoring already works.
+// Pre-Consultation Assessment (Hair / Skin / Body) — architecture review
+// (Enterprise Connector-style artifact, "Pre-Consultation Assessment
+// Redesign"). Flow: Intro -> body-area Select -> Lead Capture -> Predefined
+// Questions -> deterministic scoreAssessment() -> Results (Concern % + Risk
+// % + severity + contributing factors, never a treatment name) -> Book.
 export default function SkinQuizPage() {
   // Read directly from window.location instead of next/navigation's
   // useSearchParams() — that hook requires a <Suspense> boundary during
@@ -208,9 +209,12 @@ export default function SkinQuizPage() {
     setSessionId(getOrCreateSessionId());
   }, []);
 
-  const [quizConfig, setQuizConfig] = useState<AssessmentConfigData>(DEFAULT_QUIZ_CONFIG);
+  const [typeOptions, setTypeOptions] = useState<AssessmentTypeOption[]>([]);
+  const [assessmentType, setAssessmentType] = useState<string | null>(null);
+  const [typeConfig, setTypeConfig] = useState<AssessmentTypeConfig | null>(null);
   const [configReady, setConfigReady] = useState(false);
-  const [screen, setScreen] = useState<"intro" | "lead" | "question" | "analysing" | "results">("intro");
+  const [typeConfigLoading, setTypeConfigLoading] = useState(false);
+  const [screen, setScreen] = useState<"intro" | "type" | "lead" | "question" | "analysing" | "results">("intro");
   const [visible, setVisible] = useState(true);
   const [path, setPath] = useState<string[]>([]); // visited question ids, in order
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
@@ -218,31 +222,28 @@ export default function SkinQuizPage() {
   const [leadForm, setLeadForm] = useState<LeadCaptureForm>({ name: "", phone: "", preferredClinic: "" });
   const [leadCaptureStatus, setLeadCaptureStatus] = useState<LeadCaptureStatus>("idle");
   const [leadId, setLeadId] = useState<string | null>(null);
-  const [patientReport, setPatientReport] = useState<PatientReport | null>(null);
+  const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
+  const [aiExplanation, setAiExplanation] = useState<string>("");
   const startedTracked = useRef(false);
   const completedTracked = useRef(false);
   const resultsPatched = useRef(false);
 
   useEffect(() => {
-    fetch("/api/quiz-config")
+    fetch("/api/assessment-config")
       .then((r) => r.json())
-      .then((d) => { if (d.success && d.data) setQuizConfig(d.data); })
+      .then((d) => { if (d.success && Array.isArray(d.data)) setTypeOptions(d.data); })
       .catch(() => {})
       .finally(() => setConfigReady(true));
   }, []);
 
-  const trackEvent = useCallback((event: "started" | "completed", primaryConcern?: string) => {
-    postAssessmentEvent({ event, primaryConcern: primaryConcern || "", campaign, qrSource, clinicLocation, channel, sessionId });
-  }, [campaign, qrSource, clinicLocation, channel, sessionId]);
+  const trackEvent = useCallback((event: "started" | "completed", opts?: { severity?: string }) => {
+    postAssessmentEvent({
+      event, campaign, qrSource, clinicLocation, channel, sessionId,
+      assessmentType: assessmentType || "", severity: opts?.severity || "",
+    });
+  }, [campaign, qrSource, clinicLocation, channel, sessionId, assessmentType]);
 
-  // The "Enable 'Anything else for your doctor?' Note" Settings toggle only
-  // controls the specific quick-add "notes" question (id "notes"), not every
-  // free-text question — a doctor who adds a second, unrelated text question
-  // shouldn't have it silently hidden by a toggle labeled for a different one.
-  // conditionTags filtering (Dynamic Question Engine): a question with tags
-  // only shows once the visitor's answers so far have collected at least one
-  // matching tag — empty conditionTags = universal, always shown.
-  const orderedQuestions = getOrderedQuestions(quizConfig.questions, answers, quizConfig.settings);
+  const orderedQuestions = typeConfig ? getOrderedQuestions(typeConfig.questions, answers) : [];
   const currentQuestionId = path[path.length - 1];
   const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
   const currentIndex = orderedQuestions.findIndex((q) => q.id === currentQuestionId);
@@ -251,7 +252,7 @@ export default function SkinQuizPage() {
     setVisible(false);
     setTimeout(() => {
       fn();
-      // Every screen change (intro→lead, lead→question, Back/Next between
+      // Every screen change (intro→type→lead→question, Back/Next between
       // questions, →results) goes through here — without resetting scroll,
       // a screen renders wherever the user happened to have scrolled to on
       // the PREVIOUS (often taller) screen, so a shorter new screen can
@@ -263,13 +264,28 @@ export default function SkinQuizPage() {
     }, 200);
   };
 
-  // Welcome → Lead capture (Step 2) — not straight into questions. Track
-  // "started" right here, not on a successful lead POST — otherwise a
-  // visitor who clicks Start but abandons at the lead-capture screen never
-  // counts as a drop-off, silently inflating the funnel's conversion rate.
+  // Welcome → body-area Select, not straight into Lead capture.
   const startAssessment = () => {
-    if (!startedTracked.current) { startedTracked.current = true; trackEvent("started"); }
-    transition(() => setScreen("lead"));
+    transition(() => setScreen("type"));
+  };
+
+  const pickType = async (key: string) => {
+    setTypeConfigLoading(true);
+    setAssessmentType(key);
+    try {
+      const res = await fetch(`/api/assessment-config?type=${key}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTypeConfig(data.data);
+        // Track "started" only once a real assessment type is committed to —
+        // matches the existing convention of tracking at the first
+        // irreversible step, not on the earlier marketing screens.
+        if (!startedTracked.current) { startedTracked.current = true; trackEvent("started"); }
+        transition(() => setScreen("lead"));
+      }
+    } finally {
+      setTypeConfigLoading(false);
+    }
   };
 
   const handleLeadCaptureSubmit = async (e: React.FormEvent) => {
@@ -305,10 +321,11 @@ export default function SkinQuizPage() {
   };
 
   useEffect(() => {
-    if (screen !== "analysing") return;
+    if (screen !== "analysing" || !typeConfig) return;
     const timer = setTimeout(() => {
-      const primary = getPrimaryConcernTag(quizConfig.questions, answers);
-      if (!completedTracked.current) { completedTracked.current = true; trackEvent("completed", primary); }
+      const result = scoreAssessment(typeConfig, answers);
+      setAssessmentResult(result);
+      if (!completedTracked.current) { completedTracked.current = true; trackEvent("completed", { severity: result.severity }); }
       transition(() => setScreen("results"));
     }, 2200);
     return () => clearTimeout(timer);
@@ -332,7 +349,7 @@ export default function SkinQuizPage() {
 
   const handleNext = () => {
     if (!currentQuestion) return;
-    postAssessmentEvent({ event: "step_completed", stepId: currentQuestion.id, sessionId });
+    postAssessmentEvent({ event: "step_completed", stepId: currentQuestion.id, sessionId, assessmentType: assessmentType || "" });
     const nextId = resolveNextQuestionId(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
     if (nextId) {
       transition(() => setPath((p) => [...p, nextId]));
@@ -345,38 +362,27 @@ export default function SkinQuizPage() {
     if (path.length > 1) {
       transition(() => setPath((p) => p.slice(0, -1)));
     } else {
-      transition(() => setScreen("intro"));
+      transition(() => setScreen("type"));
     }
   };
 
-  const recommendations = scoreRecommendations(
-    quizConfig.questions,
-    answers,
-    quizConfig.treatmentMap,
-    { maxRecommendations: quizConfig.settings?.maxRecommendations, confidenceThreshold: quizConfig.settings?.confidenceThreshold }
-  );
-  const primaryConcernTag = getPrimaryConcernTag(quizConfig.questions, answers);
-  const primaryConcernLabel = quizConfig.treatmentMap.find((e) => e.concernTag === primaryConcernTag)?.concernLabel || primaryConcernTag;
-
   // The lead already exists (captured at Step 2) by the time the patient
   // reaches Results — this silently attaches the completed answers/
-  // recommendations to that same lead, rather than gating the report behind
-  // a second contact form. Guarded by a ref so it only fires once per visit.
+  // assessmentResult to that same lead, then asks AI to explain the
+  // (already-final) deterministic result in plain language — same
+  // sequencing as the legacy patient-report flow. Guarded by a ref so it
+  // only fires once per visit.
   useEffect(() => {
-    if (screen !== "results" || !leadId || resultsPatched.current) return;
+    if (screen !== "results" || !leadId || !assessmentResult || resultsPatched.current) return;
     resultsPatched.current = true;
     fetch("/api/leads", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId, answers, recommendations, primaryConcern: primaryConcernTag }),
+      body: JSON.stringify({ leadId, answers, assessmentType, assessmentResult }),
     })
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`PATCH failed (${res.status})`))))
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
-        // Only generate the patient report once the intake data actually
-        // saved — otherwise /api/patient-report re-fetches the lead and
-        // builds a report from stale/empty answers with no retry, since
-        // resultsPatched is already latched true by this point.
-        if (!data.success) throw new Error(data.message || "PATCH failed");
+        if (!data.success) throw new Error();
         return fetch("/api/patient-report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -384,10 +390,10 @@ export default function SkinQuizPage() {
         });
       })
       .then((res) => res.json())
-      .then((data) => { if (data.success) setPatientReport(data.data); })
+      .then((data) => { if (data.success && data.data?.aiExplanation) setAiExplanation(data.data.aiExplanation); })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, leadId]);
+  }, [screen, leadId, assessmentResult]);
 
   const handleRetake = () => {
     setAnswers({});
@@ -395,7 +401,10 @@ export default function SkinQuizPage() {
     setLeadForm({ name: "", phone: "", preferredClinic: "" });
     setLeadCaptureStatus("idle");
     setLeadId(null);
-    setPatientReport(null);
+    setAssessmentResult(null);
+    setAiExplanation("");
+    setAssessmentType(null);
+    setTypeConfig(null);
     startedTracked.current = false;
     completedTracked.current = false;
     resultsPatched.current = false;
@@ -410,12 +419,10 @@ export default function SkinQuizPage() {
   // more if there's a next question to go to from here.
   const hasNextQuestion = computeHasNextQuestion(currentQuestion, currentAnswer, orderedQuestions, currentIndex, path);
   const estimatedTotal = Math.max(path.length + (hasNextQuestion ? 1 : 0), path.length, 1);
-  const progressPct = screen === "intro" || screen === "lead" ? 0 : screen !== "question" ? 100 : Math.round((path.length / estimatedTotal) * 100);
-  const stepLabel = screen === "intro" ? "Welcome" : screen === "lead" ? "Your Details" : screen === "question" ? `Question ${path.length} of ${estimatedTotal}` : "Your Report";
+  const progressPct = screen === "intro" || screen === "type" || screen === "lead" ? 0 : screen !== "question" ? 100 : Math.round((path.length / estimatedTotal) * 100);
+  const stepLabel = screen === "intro" ? "Welcome" : screen === "type" ? "Choose Assessment" : screen === "lead" ? "Your Details" : screen === "question" ? `Question ${path.length} of ${estimatedTotal}` : "Your Report";
 
-  const resultSections = quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections;
-
-  if (configReady && quizConfig.settings && quizConfig.settings.enabled === false) {
+  if (configReady && typeOptions.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f6faff] text-center px-6">
         <div>
@@ -429,7 +436,7 @@ export default function SkinQuizPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f6faff] via-white to-[#edf4fc]">
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100/80 shadow-sm">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100/80 shadow-sm print:hidden">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-[#0B2560] hover:text-[#F5A623] transition-colors text-sm font-semibold group">
             <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -459,6 +466,17 @@ export default function SkinQuizPage() {
           </div>
         )}
         {screen === "intro" && configReady && <IntroScreen onStart={startAssessment} clinicLabel={clinicLocation ? slugToLabel(clinicLocation) : ""} />}
+
+        {screen === "type" && (
+          typeConfigLoading ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <div className="w-10 h-10 rounded-full border-4 border-[#0B2560]/20 border-t-[#0B2560] animate-spin" />
+              <p className="text-sm text-gray-500">Loading…</p>
+            </div>
+          ) : (
+            <TypeSelectScreen types={typeOptions} onPick={pickType} />
+          )
+        )}
 
         {screen === "lead" && (
           <LeadCaptureScreen
@@ -513,18 +531,19 @@ export default function SkinQuizPage() {
 
         {screen === "analysing" && <AnalysingScreen />}
 
-        {screen === "results" && (
-          <UnifiedJourneyResults
-            resultSections={resultSections}
-            recommendations={recommendations}
-            doctorMessage={quizConfig.doctorMessage}
-            primaryConcern={primaryConcernLabel}
-            patientReport={patientReport}
-            enableChat={quizConfig.settings?.enableChat !== false}
-            enableEmail={quizConfig.settings?.enableEmail !== false}
+        {screen === "results" && assessmentResult && typeConfig && (
+          <AssessmentResults
+            typeLabel={typeConfig.label}
+            resultHeadline={typeConfig.resultTemplate?.headline || `Your ${typeConfig.label} Assessment`}
+            disclaimer={typeConfig.resultTemplate?.disclaimer || "This assessment provides general guidance and is not a medical diagnosis."}
+            result={assessmentResult}
+            ctaRules={typeConfig.ctaRules}
+            aiExplanation={aiExplanation}
             leadId={leadId}
+            location={leadForm.preferredClinic}
+            name={leadForm.name}
+            phone={leadForm.phone}
             onRetake={handleRetake}
-            sessionId={sessionId}
           />
         )}
       </div>

@@ -3,6 +3,7 @@ import { connectDB } from "@/app/lib/mongodb";
 import { requirePermission } from "@/app/lib/adminAuth";
 import { Lead } from "@/app/models/Lead";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
+import AssessmentConfig, { DEFAULT_ASSESSMENT_TYPES } from "@/app/models/AssessmentConfig";
 import { migrateLegacyQuizConfig, backfillClinicalFields } from "@/app/lib/quizMigration";
 import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
@@ -37,16 +38,55 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const [lead, configDoc] = await Promise.all([
-      (Lead as any).findById(leadId).lean(),
-      (QuizConfig as any).findOne({}).lean(),
-    ]);
+    const lead = await (Lead as any).findById(leadId).lean();
     if (!lead) {
       return NextResponse.json({ success: false, message: "Lead not found" }, { status: 404 });
     }
 
-    const config = configDoc ? backfillClinicalFields(migrateLegacyQuizConfig(configDoc)) : DEFAULT_QUIZ_CONFIG;
-    const questionById = (id: string) => config.questions.find((q: any) => q.id === id);
+    // Pre-Consultation Assessment leads (Hair/Skin/Body redesign) use an
+    // entirely different question set/config collection — look up the
+    // matching type's questions there instead of the legacy QuizConfig,
+    // whose question ids wouldn't match this lead's answers at all.
+    const isNewAssessment = !!lead.assessmentType;
+    let questionById: (id: string) => any;
+    let treatmentContext: string;
+
+    if (isNewAssessment) {
+      const acDoc = await (AssessmentConfig as any).findOne({}).lean();
+      const types = acDoc?.assessmentTypes?.length ? acDoc.assessmentTypes : DEFAULT_ASSESSMENT_TYPES;
+      const typeConfig = types.find((t: any) => t.key === lead.assessmentType);
+      questionById = (id: string) => typeConfig?.questions?.find((q: any) => q.id === id);
+      const ar = lead.assessmentResult || {};
+      treatmentContext = [
+        `Overall Concern: ${ar.overallConcern ?? "N/A"}% (${ar.severity || "N/A"})`,
+        `Risk Level: ${ar.riskScore ?? "N/A"}% (${ar.riskLevel || "N/A"})`,
+        Array.isArray(ar.categoryScores) && ar.categoryScores.length
+          ? `Category breakdown: ${ar.categoryScores.map((c: any) => `${c.label} ${c.percent}%`).join(", ")}` : "",
+        Array.isArray(ar.contributingFactors) && ar.contributingFactors.length
+          ? `Possible contributing factors: ${ar.contributingFactors.map((f: any) => f.label).join(", ")}` : "",
+      ].filter(Boolean).join("\n");
+    } else {
+      const configDoc = await (QuizConfig as any).findOne({}).lean();
+      const config = configDoc ? backfillClinicalFields(migrateLegacyQuizConfig(configDoc)) : DEFAULT_QUIZ_CONFIG;
+      questionById = (id: string) => config.questions.find((q: any) => q.id === id);
+
+      const recs: any[] = Array.isArray(lead.recommendations) ? lead.recommendations : [];
+      treatmentContext = recs
+        .map((r: any) => {
+          if (typeof r === "string") return `- ${r}`;
+          const bits = [
+            r.name,
+            r.clinicalIndicators?.length ? `Indicators: ${r.clinicalIndicators.join(", ")}` : "",
+            r.possibleCauses?.length ? `Possible causes to explore: ${r.possibleCauses.join(", ")}` : "",
+            r.suggestedEvaluation?.length ? `Suggested evaluation: ${r.suggestedEvaluation.join(", ")}` : "",
+            r.contraindications?.length ? `Contraindications: ${r.contraindications.join(", ")}` : "",
+            r.doctorNotes ? `Doctor note: ${r.doctorNotes}` : "",
+          ].filter(Boolean);
+          return `- ${bits.join(" | ")}`;
+        })
+        .join("\n");
+    }
+
     const answerLabel = (q: any, raw: any): string => {
       if (raw === undefined || raw === null || raw === "") return "";
       if (Array.isArray(raw)) return raw.map((id) => q?.answers.find((a: any) => a.id === id)?.title || id).join(", ");
@@ -64,22 +104,6 @@ export async function POST(req: NextRequest) {
       .filter(Boolean)
       .join("\n");
 
-    const recs: any[] = Array.isArray(lead.recommendations) ? lead.recommendations : [];
-    const treatmentContext = recs
-      .map((r: any) => {
-        if (typeof r === "string") return `- ${r}`;
-        const bits = [
-          r.name,
-          r.clinicalIndicators?.length ? `Indicators: ${r.clinicalIndicators.join(", ")}` : "",
-          r.possibleCauses?.length ? `Possible causes to explore: ${r.possibleCauses.join(", ")}` : "",
-          r.suggestedEvaluation?.length ? `Suggested evaluation: ${r.suggestedEvaluation.join(", ")}` : "",
-          r.contraindications?.length ? `Contraindications: ${r.contraindications.join(", ")}` : "",
-          r.doctorNotes ? `Doctor note: ${r.doctorNotes}` : "",
-        ].filter(Boolean);
-        return `- ${bits.join(" | ")}`;
-      })
-      .join("\n");
-
     const prompt = `${CLINICAL_AI_GUARDRAILS}
 
 You are preparing a pre-consultation summary for a doctor at DR Youth Clinic. Below is one patient's clinical intake. Organize and synthesize ONLY what is given below into a concise, skimmable note — never invent a fact, symptom, or history detail not present here.
@@ -90,8 +114,8 @@ Primary concern: ${lead.primaryConcern || "not specified"}
 Full intake answers (question: answer):
 ${answerLines || "No answers recorded."}
 
-Possible treatment categories already matched by the clinic's intake engine, with doctor-authored clinical context:
-${treatmentContext || "No treatment categories matched yet."}
+${isNewAssessment ? "Deterministic pre-consultation assessment result (already computed — do not recompute or contradict):" : "Possible treatment categories already matched by the clinic's intake engine, with doctor-authored clinical context:"}
+${treatmentContext || "No data available yet."}
 
 Write the summary in exactly this structure, short bullet points under each heading (write "None noted" if a heading has nothing relevant — never omit a heading):
 

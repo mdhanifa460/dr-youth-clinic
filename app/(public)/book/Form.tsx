@@ -69,6 +69,14 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const service = params.get('service') || '';
+    // Pre-Consultation Assessment handoff (Hair/Skin/Body redesign) — a
+    // concern *label* (e.g. "Hair Fall Impact"), never a treatment name,
+    // since none exists at this point in the journey. See
+    // AssessmentResults.tsx's handleCta and the architecture review §11.
+    const concernLabel = params.get('concern') || '';
+    const assessmentTypeParam = params.get('assessmentType') || '';
+    const overallConcern = params.get('overallConcern') || '';
+    const severity = params.get('severity') || '';
     const locationKey = (params.get('location') || '').toLowerCase();
     const name = params.get('name') || '';
     const phone = params.get('phone') || '';
@@ -78,10 +86,17 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       ? locationKey.charAt(0).toUpperCase() + locationKey.slice(1)
       : '';
 
-    if (service || matchedLocation || name || phone) {
+    // Human-readable, editable prefill — lets reception/the doctor see at a
+    // glance that this booking followed a completed assessment, without
+    // ever implying a treatment was recommended.
+    const assessmentConcernText = concernLabel
+      ? `${concernLabel}${assessmentTypeParam ? ` (${assessmentTypeParam.charAt(0).toUpperCase()}${assessmentTypeParam.slice(1)} Assessment` : ''}${overallConcern ? ` · ${overallConcern}% ${severity}` : ''}${assessmentTypeParam ? ')' : ''}`
+      : '';
+
+    if (service || assessmentConcernText || matchedLocation || name || phone) {
       setForm((f) => ({
         ...f,
-        concern: service ? service : f.concern,
+        concern: assessmentConcernText || (service ? service : f.concern),
         location: matchedLocation || f.location,
         name: name ? name : f.name,
         phone: phone ? phone : f.phone,

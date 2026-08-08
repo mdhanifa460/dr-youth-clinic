@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 
   try {
-    const { event, primaryConcern, campaign, qrSource, clinicLocation, channel, goal, stepId, sessionId } = await req.json();
+    const { event, primaryConcern, campaign, qrSource, clinicLocation, channel, goal, stepId, sessionId, assessmentType, severity } = await req.json();
     if (!VALID_EVENTS.has(event)) {
       return NextResponse.json({ success: false, message: 'Invalid event' }, { status: 400 });
     }
@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       goal: goal || '',
       stepId: stepId || '',
       sessionId: sessionId || '',
+      assessmentType: assessmentType || '',
+      severity: severity || '',
     });
 
     return NextResponse.json({ success: true });

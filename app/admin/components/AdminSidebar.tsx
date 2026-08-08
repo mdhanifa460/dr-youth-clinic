@@ -83,7 +83,8 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/intelligence", label: "🧠 AI Intelligence", module: "intelligence" },
       { href: "/admin/seo", label: "🔍 SEO", module: "seo" },
-      { href: "/admin/ai-assessment", label: "✨ Clinical Intake", module: "ai-assessment" },
+      { href: "/admin/assessment-manager", label: "🩺 AI Assessment Manager", module: "ai-assessment" },
+      { href: "/admin/ai-assessment", label: "✨ Clinical Intake (Legacy)", module: "ai-assessment" },
       { href: "/admin/journey", label: "🧭 AI Beauty Journey", module: "journey" },
       { href: "/admin/ai", label: "🤖 AI Management", module: "ai" },
     ],

@@ -4,6 +4,7 @@ import { requirePermission } from "@/app/lib/adminAuth";
 import { AssessmentEvent } from "@/app/models/AssessmentEvent";
 import { Lead } from "@/app/models/Lead";
 import Booking from "@/app/models/Booking";
+import Appointment from "@/app/models/Appointment";
 import { normalizePhone } from "@/app/lib/phone";
 
 export async function GET() {
@@ -15,10 +16,17 @@ export async function GET() {
 
     const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const [events, leads, bookingPhones] = await Promise.all([
-      AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel goal stepId sessionId createdAt").lean() as Promise<any[]>,
-      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern recommendations campaign qrSource clinicLocation channel preferredClinic createdAt").lean() as Promise<any[]>,
+    const [events, leads, bookingPhones, treatmentCompletedPhones] = await Promise.all([
+      AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel goal stepId sessionId assessmentType severity createdAt").lean() as Promise<any[]>,
+      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern recommendations campaign qrSource clinicLocation channel preferredClinic assessmentType assessmentResult createdAt").lean() as Promise<any[]>,
       (Booking as any).distinct("phone"),
+      // Pre-Consultation Assessment → treatment conversion (item 5) — reuses
+      // the existing Appointment.status enum's "treatment_completed" value
+      // rather than a new field/event; a real signal that a patient who
+      // completed the assessment actually received treatment, not just
+      // booked. Matched by phone, same normalization as the booking match
+      // above (no direct FK between Lead and Appointment).
+      (Appointment as any).distinct("patientPhone", { status: "treatment_completed" }),
     ]);
     const started = events.filter((e) => e.event === "started").length;
     const completed = events.filter((e) => e.event === "completed").length;
@@ -176,6 +184,32 @@ export async function GET() {
       .map(([label, count]) => ({ label, count, pct: leads.length ? Math.round((count / leads.length) * 100) : 0 }))
       .sort((a, b) => b.count - a.count);
 
+    // Pre-Consultation Assessment (Hair/Skin/Body redesign) — additive
+    // metrics, computed only from leads/events that carry the new fields;
+    // leads.length above already includes both legacy and new leads, so
+    // these are reported alongside the existing metrics, not replacing them.
+    const newAssessmentLeads = leads.filter((l) => l.assessmentType);
+    const severityCounts: Record<string, number> = {};
+    for (const l of newAssessmentLeads) {
+      const sev = l.assessmentResult?.severity;
+      if (!sev) continue;
+      severityCounts[sev] = (severityCounts[sev] || 0) + 1;
+    }
+    const severityDistribution = Object.entries(severityCounts)
+      .map(([severity, count]) => ({ severity, count, pct: newAssessmentLeads.length ? Math.round((count / newAssessmentLeads.length) * 100) : 0 }))
+      .sort((a, b) => b.count - a.count);
+
+    const treatmentCompletedPhoneSet = new Set((treatmentCompletedPhones as string[]).filter(Boolean).map(normalizePhone));
+    const treatedLeads = newAssessmentLeads.filter((l) => l.phone && treatmentCompletedPhoneSet.has(normalizePhone(l.phone)));
+    const assessmentToTreatmentRate = newAssessmentLeads.length > 0
+      ? Math.round((treatedLeads.length / newAssessmentLeads.length) * 100)
+      : 0;
+
+    const assessmentTypeBreakdown = ["hair", "skin", "body"].map((type) => {
+      const typeLeads = newAssessmentLeads.filter((l) => l.assessmentType === type);
+      return { type, leads: typeLeads.length, bookedCount: typeLeads.filter((l) => l.phone && bookingPhoneSet.has(normalizePhone(l.phone))).length };
+    });
+
     return NextResponse.json({
       success: true,
       data: {
@@ -208,6 +242,11 @@ export async function GET() {
         dropoffByStep,
         medianCompletionSeconds: medianCompletionMs !== null ? Math.round(medianCompletionMs / 1000) : null,
         goalFunnel,
+        // Pre-Consultation Assessment (Hair/Skin/Body redesign) additions.
+        newAssessmentLeads: newAssessmentLeads.length,
+        severityDistribution,
+        assessmentToTreatmentRate,
+        assessmentTypeBreakdown,
       },
     });
   } catch (err: any) {

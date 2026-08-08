@@ -644,6 +644,32 @@ function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates, canFullReview 
         </button>
       </div>
 
+      {/* Pre-Consultation Assessment insights (Hair/Skin/Body redesign) —
+          only present on leads from the new /skin-quiz flow. Read-only
+          display of the deterministic result; doctor-summary generation
+          below already reads these same Lead fields server-side. */}
+      {lead.assessmentType && lead.assessmentResult && (
+        <div className="bg-[#0B2560] text-white rounded-xl p-3.5 space-y-2.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#F5A623]">
+            {lead.assessmentType.charAt(0).toUpperCase() + lead.assessmentType.slice(1)} Assessment Result
+          </p>
+          <div className="flex gap-4 text-xs">
+            <span>Concern: <b>{lead.assessmentResult.overallConcern}%</b> ({lead.assessmentResult.severity})</span>
+            <span>Risk: <b>{lead.assessmentResult.riskScore}%</b> ({lead.assessmentResult.riskLevel})</span>
+          </div>
+          {Array.isArray(lead.assessmentResult.categoryScores) && lead.assessmentResult.categoryScores.length > 0 && (
+            <p className="text-[11px] text-white/70">
+              {lead.assessmentResult.categoryScores.map((c: any) => `${c.label}: ${c.percent}%`).join(' · ')}
+            </p>
+          )}
+          {Array.isArray(lead.assessmentResult.contributingFactors) && lead.assessmentResult.contributingFactors.length > 0 && (
+            <p className="text-[11px] text-white/70">
+              Contributing factors: {lead.assessmentResult.contributingFactors.map((f: any) => f.label).join(', ')}
+            </p>
+          )}
+        </div>
+      )}
+
       {!canFullReview && (
         <p className="text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
           You have view-only access to Clinical Intake — generating, editing, approving, or saving requires full access.
@@ -885,6 +911,37 @@ function AnalyticsTab() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {data.newAssessmentLeads > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <p className="text-sm font-bold text-gray-700 mb-1">Pre-Consultation Assessment (Hair/Skin/Body)</p>
+          <p className="text-xs text-gray-400 mb-3">{data.newAssessmentLeads} leads from the new assessment flow, last {data.rangeDays} days.</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            {stat("Assessment → Treatment", `${data.assessmentToTreatmentRate}%`, "led to a completed treatment")}
+            {(data.assessmentTypeBreakdown || []).map((t: any) => (
+              <div key={t.type} className="bg-gray-50 rounded-2xl p-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 capitalize">{t.type}</p>
+                <p className="text-xl font-extrabold text-[#0B2560]">{t.leads}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{t.bookedCount} booked</p>
+              </div>
+            ))}
+          </div>
+          {data.severityDistribution?.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500">Severity Distribution</p>
+              {data.severityDistribution.map((s: any) => (
+                <div key={s.severity} className="flex items-center gap-3">
+                  <span className="text-xs text-gray-600 w-24 shrink-0">{s.severity}</span>
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#F5A623] rounded-full" style={{ width: `${s.pct}%` }} />
+                  </div>
+                  <span className="text-xs font-semibold text-gray-500 w-16 text-right">{s.count} ({s.pct}%)</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

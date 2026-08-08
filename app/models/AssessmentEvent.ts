@@ -41,6 +41,14 @@ const AssessmentEventSchema = new mongoose.Schema(
     // reached, or pair a "started" with its "completed") without needing
     // any identifying information.
     sessionId: { type: String, default: "" },
+
+    // Pre-Consultation Assessment (Hair/Skin/Body redesign) — additive.
+    // assessmentType distinguishes which of the three funnels a "started"/
+    // "completed" event belongs to; severity is only ever set on
+    // "completed" (deterministic, from assessmentTypeScoring.ts — never
+    // AI-decided). Empty for every legacy skin-quiz/Plan My Journey event.
+    assessmentType: { type: String, default: "" },
+    severity: { type: String, default: "" },
   },
   { timestamps: true }
 );

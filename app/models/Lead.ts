@@ -71,8 +71,32 @@ const LeadSchema = new mongoose.Schema(
     doctorNotes:         { type: String, default: "" },
     finalRecommendation: { type: String, default: "" },
     treatmentPlan:       { type: String, default: "" },
+
+    // Pre-Consultation Assessment (Hair/Skin/Body redesign) — additive,
+    // only populated by the new /skin-quiz flow. Deliberately never a
+    // treatment name/price — that stays in `recommendations` above,
+    // doctor-facing only via Doctor Review Mode, never returned to the
+    // patient. Absent on every lead created before this shipped; every
+    // reader (analytics, admin UI) must treat that as "legacy," not an error.
+    assessmentType: { type: String, enum: ["hair", "skin", "body", ""], default: "" },
+    assessmentResult: {
+      categoryScores:       { type: mongoose.Schema.Types.Mixed, default: [] }, // [{key,label,percent}]
+      overallConcern:       { type: Number, default: null },
+      severity:             { type: String, default: "" },
+      riskScore:            { type: Number, default: null },
+      riskLevel:            { type: String, default: "" },
+      contributingFactors:  { type: mongoose.Schema.Types.Mixed, default: [] }, // [{tag,label,detail}]
+      // AI's only job here — explain in plain language, never re-decide the
+      // score (architecture review §10). Optional: absent if AI isn't
+      // configured or the call fails, which the result screen degrades
+      // gracefully around (deterministic content is already complete
+      // without it).
+      aiExplanation: { type: String, default: "" },
+    },
   },
   { timestamps: true }
 );
+
+LeadSchema.index({ assessmentType: 1, "assessmentResult.severity": 1 });
 
 export const Lead = mongoose.models.Lead || mongoose.model("Lead", LeadSchema);

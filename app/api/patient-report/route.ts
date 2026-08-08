@@ -35,6 +35,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Lead not found" }, { status: 404 });
     }
 
+    // Pre-Consultation Assessment (Hair/Skin/Body redesign) — a completely
+    // different prompt/output shape from the legacy branch below. AI's role
+    // here is strictly to explain the deterministic result in plain
+    // language; it never re-derives severity, never names a treatment
+    // (there IS no treatment data in this payload to draw from), and never
+    // overrides scoreAssessment()'s output — see architecture review §10.
+    if (lead.assessmentType) {
+      const ar = lead.assessmentResult || {};
+      const categoryLines = (Array.isArray(ar.categoryScores) ? ar.categoryScores : [])
+        .map((c: any) => `${c.label}: ${c.percent}%`).join(", ");
+      const factorLines = (Array.isArray(ar.contributingFactors) ? ar.contributingFactors : [])
+        .map((f: any) => f.label).join(", ");
+
+      const prompt = `${CLINICAL_AI_GUARDRAILS}
+
+A patient just completed a ${lead.assessmentType} pre-consultation assessment at DR Youth Clinic.
+
+Deterministic results (already computed — do not change, re-rank, or contradict any of these numbers):
+- Overall Concern Level: ${ar.overallConcern ?? "N/A"}% (${ar.severity || "N/A"})
+- Risk Level: ${ar.riskScore ?? "N/A"}% (${ar.riskLevel || "N/A"})
+- Category breakdown: ${categoryLines || "none"}
+- Possible contributing factors already identified: ${factorLines || "none"}
+
+Write ONE short, warm, plain-language paragraph (3-4 sentences) explaining this result directly to the patient. You must:
+- Restate their Concern Level and Risk Level in your own words, without changing the numbers or severity label
+- Briefly mention the contributing factors already listed, if any — do not invent new ones
+- Explain in one sentence why a specialist consultation can help
+- NEVER name or imply a specific treatment, procedure, package, or price — none has been determined yet, that only happens after a doctor's evaluation
+- NEVER state a diagnosis or guarantee an outcome
+- Return ONLY the paragraph text, no JSON, no headers, no markdown`;
+
+      const explanation = (await generateText(prompt, { maxTokens: 300 })).trim();
+      await (Lead as any).findByIdAndUpdate(leadId, { $set: { "assessmentResult.aiExplanation": explanation } });
+      return NextResponse.json({ success: true, data: { aiExplanation: explanation } });
+    }
+
     const recs: any[] = Array.isArray(lead.recommendations) ? lead.recommendations : [];
     const treatmentContext = recs
       .map((r: any) => (typeof r === "string" ? r : [r.name, r.description].filter(Boolean).join(" — ")))
