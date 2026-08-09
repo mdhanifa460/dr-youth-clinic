@@ -9,8 +9,21 @@ import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, has
 import type { AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import { locations } from "@/app/data/locations";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
+import ScanPanel from "@/app/components/assessment/ScanPanel";
 import TypeSelectScreen, { type AssessmentTypeOption } from "@/app/components/assessment/TypeSelectScreen";
 import AssessmentResults from "@/app/components/assessment/AssessmentResults";
+
+// The question screen's second style — a dark "AI scan" panel beside the
+// genuinely visual/diagnostic questions (what's your main concern, what's
+// your skin type), so it reads as meaningful rather than decorative.
+// Deliberately a short, curated list, not every question — duration/
+// history/lifestyle/free-text questions stay the plain list ScanPanel's
+// own comment describes.
+const SCAN_QUESTIONS: Record<string, { icon: string; label: string }> = {
+  "primary-concern": { icon: "🔍", label: "Mapping your concern" },
+  "skin-type": { icon: "💧", label: "Reading skin type" },
+  "body-goal-type": { icon: "🎯", label: "Mapping your goal" },
+};
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -501,12 +514,26 @@ export default function SkinQuizPage() {
               {currentQuestion.subtitle && <p className="text-gray-500 text-sm md:text-base">{currentQuestion.subtitle}</p>}
             </div>
 
-            <QuestionStep
-              key={currentQuestion.id}
-              question={currentQuestion}
-              value={currentAnswer}
-              onChange={(v) => setAnswers((a) => ({ ...a, [currentQuestion.id]: v }))}
-            />
+            {SCAN_QUESTIONS[currentQuestion.id] ? (
+              <div className="md:grid md:grid-cols-[240px_1fr] md:gap-6 md:items-start">
+                <div className="mb-5 md:mb-0 max-w-[240px] md:max-w-none mx-auto md:mx-0">
+                  <ScanPanel icon={SCAN_QUESTIONS[currentQuestion.id].icon} label={SCAN_QUESTIONS[currentQuestion.id].label} />
+                </div>
+                <QuestionStep
+                  key={currentQuestion.id}
+                  question={currentQuestion}
+                  value={currentAnswer}
+                  onChange={(v) => setAnswers((a) => ({ ...a, [currentQuestion.id]: v }))}
+                />
+              </div>
+            ) : (
+              <QuestionStep
+                key={currentQuestion.id}
+                question={currentQuestion}
+                value={currentAnswer}
+                onChange={(v) => setAnswers((a) => ({ ...a, [currentQuestion.id]: v }))}
+              />
+            )}
 
             <div className="mt-8 flex items-center justify-between">
               <button onClick={handleBack} className="flex items-center gap-2 text-gray-500 hover:text-[#0B2560] transition-colors text-sm font-medium group">
