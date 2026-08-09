@@ -76,17 +76,27 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/leads", label: "🎯 Lead Export", module: "leads" },
       { href: "/admin/doctor-availability", label: "🚫 Dr. Availability", module: "bookings" },
       { href: "/admin/booking-success", label: "🎉 Booking Success Page", module: "booking-success" },
-    ],
-  },
-  {
-    label: "Marketing & AI",
-    items: [
-      { href: "/admin/intelligence", label: "🧠 AI Intelligence", module: "intelligence" },
-      { href: "/admin/seo", label: "🔍 SEO", module: "seo" },
+      // Moved from "Marketing & AI" (architecture review, Aug 2026) — these
+      // are patient-facing clinical intake/assessment tools, not marketing.
       { href: "/admin/assessment-manager", label: "🩺 AI Assessment Manager", module: "ai-assessment" },
       { href: "/admin/ai-assessment", label: "✨ Clinical Intake (Legacy)", module: "ai-assessment" },
       { href: "/admin/journey", label: "🧭 AI Beauty Journey", module: "journey" },
-      { href: "/admin/ai", label: "🤖 AI Management", module: "ai" },
+    ],
+  },
+  {
+    // Replaces "Marketing & AI" (architecture review, Aug 2026) — the old
+    // single "AI Intelligence" page mixed facts (Business/Marketing
+    // Intelligence) with actual AI-generated insight under one label; now
+    // three pages, split by what kind of thing they answer ("what
+    // happened" vs "why / what next"). SEO kept here for now (config
+    // adjacent to Marketing Intelligence's analytics) rather than merged
+    // into it — that merge is a deliberate follow-up, not done in this pass.
+    label: "Intelligence",
+    items: [
+      { href: "/admin/business-intelligence", label: "🏢 Business Intelligence", module: "intelligence" },
+      { href: "/admin/marketing-intelligence", label: "📱 Marketing Intelligence", module: "intelligence" },
+      { href: "/admin/ai-intelligence", label: "🧠 AI Intelligence", module: "intelligence" },
+      { href: "/admin/seo", label: "🔍 SEO", module: "seo" },
     ],
   },
   {
@@ -96,6 +106,8 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/legal", label: "📜 Legal Pages", module: "legal" },
       { href: "/admin/settings", label: "⚙ Settings", module: "settings" },
       { href: "/admin/integrations/crm", label: "🔌 CRM Sync", module: "integrations" },
+      // Moved from "Marketing & AI" — platform/chatbot config, not analytics.
+      { href: "/admin/ai", label: "🤖 AI Management", module: "ai" },
     ],
   },
 ];

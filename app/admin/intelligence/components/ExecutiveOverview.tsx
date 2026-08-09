@@ -186,7 +186,7 @@ function deriveActions(o: Record<string, number>): {
   actions.push({
     title: 'Review top treatment performance',
     detail: 'See which treatments are driving the most revenue and plan promotions accordingly.',
-    href: '/admin/intelligence#treatment',
+    href: '/admin/business-intelligence',
     urgency: 'this-week',
   });
 
