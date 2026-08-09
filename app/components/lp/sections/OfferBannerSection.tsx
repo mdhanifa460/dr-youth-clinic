@@ -74,17 +74,19 @@ const STYLE_CONFIG: Record<AnimStyle, {
 export default function OfferBannerSection({
   data,
   formAnchorId = 'lp-form',
+  consultationFree,
 }: {
   data: OfferBannerData;
   formAnchorId?: string;
+  consultationFree: boolean;
 }) {
   const {
     badge    = '🔥 Limited Time',
-    headline = 'Book Your Free Consultation Today',
+    headline = consultationFree ? 'Book Your Free Consultation Today' : 'Book Your Consultation Today',
     subtext  = 'Only 10 slots remaining this week',
     expiry,
     emiAvailable = true,
-    ctaText  = 'Claim Your Free Slot',
+    ctaText  = consultationFree ? 'Claim Your Free Slot' : 'Claim Your Slot',
     animationStyle = 'minimal',
     slotsLeft,
     totalSlots = 20,

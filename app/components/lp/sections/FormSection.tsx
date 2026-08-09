@@ -33,23 +33,29 @@ interface FormSectionProps {
   // overriding if this section is placed somewhere that isn't paired with
   // the default-anchored CTA/Doctor/Offer sections on the same page.
   formAnchorId?: string;
+  // Drives the "Free Consultation" eyebrow tag below, plus the submitText/
+  // headline defaults — same Settings -> Free Labels switch the rest of the
+  // site respects (app/lib/siteConfig.ts's consultationFree/consultationCta).
+  consultationFree: boolean;
 }
 
 export default function FormSection({
   data,
   fields,
-  submitText = 'Book Free Consultation',
+  submitText,
   successMessage = "Thank you! We'll call you within 2 hours.",
   slug,
   variant = 'A',
   formAnchorId = 'lp-form',
+  consultationFree,
 }: FormSectionProps) {
   const {
-    headline = 'Book Your Free Consultation',
+    headline = consultationFree ? 'Book Your Free Consultation' : 'Book Your Consultation',
     subtext = "Fill in your details and we'll call you within 2 hours.",
     slotsLeft,
     phone,
   } = data;
+  const resolvedSubmitText = submitText || (consultationFree ? 'Book Free Consultation' : 'Book Consultation');
 
   const [form, setForm] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -123,7 +129,7 @@ export default function FormSection({
             <>
               <div className="text-center mb-7">
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F5A623] bg-[#F5A623]/15 px-3 py-1.5 rounded-full mb-4">
-                  <Star size={11} fill="#F5A623" /> Free Consultation
+                  <Star size={11} fill="#F5A623" /> {consultationFree ? 'Free Consultation' : 'Consultation'}
                 </span>
                 <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] leading-tight">{headline}</h2>
                 <p className="text-gray-500 mt-3 text-sm md:text-base">{subtext}</p>
@@ -197,7 +203,7 @@ export default function FormSection({
                       Submitting…
                     </>
                   ) : (
-                    submitText
+                    resolvedSubmitText
                   )}
                 </button>
               </form>

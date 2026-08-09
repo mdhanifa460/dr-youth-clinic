@@ -147,7 +147,7 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
         <LpHeader
           phone={phone}
           whatsapp={whatsapp}
-          ctaText={heroData.ctaPrimary?.text || 'Book Free Slot'}
+          ctaText={heroData.ctaPrimary?.text || (siteConfig.consultationFree ? 'Book Free Slot' : 'Book a Slot')}
           logoUrl={siteConfig.logoUrl}
         />
 
@@ -155,11 +155,12 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
           sections={lp.sections ?? []}
           form={lp.form ?? {
             fields: [],
-            submitText: 'Book Free Consultation',
+            submitText: siteConfig.consultationCta,
             successMessage: "Thank you! We'll call you within 2 hours.",
           }}
           slug={params.slug}
           variant="A"
+          consultationFree={siteConfig.consultationFree}
         />
 
         {layoutEngineMain && layoutEngineMain.length > 0 && (
@@ -171,7 +172,7 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
         <StickyCta
           phone={phone}
           whatsapp={whatsapp}
-          ctaText={heroData.ctaPrimary?.text || 'Book Free Consultation'}
+          ctaText={heroData.ctaPrimary?.text || siteConfig.consultationCta}
         />
 
         <div className="h-16 lg:hidden" />

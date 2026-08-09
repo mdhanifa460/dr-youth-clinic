@@ -20,19 +20,20 @@ export default function LpFooter({ phone, whatsapp, city, branches, logoUrl }: L
       <div className="max-w-5xl mx-auto px-5 py-10">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
 
-          {/* Brand */}
+          {/* Brand — same wide-lockup logo box as LpHeader/Navbar/Footer;
+              the name is baked into the logo image itself, so only the
+              tagline needs its own text line. brightness-0 invert matches
+              the main Footer's treatment for the same dark navy background
+              (the logo's navy wordmark is otherwise unreadable here). */}
           <div className="flex items-center gap-3">
             <Image
               src={logoUrl || "/logo.png"}
               alt="DR Youth Clinic"
-              width={40}
-              height={40}
-              className="rounded-lg object-contain"
+              width={130}
+              height={44}
+              className="object-contain brightness-0 invert"
             />
-            <div>
-              <p className="font-extrabold text-base leading-none">DR Youth Clinic</p>
-              <p className="text-white/50 text-xs mt-0.5">Expert Skin, Hair & Laser Care</p>
-            </div>
+            <p className="text-white/50 text-xs">Expert Skin, Hair & Laser Care</p>
           </div>
 
           {/* Contact row */}

@@ -12,22 +12,28 @@ interface CtaData {
   badges?: string[];
 }
 
-const DEFAULT_BADGES = ['Free Consultation', 'No Hidden Charges', 'Expert Guidance', 'Safe & Effective'];
-
 export default function CtaSection({
   data,
   formAnchorId = 'lp-form',
+  consultationFree,
 }: {
   data: CtaData;
   formAnchorId?: string;
+  consultationFree: boolean;
 }) {
+  const defaultBadges = [
+    consultationFree ? 'Free Consultation' : 'Expert Consultation',
+    'No Hidden Charges', 'Expert Guidance', 'Safe & Effective',
+  ];
   const {
     headline = 'Ready to Regrow Your Confidence?',
-    subtext = 'Book your free consultation today and take the first step toward healthier hair.',
-    ctaPrimary = 'Book Free Consultation',
+    subtext = consultationFree
+      ? 'Book your free consultation today and take the first step toward healthier hair.'
+      : 'Book your consultation today and take the first step toward healthier hair.',
+    ctaPrimary = consultationFree ? 'Book Free Consultation' : 'Book Consultation',
     phone,
     whatsapp,
-    badges = DEFAULT_BADGES,
+    badges = defaultBadges,
   } = data;
 
   return (

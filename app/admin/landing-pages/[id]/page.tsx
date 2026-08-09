@@ -1190,7 +1190,7 @@ function SectionFieldPanel({
                 Close Preview
               </button>
             </div>
-            <OfferBannerSection data={section.data} />
+            <OfferBannerSection data={section.data} consultationFree={true} />
           </div>
         </div>
       )}

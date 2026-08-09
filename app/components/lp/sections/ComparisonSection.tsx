@@ -15,27 +15,29 @@ interface ComparisonData {
   ctaText?: string;
 }
 
-const DEFAULT_ROWS: ComparisonRow[] = [
-  { label: 'Certified Dermatologist',        us: true,  others: false },
-  { label: 'FDA-Approved Equipment',          us: true,  others: false },
-  { label: 'Personalised Treatment Protocol', us: true,  others: false },
-  { label: 'Free Initial Consultation',       us: true,  others: false },
-  { label: 'Post-Treatment Support',          us: true,  others: false },
-  { label: 'Zero-Cost EMI Available',         us: true,  others: false },
-  { label: 'Results Within 4–8 Sessions',     us: true,  others: false },
-];
+function defaultRows(consultationFree: boolean): ComparisonRow[] {
+  return [
+    { label: 'Certified Dermatologist',        us: true,  others: false },
+    { label: 'FDA-Approved Equipment',          us: true,  others: false },
+    { label: 'Personalised Treatment Protocol', us: true,  others: false },
+    { label: consultationFree ? 'Free Initial Consultation' : 'Detailed Initial Consultation', us: true, others: false },
+    { label: 'Post-Treatment Support',          us: true,  others: false },
+    { label: 'Zero-Cost EMI Available',         us: true,  others: false },
+    { label: 'Results Within 4–8 Sessions',     us: true,  others: false },
+  ];
+}
 
-export default function ComparisonSection({ data }: { data: ComparisonData }) {
+export default function ComparisonSection({ data, consultationFree }: { data: ComparisonData; consultationFree: boolean }) {
   const {
     headline    = 'Why DR Youth Clinic?',
     badge       = 'The Smart Choice',
     usLabel     = 'DR Youth Clinic',
     othersLabel = 'Other Clinics',
     rows        = [],
-    ctaText     = 'Book Free Consultation',
+    ctaText     = consultationFree ? 'Book Free Consultation' : 'Book Consultation',
   } = data;
 
-  const rowsToShow = rows.length ? rows : DEFAULT_ROWS;
+  const rowsToShow = rows.length ? rows : defaultRows(consultationFree);
 
   return (
     <section className="bg-[#f6faff] py-14 md:py-20">

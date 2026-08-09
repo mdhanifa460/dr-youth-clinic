@@ -38,22 +38,24 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', 
     >
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
 
-        {/* Logo + name */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Logo — the source image is a wide lockup (logo + "DR Youth
+            Clinic" wordmark baked in, ~3.8:1), matching the box size used
+            in the main Navbar/Footer. A tight square box here used to
+            shrink it to an illegible sliver, which is why a separate
+            "DR Youth Clinic" text label existed next to it — redundant
+            now that the logo itself renders at a readable size.
+            The wordmark is dark navy — same fix as the main Footer
+            (brightness-0 invert) to stay legible on the transparent/
+            unscrolled state's dark hero, reverting to normal color once
+            the header itself goes white on scroll. */}
+        <div className="flex items-center shrink-0">
           <Image
             src={logoUrl || "/logo.png"}
             alt="DR Youth Clinic"
-            width={36}
-            height={36}
-            className="rounded-lg object-contain"
+            width={150}
+            height={48}
+            className={`object-contain transition-all duration-300 ${scrolled ? '' : 'brightness-0 invert'}`}
           />
-          <span
-            className={`hidden sm:inline-block font-extrabold text-sm md:text-base transition-colors duration-300 leading-tight ${
-              scrolled ? 'text-[#0B2560]' : 'text-white'
-            }`}
-          >
-            DR Youth Clinic
-          </span>
         </div>
 
         {/* Right actions */}

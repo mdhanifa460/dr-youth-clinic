@@ -53,7 +53,7 @@ const fadeUp = {
   }),
 };
 
-export default function HeroSection({ data, slug }: { data: HeroData; slug: string }) {
+export default function HeroSection({ data, slug, consultationFree }: { data: HeroData; slug: string; consultationFree: boolean }) {
   const {
     badge = 'Advanced Hair Restoration',
     headline = 'Regrow Stronger, Healthier Hair with',
@@ -70,11 +70,11 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
     yearsExperience = '20+',
     showInlineForm = true,
     concern_options = DEFAULT_CONCERNS,
-    formHeadline = 'Book Your Free Consultation',
+    formHeadline = consultationFree ? 'Book Your Free Consultation' : 'Book Your Consultation',
     formUrgencyText = 'Limited slots this week!',
     successMessage = "✓ We'll call you within 2 hours!",
     showTeamAvatars = false,
-    submitButtonText = 'Book Free Consultation',
+    submitButtonText = consultationFree ? 'Book Free Consultation' : 'Book Consultation',
     callNowText = 'Call Now',
     yearsExperienceLabel = 'Years of Excellence',
     namePlaceholder = 'Full Name *',
@@ -203,7 +203,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                 <Link href={ctaPrimary.href}>
                   <button className="flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-[#F5A623]/30 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto">
                     <CalendarCheck size={18} />
-                    {ctaPrimary.text || 'Book Free Consultation'}
+                    {ctaPrimary.text || submitButtonText}
                   </button>
                 </Link>
               ) : (
@@ -212,7 +212,7 @@ export default function HeroSection({ data, slug }: { data: HeroData; slug: stri
                   className="flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-[#F5A623]/30 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto"
                 >
                   <CalendarCheck size={18} />
-                  {ctaPrimary?.text || 'Book Free Consultation'}
+                  {ctaPrimary?.text || submitButtonText}
                 </button>
               )}
               {phone && (

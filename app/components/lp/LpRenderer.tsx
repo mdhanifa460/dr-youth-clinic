@@ -47,14 +47,20 @@ interface LpRendererProps {
   };
   slug: string;
   variant?: 'A' | 'B';
+  // Drives the default wording of every "Free ..." string across LP
+  // sections (badges, CTA buttons, the form's eyebrow tag) from the same
+  // Settings -> Free Labels switch the rest of the site already respects —
+  // only ever fills in an UNSET default; any text an admin already typed
+  // for a specific LP is left exactly as-is.
+  consultationFree: boolean;
 }
 
-function renderSection(section: LpSection, form: LpRendererProps['form'], slug: string, variant: 'A' | 'B') {
+function renderSection(section: LpSection, form: LpRendererProps['form'], slug: string, variant: 'A' | 'B', consultationFree: boolean) {
   if (!section.visible) return null;
 
   switch (section.type) {
     case 'hero':
-      return <HeroSection key={section.id} data={section.data} slug={slug} />;
+      return <HeroSection key={section.id} data={section.data} slug={slug} consultationFree={consultationFree} />;
     case 'trust-bar':
       return <TrustBarSection key={section.id} data={section.data} />;
     case 'problem':
@@ -78,15 +84,15 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
     case 'location':
       return <LocationSection key={section.id} data={section.data} />;
     case 'offer-banner':
-      return <OfferBannerSection key={section.id} data={section.data} />;
+      return <OfferBannerSection key={section.id} data={section.data} consultationFree={consultationFree} />;
     case 'faq':
       return <FaqSection key={section.id} data={section.data} />;
     case 'comparison':
-      return <ComparisonSection key={section.id} data={section.data} />;
+      return <ComparisonSection key={section.id} data={section.data} consultationFree={consultationFree} />;
     case 'guarantee':
       return <GuaranteeSection key={section.id} data={section.data} />;
     case 'cta':
-      return <CtaSection key={section.id} data={section.data} />;
+      return <CtaSection key={section.id} data={section.data} consultationFree={consultationFree} />;
     case 'video-explainer':
       return <VideoSection key={section.id} data={section.data} />;
     case 'form':
@@ -99,6 +105,7 @@ function renderSection(section: LpSection, form: LpRendererProps['form'], slug: 
           successMessage={form.successMessage}
           slug={slug}
           variant={variant}
+          consultationFree={consultationFree}
         />
       );
     default:
@@ -133,7 +140,7 @@ function groupSections(sections: LpSection[]): SectionGroup[] {
   return groups;
 }
 
-export default function LpRenderer({ sections, form, slug, variant = 'A' }: LpRendererProps) {
+export default function LpRenderer({ sections, form, slug, variant = 'A', consultationFree }: LpRendererProps) {
   const groups = groupSections(sections);
 
   return (
@@ -150,7 +157,7 @@ export default function LpRenderer({ sections, form, slug, variant = 'A' }: LpRe
             />
           );
         }
-        return renderSection(group.section, form, slug, variant);
+        return renderSection(group.section, form, slug, variant, consultationFree);
       })}
     </div>
   );
