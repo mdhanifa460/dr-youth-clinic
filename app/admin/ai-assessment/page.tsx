@@ -4,15 +4,11 @@ import { useEffect, useState } from "react";
 import {
   DEFAULT_QUIZ_CONFIG,
   DEFAULT_QUESTIONS,
-  DEFAULT_TREATMENT_MAP,
   type AssessmentConfigData,
   type AssessmentQuestion,
   type AssessmentAnswer,
   type QuestionType,
-  type TreatmentMapEntry,
-  type TreatmentRecommendation,
 } from "@/app/lib/quizDefaults";
-import { deriveConfidenceLevel } from "@/app/lib/confidenceLevel";
 import { canAccess, type AdminRole } from "@/app/lib/permissions";
 
 // ─── Small reusable inputs ─────────────────────────────────────────────────
@@ -243,159 +239,6 @@ function QuestionCard({
           ) : null}
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Treatment card ──────────────────────────────────────────────────────────
-
-function TreatmentCard({ t, onChange, onRemove }: { t: TreatmentRecommendation; onChange: (t: TreatmentRecommendation) => void; onRemove: () => void }) {
-  const set = (patch: Partial<TreatmentRecommendation>) => onChange({ ...t, ...patch });
-  const listField = (val: string[], onSet: (v: string[]) => void, placeholder: string) => (
-    <Textarea value={val.join("\n")} onChange={(v) => onSet(v.split("\n").map((x) => x.trim()).filter(Boolean))} placeholder={placeholder} rows={2} />
-  );
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-      <div className="flex gap-2 items-center">
-        <input value={t.icon} onChange={(e) => set({ icon: e.target.value })} placeholder="✨"
-          className="w-12 border border-gray-200 rounded-lg px-2 py-2 text-center text-base focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0" />
-        <Input value={t.name} onChange={(v) => set({ name: v })} placeholder="Treatment name" className="flex-1" />
-        <div className="flex items-center gap-1 shrink-0">
-          <input type="number" min={0} max={100} value={t.confidence}
-            onChange={(e) => { const confidence = Number(e.target.value); set({ confidence, confidenceLevel: deriveConfidenceLevel(confidence) }); }}
-            className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span className="text-xs text-gray-400">%</span>
-        </div>
-        <button onClick={onRemove} className="text-red-400 hover:text-red-600 text-xl leading-none shrink-0">×</button>
-      </div>
-      <p className="text-[10px] text-gray-400 -mt-2">
-        Shown to doctor/patient as{" "}
-        <span className={`font-semibold ${t.confidenceLevel === "High" ? "text-green-600" : t.confidenceLevel === "Low" ? "text-gray-500" : "text-amber-600"}`}>
-          {t.confidenceLevel || deriveConfidenceLevel(t.confidence)} Confidence
-        </span>{" "}— never the raw number above.
-      </p>
-      <Textarea value={t.description} onChange={(v) => set({ description: v })} placeholder="Clinical description…" rows={2} />
-      <div className="grid grid-cols-3 gap-2">
-        <Input value={t.sessions} onChange={(v) => set({ sessions: v })} placeholder="Sessions" />
-        <Input value={t.duration} onChange={(v) => set({ duration: v })} placeholder="Duration" />
-        <Input value={t.recovery} onChange={(v) => set({ recovery: v })} placeholder="Recovery" />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Input value={t.price} onChange={(v) => set({ price: v })} placeholder="Price range" />
-        <Input value={t.cta} onChange={(v) => set({ cta: v })} placeholder="CTA button text" />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div><label className="text-[10px] text-gray-400 block mb-0.5">Advantages (one per line)</label>{listField(t.advantages, (v) => set({ advantages: v }), "Fast results\nMinimal downtime")}</div>
-        <div><label className="text-[10px] text-gray-400 block mb-0.5">Disadvantages (one per line)</label>{listField(t.disadvantages, (v) => set({ disadvantages: v }), "Requires maintenance")}</div>
-      </div>
-      <div>
-        <label className="text-[10px] text-gray-400 block mb-0.5">Required tags (eligibility gate — leave blank to always show)</label>
-        <Input value={t.requiredTags.join(", ")} onChange={(v) => set({ requiredTags: v.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) })} placeholder="e.g. urgent" />
-      </div>
-
-      <details className="border-t border-gray-100 pt-3">
-        <summary className="text-xs font-semibold text-[#0B2560] cursor-pointer select-none">
-          🩺 Clinical Intelligence — never diagnose or guarantee outcomes here
-        </summary>
-        <div className="space-y-2 mt-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-gray-400 block mb-0.5">Clinical indicators (patient signs that make this worth discussing — one per line)</label>
-              {listField(t.clinicalIndicators, (v) => set({ clinicalIndicators: v }), "Sudden hair shedding\nFamily history of pattern baldness")}
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-400 block mb-0.5">Possible causes (possibilities to investigate, not a diagnosis — one per line)</label>
-              {listField(t.possibleCauses, (v) => set({ possibleCauses: v }), "Telogen effluvium\nAndrogenetic alopecia")}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-gray-400 block mb-0.5">Suggested evaluation (what the doctor might check — one per line)</label>
-              {listField(t.suggestedEvaluation, (v) => set({ suggestedEvaluation: v }), "Scalp examination\nThyroid/iron panel if indicated")}
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-400 block mb-0.5">Contraindications (when this may not be suitable — one per line)</label>
-              {listField(t.contraindications, (v) => set({ contraindications: v }), "Active scalp infection\nPregnancy")}
-            </div>
-          </div>
-          <div>
-            <label className="text-[10px] text-gray-400 block mb-0.5">Doctor notes (internal guidance shown only in the doctor dashboard)</label>
-            <Textarea value={t.doctorNotes} onChange={(v) => set({ doctorNotes: v })} placeholder="Confirm duration and rule out telogen effluvium before discussing procedural options" rows={2} />
-          </div>
-          <div>
-            <label className="text-[10px] text-gray-400 block mb-0.5">Patient education (plain-language points safe to show a patient — one per line)</label>
-            {listField(t.patientEducation, (v) => set({ patientEducation: v }), "Hair fall can have many causes — your doctor will confirm what's driving yours")}
-          </div>
-        </div>
-      </details>
-    </div>
-  );
-}
-
-function ConcernTreatmentPanel({ entry, aiPrompt, enableAI, onChange }: { entry: TreatmentMapEntry; aiPrompt: string; enableAI: boolean; onChange: (e: TreatmentMapEntry) => void }) {
-  const [generating, setGenerating] = useState(false);
-  const [aiError, setAiError] = useState("");
-
-  const updateTreatment = (i: number, t: TreatmentRecommendation) => onChange({ ...entry, treatments: entry.treatments.map((x, idx) => idx === i ? t : x) });
-  const removeTreatment = (i: number) => onChange({ ...entry, treatments: entry.treatments.filter((_, idx) => idx !== i) });
-  const addTreatment = () => onChange({
-    ...entry,
-    treatments: [...entry.treatments, { id: `${entry.concernTag}-${Date.now()}`, name: "", icon: "✨", description: "", confidence: 80, priority: entry.treatments.length + 1, sessions: "", duration: "", recovery: "", price: "", advantages: [], disadvantages: [], cta: "Book Consultation", requiredTags: [], clinicalIndicators: [], possibleCauses: [], suggestedEvaluation: [], contraindications: [], doctorNotes: "", patientEducation: [], confidenceLevel: "Medium" }],
-  });
-
-  const aiSuggest = async () => {
-    setGenerating(true);
-    setAiError("");
-    try {
-      const res = await fetch("/api/admin/quiz/ai-suggest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ concernLabel: entry.concernLabel || entry.concernTag, customPrompt: aiPrompt }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
-      const treatments: TreatmentRecommendation[] = data.data.map((t: any, i: number) => ({
-        id: `${entry.concernTag}-${i}`, name: t.name, icon: t.icon, description: t.description,
-        confidence: t.confidence, priority: i + 1, sessions: t.sessions, duration: t.duration || "",
-        recovery: t.recovery || "", price: t.price, advantages: t.advantages || [], disadvantages: t.disadvantages || [],
-        cta: t.cta || "Book Consultation", requiredTags: [],
-        clinicalIndicators: t.clinicalIndicators || [], possibleCauses: t.possibleCauses || [],
-        suggestedEvaluation: t.suggestedEvaluation || [], contraindications: t.contraindications || [],
-        doctorNotes: t.doctorNotes || "", patientEducation: t.patientEducation || [],
-        confidenceLevel: t.confidenceLevel || "Medium",
-      }));
-      onChange({ ...entry, treatments });
-    } catch (err: any) {
-      setAiError(err.message || "AI generation failed");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-gray-700 text-sm">
-          {entry.concernLabel || entry.concernTag}
-          <span className="ml-2 text-xs text-gray-400 font-normal">({entry.treatments.length} treatments)</span>
-        </h4>
-        {enableAI ? (
-          <button onClick={aiSuggest} disabled={generating}
-            className="flex items-center gap-1.5 bg-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-purple-700 disabled:opacity-60 transition">
-            {generating ? <>⏳ Generating…</> : <>✨ AI Suggest</>}
-          </button>
-        ) : (
-          <span className="text-xs text-gray-400 italic">AI Suggest is off — enable it in Settings</span>
-        )}
-      </div>
-      {aiError && <p className="text-xs text-red-600 bg-red-50 rounded px-3 py-1.5">{aiError}</p>}
-      <div className="space-y-2">
-        {entry.treatments.map((t, i) => (
-          <TreatmentCard key={t.id} t={t} onChange={(updated) => updateTreatment(i, updated)} onRemove={() => removeTreatment(i)} />
-        ))}
-      </div>
-      {entry.treatments.length < 5 && <button onClick={addTreatment} className="text-sm text-blue-600 hover:text-blue-800 font-medium">+ Add treatment</button>}
     </div>
   );
 }
@@ -838,12 +681,6 @@ function LeadRow({
               })}
             </div>
           </div>
-          {Array.isArray(lead.recommendations) && lead.recommendations.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-gray-500 mb-1.5">Possible Treatment Categories</p>
-              <p className="text-xs text-gray-600">{lead.recommendations.map((r: any) => (typeof r === "string" ? r : r?.name)).filter(Boolean).join(", ")}</p>
-            </div>
-          )}
           <DoctorReviewPanel lead={lead} onUpdate={onUpdate} doctorNoteTemplates={doctorNoteTemplates} canFullReview={canFullReview} />
         </div>
       )}
@@ -892,8 +729,6 @@ function AnalyticsTab() {
         {stat("Consultation Clicks", data.consultationBookedClicks ?? 0, "clicked \"Book Consultation\"")}
         {stat("Median Time to Complete", formatDuration(data.medianCompletionSeconds ?? null))}
         {stat("Most Common Concern", data.mostCommonConcern || "—")}
-        {stat("Most Recommended", data.mostRecommendedTreatment || "—")}
-        {stat("Most Accepted", data.mostAcceptedTreatment || "—")}
       </div>
 
       {data.goalFunnel?.length > 0 && (
@@ -916,7 +751,7 @@ function AnalyticsTab() {
 
       {data.newAssessmentLeads > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <p className="text-sm font-bold text-gray-700 mb-1">Pre-Consultation Assessment (Hair/Skin/Body)</p>
+          <p className="text-sm font-bold text-gray-700 mb-1">Pre-Consultation Assessment (Hair/Skin/Body + Plan My Journey)</p>
           <p className="text-xs text-gray-400 mb-3">{data.newAssessmentLeads} leads from the new assessment flow, last {data.rangeDays} days.</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             {stat("Assessment → Treatment", `${data.assessmentToTreatmentRate}%`, "led to a completed treatment")}
@@ -1194,8 +1029,7 @@ export default function AiAssessmentAdminPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"questions" | "treatments" | "leads" | "analytics" | "qr" | "settings">("questions");
-  const [openConcern, setOpenConcern] = useState<string | null>(null);
+  const [tab, setTab] = useState<"questions" | "leads" | "analytics" | "qr" | "settings">("questions");
   const [myRole, setMyRole] = useState<AdminRole | null>(null);
 
   useEffect(() => {
@@ -1313,11 +1147,11 @@ export default function AiAssessmentAdminPage() {
     const toAdd = DEFAULT_QUESTIONS.filter((q) => q.conditionTags?.includes("weight-loss") && !config.questions.some((x) => x.id === q.id));
     const maxOrder = updatedQuestions.reduce((m, q) => Math.max(m, q.order), 0);
     const withOrder = toAdd.map((q, i) => ({ ...q, order: maxOrder + i + 1 }));
-    const wlTreatmentEntry = DEFAULT_TREATMENT_MAP.find((e) => e.concernTag === "weight-loss");
-    updateConfig({
-      questions: [...updatedQuestions, ...withOrder],
-      treatmentMap: wlTreatmentEntry ? [...config.treatmentMap, wlTreatmentEntry] : config.treatmentMap,
-    });
+    // updateConfig's own concern-tag reconciliation (below) picks up the new
+    // "weight-loss" answer automatically and adds its treatmentMap entry
+    // (concernTag/concernLabel only) — no need to push real treatment
+    // content here now that Treatment Mapping is no longer editable/shown.
+    updateConfig({ questions: [...updatedQuestions, ...withOrder] });
   };
 
   const updateQuestion = (id: string, q: AssessmentQuestion) => updateConfig({ questions: config.questions.map((x) => x.id === id ? q : x) });
@@ -1343,11 +1177,6 @@ export default function AiAssessmentAdminPage() {
     updateConfig({ resultSections: ordered.map((s, i) => ({ ...s, order: i + 1 })) });
   };
 
-  const updateTreatmentMap = (concernTag: string, entry: TreatmentMapEntry) => {
-    setConfig((prev) => ({ ...prev, treatmentMap: prev.treatmentMap.map((e) => e.concernTag === concernTag ? entry : e) }));
-    setSaved(false);
-  };
-
   if (loading) return <div className="text-center py-20 text-gray-400">Loading Clinical Intake…</div>;
 
   const orderedQuestions = [...config.questions].sort((a, b) => a.order - b.order);
@@ -1371,7 +1200,7 @@ export default function AiAssessmentAdminPage() {
 
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit flex-wrap">
         {([
-          ["questions", "📋 Questions"], ["treatments", "💊 Treatment Mapping"],
+          ["questions", "📋 Questions"],
           ["leads", "🧑‍🤝‍🧑 Leads"],
           ["analytics", "📊 Analytics"], ["qr", "🔗 QR Generator"], ["settings", "⚙ Settings"],
         ] as const).map(([t, label]) => (
@@ -1406,52 +1235,6 @@ export default function AiAssessmentAdminPage() {
         </div>
       )}
 
-      {tab === "treatments" && (
-        <div className="space-y-4">
-          <div className="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3">
-            <p className="text-sm text-gray-500">
-              <strong>💡 AI Suggest</strong> — generates 3 evidence-based treatments per concern using the AI Prompt configured in Settings. Doctor reviews and edits before saving.
-            </p>
-          </div>
-          {config.treatmentMap.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">
-              No concerns tagged yet. Go to Questions and tag an answer (e.g. "hair") with weight ≥ 50 — it'll appear here automatically.
-            </div>
-          ) : (
-            config.treatmentMap.map((entry) => {
-              // Knowledge Base completeness — how many of this concern's
-              // treatments have real doctor-authored clinical content
-              // (indicators/causes/evaluation) vs. still sitting at the
-              // empty Phase 1 placeholder. A quick signal for which concerns
-              // still need a doctor's pass before they're consultation-ready.
-              const authored = entry.treatments.filter((t) => t.clinicalIndicators.length > 0 || t.possibleCauses.length > 0 || t.suggestedEvaluation.length > 0).length;
-              return (
-              <div key={entry.concernTag} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <button onClick={() => setOpenConcern(openConcern === entry.concernTag ? null : entry.concernTag)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition">
-                  <div>
-                    <span className="font-semibold text-gray-800">{entry.concernLabel || entry.concernTag}</span>
-                    <span className="ml-3 text-xs text-gray-400">{entry.treatments.length} treatments</span>
-                    {entry.treatments.length > 0 && (
-                      <span className={`ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${authored === entry.treatments.length ? "bg-green-100 text-green-700" : authored > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
-                        🩺 {authored}/{entry.treatments.length} clinically authored
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-gray-400">{openConcern === entry.concernTag ? "▲" : "▼"}</span>
-                </button>
-                {openConcern === entry.concernTag && (
-                  <div className="px-5 pb-5 border-t border-gray-50 pt-4">
-                    <ConcernTreatmentPanel entry={entry} aiPrompt={config.aiPrompt} enableAI={config.settings.enableAI} onChange={(updated) => updateTreatmentMap(entry.concernTag, updated)} />
-                  </div>
-                )}
-              </div>
-              );
-            })
-          )}
-        </div>
-      )}
-
       {tab === "leads" && <LeadsTab canFullReview={canFullReview} />}
       {tab === "analytics" && <AnalyticsTab />}
       {tab === "qr" && (
@@ -1467,35 +1250,9 @@ export default function AiAssessmentAdminPage() {
           <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
             <p className="text-sm font-bold text-gray-700">Feature Toggles</p>
             <Toggle checked={config.settings.enabled} onChange={(v) => updateConfig({ settings: { ...config.settings, enabled: v } })} label="Enable Clinical Intake" />
-            <Toggle checked={config.settings.enableAI} onChange={(v) => updateConfig({ settings: { ...config.settings, enableAI: v } })} label="Enable AI Suggest (Treatment Mapping)" />
-            <Toggle checked={config.settings.enableEmail} onChange={(v) => updateConfig({ settings: { ...config.settings, enableEmail: v } })} label="Enable Email Report" />
             <Toggle checked={config.settings.enableQR} onChange={(v) => updateConfig({ settings: { ...config.settings, enableQR: v } })} label="Enable QR Code Access" />
             <Toggle checked={config.settings.enableNotes !== false} onChange={(v) => updateConfig({ settings: { ...config.settings, enableNotes: v } })} label={'Enable "Anything else for your doctor?" Note'} />
-            <Toggle checked={config.settings.enableChat !== false} onChange={(v) => updateConfig({ settings: { ...config.settings, enableChat: v } })} label='Enable "Chat with AI about your results"' />
             <Toggle checked={config.settings.anonymousMode} onChange={(v) => updateConfig({ settings: { ...config.settings, anonymousMode: v } })} label="Anonymous Mode (no login required)" />
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-            <p className="text-sm font-bold text-gray-700">Matching</p>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Maximum Recommendations</label>
-              <input type="number" min={1} max={5} value={config.settings.maxRecommendations}
-                onChange={(e) => updateConfig({ settings: { ...config.settings, maxRecommendations: Number(e.target.value) } })}
-                className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Confidence Threshold (%)</label>
-              <input type="number" min={0} max={100} value={config.settings.confidenceThreshold}
-                onChange={(e) => updateConfig({ settings: { ...config.settings, confidenceThreshold: Number(e.target.value) } })}
-                className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-              <p className="text-[10px] text-gray-400 mt-1">Treatments below this confidence % are never recommended.</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
-            <p className="text-sm font-bold text-gray-700">AI Prompt</p>
-            <p className="text-xs text-gray-400">Clinic guidance the AI must follow when generating treatment suggestions on the Treatment Mapping tab.</p>
-            <Textarea value={config.aiPrompt} onChange={(v) => updateConfig({ aiPrompt: v })} rows={5} placeholder="Always recommend evidence-based treatments…" />
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">

@@ -7,7 +7,7 @@ import { locations } from "@/app/data/locations";
 import type { JourneyGoalSlug, JourneyGoalBundle } from "@/app/lib/journeyGoals";
 import type { IJourneyGoal } from "@/app/models/JourneyConfig";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion } from "@/app/lib/quizDefaults";
-import { scoreRecommendations, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import { scoreJourneyConcern, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import {
   seedAnswersFromTags,
   getOrderedQuestions,
@@ -121,6 +121,12 @@ function PlanMyJourneyFlow({
   const [visible, setVisible] = useState(true);
   const [leadId, setLeadId] = useState<string | null>(null);
   const [patientReport, setPatientReport] = useState<PatientReport | null>(null);
+  // Plain-language explanation of journeyResult (percentage/severity) —
+  // replaces patientReport as the AI narrative now that this flow's leads
+  // route through /api/patient-report's assessmentType branch (see the
+  // results-patch effect below), same "In Your Own Words" contract as
+  // skin-quiz's AssessmentResults.tsx.
+  const [aiExplanation, setAiExplanation] = useState("");
   const resultsPatched = useRef(false);
   const [sessionId, setSessionId] = useState("");
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
@@ -299,31 +305,33 @@ function PlanMyJourneyFlow({
     }
   };
 
-  // Same scoring engine skin-quiz uses — only produces real recommendations
-  // when goal-filtered intake questions were actually answered (see
-  // goal.concernTags bridging); empty for goals with no mapped questions
-  // yet, in which case UnifiedJourneyResults falls back to the matched
-  // Service data alone.
-  const recommendations = scoreRecommendations(
-    quizConfig.questions,
-    answers,
-    quizConfig.treatmentMap,
-    { maxRecommendations: quizConfig.settings?.maxRecommendations, confidenceThreshold: quizConfig.settings?.confidenceThreshold }
-  );
+  // The no-treatment-reveal, percentage-based result — same tag-weight
+  // signal the old treatment-matching engine used, reframed as concern %/
+  // severity instead of a treatment name (Treatment Mapping was removed
+  // per a business decision: doctors and patients work from this
+  // deterministic result and the raw answers, not a system-suggested
+  // treatment list — see architecture note on scoreJourneyConcern).
+  const journeyResult = scoreJourneyConcern(quizConfig.questions, answers, quizConfig.treatmentMap);
   const primaryConcernTag = getPrimaryConcernTag(quizConfig.questions, answers);
   const primaryConcernLabel = quizConfig.treatmentMap.find((e) => e.concernTag === primaryConcernTag)?.concernLabel || primaryConcernTag;
 
-  // Mirrors skin-quiz's own results-patch effect exactly — attach the
-  // completed answers/recommendations to the lead already captured, then
-  // generate a patient report, but only when there's an actual clinical
-  // intake to report on (recommendations.length > 0).
+  // Mirrors skin-quiz's own results-patch effect — attach the completed
+  // answers/journeyResult to the lead already captured, then generate a
+  // patient report, but only when there's an actual clinical intake to
+  // report on (journeyResult.categoryScores.length > 0). Setting
+  // assessmentType: "journey" here routes this lead through
+  // /api/patient-report's assessmentType branch (percentage-based, never
+  // names a treatment).
   useEffect(() => {
-    if (screen !== "results" || !leadId || resultsPatched.current || recommendations.length === 0) return;
+    if (screen !== "results" || !leadId || resultsPatched.current || journeyResult.categoryScores.length === 0) return;
     resultsPatched.current = true;
     fetch("/api/leads", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId, answers, recommendations, primaryConcern: primaryConcernTag }),
+      body: JSON.stringify({
+        leadId, answers, primaryConcern: primaryConcernTag,
+        assessmentType: "journey", assessmentResult: journeyResult,
+      }),
     })
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`PATCH failed (${res.status})`))))
       .then((data) => {
@@ -335,7 +343,7 @@ function PlanMyJourneyFlow({
         });
       })
       .then((res) => res.json())
-      .then((data) => { if (data.success) setPatientReport(data.data); })
+      .then((data) => { if (data.success && data.data?.aiExplanation) setAiExplanation(data.data.aiExplanation); })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, leadId]);
@@ -401,12 +409,11 @@ function PlanMyJourneyFlow({
             <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-10">
               <UnifiedJourneyResults
                 resultSections={quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections}
-                recommendations={recommendations}
+                journeyResult={journeyResult}
+                aiExplanation={aiExplanation}
                 doctorMessage={quizConfig.doctorMessage}
                 primaryConcern={primaryConcernLabel}
                 patientReport={patientReport}
-                enableChat={quizConfig.settings?.enableChat !== false}
-                enableEmail={quizConfig.settings?.enableEmail !== false}
                 leadId={leadId}
                 journey={{
                   service: svc,
@@ -425,7 +432,6 @@ function PlanMyJourneyFlow({
                 }}
                 goal={goal}
                 sessionId={sessionId}
-                costPlanningNote={costPlanningNote}
                 preferredClinic={effectiveClinic}
                 leadName={lead.name}
                 leadPhone={lead.phone}

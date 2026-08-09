@@ -48,18 +48,21 @@ export async function POST(req: NextRequest) {
       const factorLines = (Array.isArray(ar.contributingFactors) ? ar.contributingFactors : [])
         .map((f: any) => f.label).join(", ");
 
+      // Plan My Journey leads (assessmentType "journey") have no per-answer
+      // risk-weight data, so ar.riskLevel stays "" — omit the line entirely
+      // rather than reporting a misleading "0% risk" that was never measured.
+      const assessmentLabel = lead.assessmentType === "journey" ? "Plan My Journey" : lead.assessmentType;
       const prompt = `${CLINICAL_AI_GUARDRAILS}
 
-A patient just completed a ${lead.assessmentType} pre-consultation assessment at DR Youth Clinic.
+A patient just completed a ${assessmentLabel} pre-consultation assessment at DR Youth Clinic.
 
 Deterministic results (already computed — do not change, re-rank, or contradict any of these numbers):
 - Overall Concern Level: ${ar.overallConcern ?? "N/A"}% (${ar.severity || "N/A"})
-- Risk Level: ${ar.riskScore ?? "N/A"}% (${ar.riskLevel || "N/A"})
-- Category breakdown: ${categoryLines || "none"}
+${ar.riskLevel ? `- Risk Level: ${ar.riskScore ?? "N/A"}% (${ar.riskLevel})\n` : ""}- Category breakdown: ${categoryLines || "none"}
 - Possible contributing factors already identified: ${factorLines || "none"}
 
 Write ONE short, warm, plain-language paragraph (3-4 sentences) explaining this result directly to the patient. You must:
-- Restate their Concern Level and Risk Level in your own words, without changing the numbers or severity label
+- Restate their Concern Level in your own words, without changing the number or severity label${ar.riskLevel ? " (and their Risk Level, if given)" : ""}
 - Briefly mention the contributing factors already listed, if any — do not invent new ones
 - Explain in one sentence why a specialist consultation can help
 - NEVER name or imply a specific treatment, procedure, package, or price — none has been determined yet, that only happens after a doctor's evaluation
@@ -71,40 +74,35 @@ Write ONE short, warm, plain-language paragraph (3-4 sentences) explaining this 
       return NextResponse.json({ success: true, data: { aiExplanation: explanation } });
     }
 
-    const recs: any[] = Array.isArray(lead.recommendations) ? lead.recommendations : [];
-    const treatmentContext = recs
-      .map((r: any) => (typeof r === "string" ? r : [r.name, r.description].filter(Boolean).join(" — ")))
-      .filter(Boolean)
-      .join("\n");
-
+    // Only reachable for pre-existing historical leads with no assessmentType
+    // at all — every current lead-creation path (skin-quiz, Plan My Journey)
+    // sets one and takes the branch above instead. No treatment-matched
+    // context anymore (Treatment Mapping removed) — the report is built from
+    // the patient's own concern/answers alone.
     const prompt = `${CLINICAL_AI_GUARDRAILS}
 
 A patient just completed a clinical intake at DR Youth Clinic. Their main concern: "${lead.primaryConcern || "not specified"}".
-
-Possible discussion topics already matched by the clinic's intake engine (do not invent new ones, only reference these):
-${treatmentContext || "No specific topics matched yet."}
 
 Write a short, friendly, plain-language report for the PATIENT (not the doctor) to read right after finishing their intake. Return ONLY valid JSON, no other text, in exactly this shape:
 {
   "summary": "1-2 sentence friendly summary of their concern and what this report covers",
   "contributingFactors": ["short factor", "short factor"],
   "lifestyleFindings": ["short finding", "short finding"],
-  "questionsForDoctor": ["a question the patient could ask their doctor", "..."],
-  "treatmentOptionsDiscussed": ["short treatment category name", "..."]
+  "questionsForDoctor": ["a question the patient could ask their doctor", "..."]
 }
 
 Rules:
 - 2-4 short items per array, plain language, no medical jargon without a one-word explanation
-- Never diagnose, never guarantee an outcome, never state a treatment is "needed" — frame treatmentOptionsDiscussed as things the doctor may discuss
+- NEVER name or imply a specific treatment, procedure, package, or price — none has been determined yet, that only happens after a doctor's evaluation
+- Never diagnose, never guarantee an outcome
 - questionsForDoctor should be genuinely useful questions the patient wouldn't have thought to ask`;
 
-    const raw = await generateText(prompt, { maxTokens: 700 });
+    const raw = await generateText(prompt, { maxTokens: 500 });
     const parsed = parseClaudeJson<{
       summary?: string;
       contributingFactors?: string[];
       lifestyleFindings?: string[];
       questionsForDoctor?: string[];
-      treatmentOptionsDiscussed?: string[];
     }>(raw);
 
     const str = (v: any) => (typeof v === "string" ? v : "");
@@ -114,7 +112,7 @@ Rules:
       contributingFactors: strArray(parsed.contributingFactors),
       lifestyleFindings: strArray(parsed.lifestyleFindings),
       questionsForDoctor: strArray(parsed.questionsForDoctor),
-      treatmentOptionsDiscussed: strArray(parsed.treatmentOptionsDiscussed),
+      treatmentOptionsDiscussed: [] as string[],
       generatedAt: new Date(),
     };
 

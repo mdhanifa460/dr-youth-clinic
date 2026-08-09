@@ -321,7 +321,7 @@ const BODY_CONTRIBUTING_FACTORS: ContributingFactorRule[] = [
 // on the clinic side must review/approve these (and every category's
 // maxWeight above) before this reaches real patients — see the architecture
 // review §08's callout and §14's approval item.
-const DEFAULT_SEVERITY_THRESHOLDS: SeverityBand[] = [
+export const DEFAULT_SEVERITY_THRESHOLDS: SeverityBand[] = [
   { min: 0, max: 30, label: "Mild" },
   { min: 31, max: 60, label: "Moderate" },
   { min: 61, max: 80, label: "Significant" },
@@ -335,7 +335,7 @@ const DEFAULT_RISK_THRESHOLDS: SeverityBand[] = [
   { min: 81, max: 100, label: "High" },
 ];
 
-function defaultCtaRules(typeLabel: string): CtaRule[] {
+export function defaultCtaRules(typeLabel: string): CtaRule[] {
   return [
     {
       severity: "Mild",

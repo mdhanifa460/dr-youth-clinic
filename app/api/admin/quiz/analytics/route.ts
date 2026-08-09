@@ -18,7 +18,7 @@ export async function GET() {
 
     const [events, leads, bookingPhones, treatmentCompletedPhones] = await Promise.all([
       AssessmentEvent.find({ createdAt: { $gte: since30d } } as any).select("event clinicLocation channel goal stepId sessionId assessmentType severity createdAt").lean() as Promise<any[]>,
-      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern recommendations campaign qrSource clinicLocation channel preferredClinic assessmentType assessmentResult createdAt").lean() as Promise<any[]>,
+      Lead.find({ createdAt: { $gte: since30d } } as any).select("phone email primaryConcern campaign qrSource clinicLocation channel preferredClinic assessmentType assessmentResult createdAt").lean() as Promise<any[]>,
       (Booking as any).distinct("phone"),
       // Pre-Consultation Assessment → treatment conversion (item 5) — reuses
       // the existing Appointment.status enum's "treatment_completed" value
@@ -111,31 +111,6 @@ export async function GET() {
     }
     const mostCommonConcern = Object.entries(concernCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
-    // Most recommended treatment — across all leads' recommendation lists
-    const recCounts: Record<string, number> = {};
-    for (const l of leads) {
-      const recs = Array.isArray(l.recommendations) ? l.recommendations : [];
-      for (const r of recs) {
-        const name = typeof r === "string" ? r : r?.name;
-        if (!name) continue;
-        recCounts[name] = (recCounts[name] || 0) + 1;
-      }
-    }
-    const mostRecommendedTreatment = Object.entries(recCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
-
-    // Most accepted treatment — top recommendation among leads who went on to
-    // book (phone matched in Booking) — a real, computed proxy for
-    // "accepted", not a fabricated number.
-    const acceptedCounts: Record<string, number> = {};
-    for (const l of convertedLeads) {
-      const recs = Array.isArray(l.recommendations) ? l.recommendations : [];
-      const top = recs[0];
-      const name = typeof top === "string" ? top : top?.name;
-      if (!name) continue;
-      acceptedCounts[name] = (acceptedCounts[name] || 0) + 1;
-    }
-    const mostAcceptedTreatment = Object.entries(acceptedCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
-
     // Concern heatmap (% share of leads)
     const concernHeatmap = Object.entries(concernCounts)
       .map(([concern, count]) => ({ concern, count, pct: leads.length ? Math.round((count / leads.length) * 100) : 0 }))
@@ -205,7 +180,7 @@ export async function GET() {
       ? Math.round((treatedLeads.length / newAssessmentLeads.length) * 100)
       : 0;
 
-    const assessmentTypeBreakdown = ["hair", "skin", "body"].map((type) => {
+    const assessmentTypeBreakdown = ["hair", "skin", "body", "journey"].map((type) => {
       const typeLeads = newAssessmentLeads.filter((l) => l.assessmentType === type);
       return { type, leads: typeLeads.length, bookedCount: typeLeads.filter((l) => l.phone && bookingPhoneSet.has(normalizePhone(l.phone))).length };
     });
@@ -225,8 +200,6 @@ export async function GET() {
         bookingRate: leads.length > 0 ? Math.round((convertedLeads.length / leads.length) * 100) : 0,
         bookedCount: convertedLeads.length,
         mostCommonConcern,
-        mostRecommendedTreatment,
-        mostAcceptedTreatment,
         concernHeatmap,
         qrLeads,
         organicLeads: leads.length - qrLeads,

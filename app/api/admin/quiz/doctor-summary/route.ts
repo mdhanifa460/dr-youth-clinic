@@ -55,36 +55,37 @@ export async function POST(req: NextRequest) {
       const acDoc = await (AssessmentConfig as any).findOne({}).lean();
       const types = acDoc?.assessmentTypes?.length ? acDoc.assessmentTypes : DEFAULT_ASSESSMENT_TYPES;
       const typeConfig = types.find((t: any) => t.key === lead.assessmentType);
-      questionById = (id: string) => typeConfig?.questions?.find((q: any) => q.id === id);
+      // "journey" (Plan My Journey) has no matching AssessmentConfig entry —
+      // its questions live in QuizConfig instead (see scoreJourneyConcern in
+      // assessmentScoring.ts, which computes assessmentResult from that same
+      // config). Fall back there so answer labels still resolve instead of
+      // silently degrading to raw stored values for every PMJ lead.
+      let questionByIdFallback: ((id: string) => any) | null = null;
+      if (!typeConfig) {
+        const quizConfigDoc = await (QuizConfig as any).findOne({}).lean();
+        const fallbackConfig = quizConfigDoc ? backfillClinicalFields(migrateLegacyQuizConfig(quizConfigDoc)) : DEFAULT_QUIZ_CONFIG;
+        questionByIdFallback = (id: string) => fallbackConfig.questions.find((q: any) => q.id === id);
+      }
+      questionById = (id: string) => typeConfig?.questions?.find((q: any) => q.id === id) ?? questionByIdFallback?.(id);
       const ar = lead.assessmentResult || {};
       treatmentContext = [
         `Overall Concern: ${ar.overallConcern ?? "N/A"}% (${ar.severity || "N/A"})`,
-        `Risk Level: ${ar.riskScore ?? "N/A"}% (${ar.riskLevel || "N/A"})`,
+        ar.riskLevel ? `Risk Level: ${ar.riskScore ?? "N/A"}% (${ar.riskLevel})` : "",
         Array.isArray(ar.categoryScores) && ar.categoryScores.length
           ? `Category breakdown: ${ar.categoryScores.map((c: any) => `${c.label} ${c.percent}%`).join(", ")}` : "",
         Array.isArray(ar.contributingFactors) && ar.contributingFactors.length
           ? `Possible contributing factors: ${ar.contributingFactors.map((f: any) => f.label).join(", ")}` : "",
       ].filter(Boolean).join("\n");
     } else {
+      // Only reachable for pre-existing historical leads with no
+      // assessmentType at all — every current lead-creation path (skin-quiz,
+      // Plan My Journey) sets one. No treatment-matched context anymore
+      // (Treatment Mapping removed): the doctor works from the raw answers
+      // below alone, same as the deterministic-assessment branch above.
       const configDoc = await (QuizConfig as any).findOne({}).lean();
       const config = configDoc ? backfillClinicalFields(migrateLegacyQuizConfig(configDoc)) : DEFAULT_QUIZ_CONFIG;
       questionById = (id: string) => config.questions.find((q: any) => q.id === id);
-
-      const recs: any[] = Array.isArray(lead.recommendations) ? lead.recommendations : [];
-      treatmentContext = recs
-        .map((r: any) => {
-          if (typeof r === "string") return `- ${r}`;
-          const bits = [
-            r.name,
-            r.clinicalIndicators?.length ? `Indicators: ${r.clinicalIndicators.join(", ")}` : "",
-            r.possibleCauses?.length ? `Possible causes to explore: ${r.possibleCauses.join(", ")}` : "",
-            r.suggestedEvaluation?.length ? `Suggested evaluation: ${r.suggestedEvaluation.join(", ")}` : "",
-            r.contraindications?.length ? `Contraindications: ${r.contraindications.join(", ")}` : "",
-            r.doctorNotes ? `Doctor note: ${r.doctorNotes}` : "",
-          ].filter(Boolean);
-          return `- ${bits.join(" | ")}`;
-        })
-        .join("\n");
+      treatmentContext = "";
     }
 
     const answerLabel = (q: any, raw: any): string => {
@@ -114,8 +115,8 @@ Primary concern: ${lead.primaryConcern || "not specified"}
 Full intake answers (question: answer):
 ${answerLines || "No answers recorded."}
 
-${isNewAssessment ? "Deterministic pre-consultation assessment result (already computed — do not recompute or contradict):" : "Possible treatment categories already matched by the clinic's intake engine, with doctor-authored clinical context:"}
-${treatmentContext || "No data available yet."}
+${isNewAssessment ? "Deterministic pre-consultation assessment result (already computed — do not recompute or contradict):" : ""}
+${treatmentContext || (isNewAssessment ? "No data available yet." : "")}
 
 Write the summary in exactly this structure, short bullet points under each heading (write "None noted" if a heading has nothing relevant — never omit a heading):
 
@@ -125,12 +126,11 @@ Symptoms Summary:
 Lifestyle Summary:
 Previous Treatments:
 Patterns Identified:
-Red Flags: (only flag something here if it genuinely warrants urgent doctor attention before/at consultation — e.g. a contraindication matched, a red-flag symptom combination; otherwise "None noted")
+Red Flags: (only flag something here if it genuinely warrants urgent doctor attention before/at consultation — e.g. a red-flag symptom combination; otherwise "None noted")
 Possible Clinical Indicators:
 Suggested Investigations:
-Possible Treatment Categories:
 
-Keep it factual and concise. This is a draft starting point — the doctor will review and edit it before it is ever finalized or acted on.`;
+Never suggest or name a specific treatment, procedure, package, or price — that decision belongs to the doctor alone, based on their own evaluation at consultation. Keep it factual and concise. This is a draft starting point — the doctor will review and edit it before it is ever finalized or acted on.`;
 
     const draftText = await generateText(prompt, { maxTokens: 900 });
 

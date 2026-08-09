@@ -6,63 +6,6 @@ import { normalizePhone } from '@/app/lib/phone';
 import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 import { sendWhatsAppText } from '@/app/lib/whatsapp';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function planEmailHtml(concern: string, recommendations: any[]) {
-  const treatmentRows = recommendations
-    .map(
-      (r: any) => `
-        <tr>
-          <td style="padding:16px;border-bottom:1px solid #eef2f7;">
-            <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#0B2560;">${r.icon ? r.icon + ' ' : ''}${r.name ?? ''}</p>
-            <p style="margin:0 0 8px;font-size:13px;color:#6b7280;line-height:1.5;">${r.description ?? r.desc ?? ''}</p>
-            <p style="margin:0;font-size:12px;color:#3B82C4;font-weight:600;">${[r.sessions, r.price].filter(Boolean).join(' · ')}</p>
-          </td>
-        </tr>`
-    )
-    .join('');
-
-  return `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;background:#f6faff;padding:24px;">
-    <div style="background:#0B2560;border-radius:16px 16px 0 0;padding:28px 24px;text-align:center;">
-      <p style="margin:0;color:#F5A623;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">DR Youth Clinic</p>
-      <h1 style="margin:8px 0 0;color:#fff;font-size:22px;">Your Clinical Intake Report</h1>
-    </div>
-    <div style="background:#fff;padding:24px;">
-      <p style="margin:0 0 16px;font-size:14px;color:#374151;">Based on your intake for <strong>${concern || 'your concern'}</strong>, here are possible discussion topics for your doctor to evaluate at consultation:</p>
-      <table style="width:100%;border-collapse:collapse;">${treatmentRows}</table>
-      <div style="text-align:center;margin-top:24px;">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL || ''}/book" style="display:inline-block;background:#F5A623;color:#0B2560;font-weight:700;font-size:14px;padding:14px 28px;border-radius:12px;text-decoration:none;">Book Your Free Consultation</a>
-      </div>
-      <p style="margin:20px 0 0;font-size:11px;color:#9ca3af;text-align:center;">This report is educational and does not replace a doctor's consultation. Your treatment plan will be confirmed by a doctor after evaluation.</p>
-    </div>
-  </div>`;
-}
-
-async function sendPlanEmail(email: string, concern: string, recommendations: any[]): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return false;
-
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM_EMAIL || 'DR Youth Clinic <onboarding@resend.dev>',
-        to: [email],
-        subject: 'Your Clinical Intake Report — DR Youth Clinic',
-        html: planEmailHtml(concern, recommendations),
-      }),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 // `to` is resolved per-lead by the caller via getClinicNotifyNumber() (the
 // lead's preferred/attributed clinic branch, falling back to the global
 // CLINIC_PHONE) — this used to always notify the single global number
@@ -125,9 +68,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ── PATCH — Clinical Intake Results: attach the completed answers/
-// recommendations to the Step-2 lead, and optionally an email if the
-// patient chose the non-blocking "email me a copy" option.
+// ── PATCH — Clinical Intake Results: attach the completed answers to the
+// Step-2 lead. "Email me a copy" (which used to email a treatment/price
+// table straight to the patient) was removed along with Treatment Mapping —
+// no replacement content was built for it, so the feature is gone rather
+// than emailing an empty table.
 export async function PATCH(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = await checkRateLimit(`leads-patch:${ip}`, 10, 60 * 60 * 1000);
@@ -135,53 +80,31 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const {
-      leadId, answers, recommendations, primaryConcern, email,
-      // Pre-Consultation Assessment (Hair/Skin/Body) — additive. Never
-      // includes a treatment name; see app/lib/assessmentTypeScoring.ts.
+      leadId, answers, primaryConcern,
+      // Pre-Consultation Assessment (Hair/Skin/Body + Plan My Journey) —
+      // additive. Never includes a treatment name; see
+      // app/lib/assessmentTypeScoring.ts / app/lib/assessmentScoring.ts.
       assessmentType, assessmentResult,
     } = await req.json();
     if (!leadId || typeof leadId !== 'string') {
       return NextResponse.json({ success: false, message: 'leadId is required' }, { status: 400 });
     }
-    if (email && (typeof email !== 'string' || !EMAIL_RE.test(email.trim()))) {
-      return NextResponse.json({ success: false, message: 'Invalid email format' }, { status: 400 });
-    }
 
     await connectDB();
 
-    // Two distinct callers share this endpoint: the Results screen attaches
-    // the completed intake (answers/recommendations/primaryConcern, or the
-    // new assessmentType/assessmentResult) once, and the separate "email me
-    // a copy" box may PATCH again later with only { leadId, email }. Only
-    // touch the intake fields when this call actually carries them, so a
-    // later email-only PATCH can't wipe out intake data already saved.
-    const hasIntakeData = answers !== undefined || recommendations !== undefined || primaryConcern !== undefined;
+    const hasIntakeData = answers !== undefined || primaryConcern !== undefined;
     const hasAssessmentResult = assessmentType !== undefined || assessmentResult !== undefined;
-    const recs = Array.isArray(recommendations) ? recommendations : [];
     const concern = primaryConcern || answers?.concern || '';
 
-    const existingLead = (hasIntakeData || hasAssessmentResult) ? null : await (Lead as any).findById(leadId).lean();
-    if (!hasIntakeData && !hasAssessmentResult && !existingLead) {
-      return NextResponse.json({ success: false, message: 'Lead not found' }, { status: 404 });
-    }
-    const emailConcern = hasIntakeData ? concern : (existingLead?.primaryConcern || '');
-    const emailRecs = hasIntakeData ? recs : (Array.isArray(existingLead?.recommendations) ? existingLead.recommendations : []);
-
-    let emailSent = false;
-    if (email) {
-      // "Email me a copy" only exists on the legacy treatment-recommendation
-      // results screen — the new Pre-Consultation Assessment results screen
-      // never offers it, so emailRecs is always [] for an assessmentResult-
-      // only PATCH and this is effectively a no-op for that flow.
-      emailSent = await sendPlanEmail(email.trim(), emailConcern, emailRecs);
+    if (!hasIntakeData && !hasAssessmentResult) {
+      return NextResponse.json({ success: false, message: 'Nothing to update' }, { status: 400 });
     }
 
     const lead = await (Lead as any).findByIdAndUpdate(
       leadId,
       {
         $set: {
-          ...(email ? { email: email.trim(), emailSent } : {}),
-          ...(hasIntakeData ? { primaryConcern: concern, answers: answers || {}, recommendations: recs } : {}),
+          ...(hasIntakeData ? { primaryConcern: concern, answers: answers || {} } : {}),
           ...(hasAssessmentResult ? {
             assessmentType: assessmentType || '',
             assessmentResult: assessmentResult || {},
@@ -200,11 +123,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Lead not found' }, { status: 404 });
     }
 
-    if (hasIntakeData) {
-      const recNames = recs.map((r: any) => (typeof r === 'string' ? r : r?.name)).filter(Boolean).join(', ');
+    if (hasIntakeData && !hasAssessmentResult) {
       getClinicNotifyNumber(lead.preferredClinic || lead.clinicLocation).then((to) => {
         notifyClinicWhatsApp(
-          `✅ Clinical Intake Completed\n\nName: ${lead.name || 'Unknown'}\nPhone: ${lead.phone || 'Unknown'}\nConcern: ${concern || 'Unknown'}\nPossible discussion topics: ${recNames || 'N/A'}`,
+          `✅ Clinical Intake Completed\n\nName: ${lead.name || 'Unknown'}\nPhone: ${lead.phone || 'Unknown'}\nConcern: ${concern || 'Unknown'}`,
           to
         );
       }).catch(() => {});
@@ -222,7 +144,7 @@ export async function PATCH(req: NextRequest) {
       }).catch(() => {});
     }
 
-    return NextResponse.json({ success: true, emailSent });
+    return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message || 'Failed' }, { status: 500 });
   }

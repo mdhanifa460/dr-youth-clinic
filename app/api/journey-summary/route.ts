@@ -18,36 +18,30 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { goalLabel, primaryConcern, treatmentName, category, sessions, costRange } = await req.json();
+    const { goalLabel, primaryConcern, overallConcern, severity } = await req.json();
 
     const safe = (v: any, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
     const safeGoal = safe(goalLabel, 60);
     const safeConcern = safe(primaryConcern, 200);
-    const safeTreatment = safe(treatmentName, 100);
-    const safeCategory = safe(category, 40);
-    const safeSessions = safe(sessions, 40);
+    const safeSeverity = safe(severity, 40);
+    const safeOverall = typeof overallConcern === "number" ? Math.max(0, Math.min(100, Math.round(overallConcern))) : null;
 
-    if (!safeGoal && !safeConcern && !safeTreatment) {
+    if (!safeGoal && !safeConcern) {
       return NextResponse.json({ success: false, message: "Not enough journey context to summarize" }, { status: 400 });
     }
 
-    const costLine =
-      costRange && typeof costRange.min === "number" && typeof costRange.max === "number"
-        ? `Estimated cost range already shown to them: ${costRange.currency || "₹"}${costRange.min}–${costRange.currency || "₹"}${costRange.max}.`
-        : "";
-
     const prompt = `${CLINICAL_AI_GUARDRAILS}
 
-You are writing a short, warm "take-home summary" for a PATIENT who just completed DR Youth Clinic's AI-guided treatment journey for "${safeGoal || "their concern"}". This is the last thing they read before deciding whether to book a consultation — it should feel like a helpful recap from someone who was listening, not a sales pitch or a diagnosis.
+You are writing a short, warm "take-home summary" for a PATIENT who just completed DR Youth Clinic's AI-guided pre-consultation journey for "${safeGoal || "their concern"}". This is the last thing they read before deciding whether to book a consultation — it should feel like a helpful recap from someone who was listening, not a sales pitch or a diagnosis.
 
 What they told us: ${safeConcern || `general concerns about ${safeGoal || "their goal"}`}
-${safeTreatment ? `What the journey matched them with, as a starting point for their doctor to discuss: ${safeTreatment}${safeCategory ? ` (${safeCategory})` : ""}${safeSessions ? `, typically ${safeSessions}` : ""}.` : ""}
-${costLine}
+${safeOverall !== null ? `Deterministic result already computed and shown to them (do not change or contradict): Concern Level ${safeOverall}%${safeSeverity ? ` (${safeSeverity})` : ""}.` : ""}
 
 Write 3-4 short sentences that:
 - Briefly acknowledge their specific concern/goal in your own words (don't just repeat it verbatim).
-- Mention the matched treatment as a starting point for discussion, not a confirmed prescription.
-- End with a warm, encouraging nudge toward booking a consultation to confirm the plan with a doctor.
+- If a Concern Level is given, restate it in your own words without changing the number or severity label.
+- NEVER name or imply a specific treatment, procedure, package, or price — none has been determined yet, that only happens after a doctor's evaluation.
+- End with a warm, encouraging nudge toward booking a consultation to get a doctor's full evaluation.
 - Never state or imply a diagnosis, never guarantee a result or timeline, never use words like "will cure/fix/guarantee" — use "aims to", "many patients find", "your doctor will confirm" instead.
 
 Return ONLY the summary text — no headings, no bullet points, no markdown, no quotation marks around it.`;

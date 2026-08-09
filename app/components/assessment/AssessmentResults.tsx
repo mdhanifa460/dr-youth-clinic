@@ -107,10 +107,16 @@ export default function AssessmentResults({
 
         <div className="flex justify-center gap-8 my-4">
           <Ring percent={result.overallConcern} label="Concern Level" gradientId="concernGrad" colors={['#3B82C4', '#F5A623']} />
-          <Ring percent={result.riskScore} label="Risk Level" gradientId="riskGrad" colors={['#3B82C4', '#60A5FA']} />
+          {/* Risk Level needs its own weighted answer data (riskWeight per
+              answer) — not every caller has authored that yet (Plan My
+              Journey's QuizConfig doesn't), so this ring only renders once
+              there's a real risk band to show, rather than a misleading 0%. */}
+          {result.riskLevel && (
+            <Ring percent={result.riskScore} label="Risk Level" gradientId="riskGrad" colors={['#3B82C4', '#60A5FA']} />
+          )}
         </div>
         <p className="text-center text-[#F5A623] font-bold text-xs tracking-wide mb-6">
-          {result.severity.toUpperCase()} CONCERN &middot; {result.riskLevel.toUpperCase()} RISK
+          {result.severity.toUpperCase()} CONCERN{result.riskLevel ? ` · ${result.riskLevel.toUpperCase()} RISK` : ''}
         </p>
 
         {result.categoryScores.length > 0 && (

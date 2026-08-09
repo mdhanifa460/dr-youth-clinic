@@ -1,52 +1,56 @@
 "use client";
 
-// One results screen shared by both Free Clinical Intake (/skin-quiz) and
-// Plan My Journey (/plan-my-journey) — extracted so the two flows converge
-// into a single "Journey Engine" output instead of maintaining two parallel
-// results implementations. Which blocks render is driven entirely by (a)
+// Plan My Journey's (/plan-my-journey) results screen — skin-quiz uses its
+// own, separate AssessmentResults.tsx. Which blocks render is driven by (a)
 // the admin's resultSections order/visibility config (app/admin/ai-
 // assessment's Settings tab) and (b) which data is actually present:
-// Clinical Intake's scored `recommendations` render whenever the visitor
-// answered branching questions (both flows can produce these now — see
-// GOAL_CONCERN_TAGS bridging in journeyGoals.ts); Plan My Journey's real
-// matched-Service presentation (`journey` prop) only renders when a real
-// Service document was matched. Neither flow fabricates the other's data —
-// a section simply doesn't render when its underlying data doesn't exist.
+// `journeyResult` (percentage/severity, from scoreJourneyConcern) renders
+// whenever the visitor answered branching questions; the real matched-
+// Service presentation (`journey` prop) only renders when a real Service
+// document was matched. Neither is fabricated — a section simply doesn't
+// render when its underlying data doesn't exist. Treatment Mapping-derived
+// content (treatment cards, Root Cause Analysis, Email Me a Copy) was
+// removed entirely per a business decision: doctors and patients work from
+// the deterministic assessment result, not a system-suggested treatment.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MessageCircle, Sparkles, Calendar, IndianRupee, Clock, Check, Minus } from "lucide-react";
+import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import { useBranchWhatsApp, toWaLink } from "@/app/lib/useBranchWhatsApp";
-import type { TreatmentRecommendation, ResultSectionConfig, ResultSectionKey } from "@/app/lib/quizDefaults";
+import type { ResultSectionConfig, ResultSectionKey } from "@/app/lib/quizDefaults";
+import type { AssessmentResult } from "@/app/lib/assessmentTypeScoring";
 import { postAssessmentEvent } from "@/app/lib/assessmentFlow";
-import TreatmentComparison from "@/app/components/TreatmentComparison";
-import TreatmentJourney from "@/app/components/TreatmentJourney";
-import TreatmentJourneyExplorer from "@/app/components/TreatmentJourneyExplorer";
-import RecoveryTimeline from "@/app/components/RecoveryTimeline";
-import AiJourneySimulator from "@/app/components/AiJourneySimulator";
-import CostEstimator from "@/app/components/CostEstimator";
-import EMICalculator from "@/app/components/EMICalculator";
 import SliderCard from "@/app/components/SliderCard";
-import AssessmentChat from "./AssessmentChat";
 
-// AI Beauty Journey Module 9 — carries the journey's already-known context
-// (matched treatment, preferred branch, the name/phone already captured at
-// Lead Capture, and the sessionId) into the booking form via URL params, so
-// /book can prefill instead of asking the patient to retype everything
-// they already told the journey. Every param is optional and additive —
-// /book still works with none of them (Skin Quiz's plainer handoff, or a
-// visitor arriving at /book directly).
+// Pre-consultation booking handoff — same contract skin-quiz's
+// AssessmentResults.tsx uses (assessmentType/concern/overallConcern/
+// severity/leadId), never a treatment or service name. Plan My Journey used
+// to pass `service=<matched treatment name>` here; that's exactly the
+// reveal this rework removes (see architecture note above JourneyConcernSummary).
 function buildBookUrl(
-  serviceName: string,
-  opts?: { location?: string; name?: string; phone?: string; sessionId?: string }
+  opts: {
+    assessmentType?: string;
+    concern?: string;
+    overallConcern?: number;
+    severity?: string;
+    leadId?: string | null;
+    location?: string;
+    name?: string;
+    phone?: string;
+    sessionId?: string;
+  }
 ): string {
   const params = new URLSearchParams();
-  if (serviceName) params.set("service", serviceName);
-  if (opts?.location) params.set("location", opts.location);
-  if (opts?.name) params.set("name", opts.name);
-  if (opts?.phone) params.set("phone", opts.phone);
-  if (opts?.sessionId) params.set("sessionId", opts.sessionId);
+  if (opts.assessmentType) params.set("assessmentType", opts.assessmentType);
+  if (opts.concern) params.set("concern", opts.concern);
+  if (opts.overallConcern !== undefined) params.set("overallConcern", String(opts.overallConcern));
+  if (opts.severity) params.set("severity", opts.severity);
+  if (opts.leadId) params.set("leadId", opts.leadId);
+  if (opts.location) params.set("location", opts.location);
+  if (opts.name) params.set("name", opts.name);
+  if (opts.phone) params.set("phone", opts.phone);
+  if (opts.sessionId) params.set("sessionId", opts.sessionId);
   const qs = params.toString();
   return qs ? `/book?${qs}` : "/book";
 }
@@ -69,137 +73,92 @@ export interface JourneyPresentationData {
   onSwitchService?: (id: string) => void;
 }
 
-const CONFIDENCE_BADGE: Record<string, string> = {
-  High: "bg-[#0B2560]/8 text-[#0B2560]",
-  Medium: "bg-[#F5A623]/15 text-[#c47e00]",
-  Low: "bg-gray-100 text-gray-500",
-};
-
-const CONFIDENCE_DOT: Record<string, string> = {
-  High: "bg-[#0B2560]",
-  Medium: "bg-[#F5A623]",
-  Low: "bg-gray-400",
-};
-
-// AI Beauty Journey Module 6 (Cost Planning) — Service has only a single
-// admin-entered `price`, not a range (no priceMin/priceMax field exists on
-// the model, and adding one would ripple into every other page that shows
-// price as an exact figure, which is out of scope here). A modest ±spread
-// around that price, rounded to a clean figure, is a defensible "typical
-// range" without touching the pricing model everywhere else on the site —
-// the detailed CostEstimator/EMICalculator below still show an exact
-// calculated total for patients who want to dig into specifics.
-function computeCostRange(price: number): { min: number; max: number } {
-  const round100 = (n: number) => Math.round(n / 100) * 100;
-  return { min: round100(price * 0.85), max: round100(price * 1.25) };
-}
-
-function CostRangeCard({ min, max, currency, note }: { min: number; max: number; currency: string; note: string }) {
+function Ring({ percent }: { percent: number }) {
+  const r = 42;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - percent / 100);
   return (
-    <div className="rounded-3xl border border-blue-50 bg-gradient-to-br from-[#f6faff] to-white p-6 md:p-8 sm:col-span-2">
-      <p className="text-xs font-bold text-[#0B2560] uppercase tracking-wider mb-2">Estimated Cost Range</p>
-      <p className="text-3xl md:text-4xl font-extrabold text-[#0B2560]">
-        {currency}{min.toLocaleString("en-IN")} &ndash; {currency}{max.toLocaleString("en-IN")}
-      </p>
-      <p className="text-gray-500 text-sm mt-3 leading-relaxed">{note}</p>
+    <div className="relative w-24 h-24 shrink-0">
+      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(11,37,96,0.08)" strokeWidth="9" />
+        <defs>
+          <linearGradient id="pmjConcernGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3B82C4" />
+            <stop offset="100%" stopColor="#F5A623" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx="50" cy="50" r={r} fill="none" stroke="url(#pmjConcernGrad)" strokeWidth="9"
+          strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-xl font-extrabold text-[#0B2560]">{percent}%</span>
+      </div>
     </div>
   );
 }
 
-function TreatmentCard({
-  treatment,
-  rank,
-  goal,
-  sessionId,
-  preferredClinic,
-  leadName,
-  leadPhone,
-}: {
-  treatment: TreatmentRecommendation;
-  rank: number;
-  goal?: string;
-  sessionId?: string;
-  preferredClinic?: string;
-  leadName?: string;
-  leadPhone?: string;
-}) {
-  const { consultationCta } = useSiteConfig();
-  const bookUrl = buildBookUrl(treatment.name, { location: preferredClinic, name: leadName, phone: leadPhone, sessionId });
-  const confidenceLevel = treatment.confidenceLevel || "Medium";
-  const isTop = rank === 0;
-
-  const stats = [
-    treatment.sessions ? { icon: Calendar, label: treatment.sessions } : null,
-    treatment.price ? { icon: IndianRupee, label: String(treatment.price) } : null,
-    treatment.recovery ? { icon: Clock, label: treatment.recovery } : null,
-  ].filter((s): s is { icon: typeof Calendar; label: string } => s !== null);
+// Replaces the old TreatmentCard/CostRangeCard/Journey Explorer trio — this
+// is the ONLY place the matched treatment/service used to be named and
+// priced pre-consultation. Percentage + severity + contributing factors
+// instead, same "no treatment reveal" contract as skin-quiz's
+// AssessmentResults.tsx (see app/lib/assessmentScoring.ts's
+// scoreJourneyConcern, which computes `result` from the same tag-weight
+// data the old TreatmentCard's matching used — nothing here is fabricated,
+// it's the same signal, just not translated into a treatment name).
+function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
+  const whatWeFound = result.categoryScores
+    .filter((c) => c.percent >= 20)
+    .map((c) => `${c.label} identified based on your responses`);
 
   return (
-    <div className={`bg-white rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 flex flex-col ${
-      isTop ? "border-[#0B2560] shadow-md shadow-[#0B2560]/10" : "border-gray-100 shadow-sm"
-    }`}>
-      {isTop && (
-        <div className="bg-[#0B2560] text-white text-xs font-bold uppercase tracking-widest text-center py-1.5 px-4 flex items-center justify-center gap-1.5">
-          <Sparkles size={12} className="shrink-0" /> Most Relevant Discussion Topic
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
+      <div className="flex items-center gap-6 mb-6">
+        <Ring percent={result.overallConcern} />
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-1">
+            {result.severity} Concern
+          </p>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            Based on your answers — your doctor will confirm the full picture at consultation.
+          </p>
+        </div>
+      </div>
+
+      {result.categoryScores.length > 0 && (
+        <div className="space-y-2.5 mb-2">
+          {result.categoryScores.map((c) => (
+            <div key={c.key} className="flex items-center gap-2.5 text-xs">
+              <span className="w-32 shrink-0 text-gray-500">{c.label}</span>
+              <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#3B82C4] to-[#F5A623]" style={{ width: `${c.percent}%` }} />
+              </div>
+              <span className="w-9 text-right font-bold text-[#0B2560]">{c.percent}%</span>
+            </div>
+          ))}
         </div>
       )}
-      <div className="p-5 flex flex-col flex-1">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-2xl shrink-0 w-11 h-11 rounded-xl bg-[#f6faff] flex items-center justify-center">{treatment.icon}</span>
-          <h3 className="font-bold text-[#0B2560] text-base leading-tight min-w-0 truncate" title={treatment.name}>
-            {treatment.name}
-          </h3>
-        </div>
 
-        <span
-          className={`self-start inline-flex items-center gap-1.5 whitespace-nowrap text-[11px] font-bold rounded-full px-2.5 py-1 mb-3 ${
-            CONFIDENCE_BADGE[confidenceLevel] || CONFIDENCE_BADGE.Medium
-          }`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${CONFIDENCE_DOT[confidenceLevel] || CONFIDENCE_DOT.Medium}`} />
-          {confidenceLevel} Confidence
-        </span>
+      {whatWeFound.length > 0 && (
+        <>
+          <hr className="border-gray-100 my-5" />
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B2560] mb-2">What We Found</p>
+          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#F5A623]">
+            {whatWeFound.map((line) => <li key={line}>{line}</li>)}
+          </ul>
+        </>
+      )}
 
-        <p className="text-sm text-gray-600 leading-relaxed mb-4">{treatment.description}</p>
-
-        {stats.length > 0 && (
-          <div className="flex gap-2 mb-4">
-            {stats.map(({ icon: StatIcon, label }, i) => (
-              <div key={i} className="flex-1 min-w-0 rounded-lg bg-gray-50 py-2 px-1.5 text-center">
-                <StatIcon size={13} className="mx-auto mb-1 text-[#0B2560]" />
-                <p className="text-[11px] font-semibold text-gray-700 leading-tight truncate" title={label}>
-                  {label}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {(treatment.advantages?.length || treatment.disadvantages?.length) ? (
-          <div className="mb-4 space-y-1.5">
-            {treatment.advantages?.slice(0, 2).map((a, i) => (
-              <p key={i} className="text-xs text-green-700 flex items-start gap-1.5">
-                <Check size={13} className="shrink-0 mt-0.5" />
-                {a}
-              </p>
-            ))}
-            {treatment.disadvantages?.slice(0, 1).map((d, i) => (
-              <p key={i} className="text-xs text-gray-500 flex items-start gap-1.5">
-                <Minus size={13} className="shrink-0 mt-0.5" />
-                {d}
-              </p>
-            ))}
-          </div>
-        ) : null}
-
-        <Link
-          href={bookUrl}
-          onClick={() => postAssessmentEvent({ event: "consultation_booked", goal: goal || "", sessionId: sessionId || "", primaryConcern: treatment.name })}
-          className="mt-auto block w-full text-center py-3 rounded-xl font-bold text-sm transition-all duration-200 bg-[#0B2560] text-white hover:bg-[#0d2d72] shadow-sm hover:shadow-md hover:shadow-[#0B2560]/20"
-        >
-          {treatment.cta || consultationCta}
-        </Link>
-      </div>
+      {result.contributingFactors.length > 0 && (
+        <>
+          <hr className="border-gray-100 my-5" />
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B2560] mb-2">Possible Contributing Factors</p>
+          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#F5A623]">
+            {result.contributingFactors.map((f, i) => <li key={i}>{f.label}</li>)}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
@@ -222,147 +181,29 @@ function ReportList({ title, icon, items }: { title: string; icon: string; items
   );
 }
 
-// Surfaces the doctor/AI-drafted-then-doctor-reviewed clinical content that
-// already exists on every TreatmentRecommendation (see the admin's Treatment
-// Mapping tab + "AI Suggest") but was never shown to the patient before —
-// the "why is this happening to you" narrative, not just a treatment card.
-// Deliberately excludes `doctorNotes`: that field is internal guidance for
-// the doctor reviewing the entry, never patient-facing (see the AI Suggest
-// prompt in app/api/admin/quiz/ai-suggest). Honest empty state: renders
-// nothing if a concern's content hasn't been authored yet, rather than
-// showing an empty shell.
-function RootCauseRow({ icon, title, items, tint, caution }: { icon: string; title: string; items: string[]; tint?: boolean; caution?: boolean }) {
-  return (
-    <div className={`rounded-xl p-4 border ${caution ? "bg-amber-50 border-amber-100" : tint ? "bg-[#f6faff] border-[#0B2560]/10" : "border-gray-100"}`}>
-      <p className="text-xs font-bold text-[#0B2560] mb-2 flex items-center gap-1.5">
-        <span>{icon}</span> {title}
-      </p>
-      <ul className="space-y-1">
-        {items.map((item, i) => (
-          <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
-            <span className={`mt-1 shrink-0 ${caution ? "text-amber-500" : "text-[#F5A623]"}`}>•</span> {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function RootCauseAnalysis({ treatment }: { treatment: TreatmentRecommendation }) {
-  const hasContent =
-    treatment.clinicalIndicators.length > 0 ||
-    treatment.possibleCauses.length > 0 ||
-    treatment.suggestedEvaluation.length > 0 ||
-    treatment.patientEducation.length > 0;
-  if (!hasContent) return null;
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-      <div className="bg-[#0B2560] px-5 py-3.5 flex items-center gap-2.5">
-        <span className="text-lg">🔬</span>
-        <div>
-          <p className="text-white font-bold text-sm leading-tight">Your Root Cause Analysis</p>
-          <p className="text-white/60 text-[11px] leading-tight">Based on your answers — confirmed by your doctor at consultation</p>
-        </div>
-      </div>
-      <div className="p-5 space-y-3">
-        {treatment.clinicalIndicators.length > 0 && (
-          <RootCauseRow icon="🔍" title="What we noticed in your answers" items={treatment.clinicalIndicators} />
-        )}
-        {treatment.possibleCauses.length > 0 && (
-          <RootCauseRow icon="🧭" title="Possible causes to explore with your doctor" items={treatment.possibleCauses} tint />
-        )}
-        {treatment.suggestedEvaluation.length > 0 && (
-          <RootCauseRow icon="🩺" title="What your doctor will likely check" items={treatment.suggestedEvaluation} />
-        )}
-        {treatment.contraindications.length > 0 && (
-          <RootCauseRow icon="⚠️" title="Worth mentioning to your doctor" items={treatment.contraindications} caution />
-        )}
-        {treatment.patientEducation.length > 0 && (
-          <RootCauseRow icon="📘" title="In plain terms" items={treatment.patientEducation} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Small, self-contained "email me a copy" affordance — not a gate (the
-// report is already unlocked once a lead exists), purely an optional
-// convenience. Calls the same PATCH endpoint that persists completed
-// answers, this time with an email attached.
-function EmailCopyForm({ leadId }: { leadId: string | null }) {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!leadId || !email.trim()) return;
-    setStatus("sending");
-    try {
-      const res = await fetch("/api/leads", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId, email: email.trim() }),
-      });
-      const data = await res.json();
-      setStatus(data.success ? "sent" : "error");
-    } catch {
-      setStatus("error");
-    }
-  };
-
-  if (status === "sent") {
-    return (
-      <div className="bg-green-50 border border-green-100 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm text-green-800">
-        <span className="text-lg">✅</span> Sent — check your inbox (and spam folder).
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={submit} className="flex flex-col sm:flex-row items-stretch gap-2">
-      <input
-        type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email me a copy of this report (optional)"
-        className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-100 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0B2560]/40"
-      />
-      <button
-        type="submit" disabled={status === "sending" || !email.trim()}
-        className="px-5 py-3 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-sm rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-      >
-        {status === "sending" ? "Sending…" : "Email Me a Copy"}
-      </button>
-      {status === "error" && <p className="text-xs text-red-500 sm:self-center">Something went wrong — please try again.</p>}
-    </form>
-  );
-}
-
 // AI Beauty Journey Module 10 — a short, AI-generated "take-home summary"
-// wrapping up the patient's concern + matched treatment, generated once per
-// session (guarded by `started` ref) and persisted onto
-// PatientJourney.aiSummaryReport the same way Module 5's Journey Timeline
-// persists via AiJourneySimulator's onGenerated. AI Beauty Journey only
-// (goal/sessionId both required) — Skin Quiz has no PatientJourney session
-// to persist onto. Renders nothing on error or while there isn't yet enough
-// journey context to summarize, rather than showing an empty/broken card.
+// wrapping up the patient's concern, generated once per session (guarded by
+// `started` ref) and persisted onto PatientJourney.aiSummaryReport the same
+// way Module 5's Journey Timeline persists via AiJourneySimulator's
+// onGenerated. AI Beauty Journey only (goal/sessionId both required) — Skin
+// Quiz has no PatientJourney session to persist onto. Renders nothing on
+// error or while there isn't yet enough journey context to summarize.
+// Percentage/severity only, same no-treatment-name contract as everywhere
+// else on this screen — see /api/journey-summary's prompt.
 function AiSummaryReportCard({
   goal,
   sessionId,
   goalLabel,
   primaryConcern,
-  treatmentName,
-  category,
-  sessions,
-  costRange,
+  overallConcern,
+  severity,
 }: {
   goal?: string;
   sessionId?: string;
   goalLabel?: string;
   primaryConcern?: string;
-  treatmentName?: string;
-  category?: string;
-  sessions?: string;
-  costRange?: { min: number; max: number; currency: string } | null;
+  overallConcern?: number;
+  severity?: string;
 }) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -370,14 +211,14 @@ function AiSummaryReportCard({
 
   useEffect(() => {
     if (started.current || !goal || !sessionId) return;
-    if (!goalLabel && !primaryConcern && !treatmentName) return;
+    if (!goalLabel && !primaryConcern) return;
     started.current = true;
     setStatus("loading");
 
     fetch("/api/journey-summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goalLabel, primaryConcern, treatmentName, category, sessions, costRange }),
+      body: JSON.stringify({ goalLabel, primaryConcern, overallConcern, severity }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -423,29 +264,35 @@ function AiSummaryReportCard({
 
 export default function UnifiedJourneyResults({
   resultSections,
-  recommendations,
+  journeyResult,
+  aiExplanation,
   doctorMessage,
   primaryConcern,
   patientReport,
-  enableChat,
-  enableEmail,
   leadId,
   onRetake,
   journey,
   goal,
   sessionId,
-  costPlanningNote,
   preferredClinic,
   leadName,
   leadPhone,
 }: {
   resultSections: ResultSectionConfig[];
-  recommendations: TreatmentRecommendation[];
+  // Percentage/severity/contributing-factors result — the no-treatment-
+  // reveal replacement for the old TreatmentCard/CostRangeCard/Journey
+  // Explorer/Root-Cause-Analysis/Email-Me-a-Copy blocks (all removed along
+  // with Treatment Mapping — see scoreJourneyConcern in
+  // assessmentScoring.ts). Null while it hasn't been computed yet, or for a
+  // goal with no mapped intake questions at all.
+  journeyResult: AssessmentResult | null;
+  // Plain-language explanation of journeyResult — same "In Your Own Words"
+  // contract as skin-quiz's AssessmentResults.tsx (/api/patient-report's
+  // assessmentType branch). Undefined while generating or unconfigured.
+  aiExplanation?: string;
   doctorMessage: string;
   primaryConcern: string;
   patientReport: PatientReport | null;
-  enableChat: boolean;
-  enableEmail: boolean;
   leadId: string | null;
   onRetake?: () => void;
   journey?: JourneyPresentationData;
@@ -453,10 +300,6 @@ export default function UnifiedJourneyResults({
   // skin-quiz, which has no goal concept of its own.
   goal?: string;
   sessionId?: string;
-  // AI Beauty Journey only (JourneyConfig.costPlanningNote) — undefined for
-  // Skin Quiz, which falls back to a generic note inside CostRangeCard's
-  // caller below.
-  costPlanningNote?: string;
   // AI Beauty Journey Module 9 — already known by the time the patient
   // reaches results (Branch Selection / Lead Capture), threaded into the
   // booking handoff so /book can prefill instead of re-asking. Undefined
@@ -465,40 +308,19 @@ export default function UnifiedJourneyResults({
   leadName?: string;
   leadPhone?: string;
 }) {
-  const { publicWhatsApp, consultationCta, showPriceOnCards } = useSiteConfig() as any;
-  const svcForCostRange = journey?.service;
-  const costRangePersisted = useRef(false);
-
-  // Fires once when a real matched Service + AI Beauty Journey session are
-  // both available — persists the computed range onto PatientJourney the
-  // same way the Journey Timeline (Module 5) persists via onGenerated,
-  // just without an AI call in between since this is a pure calculation.
-  useEffect(() => {
-    if (!svcForCostRange?.price || !goal || !sessionId || costRangePersisted.current) return;
-    costRangePersisted.current = true;
-    const { min, max } = computeCostRange(svcForCostRange.price);
-    fetch("/api/patient-journey", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        goal,
-        currentModule: "doctor_matching",
-        costRange: { min, max, currency: "₹", note: costPlanningNote || "" },
-      }),
-    }).catch(() => {});
-  }, [svcForCostRange, goal, sessionId, costPlanningNote]);
+  const { publicWhatsApp, consultationCta } = useSiteConfig() as any;
+  const hasResult = !!journeyResult && journeyResult.categoryScores.length > 0;
 
   // Plan My Journey with no matched Service at all (e.g. weight-loss before
   // Phase 3 content lands) — nothing clinical to show either, since no
   // questions were asked for this goal. Keep this as its own simple screen
   // rather than forcing it through the full clinical-intake-flavored layout
-  // below, which assumes there's at least a recommendation or a service.
-  if (journey && !journey.service && recommendations.length === 0) {
+  // below, which assumes there's at least a scored result or a service.
+  if (journey && !journey.service && !hasResult) {
     return (
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16 text-center">
         <span className="text-5xl">{journey.goalIcon}</span>
-        <h2 className="text-2xl font-headline font-bold text-[#0B2560] mt-4">{journey.goalLabel} treatments coming soon</h2>
+        <h2 className="text-2xl font-headline font-bold text-[#0B2560] mt-4">{journey.goalLabel} — let's talk it through</h2>
         <p className="text-gray-500 max-w-md mx-auto mt-2">We're preparing options for this goal. Book a consultation and our specialists will guide you directly.</p>
         <Link href="/book" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-6">
           {consultationCta || "Book a Consultation"} <ArrowRight size={15} />
@@ -510,19 +332,18 @@ export default function UnifiedJourneyResults({
   const sectionVisible = (key: ResultSectionKey) => resultSections.find((s) => s.key === key)?.visible !== false;
   const orderOf = (key: ResultSectionKey) => resultSections.find((s) => s.key === key)?.order ?? 999;
 
-  const svc = journey?.service;
-  const alternatives = journey?.alternatives || [];
-
-  // Same combined semantics as the original two independent toggles: "All"
-  // wins if both happen to be visible, "Top" narrows to just the #1 match,
-  // neither visible means no recommendation card renders at all.
-  const showAll = sectionVisible("allRecommendations");
-  const showTop = sectionVisible("topRecommendation");
-  const visibleRecommendations = showAll ? recommendations : showTop ? recommendations.slice(0, 1) : [];
-  const recommendationsOrder = showAll ? orderOf("allRecommendations") : orderOf("topRecommendation");
-
-  const bookServiceName = recommendations[0]?.name || svc?.name || "";
-  const bookUrl = buildBookUrl(bookServiceName, { location: preferredClinic, name: leadName, phone: leadPhone, sessionId });
+  const primaryCategoryLabel = journeyResult?.categoryScores[0]?.label || journey?.goalLabel || primaryConcern || "";
+  const bookUrl = buildBookUrl({
+    assessmentType: "journey",
+    concern: primaryCategoryLabel,
+    overallConcern: journeyResult?.overallConcern,
+    severity: journeyResult?.severity,
+    leadId,
+    location: preferredClinic,
+    name: leadName,
+    phone: leadPhone,
+    sessionId,
+  });
   // Branch-aware — /plan-my-journey and /skin-quiz aren't location-scoped
   // URLs, so the visitor's already-selected branch (Module 8) is passed
   // explicitly rather than relying on useBranchWhatsApp's own pathname/
@@ -530,146 +351,27 @@ export default function UnifiedJourneyResults({
   const branchWhatsApp = useBranchWhatsApp(publicWhatsApp || "", preferredClinic);
   const waBaseHref = branchWhatsApp ? toWaLink(branchWhatsApp) : "";
   const waHref = waBaseHref
-    ? `${waBaseHref}${bookServiceName ? `?text=${encodeURIComponent(`Hi, I just completed my clinical intake and would like to know more about ${bookServiceName} before my consultation.`)}` : ""}`
+    ? `${waBaseHref}${primaryCategoryLabel ? `?text=${encodeURIComponent(`Hi, I just completed my Plan My Journey intake for ${primaryCategoryLabel} and would like to know more before my consultation.`)}` : ""}`
     : "";
 
   type Block = { key: ResultSectionKey; order: number; node: React.ReactNode };
   const blocks: Block[] = [];
 
-  if (visibleRecommendations.length > 0) {
+  if (hasResult && journeyResult) {
     blocks.push({
-      key: showAll ? "allRecommendations" : "topRecommendation",
-      order: recommendationsOrder,
-      node: (
-        <div key="recommendations" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {visibleRecommendations.map((rec, i) => (
-            <TreatmentCard
-              key={rec.id}
-              treatment={rec}
-              rank={i}
-              goal={goal}
-              sessionId={sessionId}
-              preferredClinic={preferredClinic}
-              leadName={leadName}
-              leadPhone={leadPhone}
-            />
-          ))}
-        </div>
-      ),
+      key: "topRecommendation",
+      order: orderOf("topRecommendation"),
+      node: <JourneyConcernSummary key="concern-summary" result={journeyResult} />,
     });
-  } else if (recommendations.length === 0 && !svc) {
-    // Neither engine matched anything — the one case worth an explicit
-    // empty state, mirroring the original honest "no fabrication" fallback.
+  } else if (!journey?.service) {
+    // Nothing matched — the one case worth an explicit empty state,
+    // mirroring the original honest "no fabrication" fallback.
     blocks.push({
       key: "topRecommendation",
       order: orderOf("topRecommendation"),
       node: (
         <div key="no-match" className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500">
           We couldn't match a discussion topic to your answers — a specialist will review your responses personally.
-        </div>
-      ),
-    });
-  }
-
-  if (sectionVisible("rootCauseAnalysis") && recommendations[0]) {
-    blocks.push({
-      key: "rootCauseAnalysis",
-      order: orderOf("rootCauseAnalysis"),
-      node: <RootCauseAnalysis key="root-cause" treatment={recommendations[0]} />,
-    });
-  }
-
-  if (sectionVisible("journeyExplorer") && svc) {
-    blocks.push({
-      key: "journeyExplorer",
-      order: orderOf("journeyExplorer"),
-      node: (
-        <div key="journey" className="space-y-6">
-          <div>
-            <h3 className="text-xl font-headline font-bold text-[#0B2560] mb-1">{svc.name}</h3>
-            {alternatives.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {alternatives.map((alt: any) => (
-                  <button
-                    key={String(alt._id)}
-                    onClick={() => journey?.onSwitchService?.(String(alt._id))}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-[#0B2560]/30"
-                  >
-                    Compare: {alt.name}
-                  </button>
-                ))}
-              </div>
-            )}
-            {alternatives.length > 0 && (
-              <div className="mt-5">
-                <TreatmentComparison current={svc} alternatives={alternatives} showPrice={showPriceOnCards} />
-              </div>
-            )}
-          </div>
-
-          {svc.journeyExplorer?.length ? (
-            <TreatmentJourneyExplorer stages={svc.journeyExplorer} serviceName={svc.name} />
-          ) : (
-            <TreatmentJourney sessions={svc.sessionsCount || 6} treatmentName={svc.name} phases={svc.journeyPhases} />
-          )}
-
-          <RecoveryTimeline recoveryTime={svc.recoveryTime} stages={svc.recoveryStages} />
-
-          <AiJourneySimulator
-            key={String(svc._id)}
-            serviceId={String(svc._id)}
-            serviceName={svc.name}
-            initialConcern={primaryConcern}
-            initialGoal={journey?.goalLabel || ""}
-            // goal is only non-empty for AI Beauty Journey (Skin Quiz passes
-            // "" — see the prop comment above) — scopes auto-generation +
-            // persistence to that flow without changing Skin Quiz's
-            // existing manual-entry behavior.
-            autoStart={!!goal && !!primaryConcern}
-            onGenerated={
-              goal && sessionId
-                ? (result) => {
-                    fetch("/api/patient-journey", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        sessionId,
-                        goal,
-                        currentModule: "cost_planning",
-                        timeline: { ...result, generatedAt: new Date().toISOString() },
-                      }),
-                    }).catch(() => {});
-                  }
-                : undefined
-            }
-          />
-        </div>
-      ),
-    });
-  }
-
-  if (sectionVisible("costEstimator") && svc) {
-    // The range card is AI Beauty Journey only (goal truthy — see the
-    // costPlanningNote prop comment) — it leads with "typical range,
-    // confirmed at consultation" before the exact calculator below, which
-    // both flows keep showing unchanged for patients who want to dig into
-    // session-count/EMI specifics.
-    const range = goal ? computeCostRange(svc.price) : null;
-    blocks.push({
-      key: "costEstimator",
-      order: orderOf("costEstimator"),
-      node: (
-        <div key="cost" className="grid sm:grid-cols-2 gap-6">
-          {range && (
-            <CostRangeCard
-              min={range.min}
-              max={range.max}
-              currency="₹"
-              note={costPlanningNote || "This is a typical range for patients with similar needs — your exact cost is confirmed by a doctor after consultation."}
-            />
-          )}
-          <CostEstimator basePrice={svc.price} sessionsRequired={svc.sessionsRequired} serviceName={svc.name} />
-          <EMICalculator price={svc.price} />
         </div>
       ),
     });
@@ -738,7 +440,6 @@ export default function UnifiedJourneyResults({
   }
 
   if (sectionVisible("aiSummaryReport") && goal && sessionId) {
-    const costRangeForSummary = svcForCostRange?.price ? computeCostRange(svcForCostRange.price) : null;
     blocks.push({
       key: "aiSummaryReport",
       order: orderOf("aiSummaryReport"),
@@ -749,10 +450,8 @@ export default function UnifiedJourneyResults({
           sessionId={sessionId}
           goalLabel={journey?.goalLabel}
           primaryConcern={primaryConcern}
-          treatmentName={svc?.name || recommendations[0]?.name}
-          category={svc?.category}
-          sessions={svc?.sessionsCount ? `${svc.sessionsCount} sessions` : recommendations[0]?.sessions}
-          costRange={costRangeForSummary ? { ...costRangeForSummary, currency: "₹" } : null}
+          overallConcern={journeyResult?.overallConcern}
+          severity={journeyResult?.severity}
         />
       ),
     });
@@ -781,14 +480,6 @@ export default function UnifiedJourneyResults({
     });
   }
 
-  if (sectionVisible("emailForm") && enableEmail && leadId) {
-    blocks.push({
-      key: "emailForm",
-      order: orderOf("emailForm"),
-      node: <EmailCopyForm key="email" leadId={leadId} />,
-    });
-  }
-
   blocks.sort((a, b) => a.order - b.order);
 
   return (
@@ -796,13 +487,13 @@ export default function UnifiedJourneyResults({
       <div className="text-center">
         <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
-          {recommendations.length > 0 ? "Your Clinical Intake Is Complete" : `Your ${journey?.goalLabel || "Journey"}`}
+          {hasResult ? "Your Clinical Intake Is Complete" : `Your ${journey?.goalLabel || "Journey"}`}
         </span>
         <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-3 tracking-tight">
-          {recommendations.length > 0 ? "Possible Discussion Topics for Your Consultation" : svc?.name || "Your Personalised Plan"}
+          {hasResult ? "Your Pre-Consultation Summary" : `Your ${journey?.goalLabel || "Personalised"} Plan`}
         </h2>
         <p className="text-sm text-gray-500 max-w-md mx-auto">
-          {patientReport?.summary || "Based on what you shared — your doctor will confirm what's right for you after a full evaluation."}
+          {aiExplanation || patientReport?.summary || "Based on what you shared — your doctor will confirm what's right for you after a full evaluation."}
         </p>
       </div>
 
@@ -817,10 +508,6 @@ export default function UnifiedJourneyResults({
 
       {patientReport && patientReport.questionsForDoctor.length > 0 && (
         <ReportList title="Questions to Ask Your Doctor" icon="💬" items={patientReport.questionsForDoctor} />
-      )}
-
-      {enableChat && recommendations.length > 0 && (
-        <AssessmentChat primaryConcern={primaryConcern} recommendations={recommendations} doctorMessage={doctorMessage} />
       )}
 
       {onRetake && (

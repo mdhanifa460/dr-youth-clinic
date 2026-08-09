@@ -4,8 +4,86 @@
 // can carry tags/weight, so any question (not just the concern one) can
 // influence which concern — and therefore which treatments — surface.
 import type { AssessmentQuestion, TreatmentMapEntry, TreatmentRecommendation } from "./quizDefaults";
+import { DEFAULT_SEVERITY_THRESHOLDS } from "./assessmentTypeDefaults";
+import type { AssessmentResult } from "./assessmentTypeScoring";
 
 export type AssessmentAnswers = Record<string, string | string[] | number>;
+
+function tagWeightsFrom(questions: AssessmentQuestion[], answers: AssessmentAnswers): Record<string, number> {
+  const tagWeights: Record<string, number> = {};
+  for (const q of questions) {
+    const given = answers[q.id];
+    if (given === undefined || given === null || given === "") continue;
+    const chosenIds = Array.isArray(given) ? given : [String(given)];
+    for (const answerId of chosenIds) {
+      const ans = q.answers.find((a) => a.id === answerId);
+      if (!ans) continue;
+      for (const tag of ans.tags) {
+        tagWeights[tag] = (tagWeights[tag] || 0) + (ans.weight || 0);
+      }
+    }
+  }
+  return tagWeights;
+}
+
+// The percentage-based, no-treatment-reveal result for Plan My Journey —
+// same output shape as the newer assessmentTypeScoring.ts (so it can feed
+// straight into the same <AssessmentResults> component skin-quiz uses),
+// but computed from QuizConfig's EXISTING tag-weight content: no new admin
+// config, no re-authoring of PMJ's questions/treatments. A category's "max
+// weight" is auto-derived (the highest-weight answer, per question, that
+// carries that tag) rather than admin-set, since QuizConfig never had a
+// per-category maxWeight field to begin with.
+export function scoreJourneyConcern(
+  questions: AssessmentQuestion[],
+  answers: AssessmentAnswers,
+  treatmentMap: TreatmentMapEntry[]
+): AssessmentResult {
+  const tagWeights = tagWeightsFrom(questions, answers);
+
+  const maxWeightByTag: Record<string, number> = {};
+  for (const q of questions) {
+    const bestByTag: Record<string, number> = {};
+    for (const ans of q.answers) {
+      for (const tag of ans.tags) {
+        bestByTag[tag] = Math.max(bestByTag[tag] || 0, ans.weight || 0);
+      }
+    }
+    for (const [tag, w] of Object.entries(bestByTag)) {
+      maxWeightByTag[tag] = (maxWeightByTag[tag] || 0) + w;
+    }
+  }
+
+  const categoryScores = treatmentMap
+    .filter((entry) => (tagWeights[entry.concernTag] || 0) > 0)
+    .map((entry) => {
+      const max = maxWeightByTag[entry.concernTag] || 0;
+      const percent = max > 0 ? Math.round(Math.max(0, Math.min(100, (tagWeights[entry.concernTag] / max) * 100))) : 0;
+      return { key: entry.concernTag, label: entry.concernLabel, percent };
+    })
+    .sort((a, b) => b.percent - a.percent);
+
+  const overallConcern = categoryScores[0]?.percent ?? 0;
+  const severity = DEFAULT_SEVERITY_THRESHOLDS.find((b) => overallConcern >= b.min && overallConcern <= b.max)?.label
+    || DEFAULT_SEVERITY_THRESHOLDS[DEFAULT_SEVERITY_THRESHOLDS.length - 1]?.label
+    || "";
+
+  // Contributing factors used to be sourced from each matched treatment's
+  // possibleCauses — removed along with Treatment Mapping (business
+  // decision: doctors work from concern%/severity/raw answers, not a
+  // system-suggested treatment list; see architecture note on
+  // scoreJourneyConcern above). No concern-level replacement source exists
+  // in QuizConfig, so this stays empty rather than reintroducing a
+  // treatment-keyed one. AssessmentResults/UnifiedJourneyResults already
+  // skip this section entirely when the array is empty.
+  const contributingFactors: AssessmentResult["contributingFactors"] = [];
+
+  // No per-answer riskWeight data exists in QuizConfig — riskScore/riskLevel
+  // stay at their zero-value defaults; <AssessmentResults> only renders the
+  // Risk ring when riskLevel is non-empty, so this cleanly omits it rather
+  // than showing a fabricated "0% risk".
+  return { categoryScores, overallConcern, severity, riskScore: 0, riskLevel: "", contributingFactors };
+}
 
 export function scoreRecommendations(
   questions: AssessmentQuestion[],

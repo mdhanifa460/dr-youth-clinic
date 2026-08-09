@@ -78,7 +78,11 @@ const LeadSchema = new mongoose.Schema(
     // doctor-facing only via Doctor Review Mode, never returned to the
     // patient. Absent on every lead created before this shipped; every
     // reader (analytics, admin UI) must treat that as "legacy," not an error.
-    assessmentType: { type: String, enum: ["hair", "skin", "body", ""], default: "" },
+    // "journey" = Plan My Journey (goal-based flow, reuses this same field/
+    // AssessmentResult shape via scoreJourneyConcern() so the AI-explanation
+    // branch in /api/patient-report and the doctor-dashboard insights apply
+    // to it too, without a parallel set of Lead fields).
+    assessmentType: { type: String, enum: ["hair", "skin", "body", "journey", ""], default: "" },
     assessmentResult: {
       categoryScores:       { type: mongoose.Schema.Types.Mixed, default: [] }, // [{key,label,percent}]
       overallConcern:       { type: Number, default: null },
