@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone, Bot, Menu } from "lucide-react";
+import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone, Bot, Menu, Sparkles } from "lucide-react";
 
 const GROUPS = [
   {
@@ -61,6 +61,15 @@ const GROUPS = [
         title: "Free Label Controls",
         desc: "Toggle whether CTAs say \"Free Consultation\" or \"Consultation\" and \"Free Clinical Intake\" or \"Clinical Intake\" — one switch, all pages site-wide.",
         tags: ["Free CTA", "Consultation", "Clinical Intake"],
+      },
+      {
+        href: "/admin/settings/personalization",
+        icon: Sparkles,
+        color: "bg-indigo-50 text-indigo-600",
+        border: "border-indigo-100 hover:border-indigo-300",
+        title: "Homepage Personalization",
+        desc: "Master on/off for anonymous visitor-interest tracking — the foundation for a homepage that adapts to what each visitor is actually interested in. Off by default.",
+        tags: ["Personalization", "Interest tracking", "Phase 1"],
       },
     ],
   },

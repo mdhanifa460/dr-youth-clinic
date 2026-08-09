@@ -8,6 +8,7 @@ import type { JourneyGoalSlug, JourneyGoalBundle } from "@/app/lib/journeyGoals"
 import type { IJourneyGoal } from "@/app/models/JourneyConfig";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion } from "@/app/lib/quizDefaults";
 import { scoreJourneyConcern, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import { postInterestEvent } from "@/app/lib/personalization";
 import {
   seedAnswersFromTags,
   getOrderedQuestions,
@@ -299,6 +300,10 @@ function PlanMyJourneyFlow({
       // asked for this goal (e.g. weight-loss's straight-to-lead path still
       // ends in a real results screen).
       postAssessmentEvent({ event: "completed", goal, sessionId });
+      // Personalization Engine (Phase 1) — goal is already the clean
+      // category slug (hair/skin/laser/weight-loss), no mapping needed.
+      // See the same note in skin-quiz/page.tsx's trackEvent.
+      if (goal) postInterestEvent("assessment_completed", goal);
       setScreen("results");
     } catch {
       setLeadStatus("error");

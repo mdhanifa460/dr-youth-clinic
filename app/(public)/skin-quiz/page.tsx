@@ -7,6 +7,7 @@ import { scoreAssessment, type AssessmentResult } from "@/app/lib/assessmentType
 import type { AssessmentTypeConfig } from "@/app/lib/assessmentTypeDefaults";
 import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, hasNextQuestion as computeHasNextQuestion, postAssessmentEvent, getOrCreateSessionId } from "@/app/lib/assessmentFlow";
 import type { AssessmentAnswers } from "@/app/lib/assessmentScoring";
+import { postInterestEvent } from "@/app/lib/personalization";
 import { locations } from "@/app/data/locations";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
 import ScanPanel from "@/app/components/assessment/ScanPanel";
@@ -254,6 +255,15 @@ export default function SkinQuizPage() {
       event, campaign, qrSource, clinicLocation, channel, sessionId,
       assessmentType: assessmentType || "", severity: opts?.severity || "",
     });
+    // Personalization Engine (Phase 1) — a completed assessment is the one
+    // event type with a clean, unambiguous category (assessmentType IS
+    // "hair"/"skin"/"body" already, no taxonomy mapping needed) and the
+    // highest-confidence interest signal available. Other emission points
+    // (treatment page views, blog reads, etc.) are deliberately not wired
+    // yet — see app/lib/personalization.ts's header comment.
+    if (event === "completed" && assessmentType) {
+      postInterestEvent("assessment_completed", assessmentType);
+    }
   }, [campaign, qrSource, clinicLocation, channel, sessionId, assessmentType]);
 
   const orderedQuestions = typeConfig ? getOrderedQuestions(typeConfig.questions, answers) : [];

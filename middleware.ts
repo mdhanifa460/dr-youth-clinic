@@ -14,6 +14,25 @@ const ADMIN_SESSION_SECRET =
   "change-this-admin-session-secret";
 
 const VALID_LOCATIONS = ["chennai", "bangalore", "coimbatore", "kochi"];
+const VISITOR_COOKIE = "visitor_id";
+
+// Personalization engine foundation (Phase 1) — a random, non-PII visitor
+// identifier, set on whichever public page the visitor lands on first
+// (not just "/" — most visitors arrive via search/ads on a blog post or
+// service page, never the homepage). No name/email/phone is ever stored
+// against this; it only ever labels anonymous InterestEvent rows so a
+// later page (e.g. the homepage) can look up that visitor's own event
+// history. `crypto.randomUUID()` is available in the Edge runtime
+// middleware runs in, same as sessionId generation elsewhere in the app.
+function ensureVisitorId(req: NextRequest, res: NextResponse) {
+  if (req.cookies.get(VISITOR_COOKIE)?.value) return;
+  res.cookies.set(VISITOR_COOKIE, crypto.randomUUID(), {
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+    secure: true,
+    sameSite: "lax",
+  });
+}
 
 function bytesToHex(bytes: ArrayBuffer) {
   return Array.from(new Uint8Array(bytes))
@@ -96,26 +115,35 @@ export async function middleware(req: NextRequest) {
     return withPathname(req);
   }
 
+  const response = NextResponse.next();
+
   // Location detection — only run when no cookie is set yet to avoid redundant Set-Cookie on every request
   if (pathname === "/" && !req.cookies.get(LOCATION_COOKIE)?.value) {
     const country = req.headers.get("x-vercel-ip-country-region") ?? req.headers.get("x-geo-country");
     const detectedLocation = getLocationFromCountry(country ?? undefined);
 
     if (detectedLocation && VALID_LOCATIONS.includes(detectedLocation)) {
-      const response = NextResponse.next();
       response.cookies.set(LOCATION_COOKIE, detectedLocation, {
         maxAge: 60 * 60 * 24 * 365,
         path: "/",
         secure: true,
         sameSite: "lax",
       });
-      return response;
     }
   }
 
-  return NextResponse.next();
+  ensureVisitorId(req, response);
+  return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/"],
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    // Every public page — needed so a first-time visitor gets a visitor_id
+    // regardless of which page they land on first (search/ad traffic rarely
+    // enters through "/"). Excludes /api (its own routes read the cookie
+    // directly, no need to re-run this), static assets, and Next internals.
+    "/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
+  ],
 };

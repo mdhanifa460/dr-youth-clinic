@@ -97,6 +97,13 @@ export interface ISettings extends Document {
   // Same reasoning for the /offers listing page — a singleton with no
   // per-record document.
   offersPageLayoutEngineEnabled?: boolean;
+  // Homepage Personalization Engine (Phase 1) — master on/off for the
+  // whole visitor-interest tracking pipeline (InterestEvent collection +
+  // /api/interest-events + every postInterestEvent() call site). Defaults
+  // off, same as the layout-engine flags above: this collects visitor
+  // behavioral data, so it stays inert until an admin explicitly turns it
+  // on rather than silently starting to track on deploy.
+  personalizationEnabled?: boolean;
   promotions: {
     promoCode: string;
     promoDiscount: number;
@@ -343,6 +350,7 @@ const SettingsSchema = new Schema<ISettings>(
     },
     homepageLayoutEngineEnabled: { type: Boolean, default: false },
     offersPageLayoutEngineEnabled: { type: Boolean, default: false },
+    personalizationEnabled: { type: Boolean, default: false },
     promotions: {
       promoCode:        { type: String,  default: '' },
       promoDiscount:    { type: Number,  default: 10 },
