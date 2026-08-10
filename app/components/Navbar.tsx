@@ -82,14 +82,22 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
 
     const handleScroll = () => {
       const scrollY = window.scrollY + 120;
+      // Some homepage sections (e.g. the embedded Doctors highlight) have
+      // no matching nav item — "Doctors" in the nav links to the separate
+      // /doctors page instead. Scrolling through one of those used to leave
+      // whichever nav item matched last still highlighted, which reads as
+      // the highlight "sticking" or jumping to the wrong place. Falling
+      // back to "home" (the same default used on route change) when
+      // nothing matches keeps the highlight honest instead of stale.
+      let matched = "";
       for (const id of sectionIds) {
         const section = document.getElementById(id);
-        if (section) {
-          const top = section.offsetTop;
-          const height = section.offsetHeight;
-          if (scrollY >= top && scrollY < top + height) setActive(id);
-        }
+        if (!section) continue;
+        const top = section.offsetTop;
+        const height = section.offsetHeight;
+        if (scrollY >= top && scrollY < top + height) { matched = id; break; }
       }
+      setActive(matched || "home");
     };
 
     const handleClickOutside = () => {
