@@ -1,31 +1,23 @@
-import { unstable_cache } from 'next/cache';
-import { connectDB } from '@/app/lib/mongodb';
-import { Category, DEFAULT_CATEGORIES } from '@/app/models/Category';
-
 // Canonical category definitions shared between the real category listing
 // pages (app/(public)/[location]/services/[category]/page.tsx) and the
 // homepage's category showcase (app/components/homepage/ServicesCards.tsx)
 // — extracted here so both stay in sync instead of maintaining two copies.
 //
+// Plain data/types only, deliberately — this file is imported by 'use
+// client' components (app/admin/homepage/page.tsx, app/admin/banners/
+// [id]/page.tsx) for CATEGORY_MAP/CATEGORY_SLUGS. A server-only import
+// here (connectDB, a Mongoose model) would pull the whole Mongoose chain
+// into those client bundles and break the build — see
+// app/lib/getCachedCategories.ts for the DB-backed reader, kept separate
+// for exactly this reason.
+//
 // CATEGORY_MAP/CATEGORY_META below are the original hardcoded set, still
-// used by those two consumers. getCachedCategories() is the newer,
-// admin-managed source (Settings → Service Categories, the Category model)
-// — currently wired only into the Services Hub page
+// used by those two consumers. getCachedCategories() (the other file) is
+// the newer, admin-managed source (Settings → Service Categories, the
+// Category model) — currently wired only into the Services Hub page
 // (app/(public)/[location]/services/page.tsx). The other two consumers
 // migrating to it is deliberately out of scope here; flagged as related
 // follow-up, not silently dropped.
-export type { ICategory } from '@/app/models/Category';
-
-export const getCachedCategories = unstable_cache(
-  async () => {
-    await connectDB();
-    const count = await (Category as any).countDocuments({});
-    if (count === 0) await (Category as any).insertMany(DEFAULT_CATEGORIES);
-    return (Category as any).find({ active: true }).sort({ order: 1 }).lean();
-  },
-  ['public-service-categories'],
-  { revalidate: 300, tags: ['categories'] }
-);
 
 // URL slug -> DB `Service.category` value
 export const CATEGORY_MAP: Record<string, string> = {

@@ -7,7 +7,7 @@ import { Service } from '@/app/models/Service';
 import { LocationContent } from '@/app/models/LocationContent';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
-import { getCachedCategories } from '@/app/lib/serviceCategories';
+import { getCachedCategories } from '@/app/lib/getCachedCategories';
 
 export const revalidate = 300;
 
