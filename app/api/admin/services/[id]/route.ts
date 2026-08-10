@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { deleteImage } from '@/app/lib/cloudinary';
-import { Service } from '@/app/models/Service';
+import { Service, computeSeoScore } from '@/app/models/Service';
 import type { IService } from '@/app/models/Service';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { removeChunk } from '@/app/lib/rag/KnowledgeBase';
@@ -52,6 +52,11 @@ export async function PUT(
     // treat '' as "not set"). findByIdAndUpdate is a query, not a document
     // save, so the schema-level setter for this isn't guaranteed to run here.
     if (body.painLevel === '') delete body.painLevel;
+
+    // Computed directly against the request body, not via a pre-hook — see
+    // the removed-hook comment in Service.ts for why a findOneAndUpdate
+    // hook silently failed to persist this under this Mongoose version.
+    body.seoScore = computeSeoScore(body);
 
     const service: IService | null = await (Service as any).findByIdAndUpdate(
       params.id,

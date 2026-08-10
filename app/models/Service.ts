@@ -327,8 +327,11 @@ ServiceSchema.index({ targetLocations: 1 });
 
 // Deterministic content-completeness score (0-100) — not a live search-ranking
 // signal, just how much of the on-page/SEO content an admin has actually filled
-// in. Recomputed on every save so it stays honest as content changes.
-function computeSeoScore(svc: any): number {
+// in. Recomputed on every save so it stays honest as content changes. Exported
+// so the admin edit route (findByIdAndUpdate, not .save()) can compute it
+// directly against the request body — see the route-level comment for why
+// that's more reliable than a pre('findOneAndUpdate') hook here.
+export function computeSeoScore(svc: any): number {
   let score = 0;
   const metaTitleLen = svc.metaTitle?.length ?? 0;
   const metaDescLen = svc.metaDescription?.length ?? 0;
@@ -374,17 +377,16 @@ ServiceSchema.pre('save', async function () {
   this.seoScore = computeSeoScore(this);
 });
 
-// The admin edit route updates via findByIdAndUpdate, which bypasses the
-// 'save' hook above — recompute the score here too so it stays accurate
-// after edits, not just on creation.
-ServiceSchema.pre('findOneAndUpdate', function () {
-  const update: any = this.getUpdate();
-  if (!update) return;
-  const target = update.$set ?? update;
-  if (target && typeof target === 'object') {
-    target.seoScore = computeSeoScore(target);
-  }
-});
+// A pre('findOneAndUpdate') hook used to live here to recompute the score
+// on the admin edit route's findByIdAndUpdate calls (which bypass the
+// 'save' hook above). Removed: under this Mongoose version, a plain update
+// body gets split into a top-level object plus an accompanying, separately-
+// applied update.$set before the hook runs, and mutating either (even via
+// this.setUpdate()) was silently not reflected in the persisted document —
+// every edit reset seoScore to 0 regardless of actual content. The admin
+// route now computes computeSeoScore(body) directly against the request
+// body before calling findByIdAndUpdate, which sidesteps the update-casting
+// entirely — see app/api/admin/services/[id]/route.ts.
 
 // Keeps the RAG knowledge base (KnowledgeChunk) in sync whenever a service is
 // created or edited. Fire-and-forget + logged, never allowed to fail the
