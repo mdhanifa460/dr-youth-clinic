@@ -88,3 +88,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!updated) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
   return NextResponse.json({ success: true, data: updated });
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const denied = await requirePermission("bookings", "full");
+  if (denied) return denied;
+
+  await connectDB();
+  const deleted = await (Booking as any).findByIdAndDelete(params.id).lean();
+  if (!deleted) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  return NextResponse.json({ success: true });
+}

@@ -6,7 +6,7 @@ import {
   MessageCircle, Phone, Calendar, ArrowRight, AlertCircle,
   CheckCircle, Clock, TrendingUp, Users, Loader2, Edit2,
   IndianRupee, Filter, Download, Plus, History, StickyNote,
-  Info, Repeat2,
+  Info, Repeat2, Trash2,
 } from "lucide-react";
 import type { AdminRole } from "@/app/lib/permissions";
 import ConvertToAppointmentModal from "@/app/admin/components/ConvertToAppointmentModal";
@@ -660,6 +660,8 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
   const [statsLoading,setStatsLoading]= useState(true);
   const [selected,    setSelected]    = useState<Booking | null>(null);
   const [error,       setError]       = useState("");
+  const [checkedIds,  setCheckedIds]  = useState<Set<string>>(new Set());
+  const [deleting,    setDeleting]    = useState(false);
 
   // Filters
   const [search,   setSearch]   = useState("");
@@ -730,6 +732,57 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
     setSearch(""); setStatus(""); setService(""); setLocation(""); setSource(""); setDateFrom(""); setDateTo("");
   }
 
+  function toggleChecked(id: string) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleCheckAll() {
+    setCheckedIds((prev) => (prev.size === bookings.length ? new Set() : new Set(bookings.map((b) => b._id))));
+  }
+
+  async function deleteOne(id: string, name: string) {
+    if (!confirm(`Delete the booking/lead for "${name}"? This can't be undone.`)) return;
+    setDeleting(true);
+    const res = await fetch(`/api/admin/bookings/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (data.success) {
+      setBookings((prev) => prev.filter((b) => b._id !== id));
+      setCheckedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+      if (selected?._id === id) setSelected(null);
+      setTotal((t) => t - 1);
+      fetchStats();
+    } else {
+      setError(data.message || "Failed to delete");
+    }
+    setDeleting(false);
+  }
+
+  async function deleteSelected() {
+    const ids = Array.from(checkedIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} selected booking${ids.length !== 1 ? "s" : ""}/lead${ids.length !== 1 ? "s" : ""}? This can't be undone.`)) return;
+    setDeleting(true);
+    const res = await fetch("/api/admin/bookings/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setCheckedIds(new Set());
+      setSelected(null);
+      fetchBookings(page);
+      fetchStats();
+    } else {
+      setError(data.message || "Failed to delete selected");
+    }
+    setDeleting(false);
+  }
+
   function handleUpdate(id: string, patch: Partial<Booking>) {
     setBookings((prev) => prev.map((b) => b._id === id ? { ...b, ...patch } : b));
     if (selected?._id === id) setSelected((s) => s ? { ...s, ...patch } : s);
@@ -774,6 +827,12 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                 className="flex items-center gap-1.5 text-xs font-semibold border border-gray-200 bg-white text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-50 transition">
                 <Download size={13} /> Export
               </button>
+              {canWrite && checkedIds.size > 0 && (
+                <button onClick={deleteSelected} disabled={deleting}
+                  className="flex items-center gap-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-600 px-3 py-2 rounded-xl hover:bg-red-100 transition disabled:opacity-50">
+                  {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Delete Selected ({checkedIds.size})
+                </button>
+              )}
             </div>
           </div>
 
@@ -878,6 +937,17 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/70">
+                      {canWrite && (
+                        <th className="px-4 py-3 w-8">
+                          <input
+                            type="checkbox"
+                            checked={bookings.length > 0 && checkedIds.size === bookings.length}
+                            onChange={toggleCheckAll}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded border-gray-300"
+                          />
+                        </th>
+                      )}
                       {["Patient","Service","Location","Date & Time","Status","Source","Actions"].map((h) => (
                         <th key={h} className="px-4 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
                           {h}
@@ -895,6 +965,16 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                           onClick={() => setSelected(b._id === selected?._id ? null : b)}
                           className={`cursor-pointer transition-colors hover:bg-blue-50/40 ${b._id === selected?._id ? "bg-blue-50/60" : ""}`}
                         >
+                          {canWrite && (
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={checkedIds.has(b._id)}
+                                onChange={() => toggleChecked(b._id)}
+                                className="rounded border-gray-300"
+                              />
+                            </td>
+                          )}
                           {/* Patient */}
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2 min-w-0">
@@ -971,6 +1051,12 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                                 className="p-1.5 rounded-lg text-gray-400 hover:text-[#0B2560] hover:bg-blue-50 transition">
                                 <Edit2 size={15} />
                               </button>
+                              {canWrite && (
+                                <button title="Delete" onClick={() => deleteOne(b._id, b.name)} disabled={deleting}
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-50">
+                                  <Trash2 size={15} />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
