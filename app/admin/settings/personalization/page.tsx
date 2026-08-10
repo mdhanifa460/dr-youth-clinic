@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save, Plus, Trash2, ChevronUp, ChevronDown, Star } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save, Plus, Trash2, ChevronUp, ChevronDown, Star, BarChart3, Users, Activity } from "lucide-react";
 
 type Category = { key: string; label: string; order: number; active: boolean };
 type EventWeightRow = { eventType: string; label: string; weight: number };
@@ -30,11 +30,19 @@ type PersonalizationConfig = {
 };
 
 const TABS = [
+  { key: "analytics", label: "Interest Analytics" },
   { key: "categories", label: "Categories" },
   { key: "weights", label: "Weights & Thresholds" },
   { key: "sections", label: "Sections" },
 ] as const;
 type TabKey = typeof TABS[number]["key"];
+
+interface AnalyticsData {
+  totalEvents: number;
+  totalVisitorsTracked: number;
+  categories: { key: string; label: string; count: number; visitorCount: number }[];
+  eventTypes: { eventType: string; count: number }[];
+}
 
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -78,11 +86,22 @@ export default function PersonalizationSettingsPage() {
   const [toggleSaving, setToggleSaving] = useState(false);
 
   const [config, setConfig] = useState<PersonalizationConfig | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>("categories");
+  const [activeTab, setActiveTab] = useState<TabKey>("analytics");
   const [loading, setLoading] = useState(true);
   const [configSaving, setConfigSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  const loadAnalytics = useCallback(() => {
+    setAnalyticsLoading(true);
+    fetch("/api/admin/personalization-analytics")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setAnalytics(d.data); setAnalyticsLoading(false); })
+      .catch(() => setAnalyticsLoading(false));
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -95,7 +114,8 @@ export default function PersonalizationSettingsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   async function saveToggle(next: boolean) {
     setEnabled(next);
@@ -248,6 +268,98 @@ export default function PersonalizationSettingsPage() {
             </button>
           ))}
         </div>
+
+        {/* ── Interest Analytics tab ──────────────────────────────── */}
+        {activeTab === "analytics" && (
+          <div className="space-y-6">
+            {analyticsLoading ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-10 flex items-center justify-center">
+                <Loader2 size={20} className="animate-spin text-gray-300" />
+              </div>
+            ) : !analytics || analytics.totalEvents === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+                <Activity size={24} className="mx-auto text-gray-300 mb-3" />
+                <p className="text-sm font-semibold text-gray-600">No interest events recorded yet</p>
+                <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+                  {enabled
+                    ? "Tracking is on, but nothing has been captured yet — this fills in as real visitors browse the site."
+                    : "Tracking is currently off (see the toggle above) — nothing is being recorded until it's turned on."}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                      <Activity size={18} className="text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-[#0B2560] tabular-nums">{analytics.totalEvents.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">Total interest events</p>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Users size={18} className="text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-[#0B2560] tabular-nums">{analytics.totalVisitorsTracked.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">Unique visitors tracked</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-50">
+                    <h2 className="font-bold text-[#0B2560] text-sm flex items-center gap-2"><BarChart3 size={15} /> By Category</h2>
+                    <p className="text-gray-400 text-xs mt-0.5">How much signal each category has collected — this is the raw event count, not a per-visitor score (see Categories tab for the category list itself).</p>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+                    {analytics.categories.length === 0 ? (
+                      <p className="text-sm text-gray-400 px-6 py-8 text-center">No category data yet.</p>
+                    ) : (
+                      (() => {
+                        const max = Math.max(...analytics.categories.map((c) => c.count), 1);
+                        return analytics.categories.map((c) => (
+                          <div key={c.key} className="px-6 py-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-semibold text-gray-700">{c.label}</span>
+                              <span className="text-xs text-gray-400 tabular-nums">
+                                {c.count.toLocaleString()} event{c.count !== 1 ? "s" : ""} · {c.visitorCount.toLocaleString()} visitor{c.visitorCount !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-[#0B2560] rounded-full" style={{ width: `${(c.count / max) * 100}%` }} />
+                            </div>
+                          </div>
+                        ));
+                      })()
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-50">
+                    <h2 className="font-bold text-[#0B2560] text-sm">By Event Type</h2>
+                    <p className="text-gray-400 text-xs mt-0.5">Which behaviors are actually being tracked, across all categories.</p>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+                    {analytics.eventTypes.map((e) => (
+                      <div key={e.eventType} className="px-6 py-3 flex items-center justify-between">
+                        <span className="text-sm text-gray-600 font-mono">{e.eventType}</span>
+                        <span className="text-sm font-semibold text-[#0B2560] tabular-nums">{e.count.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+            <button onClick={loadAnalytics} disabled={analyticsLoading}
+              className="text-xs text-gray-400 hover:text-[#0B2560] font-semibold transition">
+              Refresh
+            </button>
+          </div>
+        )}
 
         {/* ── Categories tab ───────────────────────────────────────── */}
         {activeTab === "categories" && (
