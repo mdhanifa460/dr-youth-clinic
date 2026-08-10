@@ -4,8 +4,6 @@ import Link from 'next/link';
 import { BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const SLIDE_DURATION = 5000;
-
 type Slide = {
   badge: string;
   headline: string;
@@ -74,6 +72,12 @@ const ACCENT_OPTIONS = [
 ];
 
 export default function HeroSection({ data }: { data: any }) {
+  // Same convention as TestimonialsSlider's data._rotateMs — the homepage
+  // section registry (SECTION_COMPONENTS) uses a uniform { data } prop for
+  // every section, so a computed value (Settings.display.carouselIntervalMs)
+  // gets merged into the section's own data object by the page rather than
+  // becoming a second, registry-incompatible prop.
+  const intervalMs: number = data?._intervalMs ?? 5000;
   const slides: Slide[] = (() => {
     if (data?.slides?.length > 0) {
       return (data.slides as any[]).map((s) => ({
@@ -136,7 +140,7 @@ export default function HeroSection({ data }: { data: any }) {
 
   useEffect(() => {
     if (paused) return;
-    timerRef.current = setInterval(next, SLIDE_DURATION);
+    timerRef.current = setInterval(next, intervalMs);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [paused, next]);
 
@@ -260,7 +264,7 @@ export default function HeroSection({ data }: { data: any }) {
             key={`${current}-progress`}
             className="h-full bg-[#0B2560]/40 rounded-full"
             style={{
-              animation: `slideProgress ${SLIDE_DURATION}ms linear forwards`,
+              animation: `slideProgress ${intervalMs}ms linear forwards`,
             }}
           />
         </div>

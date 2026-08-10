@@ -481,6 +481,7 @@ export default async function Home() {
 
   const enriched = {
     ...sectionData,
+    hero: { ...(sectionData['hero'] ?? {}), _intervalMs: settings.display?.carouselIntervalMs ?? 5000 },
     testimonials: { ...td, _reviews: initialReviews, _rotateMs: testimonialsRotateMs },
     locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds, _detectedCity: detectedCity },
     doctors: {
@@ -532,7 +533,7 @@ export default async function Home() {
           if (s.key === 'hero' && heroBanners.length > 0) {
             return (
               <div key={s.key}>
-                <BannerCarousel slides={heroBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
+                <BannerCarousel slides={heroBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={settings.display?.carouselIntervalMs ?? 6000} />
               </div>
             );
           }

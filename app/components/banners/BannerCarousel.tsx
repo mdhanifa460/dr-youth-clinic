@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const SLIDE_DURATION = 6000;
-
 // Same fade/auto-scroll/dots/progress-bar interaction HeroSection.tsx
 // already uses for the homepage's hand-authored slides — reused here to
 // drive resolveBanner()'s admin-managed Banner documents instead.
@@ -25,7 +23,12 @@ const SLIDE_DURATION = 6000;
 // below with zero nav chrome — pixel-identical to before this component
 // existed. Nav chrome only appears once an admin has actually added a
 // second banner to the same slot.
-export default function BannerCarousel({ slides }: { slides: ReactNode[] }) {
+//
+// intervalMs comes from Settings.display.carouselIntervalMs (Public
+// Display admin settings) — one shared value site-wide rather than a
+// hardcoded constant per component. The 6000 default only applies if a
+// caller genuinely can't reach Settings, which none currently do.
+export default function BannerCarousel({ slides, intervalMs = 6000 }: { slides: ReactNode[]; intervalMs?: number }) {
   const [current, setCurrent] = useState(0);
   const [visible, setVisible] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -52,7 +55,7 @@ export default function BannerCarousel({ slides }: { slides: ReactNode[] }) {
 
   useEffect(() => {
     if (paused || slides.length < 2) return;
-    timerRef.current = setInterval(next, SLIDE_DURATION);
+    timerRef.current = setInterval(next, intervalMs);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [paused, next, slides.length]);
 
@@ -98,7 +101,7 @@ export default function BannerCarousel({ slides }: { slides: ReactNode[] }) {
           <div
             key={`${current}-progress`}
             className="h-full bg-white/70 rounded-full"
-            style={{ animation: `bannerCarouselProgress ${SLIDE_DURATION}ms linear forwards` }}
+            style={{ animation: `bannerCarouselProgress ${intervalMs}ms linear forwards` }}
           />
         </div>
       )}

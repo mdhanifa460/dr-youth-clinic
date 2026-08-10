@@ -161,6 +161,7 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
           slug={params.slug}
           variant="A"
           consultationFree={siteConfig.consultationFree}
+          carouselIntervalMs={siteConfig.carouselIntervalMs}
         />
 
         {layoutEngineMain && layoutEngineMain.length > 0 && (

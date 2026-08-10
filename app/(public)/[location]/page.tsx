@@ -19,6 +19,7 @@ import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import { getSettings } from '@/app/models/Settings';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import { pseudoPageId } from '@/app/lib/layoutEngine/pseudoPageId';
 
@@ -115,11 +116,12 @@ export default async function LocationPage({ params }: { params: { location: str
   const loc = locations[cityKey];
   if (!loc) notFound();
 
-  const [content, locationBanners, branchResults, siteConfig] = await Promise.all([
+  const [content, locationBanners, branchResults, siteConfig, settings] = await Promise.all([
     getLocationContent(cityKey),
     resolveBanner({ page: 'location', location: cityKey }),
     getBranchResults(cityKey),
     getSiteConfig(),
+    getSettings(),
   ]);
   const otherCities = Object.entries(locations).filter(([k]) => k !== cityKey);
   const hasHero    = !!(content?.heroImage?.url);
@@ -174,7 +176,7 @@ export default async function LocationPage({ params }: { params: { location: str
             rhythm that the CTA row clears the fixed mobile WhatsApp/Call/
             Book bar). */}
         {locationBanners.length > 0 ? (
-          <BannerCarousel slides={locationBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
+          <BannerCarousel slides={locationBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={settings.display?.carouselIntervalMs ?? 6000} />
         ) : (
         <section id="home" className="py-8 md:py-24 px-6 md:px-10 bg-background">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-start">

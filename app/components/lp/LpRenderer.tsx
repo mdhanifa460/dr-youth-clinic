@@ -53,6 +53,11 @@ interface LpRendererProps {
   // only ever fills in an UNSET default; any text an admin already typed
   // for a specific LP is left exactly as-is.
   consultationFree: boolean;
+  // Settings.display.carouselIntervalMs — this component's own multi-slide
+  // "solution group" carousel (below) is the one LP call site not already
+  // covered by the (public) route group's SiteConfigProvider, since LP
+  // lives outside that layout.
+  carouselIntervalMs?: number;
 }
 
 function renderSection(section: LpSection, form: LpRendererProps['form'], slug: string, variant: 'A' | 'B', consultationFree: boolean) {
@@ -140,7 +145,7 @@ function groupSections(sections: LpSection[]): SectionGroup[] {
   return groups;
 }
 
-export default function LpRenderer({ sections, form, slug, variant = 'A', consultationFree }: LpRendererProps) {
+export default function LpRenderer({ sections, form, slug, variant = 'A', consultationFree, carouselIntervalMs }: LpRendererProps) {
   const groups = groupSections(sections);
 
   return (
@@ -154,6 +159,7 @@ export default function LpRenderer({ sections, form, slug, variant = 'A', consul
             <BannerCarousel
               key={`solution-group-${i}`}
               slides={group.items.map((s) => <SolutionSection key={s.id} data={s.data} />)}
+              intervalMs={carouselIntervalMs}
             />
           );
         }

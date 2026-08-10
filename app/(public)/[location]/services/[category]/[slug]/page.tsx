@@ -405,7 +405,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             any exist — as a carousel when there's more than one; otherwise
             the original hardcoded hero below renders unchanged. */}
         {serviceBanners.length > 0 ? (
-          <BannerCarousel slides={serviceBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
+          <BannerCarousel slides={serviceBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
         ) : (
         <section className="relative bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">

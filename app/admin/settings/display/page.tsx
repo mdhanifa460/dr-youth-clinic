@@ -9,6 +9,7 @@ type DisplaySettings = {
   showDurationOnCards: boolean;
   showBeforeAfterOnPublic: boolean;
   relatedServicesCount: number;
+  carouselIntervalMs: number;
 };
 
 const DEFAULTS: DisplaySettings = {
@@ -16,6 +17,7 @@ const DEFAULTS: DisplaySettings = {
   showDurationOnCards: true,
   showBeforeAfterOnPublic: true,
   relatedServicesCount: 3,
+  carouselIntervalMs: 5000,
 };
 
 const TOGGLES: { key: keyof DisplaySettings; label: string; desc: string }[] = [
@@ -168,6 +170,31 @@ export default function DisplaySettingsPage() {
                 className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-[#0B2560] focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
               />
               <span className="text-xs text-gray-400">per page (2–12)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Carousel auto-scroll interval */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mt-6">
+          <div className="px-6 py-4 border-b border-gray-50">
+            <h2 className="font-bold text-[#0B2560] text-sm">Carousel Auto-Scroll</h2>
+            <p className="text-gray-400 text-xs mt-0.5">How long each slide shows before auto-advancing — applies everywhere a multi-slide carousel appears site-wide (homepage hero, promotional banners on service pages). One setting, not per-page.</p>
+          </div>
+          <div className="px-6 py-5">
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={2}
+                max={20}
+                step={0.5}
+                value={form.carouselIntervalMs / 1000}
+                onChange={(e) => {
+                  const seconds = Math.max(2, Math.min(20, Number(e.target.value) || 5));
+                  set("carouselIntervalMs", Math.round(seconds * 1000));
+                }}
+                className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-[#0B2560] focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+              />
+              <span className="text-xs text-gray-400">seconds per slide (2–20)</span>
             </div>
           </div>
         </div>

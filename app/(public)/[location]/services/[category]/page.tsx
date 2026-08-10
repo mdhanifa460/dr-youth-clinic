@@ -119,7 +119,7 @@ export default async function CategoryPage({ params }: PageProps) {
           Same override-else-fallback pattern used on the homepage/
           location/service pages. ── */}
       {categoryBanners.length > 0 ? (
-        <BannerCarousel slides={categoryBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} />
+        <BannerCarousel slides={categoryBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
       ) : (
       <section className={`relative overflow-hidden bg-gradient-to-br ${meta.heroGrad} text-white`}>
         <div className="absolute inset-0 pointer-events-none">

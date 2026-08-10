@@ -47,6 +47,9 @@ export interface SiteConfig {
   schemaType: string;
   /** Fallback byline shown when a blog post has no author set (Settings → Content) */
   defaultAuthorName: string;
+  /** Milliseconds each slide shows before auto-advancing — shared by every multi-slide
+   *  carousel site-wide (homepage hero, admin-managed promo banners) (Settings → Display) */
+  carouselIntervalMs: number;
 }
 
 export const SITE_CONFIG_DEFAULTS: SiteConfig = {
@@ -75,4 +78,5 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   showBeforeAfterOnPublic: true,
   schemaType: 'MedicalClinic',
   defaultAuthorName: 'DR Youth Clinic',
+  carouselIntervalMs: 5000,
 };

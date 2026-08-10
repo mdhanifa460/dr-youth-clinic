@@ -71,6 +71,7 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       showBeforeAfterOnPublic: settings.display?.showBeforeAfterOnPublic ?? true,
       schemaType: settings.content?.schemaType || 'MedicalClinic',
       defaultAuthorName: settings.content?.defaultAuthorName || 'DR Youth Clinic',
+      carouselIntervalMs: settings.display?.carouselIntervalMs ?? 5000,
     };
   } catch {
     return SITE_CONFIG_DEFAULTS;

@@ -43,6 +43,11 @@ export interface ISettings extends Document {
     showDurationOnCards: boolean;
     showBeforeAfterOnPublic: boolean;
     relatedServicesCount: number;
+    // Shared auto-rotate interval for every multi-slide carousel site-wide
+    // (homepage hero, admin-managed promo banners) — was three separate
+    // hardcoded constants (5000/6000ms, one component with none at all)
+    // before this existed, each only changeable by editing code.
+    carouselIntervalMs: number;
   };
   brand: {
     tagline: string;
@@ -309,6 +314,7 @@ const SettingsSchema = new Schema<ISettings>(
       showDurationOnCards:     { type: Boolean, default: true },
       showBeforeAfterOnPublic: { type: Boolean, default: true },
       relatedServicesCount:    { type: Number,  default: 3 },
+      carouselIntervalMs:      { type: Number,  default: 5000 },
     },
     brand: {
       tagline:        { type: String, default: "Your Skin's Best Friend" },
