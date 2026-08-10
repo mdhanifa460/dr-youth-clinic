@@ -20,6 +20,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:visual": "playwright test tests/e2e/visual.spec.ts",
     "test:lighthouse": "lhci autorun",
+    "test:lighthouse:mobile": "lhci autorun --config=.lighthouserc.mobile.json",
     "admin:reset": "tsx scripts/reset-admin.ts"
   },
   "dependencies": {

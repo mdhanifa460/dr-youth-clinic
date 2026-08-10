@@ -49,3 +49,12 @@ next-env.d.ts
 .claude/skills/upstash-*
 .claude/settings.json
 skills-lock.json
+
+# Lighthouse CI report output — regenerated per run, not source
+.lighthouseci-desktop/
+.lighthouseci-mobile/
+.lighthouseci/
+
+# Playwright test-run output — regenerated every run, never source
+playwright-report/
+test-results/
