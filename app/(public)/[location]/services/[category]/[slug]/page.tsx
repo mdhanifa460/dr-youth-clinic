@@ -38,6 +38,8 @@ import TreatmentComparison from '@/app/components/TreatmentComparison';
 import AftercareCalendar from '@/app/components/AftercareCalendar';
 import FaqAccordion from '@/app/components/FaqAccordion';
 import BenefitsGrid from '@/app/components/BenefitsGrid';
+import InterestTracker from '@/app/components/InterestTracker';
+import { resolveInterestCategory } from '@/app/lib/personalization';
 import TreatmentStepsList from '@/app/components/TreatmentStepsList';
 import RecoveryTimeline from '@/app/components/RecoveryTimeline';
 import ServiceStickyDesktopCta from '@/app/components/ServiceStickyDesktopCta';
@@ -379,6 +381,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   return (
     <>
       <ServiceSchemas svc={svc} cityName={cityName} params={params} schemaType={siteConfig.schemaType} />
+      <InterestTracker eventType="page_view" category={resolveInterestCategory(svc.category)} />
 
       <main className="bg-white">
 

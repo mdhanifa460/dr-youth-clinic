@@ -21,6 +21,8 @@ import { resolveRelatedLinks, resolveReferencedDoctors, resolveReferencedVideos 
 import { CATEGORY_COLOR } from '@/app/lib/blogCategories';
 import { BreadcrumbSchema, BlogPostingSchema, FAQSchema } from '@/app/components/SchemaMarkup';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
+import InterestTracker from '@/app/components/InterestTracker';
+import { resolveInterestCategory } from '@/app/lib/personalization';
 
 // No `revalidate` export existed before this fix — this page had zero
 // caching at any level and ran three uncached queries on every single
@@ -142,6 +144,7 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
         dateModified={post.updatedAt}
       />
       <FAQSchema faqs={faqItems} />
+      <InterestTracker eventType="blog_read" category={resolveInterestCategory(post.category)} />
       <BreadcrumbSchema
         items={[
           { name: 'Home', url: SITE_URL },

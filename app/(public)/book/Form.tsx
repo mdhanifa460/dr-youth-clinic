@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { postInterestEvent, resolveInterestCategory } from '@/app/lib/personalization';
 
 const SERVICES = [
   { id: 'Skin', icon: '✨', label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
@@ -66,6 +67,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   // sessionId isn't a form field — kept in a ref so it survives to the
   // submit handler without becoming part of the submitted booking shape.
   const journeySessionId = useRef('');
+  const bookingEventFired = useRef(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const service = params.get('service') || '';
@@ -101,6 +103,22 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         name: name ? name : f.name,
         phone: phone ? phone : f.phone,
       }));
+    }
+
+    // Homepage Personalization Engine — "booking_started" (highest weight
+    // of all tracked events: reaching /book at all is strong intent).
+    // Attributed from whatever category context the visitor arrived with —
+    // an assessment handoff or a service page's "Book Now" link — since
+    // form.service itself isn't chosen until step 2. A direct, contextless
+    // /book visit fires nothing rather than guess a category.
+    const bookingCategory =
+      resolveInterestCategory(assessmentTypeParam) ||
+      resolveInterestCategory(service) ||
+      resolveInterestCategory(concernLabel) ||
+      resolveInterestCategory(overallConcern);
+    if (bookingCategory && !bookingEventFired.current) {
+      bookingEventFired.current = true;
+      postInterestEvent('booking_started', bookingCategory);
     }
   }, []);
 

@@ -44,3 +44,26 @@ export function postInterestEvent(eventType: InterestEventType, category: string
     // no-op — tracking must never throw into the calling page
   }
 }
+
+// Resolves one of this codebase's 5 pre-existing, mutually-inconsistent
+// category systems (Service.category, Blog.category, Video.category,
+// Doctor.specializations — see the architecture note above them in each
+// model) into this engine's own dedicated taxonomy (hair/skin/body/
+// weight-loss). Deliberately conservative: an ambiguous source value
+// (Service's "Laser" — hair removal or skin resurfacing? Blog's
+// "Aesthetics"/"General"; Video's "Technology"/"FAQ"/etc.) returns null
+// rather than guessing, so a page fires no event at all sooner than a
+// wrong one that pollutes a visitor's interest profile. Note this means
+// "body" and "weight-loss" currently have no page_view/blog_read/
+// video_watch source at all (no content model has a matching category
+// value today) — those two categories only accumulate signal via
+// assessment_completed until real content is tagged for them.
+export function resolveInterestCategory(source: string | null | undefined): string | null {
+  if (!source) return null;
+  const s = source.toLowerCase().trim();
+  if (s.includes('hair')) return 'hair';
+  if (s.includes('skin') || s.includes('acne') || s.includes('botox') || s.includes('prp') || s.includes('gfc')) return 'skin';
+  if (s.includes('weight')) return 'weight-loss';
+  if (s.includes('body') || s.includes('slim') || s.includes('contour')) return 'body';
+  return null;
+}

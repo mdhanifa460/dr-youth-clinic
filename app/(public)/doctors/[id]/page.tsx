@@ -13,6 +13,8 @@ import { getSiteConfig } from '@/app/lib/siteConfig';
 import SliderCard from '@/app/components/SliderCard';
 import { PhysicianSchema } from '@/app/components/SchemaMarkup';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
+import InterestTracker from '@/app/components/InterestTracker';
+import { resolveInterestCategory } from '@/app/lib/personalization';
 
 export const revalidate = 300;
 
@@ -110,6 +112,10 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
         specializations={doctor.specializations}
         bio={doctor.bio}
         locations={doctor.locations}
+      />
+      <InterestTracker
+        eventType="doctor_view"
+        category={(doctor.specializations ?? []).map(resolveInterestCategory).find(Boolean) ?? null}
       />
 
       {/* ── HERO ── */}
