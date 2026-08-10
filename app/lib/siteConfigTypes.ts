@@ -50,6 +50,12 @@ export interface SiteConfig {
   /** Milliseconds each slide shows before auto-advancing — shared by every multi-slide
    *  carousel site-wide (homepage hero, admin-managed promo banners) (Settings → Display) */
   carouselIntervalMs: number;
+  /** Services Hub page (/[location]/services) hero headline, e.g. "Clinical" (Settings → Content) */
+  servicesHubHeadline: string;
+  /** Accent-colored second line of the headline, e.g. "Excellence." (Settings → Content) */
+  servicesHubHeadlineAccent: string;
+  /** Hero subtext template — {count} and {city} placeholders filled in at render time (Settings → Content) */
+  servicesHubDescription: string;
 }
 
 export const SITE_CONFIG_DEFAULTS: SiteConfig = {
@@ -79,4 +85,7 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   schemaType: 'MedicalClinic',
   defaultAuthorName: 'DR Youth Clinic',
   carouselIntervalMs: 5000,
+  servicesHubHeadline: 'Clinical',
+  servicesHubHeadlineAccent: 'Excellence.',
+  servicesHubDescription: '{count} across dermatology, hair restoration, and precision laser — all in {city}.',
 };

@@ -13,6 +13,7 @@ type Category = {
   slug: string;
   dbKey: string;
   icon: string;
+  tagline: string;
   description: string;
   heroGrad: string;
   accentColor: string;
@@ -21,7 +22,7 @@ type Category = {
 };
 
 const EMPTY: Omit<Category, "_id"> = {
-  label: "", slug: "", dbKey: "", icon: "✨",
+  label: "", slug: "", dbKey: "", icon: "✨", tagline: "",
   description: "", heroGrad: "from-[#0B2560] via-[#1e3a8a] to-[#3b82f6]",
   accentColor: "#3b82f6", order: 0, active: true,
 };
@@ -130,10 +131,14 @@ export default function CategoriesSettingsPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 text-sm text-amber-800 mb-6 flex items-start gap-2.5">
           <AlertCircle size={15} className="shrink-0 mt-0.5" />
           <span>
-            The 4 default categories (Skin, Hair, Laser, Other) are linked to existing services. Editing their display is safe.
-            Adding a new category requires also updating the service schema to accept it.
+            These cards are live on the Services Hub page (yourdomain.com/[city]/services) — edits here show up
+            there directly. The <strong>"db:" key</strong> must match one of the 4 real service categories
+            (Skin, Hair, Laser, Other) — renaming a card's label/tagline/colors is always safe, but changing its
+            db key to something no service is actually tagged with will show 0 treatments on that card.
           </span>
         </div>
+
+        <ServicesHubHeroSettings />
 
         {loading ? (
           <div className="flex items-center justify-center py-24 text-gray-400">
@@ -282,6 +287,17 @@ export default function CategoriesSettingsPage() {
                 />
               </div>
 
+              {/* Tagline */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Tagline</label>
+                <input
+                  value={form.tagline}
+                  onChange={(e) => setForm((f) => ({ ...f, tagline: e.target.value }))}
+                  placeholder="Short line shown above the label, e.g. Radiance · Restored"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]"
+                />
+              </div>
+
               {/* Description */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Description</label>
@@ -329,6 +345,88 @@ export default function CategoriesSettingsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+type HubHero = { servicesHubHeadline: string; servicesHubHeadlineAccent: string; servicesHubDescription: string };
+const HUB_HERO_DEFAULTS: HubHero = {
+  servicesHubHeadline: "Clinical",
+  servicesHubHeadlineAccent: "Excellence.",
+  servicesHubDescription: "{count} across dermatology, hair restoration, and precision laser — all in {city}.",
+};
+
+// The Services Hub page's hero headline/subtext — was hardcoded directly in
+// the page component with no admin control at all. {count} and {city} are
+// placeholders the page fills in itself (e.g. "84 specialised procedures",
+// "Chennai") — not literal text to type here.
+function ServicesHubHeroSettings() {
+  const [form, setForm] = useState<HubHero>(HUB_HERO_DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/settings").then((r) => r.json()).then((d) => {
+      if (d.success && d.data?.content) {
+        setForm({
+          servicesHubHeadline: d.data.content.servicesHubHeadline || HUB_HERO_DEFAULTS.servicesHubHeadline,
+          servicesHubHeadlineAccent: d.data.content.servicesHubHeadlineAccent || HUB_HERO_DEFAULTS.servicesHubHeadlineAccent,
+          servicesHubDescription: d.data.content.servicesHubDescription || HUB_HERO_DEFAULTS.servicesHubDescription,
+        });
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  async function save() {
+    setSaving(true); setSuccess(false);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: form }),
+      });
+      const data = await res.json();
+      if (data.success) { setSuccess(true); setTimeout(() => setSuccess(false), 3000); }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
+      <h2 className="font-bold text-[#0B2560] text-sm mb-1">Services Hub Hero</h2>
+      <p className="text-xs text-gray-400 mb-4">
+        The headline and subtext at the top of the Services Hub page. Use <code className="bg-gray-50 px-1 rounded">{"{count}"}</code> and{" "}
+        <code className="bg-gray-50 px-1 rounded">{"{city}"}</code> in the subtext — filled in automatically per city.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-3 mb-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Headline</label>
+          <input value={form.servicesHubHeadline} onChange={(e) => setForm((f) => ({ ...f, servicesHubHeadline: e.target.value }))}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Headline (accent, second line)</label>
+          <input value={form.servicesHubHeadlineAccent} onChange={(e) => setForm((f) => ({ ...f, servicesHubHeadlineAccent: e.target.value }))}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560]" />
+        </div>
+      </div>
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Subtext</label>
+        <textarea rows={2} value={form.servicesHubDescription} onChange={(e) => setForm((f) => ({ ...f, servicesHubDescription: e.target.value }))}
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] resize-none" />
+      </div>
+      <div className="flex items-center gap-3">
+        <button onClick={save} disabled={saving}
+          className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#0d2d72] transition disabled:opacity-50">
+          {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save
+        </button>
+        {success && <span className="flex items-center gap-1.5 text-sm text-green-600"><CheckCircle size={14} /> Saved</span>}
+      </div>
     </div>
   );
 }

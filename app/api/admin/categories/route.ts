@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Category, DEFAULT_CATEGORIES } from '@/app/models/Category';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
     // Auto-generate dbKey from label if not provided
     if (!body.dbKey) body.dbKey = body.label?.trim();
     const category = await Category.create(body);
+    revalidateTag('categories');
     return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (error: any) {
     if (error.code === 11000) {

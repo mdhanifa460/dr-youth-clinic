@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Category } from '@/app/models/Category';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -12,6 +13,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = await req.json();
     const category = await (Category as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!category) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    revalidateTag('categories');
     return NextResponse.json({ success: true, data: category });
   } catch (error: any) {
     if (error.name === 'ValidationError') {
@@ -30,6 +32,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     await connectDB();
     const category = await (Category as any).findByIdAndDelete(params.id);
     if (!category) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    revalidateTag('categories');
     return NextResponse.json({ success: true, message: 'Category deleted' });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to delete category' }, { status: 500 });

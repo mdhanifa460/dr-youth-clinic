@@ -72,6 +72,9 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       schemaType: settings.content?.schemaType || 'MedicalClinic',
       defaultAuthorName: settings.content?.defaultAuthorName || 'DR Youth Clinic',
       carouselIntervalMs: settings.display?.carouselIntervalMs ?? 5000,
+      servicesHubHeadline: settings.content?.servicesHubHeadline || 'Clinical',
+      servicesHubHeadlineAccent: settings.content?.servicesHubHeadlineAccent || 'Excellence.',
+      servicesHubDescription: settings.content?.servicesHubDescription || '{count} across dermatology, hair restoration, and precision laser — all in {city}.',
     };
   } catch {
     return SITE_CONFIG_DEFAULTS;

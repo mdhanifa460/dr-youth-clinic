@@ -94,6 +94,12 @@ export interface ISettings extends Document {
     testimonialMinRating: number;
     testimonialsRotateMs: number;
     schemaType: string;
+    // Services Hub page (/[location]/services) hero copy — was hardcoded
+    // directly in the page component with zero admin control. Description
+    // supports {count} and {city} placeholders, filled in at render time.
+    servicesHubHeadline: string;
+    servicesHubHeadlineAccent: string;
+    servicesHubDescription: string;
   };
   // Content Layout Engine opt-in for the Home page. Home is a singleton (no
   // per-record document to hang a flag off, unlike Service/Blog/LandingPage),
@@ -353,6 +359,9 @@ const SettingsSchema = new Schema<ISettings>(
       testimonialMinRating: { type: Number, default: 4 },
       testimonialsRotateMs: { type: Number, default: 4000 },
       schemaType:           { type: String, default: 'MedicalClinic' },
+      servicesHubHeadline:       { type: String, default: 'Clinical' },
+      servicesHubHeadlineAccent: { type: String, default: 'Excellence.' },
+      servicesHubDescription:    { type: String, default: '{count} across dermatology, hair restoration, and precision laser — all in {city}.' },
     },
     homepageLayoutEngineEnabled: { type: Boolean, default: false },
     offersPageLayoutEngineEnabled: { type: Boolean, default: false },

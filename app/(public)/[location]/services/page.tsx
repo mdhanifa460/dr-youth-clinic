@@ -7,77 +7,13 @@ import { Service } from '@/app/models/Service';
 import { LocationContent } from '@/app/models/LocationContent';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import { getCachedCategories } from '@/app/lib/serviceCategories';
 
 export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-const CATEGORIES = [
-  {
-    key: 'Skin',
-    slug: 'skin',
-    label: 'Skin & Aesthetics',
-    tagline: 'Radiance · Restored',
-    description: 'Advanced dermatological solutions for luminous, healthy skin — from acne to anti-ageing.',
-    icon: '✨',
-    bg: 'bg-gradient-to-br from-[#fff5f0] to-[#fde8e0]',
-    border: 'border-[#f9c3ae]',
-    pill: 'bg-[#f9c3ae]/60 text-[#8b3018]',
-    heading: 'text-[#7c1d0a]',
-    sub: 'text-[#a63c1c]',
-    dot: 'bg-[#c96a4e]',
-    arrow: 'text-[#a63c1c]',
-    glyph: 'opacity-[0.07] select-none pointer-events-none absolute -bottom-4 -right-4 text-[140px] leading-none',
-  },
-  {
-    key: 'Hair',
-    slug: 'hair',
-    label: 'Hair Restoration',
-    tagline: 'Volume · Confidence',
-    description: 'Expert trichology for PRP, GFC, transplants, and scalp-level treatments.',
-    icon: '🌿',
-    bg: 'bg-gradient-to-br from-[#fffbeb] to-[#fef0c7]',
-    border: 'border-[#fcd34d]',
-    pill: 'bg-[#fcd34d]/50 text-[#78350f]',
-    heading: 'text-[#6b2d00]',
-    sub: 'text-[#9a4109]',
-    dot: 'bg-[#d97706]',
-    arrow: 'text-[#9a4109]',
-    glyph: 'opacity-[0.07] select-none pointer-events-none absolute -bottom-4 -right-4 text-[140px] leading-none',
-  },
-  {
-    key: 'Laser',
-    slug: 'laser',
-    label: 'Laser Precision',
-    tagline: 'Science · Skin',
-    description: 'Cutting-edge laser technology for hair removal, pigmentation, and skin rejuvenation.',
-    icon: '⚡',
-    bg: 'bg-gradient-to-br from-[#eff6ff] to-[#dbeafe]',
-    border: 'border-[#93c5fd]',
-    pill: 'bg-[#93c5fd]/50 text-[#1e3a8a]',
-    heading: 'text-[#0B2560]',
-    sub: 'text-[#1e40af]',
-    dot: 'bg-[#3b82f6]',
-    arrow: 'text-[#1e40af]',
-    glyph: 'opacity-[0.07] select-none pointer-events-none absolute -bottom-4 -right-4 text-[140px] leading-none',
-  },
-  {
-    key: 'Other',
-    slug: 'other',
-    label: 'Specialist Care',
-    tagline: 'Tailored · Precise',
-    description: 'Specialised aesthetic and medical wellness procedures crafted for your unique goals.',
-    icon: '🏥',
-    bg: 'bg-gradient-to-br from-[#ecfdf5] to-[#d1fae5]',
-    border: 'border-[#6ee7b7]',
-    pill: 'bg-[#6ee7b7]/50 text-[#064e3b]',
-    heading: 'text-[#052e16]',
-    sub: 'text-[#047857]',
-    dot: 'bg-[#10b981]',
-    arrow: 'text-[#047857]',
-    glyph: 'opacity-[0.07] select-none pointer-events-none absolute -bottom-4 -right-4 text-[140px] leading-none',
-  },
-];
+const GLYPH_CLS = 'opacity-[0.07] select-none pointer-events-none absolute -bottom-4 -right-4 text-[140px] leading-none';
 
 interface PageProps {
   params: { location: string };
@@ -140,11 +76,17 @@ export default async function ServicesHubPage({ params }: PageProps) {
   const loc = locations[params.location];
   if (!loc) notFound();
 
-  const [{ counts, previews, total }, phone, siteConfig] = await Promise.all([
+  const [{ counts, previews, total }, phone, siteConfig, categories] = await Promise.all([
     getCategoryData(params.location),
     getClinicPhone(params.location, loc.phone),
     getSiteConfig(),
+    getCachedCategories(),
   ]);
+
+  const countPhrase = total > 0 ? `${total} specialised procedures` : 'Premium procedures';
+  const heroDescription = siteConfig.servicesHubDescription
+    .replace('{count}', countPhrase)
+    .replace('{city}', loc.name);
 
   return (
     <main className="bg-white min-h-screen">
@@ -165,12 +107,11 @@ export default async function ServicesHubPage({ params }: PageProps) {
               {loc.name} · All Treatments
             </span>
             <h1 className="text-5xl md:text-[64px] font-headline font-extrabold leading-[1.05] mb-6 tracking-tight">
-              Clinical<br />
-              <span className="text-[#F5A623]">Excellence.</span>
+              {siteConfig.servicesHubHeadline}<br />
+              <span className="text-[#F5A623]">{siteConfig.servicesHubHeadlineAccent}</span>
             </h1>
             <p className="text-[17px] text-white/65 max-w-lg leading-relaxed mb-10">
-              {total > 0 ? `${total} specialised procedures` : 'Premium procedures'} across
-              dermatology, hair restoration, and precision laser — all in {loc.name}.
+              {heroDescription}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -197,7 +138,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-8 md:gap-12">
             {[
               { label: 'Treatments', value: total > 0 ? `${total}+` : '20+' },
-              { label: 'Categories', value: '4' },
+              { label: 'Categories', value: String(categories.length) },
               { label: 'Years Expertise', value: '10+' },
               { label: 'Happy Patients', value: '5,000+' },
             ].map((s) => (
@@ -228,34 +169,51 @@ export default async function ServicesHubPage({ params }: PageProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
-          {CATEGORIES.map((cat) => {
-            const count = counts[cat.key] || 0;
-            const names = previews[cat.key] || [];
+          {categories.map((cat: any) => {
+            const count = counts[cat.dbKey] || 0;
+            const names = previews[cat.dbKey] || [];
+            const accent = cat.accentColor || '#3b82f6';
 
             return (
               <Link
-                key={cat.key}
+                key={cat.slug}
                 href={`/${params.location}/services/${cat.slug}`}
-                className={`group relative overflow-hidden rounded-3xl border ${cat.border} ${cat.bg} p-8 md:p-10 block transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5`}
+                className="group relative overflow-hidden rounded-3xl border p-8 md:p-10 block transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5"
+                style={{
+                  borderColor: `color-mix(in srgb, ${accent} 35%, white)`,
+                  background: `color-mix(in srgb, ${accent} 8%, white)`,
+                }}
               >
                 {/* big decorative glyph */}
-                <span className={cat.glyph}>{cat.icon}</span>
+                <span className={GLYPH_CLS}>{cat.icon}</span>
 
                 <div className="relative space-y-5">
                   {/* top row */}
                   <div className="flex items-start justify-between gap-4">
                     <span className="text-4xl md:text-5xl leading-none">{cat.icon}</span>
-                    <span className={`shrink-0 mt-1 text-[11px] font-bold px-3 py-1 rounded-full ${cat.pill}`}>
+                    <span
+                      className="shrink-0 mt-1 text-[11px] font-bold px-3 py-1 rounded-full"
+                      style={{
+                        background: `color-mix(in srgb, ${accent} 20%, white)`,
+                        color: `color-mix(in srgb, ${accent} 75%, black)`,
+                      }}
+                    >
                       {count > 0 ? `${count} treatment${count !== 1 ? 's' : ''}` : 'Coming soon'}
                     </span>
                   </div>
 
                   {/* heading */}
                   <div>
-                    <p className={`text-[11px] font-bold uppercase tracking-[0.2em] ${cat.sub} mb-1.5`}>
+                    <p
+                      className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1.5"
+                      style={{ color: `color-mix(in srgb, ${accent} 65%, black)` }}
+                    >
                       {cat.tagline}
                     </p>
-                    <h3 className={`text-2xl md:text-3xl font-headline font-extrabold ${cat.heading} leading-tight`}>
+                    <h3
+                      className="text-2xl md:text-3xl font-headline font-extrabold leading-tight"
+                      style={{ color: `color-mix(in srgb, ${accent} 80%, black)` }}
+                    >
                       {cat.label}
                     </h3>
                     <p className="text-sm text-gray-500 mt-2 leading-relaxed">{cat.description}</p>
@@ -264,9 +222,9 @@ export default async function ServicesHubPage({ params }: PageProps) {
                   {/* service name previews */}
                   {names.length > 0 && (
                     <ul className="space-y-1.5">
-                      {names.map((name) => (
+                      {names.map((name: string) => (
                         <li key={name} className="flex items-center gap-2.5 text-sm text-gray-500">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cat.dot}`} />
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: accent }} />
                           {name}
                         </li>
                       ))}
@@ -277,7 +235,10 @@ export default async function ServicesHubPage({ params }: PageProps) {
                   )}
 
                   {/* CTA arrow */}
-                  <div className={`flex items-center gap-2 text-sm font-bold ${cat.arrow} pt-1 group-hover:gap-3 transition-all duration-200`}>
+                  <div
+                    className="flex items-center gap-2 text-sm font-bold pt-1 group-hover:gap-3 transition-all duration-200"
+                    style={{ color: `color-mix(in srgb, ${accent} 65%, black)` }}
+                  >
                     Explore Treatments
                     <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform duration-200" />
                   </div>
