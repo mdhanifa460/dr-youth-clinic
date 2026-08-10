@@ -1,8 +1,62 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Plug, RefreshCw, CheckCircle2, XCircle, Loader2, Plus, X, Save, Copy, Check, ArrowDownToLine, ArrowUpFromLine, Clock } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Plug, RefreshCw, CheckCircle2, XCircle, Loader2, Plus, X, Save, Copy, Check, ArrowDownToLine, ArrowUpFromLine, Clock, Sparkles } from 'lucide-react';
 import { FieldInput } from '@/app/admin/components/FormControls';
+import GuidedTour, { type TourStep, type GuidedTourHandle } from '@/app/admin/components/GuidedTour';
+
+const CRM_SYNC_TOUR_STEPS: TourStep[] = [
+  {
+    target: 'connection-baseurl',
+    title: "Your CRM's address",
+    description: "This is the web address your CRM's API lives at — ask your CRM developer for this if you don't have it handy.",
+    example: 'https://api.yourcrm.com',
+  },
+  {
+    target: 'connection-auth',
+    title: 'How we prove who we are',
+    description: "Pick whatever your CRM already supports. Most systems use an API Key or Bearer Token — if you're not sure, ask your CRM developer which one they use.",
+    example: 'API Key is the simplest — just one secret value.',
+  },
+  {
+    target: 'push-endpoints',
+    title: 'Where enquiries/bookings go',
+    description: 'Give these two paths to your CRM developer — this is where we automatically send every website enquiry and booking, the moment it happens. Nothing for you to trigger manually.',
+    example: '/api/v2/leads',
+  },
+  {
+    target: 'pull-endpoints',
+    title: 'Optional: doctor & branch sync',
+    description: 'Only fill these in if you want the website\'s doctor list and location pages to update automatically from your CRM. Skip this entirely and manage doctors/branches by hand — nothing else breaks.',
+    example: '/api/v2/doctors',
+  },
+  {
+    target: 'webhook-url',
+    title: 'Give this URL to your CRM developer',
+    description: 'This is the one URL your CRM should call the instant a lead or invoice is created or updated. Copy it and send it over — this is the most important thing on this whole page.',
+  },
+  {
+    target: 'webhook-secret',
+    title: 'A shared password for that URL',
+    description: "Your CRM developer generates this on their end and gives it to you — it proves a request calling our URL really came from your CRM, not somewhere else.",
+  },
+  {
+    target: 'mapping-tabs',
+    title: 'Matching field names',
+    description: "Your CRM might call a field \"billNo\" while we call it \"invoiceNumber\" — pick which of these 6 things you're configuring, then tell us which of your CRM's field names line up with ours.",
+  },
+  {
+    target: 'mapping-static',
+    title: 'Fixed values',
+    description: 'Click "Add Field" to add a row for each field you want to map. Tick "fixed value" on a row when it should always be the same thing, not read from a real record every time.',
+    example: 'source = website, always the same, never something the CRM sends us.',
+  },
+  {
+    target: 'save-mapping',
+    title: "Don't forget to save",
+    description: 'Each mapping (Leads, Bookings, Doctors, Branches, etc.) has to be saved separately after you edit it — switching tabs without saving loses your changes for that one.',
+  },
+];
 
 interface ConnectorHealth {
   lastCheckAt: string | null;
@@ -62,6 +116,7 @@ const STATUS_META: Record<string, { label: string; cls: string; icon: any }> = {
 };
 
 export default function CrmSyncPage() {
+  const tourRef = useRef<GuidedTourHandle>(null);
   const [connector, setConnector] = useState<ConnectorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -226,15 +281,23 @@ export default function CrmSyncPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <GuidedTour ref={tourRef} tourId="crm-sync-setup" steps={CRM_SYNC_TOUR_STEPS} />
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><Plug size={22} /> CRM Sync</h1>
           <p className="text-sm text-gray-500 mt-0.5">Connects this website to your clinic's CRM — one page, three simple flows: what we send them, what we check on their end, and what they send us.</p>
         </div>
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${meta.cls}`}>
-          <StatusIcon size={13} /> {meta.label}
-        </span>
+        <div className="flex items-center gap-2">
+          <button onClick={() => tourRef.current?.start()}
+            className="inline-flex items-center gap-1.5 border border-[#F5A623]/40 bg-[#F5A623]/10 text-[#0B2560] px-3 py-1.5 rounded-full text-xs font-bold hover:bg-[#F5A623]/20 transition">
+            <Sparkles size={13} className="text-[#F5A623]" /> Replay Guide
+          </button>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${meta.cls}`}>
+            <StatusIcon size={13} /> {meta.label}
+          </span>
+        </div>
       </div>
 
       {/* Plain-language map of the whole page */}
@@ -262,7 +325,9 @@ export default function CrmSyncPage() {
           <FieldInput label="Name" value={connector.name} onChange={(v) => setConnector({ ...connector, name: v })} />
           <FieldInput label="CRM Provider (free text)" value={connector.provider} onChange={(v) => setConnector({ ...connector, provider: v })} placeholder="e.g. leadsquared" />
         </div>
-        <FieldInput label="Base URL (your CRM's API address)" value={connector.config.baseUrl} onChange={(v) => setConnector({ ...connector, config: { ...connector.config, baseUrl: v } })} placeholder="https://api.yourcrm.com" />
+        <div data-tour="connection-baseurl">
+          <FieldInput label="Base URL (your CRM's API address)" value={connector.config.baseUrl} onChange={(v) => setConnector({ ...connector, config: { ...connector.config, baseUrl: v } })} placeholder="https://api.yourcrm.com" />
+        </div>
         <div>
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Status</label>
           <select value={connector.status} onChange={(e) => setConnector({ ...connector, status: e.target.value as any })}
@@ -272,7 +337,7 @@ export default function CrmSyncPage() {
             <option value="paused">Paused — temporarily stopped</option>
           </select>
         </div>
-        <div>
+        <div data-tour="connection-auth">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Authentication</label>
           <select value={authType} onChange={(e) => { setAuthType(e.target.value); setAuthFields({}); }}
             className="border border-gray-200 rounded-xl px-3 py-2 text-sm mb-3">
@@ -311,7 +376,7 @@ export default function CrmSyncPage() {
 
       {/* Outbound push */}
       <Section title="What we send TO your CRM" subtitle="Automatic — fires the moment a patient submits an enquiry or books online. Nothing for your developer to build here except receiving it.">
-        <div>
+        <div data-tour="push-endpoints">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Where we send it (ask your CRM developer for these)</label>
           <div className="space-y-2">
             {PUSH_OPERATIONS.map((op) => (
@@ -333,7 +398,7 @@ export default function CrmSyncPage() {
 
       {/* Periodic pull */}
       <Section title="What we check periodically" subtitle="Doctor list & branch info — these change rarely, so we poll instead of needing a live feed.">
-        <div>
+        <div data-tour="pull-endpoints">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Where we check (ask your CRM developer for these)</label>
           <div className="space-y-2">
             {PULL_OPERATIONS.map((op) => (
@@ -369,7 +434,7 @@ export default function CrmSyncPage() {
 
       {/* Inbound webhook */}
       <Section title="What your CRM sends US" subtitle="Leads and invoices, the instant one is created or updated — event-driven, not polled.">
-        <div>
+        <div data-tour="webhook-url">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Give this URL to your CRM developer</label>
           <div className="flex items-center gap-2">
             <input readOnly value={fullWebhookUrl} className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs font-mono bg-gray-50" />
@@ -383,7 +448,9 @@ export default function CrmSyncPage() {
             with <code className="bg-gray-100 px-1 rounded">event</code> set to <code className="bg-gray-100 px-1 rounded">lead.created</code>, <code className="bg-gray-100 px-1 rounded">invoice.created</code>, or <code className="bg-gray-100 px-1 rounded">invoice.updated</code> in the JSON body.
           </p>
         </div>
-        <FieldInput label="Signing Secret (from your CRM's webhook settings — proves the call really came from them)" value={webhookSecret} onChange={setWebhookSecret} placeholder={webhookInfo?.last4 ? `•••${webhookInfo.last4} — paste a new one to replace` : 'paste secret'} />
+        <div data-tour="webhook-secret">
+          <FieldInput label="Signing Secret (from your CRM's webhook settings — proves the call really came from them)" value={webhookSecret} onChange={setWebhookSecret} placeholder={webhookInfo?.last4 ? `•••${webhookInfo.last4} — paste a new one to replace` : 'paste secret'} />
+        </div>
         <button onClick={saveWebhookSecret} disabled={savingWebhook || !webhookSecret}
           className="flex items-center gap-2 bg-[#0B2560] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#0d2d72] disabled:opacity-50 disabled:cursor-not-allowed">
           {savingWebhook ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Webhook Secret
@@ -425,7 +492,7 @@ export default function CrmSyncPage() {
 
       {/* Field Mapping */}
       <Section title="Field Mapping" subtitle="Tell us which of your CRM's field names correspond to ours, for each of the 6 things that move between the two systems.">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" data-tour="mapping-tabs">
           {MAPPING_TARGETS.map((t) => (
             <button key={`${t.capability}-${t.direction}`} onClick={() => setMappingTarget(t)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${mappingTarget.capability === t.capability && mappingTarget.direction === t.direction ? 'bg-[#0B2560] text-white border-[#0B2560]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
@@ -434,8 +501,10 @@ export default function CrmSyncPage() {
           ))}
         </div>
         <p className="text-xs text-gray-500 -mt-1">{mappingTarget.blurb}</p>
-        <MappingEditor fields={mappingFields} onChange={setMappingFields} direction={mappingTarget.direction} />
-        <button onClick={saveMapping} disabled={savingMapping}
+        <div data-tour="mapping-static">
+          <MappingEditor fields={mappingFields} onChange={setMappingFields} direction={mappingTarget.direction} />
+        </div>
+        <button onClick={saveMapping} disabled={savingMapping} data-tour="save-mapping"
           className="flex items-center gap-2 bg-[#0B2560] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#0d2d72] disabled:opacity-50">
           {savingMapping ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Mapping
         </button>
