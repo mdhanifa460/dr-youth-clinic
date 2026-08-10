@@ -5,6 +5,7 @@ import Connector from "@/app/models/Connector";
 import ConnectorWebhookEvent from "@/app/models/ConnectorWebhookEvent";
 import { decryptCredential } from "@/app/lib/crm/encryption";
 import { checkRateLimit, tooManyRequestsResponse } from "@/app/lib/rateLimit";
+import { processCrmWebhookEvent } from "@/app/lib/crm/webhookProcessing";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: { connectorId
   const signatureValid = verifySignature(req, rawBody, connector);
   const event = payload?.event || payload?.type || req.nextUrl.searchParams.get("event") || "unknown";
 
-  await (ConnectorWebhookEvent as any).create({
+  const logDoc = await (ConnectorWebhookEvent as any).create({
     connectorId: connector._id,
     event,
     signatureValid,
@@ -55,13 +56,20 @@ export async function POST(req: NextRequest, { params }: { params: { connectorId
     return NextResponse.json({ success: true, processed: false, reason: "invalid signature" });
   }
 
-  // Event-specific processing is intentionally not built yet — no real CRM
-  // webhook payload shape to design against (architecture review §13).
-  // The event is durably logged and visible in the Sync Manager's Logs
-  // tab; wiring a specific event to a specific local-model update is a
-  // follow-up once real payloads are available to test against.
+  let result: { processed: boolean; reason?: string };
+  try {
+    result = await processCrmWebhookEvent(String(connector._id), event, payload);
+  } catch (e: any) {
+    result = { processed: false, reason: e?.message || "Processing failed" };
+  }
 
-  return NextResponse.json({ success: true, processed: false, reason: "handler not yet implemented for this event" });
+  await (ConnectorWebhookEvent as any).findByIdAndUpdate(logDoc._id, {
+    status: result.processed ? "processed" : "failed",
+    processedAt: new Date(),
+    errorMessage: result.reason || "",
+  });
+
+  return NextResponse.json({ success: true, ...result });
 }
 
 function verifySignature(req: NextRequest, rawBody: string, connector: any): boolean {

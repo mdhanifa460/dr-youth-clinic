@@ -40,3 +40,35 @@ export interface PlatformBooking extends PlatformLead {
 export interface ConnectorPushResult {
   externalId: string;
 }
+
+// Inbound — CRM is the source, delivered via webhook (not polled). A lead
+// your staff logs directly in the CRM (a phone enquiry, a walk-in) rather
+// than one that started on the website.
+export interface PlatformInboundLead {
+  externalId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  service?: string;
+  location?: string;
+  notes?: string;
+}
+
+// Inbound — CRM is the source, delivered via webhook. One invoice/bill,
+// carrying patient + doctor + treatment + amount together, since that's
+// how a real billing system already bundles them — no separate pull for
+// "patient info" or "treatment info" on their own.
+export interface PlatformInvoice {
+  externalId: string;
+  invoiceNumber?: string;
+  patientName: string;
+  patientPhone: string;
+  patientEmail?: string;
+  doctorName?: string;
+  branch?: string;
+  treatments: string[];
+  amount: number;
+  amountPaid: number;
+  status?: string; // "paid" | "partial" | "unpaid" — free string, CRM-defined
+  invoiceDate?: string; // ISO date
+}

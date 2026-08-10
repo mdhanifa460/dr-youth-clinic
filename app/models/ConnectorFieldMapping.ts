@@ -10,6 +10,12 @@ const MappingFieldSchema = new mongoose.Schema(
     externalField: { type: String, required: true },
     transform: { type: String, default: "" },
     required: { type: Boolean, default: false },
+    // A fixed value sent/stored every time, instead of one read from a
+    // source field — e.g. push "source" is always the literal "website",
+    // never something the CRM's response would ever supply. When set,
+    // externalField/platformField still name the destination key, but
+    // nothing is read from the source record for this field.
+    staticValue: { type: String, default: "" },
   },
   { _id: false }
 );

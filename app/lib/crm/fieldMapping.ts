@@ -25,6 +25,9 @@ export interface MappingFieldDef {
   externalField: string;
   transform?: string;
   required?: boolean;
+  // See ConnectorFieldMapping's schema comment — a non-empty staticValue
+  // always wins over reading the source record for this field.
+  staticValue?: string;
 }
 
 export interface MappingResult {
@@ -51,6 +54,11 @@ export function applyFieldMapping(
   const writeKey = direction === "push" ? "externalField" : "platformField";
 
   for (const field of fields) {
+    if (field.staticValue) {
+      mapped[field[writeKey]] = field.staticValue;
+      continue;
+    }
+
     const raw = source[field[readKey]];
     const rawEmpty = raw === undefined || raw === null || raw === "";
     if (rawEmpty && field.required) {

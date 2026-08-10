@@ -38,13 +38,23 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Create the CRM connector before saving field mappings." }, { status: 404 });
   }
 
+  // The destination key (where the value ends up) is always required —
+  // externalField for push, platformField for pull. The source key (where
+  // it's read from) is only required when there's no fixed staticValue to
+  // use instead — a static field never reads a source at all.
   const cleanFields = fields
-    .filter((f: any) => f?.platformField && f?.externalField)
+    .filter((f: any) => {
+      const isStatic = !!f?.staticValue;
+      return direction === "push"
+        ? f?.externalField && (isStatic || f?.platformField)
+        : f?.platformField && (isStatic || f?.externalField);
+    })
     .map((f: any) => ({
-      platformField: String(f.platformField),
-      externalField: String(f.externalField),
+      platformField: String(f.platformField || ""),
+      externalField: String(f.externalField || ""),
       transform: String(f.transform || ""),
       required: Boolean(f.required),
+      staticValue: String(f.staticValue || ""),
     }));
 
   const mapping = await (ConnectorFieldMapping as any).findOneAndUpdate(
