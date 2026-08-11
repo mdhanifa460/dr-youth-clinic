@@ -60,9 +60,26 @@ export interface ISettings extends Document {
     googleBusiness: string;
   };
   analytics: {
+    // GTM is the primary tracking layer — explicit on/off, separate from
+    // just "an ID is present", so an admin can stage a container ID
+    // without it going live, and so direct GA4/Meta Pixel loading has a
+    // single, unambiguous switch to check against (see gtmActive in
+    // app/lib/analyticsConfig.ts) rather than re-deriving "is GTM active"
+    // from ID-presence in multiple places.
+    gtmEnabled: boolean;
+    gtmId: string;
+    // Optional — GTM's own environment/preview-workspace mechanism
+    // (Admin → Environments → a non-Live one, or Preview mode), for
+    // testing a container change before publishing it to the Live
+    // environment visitors get. Empty/unused unless an admin has an
+    // actual second workspace to point at.
+    gtmAuth: string;
+    gtmPreview: string;
+    // Advanced/fallback only — loaded directly ONLY when GTM is off
+    // (gtmActive false). See the "Managed by GTM" vs "Direct" badge
+    // logic in the admin page and the !gtmActive guards in layout.tsx.
     ga4Id: string;
     metaPixelId: string;
-    gtmId: string;
     clarityId: string;
     hotjarId: string;
     searchConsoleId: string;
@@ -333,9 +350,15 @@ const SettingsSchema = new Schema<ISettings>(
       googleBusiness: { type: String, default: '' },
     },
     analytics: {
+      // Defaults true so an existing clinic that already has gtmId set
+      // sees zero behavior change on deploy — GTM was implicitly "on
+      // whenever an ID is present" before this field existed.
+      gtmEnabled:      { type: Boolean, default: true },
+      gtmId:           { type: String, default: '' },
+      gtmAuth:         { type: String, default: '' },
+      gtmPreview:      { type: String, default: '' },
       ga4Id:           { type: String, default: '' },
       metaPixelId:     { type: String, default: '' },
-      gtmId:           { type: String, default: '' },
       clarityId:       { type: String, default: '' },
       hotjarId:        { type: String, default: '' },
       searchConsoleId: { type: String, default: '' },

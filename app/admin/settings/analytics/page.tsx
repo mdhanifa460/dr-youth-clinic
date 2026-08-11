@@ -2,39 +2,56 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save, ChevronDown } from "lucide-react";
 
 type AnalyticsSettings = {
+  gtmEnabled: boolean;
+  gtmId: string;
+  gtmAuth: string;
+  gtmPreview: string;
   ga4Id: string;
   metaPixelId: string;
-  gtmId: string;
   clarityId: string;
   hotjarId: string;
   searchConsoleId: string;
 };
 
 const DEFAULTS: AnalyticsSettings = {
+  gtmEnabled: true,
+  gtmId: "",
+  gtmAuth: "",
+  gtmPreview: "",
   ga4Id: "",
   metaPixelId: "",
-  gtmId: "",
   clarityId: "",
   hotjarId: "",
   searchConsoleId: "",
 };
 
-function StatusBadge({ active }: { active: boolean }) {
-  if (active) {
+// Three real states now, not just on/off — matters most for GA4/Meta
+// Pixel, which can be "the browser is loading this directly" or "GTM is
+// (expected to be) loading this instead" or plain "nothing configured".
+function StatusBadge({ status }: { status: "gtm" | "direct" | "off" }) {
+  if (status === "gtm") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block" />
+        Managed by GTM
+      </span>
+    );
+  }
+  if (status === "direct") {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
         <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-        Active
+        Direct — Active
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">
       <span className="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block" />
-      Not configured
+      Disabled
     </span>
   );
 }
@@ -45,6 +62,7 @@ export default function AnalyticsSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [gtmAdvancedOpen, setGtmAdvancedOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -85,6 +103,10 @@ export default function AnalyticsSettingsPage() {
     </div>
   );
 
+  const gtmActive = form.gtmEnabled && !!form.gtmId;
+  const ga4Status: "gtm" | "direct" | "off" = gtmActive ? "gtm" : form.ga4Id ? "direct" : "off";
+  const metaStatus: "gtm" | "direct" | "off" = gtmActive ? "gtm" : form.metaPixelId ? "direct" : "off";
+
   return (
     <div className="min-h-screen bg-[#f6faff]">
       <div className="max-w-2xl mx-auto px-6 py-10">
@@ -113,7 +135,11 @@ export default function AnalyticsSettingsPage() {
             <rect x="7" y="4" width="1" height="1.2" rx="0.5" fill="white" />
           </svg>
           <p className="text-sm leading-relaxed opacity-90">
-            These IDs are injected into every public page as tracking scripts. No API secrets here — only public measurement IDs that belong in the browser.
+            Google Tag Manager is the recommended way to run this site's tracking — turn it on below and manage every
+            pixel/tag (however many GA4 properties or Meta Pixels your marketing team uses) from inside GTM itself,
+            with zero code changes here ever again. GA4 and Meta Pixel below are the older, direct-integration path —
+            keep using them only if you're not on GTM yet. No API secrets on this page either way — only public
+            measurement IDs that belong in the browser.
           </p>
         </div>
 
@@ -128,16 +154,103 @@ export default function AnalyticsSettingsPage() {
           </div>
         )}
 
+        {/* Google Tag Manager — primary */}
+        <div className="bg-white rounded-2xl border-2 border-[#0B2560]/15 overflow-hidden mb-4">
+          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-[#0B2560] text-sm flex items-center gap-2">
+                Google Tag Manager
+                <span className="text-[9px] font-bold bg-[#F5A623]/20 text-[#8a5c0e] px-1.5 py-0.5 rounded">RECOMMENDED</span>
+              </h2>
+              <p className="text-gray-400 text-xs mt-0.5">One container manages every GA4 property, Meta Pixel, Google Ads tag, and more — no code changes when marketing adds or swaps a tag.</p>
+            </div>
+            <StatusBadge status={gtmActive ? "gtm" : "off"} />
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            <label className="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.gtmEnabled}
+                onClick={() => set("gtmEnabled", !form.gtmEnabled)}
+                className={`relative shrink-0 w-10 h-5.5 rounded-full transition-colors ${form.gtmEnabled ? "bg-[#0B2560]" : "bg-gray-200"}`}
+                style={{ width: 40, height: 22 }}
+              >
+                <span
+                  className="absolute top-0.5 left-0.5 bg-white rounded-full shadow-sm transition-transform duration-200"
+                  style={{ width: 18, height: 18, transform: form.gtmEnabled ? "translateX(18px)" : "translateX(0)" }}
+                />
+              </button>
+              <span className="text-sm font-semibold text-gray-700">GTM {form.gtmEnabled ? "enabled" : "disabled"}</span>
+            </label>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Container ID</label>
+              <input
+                type="text"
+                value={form.gtmId}
+                onChange={(e) => set("gtmId", e.target.value)}
+                placeholder="GTM-XXXXXXX"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
+              />
+              <p className="text-[11px] text-gray-400 mt-1.5">
+                Find this in Google Tag Manager → Admin → Container Settings. While this is on, GA4 and Meta Pixel
+                below will NOT load directly — configure them as tags inside this GTM container instead, so nothing
+                fires twice.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setGtmAdvancedOpen((o) => !o)}
+              className="flex items-center gap-1 text-[11px] font-bold text-gray-400 hover:text-[#0B2560] transition uppercase tracking-wider"
+            >
+              <ChevronDown size={12} className={`transition-transform ${gtmAdvancedOpen ? "rotate-180" : ""}`} />
+              Advanced — Environment / Preview
+            </button>
+            {gtmAdvancedOpen && (
+              <div className="grid sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">gtm_auth</label>
+                  <input
+                    type="text"
+                    value={form.gtmAuth}
+                    onChange={(e) => set("gtmAuth", e.target.value)}
+                    placeholder="Optional"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560] font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">gtm_preview</label>
+                  <input
+                    type="text"
+                    value={form.gtmPreview}
+                    onChange={(e) => set("gtmPreview", e.target.value)}
+                    placeholder="Optional"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560] font-mono"
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400 sm:col-span-2">
+                  Only needed if you're pointing this site at a non-Live GTM environment (Admin → Environments in
+                  GTM) to test a container change before publishing it. Leave both blank for normal production use.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Google Analytics 4 */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-[#0B2560] text-sm">Google Analytics 4</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Track page views, sessions, and user behaviour.</p>
+              <p className="text-gray-400 text-xs mt-0.5">
+                {gtmActive ? "Advanced/fallback — add GA4 as a tag inside GTM instead; this field is ignored while GTM is on." : "Track page views, sessions, and user behaviour."}
+              </p>
             </div>
-            <StatusBadge active={!!form.ga4Id} />
+            <StatusBadge status={ga4Status} />
           </div>
-          <div className="px-6 py-5 space-y-3">
+          <div className={`px-6 py-5 space-y-3 ${gtmActive ? "opacity-50" : ""}`}>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                 Measurement ID
@@ -146,12 +259,15 @@ export default function AnalyticsSettingsPage() {
                 type="text"
                 value={form.ga4Id}
                 onChange={(e) => set("ga4Id", e.target.value)}
+                disabled={gtmActive}
                 placeholder="G-XXXXXXXXXX"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
               />
             </div>
             <p className="text-[11px] text-gray-400">
-              Find this in Google Analytics → Admin → Data Streams → Measurement ID
+              {gtmActive
+                ? "Not loaded directly while GTM is enabled above — this value is kept in case you turn GTM off later, but has no effect right now."
+                : "Find this in Google Analytics → Admin → Data Streams → Measurement ID"}
             </p>
           </div>
         </div>
@@ -161,11 +277,13 @@ export default function AnalyticsSettingsPage() {
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-[#0B2560] text-sm">Meta (Facebook) Pixel</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Track conversions and retarget visitors via Meta Ads.</p>
+              <p className="text-gray-400 text-xs mt-0.5">
+                {gtmActive ? "Advanced/fallback — add your Pixel(s) as tags inside GTM instead; this field is ignored while GTM is on." : "Track conversions and retarget visitors via Meta Ads."}
+              </p>
             </div>
-            <StatusBadge active={!!form.metaPixelId} />
+            <StatusBadge status={metaStatus} />
           </div>
-          <div className="px-6 py-5 space-y-3">
+          <div className={`px-6 py-5 space-y-3 ${gtmActive ? "opacity-50" : ""}`}>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                 Pixel ID
@@ -174,40 +292,15 @@ export default function AnalyticsSettingsPage() {
                 type="text"
                 value={form.metaPixelId}
                 onChange={(e) => set("metaPixelId", e.target.value)}
+                disabled={gtmActive}
                 placeholder="1234567890123"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
               />
             </div>
             <p className="text-[11px] text-gray-400">
-              Find this in Meta Business Suite → Events Manager → Data Sources
-            </p>
-          </div>
-        </div>
-
-        {/* Google Tag Manager */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
-          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-            <div>
-              <h2 className="font-bold text-[#0B2560] text-sm">Google Tag Manager</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Manage all tags and pixels from one dashboard without code changes.</p>
-            </div>
-            <StatusBadge active={!!form.gtmId} />
-          </div>
-          <div className="px-6 py-5 space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                Container ID
-              </label>
-              <input
-                type="text"
-                value={form.gtmId}
-                onChange={(e) => set("gtmId", e.target.value)}
-                placeholder="GTM-XXXXXXX"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
-              />
-            </div>
-            <p className="text-[11px] text-gray-400">
-              Use GTM to manage all tracking in one place without code changes
+              {gtmActive
+                ? "Not loaded directly while GTM is enabled above — this value is kept in case you turn GTM off later, but has no effect right now."
+                : "Find this in Meta Business Suite → Events Manager → Data Sources. Only one pixel here — if marketing runs several, that's exactly the case GTM above is for."}
             </p>
           </div>
         </div>
@@ -217,9 +310,9 @@ export default function AnalyticsSettingsPage() {
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-[#0B2560] text-sm">Microsoft Clarity</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Free session recordings and click heatmaps.</p>
+              <p className="text-gray-400 text-xs mt-0.5">Free session recordings and click heatmaps. Runs independently of GTM.</p>
             </div>
-            <StatusBadge active={!!form.clarityId} />
+            <StatusBadge status={form.clarityId ? "direct" : "off"} />
           </div>
           <div className="px-6 py-5 space-y-3">
             <div>
@@ -245,9 +338,9 @@ export default function AnalyticsSettingsPage() {
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-[#0B2560] text-sm">Hotjar</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Heatmaps, session recordings, and feedback polls.</p>
+              <p className="text-gray-400 text-xs mt-0.5">Heatmaps, session recordings, and feedback polls. Runs independently of GTM.</p>
             </div>
-            <StatusBadge active={!!form.hotjarId} />
+            <StatusBadge status={form.hotjarId ? "direct" : "off"} />
           </div>
 
           {/* Overlap warning banner */}
@@ -286,9 +379,9 @@ export default function AnalyticsSettingsPage() {
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-[#0B2560] text-sm">Google Search Console</h2>
-              <p className="text-gray-400 text-xs mt-0.5">Verify site ownership to monitor SEO rankings and indexing.</p>
+              <p className="text-gray-400 text-xs mt-0.5">Verify site ownership to monitor SEO rankings and indexing. A verification mechanism, not a tracking tag — independent of GTM.</p>
             </div>
-            <StatusBadge active={!!form.searchConsoleId} />
+            <StatusBadge status={form.searchConsoleId ? "direct" : "off"} />
           </div>
           <div className="mx-6 mt-4 flex items-start gap-2.5 bg-green-50 border border-green-100 px-4 py-3 rounded-xl">
             <svg width="14" height="14" viewBox="0 0 15 15" fill="none" className="shrink-0 mt-0.5">

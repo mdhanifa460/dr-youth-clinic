@@ -75,11 +75,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Google Review avatars */}
         <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
 
-        {analytics.gtmId && (
+        {analytics.gtmActive && (
           <link rel="preconnect" href="https://www.googletagmanager.com" />
         )}
-        {analytics.ga4Id && (
+        {analytics.ga4Id && !analytics.gtmActive && (
           <link rel="preconnect" href="https://www.google-analytics.com" />
+        )}
+        {analytics.metaPixelId && !analytics.gtmActive && (
+          <link rel="preconnect" href="https://connect.facebook.net" />
         )}
         {analytics.searchConsoleId && (
           <meta name="google-site-verification" content={analytics.searchConsoleId} />
@@ -87,18 +90,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="min-h-screen flex flex-col bg-[#f6faff]">
 
-        {/* Google Tag Manager */}
-        {analytics.gtmId && (
+        {/* Google Tag Manager — the primary tracking layer. gtm_auth/
+            gtm_preview only get appended when an admin has actually
+            pointed this at a non-Live GTM environment/workspace; a
+            normal production container ignores them if absent. */}
+        {analytics.gtmActive && (
           <Script id="gtm" strategy="afterInteractive">{`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
             var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-            j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+            j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl${analytics.gtmAuth ? `+'&gtm_auth=${analytics.gtmAuth}'` : ''}${analytics.gtmPreview ? `+'&gtm_preview=${analytics.gtmPreview}&gtm_cookies_win=x'` : ''};
             f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${analytics.gtmId}');
           `}</Script>
         )}
 
-        {/* Google Analytics 4 (only if GTM not already loading it) */}
-        {analytics.ga4Id && !analytics.gtmId && (
+        {/* Google Analytics 4 — advanced/fallback only, loaded directly
+            ONLY when GTM isn't the active layer. When GTM is on, GA4 is
+            expected to be configured as a tag inside the GTM container
+            instead (see the admin page's "Managed by GTM" status). */}
+        {analytics.ga4Id && !analytics.gtmActive && (
           <>
             <Script async src={`https://www.googletagmanager.com/gtag/js?id=${analytics.ga4Id}`} strategy="afterInteractive" />
             <Script id="ga4" strategy="afterInteractive">{`
@@ -110,8 +119,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </>
         )}
 
-        {/* Meta (Facebook) Pixel */}
-        {analytics.metaPixelId && (
+        {/* Meta (Facebook) Pixel — same rule as GA4 above. This used to
+            load unconditionally even when GTM was also active, firing a
+            duplicate PageView (and would double any future event routed
+            through both paths) whenever both were configured. */}
+        {analytics.metaPixelId && !analytics.gtmActive && (
           <Script id="meta-pixel" strategy="afterInteractive">{`
             !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
             n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
