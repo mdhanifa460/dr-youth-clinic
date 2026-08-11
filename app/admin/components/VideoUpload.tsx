@@ -10,10 +10,17 @@ interface VideoUploadProps {
 }
 
 // Thin video counterpart to ImageUpload.tsx, modeled 1:1 on its
-// drop-zone/progress/error structure but posting to the existing
-// /api/admin/services/upload-video route (50MB, mp4/webm/quicktime/avi) —
-// no "Choose from Media Library" picker, since MediaGalleryModal is
-// image-only.
+// drop-zone/progress/error structure — no "Choose from Media Library"
+// picker, since MediaGalleryModal is image-only.
+//
+// Uploads DIRECTLY from the browser to Cloudinary (via a signature from
+// /api/admin/cloudinary-sign), not through a Next.js API route — a video
+// routed through a Vercel function as a base64 body hits this
+// deployment's real request-size ceiling well under the 50MB this UI
+// promises (confirmed: a 10MB file was rejected with a platform-level
+// "Request Entity Too Large", not our own validation). Signing only (no
+// file bytes) keeps the admin-permission check server-side while letting
+// the actual upload bypass that limit entirely.
 export default function VideoUpload({ onUpload, label = "Upload Video", currentUrl }: VideoUploadProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,17 +44,36 @@ export default function VideoUpload({ onUpload, label = "Upload Video", currentU
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/admin/services/upload-video", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!data.success) {
-        setError(data.message || "Upload failed");
+      const signRes = await fetch("/api/admin/cloudinary-sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder: "dr-youth-clinic/videos" }),
+      });
+      const sign = await signRes.json();
+      if (!sign.success) {
+        setError(sign.message || "Could not authorize upload");
         return;
       }
-      setPreviewSrc(data.data.secure_url);
+
+      const uploadForm = new FormData();
+      uploadForm.append("file", file);
+      uploadForm.append("api_key", sign.apiKey);
+      uploadForm.append("timestamp", String(sign.timestamp));
+      uploadForm.append("signature", sign.signature);
+      uploadForm.append("folder", sign.folder);
+
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloudName}/video/upload`, {
+        method: "POST",
+        body: uploadForm,
+      });
+      const data = await uploadRes.json();
+      if (data.error) {
+        setError(data.error.message || "Upload failed");
+        return;
+      }
+      setPreviewSrc(data.secure_url);
       setSuccess(true);
-      onUpload({ url: data.data.secure_url, publicId: data.data.public_id });
+      onUpload({ url: data.secure_url, publicId: data.public_id });
       setTimeout(() => setSuccess(false), 2500);
     } catch (err: any) {
       setError(err.message || "Upload failed. Please try again.");
