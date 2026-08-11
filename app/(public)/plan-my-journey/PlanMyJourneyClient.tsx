@@ -228,18 +228,27 @@ function PlanMyJourneyFlow({
     // each goal's "completed" sessions against how many started it.
     postAssessmentEvent({ event: "started", goal: g, sessionId });
     postAssessmentEvent({ event: "goal_selected", goal: g, sessionId });
+    // seedAnswersFromTags only pre-fills answers whose OWN tags match the
+    // goal's concernTags — most questions here have no seedable answer at
+    // all and are meant to be asked normally, gated only by their own
+    // conditionTags (getOrderedQuestions' filter), independent of whether
+    // anything got seeded. Bailing out here whenever `seeded` came back
+    // empty used to skip every question for a goal even when real,
+    // unconditional ones existed — confirmed against Hair: 12 of 13
+    // questions are conditionTags:["hair"]-gated, but the 1 unconditional
+    // question that's supposed to bootstrap that tag never got a chance to
+    // show, because this returned before ever computing `ordered`.
     const seeded = seedAnswersFromTags(quizConfig.questions, goalMap[g]?.concernTags || []);
-    if (Object.keys(seeded).length > 0) {
-      const ordered = getOrderedQuestions(quizConfig.questions, seeded, quizConfig.settings);
-      const firstUnanswered = ordered.find((q) => !(q.id in seeded));
-      if (firstUnanswered) {
-        setAnswers(seeded);
-        transition(() => { setPath([firstUnanswered.id]); setScreen("question"); });
-        return;
-      }
+    const ordered = getOrderedQuestions(quizConfig.questions, seeded, quizConfig.settings);
+    const firstUnanswered = ordered.find((q) => !(q.id in seeded));
+    if (firstUnanswered) {
+      setAnswers(seeded);
+      transition(() => { setPath([firstUnanswered.id]); setScreen("question"); });
+      return;
     }
-    // No mapped concern questions for this goal yet (e.g. weight-loss,
-    // until real content lands) — skip straight past Smart Conversation.
+    // Genuinely no question is visible for this goal at all (e.g.
+    // weight-loss, until real content lands) — skip straight past Smart
+    // Conversation.
     setAnswers({});
     setPath([]);
     transition(() => setScreen(afterQuestionsScreen()));
