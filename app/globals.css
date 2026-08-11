@@ -26,6 +26,18 @@
 
 html {
   scroll-behavior: smooth;
+  /* Sitewide horizontal-overflow guard — no component should ever be able
+     to introduce a horizontal scrollbar/page shift. Every genuine cause
+     found in a full responsive audit was fixed at its source (see
+     app/components/lp/LpHeader.tsx); this is the backstop for anything
+     sub-pixel that slips through, not a substitute for fixing a real
+     overflowing element. Doesn't affect any intentional horizontal-scroll
+     rail (those scope their own overflow-x: auto internally). */
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 /* Fix section hidden under navbar */
