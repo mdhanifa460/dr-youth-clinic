@@ -14,7 +14,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const { phone, bookingId, requestedDate, requestedTime, note } = await req.json();
-    if (!phone || !bookingId || !requestedDate || !requestedTime) {
+    if (
+      !phone || !bookingId || !requestedDate || !requestedTime ||
+      typeof phone !== 'string' || typeof bookingId !== 'string'
+    ) {
       return NextResponse.json({ success: false, message: 'Phone, booking ID, and a preferred date and time are required' }, { status: 400 });
     }
 

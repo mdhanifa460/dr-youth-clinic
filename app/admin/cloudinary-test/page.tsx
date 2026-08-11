@@ -50,7 +50,7 @@ export default function CloudinaryDiagnosticsPage() {
       }
 
       // Call diagnostics API
-      const response = await fetch('/api/cloudinary/diagnostics');
+      const response = await fetch('/api/admin/cloudinary-diagnostics');
       const data = await response.json();
 
       console.log('📊 Diagnostics result:', data);
