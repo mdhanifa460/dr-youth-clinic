@@ -238,8 +238,16 @@ function PlanMyJourneyFlow({
     // questions are conditionTags:["hair"]-gated, but the 1 unconditional
     // question that's supposed to bootstrap that tag never got a chance to
     // show, because this returned before ever computing `ordered`.
-    const seeded = seedAnswersFromTags(quizConfig.questions, goalMap[g]?.concernTags || []);
-    const ordered = getOrderedQuestions(quizConfig.questions, seeded, quizConfig.settings);
+    //
+    // Passing the goal's own concernTags as getOrderedQuestions' extraTags
+    // closes a second, deeper gap found after that fix shipped: even the
+    // one unconditional question showing didn't help if NO answer
+    // anywhere carries the matching tag — conditionTags-gated questions
+    // stayed unreachable forever regardless of what got answered. A goal
+    // should always unlock its own gated questions; see assessmentFlow.ts.
+    const concernTags = goalMap[g]?.concernTags || [];
+    const seeded = seedAnswersFromTags(quizConfig.questions, concernTags);
+    const ordered = getOrderedQuestions(quizConfig.questions, seeded, quizConfig.settings, concernTags);
     const firstUnanswered = ordered.find((q) => !(q.id in seeded));
     if (firstUnanswered) {
       setAnswers(seeded);
@@ -254,7 +262,11 @@ function PlanMyJourneyFlow({
     transition(() => setScreen(afterQuestionsScreen()));
   };
 
-  const orderedQuestions = getOrderedQuestions(quizConfig.questions, answers, quizConfig.settings);
+  // Same extraTags as pickGoal() above — the current goal's concernTags
+  // stay "unlocked" for the whole question flow, not just the initial
+  // computation, so conditionTags-gated questions keep showing correctly
+  // as the visitor moves from step to step.
+  const orderedQuestions = getOrderedQuestions(quizConfig.questions, answers, quizConfig.settings, goal ? goalMap[goal]?.concernTags || [] : []);
   const currentQuestionId = path[path.length - 1];
   const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
   const currentIndex = orderedQuestions.findIndex((q) => q.id === currentQuestionId);

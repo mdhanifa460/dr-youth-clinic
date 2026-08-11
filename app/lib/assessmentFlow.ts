@@ -10,8 +10,18 @@ import type { AssessmentAnswers } from "./assessmentScoring";
 // Dynamic Question Engine: a question with conditionTags only shows once
 // the visitor's answers so far have collected at least one matching tag —
 // empty conditionTags = universal, always shown.
-export function collectAnsweredTags(questions: AssessmentQuestion[], answers: AssessmentAnswers): Set<string> {
-  const tags = new Set<string>();
+//
+// `extraTags` — tags considered "already collected" independent of any
+// actual answer (e.g. Plan My Journey's picked goal's own concernTags —
+// see PlanMyJourneyClient.tsx). Answer-derived tags stay the primary,
+// content-authored mechanism; this is a defensive addition, not a
+// replacement — see getOrderedQuestions' comment for why it exists.
+export function collectAnsweredTags(
+  questions: AssessmentQuestion[],
+  answers: AssessmentAnswers,
+  extraTags: string[] = []
+): Set<string> {
+  const tags = new Set<string>(extraTags);
   for (const q of questions) {
     const given = answers[q.id];
     if (given === undefined || given === null || given === "") continue;
@@ -28,12 +38,29 @@ export function collectAnsweredTags(questions: AssessmentQuestion[], answers: As
 // controls the specific quick-add "notes" question (id "notes"), not every
 // free-text question — a doctor who adds a second, unrelated text question
 // shouldn't have it silently hidden by a toggle labeled for a different one.
+//
+// `extraTags` (see collectAnsweredTags) closes a real gap found in
+// production: an admin can gate a question behind conditionTags:["hair"]
+// in the Clinical Intake editor without realizing that tag also has to be
+// attached to some ANSWER OPTION somewhere (a separate field) for it to
+// ever actually get collected — otherwise every conditionTags-gated
+// question is permanently unreachable, no matter what the visitor
+// answers. Confirmed live: 12 of 13 Hair questions were conditionTags:
+// ["hair"]-gated, but literally zero answers anywhere in the config
+// carried a "hair" tag, so the gate could never open — Plan My Journey
+// asked exactly one (the sole unconditional) question then jumped
+// straight to photo-capture for every visitor. Passing the picked goal's
+// own concernTags through as extraTags means a goal always unlocks its
+// own conditionTags-gated questions, regardless of whether an admin also
+// remembered to tag an answer — answer-tag seeding (seedAnswersFromTags)
+// keeps working exactly as before for the cases it already covered.
 export function getOrderedQuestions(
   questions: AssessmentQuestion[],
   answers: AssessmentAnswers,
-  settings?: Pick<AssessmentSettings, "enableNotes">
+  settings?: Pick<AssessmentSettings, "enableNotes">,
+  extraTags: string[] = []
 ): AssessmentQuestion[] {
-  const answeredTags = collectAnsweredTags(questions, answers);
+  const answeredTags = collectAnsweredTags(questions, answers, extraTags);
   return [...questions]
     .filter((q) => !(q.type === "text" && q.id === "notes" && settings?.enableNotes === false))
     .filter((q) => !q.conditionTags?.length || q.conditionTags.some((t) => answeredTags.has(t)))
