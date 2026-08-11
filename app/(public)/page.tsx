@@ -17,7 +17,7 @@ import { Story } from '@/app/models/Story';
 import '@/app/models/StoryType';
 import { Faq } from '@/app/models/Faq';
 import { getSettings } from '@/app/models/Settings';
-import { CATEGORY_MAP } from '@/app/lib/serviceCategories';
+import { getCachedCategories } from '@/app/lib/getCachedCategories';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
 import Booking from '@/app/models/Booking';
@@ -343,9 +343,10 @@ const getCachedServiceCategoryCounts = unstable_cache(
       const byDbCategory: Record<string, number> = {};
       for (const row of rows) byDbCategory[row._id] = row.count;
 
+      const categories = await getCachedCategories();
       const bySlug: Record<string, number> = {};
-      for (const [slug, dbCategory] of Object.entries(CATEGORY_MAP)) {
-        bySlug[slug] = byDbCategory[dbCategory] || 0;
+      for (const cat of categories) {
+        bySlug[cat.slug] = byDbCategory[cat.dbKey] || 0;
       }
       return bySlug;
     } catch {
@@ -452,7 +453,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -468,6 +469,7 @@ export default async function Home() {
     getCachedHomepageFaqs(),
     getCachedTestimonialsRotateMs(),
     getSettings(),
+    getCachedCategories(),
   ]);
 
   // Content Layout Engine — additive zone, opt-in site-wide via
@@ -542,7 +544,7 @@ export default async function Home() {
           if (s.key === 'services') {
             return (
               <div key={s.key}>
-                <ServicesCards data={enriched[s.key]} location={resolvedLocation} categoryCounts={serviceCategoryCounts} />
+                <ServicesCards data={enriched[s.key]} location={resolvedLocation} categoryCounts={serviceCategoryCounts} categories={serviceCategories as any} />
               </div>
             );
           }

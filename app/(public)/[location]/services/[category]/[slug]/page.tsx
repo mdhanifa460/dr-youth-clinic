@@ -44,20 +44,11 @@ import TreatmentStepsList from '@/app/components/TreatmentStepsList';
 import RecoveryTimeline from '@/app/components/RecoveryTimeline';
 import ServiceStickyDesktopCta from '@/app/components/ServiceStickyDesktopCta';
 import { getServiceCities, getEffectiveSeo, getEffectiveSlug } from '@/app/lib/serviceSeo';
+import { getCachedCategories } from '@/app/lib/getCachedCategories';
 
 export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
-
-const CATEGORY_MAP: Record<string, string> = {
-  skin: 'Skin', hair: 'Hair', laser: 'Laser', other: 'Other',
-};
-const CATEGORY_LABEL: Record<string, string> = {
-  skin: 'Skin & Aesthetics', hair: 'Hair Restoration', laser: 'Laser Precision', other: 'Specialist Care',
-};
-const CATEGORY_ICON: Record<string, string> = {
-  Skin: '✨', Hair: '🌿', Laser: '⚡', Other: '🏥',
-};
 
 interface PageProps {
   params: { location: string; category: string; slug: string };
@@ -314,7 +305,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   if (!loc) notFound();
 
   const catSlug = params.category.toLowerCase();
-  if (!CATEGORY_MAP[catSlug]) notFound();
+  const categories = await getCachedCategories();
+  const catBySlug = (categories as any[]).find((c) => c.slug === catSlug);
+  if (!catBySlug) notFound();
 
   const svc = await getService(params.location, params.slug);
   if (!svc) notFound();
@@ -339,8 +332,14 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     getServiceResults(svc._id),
   ]);
 
+  // svc.category is the DB value (e.g. "Skin"), catBySlug.dbKey is the same
+  // thing looked up via the URL slug — kept as its own lookup (by dbKey,
+  // not just reusing catBySlug) since a service's actual category can, in
+  // principle, differ from the URL segment's matched category doc.
+  const catByDbKey = (categories as any[]).find((c) => c.dbKey === svc.category);
+  const catIcon = catByDbKey?.icon ?? '🏥';
   const cityName = loc.name;
-  const catLabel = CATEGORY_LABEL[catSlug] ?? svc.category;
+  const catLabel = catBySlug.label ?? svc.category;
   const beforeAfterPairs = svc.beforeAfterImages?.filter((p: any) => p.before?.url && p.after?.url) ?? [];
   const hasBeforeAfter = siteConfig.showBeforeAfterOnPublic && beforeAfterPairs.length > 0;
   const hasJourney = svc.treatmentSteps?.length > 0;
@@ -423,7 +422,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           <div className="max-w-7xl mx-auto px-6 md:px-10 py-10 grid md:grid-cols-2 gap-10 items-center relative">
             <div className="space-y-5">
               <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur text-white text-xs font-bold px-4 py-1.5 rounded-full tracking-wider uppercase border border-white/10">
-                {CATEGORY_ICON[svc.category] ?? '🏥'} {svc.category} Treatment
+                {catIcon} {svc.category} Treatment
               </span>
               <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight">
                 {svc.name}
@@ -482,7 +481,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               sizes="(max-width: 768px) 100vw, 50vw"
               alt={`${svc.name} in ${cityName}`}
               className="rounded-3xl shadow-2xl ring-1 ring-white/10 bg-white/10"
-              fallbackEmoji={CATEGORY_ICON[svc.category] ?? '🏥'}
+              fallbackEmoji={catIcon}
               priority
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
@@ -529,7 +528,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 { label: 'Sessions Needed', value: svc.sessionsRequired || 'Consult', icon: '🔄' },
                 { label: 'Recovery Time', value: svc.recoveryTime || 'Varies', icon: '🌿' },
                 { label: 'Anaesthesia', value: svc.anaesthesia || 'Topical / None', icon: '💉' },
-                { label: 'Category', value: svc.category, icon: CATEGORY_ICON[svc.category] },
+                { label: 'Category', value: svc.category, icon: catIcon },
               ].filter((f) => !f.priceOnly || siteConfig.showPriceOnCards);
               return (
                 <div className={`flex md:grid ${quickFacts.length === 6 ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0`}>

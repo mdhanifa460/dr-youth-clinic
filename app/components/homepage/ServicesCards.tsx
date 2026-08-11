@@ -1,27 +1,40 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Stethoscope } from 'lucide-react';
-import { CATEGORY_MAP, CATEGORY_META } from '@/app/lib/serviceCategories';
+
+export interface ServicesCardsCategory {
+  slug: string;
+  label: string;
+  tagline: string;
+  icon: string;
+  heroGrad: string;
+  accentColor: string;
+}
 
 export interface ServicesCardsProps {
   data: any;
   location?: string;
   categoryCounts?: Record<string, number>;
+  // DB-backed (Category model, via getCachedCategories()) — same live
+  // source as the Services Hub page, so a category rename/reorder from
+  // Settings → Service Categories shows up here too instead of only on
+  // the hub. categoryImages/categoryCounts stay keyed by `slug`, which
+  // is stable across that admin-managed source (default seed keeps the
+  // original skin/hair/laser/other slugs).
+  categories: ServicesCardsCategory[];
 }
 
 // Category-wise cards, each linking to its real category listing page —
 // replaces the previous free-text admin-authored decorative cards (which
-// had no click behavior at all). Always shows all 4 real categories,
+// had no click behavior at all). Always shows every active category,
 // regardless of how many services exist in each, with an honest count.
-export default function ServicesCards({ data, location = 'chennai', categoryCounts = {} }: ServicesCardsProps) {
+export default function ServicesCards({ data, location = 'chennai', categoryCounts = {}, categories }: ServicesCardsProps) {
   const {
     headline = 'Clinical-Level Beauty Services',
     subheadline = 'Experience medical precision meets aesthetic artistry across our core specializations.',
     diagnosisPanel = {},
     categoryImages = {},
   } = data || {};
-
-  const categorySlugs = Object.keys(CATEGORY_MAP);
 
   return (
     <section id="services" className="py-12 md:py-16 lg:py-20 bg-background">
@@ -47,35 +60,41 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
 
         {/* CATEGORY CARDS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-          {categorySlugs.map((slug) => {
-            const meta = CATEGORY_META[slug];
-            const count = categoryCounts[slug] ?? 0;
-            const image = categoryImages[slug];
+          {categories.map((cat) => {
+            const count = categoryCounts[cat.slug] ?? 0;
+            const image = categoryImages[cat.slug];
+            const accent = cat.accentColor || '#3b82f6';
             return (
               <Link
-                key={slug}
-                href={`/${location}/services/${slug}`}
+                key={cat.slug}
+                href={`/${location}/services/${cat.slug}`}
                 className="group relative overflow-hidden rounded-3xl min-h-[240px] md:min-h-[300px] shadow-[0_12px_35px_rgba(11,37,96,0.1)] ring-1 ring-white/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(11,37,96,0.16)] flex flex-col justify-end"
               >
                 {image?.url ? (
                   <Image
                     src={image.url}
-                    alt={meta.label}
+                    alt={cat.label}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover"
                   />
                 ) : (
-                  <div className={`absolute inset-0 bg-gradient-to-br ${meta.heroGrad}`} />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${cat.heroGrad}`} />
                 )}
                 <div className={`absolute inset-0 bg-gradient-to-t ${image?.url ? 'from-black/70 via-black/30' : 'from-black/50 via-black/10'} to-transparent`} />
-                <span className="absolute top-4 left-4 text-3xl md:text-4xl opacity-90">{meta.icon}</span>
+                <span className="absolute top-4 left-4 text-3xl md:text-4xl opacity-90">{cat.icon}</span>
                 <div className="relative p-4 md:p-6">
-                  <span className={`inline-block ${meta.pillBg} ${meta.pillText} backdrop-blur text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-2`}>
-                    {meta.tagline}
+                  <span
+                    className="inline-block backdrop-blur text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-2"
+                    style={{
+                      background: `color-mix(in srgb, ${accent} 25%, transparent)`,
+                      color: `color-mix(in srgb, ${accent} 45%, white)`,
+                    }}
+                  >
+                    {cat.tagline}
                   </span>
                   <h3 className="text-lg md:text-xl font-headline font-extrabold text-white mb-1 leading-tight">
-                    {meta.label}
+                    {cat.label}
                   </h3>
                   <p className="text-white/70 text-xs md:text-sm mb-3">
                     {count > 0 ? `${count} treatment${count !== 1 ? 's' : ''}` : 'Ask about pricing'}

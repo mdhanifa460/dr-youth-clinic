@@ -1,23 +1,21 @@
-// Canonical category definitions shared between the real category listing
-// pages (app/(public)/[location]/services/[category]/page.tsx) and the
-// homepage's category showcase (app/components/homepage/ServicesCards.tsx)
-// — extracted here so both stay in sync instead of maintaining two copies.
+// Original hardcoded category set — superseded by the DB-backed Category
+// model (Settings → Service Categories) for every real-page rendering path.
+// getCachedCategories() (app/lib/getCachedCategories.ts) is the live source
+// now used by the Services Hub page, the category listing/detail pages, and
+// the homepage's ServicesCards — an admin edit there (rename, reorder, new
+// category) shows up on all of them.
 //
-// Plain data/types only, deliberately — this file is imported by 'use
-// client' components (app/admin/homepage/page.tsx, app/admin/banners/
-// [id]/page.tsx) for CATEGORY_MAP/CATEGORY_SLUGS. A server-only import
-// here (connectDB, a Mongoose model) would pull the whole Mongoose chain
-// into those client bundles and break the build — see
-// app/lib/getCachedCategories.ts for the DB-backed reader, kept separate
-// for exactly this reason.
-//
-// CATEGORY_MAP/CATEGORY_META below are the original hardcoded set, still
-// used by those two consumers. getCachedCategories() (the other file) is
-// the newer, admin-managed source (Settings → Service Categories, the
-// Category model) — currently wired only into the Services Hub page
-// (app/(public)/[location]/services/page.tsx). The other two consumers
-// migrating to it is deliberately out of scope here; flagged as related
-// follow-up, not silently dropped.
+// CATEGORY_MAP/CATEGORY_SLUGS below still exist, kept plain data/types only
+// deliberately, for two remaining 'use client' admin consumers that haven't
+// migrated: app/admin/homepage/page.tsx and app/admin/banners/[id]/page.tsx
+// (both use CATEGORY_MAP purely for a static category-target dropdown), plus
+// app/lib/banners/revalidate.ts's fallback category list. Migrating those to
+// the live source would need a client-side fetch (a direct Mongoose import
+// here would pull the whole Mongoose chain into those client bundles and
+// break the build — see app/lib/getCachedCategories.ts's own comment) —
+// flagged as further follow-up, not silently dropped. CATEGORY_META is kept
+// only because CATEGORY_MAP still needs the interface/module to type-check;
+// no remaining consumer reads it.
 
 // URL slug -> DB `Service.category` value
 export const CATEGORY_MAP: Record<string, string> = {

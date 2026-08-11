@@ -8,7 +8,7 @@ import { Service } from '@/app/models/Service';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getEffectiveSlug } from '@/app/lib/serviceSeo';
-import { CATEGORY_MAP, CATEGORY_META } from '@/app/lib/serviceCategories';
+import { getCachedCategories } from '@/app/lib/getCachedCategories';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
@@ -64,14 +64,16 @@ async function findServiceBySlug(location: string, slug: string) {
 }
 
 export async function generateStaticParams() {
-  return Object.keys(CATEGORY_MAP).map((slug) => ({ category: slug }));
+  const categories = await getCachedCategories();
+  return categories.map((cat: any) => ({ category: cat.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const loc = locations[params.location];
   if (!loc) return {};
   const catSlug = params.category.toLowerCase();
-  const meta = CATEGORY_META[catSlug];
+  const categories = await getCachedCategories();
+  const meta = categories.find((c: any) => c.slug === catSlug);
   if (!meta) return {};
   const city = loc.name;
   return {
@@ -91,9 +93,11 @@ export default async function CategoryPage({ params }: PageProps) {
   if (!loc) notFound();
 
   const catSlug = params.category.toLowerCase();
+  const categories = await getCachedCategories();
+  const meta: any = categories.find((c: any) => c.slug === catSlug);
 
   // If not a valid category slug, check if it's an old service URL and redirect
-  if (!CATEGORY_MAP[catSlug]) {
+  if (!meta) {
     const svc = await findServiceBySlug(params.location, params.category);
     if (svc) {
       redirect(`/${params.location}/services/${svc.category.toLowerCase()}/${svc.urlSlug}`);
@@ -101,10 +105,9 @@ export default async function CategoryPage({ params }: PageProps) {
     notFound();
   }
 
-  const dbCategory = CATEGORY_MAP[catSlug];
-  const meta = CATEGORY_META[catSlug];
+  const accent = meta.accentColor || '#3b82f6';
   const [services, siteConfig, categoryBanners] = await Promise.all([
-    getServicesForCategory(params.location, dbCategory),
+    getServicesForCategory(params.location, meta.dbKey),
     getSiteConfig(),
     resolveBanner({ page: 'category', location: params.location, category: catSlug }),
   ]);
@@ -142,7 +145,10 @@ export default async function CategoryPage({ params }: PageProps) {
 
         <div className="max-w-7xl mx-auto px-6 md:px-10 pb-20 md:pb-24 relative">
           <div className="max-w-2xl">
-            <span className={`inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] ${meta.accentText} opacity-70 mb-6`}>
+            <span
+              className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] opacity-70 mb-6"
+              style={{ color: `color-mix(in srgb, ${accent} 55%, white)` }}
+            >
               <span className="w-6 h-px bg-current opacity-50" />
               {city} · {meta.tagline}
             </span>
@@ -154,7 +160,13 @@ export default async function CategoryPage({ params }: PageProps) {
                   {meta.label}
                 </h1>
                 {services.length > 0 && (
-                  <span className={`inline-block mt-2 text-xs font-bold px-3 py-1 rounded-full ${meta.pillBg} ${meta.pillText}`}>
+                  <span
+                    className="inline-block mt-2 text-xs font-bold px-3 py-1 rounded-full"
+                    style={{
+                      background: `color-mix(in srgb, ${accent} 25%, transparent)`,
+                      color: `color-mix(in srgb, ${accent} 45%, white)`,
+                    }}
+                  >
                     {services.length} treatment{services.length !== 1 ? 's' : ''} available
                   </span>
                 )}
