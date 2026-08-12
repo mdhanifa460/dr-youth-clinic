@@ -1,5 +1,6 @@
 import { connectDB } from './mongodb';
 import { getSettings } from '../models/Settings';
+import { extractSearchConsoleToken } from './searchConsole';
 
 export type AnalyticsConfig = {
   gtmEnabled: boolean;
@@ -39,7 +40,11 @@ export async function getAnalyticsConfig(): Promise<AnalyticsConfig> {
       metaPixelId:     settings.analytics?.metaPixelId     || '',
       clarityId:       settings.analytics?.clarityId       || '',
       hotjarId:        settings.analytics?.hotjarId        || '',
-      searchConsoleId: settings.analytics?.searchConsoleId || '',
+      // Defensive, not just documented: self-heals if an admin ever pastes
+      // the full <meta ...> tag instead of just the token (see
+      // searchConsole.ts) — renders correctly in layout.tsx either way,
+      // without needing another admin save.
+      searchConsoleId: extractSearchConsoleToken(settings.analytics?.searchConsoleId || ''),
     };
   } catch {
     return EMPTY_CONFIG;

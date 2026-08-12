@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Settings, getSettings } from '@/app/models/Settings';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { extractSearchConsoleToken } from '@/app/lib/searchConsole';
 
 export async function GET() {
   const denied = await requirePermission('settings', 'view');
@@ -24,6 +25,18 @@ export async function PUT(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
+
+    // Search Console verification is meant to be token-only (see
+    // app/lib/searchConsole.ts) — an admin pasting Search Console's own
+    // full <meta ...> tag instead of just the content="..." value has
+    // already happened once in production. Sanitized here, not just
+    // documented in the field's help text, so it can't happen again
+    // regardless of what actually gets pasted. Scoped to this one field
+    // only — every other settings field passes through unchanged.
+    if (body?.analytics && typeof body.analytics.searchConsoleId === 'string') {
+      body.analytics.searchConsoleId = extractSearchConsoleToken(body.analytics.searchConsoleId);
+    }
+
     const existing = await Settings.findOne({} as any).lean();
 
     let updated;
