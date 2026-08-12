@@ -4,6 +4,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Settings, getSettings } from '@/app/models/Settings';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { extractSearchConsoleToken } from '@/app/lib/searchConsole';
+import { mergeSettingsUpdate } from '@/app/lib/settingsMerge';
 
 export async function GET() {
   const denied = await requirePermission('settings', 'view');
@@ -41,7 +42,8 @@ export async function PUT(req: NextRequest) {
 
     let updated;
     if (existing) {
-      updated = await (Settings as any).findByIdAndUpdate(existing._id, { $set: body }, { returnDocument: 'after', runValidators: true });
+      const mergedBody = mergeSettingsUpdate(existing, body);
+      updated = await (Settings as any).findByIdAndUpdate(existing._id, { $set: mergedBody }, { returnDocument: 'after', runValidators: true });
     } else {
       updated = await Settings.create(body);
     }
