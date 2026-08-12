@@ -7,8 +7,9 @@ import {
   ChevronRight, ArrowLeft, CheckCircle, IndianRupee, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
 import { markdownToHtml } from '@/app/lib/blogMarkdown';
-import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
 import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
+import { locations } from '@/app/data/locations';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
@@ -169,7 +170,14 @@ function PanelHeader({ title, onBack }: { title: string; onBack: () => void }) {
 
 // ── Inline Booking ──────────────────────────────────────────────────────
 function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }) {
-  const [form, setForm] = useState({ name: '', phone: '', service: '', date: '', time: '' });
+  // `location` is required by the /api/booking Zod schema (bookingSchema)
+  // but was missing from this form entirely — every real submission
+  // through the AI chat widget was failing with a raw "Invalid input:
+  // expected string, received undefined" error shown straight to the
+  // patient. Pre-filled from the same ?location=/?clinic= URL convention
+  // getUrlBranch() already reads elsewhere in this file, so a branch-scoped
+  // visitor doesn't have to pick it again.
+  const [form, setForm] = useState({ name: '', phone: '', service: '', location: getUrlBranch(), date: '', time: '' });
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -177,8 +185,8 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const submit = async () => {
-    if (!form.name.trim() || !form.phone.trim() || !form.date || !form.time) {
-      setError('Name, phone, date, and time are required.'); return;
+    if (!form.name.trim() || !form.phone.trim() || !form.location || !form.date || !form.time) {
+      setError('Name, phone, clinic location, date, and time are required.'); return;
     }
     setSaving(true); setError('');
     try {
@@ -190,6 +198,11 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
       if (data.success) {
         setDone(true);
         trackBookingConversion({ bookingId: data.bookingId, service: form.service });
+        // AI funnel event — same GTM dataLayer bridge, distinct from the
+        // sitewide booking_confirmed trackBookingConversion() already
+        // fires above, so Marketing Intelligence can tell an AI-chat
+        // booking apart from a direct /book submission.
+        pushDataLayerEvent('ai_booking_completed', { source: 'ai_chat', service: form.service || undefined });
       } else setError(data.message || 'Could not book — please try again.');
     } catch { setError('Network error — please try again.'); }
     finally { setSaving(false); }
@@ -217,6 +230,13 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" />
         <input value={form.service} onChange={e => set('service', e.target.value)} placeholder="Concern / treatment (optional)"
           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" />
+        <select value={form.location} onChange={e => set('location', e.target.value)}
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-white">
+          <option value="">Select clinic location</option>
+          {Object.entries(locations).map(([slug, l]) => (
+            <option key={slug} value={slug}>{l.name}</option>
+          ))}
+        </select>
         <div className="grid grid-cols-2 gap-2">
           <input value={form.date} onChange={e => set('date', e.target.value)} type="date"
             className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm" />
@@ -340,6 +360,9 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
     setView('chat');
     setMessages(prev => [...prev, { role: 'user', content: trimmed }, { role: 'assistant', content: '', streaming: true }]);
     setStreaming(true);
+    // No message content sent — matches this codebase's existing no-PII
+    // dataLayer convention (booking_confirmed/lead_submitted etc.).
+    pushDataLayerEvent('ai_message_sent', { source: 'ai_chat' });
 
     try {
       const res = await fetch('/api/ai-chat', {
@@ -387,11 +410,15 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
             setDisabled(true);
           } else if (evt.type === 'error') {
             setError(evt.message || 'Something went wrong.');
+            pushDataLayerEvent('ai_error', { source: 'ai_chat', reason: 'stream' });
+          } else if (evt.type === 'done') {
+            pushDataLayerEvent('ai_response_generated', { source: 'ai_chat' });
           }
         }
       }
     } catch {
       setError('Connection lost — please try again.');
+      pushDataLayerEvent('ai_error', { source: 'ai_chat', reason: 'network' });
     } finally {
       setStreaming(false);
       setMessages(prev => {
@@ -418,14 +445,27 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
 
   const handleQuickAction = (action: string) => {
     const inline = INLINE_VIEWS[action];
-    if (inline) setView(inline);
+    if (inline) {
+      setView(inline);
+      if (inline === 'book') pushDataLayerEvent('ai_booking_started', { source: 'ai_chat' });
+    }
   };
 
   return (
     <>
       {/* Launcher */}
       <button
-        onClick={() => setOpen(o => { if (o) setView('chat'); return !o; })}
+        onClick={() => {
+          // The side effect must live outside the setOpen updater — React
+          // StrictMode double-invokes updater functions in dev specifically
+          // to catch impurities like this, which was firing this event
+          // twice on every real single click. Reading `open` directly from
+          // render scope (not via the functional updater) keeps the state
+          // update itself pure and the event push a true once-per-click.
+          if (open) setView('chat');
+          else pushDataLayerEvent('ai_chat_opened', { source: 'ai_chat' });
+          setOpen(o => !o);
+        }}
         aria-label={open ? 'Close chat assistant' : 'Open chat assistant'}
         className={`fixed z-50 bottom-24 right-5 lg:bottom-6 lg:right-6 w-14 h-14 rounded-full bg-gradient-to-br ${accent} text-white shadow-[0_8px_28px_rgba(11,37,96,0.35)] flex items-center justify-center hover:scale-105 transition-transform`}
       >
@@ -542,6 +582,7 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ sessionId: sessionIdRef.current }),
                         }).catch(() => {});
+                        pushDataLayerEvent('ai_human_handoff', { source: 'ai_chat' });
                       }}
                       className="shrink-0 text-[11px] font-semibold bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-full border border-green-100 transition whitespace-nowrap">
                       💬 WhatsApp
