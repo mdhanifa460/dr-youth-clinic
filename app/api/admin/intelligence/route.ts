@@ -5,7 +5,9 @@ import Booking from '@/app/models/Booking';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
+import { Lead } from '@/app/models/Lead';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { canonicalizeLocation, BRANCH_SLUGS } from '@/app/lib/locationNormalize';
 
 const BRANCHES = ['chennai', 'bangalore', 'coimbatore', 'kochi'] as const;
 
@@ -35,13 +37,20 @@ function pd(d: any): Date {
 const getCachedRawData = unstable_cache(
   async () => {
     await connectDB();
-    const [allBookings, allServices, allDoctors, allReviews] = await Promise.all([
+    const [allBookings, allServices, allDoctors, allReviews, allLeads] = await Promise.all([
       Booking.find().select('createdAt status phone formattedPhone service location doctorId').lean(),
       Service.find().select('name price category seoScore location status').lean(),
       Doctor.find().select('name title experience locations active').lean(),
       Review.find().select('location rating source reviewText authorName isVisible createdAt').lean(),
+      // Real Lead records for location-wise lead tracking (§4 of the
+      // Marketing Intelligence requirements) — `preferredClinic` is the
+      // patient's own branch choice (see Lead.ts comment), the most
+      // meaningful "which location is this lead for" signal, with
+      // `clinicLocation` (QR/link attribution) and `city` (legacy free
+      // text) as fallbacks for older leads that predate preferredClinic.
+      Lead.find().select('preferredClinic clinicLocation city createdAt').lean(),
     ]);
-    return { allBookings, allServices, allDoctors, allReviews };
+    return { allBookings, allServices, allDoctors, allReviews, allLeads };
   },
   ['admin-intelligence-raw'],
   { revalidate: 60 }
@@ -61,12 +70,13 @@ export async function GET(req: NextRequest) {
     const monthStart = new Date(todayStart.getTime() - 30 * MS_DAY);
     const day90Start = new Date(todayStart.getTime() - 90 * MS_DAY);
 
-    const { allBookings, allServices, allDoctors, allReviews } = await getCachedRawData();
+    const { allBookings, allServices, allDoctors, allReviews, allLeads } = await getCachedRawData();
 
     const allBs   = allBookings as any[];
     const allSvcs = allServices as any[];
     const allDocsArr = allDoctors as any[];
     const allRevs = allReviews as any[];
+    const allLds  = (allLeads as any[]) || [];
 
     // Branch-scoped working sets — every metric below (except `byLocation`,
     // which exists specifically to compare branches side by side and always
@@ -194,14 +204,54 @@ export async function GET(req: NextRequest) {
     // arrays, not the branch-filtered ones above) regardless of the selected
     // branch filter, since a single-branch view of a branch-comparison table
     // would defeat its purpose.
+    //
+    // `normLoc` canonicalizes free-text location values (Booking.location,
+    // Lead.preferredClinic/clinicLocation/city are all unvalidated strings
+    // written inconsistently across entry points — see locationNormalize.ts)
+    // down to one of the 4 real branch slugs, falling back to a lowercased
+    // raw value (not silently dropped) for anything that doesn't match, so
+    // a genuine data-quality problem stays visible as its own row instead
+    // of disappearing into 'unknown'.
+    const normLoc = (raw: unknown): string =>
+      canonicalizeLocation(raw) || (typeof raw === 'string' && raw.trim() ? raw.trim().toLowerCase() : 'unknown');
+
     const locMap = new Map<string, { count: number; revenue: number }>();
+    // Service breakdown per location (from Booking.service — the real
+    // "service" field; Lead has no equivalent, only primaryConcern) so
+    // "which service generates the most leads/bookings for each location"
+    // can be answered without guessing.
+    const locSvcMap = new Map<string, Map<string, number>>();
     for (const b of allBs) {
-      const loc = (b.location || 'unknown').toLowerCase();
+      const loc = normLoc(b.location);
       if (!locMap.has(loc)) locMap.set(loc, { count: 0, revenue: 0 });
       const e = locMap.get(loc)!;
       e.count++;
       if (b.status !== 'cancelled') e.revenue += getPrice(b.service || '');
+
+      if (!locSvcMap.has(loc)) locSvcMap.set(loc, new Map());
+      const svcName = (b.service || 'Unknown').trim();
+      const sm = locSvcMap.get(loc)!;
+      sm.set(svcName, (sm.get(svcName) || 0) + 1);
     }
+
+    // Real leads-by-location — preferredClinic first (patient's own branch
+    // choice), falling back to clinicLocation (QR/link attribution) then
+    // city (legacy free text) for older leads.
+    const leadLocMap = new Map<string, number>();
+    for (const l of allLds) {
+      const loc = normLoc(l.preferredClinic) !== 'unknown' ? normLoc(l.preferredClinic)
+        : normLoc(l.clinicLocation) !== 'unknown' ? normLoc(l.clinicLocation)
+        : normLoc(l.city);
+      leadLocMap.set(loc, (leadLocMap.get(loc) || 0) + 1);
+    }
+
+    // Seed every real branch even with zero bookings/leads so the location
+    // table always shows all 4 clinics, not just the ones with activity.
+    for (const slug of BRANCH_SLUGS) {
+      if (!locMap.has(slug)) locMap.set(slug, { count: 0, revenue: 0 });
+      if (!leadLocMap.has(slug)) leadLocMap.set(slug, 0);
+    }
+
     const activeDocsGlobal = allDocsArr.filter((d: any) => d.active);
     const byLocation = Array.from(locMap.entries())
       .map(([location, e]) => {
@@ -209,6 +259,11 @@ export async function GET(req: NextRequest) {
         const lDocs = activeDocsGlobal.filter((d: any) => d.locations?.includes(location) || d.locations?.includes('all'));
         const lSvcs = allSvcs.filter((s: any) => s.location === location && s.status === 'active');
         const avgR  = lRevs.length ? lRevs.reduce((s: number, r: any) => s + (r.rating || 0), 0) / lRevs.length : 0;
+        const leads = leadLocMap.get(location) || 0;
+        const svcCounts = locSvcMap.get(location);
+        const topService = svcCounts && svcCounts.size
+          ? Array.from(svcCounts.entries()).sort((a, b) => b[1] - a[1])[0][0]
+          : null;
         return {
           location,
           count:       e.count,
@@ -217,6 +272,17 @@ export async function GET(req: NextRequest) {
           doctors:     lDocs.length,
           avgRating:   Math.round(avgR * 10) / 10,
           reviewCount: lRevs.length,
+          // Real Lead-collection counts, not derived from bookings.
+          leads,
+          // Approximate — bookings and leads are separate collections with
+          // no leadId link on Booking today (a booking can also happen with
+          // no prior Lead record at all, e.g. direct /book submissions), so
+          // this is bookings÷leads by location, not a true per-patient
+          // conversion funnel. Good enough for "which location converts
+          // best" directionally; a leadId-linked funnel would need a schema
+          // change to Booking (out of scope for this pass).
+          conversionRate: leads > 0 ? Math.round((e.count / leads) * 100) : null,
+          topService,
         };
       })
       .sort((a, b) => b.count - a.count);

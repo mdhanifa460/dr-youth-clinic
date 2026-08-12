@@ -22,6 +22,7 @@ const CAMPAIGNS = [
 export default function MarketingIntelligence({ data }: { data: any }) {
   const o = data?.overview || {};
   const totalMonthly = o.monthBookings || 100;
+  const byLocation: any[] = data?.byLocation || [];
 
   const enrichedSources = LEAD_SOURCES.map(s => ({
     ...s,
@@ -46,9 +47,57 @@ export default function MarketingIntelligence({ data }: { data: any }) {
         badge="Marketing Analytics"
       />
 
+      {/* Location-wise Lead & Booking Performance — real Lead/Booking data,
+          not a benchmark. Answers "which location gets the most leads/
+          bookings and converts best" directly from the database. */}
+      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+          <p className="text-sm font-bold text-[#0B2560]">Location-wise Lead &amp; Booking Performance</p>
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Real Data</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-gray-50">
+                {['Location', 'Leads', 'Bookings', 'Bookings/Lead', 'Top Service'].map(h => (
+                  <th key={h} className="text-left px-4 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {byLocation.length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">No data available for the selected period.</td></tr>
+              )}
+              {byLocation.map((l, i) => (
+                <tr key={i} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-gray-800 capitalize">{l.location}</td>
+                  <td className="px-4 py-3 text-gray-700">{l.leads}</td>
+                  <td className="px-4 py-3 text-gray-700">{l.count}</td>
+                  <td className="px-4 py-3">
+                    {l.conversionRate == null ? (
+                      <span className="text-gray-400">—</span>
+                    ) : (
+                      // Deliberately not color-coded good/bad — this can
+                      // legitimately read over 100% (most bookings don't
+                      // originate from a Lead record at all, see footnote),
+                      // so a green/red judgment would misrepresent it.
+                      <span className="font-semibold text-gray-700">{l.conversionRate}%</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">{l.topService || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-5 py-3 bg-gray-50/50 text-[11px] text-gray-500">
+          Leads counted from Clinical Intake / Plan My Journey submissions, by preferred clinic. &quot;Bookings/Lead&quot; is bookings ÷ leads per location — it can read over 100% since most bookings (main booking page, homepage bar, AI chat) don&apos;t originate from a Lead record at all. Treat it as directional, not an exact per-patient conversion funnel.
+        </div>
+      </div>
+
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800 flex items-start gap-2">
         <span className="shrink-0">💡</span>
-        <span><strong>Sample data.</strong> Lead source splits and campaign figures below are illustrative industry benchmarks, not your actual tracked leads. Connect your CRM or booking form UTM tracking to see real-time data.</span>
+        <span><strong>Sample data below.</strong> Lead source splits and campaign figures are illustrative industry benchmarks, not your actual tracked leads. Connect UTM tracking (coming soon) to see real channel/campaign attribution.</span>
       </div>
 
       {/* Lead source breakdown */}
