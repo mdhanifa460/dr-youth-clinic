@@ -4,6 +4,7 @@ import { Service } from "@/app/models/Service";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
+import { parseClaudeJson } from "@/app/lib/ai/anthropic";
 
 export async function POST(req: Request) {
   // 5 simulations per hour per IP — this hits a paid AI API with no auth wall,
@@ -72,14 +73,21 @@ The 4 sessionRange values must divide ${sessions} total sessions sensibly (e.g. 
     // -> cache hit, no second AI call. Different wording is a different
     // hash, so this never serves a stale/mismatched journey to a patient
     // who actually described something different.
-    const text = await generateText(prompt, { maxTokens: 900, cacheKey: "journey-simulator:generate" });
+    //
+    // maxTokens raised from 900 — a summary + 4 phase descriptions +
+    // disclaimer sits close enough to that budget that the model could get
+    // cut off mid-array, producing truncated JSON. Same root cause found
+    // and fixed in app/api/admin/intelligence/ai/route.ts.
+    const text = await generateText(prompt, { maxTokens: 1400, cacheKey: "journey-simulator:generate" });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON in AI response");
-
-    const journey = JSON.parse(jsonMatch[0]);
+    // parseClaudeJson (extracts the {...} block regardless of surrounding
+    // prose/fences, repairs raw-control-character-in-string responses, and
+    // throws a clean "please try again" instead of a raw parser
+    // SyntaxError) — same shared, hardened parser as every other
+    // AI-JSON route now.
+    const journey: any = parseClaudeJson(text);
     if (!journey?.phases || !Array.isArray(journey.phases) || journey.phases.length === 0) {
-      throw new Error("Invalid AI response format");
+      throw new Error("The AI response was incomplete — please try again.");
     }
 
     return NextResponse.json({ success: true, data: journey });

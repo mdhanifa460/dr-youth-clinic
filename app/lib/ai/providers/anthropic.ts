@@ -153,11 +153,89 @@ export async function callClaudeMessages(opts: {
   });
 }
 
-// Strips ```json fences some responses get wrapped in despite the prompt
-// asking for raw JSON — cheap insurance before JSON.parse.
+// Claude occasionally emits a literal raw newline/tab inside a JSON string
+// value instead of the escaped "\n"/"\t" the spec requires — e.g.
+// {"detail": "First sentence.
+// Second sentence."} — which JSON.parse rejects as "Bad control character
+// in string literal". A blind global replace of every raw newline in the
+// text would corrupt the JSON structure itself (indentation whitespace
+// between tokens is meaningful to look at, even though insignificant to
+// parse) — a stray inserted "\n" two-character sequence OUTSIDE a string
+// is invalid syntax. This scans char-by-char tracking whether we're
+// inside a quoted string (respecting backslash-escaped quotes) and only
+// escapes control characters found there; whitespace between structural
+// tokens outside strings is left exactly as-is, since raw whitespace there
+// is already valid per the JSON spec.
+function sanitizeJsonControlChars(text: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (const ch of text) {
+    if (inString) {
+      if (escaped) {
+        out += ch;
+        escaped = false;
+      } else if (ch === "\\") {
+        out += ch;
+        escaped = true;
+      } else if (ch === '"') {
+        out += ch;
+        inString = false;
+      } else if (ch === "\n") {
+        out += "\\n";
+      } else if (ch === "\r") {
+        out += "\\r";
+      } else if (ch === "\t") {
+        out += "\\t";
+      } else if (ch.charCodeAt(0) < 0x20) {
+        out += "\\u" + ch.charCodeAt(0).toString(16).padStart(4, "0");
+      } else {
+        out += ch;
+      }
+    } else {
+      if (ch === '"') inString = true;
+      out += ch;
+    }
+  }
+  return out;
+}
+
+// Strips ```json fences some responses get wrapped in, AND extracts just
+// the {...} substring — Claude sometimes adds prose before/after the JSON
+// block despite being told "return ONLY valid JSON" (e.g. a trailing
+// "### Critical Summary for Leadership" section after the closing fence).
+// Taking the first "{" to the last "}" in the whole text handles both the
+// fenced and unfenced cases in one pass, and is safe here specifically
+// because every prompt using this parser asks for a single top-level JSON
+// object, not an array or bare value.
+//
+// Every one of this function's 12 callers (patient-report, 7 content-block
+// generators, 4 video generators) wraps this call in its own try/catch and
+// forwards err.message straight into the API response — none of them
+// expected JSON.parse's native SyntaxError specifically, so a truncated or
+// malformed AI response (Claude cut off mid-array on a large structured
+// reply, same root cause as the fix in app/api/admin/intelligence/ai and
+// app/api/journey-simulator, which now both route through this same
+// function too) surfaced a raw "Expected ',' or ']' after array element in
+// JSON at position N" straight to a real user. Catching it once here, at
+// the single shared choke point, fixes every caller and any future one —
+// patching each call site individually would leave the same gap open the
+// next time a route is added.
 export function parseClaudeJson<T>(text: string): T {
-  const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
-  return JSON.parse(cleaned) as T;
+  const fenceStripped = text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+  const braceMatch = fenceStripped.match(/\{[\s\S]*\}/);
+  const cleaned = braceMatch ? braceMatch[0] : fenceStripped;
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    // First attempt failed — try again after repairing the specific "raw
+    // control character inside a string" quirk before giving up entirely.
+    try {
+      return JSON.parse(sanitizeJsonControlChars(cleaned)) as T;
+    } catch {
+      throw new Error("The AI response was incomplete or malformed — please try again.");
+    }
+  }
 }
 
 // Normalized streaming: parses Anthropic's SSE event shape

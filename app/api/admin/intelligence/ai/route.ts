@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { generateText, getConfiguredProviderEnvKeyName, isConfiguredProviderReady } from '@/app/lib/ai';
+import { parseClaudeJson } from '@/app/lib/ai/anthropic';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,9 +32,9 @@ LIVE BUSINESS DATA:
 - Top Services: ${top5 || 'no data yet'}
 - Clinic Performance: ${locs || 'no location data'}
 
-Provide a sharp, clinic-specific BI analysis. Be specific — name services, patient segments, and rupee figures.
+Provide a sharp, clinic-specific BI analysis. Be specific — name services, patient segments, and rupee figures. Keep every text field SHORT — this is a scannable dashboard card, not a report: "detail"/"action"/"description" max 20 words each (1 sentence), "title" max 8 words, each "steps" entry max 10 words. Being concise here matters more than being exhaustive.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON, with EXACTLY 3 items in "insights" and EXACTLY 3 items in "recommendations" — no more, no fewer, even if more could be said:
 {
   "insights": [
     {"title":"...","detail":"...","trend":"up|down|neutral","metric":"..."},
@@ -58,14 +59,36 @@ Return ONLY valid JSON:
     // only actually re-generates when the underlying numbers move; a
     // dashboard refreshed twice in a few minutes reuses the same analysis
     // instead of paying for an effectively-identical one.
+    //
+    // The real fix for the truncation that caused this is the "keep every
+    // field short, exactly 3 items" instruction added to the prompt above
+    // plus the defensive .slice(0,3) below — not a bigger token ceiling on
+    // its own. This shared http.ts's fetchWithRetry has a 20s timeout per
+    // attempt, and a real direct test showed a 2500-token completion
+    // taking ~19.6s (~127 tokens/sec for Haiku) — dangerously close to it,
+    // so a naive maxTokens bump alone would trade a JSON-truncation bug
+    // for a request-timeout bug. A real test also showed Claude ignoring
+    // "exactly 3" and returning 5+5 items despite the length cap, so 1800
+    // (~14s at that rate) keeps real margin over that observed variance
+    // while staying well under the 20s timeout.
     const text = await generateText(prompt, { maxTokens: 1800, cacheKey: "admin:intelligence-ai", cacheTtlSeconds: 600 });
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AI returned unexpected format');
-
-    const parsed = JSON.parse(match[0]);
+    // parseClaudeJson strips ```json fences, repairs the "raw control
+    // character inside a string" quirk (a real, observed failure mode —
+    // Claude emitting a literal newline instead of "\n" inside a "detail"
+    // field), and throws a clean "please try again" message instead of a
+    // raw parser SyntaxError for anything it can't recover — same shared,
+    // hardened parser every other AI-JSON route in this codebase uses now.
+    const parsed: any = parseClaudeJson(text);
+    // Defensive bound regardless of prompt compliance — a real test run
+    // returned 5 insights/5 recommendations despite the prompt explicitly
+    // asking for exactly 3, which is exactly the kind of unpredictable
+    // response size that pushed a real request past maxTokens and into
+    // the truncated-JSON bug in the first place.
+    if (Array.isArray(parsed?.insights)) parsed.insights = parsed.insights.slice(0, 3);
+    if (Array.isArray(parsed?.recommendations)) parsed.recommendations = parsed.recommendations.slice(0, 3);
     return NextResponse.json({ success: true, ...parsed });
 
   } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: err.message || 'AI generation failed — please try again.' }, { status: 500 });
   }
 }
