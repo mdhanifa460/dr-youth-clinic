@@ -41,8 +41,20 @@ export interface AssessmentQuestion {
   sliderUnit: string;
   // Which concern tag(s) this question applies under — matched against the
   // tags carried by the patient's chosen concern answer(s). Empty = universal
-  // (always shown, e.g. skin type, gender, age, photo, notes).
+  // (always shown, e.g. skin type, gender, age, photo, notes). ANY match
+  // shows the question (OR semantics) — a question tagged conditionTags:
+  // ["hair","acne"] applies to either concern.
   conditionTags: string[];
+  // Additional gate, ALL of which must be present (AND semantics) —
+  // conditionTags alone can't express "hair concern AND female", since it
+  // OR-matches a single list. Kept as a separate field rather than
+  // overloading conditionTags: every question predating this only ever
+  // set conditionTags, so leaving it optional/empty means zero behavior
+  // change for them. Typical use: gender-specific follow-ups (e.g. a
+  // pregnancy question under requiredTags: ["female"]) — matched against
+  // the same tag pool conditionTags reads, so it works with any question
+  // whose answers carry the relevant tag (see the "gender" question).
+  requiredTags?: string[];
 }
 
 export interface TreatmentRecommendation {
@@ -286,7 +298,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
   // every concern's own deep-dive questions, same priority tier as gender,
   // while conditionTags keeps the wording tailored per concern (see the
   // matching pigmentation/weight-loss versions below).
-  { id: "hair-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["hair"], answers: yesNo("hair-pregnancy") },
+  { id: "hair-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4.5, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["hair"], requiredTags: ["female"], answers: yesNo("hair-pregnancy") },
   { id: "hair-medications", title: "Are you currently on any medications?", subtitle: "List any you're currently taking, if relevant", description: "", icon: "💊", image: "", type: "text", order: 19, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["hair"], answers: [] },
 
   // ── Acne follow-ups ──
@@ -316,7 +328,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     { id: "moderate", title: "Moderate (some outdoor time)", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
     { id: "high", title: "High (outdoors most of the day)", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
   ] },
-  { id: "pigmentation-pregnancy", title: "Are you currently pregnant, or was this pigmentation pregnancy-related?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-pregnancy") },
+  { id: "pigmentation-pregnancy", title: "Are you currently pregnant, or was this pigmentation pregnancy-related?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4.5, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], requiredTags: ["female"], answers: yesNo("pigmentation-pregnancy") },
   { id: "pigmentation-hormonal-history", title: "Any known hormonal history relevant to this?", subtitle: "e.g. contraceptive use, thyroid, PCOS", description: "", icon: "⚖️", image: "", type: "yesno", order: 32, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-hormonal-history") },
   { id: "pigmentation-previous-creams", title: "Which creams or products have you already tried?", subtitle: "Optional", description: "", icon: "🧴", image: "", type: "text", order: 33, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: [] },
   { id: "pigmentation-laser-history", title: "Have you had any laser treatment before?", subtitle: "", description: "", icon: "⚡", image: "", type: "yesno", order: 34, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["pigmentation"], answers: yesNo("pigmentation-laser-history") },
@@ -358,7 +370,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
     { id: "weight-medications", title: "Medications", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
     { id: "none-tried-wl", title: "None so far", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
   ] },
-  { id: "wl-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], answers: yesNo("wl-pregnancy") },
+  { id: "wl-pregnancy", title: "Are you currently pregnant or breastfeeding?", subtitle: "If applicable", description: "", icon: "🤰", image: "", type: "yesno", order: 4.5, required: false, sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: ["weight-loss"], requiredTags: ["female"], answers: yesNo("wl-pregnancy") },
 
   // Demographic + photo questions — informational for the doctor's review,
   // not scoring inputs (no tags/weight), so they never change which
@@ -366,15 +378,23 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
   // the visitor can always skip a photo upload regardless of this setting —
   // see the public page's canProceed logic. Universal (conditionTags: []).
   {
+    // Order 3.5 — deliberately BEFORE the concern-specific block (hair/
+    // pigmentation/weight-loss questions start at order 4) rather than
+    // the far end of the question set: gender-gated follow-ups there
+    // (e.g. the pregnancy questions just below, requiredTags: ["female"])
+    // need this question's answer already in the collected-tags pool by
+    // the time they're evaluated — see getOrderedQuestions in
+    // assessmentFlow.ts. A question can only gate on a tag that was
+    // asked about earlier in `order`.
     id: "gender", title: "What's your gender?",
     subtitle: "Helps your doctor tailor their assessment",
     description: "", icon: "🧑", image: "",
-    type: "single", order: 50, required: false,
+    type: "single", order: 3.5, required: false,
     sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",
     conditionTags: [],
     answers: [
-      { id: "male", title: "Male", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
-      { id: "female", title: "Female", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" },
+      { id: "male", title: "Male", description: "", icon: "", image: "", score: 0, tags: ["male"], weight: 0, nextQuestionId: "" },
+      { id: "female", title: "Female", description: "", icon: "", image: "", score: 0, tags: ["female"], weight: 0, nextQuestionId: "" },
     ],
   },
   {

@@ -375,8 +375,17 @@ function PlanMyJourneyFlow({
   }, [screen, leadId]);
 
   return (
-    <main className="bg-[#f6faff] min-h-screen">
-      <div className={`max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
+    <main className="relative bg-[#f6faff] min-h-screen">
+      {/* Ambient background — see globals.css .pmj-ambient-* for why this is
+          safe to leave always-on (fixed layer, compositor-only animation,
+          zero network cost). Sits behind everything (z-0); the content
+          column below is explicitly z-10 to stay on top of it. */}
+      <div className="pmj-ambient-bg" aria-hidden="true">
+        <div className="pmj-ambient-blob pmj-ambient-blob--1" />
+        <div className="pmj-ambient-blob pmj-ambient-blob--2" />
+        <div className="pmj-ambient-blob pmj-ambient-blob--3" />
+      </div>
+      <div className={`relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
         {screen === "intro" && <IntroScreen goals={goals} onStart={() => setScreen("goal-pick")} />}
         {screen === "goal-pick" && <GoalPickScreen goals={goals} bundles={bundles} onPick={pickGoal} />}
         {screen === "question" && currentQuestion && (
@@ -583,32 +592,64 @@ function QuestionScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="mb-7">
-        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+        <span className="inline-flex items-center gap-1.5 bg-[#F5A623]/15 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
           {goalLabel} · Question {stepNumber}{totalSteps > 0 ? ` of ${totalSteps}` : ""}
         </span>
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-5">
-          <div className="h-full bg-[#0B2560] rounded-full transition-all duration-300 ease-out" style={{ width: `${progressPct}%` }} />
+          <div className="h-full bg-[#F5A623] rounded-full transition-all duration-300 ease-out" style={{ width: `${progressPct}%` }} />
         </div>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">{question.title}</h2>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
+          <HighlightedTitle title={question.title} />
+          {question.icon && <span className="ml-2 align-middle">{question.icon}</span>}
+        </h2>
         {question.subtitle && <p className="text-gray-500 text-sm md:text-base">{question.subtitle}</p>}
       </div>
 
-      <QuestionStep key={question.id} question={question} value={value} onChange={onChange} />
+      <QuestionStep key={question.id} question={question} value={value} onChange={onChange} theme="gold" />
 
       <div className="mt-8 flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-gray-500 hover:text-[#0B2560] transition-colors text-sm font-medium">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-gray-100 text-[#0B2560] font-bold rounded-xl hover:border-gray-200 transition-all duration-200"
+        >
           ← Back
         </button>
         <button
           onClick={onNext}
           disabled={!canProceed}
-          className="group flex items-center gap-2 px-8 py-3 bg-[#0B2560] text-white font-bold rounded-xl shadow-md shadow-[#0B2560]/20 hover:bg-[#0d2d72] hover:shadow-lg hover:shadow-[#0B2560]/25 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md transition-all duration-200 active:translate-y-0"
+          className="group relative flex items-center gap-2 px-8 py-3 text-[#0B2560] font-bold rounded-xl transition-all duration-200 disabled:cursor-not-allowed enabled:shadow-md enabled:shadow-[#F5A623]/25 enabled:hover:shadow-lg enabled:hover:shadow-[#F5A623]/35 enabled:hover:-translate-y-0.5 active:translate-y-0"
+          style={
+            canProceed
+              ? { background: "linear-gradient(90deg, #F9D889 0%, #F5A623 55%, #E08E12 100%)" }
+              : { background: "#E7E9F2", color: "#9CA3AF" }
+          }
         >
           {hasNext ? "Next" : "Continue →"}
           <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
     </div>
+  );
+}
+
+// Question titles can mark a phrase for the gold-accent treatment shown in
+// the redesign — e.g. "What's your **skin type**?" — by wrapping it in
+// double asterisks (plain-text convention, no schema/admin-UI change
+// needed since `title` is already a free-text field). A title with no
+// markers renders exactly as before, in solid navy.
+function HighlightedTitle({ title }: { title: string }) {
+  const parts = title.split(/\*\*(.+?)\*\*/g);
+  if (parts.length === 1) return <>{title}</>;
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <span key={i} className="text-[#F5A623]">{part}</span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
   );
 }
 

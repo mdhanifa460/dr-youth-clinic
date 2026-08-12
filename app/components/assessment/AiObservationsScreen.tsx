@@ -10,11 +10,82 @@
 // the patient has explicitly acknowledged it, and that acknowledgment is
 // persisted (see PatientJourney.aiObservations.disclaimerAcknowledged),
 // not just shown and forgotten.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface AiObservationsResult {
   text: string;
   disclaimerAcknowledged: true;
+}
+
+// Purely a perceived-progress indicator — reveals one step every ~750ms,
+// capped one short of the end. It never gates the real request: the
+// component unmounts into the "done"/"error" branch the instant the
+// actual fetch resolves, however many of these have shown by then. A
+// fast response (sub-second) just skips most of the list; a slow one
+// never sits on a dead, static spinner. Kept deliberately goal-agnostic
+// (Plan My Journey covers Hair/Skin/Body, not only skin) rather than
+// hardcoded to skin-specific steps.
+const ANALYSIS_STEPS = [
+  "Initializing AI analysis…",
+  "Reviewing your answers",
+  "Analyzing your photo",
+  "Identifying key patterns",
+  "Calculating your personalised insights",
+] as const;
+const STEP_INTERVAL_MS = 750;
+
+function AnalyzingProgress() {
+  const [revealed, setRevealed] = useState(1);
+
+  useEffect(() => {
+    if (revealed >= ANALYSIS_STEPS.length - 1) return;
+    const t = setTimeout(() => setRevealed((n) => n + 1), STEP_INTERVAL_MS);
+    return () => clearTimeout(t);
+  }, [revealed]);
+
+  return (
+    <div className="flex flex-col items-center py-8">
+      {/* Progress ring — a plain rotating gradient arc reads as
+          "working", not a determinate percentage nothing here can
+          honestly measure (a single AI request has no real sub-steps
+          to report progress against). */}
+      <div className="relative w-32 h-32 mb-7">
+        <svg viewBox="0 0 100 100" className="w-full h-full animate-spin" style={{ animationDuration: "1.6s" }}>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#FDEBC8" strokeWidth="8" />
+          <circle
+            cx="50" cy="50" r="42" fill="none" stroke="#F5A623" strokeWidth="8" strokeLinecap="round"
+            strokeDasharray="264" strokeDashoffset="180"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-bold text-[#0B2560]">Analyzing</span>
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm bg-white border border-gray-100 rounded-2xl shadow-sm px-5 py-5">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#F5A623] mb-1">◈ AI Analysis</p>
+        <h3 className="text-base font-extrabold text-[#0B2560] mb-4">Calculating your personalised plan</h3>
+        <ul className="space-y-3">
+          {ANALYSIS_STEPS.map((step, i) => {
+            const done = i < revealed;
+            const active = i === revealed;
+            return (
+              <li key={step} className={`flex items-center gap-2.5 text-sm transition-opacity duration-300 ${done || active ? "opacity-100" : "opacity-30"}`}>
+                <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${done ? "bg-[#22c55e]" : active ? "border-2 border-[#F5A623] border-t-transparent animate-spin" : "border-2 border-gray-200"}`}>
+                  {done && (
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
+                <span className={done ? "text-gray-700" : active ? "text-[#0B2560] font-semibold" : "text-gray-400"}>{step}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 export default function AiObservationsScreen({
@@ -93,12 +164,7 @@ export default function AiObservationsScreen({
         </div>
       )}
 
-      {status === "loading" && (
-        <div className="flex flex-col items-center gap-3 py-10">
-          <span className="w-8 h-8 border-2 border-[#0B2560]/20 border-t-[#0B2560] rounded-full animate-spin" />
-          <p className="text-xs text-gray-500">Looking at your photo…</p>
-        </div>
-      )}
+      {status === "loading" && <AnalyzingProgress />}
 
       {status === "error" && (
         <div className="max-w-sm mx-auto text-center space-y-4">

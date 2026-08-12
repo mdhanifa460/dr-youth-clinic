@@ -123,14 +123,20 @@ function backfillResultSections(sections: ResultSectionConfig[] | undefined): Re
 // Pregnancy/breastfeeding was originally buried near the end of each
 // concern's question block (order 18/31/45) — a real clinic that already
 // saved a QuizConfig before this fix has those stale orders baked into
-// their doc, so DEFAULT_QUESTIONS' corrected order: 4 alone won't reach
+// their doc, so DEFAULT_QUESTIONS' corrected order alone won't reach
 // them. Corrects only these 3 known ids' order, leaving every other
 // admin customization (including a doctor's own deliberate reordering of
 // anything else) untouched.
+//
+// 4.5, not 4 — these 3 also gained requiredTags: ["female"] (gender-gated:
+// they shouldn't ask a male/non-binary/unspecified visitor about
+// pregnancy). That gate needs the "gender" question's answer already in
+// the collected-tags pool, which only happens if gender is asked FIRST —
+// gender now sits at order 3.5, so these must stay strictly after it.
 const PRIORITY_ORDER_FIXES: Record<string, number> = {
-  "hair-pregnancy": 4,
-  "pigmentation-pregnancy": 4,
-  "wl-pregnancy": 4,
+  "hair-pregnancy": 4.5,
+  "pigmentation-pregnancy": 4.5,
+  "wl-pregnancy": 4.5,
 };
 
 export function backfillClinicalFields(config: AssessmentConfigData): AssessmentConfigData {

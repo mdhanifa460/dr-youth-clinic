@@ -64,6 +64,12 @@ export function getOrderedQuestions(
   return [...questions]
     .filter((q) => !(q.type === "text" && q.id === "notes" && settings?.enableNotes === false))
     .filter((q) => !q.conditionTags?.length || q.conditionTags.some((t) => answeredTags.has(t)))
+    // requiredTags: AND-gate, every tag must be present — e.g. a pregnancy
+    // follow-up under conditionTags:["hair"] + requiredTags:["female"]
+    // only shows for a hair-concern visitor who also answered Female on
+    // the gender question. Optional/empty on every question that doesn't
+    // set it, so this filter is a no-op for them.
+    .filter((q) => !q.requiredTags?.length || q.requiredTags.every((t) => answeredTags.has(t)))
     .sort((a, b) => a.order - b.order);
 }
 

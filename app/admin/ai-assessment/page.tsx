@@ -199,6 +199,23 @@ function QuestionCard({
               questions can apply to all of them.
             </p>
           </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">
+              Also require ALL of these tags <span className="font-normal text-gray-400">(comma-separated — leave blank to skip this check)</span>
+            </label>
+            <Input
+              value={(question.requiredTags || []).join(", ")}
+              onChange={(v) => set({ requiredTags: v.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) })}
+              placeholder="e.g. female"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">
+              Unlike "Show only for these concerns" above (any one match is enough), every tag listed here
+              must be present. Use this for questions that depend on more than one thing at once — e.g. a
+              pregnancy question under Concerns "hair" that should also require the Gender question's
+              "female" tag, so it only appears for a hair-concern visitor who answered Female. Needs the
+              Gender question (or whichever question sets the tag) to come BEFORE this one in Order.
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Question Type</label>
@@ -1110,7 +1127,7 @@ export default function AiAssessmentAdminPage() {
       questions: [...config.questions, {
         id, title: "New Question", subtitle: "", description: "", icon: "❓", image: "",
         type: "single", order: config.questions.length + 1, required: true, answers: [],
-        sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: [],
+        sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: [], requiredTags: [],
       }],
     });
   };

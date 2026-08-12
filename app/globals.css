@@ -40,6 +40,84 @@ body {
   overflow-x: hidden;
 }
 
+/* ── Plan My Journey — ambient background (redesign) ──────────────────────
+   Very subtle, purely decorative gold-tinted blobs drifting behind the
+   flow's content. Deliberately cheap: only `transform` + `opacity` are
+   animated (both compositor-only, no layout/paint cost per frame), the
+   layer is `fixed` so it never contributes to page scrollHeight, and
+   `pointer-events: none` keeps it out of the way of real interactions.
+   Nothing here blocks paint or adds a network request — it's pure CSS,
+   so it can never affect page load. Respects prefers-reduced-motion. */
+.pmj-ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pmj-ambient-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.35;
+  will-change: transform;
+}
+
+.pmj-ambient-blob--1 {
+  top: -10%;
+  left: -8%;
+  width: 42vw;
+  height: 42vw;
+  max-width: 520px;
+  max-height: 520px;
+  background: radial-gradient(circle, #F5A623 0%, transparent 70%);
+  animation: pmj-drift-1 26s ease-in-out infinite;
+}
+
+.pmj-ambient-blob--2 {
+  bottom: -12%;
+  right: -10%;
+  width: 38vw;
+  height: 38vw;
+  max-width: 480px;
+  max-height: 480px;
+  background: radial-gradient(circle, #0B2560 0%, transparent 70%);
+  opacity: 0.06;
+  animation: pmj-drift-2 32s ease-in-out infinite;
+}
+
+.pmj-ambient-blob--3 {
+  top: 35%;
+  right: 15%;
+  width: 24vw;
+  height: 24vw;
+  max-width: 320px;
+  max-height: 320px;
+  background: radial-gradient(circle, #F5A623 0%, transparent 70%);
+  opacity: 0.18;
+  animation: pmj-drift-3 22s ease-in-out infinite;
+}
+
+@keyframes pmj-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(4%, 6%) scale(1.08); }
+}
+
+@keyframes pmj-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5%, -4%) scale(1.1); }
+}
+
+@keyframes pmj-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-6%, 5%) scale(0.94); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pmj-ambient-blob { animation: none; }
+}
+
 /* Fix section hidden under navbar */
 section {
   scroll-margin-top: 100px;

@@ -35,6 +35,10 @@ const QuestionSchema = new mongoose.Schema({
   // multi-select concern answer actually filter the follow-up questions the
   // patient sees, instead of every question showing regardless of concern.
   conditionTags: { type: [String], default: [] },
+  // AND-gate alongside conditionTags — see the interface comment in
+  // app/lib/quizDefaults.ts. Optional/empty for every pre-existing
+  // question, so this is purely additive.
+  requiredTags: { type: [String], default: [] },
 }, { _id: false });
 
 const TreatmentSchema = new mongoose.Schema({

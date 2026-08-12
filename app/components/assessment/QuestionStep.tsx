@@ -6,8 +6,64 @@
 // second implementation. One generic renderer for every AssessmentQuestion
 // type — questions are admin-defined, so their number/order/type isn't
 // fixed at build time.
+//
+// `theme` (default "navy") — Plan My Journey's redesign opted into a
+// gold/cream card treatment (selected = gold border + soft cream fill,
+// title stays navy) instead of the original navy-fill selection. Kept as
+// an opt-in prop rather than a second component so skin-quiz (the other
+// consumer, still on the original look) needed zero changes and can't
+// regress from this — every color reference below goes through `tokens`,
+// nothing is hardcoded per-branch anymore.
 import { useRef, useState } from "react";
 import type { AssessmentQuestion } from "@/app/lib/quizDefaults";
+
+export type QuestionStepTheme = "navy" | "gold";
+
+interface ThemeTokens {
+  selectedBorder: string;
+  selectedBg: string;
+  selectedShadow: string;
+  selectedText: string;
+  unselectedBorder: string;
+  hoverBorder: string;
+  accentRing: string;
+  showSelectionCheck: boolean;
+  checkBg: string;
+  // Tailwind's JIT scanner finds class names by matching complete, literal
+  // strings in the source — a template literal that stitches fragments
+  // together at runtime (e.g. `focus-within:${border}/40`) isn't
+  // guaranteed to compile, even though the fragments themselves look
+  // fine in isolation. Every consumer below picks a whole class from
+  // here rather than interpolating pieces.
+  textFocusBorder: string;
+}
+
+const THEME_TOKENS: Record<QuestionStepTheme, ThemeTokens> = {
+  navy: {
+    selectedBorder: "border-[#0B2560]",
+    selectedBg: "bg-[#0B2560]/5",
+    selectedShadow: "shadow-md shadow-[#0B2560]/10",
+    selectedText: "text-[#0B2560]",
+    unselectedBorder: "border-gray-100",
+    hoverBorder: "hover:border-[#0B2560]/30",
+    accentRing: "accent-[#0B2560]",
+    showSelectionCheck: true,
+    checkBg: "bg-[#0B2560]",
+    textFocusBorder: "focus-within:border-[#0B2560]/40",
+  },
+  gold: {
+    selectedBorder: "border-[#F5A623]",
+    selectedBg: "bg-[#FFF7E8]",
+    selectedShadow: "shadow-md shadow-[#F5A623]/15",
+    selectedText: "text-[#0B2560]",
+    unselectedBorder: "border-gray-100",
+    hoverBorder: "hover:border-[#F5A623]/40",
+    accentRing: "accent-[#F5A623]",
+    showSelectionCheck: false,
+    checkBg: "bg-[#F5A623]",
+    textFocusBorder: "focus-within:border-[#F5A623]/50",
+  },
+};
 
 function CheckIcon() {
   return (
@@ -17,10 +73,11 @@ function CheckIcon() {
   );
 }
 
-function SelectionCheck({ selected }: { selected: boolean }) {
+function SelectionCheck({ selected, tokens }: { selected: boolean; tokens: ThemeTokens }) {
+  if (!tokens.showSelectionCheck) return null;
   return (
     <span className={`absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
-      selected ? "bg-[#0B2560] scale-100 opacity-100" : "bg-gray-100 scale-90 opacity-0"
+      selected ? `${tokens.checkBg} scale-100 opacity-100` : "bg-gray-100 scale-90 opacity-0"
     }`}>
       <CheckIcon />
     </span>
@@ -91,11 +148,15 @@ export default function QuestionStep({
   question,
   value,
   onChange,
+  theme = "navy",
 }: {
   question: AssessmentQuestion;
   value: string | string[] | number | undefined;
   onChange: (v: string | string[] | number) => void;
+  theme?: QuestionStepTheme;
 }) {
+  const tokens = THEME_TOKENS[theme];
+
   if (question.type === "photo") {
     return <PhotoUploadField value={typeof value === "string" ? value : ""} onChange={onChange} />;
   }
@@ -103,7 +164,7 @@ export default function QuestionStep({
   if (question.type === "text") {
     const text = typeof value === "string" ? value : "";
     return (
-      <div className="bg-white rounded-2xl border-2 border-gray-100 px-5 py-4 focus-within:border-[#0B2560]/40 transition">
+      <div className={`bg-white rounded-2xl border-2 border-gray-100 px-5 py-4 ${tokens.textFocusBorder} transition`}>
         <textarea
           value={text}
           onChange={(e) => onChange(e.target.value.slice(0, 500))}
@@ -132,7 +193,7 @@ export default function QuestionStep({
           step={question.sliderStep || 1}
           value={num}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full accent-[#0B2560]"
+          className={`w-full ${tokens.accentRing}`}
         />
         <div className="flex justify-between text-xs text-gray-500 mt-1">
           <span>{question.sliderMin}</span>
@@ -167,7 +228,11 @@ export default function QuestionStep({
               key={a.id}
               onClick={() => onChange(a.id)}
               className={`flex-1 flex items-center justify-center gap-2 rounded-2xl border-2 px-6 py-6 font-bold text-lg transition-all duration-200 ${
-                selected ? "border-[#0B2560] bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/25" : "border-gray-100 bg-white text-gray-700 hover:border-[#0B2560]/30"
+                selected
+                  ? theme === "gold"
+                    ? `${tokens.selectedBorder} ${tokens.selectedBg} ${tokens.selectedText} ${tokens.selectedShadow}`
+                    : "border-[#0B2560] bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/25"
+                  : `${tokens.unselectedBorder} bg-white text-gray-700 ${tokens.hoverBorder}`
               }`}
             >
               {a.icon && <span className="text-2xl">{a.icon}</span>}
@@ -219,10 +284,12 @@ export default function QuestionStep({
             className={`relative flex items-center gap-4 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer ${
               hasDescriptions ? "px-5 py-4" : "flex-col justify-center gap-2 px-3 py-5 text-center"
             } ${
-              selected ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10" : "border-gray-100 bg-white hover:border-[#0B2560]/30 hover:shadow-sm"
+              selected
+                ? `${tokens.selectedBorder} ${tokens.selectedBg} ${tokens.selectedShadow}`
+                : `${tokens.unselectedBorder} bg-white ${tokens.hoverBorder} hover:shadow-sm`
             }`}
           >
-            <SelectionCheck selected={selected} />
+            <SelectionCheck selected={selected} tokens={tokens} />
             {a.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={a.image} alt={a.title} className="w-12 h-12 rounded-xl object-cover shrink-0" />
@@ -230,7 +297,7 @@ export default function QuestionStep({
               <span className={hasDescriptions ? "text-2xl flex-shrink-0" : "text-3xl leading-none"}>{a.icon}</span>
             )}
             <div>
-              <p className={`font-bold text-sm ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>{a.title}</p>
+              <p className={`font-bold text-sm ${selected ? tokens.selectedText : "text-gray-800"}`}>{a.title}</p>
               {a.description && <p className="text-xs text-gray-500 mt-0.5">{a.description}</p>}
             </div>
           </button>
