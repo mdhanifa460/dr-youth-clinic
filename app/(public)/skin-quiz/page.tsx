@@ -8,6 +8,7 @@ import type { AssessmentTypeConfig } from "@/app/lib/assessmentTypeDefaults";
 import { getOrderedQuestions, canProceedFromQuestion, resolveNextQuestionId, hasNextQuestion as computeHasNextQuestion, postAssessmentEvent, getOrCreateSessionId } from "@/app/lib/assessmentFlow";
 import type { AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import { postInterestEvent } from "@/app/lib/personalization";
+import { pushDataLayerEvent } from "@/app/lib/trackConversion";
 import { locations } from "@/app/data/locations";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
 import ScanPanel from "@/app/components/assessment/ScanPanel";
@@ -324,6 +325,14 @@ export default function SkinQuizPage() {
       if (!data.success || !data.leadId) { setLeadCaptureStatus("error"); return; }
       setLeadId(data.leadId);
       setLeadCaptureStatus("idle");
+      // GTM-routable lead conversion event — same dataLayer bridge
+      // booking_confirmed already uses (see trackConversion.ts). No name/
+      // phone/email — only the same non-identifying fields the booking
+      // event already sends.
+      pushDataLayerEvent("lead_submitted", {
+        source: "skin-quiz",
+        preferred_clinic: leadForm.preferredClinic || undefined,
+      });
       // Reuses the clinicLocation field, but with a different meaning here:
       // for started/completed it's QR/link attribution (?clinic=), for
       // branch_selected it's the patient's own choice — both answer "which

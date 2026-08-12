@@ -5,6 +5,7 @@ import { MdPhone } from "react-icons/md";
 import { CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import { useBranchWhatsApp, toWaLink } from "@/app/lib/useBranchWhatsApp";
+import { pushDataLayerEvent } from "@/app/lib/trackConversion";
 
 interface Props {
   phone?: string;
@@ -67,6 +68,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           style={{ touchAction: "manipulation" }}
+          onClick={() => pushDataLayerEvent("whatsapp_click", { source: "mobile_sticky_bar" })}
           className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#25D366] text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
         >
           <FaWhatsapp size={20} />
@@ -82,6 +84,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
         <a
           href={callHref}
           style={{ touchAction: "manipulation" }}
+          onClick={() => pushDataLayerEvent("call_click", { source: "mobile_sticky_bar" })}
           className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#0B2545] text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
         >
           <MdPhone size={20} />

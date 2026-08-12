@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Phone, CalendarCheck } from 'lucide-react';
+import { pushDataLayerEvent } from '@/app/lib/trackConversion';
 
 interface StickyCtaProps {
   phone?: string;
@@ -72,6 +73,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
           {phone && (
             <a
               href={`tel:${phone.replace(/\s/g, '')}`}
+              onClick={() => pushDataLayerEvent('call_click', { source: 'lp_sticky_mobile' })}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 bg-[#3B82C4] text-white font-bold text-xs active:opacity-80 touch-manipulation"
               aria-label={`Call ${phone}`}
             >
@@ -85,6 +87,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => pushDataLayerEvent('whatsapp_click', { source: 'lp_sticky_mobile' })}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 bg-[#25D366] text-white font-bold text-xs active:opacity-80 touch-manipulation"
               aria-label="Chat on WhatsApp"
             >
@@ -113,7 +116,11 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
         </button>
 
         {phone && (
-          <a href={`tel:${phone.replace(/\s/g, '')}`} aria-label={`Call ${phone}`}>
+          <a
+            href={`tel:${phone.replace(/\s/g, '')}`}
+            aria-label={`Call ${phone}`}
+            onClick={() => pushDataLayerEvent('call_click', { source: 'lp_sticky_desktop' })}
+          >
             <div className="flex items-center gap-2 bg-[#3B82C4] text-white font-bold text-sm px-4 py-3 rounded-l-2xl shadow-xl hover:bg-[#2a70b0] hover:-translate-x-1 transition-all duration-200">
               <Phone size={17} aria-hidden="true" />
               <span className="whitespace-nowrap">{phone}</span>
@@ -122,7 +129,13 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
         )}
 
         {waLink && (
-          <a href={waLink} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat on WhatsApp"
+            onClick={() => pushDataLayerEvent('whatsapp_click', { source: 'lp_sticky_desktop' })}
+          >
             <div className="flex items-center gap-2 bg-[#25D366] text-white font-bold text-sm px-4 py-3 rounded-l-2xl shadow-xl hover:bg-[#1db155] hover:-translate-x-1 transition-all duration-200">
               {WA_ICON}
               <span className="whitespace-nowrap">WhatsApp</span>
@@ -138,6 +151,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat on WhatsApp"
+          onClick={() => pushDataLayerEvent('whatsapp_click', { source: 'lp_sticky_bubble' })}
           className={`lg:hidden fixed right-4 z-40 w-14 h-14 rounded-full bg-[#25D366] shadow-2xl flex items-center justify-center text-white transition-all duration-300 touch-manipulation active:scale-95 ${
             hidden ? 'bottom-4' : 'bottom-20'
           }`}

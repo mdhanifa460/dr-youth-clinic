@@ -4,6 +4,7 @@ import Script from 'next/script';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import { getAnalyticsConfig } from '@/app/lib/analyticsConfig';
 import LpRenderer from '@/app/components/lp/LpRenderer';
 import LpHeader from '@/app/components/lp/LpHeader';
 import LpFooter from '@/app/components/lp/LpFooter';
@@ -74,7 +75,19 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
   }
 
   const siteConfig = await getSiteConfig();
-  const tracking = lp.tracking ?? {};
+  // The site's global GTM (app/layout.tsx) already loads on every page,
+  // including this one — an LP's own tracking.gtmId/metaPixelId/
+  // googleAdsId fields fired completely independent of that, with no
+  // awareness of whether GTM was already active. If global GTM is on
+  // (the case right now — GTM-N7J5FSVR, confirmed live) and an LP also
+  // had one of these set, it would double-fire: GTM's own tag for that
+  // pixel, plus this page's direct script. Same `!gtmActive` gate the
+  // main site's direct-load paths already use (see app/layout.tsx),
+  // applied here for the first time — closes the gap without touching
+  // the LP-level fields' behavior for a clinic that ever runs without
+  // global GTM (they still fire directly, exactly as before).
+  const analytics = await getAnalyticsConfig();
+  const tracking = analytics.gtmActive ? {} : (lp.tracking ?? {});
   const heroSection = lp.sections?.find((s: any) => s.type === 'hero');
   const heroData = heroSection?.data ?? {};
   const locationSection = lp.sections?.find((s: any) => s.type === 'location');

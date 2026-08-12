@@ -9,6 +9,7 @@ import type { IJourneyGoal } from "@/app/models/JourneyConfig";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion } from "@/app/lib/quizDefaults";
 import { scoreJourneyConcern, getPrimaryConcernTag, type AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import { postInterestEvent } from "@/app/lib/personalization";
+import { pushDataLayerEvent } from "@/app/lib/trackConversion";
 import {
   seedAnswersFromTags,
   getOrderedQuestions,
@@ -306,6 +307,15 @@ function PlanMyJourneyFlow({
       if (!res.ok || !data.success || !data.leadId) throw new Error("failed");
       setLeadId(data.leadId);
       setLeadStatus("sent");
+      // GTM-routable lead conversion event — same dataLayer bridge
+      // booking_confirmed uses (see trackConversion.ts). No name/phone/
+      // email — only the goal category and branch, same non-identifying
+      // shape as every other conversion event in this codebase.
+      pushDataLayerEvent("lead_submitted", {
+        source: "plan-my-journey",
+        goal: goal || undefined,
+        preferred_clinic: lead.preferredClinic || undefined,
+      });
       if (lead.preferredClinic) {
         postAssessmentEvent({ event: "branch_selected", clinicLocation: lead.preferredClinic, goal, sessionId });
         if (goal) {
