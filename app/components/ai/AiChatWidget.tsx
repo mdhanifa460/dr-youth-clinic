@@ -368,7 +368,13 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: sessionIdRef.current, message: trimmed }),
+        // location was previously never sent — the server's vector-search
+        // location filter and the new availability grounding (see
+        // app/api/ai-chat/route.ts) both need it to know which branch the
+        // visitor is asking about; getUrlBranch() was already computed
+        // here for the widget's own quick-actions/suggested-questions
+        // branch scoping, just never forwarded to the API.
+        body: JSON.stringify({ sessionId: sessionIdRef.current, message: trimmed, location: getUrlBranch() }),
       });
       if (!res.body) throw new Error('No response stream');
       const reader = res.body.getReader();

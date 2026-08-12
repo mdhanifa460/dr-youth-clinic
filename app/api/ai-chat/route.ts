@@ -10,6 +10,8 @@ import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
 import { generateChatStream, isConfiguredProviderReady } from '@/app/lib/ai';
 import { scoreHitsToCards, type RecommendationType } from '@/app/lib/rag/RecommendationService';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
+import { canonicalizeLocation } from '@/app/lib/locationNormalize';
+import { getBranchAvailability } from '@/app/lib/availability';
 
 export const dynamic = 'force-dynamic';
 
@@ -172,10 +174,49 @@ export async function POST(req: NextRequest) {
   const quickActionsText = (aiConfig.quickActions || [])
     .map((a: any) => `${a.label} -> ${a.action}`).join(', ');
 
+  // Real-time availability grounding — not full tool-calling (the model
+  // doesn't decide when to call this, it's a cheap keyword pre-check), but
+  // it replaces "the LLM guesses/deflects" with real operatingHours/
+  // holidays/slotConfig data whenever a patient's message plausibly asks
+  // about it. Branch-level only (open/closed + configured slot times) —
+  // see app/lib/availability.ts for why this doesn't attempt per-doctor
+  // calendar checking. Silently skipped if no branch is known (no
+  // ?location=/?clinic= on the page) — nothing to ground without one, and
+  // the AI already defers to "book a consultation" in that case.
+  let availabilityBlock = '';
+  const AVAILABILITY_KEYWORDS = ['available', 'availability', 'slot', 'free time', 'when can', 'today', 'tomorrow', 'open now', 'opening hours', 'timing', 'timings'];
+  const resolvedLocation = canonicalizeLocation(location);
+  if (resolvedLocation && AVAILABILITY_KEYWORDS.some(k => message.toLowerCase().includes(k))) {
+    try {
+      const days = await getBranchAvailability(resolvedLocation, 3);
+      // Explicit TODAY/TOMORROW labels, not just raw dates — a first pass
+      // that only gave dates (e.g. "2026-08-13 (Thursday): ...") led the
+      // model to hedge and ask the patient what today's date was, even
+      // though the real date was right there. Spelling it out removes any
+      // need for the model to infer "first item = today" on its own.
+      const DAY_LABEL = ['TODAY', 'TOMORROW', 'DAY AFTER TOMORROW'];
+      availabilityBlock = days.map((d, i) => {
+        const label = `${DAY_LABEL[i] || `+${i} days`} (${d.date}, ${d.weekday})`;
+        if (!d.open) {
+          const why = d.reason === 'holiday' ? `closed (holiday: ${d.holidayLabel})` : d.reason === 'closed_day' ? 'closed' : 'hours not set up yet';
+          return `${label}: ${why}`;
+        }
+        return d.slots.length
+          ? `${label}: open, slot times: ${d.slots.join(', ')}`
+          : `${label}: open, but no specific slot times configured — suggest they call or book and the clinic will confirm a time`;
+      }).join('\n');
+    } catch (e) {
+      console.error('[ai-chat] availability lookup failed', e);
+      // Fall through with no availability block — the model still answers,
+      // just without this grounding for this turn.
+    }
+  }
+
   const systemPrompt = [
     CLINICAL_AI_GUARDRAILS,
     aiConfig.systemPrompt,
     contextBlock ? `Context from the clinic's knowledge base (ground your answer in this; if the answer isn't here, say you're not certain and suggest booking a consultation):\n\n${contextBlock}` : '',
+    availabilityBlock ? `Real clinic availability for ${resolvedLocation}, already resolved to today's actual date — use this directly, do not ask the patient what today's date is or which day they mean by "today"/"tomorrow", that's already given below. This is branch-level open hours and configured slot times, not a specific doctor's personal schedule — never claim a named doctor personally has a given slot free:\n\n${availabilityBlock}` : '',
     contextBlock && aiConfig.enableRecommendations && aiConfig.recommendationPrompt ? aiConfig.recommendationPrompt : '',
     quickActionsText ? `Available quick actions you may mention: ${quickActionsText}.` : '',
     aiConfig.enableWhatsappHandoff ? 'If the patient wants a human, offer to continue on WhatsApp.' : '',
