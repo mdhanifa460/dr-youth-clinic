@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { connectDB } from "../../lib/mongodb";
+import { buildAttributionFields } from "@/app/lib/utmAttribution";
 import Booking from "../../models/Booking";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 import { normalizePhone as formatPhone } from "@/app/lib/phone";
@@ -14,7 +16,7 @@ export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   // 8 bookings per hour per IP — prevents spam while staying realistic for
   // genuine traffic: many Indian ISPs use carrier-grade NAT, so several
   // unrelated households can share one public IP, and a single household
@@ -83,6 +85,7 @@ export async function POST(req: Request) {
       ...(appointmentType ? { appointmentType } : {}),
       ...(notes ? { notes } : {}),
       ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
+      ...buildAttributionFields((name) => req.cookies.get(name)?.value),
     });
 
     // CRM Connector push — non-blocking. The booking is already saved

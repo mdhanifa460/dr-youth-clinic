@@ -7,6 +7,7 @@ import { normalizePhone } from '@/app/lib/phone';
 import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 import { sendWhatsAppText } from '@/app/lib/whatsapp';
 import { pushBookingToCrm } from '@/app/lib/crm/pushBooking';
+import { buildAttributionFields } from '@/app/lib/utmAttribution';
 
 export async function POST(
   req: NextRequest,
@@ -80,6 +81,7 @@ export async function POST(
       lpVariant: variant === 'B' ? 'B' : 'A',
       notes,
       isReturnVisit: previousBookings > 0,
+      ...buildAttributionFields((name) => req.cookies.get(name)?.value),
     });
 
     // CRM Connector push — non-blocking, no-ops silently if no CRM

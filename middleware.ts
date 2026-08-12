@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { extractUtmParams, UTM_FIRST_COOKIE, UTM_LAST_COOKIE, UTM_FIRST_MAX_AGE, UTM_LAST_MAX_AGE } from "@/app/lib/utmAttribution";
 
 const ADMIN_COOKIE = "admin_session";
 const LOCATION_COOKIE = "preferred_location";
@@ -32,6 +33,31 @@ function ensureVisitorId(req: NextRequest, res: NextResponse) {
     secure: true,
     sameSite: "lax",
   });
+}
+
+// Campaign attribution — only writes cookies on a visit whose URL actually
+// carries utm_* params (an ad click, an email link, a QR code with UTMs
+// appended), so most page loads are a no-op here. `utm_last` is always
+// overwritten on such a visit (whichever campaign most recently sent this
+// visitor is "last touch"); `utm_first` is written once and never again,
+// so the very first campaign that ever brought this visitor stays intact
+// even after later campaigns overwrite `utm_last`. Both feed
+// Lead/Booking.utmSource etc. at submission time (see utmAttribution.ts).
+function captureUtmAttribution(req: NextRequest, res: NextResponse) {
+  const utm = extractUtmParams(req.nextUrl.searchParams);
+  if (Object.keys(utm).length === 0) return;
+
+  const payload = JSON.stringify({
+    ...utm,
+    landingPage: req.nextUrl.pathname,
+    capturedAt: new Date().toISOString(),
+  });
+  const cookieOpts = { path: "/", secure: true, sameSite: "lax" as const };
+
+  res.cookies.set(UTM_LAST_COOKIE, payload, { ...cookieOpts, maxAge: UTM_LAST_MAX_AGE });
+  if (!req.cookies.get(UTM_FIRST_COOKIE)?.value) {
+    res.cookies.set(UTM_FIRST_COOKIE, payload, { ...cookieOpts, maxAge: UTM_FIRST_MAX_AGE });
+  }
 }
 
 function bytesToHex(bytes: ArrayBuffer) {
@@ -133,6 +159,7 @@ export async function middleware(req: NextRequest) {
   }
 
   ensureVisitorId(req, response);
+  captureUtmAttribution(req, response);
   return response;
 }
 

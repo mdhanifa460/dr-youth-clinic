@@ -37,6 +37,27 @@ const LeadSchema = new mongoose.Schema(
     // Which physical/digital placement the QR was printed on (?channel= on
     // the URL, e.g. "reception", "instagram", "standee").
     channel: { type: String, default: "" },
+    // Standard UTM campaign attribution — distinct from `campaign` above
+    // (that field is a bespoke ?campaign= param used only by the
+    // assessment flow's own QR/link system). These come from middleware's
+    // utm_last cookie (see app/lib/utmAttribution.ts) at submission time:
+    // whichever utm_source/medium/campaign/term/content was on the URL of
+    // the visit that actually led to this lead being captured.
+    utmSource:   { type: String, default: "" },
+    utmMedium:   { type: String, default: "" },
+    utmCampaign: { type: String, default: "" },
+    utmTerm:     { type: String, default: "" },
+    utmContent:  { type: String, default: "" },
+    // Path of the page the last-touch UTM'd visit landed on — not
+    // necessarily where the lead form itself was submitted.
+    landingPage: { type: String, default: "" },
+    // Compact "source/medium" strings (e.g. "google/cpc") from the
+    // utm_first / utm_last cookies — the very first tracked campaign that
+    // ever brought this visitor, and the most recent one, respectively.
+    // Can differ: a visitor might first arrive via an Instagram ad weeks
+    // ago, then convert today after clicking a Google search ad.
+    firstTouchSource: { type: String, default: "" },
+    lastTouchSource:  { type: String, default: "" },
     answers: { type: mongoose.Schema.Types.Mixed, default: {} },
     recommendations: { type: mongoose.Schema.Types.Mixed, default: [] },
     emailSent: { type: Boolean, default: false },

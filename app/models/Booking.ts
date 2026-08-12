@@ -62,6 +62,18 @@ const BookingSchema = new mongoose.Schema(
     lpSlug:    { type: String, default: "" },
     lpVariant: { type: String, default: "" },
 
+    // Standard UTM campaign attribution, captured the same way as on Lead
+    // (see app/lib/utmAttribution.ts / Lead.ts) — populated from the
+    // utm_last/utm_first middleware cookies at booking-submission time.
+    utmSource:   { type: String, default: "" },
+    utmMedium:   { type: String, default: "" },
+    utmCampaign: { type: String, default: "" },
+    utmTerm:     { type: String, default: "" },
+    utmContent:  { type: String, default: "" },
+    landingPage: { type: String, default: "" },
+    firstTouchSource: { type: String, default: "" },
+    lastTouchSource:  { type: String, default: "" },
+
     // CRM fields
     internalNote:   { type: String, default: "" },
     assignedTo:     { type: String, default: "" },  // staff member handling this lead
