@@ -84,7 +84,32 @@ function withPathname(req: NextRequest) {
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
+// www.dryouthclinics.com and dryouthclinics.com both resolve directly
+// (200, no redirect) — confirmed live. Every page's canonical tag already
+// points at the bare (non-www) domain (see NEXT_PUBLIC_SITE_URL / app/
+// layout.tsx's SITE_URL), but a canonical tag alone doesn't stop Google
+// from independently crawling and indexing the www version too — hence
+// Search Console's real, accurate "canonical tag does not match the
+// current URL" warning on any www. page. A canonical tag is a hint;
+// only an actual redirect makes the www. host stop being independently
+// crawlable. Scoped to exactly this one host so it can never affect
+// *.vercel.app preview/production URLs, which have no www. variant to
+// worry about.
+const WWW_HOST = "www.dryouthclinics.com";
+const APEX_HOST = "dryouthclinics.com";
+
 export async function middleware(req: NextRequest) {
+  const host = req.headers.get("host") || "";
+  if (host === WWW_HOST) {
+    const url = req.nextUrl.clone();
+    url.protocol = "https";
+    url.hostname = APEX_HOST;
+    url.port = "";
+    // 308 (not 301) preserves the request method — a POST to a www. URL
+    // (e.g. a stray bookmarked form action) redirects as a POST, not a GET.
+    return NextResponse.redirect(url, 308);
+  }
+
   const { pathname } = req.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
