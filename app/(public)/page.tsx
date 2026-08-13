@@ -562,14 +562,20 @@ export default async function Home() {
       )}
 
       {/* "Watch & Learn" — placed directly here (not yet in the admin
-          section-order system above). Falls back to the mockup's sample
-          data only when no video has been synced/published yet (same
-          empty-state-fallback pattern as blog/results/faq above); once
-          real videos exist it renders those. Move this into
+          section-order system above). Renders only once a real video has
+          been synced/published — it used to fall back to the mockup's
+          SAMPLE_WATCH_MEDIA fixture when empty, but that fixture reuses an
+          unrelated placeholder YouTube video (a stock demo ID) and two
+          Instagram "reels" whose href is just the generic instagram.com
+          homepage, not a real post. To a real visitor that looked like a
+          broken/fake video that "asks to open Instagram" instead of
+          playing, so it's better to render nothing here than fabricated
+          content — same reasoning as VideoAcademySection's own
+          `if (!videos.length) return null`. Move this into
           SECTION_COMPONENTS + HomepageSection (sectionKey: "watch_and_learn")
           the same way every section above it works, so an admin can
           reorder/hide it too. */}
-      <VideoReelsSection media={liveVideos.length > 0 ? toWatchMedia(liveVideos) : undefined} />
+      {liveVideos.length > 0 && <VideoReelsSection media={toWatchMedia(liveVideos)} />}
     </main>
   );
 }

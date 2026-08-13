@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Star, Loader, RefreshCw } from 'lucide-react';
+import { Plus, Edit, Trash2, Star, Loader, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { FaYoutube, FaInstagram } from 'react-icons/fa';
 
 // Mirrors VIDEO_CATEGORIES in app/models/Video.ts — not imported directly
@@ -24,6 +24,14 @@ interface VideoRow {
   doctor?: { name: string };
   platform?: 'youtube' | 'instagram';
   createdAt: string;
+}
+
+interface YoutubeStatus {
+  connected: boolean;
+  hasApiKey: boolean;
+  hasChannelId: boolean;
+  message: string;
+  channel?: { title: string; videoCount: string | number | null; subscriberCount: string | number | null };
 }
 
 function PlatformIcon({ platform }: { platform?: 'youtube' | 'instagram' }) {
@@ -48,11 +56,26 @@ export default function VideosPage() {
   const [syncMessage, setSyncMessage] = useState('');
   const [igSyncing, setIgSyncing] = useState(false);
   const [igSyncMessage, setIgSyncMessage] = useState('');
+  const [ytStatus, setYtStatus] = useState<YoutubeStatus | null>(null);
+  const [ytStatusLoading, setYtStatusLoading] = useState(true);
 
   // Fetch the full (small, curated) video library once — the category
   // filter used to re-fetch from the server on every dropdown change even
   // though it's just filtering this same small list.
-  useEffect(() => { fetchVideos(); }, []);
+  useEffect(() => { fetchVideos(); checkYoutubeStatus(); }, []);
+
+  async function checkYoutubeStatus() {
+    setYtStatusLoading(true);
+    try {
+      const res = await fetch('/api/admin/videos/youtube-status');
+      const data = await res.json();
+      if (data.success) setYtStatus(data);
+    } catch {
+      setYtStatus({ connected: false, hasApiKey: false, hasChannelId: false, message: 'Could not check connection — network error.' });
+    } finally {
+      setYtStatusLoading(false);
+    }
+  }
 
   async function fetchVideos() {
     try {
@@ -88,6 +111,7 @@ export default function VideosPage() {
       const data = await res.json();
       setSyncMessage(data.message || (data.success ? 'Sync complete.' : 'Sync failed.'));
       if (data.success && data.added > 0) await fetchVideos();
+      if (!data.success) checkYoutubeStatus();
     } catch {
       setSyncMessage('Sync failed — network error.');
     } finally {
@@ -137,7 +161,8 @@ export default function VideosPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={syncFromYoutube}
-            disabled={syncing}
+            disabled={syncing || ytStatusLoading || ytStatus?.connected === false}
+            title={ytStatus?.connected === false ? ytStatus.message : undefined}
             className="inline-flex items-center gap-2 bg-white border border-gray-200 text-[#0B2560] px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50"
           >
             {syncing ? <Loader size={15} className="animate-spin" /> : <FaYoutube size={15} className="text-red-600" />}
@@ -156,6 +181,34 @@ export default function VideosPage() {
             <Plus size={15} /> Add Video
           </Link>
         </div>
+      </div>
+
+      <div className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-xs font-semibold ${
+        ytStatusLoading ? 'bg-gray-50 border-gray-100 text-gray-400'
+        : ytStatus?.connected ? 'bg-green-50 border-green-100 text-green-700'
+        : 'bg-amber-50 border-amber-100 text-amber-700'
+      }`}>
+        <span className="flex items-center gap-2">
+          {ytStatusLoading ? (
+            <Loader size={13} className="animate-spin shrink-0" />
+          ) : ytStatus?.connected ? (
+            <CheckCircle2 size={14} className="shrink-0" />
+          ) : (
+            <AlertTriangle size={14} className="shrink-0" />
+          )}
+          {ytStatusLoading
+            ? 'Checking YouTube connection…'
+            : ytStatus?.connected
+              ? `YouTube connected — ${ytStatus.channel?.title} (${ytStatus.channel?.videoCount ?? '?'} videos on channel)`
+              : ytStatus?.message || 'YouTube not connected.'}
+        </span>
+        <button
+          onClick={checkYoutubeStatus}
+          disabled={ytStatusLoading}
+          className="inline-flex items-center gap-1 shrink-0 text-[11px] font-bold underline underline-offset-2 hover:opacity-70 disabled:opacity-40"
+        >
+          <RefreshCw size={11} /> Test Connection
+        </button>
       </div>
 
       {syncMessage && (
