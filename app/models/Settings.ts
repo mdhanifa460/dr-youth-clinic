@@ -556,6 +556,13 @@ const SettingsSchema = new Schema<ISettings>(
           { label: '📅 Book Appointment', action: '/book' },
           { label: '🧪 Take Skin Quiz', action: '/skin-quiz' },
           { label: '🏷️ View Offers', action: '/offers' },
+          // '/chat/...' isn't a real route — AiChatWidget.tsx's
+          // QUICK_ACTION_PROMPTS map recognizes these two specifically and
+          // sends a canned prompt into the conversation instead of
+          // navigating or opening a panel (same mechanism as clicking a
+          // Suggested Question).
+          { label: '🩺 Check Doctor Availability', action: '/chat/availability' },
+          { label: '📍 Find a Clinic', action: '/chat/find-clinic' },
         ],
       },
       enableRecommendations:  { type: Boolean, default: true },

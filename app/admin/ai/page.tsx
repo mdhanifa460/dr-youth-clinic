@@ -73,6 +73,8 @@ const DEFAULTS: AiSettings = {
     { label: '📅 Book Appointment', action: '/book' },
     { label: '🧪 Take Skin Quiz', action: '/skin-quiz' },
     { label: '🏷️ View Offers', action: '/offers' },
+    { label: '🩺 Check Doctor Availability', action: '/chat/availability' },
+    { label: '📍 Find a Clinic', action: '/chat/find-clinic' },
   ],
   enableRecommendations: true,
   enableBooking: true,

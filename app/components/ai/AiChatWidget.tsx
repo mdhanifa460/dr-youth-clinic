@@ -102,6 +102,25 @@ function resolveGreeting(rules: GreetingRule[] | undefined, isReturning: boolean
 // since there's no way to know how to inline an arbitrary future page.
 const INLINE_VIEWS: Record<string, View> = { '/book': 'book', '/offers': 'offers', '/skin-quiz': 'assessment' };
 
+// A second class of quick action: instead of opening a panel or navigating
+// away, these send a canned prompt straight into the conversation — same
+// mechanism as clicking a Suggested Question (send(q) below). Deliberately
+// phrased as open questions rather than something that forces a specific
+// answer shape: "What's your doctor availability today?" has no date/time
+// in it, so it won't itself match the ai-chat route's deterministic
+// availability short-circuit (app/lib/ai/simpleIntents.ts) — the AI
+// answers with real branch-level hours and asks which day/time, and the
+// patient's natural follow-up ("tomorrow 11am") is what actually triggers
+// the ₹0 real-doctor-availability answer. Same idea for "find a clinic":
+// a bare request for "which locations" is inherently a listing question
+// (all 4 branches), not a single named city, so it correctly goes through
+// the full AI path (grounded on real location content) rather than the
+// single-city clinic-info shortcut, which needs a named city to fire.
+const QUICK_ACTION_PROMPTS: Record<string, string> = {
+  '/chat/availability': "What's your doctor availability today?",
+  '/chat/find-clinic': 'Which clinic locations do you have?',
+};
+
 function visibleQuickActions(config: AiConfig) {
   const branch = getUrlBranch();
   const branchScoped = config.quickActions.filter(a => !a.branch || a.branch.toLowerCase() === branch);
@@ -774,7 +793,10 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
     if (inline) {
       setView(inline);
       if (inline === 'book') pushDataLayerEvent('ai_booking_started', { source: 'ai_chat' });
+      return;
     }
+    const prompt = QUICK_ACTION_PROMPTS[action];
+    if (prompt) send(prompt);
   };
 
   return (
@@ -891,7 +913,7 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
               {visibleQuickActions(config).length > 0 && (
                 <div className="flex gap-1.5 px-4 pb-2 overflow-x-auto scrollbar-hide shrink-0">
                   {visibleQuickActions(config).map((a, i) => (
-                    INLINE_VIEWS[a.action] ? (
+                    INLINE_VIEWS[a.action] || QUICK_ACTION_PROMPTS[a.action] ? (
                       <button key={i} onClick={() => handleQuickAction(a.action)}
                         className="shrink-0 text-[11px] font-semibold bg-gray-50 hover:bg-gray-100 text-[#0B2560] px-3 py-1.5 rounded-full border border-gray-100 transition whitespace-nowrap">
                         {a.label}
