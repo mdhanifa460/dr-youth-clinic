@@ -69,3 +69,19 @@ export function parseDateTime(text: string, now: Date = new Date()): ParsedDateT
   if (!date || !time) return null;
   return { date, time };
 }
+
+// Same contract as parseDateTime, except a time-only phrase ("check 11am
+// availability" — no "today"/"tomorrow"/weekday mentioned) resolves to
+// today instead of null. parseDateTime stays strict on purpose (its
+// existing callers/tests rely on a bare time being ambiguous); this is a
+// separate, explicit "assume same-day" opt-in for the one caller that
+// wants it — the ai-chat simple-intent short-circuit (see
+// app/lib/ai/simpleIntents.ts), which needs a concrete date to query real
+// per-doctor availability against, and "what time is free" without a day
+// named is naturally read as "today" in a same-day booking chat.
+export function parseDateTimeAssumeToday(text: string, now: Date = new Date()): ParsedDateTime | null {
+  const time = parseTime(text);
+  if (!time) return null;
+  const date = parseRelativeDate(text, now) || toDateString(now);
+  return { date, time };
+}

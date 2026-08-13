@@ -48,6 +48,7 @@ type AiSettings = {
   enableRecommendations: boolean;
   enableBooking: boolean;
   enableWhatsappHandoff: boolean;
+  simpleIntentsEnabled: boolean;
   greetingRules: GreetingRule[];
   recommendationRules: RecommendationRule[];
   escalationRules: EscalationRule[];
@@ -76,6 +77,7 @@ const DEFAULTS: AiSettings = {
   enableRecommendations: true,
   enableBooking: true,
   enableWhatsappHandoff: true,
+  simpleIntentsEnabled: true,
   greetingRules: [],
   recommendationRules: [],
   escalationRules: [],
@@ -165,6 +167,8 @@ function ChatbotSettingsTab({ form, set, clinicProfile, setProfile }: {
           label="Booking CTA" sub="Show a Book Appointment button in chat responses." />
         <Toggle checked={form.enableWhatsappHandoff} onChange={() => set('enableWhatsappHandoff', !form.enableWhatsappHandoff)}
           label="WhatsApp Handoff" sub="Offer to continue the conversation on WhatsApp." />
+        <Toggle checked={form.simpleIntentsEnabled} onChange={() => set('simpleIntentsEnabled', !form.simpleIntentsEnabled)}
+          label="Cost-Saving Quick Answers" sub="Skip the AI model entirely for a few simple, structured questions — an exact-time availability check, 'show me the Chennai clinic', 'what treatments do you offer' — and answer straight from the database instead. Never fires on anything open-ended; those always still go to the AI." />
       </Card>
     </>
   );

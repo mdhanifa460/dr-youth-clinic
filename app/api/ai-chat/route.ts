@@ -14,6 +14,7 @@ import { canonicalizeLocation } from '@/app/lib/locationNormalize';
 import { getBranchAvailability } from '@/app/lib/availability';
 import { getDoctorAvailability } from '@/app/lib/doctorAvailability';
 import { parseDateTime } from '@/app/lib/parseDateTime';
+import { detectSimpleIntent } from '@/app/lib/ai/simpleIntents';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,6 +145,51 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Simple-intent short-circuit — a handful of message shapes (a
+  // specific-time availability check, "show me the <city> clinic", "what
+  // treatments do you offer") are simple, structured lookups a
+  // deterministic backend query answers exactly as well as an LLM would;
+  // see app/lib/ai/simpleIntents.ts for the full detector list and the
+  // conservative-by-design rationale. Unlike the FAQ short-circuit above,
+  // this isn't limited to the first message — these are valid standalone
+  // lookups at any point in a conversation. Skipped when an escalation
+  // rule matched, same reasoning as the FAQ short-circuit above.
+  //
+  // Settings default is `true`, but a pre-existing Settings document that
+  // predates this field reads it back as `undefined` — Mongoose only
+  // applies a new field's schema default to documents created after the
+  // field existed, confirmed the hard way on videoAI.autoCategorizeEnabled
+  // — so this checks `!== false` rather than truthy.
+  const resolvedLocation = canonicalizeLocation(location);
+  if (!matchedEscalationRule && aiConfig.simpleIntentsEnabled !== false) {
+    try {
+      const simple = await detectSimpleIntent(message, resolvedLocation);
+      if (simple) {
+        const assistantCreatedAt = new Date();
+        conversation.messages.push({
+          role: 'assistant', content: simple.text, cards: simple.cards, escalated: false, createdAt: assistantCreatedAt,
+        });
+        conversation.lastMessageAt = assistantCreatedAt;
+        await conversation.save().catch((e: any) => console.error('[ai-chat] failed to persist conversation', e));
+
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(ndjson({ type: 'delta', text: simple.text }));
+            controller.enqueue(ndjson({ type: 'cards', cards: simple.cards }));
+            controller.enqueue(ndjson({ type: 'meta', createdAt: assistantCreatedAt.toISOString() }));
+            controller.enqueue(ndjson({ type: 'done' }));
+            controller.close();
+          },
+        });
+        return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' } });
+      }
+    } catch (e) {
+      console.error('[ai-chat] simple-intent detection failed', e);
+      // Fall through to the full retrieval+generation path — a failed
+      // detector should never block the patient from getting an answer.
+    }
+  }
+
   // Retrieval — one embedding + one vector search serves both the grounding
   // context for the text answer AND the recommendation cards, rather than
   // paying for two separate calls per turn.
@@ -194,7 +240,8 @@ export async function POST(req: NextRequest) {
   // tomorrow") that don't name an exact time to check a doctor against.
   let availabilityBlock = '';
   const AVAILABILITY_KEYWORDS = ['available', 'availability', 'slot', 'free time', 'when can', 'today', 'tomorrow', 'open now', 'opening hours', 'timing', 'timings', 'doctor'];
-  const resolvedLocation = canonicalizeLocation(location);
+  // resolvedLocation is computed earlier, above, for the simple-intent
+  // short-circuit — reused here rather than recomputed.
   if (resolvedLocation && AVAILABILITY_KEYWORDS.some(k => message.toLowerCase().includes(k))) {
     const specificSlot = parseDateTime(message);
     try {

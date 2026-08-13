@@ -263,6 +263,17 @@ export interface ISettings extends Document {
     enableRecommendations: boolean;
     enableBooking: boolean;
     enableWhatsappHandoff: boolean;
+    // Cost-control short-circuit — before paying for an embedding + LLM
+    // generation call, /api/ai-chat first checks whether the message is one
+    // of a handful of simple, structured intents (a specific-time
+    // availability check, "show me the <city> clinic", "what treatments do
+    // you offer") that a deterministic backend query can answer directly
+    // (app/lib/ai/simpleIntents.ts). Only ever SKIPS an AI call on an
+    // unambiguous match; anything even slightly open-ended always falls
+    // through to the full AI path unchanged, so turning this off just means
+    // those few message shapes cost an AI call again — it can never make an
+    // answer worse, only cheaper. Defaults on.
+    simpleIntentsEnabled: boolean;
     // Resolved client-side in AiChatWidget (only the client knows local time,
     // URL params, and returning-visitor state) — highest `priority` among
     // matching, enabled rules wins; falls back to `greeting`/`welcomeMessage`
@@ -550,6 +561,7 @@ const SettingsSchema = new Schema<ISettings>(
       enableRecommendations:  { type: Boolean, default: true },
       enableBooking:          { type: Boolean, default: true },
       enableWhatsappHandoff:  { type: Boolean, default: true },
+      simpleIntentsEnabled:   { type: Boolean, default: true },
       greetingRules: {
         type: [{
           id: String,
