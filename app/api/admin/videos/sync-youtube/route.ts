@@ -93,6 +93,7 @@ export async function POST() {
 
     // videos.list accepts at most 50 IDs per call.
     const created: string[] = [];
+    const failed: Array<{ title: string; message: string }> = [];
     for (let i = 0; i < newIds.length; i += 50) {
       const batch = newIds.slice(i, i + 50);
       const detailsRes = await fetch(
@@ -126,17 +127,31 @@ export async function POST() {
           status: 'draft',
           channel: item?.snippet?.channelTitle || '',
         });
-        await video.save();
-        created.push(video.id);
+        // Per-video try/catch — one bad save (a validation error, a rare
+        // slug collision, etc.) used to throw past this loop entirely and
+        // abort the rest of the batch, silently dropping every video after
+        // it even though nothing was wrong with them. Now a single failure
+        // is recorded and the sync keeps going through the rest of the
+        // channel's uploads.
+        try {
+          await video.save();
+          created.push(video.id);
+        } catch (err: any) {
+          failed.push({ title: video.title, message: err?.message || 'Unknown error' });
+        }
       }
     }
 
     revalidateTag('videos');
+    const failedNote = failed.length > 0
+      ? ` ${failed.length} failed: ${failed.slice(0, 3).map((f) => `"${f.title}" (${f.message})`).join('; ')}${failed.length > 3 ? '…' : ''}`
+      : '';
     return NextResponse.json({
       success: true,
       added: created.length,
-      skipped: allVideoIds.length - created.length,
-      message: `Added ${created.length} new video${created.length === 1 ? '' : 's'} as drafts.`,
+      skipped: allVideoIds.length - created.length - failed.length,
+      failed: failed.length,
+      message: `Added ${created.length} new video${created.length === 1 ? '' : 's'} as drafts.${failedNote}`,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Sync failed' }, { status: 500 });

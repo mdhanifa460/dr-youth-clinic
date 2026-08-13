@@ -148,10 +148,26 @@ VideoSchema.pre('save', async function () {
     }
   }
   if (!this.slug && this.title) {
-    this.slug = this.title
+    const baseSlug = this.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
+    this.slug = baseSlug;
+    // Two videos can legitimately share an identical title — e.g. the same
+    // clip posted as both a Short and a full-length video, which the
+    // YouTube sync job (sync-youtube/route.ts) pulls in as two separate
+    // Video docs. Unqualified, that collided on this field's unique index
+    // and threw E11000 mid-save, which aborted the whole sync batch partway
+    // through. Disambiguate with a short suffix from the video's own
+    // YouTube ID — stable and already unique per video — rather than a
+    // counter, which would require a query loop and can still race.
+    if (baseSlug) {
+      const conflict = await (this.constructor as any).exists({ slug: baseSlug, _id: { $ne: this._id } });
+      if (conflict) {
+        const suffix = (this.youtubeId || this.instagramMediaId || String(this._id)).slice(-6);
+        this.slug = `${baseSlug}-${suffix}`;
+      }
+    }
   }
   if (!this.thumbnail?.url && this.youtubeId) {
     this.thumbnail = { url: `https://img.youtube.com/vi/${this.youtubeId}/hqdefault.jpg` };
