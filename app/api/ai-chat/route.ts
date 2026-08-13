@@ -12,6 +12,8 @@ import { scoreHitsToCards, type RecommendationType } from '@/app/lib/rag/Recomme
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 import { canonicalizeLocation } from '@/app/lib/locationNormalize';
 import { getBranchAvailability } from '@/app/lib/availability';
+import { getDoctorAvailability } from '@/app/lib/doctorAvailability';
+import { parseDateTime } from '@/app/lib/parseDateTime';
 
 export const dynamic = 'force-dynamic';
 
@@ -176,35 +178,56 @@ export async function POST(req: NextRequest) {
 
   // Real-time availability grounding — not full tool-calling (the model
   // doesn't decide when to call this, it's a cheap keyword pre-check), but
-  // it replaces "the LLM guesses/deflects" with real operatingHours/
-  // holidays/slotConfig data whenever a patient's message plausibly asks
-  // about it. Branch-level only (open/closed + configured slot times) —
-  // see app/lib/availability.ts for why this doesn't attempt per-doctor
-  // calendar checking. Silently skipped if no branch is known (no
-  // ?location=/?clinic= on the page) — nothing to ground without one, and
-  // the AI already defers to "book a consultation" in that case.
+  // it replaces "the LLM guesses/deflects" with real data whenever a
+  // patient's message plausibly asks about it. Silently skipped if no
+  // branch is known (no ?location=/?clinic= on the page) — nothing to
+  // ground without one, and the AI already defers to "book a consultation"
+  // in that case.
+  //
+  // Two tiers: if a SPECIFIC date+time is confidently parseable from the
+  // message (parseDateTime — "tomorrow 11am"), use the real per-doctor
+  // check (app/lib/doctorAvailability.ts, the same Appointment/
+  // DoctorSlotBlock conflict logic the admin CRM's own availability
+  // checker uses) so the AI can name real doctors, not just say a slot
+  // time exists. Otherwise fall back to the branch-level 3-day summary
+  // (app/lib/availability.ts) for vaguer questions ("are you open
+  // tomorrow") that don't name an exact time to check a doctor against.
   let availabilityBlock = '';
-  const AVAILABILITY_KEYWORDS = ['available', 'availability', 'slot', 'free time', 'when can', 'today', 'tomorrow', 'open now', 'opening hours', 'timing', 'timings'];
+  const AVAILABILITY_KEYWORDS = ['available', 'availability', 'slot', 'free time', 'when can', 'today', 'tomorrow', 'open now', 'opening hours', 'timing', 'timings', 'doctor'];
   const resolvedLocation = canonicalizeLocation(location);
   if (resolvedLocation && AVAILABILITY_KEYWORDS.some(k => message.toLowerCase().includes(k))) {
+    const specificSlot = parseDateTime(message);
     try {
-      const days = await getBranchAvailability(resolvedLocation, 3);
-      // Explicit TODAY/TOMORROW labels, not just raw dates — a first pass
-      // that only gave dates (e.g. "2026-08-13 (Thursday): ...") led the
-      // model to hedge and ask the patient what today's date was, even
-      // though the real date was right there. Spelling it out removes any
-      // need for the model to infer "first item = today" on its own.
-      const DAY_LABEL = ['TODAY', 'TOMORROW', 'DAY AFTER TOMORROW'];
-      availabilityBlock = days.map((d, i) => {
-        const label = `${DAY_LABEL[i] || `+${i} days`} (${d.date}, ${d.weekday})`;
-        if (!d.open) {
-          const why = d.reason === 'holiday' ? `closed (holiday: ${d.holidayLabel})` : d.reason === 'closed_day' ? 'closed' : 'hours not set up yet';
-          return `${label}: ${why}`;
+      if (specificSlot) {
+        const result = await getDoctorAvailability(resolvedLocation, specificSlot.date, specificSlot.time);
+        if (!result.open) {
+          const why = result.reason === 'holiday' ? `closed (holiday: ${result.holidayLabel})` : result.reason === 'closed_day' ? 'closed' : 'hours not set up yet';
+          availabilityBlock = `Requested slot: ${specificSlot.date} at ${specificSlot.time} — clinic is ${why} that day. Do not offer or imply a specific doctor/time is bookable.`;
+        } else {
+          const free = result.doctors.filter(d => d.available);
+          availabilityBlock = free.length
+            ? `Requested slot: ${specificSlot.date} at ${specificSlot.time} — REAL doctors confirmed free at exactly this time (use these real names, never invent a doctor or imply someone else is free): ${free.map(d => `${d.name} (${d.title})`).join(', ')}.`
+            : `Requested slot: ${specificSlot.date} at ${specificSlot.time} — no doctor is free at exactly this time (checked against real appointment records). Do not claim any doctor is available then; offer to check a nearby time or take a booking request instead.`;
         }
-        return d.slots.length
-          ? `${label}: open, slot times: ${d.slots.join(', ')}`
-          : `${label}: open, but no specific slot times configured — suggest they call or book and the clinic will confirm a time`;
-      }).join('\n');
+      } else {
+        const days = await getBranchAvailability(resolvedLocation, 3);
+        // Explicit TODAY/TOMORROW labels, not just raw dates — a first pass
+        // that only gave dates (e.g. "2026-08-13 (Thursday): ...") led the
+        // model to hedge and ask the patient what today's date was, even
+        // though the real date was right there. Spelling it out removes any
+        // need for the model to infer "first item = today" on its own.
+        const DAY_LABEL = ['TODAY', 'TOMORROW', 'DAY AFTER TOMORROW'];
+        availabilityBlock = days.map((d, i) => {
+          const label = `${DAY_LABEL[i] || `+${i} days`} (${d.date}, ${d.weekday})`;
+          if (!d.open) {
+            const why = d.reason === 'holiday' ? `closed (holiday: ${d.holidayLabel})` : d.reason === 'closed_day' ? 'closed' : 'hours not set up yet';
+            return `${label}: ${why}`;
+          }
+          return d.slots.length
+            ? `${label}: open, slot times: ${d.slots.join(', ')}`
+            : `${label}: open, but no specific slot times configured — suggest they call or book and the clinic will confirm a time`;
+        }).join('\n');
+      }
     } catch (e) {
       console.error('[ai-chat] availability lookup failed', e);
       // Fall through with no availability block — the model still answers,

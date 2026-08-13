@@ -177,12 +177,39 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
   // patient. Pre-filled from the same ?location=/?clinic= URL convention
   // getUrlBranch() already reads elsewhere in this file, so a branch-scoped
   // visitor doesn't have to pick it again.
-  const [form, setForm] = useState({ name: '', phone: '', service: '', location: getUrlBranch(), date: '', time: '' });
+  const [form, setForm] = useState({ name: '', phone: '', service: '', location: getUrlBranch(), date: '', time: '', doctorId: '' });
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
+  // Real per-doctor availability for the exact location+date+time the user
+  // has entered — see app/api/doctors/availability. Optional: the "Check &
+  // Request" model doesn't require picking a doctor to submit a request
+  // (the clinic can assign one when confirming), it's just a nicer,
+  // honest way to show who's actually free rather than asking blind.
+  const [availLoading, setAvailLoading] = useState(false);
+  const [availResult, setAvailResult] = useState<{ open: boolean; reason?: string; doctors: { id: string; name: string; title: string; available: boolean }[] } | null>(null);
 
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v, ...(k !== 'doctorId' ? { doctorId: '' } : {}) }));
+
+  useEffect(() => {
+    if (!form.location || !form.date || !form.time) { setAvailResult(null); return; }
+    let cancelled = false;
+    setAvailLoading(true);
+    // form.time is already 24-hour "HH:MM" — the native <input type="time">
+    // value is always that format regardless of locale display, exactly
+    // what /api/doctors/availability expects. No conversion needed here
+    // (unlike the free-text chat parser, which does need one).
+    fetch(`/api/doctors/availability?location=${form.location}&date=${form.date}&time=${form.time}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return;
+        setAvailResult(d.success ? d : null);
+        if (d.success) pushDataLayerEvent('ai_availability_checked', { source: 'ai_chat', location: form.location });
+      })
+      .catch(() => { if (!cancelled) setAvailResult(null); })
+      .finally(() => { if (!cancelled) setAvailLoading(false); });
+    return () => { cancelled = true; };
+  }, [form.location, form.date, form.time]);
 
   const submit = async () => {
     if (!form.name.trim() || !form.phone.trim() || !form.location || !form.date || !form.time) {
@@ -190,9 +217,15 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
     }
     setSaving(true); setError('');
     try {
+      // The field is labeled "(optional)" but /api/booking's Zod schema
+      // actually requires a non-empty `service` — a real request with it
+      // left blank (the label invites exactly that) failed with "Select a
+      // service" every time, same class of bug as the missing-location
+      // issue found earlier. Defaulting it here keeps the field honestly
+      // optional for the patient without changing the server contract.
       const res = await fetch('/api/booking', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, source: 'ai_chat' }),
+        body: JSON.stringify({ ...form, service: form.service.trim() || 'General Consultation', source: 'ai_chat' }),
       });
       const data = await res.json();
       if (data.success) {
@@ -243,6 +276,51 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
           <input value={form.time} onChange={e => set('time', e.target.value)} type="time"
             className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm" />
         </div>
+
+        {/* Real doctor availability for the exact slot entered above —
+            never a placeholder/fake list. Optional to pick one. */}
+        {form.location && form.date && form.time && (
+          <div className="pt-1">
+            {availLoading ? (
+              <p className="text-xs text-gray-400 flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> Checking real availability…</p>
+            ) : !availResult ? (
+              <p className="text-xs text-gray-400">Couldn't check availability — you can still submit and our team will confirm.</p>
+            ) : !availResult.open ? (
+              <p className="text-xs text-amber-600 bg-amber-50 rounded-xl px-3 py-2">
+                {availResult.reason === 'holiday' ? "Clinic is closed that day (holiday)." : availResult.reason === 'closed_day' ? 'Clinic is closed that day.' : "We don't have hours set up for that day yet — submit and our team will confirm a time."}
+              </p>
+            ) : availResult.doctors.length === 0 ? (
+              <p className="text-xs text-gray-400">No doctors configured at this clinic yet — submit and our team will assign one.</p>
+            ) : (
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-semibold text-gray-500">Doctors at this time (optional — pick one, or leave blank):</p>
+                {availResult.doctors.map(d => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    disabled={!d.available}
+                    onClick={() => {
+                      set('doctorId', form.doctorId === d.id ? '' : d.id);
+                      if (form.doctorId !== d.id) pushDataLayerEvent('ai_doctor_selected', { source: 'ai_chat' });
+                    }}
+                    className={`w-full flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left transition ${
+                      !d.available ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                      : form.doctorId === d.id ? 'border-[#0B2560] bg-[#f6faff]' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-[#0B2560] truncate">{d.name}</p>
+                      <p className="text-[10px] text-gray-400 truncate">{d.title}</p>
+                    </div>
+                    <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${d.available ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+                      {d.available ? 'Available' : 'Busy'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="p-4 border-t border-gray-100 shrink-0">
         <button onClick={submit} disabled={saving}
