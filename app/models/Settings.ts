@@ -231,6 +231,13 @@ export interface ISettings extends Document {
     generateFaqEnabled: boolean;
     generateBlogEnabled: boolean;
     generateStoryEnabled: boolean;
+    // Unlike the five flags above (all on-demand "Generate" buttons an
+    // admin clicks per video), this one runs automatically inside the
+    // YouTube sync job itself — every newly-synced video gets an AI-guessed
+    // category instead of an empty one. Still just a draft guess: the video
+    // stays in Draft status either way, so a wrong guess is caught on
+    // review before publish, same safety net as every other AI field here.
+    autoCategorizeEnabled: boolean;
   };
   ai: {
     enabled: boolean;
@@ -510,6 +517,7 @@ const SettingsSchema = new Schema<ISettings>(
       generateFaqEnabled:     { type: Boolean, default: false },
       generateBlogEnabled:    { type: Boolean, default: false },
       generateStoryEnabled:   { type: Boolean, default: false },
+      autoCategorizeEnabled:  { type: Boolean, default: true },
     },
     ai: {
       enabled:      { type: Boolean, default: true },

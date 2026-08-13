@@ -10,6 +10,7 @@ type VideoAiSettings = {
   generateFaqEnabled: boolean;
   generateBlogEnabled: boolean;
   generateStoryEnabled: boolean;
+  autoCategorizeEnabled: boolean;
 };
 
 const DEFAULTS: VideoAiSettings = {
@@ -18,9 +19,16 @@ const DEFAULTS: VideoAiSettings = {
   generateFaqEnabled: false,
   generateBlogEnabled: false,
   generateStoryEnabled: false,
+  autoCategorizeEnabled: true,
 };
 
-const TOGGLES: { key: keyof VideoAiSettings; label: string; desc: string }[] = [
+const TOGGLES: { key: keyof VideoAiSettings; label: string; desc: string; automatic?: boolean }[] = [
+  {
+    key: "autoCategorizeEnabled",
+    label: "Auto-Categorize on Sync",
+    desc: "Unlike everything else below, this runs automatically — every video pulled in by \"Sync from YouTube\" gets an AI-guessed category instead of a blank one. Still saved as a Draft either way, so a wrong guess is caught on review before you publish.",
+    automatic: true,
+  },
   {
     key: "generateSeoEnabled",
     label: "Generate SEO",
@@ -123,7 +131,7 @@ export default function VideoAiSettingsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-[#0B2560]">Video AI</h1>
-            <p className="text-gray-400 text-sm mt-0.5">Turn on-demand AI generation on or off for the Video module — nothing here ever runs automatically, this only controls whether the "Generate" buttons are usable.</p>
+            <p className="text-gray-400 text-sm mt-0.5">Turn AI generation on or off for the Video module. Everything below is an on-demand "Generate" button an admin clicks per video, except Auto-Categorize, which runs by itself during YouTube sync — that one's called out below.</p>
           </div>
           <button onClick={save} disabled={saving}
             className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#0d2d72] transition disabled:opacity-50 shadow-sm">
@@ -145,10 +153,17 @@ export default function VideoAiSettingsPage() {
 
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="divide-y divide-gray-50">
-            {TOGGLES.map(({ key, label, desc }) => (
+            {TOGGLES.map(({ key, label, desc, automatic }) => (
               <div key={key} className="flex items-center justify-between px-6 py-4 gap-4">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-700">{label}</p>
+                  <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    {label}
+                    {automatic && (
+                      <span className="text-[9px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded">
+                        Runs automatically
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{desc}</p>
                 </div>
                 <Toggle on={form[key]} onChange={() => set(key, !form[key])} />
