@@ -98,7 +98,7 @@ export default async function PublicLayout({
       <div className="mobile-sticky-offset lg:pb-0">{children}</div>
       <Footer data={footer} siteConfig={siteConfig} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
-      <AiChatWidget config={aiConfig as any} whatsapp={siteConfig.publicWhatsApp} />
+      <AiChatWidget config={aiConfig as any} whatsapp={siteConfig.publicWhatsApp} phone={siteConfig.publicPhone} />
     </SiteConfigProvider>
   );
 }

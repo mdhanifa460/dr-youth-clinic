@@ -4,8 +4,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   MessageCircle, X, Send, Loader2, Sparkles, Stethoscope, Tag, Camera, Calendar,
-  ChevronRight, ArrowLeft, CheckCircle, IndianRupee, ThumbsUp, ThumbsDown,
+  ChevronRight, ArrowLeft, CheckCircle, IndianRupee, ThumbsUp, ThumbsDown, Phone, Users, PhoneCall,
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 import { markdownToHtml } from '@/app/lib/blogMarkdown';
 import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
 import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
@@ -13,7 +14,7 @@ import { locations } from '@/app/data/locations';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
-type View = 'chat' | 'book' | 'offers' | 'assessment';
+type View = 'chat' | 'book' | 'offers' | 'assessment' | 'support';
 
 type GreetingRule = {
   id: string;
@@ -180,6 +181,7 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
   const [form, setForm] = useState({ name: '', phone: '', service: '', location: getUrlBranch(), date: '', time: '', doctorId: '' });
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [bookingId, setBookingId] = useState('');
   const [error, setError] = useState('');
   // Real per-doctor availability for the exact location+date+time the user
   // has entered — see app/api/doctors/availability. Optional: the "Check &
@@ -188,6 +190,15 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
   // honest way to show who's actually free rather than asking blind.
   const [availLoading, setAvailLoading] = useState(false);
   const [availResult, setAvailResult] = useState<{ open: boolean; reason?: string; doctors: { id: string; name: string; title: string; available: boolean }[] } | null>(null);
+  // A review-before-submit step — the form's own inputs stay editable
+  // right up until the real /api/booking call, matching the "Check &
+  // Request" model's spirit: nothing is sent until the patient explicitly
+  // confirms a real summary of what they typed, not just a generic submit
+  // button.
+  const [reviewing, setReviewing] = useState(false);
+
+  const selectedDoctor = availResult?.doctors.find(d => d.id === form.doctorId) || null;
+  const locationName = form.location ? (locations as any)[form.location]?.name || form.location : '';
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v, ...(k !== 'doctorId' ? { doctorId: '' } : {}) }));
 
@@ -230,6 +241,7 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
       const data = await res.json();
       if (data.success) {
         setDone(true);
+        setBookingId(data.bookingId || '');
         trackBookingConversion({ bookingId: data.bookingId, service: form.service });
         // AI funnel event — same GTM dataLayer bridge, distinct from the
         // sitewide booking_confirmed trackBookingConversion() already
@@ -242,13 +254,99 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
   };
 
   if (done) {
+    // Real data only — bookingId from the actual /api/booking response,
+    // doctor from the real availability check (if one was picked), map
+    // link from app/data/locations.ts (the same source the public site's
+    // own location pages use). Status is deliberately "request sent", not
+    // "confirmed" — matches the Check & Request model; staff still
+    // confirms every appointment, same as today.
+    const mapUrl = form.location ? (locations as any)[form.location]?.map : null;
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-3">
-        <CheckCircle size={36} className="text-green-500" />
-        <p className="font-bold text-[#0B2560] text-sm">Request received!</p>
-        <p className="text-xs text-gray-500">Our team will call you shortly to confirm your slot.</p>
-        <button onClick={onBack} className={`mt-2 bg-gradient-to-br ${accent} text-white text-xs font-bold px-5 py-2.5 rounded-xl`}>Back to Chat</button>
+      <div className="flex-1 overflow-y-auto flex flex-col items-center text-center px-6 py-6 gap-4">
+        <CheckCircle size={40} className="text-green-500" />
+        <div>
+          <p className="font-bold text-[#0B2560] text-base">Request received!</p>
+          <p className="text-xs text-gray-500 mt-1">Our team will call you shortly to confirm your slot.</p>
+        </div>
+        <div className="w-full bg-[#f6faff] border border-blue-50 rounded-2xl p-4 text-left space-y-2">
+          {bookingId && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-400">Booking ID</span>
+              <span className="font-mono font-bold text-[#0B2560]">{bookingId}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-400">Clinic</span>
+            <span className="font-semibold text-gray-700">{locationName}</span>
+          </div>
+          {selectedDoctor && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-400">Doctor</span>
+              <span className="font-semibold text-gray-700">{selectedDoctor.name}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-400">Date</span>
+            <span className="font-semibold text-gray-700">{form.date}</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-400">Time</span>
+            <span className="font-semibold text-gray-700">{form.time}</span>
+          </div>
+        </div>
+        <div className="w-full flex gap-2">
+          {mapUrl && (
+            <a href={mapUrl} target="_blank" rel="noopener noreferrer"
+              className="flex-1 border border-gray-200 text-gray-600 text-xs font-bold px-4 py-2.5 rounded-xl text-center">Get Directions</a>
+          )}
+          <button onClick={onBack} className={`flex-1 bg-gradient-to-br ${accent} text-white text-xs font-bold px-4 py-2.5 rounded-xl`}>Back to Chat</button>
+        </div>
       </div>
+    );
+  }
+
+  if (reviewing) {
+    return (
+      <>
+        <PanelHeader title="Confirm Your Appointment" onBack={() => setReviewing(false)} />
+        <div className="flex-1 overflow-y-auto p-4">
+          {error && <p className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2 mb-3">{error}</p>}
+          <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-4 space-y-2.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Clinic</span>
+              <span className="font-bold text-[#0B2560]">{locationName}</span>
+            </div>
+            {form.service.trim() && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Treatment</span>
+                <span className="font-bold text-[#0B2560]">{form.service}</span>
+              </div>
+            )}
+            {selectedDoctor && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Doctor</span>
+                <span className="font-bold text-[#0B2560]">{selectedDoctor.name}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Date</span>
+              <span className="font-bold text-[#0B2560]">{form.date}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Time</span>
+              <span className="font-bold text-[#0B2560]">{form.time}</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-gray-400 mt-3 text-center">This is a request — our team will call to confirm your exact slot.</p>
+        </div>
+        <div className="p-4 border-t border-gray-100 shrink-0 flex gap-2">
+          <button onClick={() => setReviewing(false)} className="flex-1 border border-gray-200 text-gray-600 text-sm font-bold py-3 rounded-xl">Change</button>
+          <button onClick={submit} disabled={saving}
+            className={`flex-1 bg-gradient-to-br ${accent} text-white text-sm font-bold py-3 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2`}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />} Confirm Booking
+          </button>
+        </div>
+      </>
     );
   }
 
@@ -323,9 +421,16 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
         )}
       </div>
       <div className="p-4 border-t border-gray-100 shrink-0">
-        <button onClick={submit} disabled={saving}
-          className={`w-full bg-gradient-to-br ${accent} text-white text-sm font-bold py-3 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2`}>
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Calendar size={14} />} Request Appointment
+        <button
+          onClick={() => {
+            if (!form.name.trim() || !form.phone.trim() || !form.location || !form.date || !form.time) {
+              setError('Name, phone, clinic location, date, and time are required.'); return;
+            }
+            setError('');
+            setReviewing(true);
+          }}
+          className={`w-full bg-gradient-to-br ${accent} text-white text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2`}>
+          <Calendar size={14} /> Review &amp; Confirm
         </button>
       </div>
     </>
@@ -350,10 +455,10 @@ function OffersPanel({ onBack }: { onBack: () => void }) {
         ) : offers.length === 0 ? (
           <p className="text-xs text-gray-500 text-center py-8">No active offers right now — check back soon!</p>
         ) : offers.map(o => (
-          <div key={o._id} className="border border-gray-100 rounded-2xl p-3.5">
+          <div key={o._id} className="border border-gray-100 rounded-2xl p-3.5 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-bold text-[#0B2560] leading-snug">{o.title}</p>
-              {o.badge && <span className="shrink-0 text-[9px] font-bold bg-amber-50 text-[#F5A623] px-2 py-0.5 rounded-full">{o.badge}</span>}
+              {o.badge && <span className="shrink-0 text-[9px] font-bold bg-amber-50 text-[#F5A623] px-2 py-0.5 rounded-full whitespace-nowrap">{o.badge}</span>}
             </div>
             {o.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{o.description}</p>}
             {o.discountedPrice && (
@@ -362,9 +467,21 @@ function OffersPanel({ onBack }: { onBack: () => void }) {
                 <span className="text-sm font-extrabold text-[#0B2560] flex items-center"><IndianRupee size={12} />{o.discountedPrice}</span>
               </div>
             )}
+            {o.validUntil && (
+              <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
+                <Calendar size={10} /> Valid till {new Date(o.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+            )}
           </div>
         ))}
       </div>
+      {offers.length > 0 && (
+        <div className="p-4 border-t border-gray-100 shrink-0">
+          <Link href="/offers" className="w-full block text-center border border-gray-200 text-[#0B2560] text-sm font-bold py-2.5 rounded-xl">
+            View All Offers
+          </Link>
+        </div>
+      )}
     </>
   );
 }
@@ -393,7 +510,132 @@ function AssessmentPanel({ onBack, onPickConcern, accent }: { onBack: () => void
   );
 }
 
-export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | null; whatsapp?: string }) {
+// ── Human Support (WhatsApp / Call / Request Callback) ──────────────────
+// Was previously a single WhatsApp-only pill in the quick-actions row —
+// this replaces that with a dedicated panel offering all three real
+// escalation paths, matching the "Human Support" state every other panel
+// in this widget already has (booking, offers, assessment). The WhatsApp
+// option here keeps the exact same handoff tracking (POST
+// /api/ai-chat/handoff + ai_human_handoff event) the old pill already had.
+function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: () => void; accent: string; whatsapp?: string; phone?: string; sessionId: string }) {
+  const branchWhatsApp = useBranchWhatsApp(whatsapp || '');
+  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
+  const callHref = phone ? `tel:${phone.replace(/\s/g, '')}` : null;
+
+  const [showCallbackForm, setShowCallbackForm] = useState(false);
+  const [form, setForm] = useState({ name: '', phone: '', location: getUrlBranch() });
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const submitCallback = async () => {
+    if (!form.name.trim() || !form.phone.trim() || !form.location) {
+      setError('Name, phone, and clinic location are required.'); return;
+    }
+    setSaving(true); setError('');
+    try {
+      const res = await fetch('/api/booking', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, service: 'Callback Request', source: 'ai_chat' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDone(true);
+        pushDataLayerEvent('ai_human_handoff', { source: 'ai_chat', method: 'callback_request' });
+      } else setError(data.message || 'Could not submit — please try again.');
+    } catch { setError('Network error — please try again.'); }
+    finally { setSaving(false); }
+  };
+
+  if (showCallbackForm) {
+    if (done) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-3">
+          <CheckCircle size={36} className="text-green-500" />
+          <p className="font-bold text-[#0B2560] text-sm">Request received!</p>
+          <p className="text-xs text-gray-500">Our team will call you back shortly.</p>
+          <button onClick={onBack} className={`mt-2 bg-gradient-to-br ${accent} text-white text-xs font-bold px-5 py-2.5 rounded-xl`}>Back to Chat</button>
+        </div>
+      );
+    }
+    return (
+      <>
+        <PanelHeader title="Request a Callback" onBack={() => setShowCallbackForm(false)} />
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {error && <p className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2">{error}</p>}
+          <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Your name"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" />
+          <input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="Phone number" type="tel"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" />
+          <select value={form.location} onChange={e => set('location', e.target.value)}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-white">
+            <option value="">Preferred clinic location</option>
+            {Object.entries(locations).map(([slug, l]) => (
+              <option key={slug} value={slug}>{l.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="p-4 border-t border-gray-100 shrink-0">
+          <button onClick={submitCallback} disabled={saving}
+            className={`w-full bg-gradient-to-br ${accent} text-white text-sm font-bold py-3 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2`}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <PhoneCall size={14} />} Request Callback
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PanelHeader title="Talk to Our Team" onBack={onBack} />
+      <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+        <p className="text-xs text-gray-500 mb-1">Choose how you'd like to reach us:</p>
+        {waHref && (
+          <a href={waHref} target="_blank" rel="noopener noreferrer"
+            onClick={() => {
+              fetch('/api/ai-chat/handoff', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId }),
+              }).catch(() => {});
+              pushDataLayerEvent('ai_human_handoff', { source: 'ai_chat', method: 'whatsapp' });
+            }}
+            className="w-full flex items-center gap-3 bg-green-50 hover:bg-green-100 border border-green-100 rounded-xl px-4 py-3.5 transition">
+            <div className="w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0"><FaWhatsapp size={16} /></div>
+            <div className="text-left min-w-0">
+              <p className="text-sm font-bold text-green-800">Chat on WhatsApp</p>
+              <p className="text-[11px] text-green-600">Get quick answers</p>
+            </div>
+            <ChevronRight size={14} className="ml-auto text-green-400 shrink-0" />
+          </a>
+        )}
+        {callHref && (
+          <a href={callHref}
+            onClick={() => pushDataLayerEvent('ai_human_handoff', { source: 'ai_chat', method: 'call' })}
+            className="w-full flex items-center gap-3 bg-[#f6faff] hover:bg-blue-50 border border-blue-100 rounded-xl px-4 py-3.5 transition">
+            <div className="w-9 h-9 rounded-full bg-[#0B2560] text-white flex items-center justify-center shrink-0"><Phone size={16} /></div>
+            <div className="text-left min-w-0">
+              <p className="text-sm font-bold text-[#0B2560]">Call Us</p>
+              <p className="text-[11px] text-gray-500">{phone}</p>
+            </div>
+            <ChevronRight size={14} className="ml-auto text-gray-300 shrink-0" />
+          </a>
+        )}
+        <button onClick={() => setShowCallbackForm(true)}
+          className="w-full flex items-center gap-3 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-xl px-4 py-3.5 transition text-left">
+          <div className="w-9 h-9 rounded-full bg-[#F5A623] text-white flex items-center justify-center shrink-0"><Users size={16} /></div>
+          <div className="text-left min-w-0">
+            <p className="text-sm font-bold text-amber-800">Request a Callback</p>
+            <p className="text-[11px] text-amber-600">We'll call you back</p>
+          </div>
+          <ChevronRight size={14} className="ml-auto text-amber-400 shrink-0" />
+        </button>
+      </div>
+    </>
+  );
+}
+
+export default function AiChatWidget({ config, whatsapp, phone }: { config: AiConfig | null; whatsapp?: string; phone?: string }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>('chat');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -575,6 +817,9 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
 
           {view === 'book' && <BookingPanel onBack={() => setView('chat')} accent={accent} />}
           {view === 'offers' && <OffersPanel onBack={() => setView('chat')} />}
+          {view === 'support' && (
+            <SupportPanel onBack={() => setView('chat')} accent={accent} whatsapp={whatsapp} phone={phone} sessionId={sessionIdRef.current} />
+          )}
           {view === 'assessment' && (
             <AssessmentPanel
               onBack={() => setView('chat')}
@@ -658,19 +903,17 @@ export default function AiChatWidget({ config, whatsapp }: { config: AiConfig | 
                       </Link>
                     )
                   ))}
-                  {config.enableWhatsappHandoff && waHref && (
-                    <a href={waHref} target="_blank" rel="noopener noreferrer"
-                      onClick={() => {
-                        fetch('/api/ai-chat/handoff', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ sessionId: sessionIdRef.current }),
-                        }).catch(() => {});
-                        pushDataLayerEvent('ai_human_handoff', { source: 'ai_chat' });
-                      }}
+                  {/* Opens the dedicated Human Support panel (WhatsApp/Call/
+                      Callback) — previously this pill went straight to
+                      WhatsApp only; the panel now offers all three real
+                      escalation paths, WhatsApp's own handoff tracking
+                      (POST /api/ai-chat/handoff + ai_human_handoff event)
+                      moved with it, unchanged. */}
+                  {config.enableWhatsappHandoff && (waHref || phone) && (
+                    <button onClick={() => setView('support')}
                       className="shrink-0 text-[11px] font-semibold bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-full border border-green-100 transition whitespace-nowrap">
-                      💬 WhatsApp
-                    </a>
+                      💬 Talk to Our Team
+                    </button>
                   )}
                 </div>
               )}
