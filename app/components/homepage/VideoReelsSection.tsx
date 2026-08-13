@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { Play, X } from 'lucide-react';
 import { FaYoutube, FaInstagram } from 'react-icons/fa';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
+import { toInstagramEmbedUrl } from '@/app/lib/instagramEmbed';
 
 // Scoped to this section only — the site's global headline font is Manrope
 // (app/layout.tsx's --font-headline) and body is Inter (--font-body,
@@ -395,10 +396,16 @@ function ReelCard({ item, gradient, onOpen }: { item: WatchMediaItem; gradient: 
 
 // ─────────────────────────────────────────────────────────────────────────
 // Playback modal — deliberately minimal (per request, final design to be
-// confirmed separately). Embeds YouTube directly when youtubeId is set;
-// falls back to an honest "watch on Instagram" link when it isn't (an
-// Instagram reel has no first-party embeddable iframe without their JS
-// SDK, so this never fakes a player it can't actually show).
+// confirmed separately). One flow regardless of platform: click a card,
+// it plays right here in this same dialog. YouTube embeds directly via
+// youtubeId; Instagram embeds via its own public iframe (same
+// toInstagramEmbedUrl helper VideoPlayer.tsx uses on the Academy detail
+// page) instead of the modal handing the visitor off to instagram.com in
+// a separate tab — that hand-off was the reported issue, so this always
+// plays inline now, never opens Instagram externally. Only falls back to
+// a plain message if the stored link genuinely can't be turned into an
+// embed (e.g. a malformed URL an admin needs to fix), same as
+// VideoPlayer's own fallback.
 // ─────────────────────────────────────────────────────────────────────────
 
 function VideoModal({ item, onClose }: { item: WatchMediaItem | null; onClose: () => void }) {
@@ -418,6 +425,7 @@ function VideoModal({ item, onClose }: { item: WatchMediaItem | null; onClose: (
   if (!item) return null;
 
   const isVertical = item.kind === 'reel';
+  const instagramEmbedUrl = !item.youtubeId && item.href ? toInstagramEmbedUrl(item.href) : null;
 
   return (
     <div
@@ -444,17 +452,19 @@ function VideoModal({ item, onClose }: { item: WatchMediaItem | null; onClose: (
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
+        ) : instagramEmbedUrl ? (
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={instagramEmbedUrl}
+            title={item.title}
+            allow="encrypted-media; picture-in-picture; web-share"
+            allowFullScreen
+          />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+            <FaInstagram size={22} className="text-white/40" />
             <p className="text-white font-semibold">{item.title}</p>
-            <a
-              href={item.href || 'https://instagram.com'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white text-[#0F1B4C] px-5 py-2.5 rounded-full font-semibold text-sm"
-            >
-              <FaInstagram size={16} /> Watch on Instagram
-            </a>
+            <p className="text-white/50 text-xs">This video's link needs to be updated in the admin panel.</p>
           </div>
         )}
       </div>
