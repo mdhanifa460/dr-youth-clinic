@@ -84,6 +84,32 @@ export interface ISettings extends Document {
     hotjarId: string;
     searchConsoleId: string;
   };
+  // Domain Migration dashboard (/admin/marketing-intelligence → Domain
+  // Migration) — config for the two server-side, read-only Google API
+  // adapters (app/lib/googleAnalytics.ts, app/lib/googleSearchConsole.ts).
+  // Distinct from `analytics.ga4Id` above: that's the gtag.js measurement
+  // ID (e.g. "G-XXXXXXX") used for the client-side tag; `ga4PropertyId`
+  // here is the numeric GA4 property ID the Data API needs (e.g.
+  // "123456789") — two different identifiers GA4 itself keeps separate.
+  domainMigration: {
+    enabled: boolean;
+    oldDomain: string;
+    ga4PropertyId: string;
+    // GSC's own site-URL format, e.g. "https://dryouthclinic.co.in/" —
+    // kept as two separate properties (old/new) deliberately: GSC data is
+    // never assumed to come through GA4, and the old domain's own
+    // property is what still reports real organic impressions/clicks
+    // against old URLs even after the redirect ships.
+    oldDomainGscSiteUrl: string;
+    newDomainGscSiteUrl: string;
+    // Migration-health thresholds — see DomainMigrationIntelligence.tsx's
+    // rule-based (not blended-average) status logic. Admin-editable
+    // rather than hardcoded, same convention as every other tunable
+    // number in this app (testimonialMinRating, carouselIntervalMs, …).
+    healthyThresholdPct: number;
+    monitorThresholdPct: number;
+    organicFloorThresholdPct: number;
+  };
   whatsapp: {
     bookingConfirmation: string;
     appointmentReminder: string;
@@ -380,6 +406,16 @@ const SettingsSchema = new Schema<ISettings>(
       clarityId:       { type: String, default: '' },
       hotjarId:        { type: String, default: '' },
       searchConsoleId: { type: String, default: '' },
+    },
+    domainMigration: {
+      enabled:                  { type: Boolean, default: true },
+      oldDomain:                { type: String,  default: 'dryouthclinic.co.in' },
+      ga4PropertyId:            { type: String,  default: '' },
+      oldDomainGscSiteUrl:      { type: String,  default: '' },
+      newDomainGscSiteUrl:      { type: String,  default: '' },
+      healthyThresholdPct:      { type: Number,  default: 5 },
+      monitorThresholdPct:      { type: Number,  default: 15 },
+      organicFloorThresholdPct: { type: Number,  default: 20 },
     },
     whatsapp: {
       bookingConfirmation:   { type: String, default: "Hello {{name}}! 🌟 Your appointment at DR Youth Clinic has been requested.\n\n📅 Treatment: {{service}}\n📍 Location: {{location}}\n\nOur team will call you within 2 hours to confirm your slot.\n\n— DR Youth Clinic ✨" },

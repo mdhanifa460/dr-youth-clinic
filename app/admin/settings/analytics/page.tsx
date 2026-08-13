@@ -28,6 +28,28 @@ const DEFAULTS: AnalyticsSettings = {
   searchConsoleId: "",
 };
 
+type DomainMigrationSettings = {
+  enabled: boolean;
+  oldDomain: string;
+  ga4PropertyId: string;
+  oldDomainGscSiteUrl: string;
+  newDomainGscSiteUrl: string;
+  healthyThresholdPct: number;
+  monitorThresholdPct: number;
+  organicFloorThresholdPct: number;
+};
+
+const DM_DEFAULTS: DomainMigrationSettings = {
+  enabled: true,
+  oldDomain: "",
+  ga4PropertyId: "",
+  oldDomainGscSiteUrl: "",
+  newDomainGscSiteUrl: "",
+  healthyThresholdPct: 5,
+  monitorThresholdPct: 15,
+  organicFloorThresholdPct: 20,
+};
+
 // Three real states now, not just on/off — matters most for GA4/Meta
 // Pixel, which can be "the browser is loading this directly" or "GTM is
 // (expected to be) loading this instead" or plain "nothing configured".
@@ -58,6 +80,7 @@ function StatusBadge({ status }: { status: "gtm" | "direct" | "off" }) {
 
 export default function AnalyticsSettingsPage() {
   const [form, setForm] = useState<AnalyticsSettings>(DEFAULTS);
+  const [dmForm, setDmForm] = useState<DomainMigrationSettings>(DM_DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -69,6 +92,7 @@ export default function AnalyticsSettingsPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d.success && d.data?.analytics) setForm({ ...DEFAULTS, ...d.data.analytics });
+        if (d.success && d.data?.domainMigration) setDmForm({ ...DM_DEFAULTS, ...d.data.domainMigration });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -77,6 +101,9 @@ export default function AnalyticsSettingsPage() {
   function set<K extends keyof AnalyticsSettings>(key: K, val: AnalyticsSettings[K]) {
     setForm((f) => ({ ...f, [key]: val }));
   }
+  function setDm<K extends keyof DomainMigrationSettings>(key: K, val: DomainMigrationSettings[K]) {
+    setDmForm((f) => ({ ...f, [key]: val }));
+  }
 
   async function save() {
     setSaving(true); setError(""); setSuccess(false);
@@ -84,7 +111,7 @@ export default function AnalyticsSettingsPage() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ analytics: form }),
+        body: JSON.stringify({ analytics: form, domainMigration: dmForm }),
       });
       const data = await res.json();
       if (!data.success) { setError(data.message || "Save failed"); return; }
@@ -407,6 +434,94 @@ export default function AnalyticsSettingsPage() {
             </div>
             <p className="text-[11px] text-gray-400 leading-relaxed">
               In Search Console → Settings → Ownership verification → HTML tag — copy only the <code className="bg-gray-100 px-1 rounded">content="…"</code> value, not the full tag.
+            </p>
+          </div>
+        </div>
+
+        {/* Domain Migration */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
+          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-[#0B2560] text-sm">Domain Migration</h2>
+              <p className="text-gray-400 text-xs mt-0.5">Powers Marketing Intelligence → Domain Migration. Read-only, server-side — no data is written back to GA4 or Search Console.</p>
+            </div>
+            <StatusBadge status={dmForm.enabled ? (dmForm.ga4PropertyId && dmForm.oldDomainGscSiteUrl ? "direct" : "off") : "off"} />
+          </div>
+          <div className="mx-6 mt-4 flex items-start gap-2.5 bg-[#f6faff] border border-blue-50 px-4 py-3 rounded-xl">
+            <p className="text-[11px] text-[#0B2560]/80 leading-relaxed">
+              Needs a Google Cloud service account granted <strong>Viewer</strong> on the GA4 property and added under
+              Search Console → Settings → Users and permissions for both domain properties. Paste its full downloaded
+              JSON key into the <code className="bg-white px-1 rounded">GOOGLE_SERVICE_ACCOUNT_JSON</code> environment
+              variable (Vercel → Settings → Environment Variables) — not entered here, since it's a secret, same as
+              every other API key in this app.
+            </p>
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            <label className="flex items-center gap-3">
+              <button type="button" role="switch" aria-checked={dmForm.enabled} onClick={() => setDm("enabled", !dmForm.enabled)}
+                className={`relative shrink-0 rounded-full transition-colors ${dmForm.enabled ? "bg-[#0B2560]" : "bg-gray-200"}`}
+                style={{ width: 40, height: 22 }}>
+                <span className="absolute top-0.5 left-0.5 bg-white rounded-full shadow-sm transition-transform duration-200"
+                  style={{ width: 18, height: 18, transform: dmForm.enabled ? "translateX(18px)" : "translateX(0)" }} />
+              </button>
+              <span className="text-sm font-semibold text-gray-700">Domain Migration panel {dmForm.enabled ? "enabled" : "disabled"}</span>
+            </label>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Old domain</label>
+              <input type="text" value={dmForm.oldDomain} onChange={(e) => setDm("oldDomain", e.target.value)}
+                placeholder="dryouthclinic.co.in"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">GA4 property ID</label>
+              <input type="text" value={dmForm.ga4PropertyId} onChange={(e) => setDm("ga4PropertyId", e.target.value)}
+                placeholder="123456789"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono" />
+              <p className="text-[11px] text-gray-400 mt-1.5">GA4 → Admin → Property Settings — the numeric Property ID, not the "G-XXXXXXX" measurement ID above.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Old-domain GSC site URL</label>
+                <input type="text" value={dmForm.oldDomainGscSiteUrl} onChange={(e) => setDm("oldDomainGscSiteUrl", e.target.value)}
+                  placeholder="https://dryouthclinic.co.in/"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560] font-mono" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">New-domain GSC site URL</label>
+                <input type="text" value={dmForm.newDomainGscSiteUrl} onChange={(e) => setDm("newDomainGscSiteUrl", e.target.value)}
+                  placeholder="https://dryouthclinics.com/"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560] font-mono" />
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400">
+              Exactly as they appear in Search Console's own property list — the old domain needs its own verified property (separate from the new one) for this to show anything.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-3 pt-1">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Healthy below (%)</label>
+                <input type="number" min={0} max={100} value={dmForm.healthyThresholdPct}
+                  onChange={(e) => setDm("healthyThresholdPct", Number(e.target.value))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560] font-mono" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Significant above (%)</label>
+                <input type="number" min={0} max={100} value={dmForm.monitorThresholdPct}
+                  onChange={(e) => setDm("monitorThresholdPct", Number(e.target.value))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560] font-mono" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Organic floor (%)</label>
+                <input type="number" min={0} max={100} value={dmForm.organicFloorThresholdPct}
+                  onChange={(e) => setDm("organicFloorThresholdPct", Number(e.target.value))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560] font-mono" />
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 leading-relaxed">
+              Old-domain share of traffic/leads under "Healthy below" shows 🟢; above "Significant above" (or old-domain organic impressions above "Organic floor") shows 🔴; the range between is 🟡. Any single high-traffic URL that redirects incorrectly always shows 🔴, regardless of these numbers.
             </p>
           </div>
         </div>

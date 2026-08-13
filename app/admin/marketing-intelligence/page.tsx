@@ -21,6 +21,7 @@ const SECTIONS: Record<string, React.ComponentType<{ data: any }>> = {
   seo:        dynamic(() => import('@/app/admin/intelligence/components/SEOIntelligence'), { loading: () => <SectionSkeleton /> }),
   geo:        dynamic(() => import('@/app/admin/intelligence/components/GEOIntelligence'), { loading: () => <SectionSkeleton /> }),
   competitor: dynamic(() => import('@/app/admin/intelligence/components/CompetitorIntelligence'), { loading: () => <SectionSkeleton /> }),
+  'domain-migration': dynamic(() => import('@/app/admin/intelligence/components/DomainMigrationIntelligence'), { loading: () => <SectionSkeleton /> }),
 };
 
 const NAV_ITEMS: IntelligenceNavItem[] = [
@@ -28,6 +29,7 @@ const NAV_ITEMS: IntelligenceNavItem[] = [
   { id: 'seo',        label: 'SEO Intelligence',        icon: '🔍', group: 'Marketing' },
   { id: 'geo',        label: 'GEO & AEO Intelligence',  icon: '🌐', group: 'Marketing' },
   { id: 'competitor', label: 'Competitor Intel',        icon: '🏆', group: 'Marketing' },
+  { id: 'domain-migration', label: 'Domain Migration',  icon: '🔀', group: 'Marketing' },
 ];
 
 const GROUPS = ['Marketing'];

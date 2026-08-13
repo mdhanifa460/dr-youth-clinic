@@ -4,6 +4,7 @@ import Footer from "@/app/components/Footer";
 import TopBar from "@/app/components/homepage/TopBar";
 import MobileStickyBar from "@/app/components/MobileStickyBar";
 import AiChatWidget from "@/app/components/ai/AiChatWidget";
+import MigrationSessionTracker from "@/app/components/MigrationSessionTracker";
 import { OrganizationSchema } from "@/app/components/SchemaMarkup";
 import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
@@ -99,6 +100,7 @@ export default async function PublicLayout({
       <Footer data={footer} siteConfig={siteConfig} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
       <AiChatWidget config={aiConfig as any} whatsapp={siteConfig.publicWhatsApp} phone={siteConfig.publicPhone} />
+      <MigrationSessionTracker />
     </SiteConfigProvider>
   );
 }
