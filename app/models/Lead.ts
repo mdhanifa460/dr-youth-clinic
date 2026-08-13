@@ -51,6 +51,12 @@ const LeadSchema = new mongoose.Schema(
     // Path of the page the last-touch UTM'd visit landed on — not
     // necessarily where the lead form itself was submitted.
     landingPage: { type: String, default: "" },
+    // The path of the visit that set utm_first — this visitor's actual
+    // first entry point into the site, vs. `landingPage` above (the most
+    // recent campaign visit). See app/lib/utmAttribution.ts's
+    // AttributionFields comment — this value existed there already but
+    // was silently discarded until now.
+    originalLandingPage: { type: String, default: "" },
     // Compact "source/medium" strings (e.g. "google/cpc") from the
     // utm_first / utm_last cookies — the very first tracked campaign that
     // ever brought this visitor, and the most recent one, respectively.
@@ -58,6 +64,14 @@ const LeadSchema = new mongoose.Schema(
     // ago, then convert today after clicking a Google search ad.
     firstTouchSource: { type: String, default: "" },
     lastTouchSource:  { type: String, default: "" },
+    // Domain Migration dashboard — 'old' only when this lead's very first
+    // recorded touch carried the old domain's redirect marker (see
+    // app/lib/migrationAttribution.ts); 'new' otherwise. Deliberately NOT
+    // given a schema `default` — a Lead created before this field existed
+    // must read back as undefined ("historical — unavailable" in the
+    // dashboard), never silently as 'new'. Every Lead created going
+    // forward gets an explicit value from app/api/leads/route.ts.
+    originDomain: { type: String, enum: ["old", "new"] },
     answers: { type: mongoose.Schema.Types.Mixed, default: {} },
     recommendations: { type: mongoose.Schema.Types.Mixed, default: [] },
     emailSent: { type: Boolean, default: false },

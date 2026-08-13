@@ -73,6 +73,10 @@ describe('buildAttributionFields', () => {
       utmTerm: 'hydra facial chennai',
       utmContent: '',
       landingPage: '/lp/hydra-facial',
+      // From utm_first, not utm_last — the visitor's real entry point
+      // (the Instagram visit), distinct from `landingPage` above (the
+      // later Google-ad visit that actually converted).
+      originalLandingPage: '/skin-quiz',
       firstTouchSource: 'instagram/social',
       lastTouchSource: 'google/cpc',
     });
@@ -82,7 +86,7 @@ describe('buildAttributionFields', () => {
     const result = buildAttributionFields(() => undefined);
     expect(result).toEqual({
       utmSource: '', utmMedium: '', utmCampaign: '', utmTerm: '', utmContent: '',
-      landingPage: '', firstTouchSource: '', lastTouchSource: '',
+      landingPage: '', originalLandingPage: '', firstTouchSource: '', lastTouchSource: '',
     });
   });
 

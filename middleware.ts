@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { extractUtmParams, UTM_FIRST_COOKIE, UTM_LAST_COOKIE, UTM_FIRST_MAX_AGE, UTM_LAST_MAX_AGE } from "@/app/lib/utmAttribution";
+import { extractMigrationParams, MIGRATION_FIRST_COOKIE, MIGRATION_FIRST_MAX_AGE } from "@/app/lib/migrationAttribution";
 
 const ADMIN_COOKIE = "admin_session";
 const LOCATION_COOKIE = "preferred_location";
@@ -58,6 +59,29 @@ function captureUtmAttribution(req: NextRequest, res: NextResponse) {
   if (!req.cookies.get(UTM_FIRST_COOKIE)?.value) {
     res.cookies.set(UTM_FIRST_COOKIE, payload, { ...cookieOpts, maxAge: UTM_FIRST_MAX_AGE });
   }
+}
+
+// Domain-migration marker — entirely separate cookie/param space from
+// captureUtmAttribution above (see app/lib/migrationAttribution.ts for
+// why), so a request carrying both a real utm_* campaign AND the old
+// domain's migration_source marker gets full, correct treatment from
+// both: this never touches utm_first/utm_last, and captureUtmAttribution
+// never touches this. Write-once, like utm_first — the very first
+// old-domain-tagged visit is what matters; a rare second one later must
+// not reset which visit gets credited as this lead's origin.
+function captureMigrationMarker(req: NextRequest, res: NextResponse) {
+  const migration = extractMigrationParams(req.nextUrl.searchParams);
+  if (!migration) return;
+  if (req.cookies.get(MIGRATION_FIRST_COOKIE)?.value) return;
+
+  const payload = JSON.stringify({
+    ...migration,
+    landingPage: req.nextUrl.pathname,
+    capturedAt: new Date().toISOString(),
+  });
+  res.cookies.set(MIGRATION_FIRST_COOKIE, payload, {
+    path: "/", secure: true, sameSite: "lax", maxAge: MIGRATION_FIRST_MAX_AGE,
+  });
 }
 
 function bytesToHex(bytes: ArrayBuffer) {
@@ -160,6 +184,7 @@ export async function middleware(req: NextRequest) {
 
   ensureVisitorId(req, response);
   captureUtmAttribution(req, response);
+  captureMigrationMarker(req, response);
   return response;
 }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { connectDB } from "../../lib/mongodb";
 import { buildAttributionFields } from "@/app/lib/utmAttribution";
+import { resolveOriginDomain } from "@/app/lib/migrationAttribution";
 import Booking from "../../models/Booking";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 import { normalizePhone as formatPhone } from "@/app/lib/phone";
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
       ...(notes ? { notes } : {}),
       ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
       ...buildAttributionFields((name) => req.cookies.get(name)?.value),
+      originDomain: resolveOriginDomain((name) => req.cookies.get(name)?.value),
     });
 
     // CRM Connector push — non-blocking. The booking is already saved

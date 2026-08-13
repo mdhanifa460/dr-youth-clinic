@@ -64,13 +64,19 @@ export interface AttributionFields {
   utmTerm: string;
   utmContent: string;
   landingPage: string;
+  // The path of the visit that set utm_first — the visitor's actual entry
+  // point into the site, as opposed to `landingPage` above (the most
+  // recent campaign visit's path, from utm_last). Previously parsed out of
+  // the utm_first cookie right below and then silently discarded — never
+  // returned, never persisted anywhere.
+  originalLandingPage: string;
   firstTouchSource: string;
   lastTouchSource: string;
 }
 
 const EMPTY_ATTRIBUTION: AttributionFields = {
   utmSource: '', utmMedium: '', utmCampaign: '', utmTerm: '', utmContent: '',
-  landingPage: '', firstTouchSource: '', lastTouchSource: '',
+  landingPage: '', originalLandingPage: '', firstTouchSource: '', lastTouchSource: '',
 };
 
 // Reads the utm_first/utm_last cookies (via whatever cookie-getter the
@@ -89,6 +95,7 @@ export function buildAttributionFields(getCookie: (name: string) => string | und
       utmTerm:     last?.term || '',
       utmContent:  last?.content || '',
       landingPage: last?.landingPage || '',
+      originalLandingPage: first?.landingPage || '',
       firstTouchSource: formatTouchSource(first),
       lastTouchSource:  formatTouchSource(last),
     };

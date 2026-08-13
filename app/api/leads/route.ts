@@ -6,6 +6,7 @@ import { normalizePhone } from '@/app/lib/phone';
 import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 import { sendWhatsAppText } from '@/app/lib/whatsapp';
 import { buildAttributionFields } from '@/app/lib/utmAttribution';
+import { resolveOriginDomain } from '@/app/lib/migrationAttribution';
 
 // `to` is resolved per-lead by the caller via getClinicNotifyNumber() (the
 // lead's preferred/attributed clinic branch, falling back to the global
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
       clinicLocation: clinicLocation || '',
       channel: channel || '',
       ...buildAttributionFields((name) => req.cookies.get(name)?.value),
+      originDomain: resolveOriginDomain((name) => req.cookies.get(name)?.value),
     });
 
     getClinicNotifyNumber(preferredClinic || clinicLocation).then((to) => {

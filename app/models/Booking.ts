@@ -71,8 +71,19 @@ const BookingSchema = new mongoose.Schema(
     utmTerm:     { type: String, default: "" },
     utmContent:  { type: String, default: "" },
     landingPage: { type: String, default: "" },
+    // The path of the visit that set utm_first — this visitor's actual
+    // first entry point, vs. `landingPage` above (most recent campaign
+    // visit). See app/lib/utmAttribution.ts's AttributionFields comment.
+    originalLandingPage: { type: String, default: "" },
     firstTouchSource: { type: String, default: "" },
     lastTouchSource:  { type: String, default: "" },
+    // Domain Migration dashboard — same rules as Lead.originDomain above:
+    // 'old' only when this booking's very first recorded touch carried
+    // the old domain's redirect marker (app/lib/migrationAttribution.ts),
+    // 'new' otherwise, and deliberately no schema `default` so a Booking
+    // created before this field existed reads back undefined
+    // ("historical — unavailable"), never silently 'new'.
+    originDomain: { type: String, enum: ["old", "new"] },
 
     // CRM fields
     internalNote:   { type: String, default: "" },
