@@ -1,9 +1,37 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 interface ExpertsData { headline?: string; subheading?: string }
 
+// Auto-scrolls the doctor cards horizontally, one card at a time, pausing
+// whenever the visitor is actually interacting with the tray (hover, touch,
+// or manual scroll) — the same pause-on-interact convention already used by
+// the homepage's TrustTimeline/BeforeAfterSection trays, so a visitor
+// reading one doctor's bio never has it yanked out from under them mid-read.
+// Loops back to the start once it reaches the end rather than stopping.
+const AUTO_SCROLL_INTERVAL_MS = 3000;
+
 export default function ExpertsSection({ data, doctors }: { data: ExpertsData; doctors: any[] }) {
   const { headline = 'Meet the Doctors', subheading } = data;
+  const trayRef = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused || doctors.length <= 1) return;
+    const el = trayRef.current;
+    if (!el) return;
+
+    const id = setInterval(() => {
+      const card = el.querySelector<HTMLElement>('[data-doctor-card]');
+      const step = (card?.offsetWidth || el.clientWidth * 0.8) + 24; // + gap-6
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+      el.scrollTo({ left: atEnd ? 0 : el.scrollLeft + step, behavior: 'smooth' });
+    }, AUTO_SCROLL_INTERVAL_MS);
+
+    return () => clearInterval(id);
+  }, [paused, doctors.length]);
 
   return (
     <section className="bg-[#f6faff] py-14 md:py-20">
@@ -20,13 +48,21 @@ export default function ExpertsSection({ data, doctors }: { data: ExpertsData; d
             <p className="text-gray-500 font-semibold">Our team profiles are coming soon.</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            ref={trayRef}
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-[#0B2560]/10 [&::-webkit-scrollbar-thumb]:rounded-full"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onTouchStart={() => setPaused(true)}
+            onTouchEnd={() => setPaused(false)}
+          >
             {doctors.map((doc: any) => {
               const initials = doc.name?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
               return (
                 <div
                   key={String(doc._id)}
-                  className="bg-white rounded-3xl p-8 ring-1 ring-[#e8eff7] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center"
+                  data-doctor-card
+                  className="snap-start shrink-0 basis-[78%] sm:basis-[46%] lg:basis-[31%] bg-white rounded-3xl p-8 ring-1 ring-[#e8eff7] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center"
                 >
                   {doc.photo?.url ? (
                     <img src={doc.photo.url} alt={doc.name} className="w-20 h-20 rounded-full object-cover mb-4 shadow-lg" />

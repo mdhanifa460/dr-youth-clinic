@@ -8,6 +8,22 @@ interface HeroData {
   stats?: { value: string; label: string }[];
 }
 
+// Literal class strings (not a template-string `grid-cols-${n}`) — Tailwind's
+// build-time class scanner only picks up classes it can find as whole
+// strings in source, so a dynamically-interpolated class name would
+// silently never be generated. Keyed by stat count so any admin-configured
+// number of stats gets a sensible, non-wrapping column count on each
+// breakpoint instead of the previous fixed grid-cols-4 (which wrapped a
+// 5th stat onto its own row).
+const DESKTOP_COLS: Record<number, string> = {
+  1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3',
+  4: 'md:grid-cols-4', 5: 'md:grid-cols-5', 6: 'md:grid-cols-6',
+};
+const MOBILE_COLS: Record<number, string> = {
+  1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3',
+  4: 'grid-cols-2', 5: 'grid-cols-3', 6: 'grid-cols-3',
+};
+
 export default function HeroSection({ data }: { data: HeroData }) {
   const { badge, headline = '', headlineAccent, subheading, body, backgroundImage, stats = [] } = data;
   const [before, after] = headlineAccent && headline.includes(headlineAccent)
@@ -46,11 +62,20 @@ export default function HeroSection({ data }: { data: HeroData }) {
 
       {stats.length > 0 && (
         <section className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* Fixed grid-cols-4 wrapped a 5th+ stat onto its own row (a lone
+              centered item looks broken, not intentional) — column count
+              now tracks the real stat count instead, on both breakpoints,
+              so any number of stats stays a single row on desktop and a
+              tidy, evenly-filled grid on mobile. Smaller type/spacing than
+              before so 5-6 stats still read comfortably in one row rather
+              than feeling cramped. */}
+          <div
+            className={`max-w-7xl mx-auto px-6 py-6 md:py-8 grid gap-3 md:gap-6 ${MOBILE_COLS[stats.length] || 'grid-cols-3'} ${DESKTOP_COLS[stats.length] || 'md:grid-cols-6'}`}
+          >
             {stats.map((s, i) => (
               <div key={i} className="text-center">
-                <p className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560]">{s.value}</p>
-                <p className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wider">{s.label}</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">{s.value}</p>
+                <p className="text-[10px] md:text-xs text-gray-500 mt-1 font-medium uppercase tracking-wider leading-tight">{s.label}</p>
               </div>
             ))}
           </div>

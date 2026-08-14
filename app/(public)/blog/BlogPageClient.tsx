@@ -127,7 +127,22 @@ export default function BlogPageClient({
   }, [posts, activeCategory, search]);
 
   const featured = !isFiltering ? posts.find((p) => p.featured) || posts[0] : null;
-  const gridPosts = featured ? filtered.filter((p) => p._id !== featured._id) : filtered;
+
+  // Doctor-reviewed posts are curated into their own highlighted section
+  // below — computed here, before gridPosts, so gridPosts can exclude
+  // them. Previously these two sections were computed independently from
+  // the same full `posts` list with no exclusion between them, so any
+  // doctor-reviewed post that also fell on the visible "Latest Articles"
+  // page rendered as the same card twice on one page. Only applied when
+  // not actively searching/filtering — a search result set should show
+  // every real match, not quietly hide one because it's also "recommended".
+  const doctorRecommended = useMemo(
+    () => (isFiltering ? [] : posts.filter((p) => p.reviewedByDoctorId?.name && p._id !== featured?._id).slice(0, 3)),
+    [posts, isFiltering, featured?._id]
+  );
+  const doctorRecommendedIds = useMemo(() => new Set(doctorRecommended.map((p) => p._id)), [doctorRecommended]);
+
+  const gridPosts = filtered.filter((p) => p._id !== featured?._id && !doctorRecommendedIds.has(p._id));
   const totalPages = Math.max(1, Math.ceil(gridPosts.length / postsPerPage));
   const pagedPosts = gridPosts.slice((page - 1) * postsPerPage, page * postsPerPage);
 
@@ -138,11 +153,6 @@ export default function BlogPageClient({
 
   // Reset to page 1 whenever the visible set changes underneath the pager.
   useEffect(() => { setPage(1); }, [search, activeCategory]);
-
-  const doctorRecommended = useMemo(
-    () => posts.filter((p) => p.reviewedByDoctorId?.name).slice(0, 3),
-    [posts]
-  );
 
   const videoCategories = useMemo(
     () => ['All', ...Array.from(new Set(videos.map((v) => v.category).filter(Boolean)))],
