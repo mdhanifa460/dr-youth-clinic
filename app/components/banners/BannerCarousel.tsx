@@ -83,17 +83,28 @@ export default function BannerCarousel({ slides, intervalMs = 6000 }: { slides: 
         <ChevronRight size={20} />
       </button>
 
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-20">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            aria-label={`Go to banner ${i + 1}`}
-            className={`rounded-full transition-all duration-300 touch-manipulation ${
-              i === current ? 'w-8 h-3 bg-white' : 'w-3 h-3 bg-white/50 hover:bg-white/80'
-            }`}
-          />
-        ))}
+      {/* Dots + "1 / 2" counter, both sitting on a dark pill so they read
+          clearly regardless of the current slide's own background — the
+          previous plain dots (white/50%, no backing) were easy to miss
+          against a busy or already-light banner, which is what made a
+          rotated-away banner look "gone" rather than "still here, on the
+          next slide." */}
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-black/30 backdrop-blur-sm rounded-full pl-3 pr-4 py-2">
+        <div className="flex items-center gap-2">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Go to banner ${i + 1}`}
+              className={`rounded-full transition-all duration-300 touch-manipulation ${
+                i === current ? 'w-8 h-3.5 bg-white' : 'w-3.5 h-3.5 bg-white/60 hover:bg-white/90'
+              }`}
+            />
+          ))}
+        </div>
+        <span className="text-white text-xs font-semibold tabular-nums tracking-wide">
+          {current + 1} / {slides.length}
+        </span>
       </div>
 
       {!paused && (
