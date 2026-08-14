@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Volume2 } from 'lucide-react';
 import Image from 'next/image';
 import type { BannerDoc } from '@/app/lib/banners/types';
 import CTAButton from '@/app/components/banners/shared/CTAButton';
@@ -9,6 +9,7 @@ import PopupEntranceEffect from '@/app/components/banners/shared/PopupEntranceEf
 import { usePrefersReducedMotion } from '@/app/components/banners/shared/ScrollMotion';
 import { shouldShowSplash, markSplashShown } from '@/app/lib/banners/splashFrequency';
 import { postBannerPopupEvent } from '@/app/lib/bannerPopupAnalytics';
+import { playPopupSound } from '@/app/lib/banners/popupSound';
 import { cloudImgFocal } from '@/app/lib/cloudinary-url';
 import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
 
@@ -116,6 +117,12 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
 
   function handleCtaClick() {
     if (banner) {
+      // A real click, same as the 🔊 toggle — safe to play sound here too.
+      // Skipped under reduced motion, same combined "minimal experience"
+      // rule the entrance effect follows.
+      if (!reduced && banner.splashSound?.enabled && banner.splashSound.effect) {
+        playPopupSound(banner.splashSound.effect);
+      }
       postBannerPopupEvent('flash_offer_cta_click', {
         bannerId: String(banner._id),
         offerName: banner.headline || '',
@@ -125,10 +132,20 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
     close();
   }
 
+  function handleSoundClick() {
+    if (banner?.splashSound?.effect) playPopupSound(banner.splashSound.effect);
+  }
+
   if (!banner || !open) return null;
 
   const backdrop = banner.splashBackdrop || { blur: 0, darkness: 0.6 };
   const showCountdown = banner.splashShowCountdown !== false;
+  // Sound never autoplays — this toggle is the only thing that ever calls
+  // playPopupSound() outside a CTA click, and it only renders at all when
+  // an admin has actually configured a sound (see popupSound.ts's own
+  // comment on why every call site must be a real click handler). Hidden
+  // entirely under reduced motion, same as the entrance effect.
+  const soundConfigured = !reduced && !!banner.splashSound?.enabled && !!banner.splashSound?.effect;
   const desktopImg = banner.desktopImage?.url ? banner.desktopImage : null;
   const mobileImg = banner.mobileImage?.url ? banner.mobileImage : desktopImg;
 
@@ -153,6 +170,17 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
           lottieUrl={banner.lottieUrl}
           reduced={reduced}
         />
+
+        {soundConfigured && (
+          <button
+            onClick={handleSoundClick}
+            aria-label="Play sound"
+            title="Play sound"
+            className="absolute top-3 right-14 z-20 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition"
+          >
+            <Volume2 size={16} />
+          </button>
+        )}
 
         <button
           ref={closeBtnRef}

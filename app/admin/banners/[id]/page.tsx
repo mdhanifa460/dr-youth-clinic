@@ -16,6 +16,8 @@ import {
   SPLASH_ANIMATION_STYLE_LABELS,
   SPLASH_FREQUENCIES,
   SPLASH_FREQUENCY_LABELS,
+  SPLASH_SOUND_EFFECTS,
+  SPLASH_SOUND_EFFECT_LABELS,
 } from "@/app/lib/banners/popupOptions";
 
 // ─── Small reusable inputs (same pattern as app/admin/ai-assessment/page.tsx) ──
@@ -690,6 +692,25 @@ export default function BannerEditPage() {
                       className="w-full"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <Toggle
+                    checked={!!banner.splashSound?.enabled}
+                    onChange={(v) => set({ splashSound: { ...(banner.splashSound || {}), enabled: v } })}
+                    label="🔊 Sound — visitor taps a small speaker icon to hear it (never plays automatically)"
+                  />
+                  {banner.splashSound?.enabled && (
+                    <select
+                      value={banner.splashSound?.effect || "soft-chime"}
+                      onChange={(e) => set({ splashSound: { ...(banner.splashSound || {}), effect: e.target.value } })}
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {SPLASH_SOUND_EFFECTS.map((s) => (
+                        <option key={s} value={s}>{SPLASH_SOUND_EFFECT_LABELS[s]}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
             )}
