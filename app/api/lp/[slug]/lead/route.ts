@@ -3,7 +3,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
 import Booking from '@/app/models/Booking';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
-import { normalizePhone } from '@/app/lib/phone';
+import { normalizePhone, isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 import { sendWhatsAppText } from '@/app/lib/whatsapp';
 import { pushBookingToCrm } from '@/app/lib/crm/pushBooking';
@@ -32,10 +32,10 @@ export async function POST(
       );
     }
 
-    const formattedPhone = normalizePhone(phone);
-    if (!formattedPhone || formattedPhone.length < 10) {
-      return NextResponse.json({ success: false, message: 'Invalid phone number' }, { status: 400 });
+    if (!isValidIndianMobile(phone)) {
+      return NextResponse.json({ success: false, message: INVALID_MOBILE_MESSAGE }, { status: 400 });
     }
+    const formattedPhone = normalizePhone(phone);
 
     const lp = await (LandingPage as any).findOne({ slug: params.slug, status: 'published' }).lean() as any;
 

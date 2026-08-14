@@ -272,7 +272,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
               href={`tel:${phone}`}
               className="inline-flex items-center gap-2 border border-white/25 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition"
             >
-              Call {phone}
+              Call Now
             </a>
           </div>
         </div>

@@ -10,6 +10,7 @@ import type { AssessmentAnswers } from "@/app/lib/assessmentScoring";
 import { postInterestEvent } from "@/app/lib/personalization";
 import { pushDataLayerEvent } from "@/app/lib/trackConversion";
 import { locations } from "@/app/data/locations";
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from "@/app/lib/phone";
 import QuestionStep from "@/app/components/assessment/QuestionStep";
 import ScanPanel from "@/app/components/assessment/ScanPanel";
 import TypeSelectScreen, { type AssessmentTypeOption } from "@/app/components/assessment/TypeSelectScreen";
@@ -97,11 +98,13 @@ function LeadCaptureScreen({
   lead,
   setLead,
   status,
+  errorMessage,
   onSubmit,
 }: {
   lead: LeadCaptureForm;
   setLead: React.Dispatch<React.SetStateAction<LeadCaptureForm>>;
   status: LeadCaptureStatus;
+  errorMessage: string;
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
@@ -159,7 +162,7 @@ function LeadCaptureScreen({
           {status === "sending" ? "Saving…" : "Continue →"}
         </button>
         {status === "error" && (
-          <p className="text-xs text-red-500 text-center">Something went wrong — please check your details and try again.</p>
+          <p className="text-xs text-red-500 text-center">{errorMessage}</p>
         )}
         <p className="text-center text-xs text-gray-500">We'll never share your details. No spam, ever.</p>
       </form>
@@ -197,6 +200,7 @@ function AnalysingScreen() {
 // Results screen for patients who want a copy sent to their inbox.
 type LeadCaptureForm = { name: string; phone: string; preferredClinic: string };
 type LeadCaptureStatus = "idle" | "sending" | "error";
+const GENERIC_LEAD_ERROR = "Something went wrong — please check your details and try again.";
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -236,6 +240,7 @@ export default function SkinQuizPage() {
   // Step 2 — captured immediately, before any concern/question screens.
   const [leadForm, setLeadForm] = useState<LeadCaptureForm>({ name: "", phone: "", preferredClinic: "" });
   const [leadCaptureStatus, setLeadCaptureStatus] = useState<LeadCaptureStatus>("idle");
+  const [leadCaptureError, setLeadCaptureError] = useState(GENERIC_LEAD_ERROR);
   const [leadId, setLeadId] = useState<string | null>(null);
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
   const [aiExplanation, setAiExplanation] = useState<string>("");
@@ -314,6 +319,11 @@ export default function SkinQuizPage() {
 
   const handleLeadCaptureSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidIndianMobile(leadForm.phone)) {
+      setLeadCaptureError(INVALID_MOBILE_MESSAGE);
+      setLeadCaptureStatus("error");
+      return;
+    }
     setLeadCaptureStatus("sending");
     try {
       const res = await fetch("/api/leads", {
@@ -322,7 +332,11 @@ export default function SkinQuizPage() {
         body: JSON.stringify({ ...leadForm, source: "skin-quiz", campaign, qrSource, clinicLocation, channel }),
       });
       const data = await res.json();
-      if (!data.success || !data.leadId) { setLeadCaptureStatus("error"); return; }
+      if (!data.success || !data.leadId) {
+        setLeadCaptureError(data.message || GENERIC_LEAD_ERROR);
+        setLeadCaptureStatus("error");
+        return;
+      }
       setLeadId(data.leadId);
       setLeadCaptureStatus("idle");
       // GTM-routable lead conversion event — same dataLayer bridge
@@ -344,6 +358,7 @@ export default function SkinQuizPage() {
       if (!first) { transition(() => setScreen("results")); return; }
       transition(() => { setPath([first.id]); setScreen("question"); });
     } catch {
+      setLeadCaptureError(GENERIC_LEAD_ERROR);
       setLeadCaptureStatus("error");
     }
   };
@@ -515,6 +530,7 @@ export default function SkinQuizPage() {
             lead={leadForm}
             setLead={setLeadForm}
             status={leadCaptureStatus}
+            errorMessage={leadCaptureError}
             onSubmit={handleLeadCaptureSubmit}
           />
         )}

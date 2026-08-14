@@ -521,7 +521,7 @@ export default async function LocationPage({ params }: { params: { location: str
                   className="flex items-center gap-2 justify-center text-white font-semibold text-lg hover:opacity-80 transition"
                 >
                   <Phone size={18} />
-                  {phone}
+                  Call Now
                 </a>
               </div>
             </div>

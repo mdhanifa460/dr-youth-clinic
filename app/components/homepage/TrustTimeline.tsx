@@ -38,11 +38,15 @@ export default function TrustTimeline({ data }: { data: TrustTimelineData }) {
           </span>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Always a 3-across grid, even on mobile — a single-column stack
+            here reads as a long list rather than "real-time activity at a
+            glance". Padding/type scale down at the smallest breakpoint so
+            three cards still fit comfortably on a 360px-wide screen. */}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
           {stats.map((s, i) => (
-            <div key={i} className="bg-[#f6faff] rounded-3xl p-6 text-center border border-blue-50">
-              <p className="text-4xl font-extrabold text-[#0B2560] mb-1">{s.value.toLocaleString('en-IN')}</p>
-              <p className="text-gray-500 text-sm">{s.label}</p>
+            <div key={i} className="bg-[#f6faff] rounded-2xl sm:rounded-3xl p-3 sm:p-6 text-center border border-blue-50">
+              <p className="text-xl sm:text-4xl font-extrabold text-[#0B2560] mb-1">{s.value.toLocaleString('en-IN')}</p>
+              <p className="text-gray-500 text-[11px] sm:text-sm leading-tight">{s.label}</p>
             </div>
           ))}
         </div>

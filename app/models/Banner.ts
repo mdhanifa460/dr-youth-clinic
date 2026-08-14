@@ -89,6 +89,10 @@ export interface IBanner extends Document {
   // may want to target individual service pages without targeting the
   // coarser category-listing page, or vice versa.
   showOnCategoryPage: boolean;
+  // Only meaningful when showOnHomepage is also true — see the matching
+  // comment on BannerDoc in app/lib/banners/types.ts.
+  splashEnabled: boolean;
+  splashAutoCloseSeconds: number;
   targetPages: ("homepage" | "location" | "service" | "category")[];
   targetLocations: string[];
   targetServices: string[];
@@ -253,6 +257,8 @@ const BannerSchema = new Schema<IBanner>(
     showOnLocationPage: { type: Boolean, default: false },
     showOnServicePage: { type: Boolean, default: false },
     showOnCategoryPage: { type: Boolean, default: false },
+    splashEnabled: { type: Boolean, default: false },
+    splashAutoCloseSeconds: { type: Number, default: 5 },
     // Derived (see pre('save') hook below) — do not set independently from
     // the four booleans above.
     targetPages: { type: [String], enum: ["homepage", "location", "service", "category"], default: [] },

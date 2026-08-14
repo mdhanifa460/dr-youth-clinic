@@ -1,28 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  FaFacebookF,
-  FaInstagram,
-  FaYoutube,
-  FaWhatsapp,
-  FaTwitter,
-} from "react-icons/fa";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
 import type { SiteConfig } from "@/app/lib/siteConfig";
-import BranchWhatsAppLink from "@/app/components/BranchWhatsAppLink";
-
-const SOCIAL_ICONS: Record<string, React.ReactNode> = {
-  facebook: <FaFacebookF size={13} />,
-  instagram: <FaInstagram size={13} />,
-  youtube: <FaYoutube size={13} />,
-  whatsapp: <FaWhatsapp size={13} />,
-  twitter: <FaTwitter size={13} />,
-};
 
 const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
 
-// Data is fetched once in PublicLayout and passed down — no DB call here
+// Every column, the bottom-bar links, and the copyright line all come
+// from `data` (a HomepageSection document, edited at Admin → Homepage →
+// Footer) — nothing here is hardcoded content, only structure/styling.
+// Social icons are deliberately NOT shown here — they're already in
+// TopBar, and repeating them in the footer was redundant.
 export default async function Footer({ data, siteConfig }: { data?: any; siteConfig?: SiteConfig }) {
   const resolvedData = data ?? HOMEPAGE_DEFAULTS.footer.data;
   const logoUrl = siteConfig?.logoUrl || DEFAULT_LOGO_URL;
@@ -38,19 +26,8 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
     contactHeading = "Contact Us",
     contact = {},
     copyright = `© ${new Date().getFullYear()} DR Youth Clinic. All Rights Reserved.`,
-    socialLinks = [],
+    bottomLinks = HOMEPAGE_DEFAULTS.footer.data.bottomLinks,
   } = resolvedData;
-
-  // Merge brand URLs from Settings as fallback when homepage editor link is '#' or empty
-  const BRAND_FALLBACK: Record<string, string> = {
-    instagram: siteConfig?.instagramUrl || '',
-    facebook:  siteConfig?.facebookUrl  || '',
-    youtube:   siteConfig?.youtubeUrl   || '',
-  };
-  const resolvedSocialLinks = socialLinks.map((s: any) => ({
-    ...s,
-    url: (!s.url || s.url === '#') ? (BRAND_FALLBACK[s.platform] || '#') : s.url,
-  })).filter((s: any) => s.url && s.url !== '#');
 
   return (
     <footer className="bg-[#0B2560] text-white">
@@ -69,32 +46,6 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
               />
             </Link>
             <p className="text-white/60 text-sm leading-relaxed">{tagline}</p>
-            {resolvedSocialLinks.length > 0 && (
-              <div className="flex items-center gap-2 pt-1">
-                {resolvedSocialLinks.map((s: any, i: number) =>
-                  s.platform === "whatsapp" ? (
-                    <BranchWhatsAppLink
-                      key={i}
-                      fallback={s.url}
-                      ariaLabel="whatsapp"
-                      className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#F5A623] hover:text-[#0B2560] transition"
-                    >
-                      {SOCIAL_ICONS[s.platform]}
-                    </BranchWhatsAppLink>
-                  ) : (
-                    <a
-                      key={i}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#F5A623] hover:text-[#0B2560] transition"
-                    >
-                      {SOCIAL_ICONS[s.platform] ?? s.platform}
-                    </a>
-                  )
-                )}
-              </div>
-            )}
           </div>
 
           {/* COL 2 — QUICK LINKS */}
@@ -190,28 +141,20 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
         {/* BOTTOM BAR */}
         <div className="mt-12 pt-6 border-t border-white/10 space-y-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {resolvedSocialLinks.map((s: any, i: number) => (
-                <a
-                  key={i}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/40 hover:text-white transition"
-                >
-                  {SOCIAL_ICONS[s.platform] ?? s.platform}
-                </a>
-              ))}
-            </div>
             <p className="text-white/60 text-xs">{copyright}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2">
-            <Link href="/about" className="text-white/60 text-xs hover:text-white/90 transition">About Us</Link>
-            <Link href="/plan-my-journey" className="text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium">✨ Plan My Journey</Link>
-            <Link href="/privacy-policy" className="text-white/60 text-xs hover:text-white/90 transition">Privacy Policy</Link>
-            <Link href="/terms" className="text-white/60 text-xs hover:text-white/90 transition">Terms of Service</Link>
-            <Link href="/blog" className="text-white/60 text-xs hover:text-white/90 transition">Blog</Link>
-            <Link href="/offers" className="text-white/60 text-xs hover:text-white/90 transition">Offers</Link>
+            {bottomLinks.map((l: any, i: number) => (
+              <Link
+                key={i}
+                href={l.href}
+                className={l.accent
+                  ? "text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium"
+                  : "text-white/60 text-xs hover:text-white/90 transition"}
+              >
+                {l.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

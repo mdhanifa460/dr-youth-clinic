@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Calendar, Clock, MapPin, Stethoscope, CheckCircle, RotateCcw } from 'lucide-react';
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 const LOCATION_LABELS: Record<string, string> = {
   chennai: 'Chennai', bangalore: 'Bangalore', coimbatore: 'Coimbatore', kochi: 'Kochi', all: 'Any clinic',
@@ -41,6 +42,7 @@ export default function MyAppointmentsPage() {
 
   const lookup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidIndianMobile(phone)) { setError(INVALID_MOBILE_MESSAGE); return; }
     setLoading(true); setError(''); setData(null);
     try {
       const res = await fetch('/api/my-appointments/lookup', {

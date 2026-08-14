@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cloudImgFocal } from '@/app/lib/cloudinary-url';
 import { focalPointToObjectPosition, type FocalPoint } from '@/app/lib/media/focalPoint';
+import { useBeforeAfterDrag } from '@/app/lib/useBeforeAfterDrag';
 
 interface Pair {
   before: { url: string; publicId?: string };
@@ -33,11 +34,16 @@ function focalSrc(img: { url: string; publicId?: string }, focalPoint?: FocalPoi
 }
 
 function CompareSlider({ pair, serviceName }: { pair: Pair; serviceName: string }) {
-  const [pos, setPos] = useState(50);
+  const { pos, setPos, containerRef, dragHandlers } = useBeforeAfterDrag(50);
   const objectPosition = focalPointToObjectPosition(pair.focalPoint);
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm select-none" style={{ aspectRatio: '1 / 1' }}>
+    <div
+      ref={containerRef}
+      className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm select-none touch-none"
+      style={{ aspectRatio: '1 / 1' }}
+      {...dragHandlers}
+    >
       {/* After (base layer) */}
       <Image
         src={focalSrc(pair.after, pair.focalPoint)}
@@ -86,14 +92,16 @@ function CompareSlider({ pair, serviceName }: { pair: Pair; serviceName: string 
         </div>
       )}
 
-      {/* Invisible range input captures drag */}
+      {/* Keyboard-accessible fallback — drag itself is handled by the
+          container's pointer handlers above (see
+          app/lib/useBeforeAfterDrag.ts). */}
       <input
         type="range"
         min={0}
         max={100}
-        value={pos}
+        value={Math.round(pos)}
         onChange={(e) => setPos(Number(e.target.value))}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-10"
+        className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
         style={{ margin: 0 }}
         aria-label={`Compare before and after for ${serviceName}`}
       />

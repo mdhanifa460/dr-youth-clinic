@@ -10,7 +10,12 @@ export type BannerTemplateType =
   | "service"
   | "doctor"
   | "clinic-experience"
-  | "glass-hero";
+  | "glass-hero"
+  // Full-bleed background image (not the split text-left/image-right
+  // layout every other template but "before-after" uses) — added
+  // specifically so Offer banners have a full-image option, not just the
+  // existing right-aligned circular image.
+  | "full-image";
 
 export interface CTAData {
   label: string;
@@ -44,6 +49,20 @@ export interface BannerTemplateDef {
 }
 
 export const BANNER_TEMPLATES: BannerTemplateDef[] = [
+  {
+    type: "full-image",
+    label: "Full Image",
+    icon: "🖼️",
+    description: "Full-bleed background image (not split text/image) with a text overlay and CTA — for offers, promotions, or any banner that should read as one photo, not a text-plus-thumbnail layout.",
+    defaultData: {
+      headline: "Flat 20% OFF\nThis Month Only",
+      subtitle: "Limited Time Offer",
+      description: "",
+      primaryCTA: { label: "Claim This Offer", href: "/offers" },
+      secondaryCTA: { label: "", href: "" },
+      overlay: { enabled: true, style: "gradient", opacity: 0.6 },
+    },
+  },
   {
     type: "glass-hero",
     label: "Glass Hero (Premium)",
@@ -227,6 +246,12 @@ export interface BannerDoc {
   showOnLocationPage: boolean;
   showOnServicePage: boolean;
   showOnCategoryPage: boolean;
+  // Only meaningful when showOnHomepage is also true — shows this banner
+  // as an auto-dismissing modal splash on homepage load (in addition to,
+  // not instead of, its normal inline placement) rather than a static
+  // section the visitor has to scroll to. See HomepageOfferSplash.tsx.
+  splashEnabled: boolean;
+  splashAutoCloseSeconds: number;
   targetLocations: string[];
   targetServices: string[];
   targetCategories: string[];

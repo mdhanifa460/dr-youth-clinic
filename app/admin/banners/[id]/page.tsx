@@ -599,6 +599,27 @@ export default function BannerEditPage() {
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
         <p className="text-sm font-bold text-gray-700">Where to Show</p>
         <Toggle checked={!!banner.showOnHomepage} onChange={(v) => set({ showOnHomepage: v })} label="Homepage" />
+        {banner.showOnHomepage && (
+          <div className="pl-4 space-y-2 border-l-2 border-gray-100">
+            <Toggle
+              checked={!!banner.splashEnabled}
+              onChange={(v) => set({ splashEnabled: v })}
+              label="Also show as an auto-closing splash popup on homepage load"
+            />
+            {banner.splashEnabled && (
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500">Auto-close after</label>
+                <input
+                  type="number" min={2} max={15}
+                  value={banner.splashAutoCloseSeconds ?? 5}
+                  onChange={(e) => set({ splashAutoCloseSeconds: Number(e.target.value) })}
+                  className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                />
+                <span className="text-xs text-gray-500">seconds (visitor can also close it early)</span>
+              </div>
+            )}
+          </div>
+        )}
         <Toggle checked={!!banner.showOnLocationPage} onChange={(v) => set({ showOnLocationPage: v })} label="Location Pages" />
         {banner.showOnLocationPage && (
           <div className="pl-4 space-y-1.5">

@@ -278,6 +278,11 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       headline: 'Our Locations',
       subheadline: 'We are available in multiple locations to serve you better.',
       cities: ['Chennai', 'Bengaluru', 'Coimbatore', 'Kochi'],
+      // "Clinics Across India" is always live (cities.length) — these two
+      // are the ones that were previously hardcoded directly in
+      // HomepageLocations.tsx with no admin path at all.
+      doctorsStat: '20+',
+      treatmentsStat: '50+',
       viewAllText: 'View all clinics',
       featuredCity: {
         name: 'Chennai',
@@ -465,12 +470,21 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         email: 'info@dryouthclinic.com',
       },
       copyright: '© 2024 DR Youth Clinic. All Rights Reserved.',
-      socialLinks: [
-        { platform: 'facebook', url: '#' },
-        { platform: 'instagram', url: '#' },
-        { platform: 'youtube', url: '#' },
-        { platform: 'whatsapp', url: '#' },
+      // Bottom-bar links (About Us, Plan My Journey, Privacy Policy, …) —
+      // previously hardcoded directly in Footer.tsx's JSX with no admin
+      // path at all. `accent: true` on an item renders it in the site's
+      // gold accent color instead of the default muted white, matching
+      // "✨ Plan My Journey" 's original hardcoded styling.
+      bottomLinks: [
+        { label: 'About Us', href: '/about', accent: false },
+        { label: '✨ Plan My Journey', href: '/plan-my-journey', accent: true },
+        { label: 'Privacy Policy', href: '/privacy-policy', accent: false },
+        { label: 'Terms of Service', href: '/terms', accent: false },
+        { label: 'Blog', href: '/blog', accent: false },
+        { label: 'Offers', href: '/offers', accent: false },
       ],
+      // Social icons are shown in TopBar already — kept out of the footer
+      // by design (see Footer.tsx), not re-added here.
     },
   },
 };

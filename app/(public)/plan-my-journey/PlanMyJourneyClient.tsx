@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Sparkles, MapPin, Star, Check } from "lucide-react";
 import { SiteConfigProvider } from "@/app/components/SiteConfigContext";
 import { locations } from "@/app/data/locations";
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from "@/app/lib/phone";
 import type { JourneyGoalSlug, JourneyGoalBundle } from "@/app/lib/journeyGoals";
 import type { IJourneyGoal } from "@/app/models/JourneyConfig";
 import { DEFAULT_QUIZ_CONFIG, type AssessmentConfigData, type AssessmentQuestion } from "@/app/lib/quizDefaults";
@@ -26,6 +27,7 @@ import AiObservationsScreen, { type AiObservationsResult } from "@/app/component
 
 type Screen = "intro" | "goal-pick" | "question" | "photo-capture" | "ai-observations" | "lead" | "results";
 type LeadStatus = "idle" | "sending" | "sent" | "error";
+const GENERIC_LEAD_ERROR = "Something went wrong — please check your details and try again.";
 
 interface LeadForm {
   name: string;
@@ -116,6 +118,7 @@ function PlanMyJourneyFlow({
   const [serviceId, setServiceId] = useState<string>("");
   const [lead, setLead] = useState<LeadForm>({ name: "", phone: "", preferredClinic: clinic });
   const [leadStatus, setLeadStatus] = useState<LeadStatus>("idle");
+  const [leadError, setLeadError] = useState(GENERIC_LEAD_ERROR);
   // Goal-filtered intake questions (Clinical Intake's engine, reused rather
   // than duplicated — see seedAnswersFromTags in assessmentFlow.ts).
   const [path, setPath] = useState<string[]>([]);
@@ -296,6 +299,11 @@ function PlanMyJourneyFlow({
 
   const submitLead = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidIndianMobile(lead.phone)) {
+      setLeadError(INVALID_MOBILE_MESSAGE);
+      setLeadStatus("error");
+      return;
+    }
     setLeadStatus("sending");
     try {
       const res = await fetch("/api/leads", {
@@ -304,7 +312,11 @@ function PlanMyJourneyFlow({
         body: JSON.stringify({ ...lead, source: "plan-my-journey", city: lead.preferredClinic, clinicLocation: lead.preferredClinic }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success || !data.leadId) throw new Error("failed");
+      if (!res.ok || !data.success || !data.leadId) {
+        setLeadError(data.message || GENERIC_LEAD_ERROR);
+        setLeadStatus("error");
+        return;
+      }
       setLeadId(data.leadId);
       setLeadStatus("sent");
       // GTM-routable lead conversion event — same dataLayer bridge
@@ -337,6 +349,7 @@ function PlanMyJourneyFlow({
       if (goal) postInterestEvent("assessment_completed", goal);
       setScreen("results");
     } catch {
+      setLeadError(GENERIC_LEAD_ERROR);
       setLeadStatus("error");
     }
   };
@@ -397,7 +410,7 @@ function PlanMyJourneyFlow({
       </div>
       <div className={`relative z-10 max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
         {screen === "intro" && <IntroScreen goals={goals} onStart={() => setScreen("goal-pick")} />}
-        {screen === "goal-pick" && <GoalPickScreen goals={goals} bundles={bundles} onPick={pickGoal} />}
+        {screen === "goal-pick" && <GoalPickScreen goals={goals} onPick={pickGoal} />}
         {screen === "question" && currentQuestion && (
           <QuestionScreen
             question={currentQuestion}
@@ -424,7 +437,7 @@ function PlanMyJourneyFlow({
           />
         )}
         {screen === "lead" && (
-          <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} onSubmit={submitLead} goalLabel={goal ? goalMap[goal]?.label || "" : ""} />
+          <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} errorMessage={leadError} onSubmit={submitLead} goalLabel={goal ? goalMap[goal]?.label || "" : ""} />
         )}
       </div>
 
@@ -531,11 +544,9 @@ function IntroScreen({ goals, onStart }: { goals: IJourneyGoal[]; onStart: () =>
 
 function GoalPickScreen({
   goals,
-  bundles,
   onPick,
 }: {
   goals: IJourneyGoal[];
-  bundles: Record<JourneyGoalSlug, JourneyGoalBundle>;
   onPick: (g: JourneyGoalSlug) => void;
 }) {
   return (
@@ -545,23 +556,19 @@ function GoalPickScreen({
         <p className="text-gray-500 text-sm md:text-base">We'll build your journey around it.</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
-        {goals.map((meta) => {
-          const count = bundles[meta.slug]?.services?.length || 0;
-          return (
-            <button
-              key={meta.slug}
-              onClick={() => onPick(meta.slug)}
-              className={`relative overflow-hidden rounded-3xl p-6 text-left text-white shadow-lg transition-transform hover:-translate-y-1 bg-gradient-to-br ${meta.heroGrad}`}
-            >
-              <span className="text-3xl">{meta.icon}</span>
-              <p className="font-headline font-extrabold text-lg mt-3">{meta.label}</p>
-              <p className="text-white/70 text-xs mt-1">{count > 0 ? `${count} treatment${count !== 1 ? "s" : ""} available` : "Ask about options"}</p>
-              <span className="inline-flex items-center gap-1 text-xs font-bold mt-4">
-                {meta.ctaLabel || "Choose"} <ArrowRight size={12} />
-              </span>
-            </button>
-          );
-        })}
+        {goals.map((meta) => (
+          <button
+            key={meta.slug}
+            onClick={() => onPick(meta.slug)}
+            className={`relative overflow-hidden rounded-3xl p-6 text-left text-white shadow-lg transition-transform hover:-translate-y-1 bg-gradient-to-br ${meta.heroGrad}`}
+          >
+            <span className="text-3xl">{meta.icon}</span>
+            <p className="font-headline font-extrabold text-lg mt-3">{meta.label}</p>
+            <span className="inline-flex items-center gap-1 text-xs font-bold mt-4">
+              {meta.ctaLabel || "Choose"} <ArrowRight size={12} />
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -706,12 +713,14 @@ function LeadCaptureScreen({
   lead,
   setLead,
   status,
+  errorMessage,
   onSubmit,
   goalLabel,
 }: {
   lead: LeadForm;
   setLead: React.Dispatch<React.SetStateAction<LeadForm>>;
   status: LeadStatus;
+  errorMessage: string;
   onSubmit: (e: React.FormEvent) => void;
   goalLabel: string;
 }) {
@@ -755,7 +764,7 @@ function LeadCaptureScreen({
           {status === "sending" ? "Saving…" : "See My Journey →"}
         </button>
         {status === "error" && (
-          <p className="text-xs text-red-500 text-center">Something went wrong — please check your details and try again.</p>
+          <p className="text-xs text-red-500 text-center">{errorMessage}</p>
         )}
         <p className="text-center text-xs text-gray-500">We'll never share your details. No spam, ever.</p>
       </form>

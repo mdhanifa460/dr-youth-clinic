@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-react';
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 interface HeroData {
   badge?: string;
@@ -98,6 +99,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidIndianMobile(form.phone)) { setError(INVALID_MOBILE_MESSAGE); return; }
     setSubmitting(true);
     setError('');
     try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SliderCard from '@/app/components/SliderCard';
@@ -11,6 +11,16 @@ const FALLBACK_PAIRS = [
   { title: 'Laser Skin Brightening', description: 'Advanced laser therapy for pigmentation, spots & uneven tone.', category: 'Laser' },
 ];
 
+// Multiple cards per row, responsive by CSS alone (native horizontal
+// scroll-snap, same tray pattern as the homepage's Shorts & Reels
+// section) — previously this showed exactly one card at a time
+// regardless of screen size, with a JS pager (arrows/dots/auto-advance)
+// to move between them. A native scroll tray means the visible card
+// count adjusts itself per breakpoint with no JS "how many fit" logic,
+// and dragging to scroll the tray no longer conflicts with dragging the
+// before/after divider inside a card, since scrolling happens on the
+// horizontal axis at the tray level while the divider drag is a
+// container-scoped pointer capture (see useBeforeAfterDrag.ts).
 export default function BeforeAfterSection({ data }: { data: any }) {
   const {
     headline = 'Real Results, Real Confidence',
@@ -19,22 +29,15 @@ export default function BeforeAfterSection({ data }: { data: any }) {
   } = data || {};
 
   const displayPairs = (pairs.length > 0 ? pairs : FALLBACK_PAIRS).slice(0, 6);
-  const total = displayPairs.length;
+  const trayRef = useRef<HTMLDivElement>(null);
 
-  const [idx, setIdx] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const prev = useCallback(() => setIdx((i) => (i - 1 + total) % total), [total]);
-  const next = useCallback(() => setIdx((i) => (i + 1) % total), [total]);
-
-  // Auto-advance every 4s, pause on hover/touch
-  useEffect(() => {
-    if (paused) return;
-    intervalRef.current = setInterval(next, 4000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [paused, next]);
+  const scrollByCard = (dir: 1 | -1) => {
+    const el = trayRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>('[data-card]');
+    const step = (card?.offsetWidth || el.clientWidth * 0.85) + 20; // + gap
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  };
 
   return (
     <section id="results" className="py-12 md:py-16 lg:py-20 bg-[#F5F1EC] relative overflow-hidden">
@@ -46,19 +49,37 @@ export default function BeforeAfterSection({ data }: { data: any }) {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 relative">
 
         {/* HEADER */}
-        {/* No stat row here by design — the clinic-wide numbers (patients, years,
-            rating) are already stated once in StatsBar right after the hero;
-            repeating a second, slightly different set here undercut trust
-            rather than building it. */}
-        <div className="mb-8 md:mb-10 max-w-2xl">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-6 h-[2px] bg-[#F5A623]" />
-            <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
+        <div className="mb-8 md:mb-10 flex items-end justify-between gap-6 flex-wrap">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-6 h-[2px] bg-[#F5A623]" />
+              <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
+            </div>
+            <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
+              {headline}
+            </h2>
+            <p className="text-[#6B7280] mt-4 text-sm leading-relaxed max-w-sm">{subheadline}</p>
           </div>
-          <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
-            {headline}
-          </h2>
-          <p className="text-[#6B7280] mt-4 text-sm leading-relaxed max-w-sm">{subheadline}</p>
+
+          {/* Arrows — desktop only, tray itself is natively swipeable on touch */}
+          {displayPairs.length > 1 && (
+            <div className="hidden md:flex gap-2 shrink-0">
+              <button
+                onClick={() => scrollByCard(-1)}
+                className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100"
+                aria-label="Scroll to previous results"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={() => scrollByCard(1)}
+                className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100"
+                aria-label="Scroll to next results"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* DRAG HINT */}
@@ -67,82 +88,30 @@ export default function BeforeAfterSection({ data }: { data: any }) {
             <svg width="15" height="10" viewBox="0 0 15 10" fill="none">
               <path d="M1 5H14M1 5L3.5 2.5M1 5L3.5 7.5M14 5L11.5 2.5M14 5L11.5 7.5" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Drag the slider to compare
+            Drag each photo to compare — swipe to see more
           </span>
         </div>
 
-        {/* PAGER — one card at a time, auto-scrolls */}
+        {/* TRAY — 1 card on mobile (with a peek of the next), 2 on tablet, 3 on desktop */}
         <div
-          className="relative"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onTouchStart={(e) => { setPaused(true); touchStartX.current = e.touches[0].clientX; }}
-          onTouchEnd={(e) => {
-            const diff = (touchStartX.current ?? 0) - e.changedTouches[0].clientX;
-            if (diff > 40) next();
-            else if (diff < -40) prev();
-            touchStartX.current = null;
-            setPaused(false);
-          }}
+          ref={trayRef}
+          className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-[#0B2560]/10 [&::-webkit-scrollbar-thumb]:rounded-full"
         >
-          {/* Card — max width on desktop, full width on mobile */}
-          <div className="max-w-xl mx-auto md:max-w-2xl">
-            {displayPairs[idx]?.slug ? (
-              <Link href={`/results/${displayPairs[idx].slug}`} className="block">
-                <SliderCard pair={displayPairs[idx]} />
-              </Link>
-            ) : (
-              <SliderCard pair={displayPairs[idx]} />
-            )}
-          </div>
-
-          {/* Side arrows — only on desktop */}
-          <button
-            onClick={prev}
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-11 h-11 rounded-full bg-white shadow-md items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100 z-10"
-            aria-label="Previous result"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            onClick={next}
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-11 h-11 rounded-full bg-white shadow-md items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100 z-10"
-            aria-label="Next result"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        {/* DOT INDICATORS + mobile arrows */}
-        <div className="flex items-center justify-center gap-4 mt-6">
-          <button
-            onClick={prev}
-            className="md:hidden w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] border border-gray-100"
-            aria-label="Previous result"
-          >
-            <ChevronLeft size={15} />
-          </button>
-
-          <div className="flex gap-1">
-            {displayPairs.map((_: any, i: number) => (
-              <button
-                key={i}
-                onClick={() => { setIdx(i); setPaused(true); setTimeout(() => setPaused(false), 6000); }}
-                className="h-11 min-w-8 rounded-full flex items-center justify-center"
-                aria-label={`Show result ${i + 1}`}
-              >
-                <span className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-7 bg-[#0B2560]' : 'w-2 bg-[#0B2560]/20'}`} />
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={next}
-            className="md:hidden w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] border border-gray-100"
-            aria-label="Next result"
-          >
-            <ChevronRight size={15} />
-          </button>
+          {displayPairs.map((pair: any, i: number) => (
+            <div
+              key={i}
+              data-card
+              className="snap-start shrink-0 basis-[86%] sm:basis-[47%] lg:basis-[31.5%]"
+            >
+              {pair?.slug ? (
+                <Link href={`/results/${pair.slug}`} className="block">
+                  <SliderCard pair={pair} />
+                </Link>
+              ) : (
+                <SliderCard pair={pair} />
+              )}
+            </div>
+          ))}
         </div>
 
         {/* CTA to details page */}

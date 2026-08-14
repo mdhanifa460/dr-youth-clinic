@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 export default function ConsultationFormBar({ data }: { data: any }) {
   const {
@@ -23,6 +24,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !service || !city) return;
+    if (!isValidIndianMobile(phone)) { setError(INVALID_MOBILE_MESSAGE); return; }
     setLoading(true); setError('');
     try {
       const res = await fetch('/api/booking', {

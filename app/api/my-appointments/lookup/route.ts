@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
-import { normalizePhone } from '@/app/lib/phone';
+import { normalizePhone, isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 // Public, unauthenticated by design — no separate patient login system.
 // The booking ID (shown once, on the confirmation screen right after
@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Phone number and booking ID are required' }, { status: 400 });
     }
 
-    const formattedPhone = normalizePhone(phone);
-    if (!formattedPhone) {
-      return NextResponse.json({ success: false, message: 'Invalid phone number' }, { status: 400 });
+    if (!isValidIndianMobile(phone)) {
+      return NextResponse.json({ success: false, message: INVALID_MOBILE_MESSAGE }, { status: 400 });
     }
+    const formattedPhone = normalizePhone(phone);
 
     await connectDB();
 

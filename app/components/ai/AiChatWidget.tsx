@@ -11,6 +11,7 @@ import { markdownToHtml } from '@/app/lib/blogMarkdown';
 import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
 import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
 import { locations } from '@/app/data/locations';
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
@@ -245,6 +246,9 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
     if (!form.name.trim() || !form.phone.trim() || !form.location || !form.date || !form.time) {
       setError('Name, phone, clinic location, date, and time are required.'); return;
     }
+    if (!isValidIndianMobile(form.phone)) {
+      setError(INVALID_MOBILE_MESSAGE); return;
+    }
     setSaving(true); setError('');
     try {
       // The field is labeled "(optional)" but /api/booking's Zod schema
@@ -445,6 +449,9 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
             if (!form.name.trim() || !form.phone.trim() || !form.location || !form.date || !form.time) {
               setError('Name, phone, clinic location, date, and time are required.'); return;
             }
+            if (!isValidIndianMobile(form.phone)) {
+              setError(INVALID_MOBILE_MESSAGE); return;
+            }
             setError('');
             setReviewing(true);
           }}
@@ -551,6 +558,9 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
   const submitCallback = async () => {
     if (!form.name.trim() || !form.phone.trim() || !form.location) {
       setError('Name, phone, and clinic location are required.'); return;
+    }
+    if (!isValidIndianMobile(form.phone)) {
+      setError(INVALID_MOBILE_MESSAGE); return;
     }
     setSaving(true); setError('');
     try {

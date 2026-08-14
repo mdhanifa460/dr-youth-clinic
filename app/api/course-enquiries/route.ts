@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { CourseEnquiry } from '@/app/models/CourseEnquiry';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
-import { normalizePhone } from '@/app/lib/phone';
+import { normalizePhone, isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 import { sendWhatsAppText } from '@/app/lib/whatsapp';
 // Registers Course with Mongoose for the ref lookup on create.
@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
     }
     if (!phone || typeof phone !== 'string' || !phone.trim()) {
       return NextResponse.json({ success: false, message: 'Mobile number is required' }, { status: 400 });
+    }
+    if (!isValidIndianMobile(phone)) {
+      return NextResponse.json({ success: false, message: INVALID_MOBILE_MESSAGE }, { status: 400 });
     }
     if (!course || typeof course !== 'string') {
       return NextResponse.json({ success: false, message: 'Course is required' }, { status: 400 });

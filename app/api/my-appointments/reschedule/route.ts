@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
-import { normalizePhone } from '@/app/lib/phone';
+import { normalizePhone, isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 // Re-verifies phone + bookingId on every call rather than trusting that the
 // client already passed the lookup screen — a stale/replayed request with
@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Phone, booking ID, and a preferred date and time are required' }, { status: 400 });
     }
 
-    const formattedPhone = normalizePhone(phone);
-    if (!formattedPhone) {
-      return NextResponse.json({ success: false, message: 'Invalid phone number' }, { status: 400 });
+    if (!isValidIndianMobile(phone)) {
+      return NextResponse.json({ success: false, message: INVALID_MOBILE_MESSAGE }, { status: 400 });
     }
+    const formattedPhone = normalizePhone(phone);
 
     await connectDB();
 

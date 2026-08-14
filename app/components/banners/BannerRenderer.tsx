@@ -6,6 +6,7 @@ import ServiceBanner from "@/app/components/banners/templates/ServiceBanner";
 import DoctorBanner from "@/app/components/banners/templates/DoctorBanner";
 import ClinicExperienceBanner from "@/app/components/banners/templates/ClinicExperienceBanner";
 import GlassHeroBanner from "@/app/components/banners/templates/GlassHeroBanner";
+import FullImageBanner from "@/app/components/banners/templates/FullImageBanner";
 import AnimatedBannerWrapper from "@/app/components/banners/AnimatedBannerWrapper";
 
 // Dispatcher — switches on templateType, wraps whichever template in one
@@ -23,6 +24,7 @@ export default function BannerRenderer({ banner }: { banner: BannerDoc | null })
     doctor: DoctorBanner,
     "clinic-experience": ClinicExperienceBanner,
     "glass-hero": GlassHeroBanner,
+    "full-image": FullImageBanner,
   }[banner.templateType];
 
   if (!Template) return null;

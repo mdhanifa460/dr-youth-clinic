@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+import { useBeforeAfterDrag } from "@/app/lib/useBeforeAfterDrag";
 
-// Compare-slider mechanics adapted from app/components/SliderCard.tsx (same
-// drag-to-compare math, clip-path divider, Before/After pill labels) —
-// stripped of SliderCard's own title/description footer, since the banner
-// template lays headline/description out separately alongside this slider
-// rather than below it.
+// Compare-slider mechanics shared with app/components/SliderCard.tsx and
+// BeforeAfterGallery.tsx via app/lib/useBeforeAfterDrag.ts (same drag-to-
+// compare math, clip-path divider, Before/After pill labels) — stripped of
+// SliderCard's own title/description footer, since the banner template
+// lays headline/description out separately alongside this slider rather
+// than below it.
 export default function BeforeAfterSlider({ before, after, title }: { before: string; after: string; title: string }) {
-  const [pos, setPos] = useState(50);
+  const { pos, setPos, containerRef, dragHandlers } = useBeforeAfterDrag(50);
 
   return (
-    <div className="relative h-[260px] sm:h-[360px] rounded-3xl overflow-hidden select-none shadow-[0_8px_34px_rgba(11,37,96,0.08)] border border-gray-100">
+    <div
+      ref={containerRef}
+      className="relative h-[260px] sm:h-[360px] rounded-3xl overflow-hidden select-none touch-none shadow-[0_8px_34px_rgba(11,37,96,0.08)] border border-gray-100"
+      {...dragHandlers}
+    >
       <Image src={after} alt="After" fill sizes="(max-width: 768px) 100vw, 560px" className="object-cover" draggable={false} />
       <Image
         src={before}
@@ -44,9 +49,9 @@ export default function BeforeAfterSlider({ before, after, title }: { before: st
         type="range"
         min={0}
         max={100}
-        value={pos}
+        value={Math.round(pos)}
         onChange={(e) => setPos(Number(e.target.value))}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-10"
+        className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
         style={{ margin: 0 }}
         aria-label={`Compare before and after for ${title}`}
       />

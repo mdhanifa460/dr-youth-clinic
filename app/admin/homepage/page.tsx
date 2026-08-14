@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp, Plus, Trash2, Upload, CheckCircle, Loader, Images, Info } from 'lucide-react';
 import { locations } from '@/app/data/locations';
+import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
@@ -324,6 +325,51 @@ function StringListField({ label, value, onChange }: {
         <button type="button" onClick={() => onChange([...(value || []), ''])}
           className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
           <Plus size={12} /> Add item
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Generic {label, href} list editor — used for every footer column
+// (Quick Links, Procedures, Patient Care) and, with `withAccent`, the
+// footer's bottom-bar links (where one entry, e.g. "Plan My Journey", can
+// be styled in the site's gold accent instead of the default muted style).
+function LinkListField({ label, value, onChange, withAccent = false }: {
+  label: string; value: Array<{ label: string; href: string; accent?: boolean }>;
+  onChange: (v: Array<{ label: string; href: string; accent?: boolean }>) => void;
+  withAccent?: boolean;
+}) {
+  const items = value || [];
+  const update = (i: number, patch: Partial<{ label: string; href: string; accent?: boolean }>) => {
+    const next = items.map((it, j) => (j === i ? { ...it, ...patch } : it));
+    onChange(next);
+  };
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <input type="text" placeholder="Label" value={item.label}
+              onChange={(e) => update(i, { label: e.target.value })}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#0B2560]" />
+            <input type="text" placeholder="/href or #anchor" value={item.href}
+              onChange={(e) => update(i, { href: e.target.value })}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-[#0B2560]" />
+            {withAccent && (
+              <label className="flex items-center gap-1 text-[10px] text-gray-500 shrink-0" title="Highlight in gold accent">
+                <input type="checkbox" checked={!!item.accent} onChange={(e) => update(i, { accent: e.target.checked })} />
+                Accent
+              </label>
+            )}
+            <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))}
+              className="text-red-400 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
+          </div>
+        ))}
+        <button type="button" onClick={() => onChange([...items, { label: '', href: '', ...(withAccent ? { accent: false } : {}) }])}
+          className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
+          <Plus size={12} /> Add link
         </button>
       </div>
     </div>
@@ -940,6 +986,16 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
           <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
           <TextField label="Sub-headline" value={d.subheadline} onChange={(v) => set('subheadline', v)} />
           <StringListField label="Cities List" value={d.cities} onChange={(v) => set('cities', v)} />
+          <div className="grid sm:grid-cols-2 gap-4">
+            {/* Falls back to the real default when this section was saved
+                before these two fields existed — otherwise a pre-existing
+                document shows a blank input here even though the public
+                site is correctly still showing "20+"/"50+" (component-level
+                fallback in HomepageLocations.tsx). Saving once persists
+                whichever value ends up in the field, closing the gap. */}
+            <TextField label="Expert Doctors Stat (e.g. 20+)" value={d.doctorsStat ?? HOMEPAGE_DEFAULTS.locations.data.doctorsStat} onChange={(v) => set('doctorsStat', v)} />
+            <TextField label="Advanced Treatments Stat (e.g. 50+)" value={d.treatmentsStat ?? HOMEPAGE_DEFAULTS.locations.data.treatmentsStat} onChange={(v) => set('treatmentsStat', v)} />
+          </div>
           <div className="rounded-xl border border-blue-100 bg-[#f6faff] p-4 flex items-start gap-3">
             <span className="text-lg shrink-0">📍</span>
             <div>
@@ -1226,8 +1282,9 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
     case 'footer':
       return (
         <div className="space-y-4">
-          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            Footer is managed via the existing Footer component. Data is stored here for reference.
+          <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+            Every column, link, and the bottom bar below are live on the real site footer — nothing here is
+            hardcoded. Social icons are intentionally not shown in the footer (they're already in the top bar).
           </p>
           <TextField label="Tagline" value={d.tagline} onChange={(v) => set('tagline', v)} multiline />
           <TextField label="Copyright Text" value={d.copyright} onChange={(v) => set('copyright', v)} />
@@ -1238,10 +1295,19 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
             <TextField label="Column Heading — Contact" value={d.contactHeading} onChange={(v) => set('contactHeading', v)} />
           </div>
           <div className="grid sm:grid-cols-3 gap-4">
+            <LinkListField label="Quick Links Column" value={d.quickLinks} onChange={(v) => set('quickLinks', v)} />
+            <LinkListField label="Procedures Column" value={d.procedures} onChange={(v) => set('procedures', v)} />
+            <LinkListField label="Patient Care Column" value={d.patientCare} onChange={(v) => set('patientCare', v)} />
+          </div>
+          <div className="grid sm:grid-cols-3 gap-4">
             <TextField label="Contact Address" value={d.contact?.address} onChange={(v) => set('contact.address', v)} multiline />
             <TextField label="Contact Phone" value={d.contact?.phone} onChange={(v) => set('contact.phone', v)} />
             <TextField label="Contact Email" value={d.contact?.email} onChange={(v) => set('contact.email', v)} />
           </div>
+          {/* Same fallback reasoning as the Locations stats above — a
+              section saved before this field existed shows the real live
+              defaults here rather than an empty list. */}
+          <LinkListField label="Bottom Bar Links" value={d.bottomLinks ?? HOMEPAGE_DEFAULTS.footer.data.bottomLinks} onChange={(v) => set('bottomLinks', v)} withAccent />
         </div>
       );
 

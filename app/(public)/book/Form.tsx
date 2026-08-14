@@ -6,6 +6,7 @@ import { AlertCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-
 import { locations } from '@/app/data/locations';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { postInterestEvent, resolveInterestCategory } from '@/app/lib/personalization';
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 const SERVICES = [
   { id: 'Skin', icon: '✨', label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
@@ -148,7 +149,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   const validate = (s: number) => {
     if (s === 1) {
       if (!form.name.trim()) return setError('Please enter your name'), false;
-      if (!form.phone.trim() || form.phone.replace(/\D/g, '').length < 10) return setError('Please enter a valid 10-digit phone number'), false;
+      if (!isValidIndianMobile(form.phone)) return setError(INVALID_MOBILE_MESSAGE), false;
       if (!form.concern.trim()) return setError('Please describe your concern'), false;
     }
     if (s === 2 && !form.service) return setError('Please select a service'), false;

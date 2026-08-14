@@ -2,15 +2,23 @@
 
 import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
+import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
+const GENERIC_ERROR = 'Something went wrong — please check your details and try again.';
 
 export default function CourseEnquiryForm({ courseId, courseTitle }: { courseId: string; courseTitle: string }) {
   const [form, setForm] = useState({ name: '', phone: '', email: '', practiceOrClinicName: '', city: '', message: '' });
   const [status, setStatus] = useState<Status>('idle');
+  const [errorMessage, setErrorMessage] = useState(GENERIC_ERROR);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidIndianMobile(form.phone)) {
+      setErrorMessage(INVALID_MOBILE_MESSAGE);
+      setStatus('error');
+      return;
+    }
     setStatus('sending');
     try {
       const res = await fetch('/api/course-enquiries', {
@@ -18,9 +26,11 @@ export default function CourseEnquiryForm({ courseId, courseTitle }: { courseId:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, course: courseId }),
       });
-      if (!res.ok) throw new Error('failed');
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.message || 'failed');
       setStatus('sent');
-    } catch {
+    } catch (err: any) {
+      setErrorMessage(err?.message && err.message !== 'failed' ? err.message : GENERIC_ERROR);
       setStatus('error');
     }
   };
@@ -99,7 +109,7 @@ export default function CourseEnquiryForm({ courseId, courseTitle }: { courseId:
         {status === 'sending' ? 'Sending…' : 'Send Enquiry'}
       </button>
       {status === 'error' && (
-        <p className="text-xs text-red-500 text-center">Something went wrong — please check your details and try again.</p>
+        <p className="text-xs text-red-500 text-center">{errorMessage}</p>
       )}
     </form>
   );

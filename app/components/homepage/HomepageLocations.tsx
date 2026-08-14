@@ -98,6 +98,8 @@ export default function HomepageLocations({ data }: { data: any }) {
     headline      = 'Our Locations',
     subheadline   = 'Advanced skin & hair care treatments. Expert doctors. Multiple locations to serve you better.',
     cities        = [],
+    doctorsStat   = '20+',
+    treatmentsStat = '50+',
     _embeds       = {},
     _detectedCity = '',
   } = data || {};
@@ -149,9 +151,9 @@ export default function HomepageLocations({ data }: { data: any }) {
   // this used to restate both with different numbers than StatsBar, which
   // read as inconsistent rather than reassuring.
   const STATS = [
-    { value: String(cities.length || 4),     label: 'Clinics Across India', icon: MapPin },
-    { value: '20+',                           label: 'Expert Doctors',       icon: Users },
-    { value: '50+',                           label: 'Advanced Treatments',  icon: Stethoscope },
+    { value: String(cities.length || 4), label: 'Clinics Across India', icon: MapPin },
+    { value: doctorsStat,                label: 'Expert Doctors',       icon: Users },
+    { value: treatmentsStat,             label: 'Advanced Treatments',  icon: Stethoscope },
   ];
 
   return (

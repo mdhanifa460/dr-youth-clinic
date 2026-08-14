@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import { cloudImgFocal } from '@/app/lib/cloudinary-url';
 import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
+import { useBeforeAfterDrag } from '@/app/lib/useBeforeAfterDrag';
 
 // 1:1 crop, both frames sharing the pair's one focal point (before/after
 // must line up identically or the slider comparison is misleading), same
@@ -15,7 +15,7 @@ function focalSrc(img: { url: string; publicId?: string }, focalPoint?: any) {
 }
 
 export default function SliderCard({ pair }: { pair: any }) {
-  const [pos, setPos] = useState(50);
+  const { pos, setPos, containerRef, dragHandlers } = useBeforeAfterDrag(50);
   if (!pair) return null;
   const hasImages = !!(pair.before?.url && pair.after?.url);
   const objectPosition = focalPointToObjectPosition(pair.focalPoint);
@@ -23,8 +23,21 @@ export default function SliderCard({ pair }: { pair: any }) {
   return (
     <div className="rounded-3xl overflow-hidden bg-white shadow-[0_8px_34px_rgba(11,37,96,0.08)] border border-[#EBE8E3] transition-all duration-300 hover:shadow-[0_16px_42px_rgba(11,37,96,0.12)]">
 
-      {/* IMAGE AREA — 1:1, matches the site's Before/After ratio standard */}
-      <div className="relative aspect-square overflow-hidden select-none">
+      {/* IMAGE AREA — 1:1, matches the site's Before/After ratio standard.
+          Pointer handlers live on this container (not a stretched native
+          range input) — a mousedown/touch anywhere starts the drag from
+          that exact point, identically on desktop and mobile. See
+          app/lib/useBeforeAfterDrag.ts for why the old approach only
+          worked reliably on touch. */}
+      <div
+        ref={containerRef}
+        className="relative aspect-square overflow-hidden select-none touch-none"
+        {...(hasImages ? dragHandlers : {})}
+        // Cards are sometimes wrapped in a Link to the result's detail
+        // page — stop the click from bubbling to it, or dragging the
+        // slider to compare would also navigate away on release.
+        onClick={(e) => e.stopPropagation()}
+      >
         {hasImages ? (
           <>
             <Image
@@ -60,14 +73,16 @@ export default function SliderCard({ pair }: { pair: any }) {
             <span className="pointer-events-none absolute top-4 left-4 bg-white/80 backdrop-blur-md text-[#0B2560] text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full border border-[#EBE8E3] shadow-sm">Before</span>
             <span className="pointer-events-none absolute top-4 right-4 bg-[#F5A623]/90 backdrop-blur-md text-white text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full shadow-sm">After</span>
 
+            {/* Keyboard-accessible fallback only — drag itself is handled
+                by the container's pointer handlers above, not this input's
+                own native drag physics. pointer-events-none keeps mouse/
+                touch going to the container; Tab-focus + arrow keys still
+                reach this normally since that's keyboard navigation, not
+                a pointer interaction. */}
             <input
-              type="range" min={0} max={100} value={pos}
+              type="range" min={0} max={100} value={Math.round(pos)}
               onChange={(e) => setPos(Number(e.target.value))}
-              // Cards are sometimes wrapped in a Link to the result's detail
-              // page — stop the click from bubbling to it, or dragging the
-              // slider to compare would also navigate away on release.
-              onClick={(e) => e.stopPropagation()}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-10"
+              className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
               style={{ margin: 0 }}
               aria-label={`Compare before and after for ${pair.title}`}
             />

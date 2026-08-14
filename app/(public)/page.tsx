@@ -25,6 +25,7 @@ import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
+import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 
 import HeroSection from '@/app/components/homepage/HeroSection';
@@ -520,10 +521,16 @@ export default async function Home() {
   };
 
   const faqItems: { question: string; answer: string }[] = enriched['faq']?.faqs ?? [];
+  // Reuses the same homepage banner fetch above (heroBanners) rather than a
+  // second query — an admin opts a banner into the splash treatment
+  // additively (Banner → Where to Show → "Also show as a splash popup"),
+  // it isn't a separate banner type.
+  const splashBanner = heroBanners.find((b: any) => b.splashEnabled) || null;
 
   return (
     <main>
       <FAQSchema faqs={faqItems} />
+      <HomepageOfferSplash banner={splashBanner} />
       {publicSectionOrder
         .filter((s) => s.visible)
         .map((s) => {
