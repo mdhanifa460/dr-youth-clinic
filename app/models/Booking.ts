@@ -14,6 +14,21 @@ export type BookingStatus =
 // Admin-configurable (Settings.booking.sources) — not a fixed union.
 export type BookingSource = string;
 
+// Lead Temperature — deliberately a DIFFERENT axis from BookingStatus above.
+// Status is lifecycle ("where is this lead in our process"); temperature is
+// current intent ("how promising does this lead look right now"), computed
+// by app/lib/leadQualification/computeQualification.ts from admin-configured
+// rules (Settings.leadQualification). Kept as a small FIXED enum on purpose —
+// admin-facing customization (labels, colors, thresholds) lives entirely in
+// Settings.leadQualification.thresholds[].label, never written in here, so a
+// label edit in the admin UI can never trip this schema's validation (see
+// the templateType enum-sync bug this project already shipped once).
+// "unclassified" is a real, distinct resting state — not a stand-in for
+// "cold". It means "never scored" (pre-existing bookings, or the engine is
+// disabled), same reasoning as originDomain's missing default below: don't
+// fake a value for data the engine never actually evaluated.
+export type LeadTemperature = "unclassified" | "cold" | "warm" | "hot" | "very_hot";
+
 const BookingSchema = new mongoose.Schema(
   {
     bookingId:    { type: String },
@@ -140,6 +155,49 @@ const BookingSchema = new mongoose.Schema(
     // rather than being hammered forever against a CRM that keeps
     // rejecting it.
     syncAttempts:  { type: Number, default: 0 },
+
+    // Lead Qualification Engine — see app/lib/leadQualification/. Computed
+    // (never hand-entered) on create and on every status-affecting PATCH by
+    // computeQualification(), against Settings.leadQualification's admin
+    // rules/thresholds. Deliberately separate from `status` above.
+    leadScore: { type: Number, default: null }, // 0-100, null = never scored
+    leadTemperature: {
+      type: String,
+      enum: ["unclassified", "cold", "warm", "hot", "very_hot"],
+      default: "unclassified",
+    },
+    leadTemperatureUpdatedAt: { type: Date, default: null },
+    // Snapshot of Settings.leadQualification.version at scoring time, so a
+    // later rule/threshold edit is visibly distinguishable from "this lead's
+    // score reflects the current rules" without needing a recompute to tell.
+    qualificationVersion: { type: String, default: "" },
+    // Which rules actually matched and why — the "why is this lead Hot?"
+    // breakdown shown in admin. A live snapshot of the CURRENT score, not a
+    // growing log (see LeadQualificationHistory for the audit trail).
+    qualificationBreakdown: {
+      type: [
+        {
+          ruleId: String,
+          label: String,
+          points: Number,
+          matchedAt: Date,
+        },
+      ],
+      default: [],
+    },
+    // Staff can override the auto-computed temperature (Phase 2 UI) without
+    // losing the original computed score — both are preserved so an override
+    // is always visibly distinguishable from a system-computed value.
+    temperatureOverride: {
+      type: {
+        active: Boolean,
+        temperature: { type: String, enum: ["cold", "warm", "hot", "very_hot"] },
+        reason: String,
+        setBy: { type: mongoose.Schema.Types.ObjectId, ref: "AdminUser", default: null },
+        setAt: Date,
+      },
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -150,5 +208,6 @@ BookingSchema.index({ status: 1, createdAt: -1 });
 BookingSchema.index({ location: 1, createdAt: -1 });
 BookingSchema.index({ doctorId: 1, createdAt: -1 });
 BookingSchema.index({ pendingSync: 1, createdAt: -1 });
+BookingSchema.index({ leadTemperature: 1, createdAt: -1 });
 
 export default mongoose.models.Booking || mongoose.model("Booking", BookingSchema);

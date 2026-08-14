@@ -131,6 +131,48 @@ export interface ISettings extends Document {
       branch: string; // '' = all branches — same convention as whatsappCtaButtons.branch below; a branch-specific rule for this status wins over a global one
     }>;
   };
+  // Lead Qualification Engine — deterministic, admin-configured scoring that
+  // classifies a Booking's current sales intent (Cold/Warm/Hot/Very Hot,
+  // "Lead Temperature") separately from its lifecycle `status`. Off by
+  // default (enabled: false) until an admin actually configures rules —
+  // see app/lib/leadQualification/computeQualification.ts, which reads this
+  // block and never hardcodes scoring numbers itself. Same admin-array +
+  // fallback-default convention as automationRules above.
+  leadQualification: {
+    enabled: boolean;
+    // Bumped whenever thresholds/scoringRules change; stamped onto
+    // Booking.qualificationVersion at scoring time so a stale score is
+    // visibly distinguishable from one computed under the current rules.
+    version: string;
+    thresholds: Array<{
+      id: string;
+      // Fixed internal key the score maps to — Booking.leadTemperature's
+      // enum. `label`/`color` are the free-text display layer; never write
+      // label text into the Booking field directly (see Booking.ts comment).
+      key: "cold" | "warm" | "hot" | "very_hot";
+      label: string;
+      minScore: number;
+      maxScore: number;
+      order: number;
+      color: string;
+      active: boolean;
+    }>;
+    scoringRules: Array<{
+      id: string;
+      event: string; // one of the fixed catalog keys computeQualification() understands
+      points: number; // can be negative (e.g. no_show)
+      enabled: boolean;
+      branch: string; // '' = all branches, same convention as automationRules.branch
+      description: string; // shown in admin + as the qualificationBreakdown label
+    }>;
+    // Internal staff-facing follow-up task when a lead crosses into a hot
+    // temperature — never an automatic patient-facing WhatsApp/SMS/email.
+    // Off by default; Phase 2 wiring (see app/lib/leadQualification).
+    notifyOnHot: {
+      enabled: boolean;
+      minTemperature: string;
+    };
+  };
   content: {
     blogPostsPerPage: number;
     defaultAuthorName: string;
@@ -428,6 +470,38 @@ const SettingsSchema = new Schema<ISettings>(
       items: {
         type: [{ id: String, status: String, trigger: String, enabled: { type: Boolean, default: true }, branch: { type: String, default: '' } }],
         default: [],
+      },
+    },
+    leadQualification: {
+      enabled: { type: Boolean, default: false },
+      version: { type: String, default: 'v1' },
+      thresholds: {
+        type: [{
+          id: String,
+          key: { type: String, enum: ['cold', 'warm', 'hot', 'very_hot'] },
+          label: String,
+          minScore: Number,
+          maxScore: Number,
+          order: { type: Number, default: 0 },
+          color: { type: String, default: '' },
+          active: { type: Boolean, default: true },
+        }],
+        default: [],
+      },
+      scoringRules: {
+        type: [{
+          id: String,
+          event: String,
+          points: { type: Number, default: 0 },
+          enabled: { type: Boolean, default: true },
+          branch: { type: String, default: '' },
+          description: { type: String, default: '' },
+        }],
+        default: [],
+      },
+      notifyOnHot: {
+        enabled: { type: Boolean, default: false },
+        minTemperature: { type: String, default: 'hot' },
       },
     },
     content: {

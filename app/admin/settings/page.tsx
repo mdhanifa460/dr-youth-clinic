@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone, Bot, Menu, Sparkles } from "lucide-react";
+import { ArrowRight, FileSliders, CalendarCog, Tag, Monitor, ExternalLink, Megaphone, Palette, BarChart2, MessageCircle, BookOpen, Gift, ToggleLeft, Phone, Bot, Menu, Sparkles, Flame } from "lucide-react";
 
 const GROUPS = [
   {
@@ -127,6 +127,15 @@ const GROUPS = [
         title: "Booking & Notifications",
         desc: "Choose which fields patients fill when booking, set consultation duration, configure WhatsApp notifications.",
         tags: ["Patient fields", "WhatsApp", "Duration"],
+      },
+      {
+        href: "/admin/settings/lead-qualification",
+        icon: Flame,
+        color: "bg-orange-50 text-orange-600",
+        border: "border-orange-100 hover:border-orange-300",
+        title: "Lead Qualification",
+        desc: "Configure the scoring rules and Cold/Warm/Hot/Very Hot thresholds used to prioritize leads — separate from lead status.",
+        tags: ["Scoring rules", "Thresholds", "Hot leads"],
       },
       {
         href: "/admin/settings/service-form",

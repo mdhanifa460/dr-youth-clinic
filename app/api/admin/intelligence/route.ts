@@ -38,7 +38,7 @@ const getCachedRawData = unstable_cache(
   async () => {
     await connectDB();
     const [allBookings, allServices, allDoctors, allReviews, allLeads] = await Promise.all([
-      Booking.find().select('createdAt status phone formattedPhone service location doctorId').lean(),
+      Booking.find().select('createdAt status phone formattedPhone service location doctorId leadScore leadTemperature').lean(),
       Service.find().select('name price category seoScore location status').lean(),
       Doctor.find().select('name title experience locations active').lean(),
       Review.find().select('location rating source reviewText authorName isVisible createdAt').lean(),
@@ -412,6 +412,37 @@ export async function GET(req: NextRequest) {
         action: 'Send a personalised "We miss you" WhatsApp campaign with a 15% reactivation discount.',
         potential: `₹${Math.round(inactiveCount * avgMoRevenue / Math.max(uniquePatients, 1) * 0.3 / 1000)}–${Math.round(inactiveCount * avgMoRevenue / Math.max(uniquePatients, 1) * 0.5 / 1000)}K recovery revenue` });
 
+    // ── Lead Qualification summary ──────────────────────────────────────
+    // Extends this same cached raw-data pass rather than a separate
+    // endpoint — leadTemperature/leadScore are read directly off `bs`
+    // (already branch-scoped above). "unclassified" is counted, not
+    // hidden — it's an honest signal (either the engine isn't enabled yet,
+    // or these are pre-existing bookings never retroactively scored).
+    const temperatureCounts: Record<string, number> = { unclassified: 0, cold: 0, warm: 0, hot: 0, very_hot: 0 };
+    for (const b of bs as any[]) {
+      const t = b.leadTemperature || 'unclassified';
+      temperatureCounts[t] = (temperatureCounts[t] || 0) + 1;
+    }
+    const hotCount   = temperatureCounts.hot + temperatureCounts.very_hot;
+    const hotLeadPct = totalBookings ? Math.round((hotCount / totalBookings) * 100) : 0;
+    const conversionByTemperature = (['cold', 'warm', 'hot', 'very_hot'] as const).map((key) => {
+      const bucket = (bs as any[]).filter((b) => (b.leadTemperature || 'unclassified') === key);
+      const completed = bucket.filter((b) => b.status === 'completed').length;
+      return {
+        temperature: key,
+        count: bucket.length,
+        completed,
+        conversionRate: bucket.length ? Math.round((completed / bucket.length) * 100) : 0,
+      };
+    });
+    const hotLeadSummary = {
+      totalLeads: totalBookings,
+      counts: temperatureCounts,
+      scoredCount: totalBookings - temperatureCounts.unclassified,
+      hotLeadPct,
+      conversionByTemperature,
+    };
+
     return NextResponse.json({
       success:       true,
       generatedAt:   now.toISOString(),
@@ -471,6 +502,7 @@ export async function GET(req: NextRequest) {
       forecast,
       alerts,
       growthOpportunities,
+      hotLeadSummary,
     });
 
   } catch (err: any) {

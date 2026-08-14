@@ -28,6 +28,13 @@ export async function pushBookingToCrm(bookingDoc: any): Promise<void> {
       location: bookingDoc.location || "",
       source: bookingDoc.source || "website",
       notes: bookingDoc.notes || "",
+      // Whatever the Lead Qualification Engine had computed as of this
+      // push — null/"unclassified" on the very first push (it runs
+      // concurrently, right after create), a real value on the cron's
+      // later retry sweep. Only actually reaches the CRM if an admin has
+      // mapped these fields in ConnectorFieldMapping.
+      ...(bookingDoc.leadScore != null ? { leadScore: bookingDoc.leadScore } : {}),
+      ...(bookingDoc.leadTemperature ? { leadTemperature: bookingDoc.leadTemperature } : {}),
     };
 
     const result = isScheduled

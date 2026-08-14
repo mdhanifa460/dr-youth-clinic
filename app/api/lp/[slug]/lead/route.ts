@@ -8,6 +8,7 @@ import { getClinicNotifyNumber } from '@/app/lib/clinicNotify';
 import { sendWhatsAppText } from '@/app/lib/whatsapp';
 import { pushBookingToCrm } from '@/app/lib/crm/pushBooking';
 import { buildAttributionFields } from '@/app/lib/utmAttribution';
+import { qualifyAndPersist } from '@/app/lib/leadQualification/persist';
 
 export async function POST(
   req: NextRequest,
@@ -88,6 +89,10 @@ export async function POST(
     // connector is configured yet. See app/api/booking/route.ts for the
     // same pattern.
     pushBookingToCrm(booking).catch(() => {});
+
+    // Lead Qualification Engine — same fire-and-forget scoring as the main
+    // booking flow (app/api/booking/route.ts); no-ops if not enabled.
+    qualifyAndPersist(booking, { reason: 'auto:initial' }).catch(() => {});
 
     // Increment analytics.leads
     const analyticsUpdate: any = { $inc: { 'analytics.leads': 1 } };

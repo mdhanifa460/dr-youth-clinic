@@ -19,10 +19,18 @@ const CAMPAIGNS = [
   { name: 'Laser Hair Chennai Launch',    platform: 'Facebook',  leads: 21, bookings: 3,  revenue: 0, cpl: 340, conv: 14, status: 'paused'   },
 ];
 
+const TEMP_TILES = [
+  { key: 'very_hot', label: 'Very Hot', icon: '⚡', color: 'text-red-600 bg-red-50' },
+  { key: 'hot',      label: 'Hot',      icon: '🔥', color: 'text-orange-600 bg-orange-50' },
+  { key: 'warm',     label: 'Warm',     icon: '🟠', color: 'text-amber-600 bg-amber-50' },
+  { key: 'cold',     label: 'Cold',     icon: '❄️', color: 'text-blue-600 bg-blue-50' },
+] as const;
+
 export default function MarketingIntelligence({ data }: { data: any }) {
   const o = data?.overview || {};
   const totalMonthly = o.monthBookings || 100;
   const byLocation: any[] = data?.byLocation || [];
+  const hotLeadSummary = data?.hotLeadSummary;
 
   const enrichedSources = LEAD_SOURCES.map(s => ({
     ...s,
@@ -46,6 +54,65 @@ export default function MarketingIntelligence({ data }: { data: any }) {
         subtitle="Lead source analysis, campaign performance, and ROI benchmarks. Benchmarked from clinic industry data."
         badge="Marketing Analytics"
       />
+
+      {/* Lead Qualification summary — real Booking.leadScore/leadTemperature
+          data (extends the same cached intelligence pass, not a separate
+          endpoint). "Unscored" is shown honestly rather than folded into
+          Cold, since it means either the engine isn't enabled yet or these
+          are pre-existing leads that were never retroactively scored. */}
+      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+          <p className="text-sm font-bold text-[#0B2560]">Lead Qualification</p>
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Real Data</span>
+        </div>
+        {!hotLeadSummary || hotLeadSummary.scoredCount === 0 ? (
+          <div className="px-5 py-6 text-sm text-gray-400">
+            No scored leads yet. Enable the engine and configure rules under
+            <a href="/admin/settings/lead-qualification" className="text-[#0B2560] font-semibold hover:underline"> Settings → Lead Qualification</a>.
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-5 py-4">
+              <div className="rounded-xl px-3 py-2.5 bg-gray-50">
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Total Leads</p>
+                <p className="text-xl font-bold text-gray-800 mt-0.5">{hotLeadSummary.totalLeads}</p>
+              </div>
+              {TEMP_TILES.map((t) => (
+                <div key={t.key} className={`rounded-xl px-3 py-2.5 ${t.color}`}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide opacity-80">{t.icon} {t.label}</p>
+                  <p className="text-xl font-bold mt-0.5">{hotLeadSummary.counts?.[t.key] ?? 0}</p>
+                </div>
+              ))}
+            </div>
+            <div className="px-5 pb-4 flex items-center gap-4 text-xs text-gray-500">
+              <span><strong className="text-gray-800">{hotLeadSummary.hotLeadPct}%</strong> of leads are Hot or Very Hot</span>
+              <span>·</span>
+              <span><strong className="text-gray-800">{hotLeadSummary.counts?.unclassified ?? 0}</strong> unscored</span>
+            </div>
+            <div className="overflow-x-auto border-t border-gray-50">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50">
+                    {['Temperature', 'Leads', 'Completed', 'Conversion'].map((h) => (
+                      <th key={h} className="text-left px-4 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {(hotLeadSummary.conversionByTemperature || []).map((row: any) => (
+                    <tr key={row.temperature} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-2.5 font-medium text-gray-800 capitalize">{row.temperature.replace('_', ' ')}</td>
+                      <td className="px-4 py-2.5 text-gray-700">{row.count}</td>
+                      <td className="px-4 py-2.5 text-gray-700">{row.completed}</td>
+                      <td className="px-4 py-2.5 font-semibold text-gray-700">{row.conversionRate}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Location-wise Lead & Booking Performance — real Lead/Booking data,
           not a benchmark. Answers "which location gets the most leads/

@@ -25,6 +25,12 @@ export async function GET(req: NextRequest) {
   const status    = searchParams.get("status") || "";
   const service   = searchParams.get("service") || "";
   const search    = searchParams.get("search") || "";
+  // Lead Qualification filters — separate axis from `status` above.
+  const temperature = searchParams.get("temperature") || "";
+  const minScore     = searchParams.get("minScore");
+  const maxScore     = searchParams.get("maxScore");
+  const assignedTo   = searchParams.get("assignedTo") || "";
+  const campaign      = searchParams.get("campaign") || "";
 
   const query: Record<string, any> = {};
 
@@ -40,6 +46,14 @@ export async function GET(req: NextRequest) {
 
   if (status)  query.status  = status;
   if (service) query.service = { $regex: service, $options: "i" };
+  if (temperature) query.leadTemperature = temperature;
+  if (assignedTo)  query.assignedTo = assignedTo;
+  if (campaign)    query.utmCampaign = { $regex: campaign, $options: "i" };
+  if (minScore || maxScore) {
+    query.leadScore = {};
+    if (minScore) query.leadScore.$gte = Number(minScore);
+    if (maxScore) query.leadScore.$lte = Number(maxScore);
+  }
 
   if (dateFrom || dateTo) {
     query.createdAt = {};

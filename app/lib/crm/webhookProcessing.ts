@@ -3,6 +3,7 @@ import Invoice from "@/app/models/Invoice";
 import ConnectorFieldMapping from "@/app/models/ConnectorFieldMapping";
 import { applyFieldMapping, type MappingFieldDef } from "./fieldMapping";
 import { normalizePhone } from "@/app/lib/phone";
+import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
 
 // Leads and invoices are event-driven (your CRM calls our webhook the
 // moment one is created/updated), not polled — no "getLeads"/"getInvoices"
@@ -67,11 +68,21 @@ async function processInboundLead(connectorId: string, payload: Record<string, u
     pendingSync: false, // it already exists in the CRM — nothing to push back
   };
 
+  let bookingId: unknown;
   if (existing) {
     await (Booking as any).findByIdAndUpdate(existing._id, { $set: fieldsToSet });
+    bookingId = existing._id;
   } else {
-    await (Booking as any).create(fieldsToSet);
+    const created = await (Booking as any).create(fieldsToSet);
+    bookingId = created._id;
   }
+
+  // Lead Qualification Engine — score inbound CRM leads too, source is just
+  // "crm" like any other; no-ops if the engine isn't enabled.
+  qualifyAndPersist(
+    { ...fieldsToSet, _id: bookingId, leadTemperature: existing?.leadTemperature },
+    { reason: "auto:initial" }
+  ).catch(() => {});
 
   return { processed: true };
 }

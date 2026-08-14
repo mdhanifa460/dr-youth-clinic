@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { Fragment, useEffect, useState, useCallback, useRef } from "react";
 import { EXPORT_ALLOWED_ROLES, canAccess, type AdminRole } from "@/app/lib/permissions";
 import ConvertToAppointmentModal from "@/app/admin/components/ConvertToAppointmentModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type QualificationBreakdownEntry = { ruleId?: string; label?: string; points?: number };
 
 type Lead = {
   _id: string;
@@ -19,6 +21,12 @@ type Lead = {
   concern?: string;
   createdAt?: string;
   convertedToAppointmentId?: string;
+  // Lead Qualification Engine — a separate axis from `status` above (see
+  // app/lib/leadQualification/). Absent/"unclassified" on leads created
+  // before the engine was enabled, never guessed.
+  leadScore?: number | null;
+  leadTemperature?: string;
+  qualificationBreakdown?: QualificationBreakdownEntry[];
 };
 
 type Doctor = { _id: string; name: string; locations: string[] };
@@ -42,10 +50,15 @@ type Filters = {
   status: string;
   service: string;
   search: string;
+  // Lead Qualification filters — separate axis from status above.
+  temperature: string;
+  minScore: string;
+  maxScore: string;
 };
 
 const EMPTY_FILTERS: Filters = {
   dateFrom: "", dateTo: "", location: "", status: "", service: "", search: "",
+  temperature: "", minScore: "", maxScore: "",
 };
 
 // Mirrors the real Booking.status enum in app/models/Booking.ts.
@@ -58,6 +71,31 @@ const STATUS_COLORS: Record<string, string> = {
   completed:  "bg-gray-100 text-gray-600",
   no_show:    "bg-orange-100 text-orange-700",
   cancelled:  "bg-red-100 text-red-700",
+};
+
+// Mirrors Booking.leadTemperature's fixed enum (app/models/Booking.ts) — the
+// admin-facing label/color customization lives in Settings.leadQualification
+// .thresholds, this map is just the pill-badge display for the 5 fixed keys.
+const TEMPERATURE_COLORS: Record<string, string> = {
+  unclassified: "bg-gray-100 text-gray-500",
+  cold:         "bg-blue-100 text-blue-700",
+  warm:         "bg-amber-100 text-amber-700",
+  hot:          "bg-orange-100 text-orange-700",
+  very_hot:     "bg-red-100 text-red-700",
+};
+const TEMPERATURE_ICONS: Record<string, string> = {
+  unclassified: "—",
+  cold:         "❄️",
+  warm:         "🟠",
+  hot:          "🔥",
+  very_hot:     "⚡",
+};
+const TEMPERATURE_LABELS: Record<string, string> = {
+  unclassified: "Unscored",
+  cold:         "Cold",
+  warm:         "Warm",
+  hot:          "Hot",
+  very_hot:     "Very Hot",
 };
 
 // ─── Export Modal ─────────────────────────────────────────────────────────────
@@ -365,6 +403,9 @@ export default function LeadsClient({
   const [error,        setError]        = useState("");
   const [showExport,   setShowExport]   = useState(false);
   const [activeTab,    setActiveTab]    = useState<"leads" | "audit">("leads");
+  // "Why is this lead Hot?" expandable row — breakdown is already embedded
+  // on each lead from the list fetch, no extra request needed to show it.
+  const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
@@ -377,6 +418,9 @@ export default function LeadsClient({
       if (filters.status)   params.set("status",   filters.status);
       if (filters.service)  params.set("service",  filters.service);
       if (filters.search)   params.set("search",   filters.search);
+      if (filters.temperature) params.set("temperature", filters.temperature);
+      if (filters.minScore)    params.set("minScore",    filters.minScore);
+      if (filters.maxScore)    params.set("maxScore",    filters.maxScore);
 
       const res  = await fetch(`/api/admin/leads?${params}`);
       const data = await res.json();
@@ -503,6 +547,43 @@ export default function LeadsClient({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
 
               <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-500">Temperature</label>
+                <select
+                  value={filters.temperature}
+                  onChange={(e) => setFilter("temperature", e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Temperatures</option>
+                  <option value="very_hot">⚡ Very Hot</option>
+                  <option value="hot">🔥 Hot</option>
+                  <option value="warm">🟠 Warm</option>
+                  <option value="cold">❄️ Cold</option>
+                  <option value="unclassified">— Unscored</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-500">Score Range</label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number" min={0} max={100}
+                    value={filters.minScore}
+                    onChange={(e) => setFilter("minScore", e.target.value)}
+                    placeholder="Min"
+                    className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-300">–</span>
+                  <input
+                    type="number" min={0} max={100}
+                    value={filters.maxScore}
+                    onChange={(e) => setFilter("maxScore", e.target.value)}
+                    placeholder="Max"
+                    className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-500">From Date</label>
                 <input
                   type="date"
@@ -615,44 +696,84 @@ export default function LeadsClient({
                         <th className="px-4 py-3">Branch</th>
                         <th className="px-4 py-3">Appointment</th>
                         <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Temperature</th>
                         <th className="px-4 py-3">Lead Date</th>
                         {canConvert && <th className="px-4 py-3">Appointment</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {leads.map((lead) => (
-                        <tr key={lead._id} className="hover:bg-gray-50 transition">
-                          <td className="px-4 py-3">
-                            <p className="font-medium text-gray-800">{lead.name || "—"}</p>
-                            <p className="text-xs text-gray-500">{lead.phone || ""}</p>
-                          </td>
-                          <td className="px-4 py-3 text-gray-700">{lead.service || "—"}</td>
-                          <td className="px-4 py-3 text-gray-700">{lead.location || "—"}</td>
-                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                            {lead.date ? `${lead.date}${lead.time ? ` · ${lead.time}` : ""}` : "—"}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[lead.status || "new"] || "bg-gray-100 text-gray-600"}`}>
-                              {lead.status || "new"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(lead.createdAt)}</td>
-                          {canConvert && (
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {lead.convertedToAppointmentId ? (
-                                <span className="text-xs font-semibold text-emerald-600">✓ Converted</span>
-                              ) : (
+                      {leads.map((lead) => {
+                        const temperature = lead.leadTemperature || "unclassified";
+                        const hasBreakdown = (lead.qualificationBreakdown?.length ?? 0) > 0;
+                        const isExpanded = expandedLeadId === lead._id;
+                        return (
+                          <Fragment key={lead._id}>
+                            <tr className="hover:bg-gray-50 transition">
+                              <td className="px-4 py-3">
+                                <p className="font-medium text-gray-800">{lead.name || "—"}</p>
+                                <p className="text-xs text-gray-500">{lead.phone || ""}</p>
+                              </td>
+                              <td className="px-4 py-3 text-gray-700">{lead.service || "—"}</td>
+                              <td className="px-4 py-3 text-gray-700">{lead.location || "—"}</td>
+                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                                {lead.date ? `${lead.date}${lead.time ? ` · ${lead.time}` : ""}` : "—"}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[lead.status || "new"] || "bg-gray-100 text-gray-600"}`}>
+                                  {lead.status || "new"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
                                 <button
-                                  onClick={() => setConvertingLead(lead)}
-                                  className="text-xs font-semibold text-[#0B2560] hover:underline"
+                                  onClick={() => hasBreakdown && setExpandedLeadId(isExpanded ? null : lead._id)}
+                                  disabled={!hasBreakdown}
+                                  title={hasBreakdown ? "See why this lead scored this way" : "Not scored yet"}
+                                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${TEMPERATURE_COLORS[temperature] || TEMPERATURE_COLORS.unclassified} ${hasBreakdown ? "cursor-pointer hover:brightness-95" : "cursor-default"}`}
                                 >
-                                  Convert →
+                                  <span>{TEMPERATURE_ICONS[temperature] || "—"}</span>
+                                  {TEMPERATURE_LABELS[temperature] || temperature}
+                                  {typeof lead.leadScore === "number" && (
+                                    <span className="opacity-70">· {lead.leadScore}</span>
+                                  )}
+                                  {hasBreakdown && <span className="opacity-60">{isExpanded ? "▲" : "▼"}</span>}
                                 </button>
+                              </td>
+                              <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(lead.createdAt)}</td>
+                              {canConvert && (
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  {lead.convertedToAppointmentId ? (
+                                    <span className="text-xs font-semibold text-emerald-600">✓ Converted</span>
+                                  ) : (
+                                    <button
+                                      onClick={() => setConvertingLead(lead)}
+                                      className="text-xs font-semibold text-[#0B2560] hover:underline"
+                                    >
+                                      Convert →
+                                    </button>
+                                  )}
+                                </td>
                               )}
-                            </td>
-                          )}
-                        </tr>
-                      ))}
+                            </tr>
+                            {isExpanded && hasBreakdown && (
+                              <tr className="bg-gray-50/70">
+                                <td colSpan={canConvert ? 7 : 6} className="px-4 py-3">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                    Why {lead.name || "this lead"} scored {lead.leadScore ?? 0}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {lead.qualificationBreakdown!.map((entry, i) => (
+                                      <span key={entry.ruleId || i} className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
+                                        ✓ {entry.label || entry.ruleId}
+                                        <span className="font-semibold text-emerald-600">+{entry.points ?? 0}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

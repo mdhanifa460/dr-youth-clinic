@@ -12,6 +12,7 @@ import { sendWhatsAppText, sendWhatsAppTemplate } from "@/app/lib/whatsapp";
 import { getEffectiveBranchConfig } from "@/app/lib/branchConfig";
 import { getSiteConfig } from "@/app/lib/siteConfig";
 import { pushBookingToCrm } from "@/app/lib/crm/pushBooking";
+import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -95,6 +96,13 @@ export async function POST(req: NextRequest) {
     // the response the patient gets. No-ops silently if no CRM connector
     // is configured yet.
     pushBookingToCrm(booking).catch(() => {});
+
+    // Lead Qualification Engine — scores this booking against the
+    // admin-configured rules (Settings.leadQualification). No-ops silently
+    // if the engine isn't enabled yet. Fire-and-forget, same as the CRM
+    // push above — never lets a scoring hiccup affect the patient's
+    // booking confirmation.
+    qualifyAndPersist(booking, { reason: "auto:initial" }).catch(() => {});
 
     // Resolves this branch's outbound sender number, if one was configured
     // (LocationContent.clinicInfo.whatsappSenderPhoneNumberId) — falls back

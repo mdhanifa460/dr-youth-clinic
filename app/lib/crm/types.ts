@@ -28,6 +28,14 @@ export interface PlatformLead {
   location?: string;
   source: string; // "website" | "landing-page"
   notes?: string;
+  // Lead Qualification Engine output — optional, since a lead created
+  // while the engine is disabled (or scored before this field existed)
+  // has neither. No special-casing needed to carry these to a CRM: they
+  // flow through applyFieldMapping()/TRANSFORM_REGISTRY like any other
+  // field, mapped via a ConnectorFieldMapping row only if the CRM
+  // actually has a matching field to receive them.
+  leadScore?: number;
+  leadTemperature?: string;
 }
 
 export interface PlatformBooking extends PlatformLead {

@@ -4,6 +4,7 @@ import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
 import Booking from "@/app/models/Booking";
 import { getSettings } from "@/app/models/Settings";
 import { maskPhone } from "@/app/lib/phoneMask";
+import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   ).lean();
 
   if (!updated) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+
+  // Recompute Lead Qualification whenever a scoring-relevant field changed
+  // (status, treatmentValue, isReturnVisit are all in the scoring event
+  // catalog) — no-ops if the engine is disabled. Only writes a history row
+  // if the temperature actually moved, so routine PATCHes that don't change
+  // it (e.g. editing a note) don't bloat the audit trail.
+  const qualification = await qualifyAndPersist(
+    { ...(updated as any), _id: params.id },
+    { reason: "auto:status_change", actor: user._id ? String(user._id) : null }
+  ).catch(() => null);
+  if (qualification) {
+    (updated as any).leadScore = qualification.score;
+    (updated as any).leadTemperature = qualification.temperature;
+    (updated as any).qualificationBreakdown = qualification.breakdown;
+    (updated as any).qualificationVersion = qualification.version;
+  }
+
   return NextResponse.json({ success: true, data: updated });
 }
 
