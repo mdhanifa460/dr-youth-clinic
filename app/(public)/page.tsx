@@ -522,10 +522,19 @@ export default async function Home() {
 
   const faqItems: { question: string; answer: string }[] = enriched['faq']?.faqs ?? [];
   // Reuses the same homepage banner fetch above (heroBanners) rather than a
-  // second query — an admin opts a banner into the splash treatment
-  // additively (Banner → Where to Show → "Also show as a splash popup"),
+  // second query — an admin opts a banner into the Flash Offer Popup
+  // treatment additively (Banner → Presentation → "Flash Offer Popup"),
   // it isn't a separate banner type.
   const splashBanner = heroBanners.find((b: any) => b.splashEnabled) || null;
+  // Duplicate-popup fix: by default (splashAlsoInRotation: true) a popup
+  // banner ALSO appears in the normal hero carousel, matching the original
+  // splash's intended "in addition to, not instead of" behavior. An admin
+  // can opt a specific banner out of the carousel (splashAlsoInRotation:
+  // false) so it shows ONLY as the popup — carouselBanners (not
+  // heroBanners) is what actually feeds the hero slot below.
+  const carouselBanners = splashBanner && splashBanner.splashAlsoInRotation === false
+    ? heroBanners.filter((b: any) => String(b._id) !== String(splashBanner._id))
+    : heroBanners;
 
   return (
     <main>
@@ -539,10 +548,10 @@ export default async function Home() {
           // more than one — otherwise the existing HomepageSection-driven
           // HeroSection renders exactly as before; this feature never
           // deletes the original hero, only overrides it.
-          if (s.key === 'hero' && heroBanners.length > 0) {
+          if (s.key === 'hero' && carouselBanners.length > 0) {
             return (
               <div key={s.key}>
-                <BannerCarousel slides={heroBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={settings.display?.carouselIntervalMs ?? 6000} />
+                <BannerCarousel slides={carouselBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={settings.display?.carouselIntervalMs ?? 6000} />
               </div>
             );
           }

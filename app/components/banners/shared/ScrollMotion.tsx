@@ -11,7 +11,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 // dependency here (AnimatedBannerWrapper.tsx already loads it on every
 // page with any banner), so this adds no new bundle weight — see Task 8/9
 // of the Experience Engine design doc.
-function usePrefersReducedMotion(): boolean {
+export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");

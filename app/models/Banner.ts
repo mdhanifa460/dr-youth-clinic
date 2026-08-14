@@ -3,6 +3,14 @@ import type { BannerTemplateType } from "@/app/lib/banners/types";
 import type { ExperiencePresetId } from "@/app/lib/banners/experiencePresets";
 import { FocalPointSchema } from "@/app/models/shared/imageSchema";
 import type { FocalPoint } from "@/app/lib/media/focalPoint";
+import {
+  SPLASH_ANIMATION_STYLES,
+  SPLASH_SOUND_EFFECTS,
+  SPLASH_FREQUENCIES,
+  type SplashAnimationStyle,
+  type SplashSoundEffect,
+  type SplashFrequency,
+} from "@/app/lib/banners/popupOptions";
 
 export interface IBanner extends Document {
   title: string;
@@ -89,10 +97,35 @@ export interface IBanner extends Document {
   // may want to target individual service pages without targeting the
   // coarser category-listing page, or vice versa.
   showOnCategoryPage: boolean;
-  // Only meaningful when showOnHomepage is also true — see the matching
-  // comment on BannerDoc in app/lib/banners/types.ts.
+  // Flash Offer Popup — only meaningful when showOnHomepage is also true.
+  // See the matching comment on BannerDoc in app/lib/banners/types.ts.
+  // "splashEnabled" is the one field that turns this banner into a popup;
+  // every field below it only matters when splashEnabled is true, and all
+  // default to reproducing today's plain-fade/no-sound/no-blur behavior so
+  // existing splash banners render identically until an admin opts into
+  // the new controls.
   splashEnabled: boolean;
   splashAutoCloseSeconds: number;
+  // 'none' disables the entrance effect entirely. 'lottie' reuses the
+  // top-level lottieUrl field below (already schema-generic; the popup
+  // doesn't need its own lottieUrl/lottiePlacement pair — see
+  // PopupEntranceEffect.tsx).
+  splashAnimationStyle: SplashAnimationStyle;
+  // Sound never autoplays — see popupSound.ts. Enabled defaults false so
+  // no banner ever gains sound just by this field existing.
+  splashSound: { enabled: boolean; effect: SplashSoundEffect };
+  // blur in px (0 = none, matches today's no-blur look); darkness is the
+  // backdrop's black-overlay opacity (0-1, 0.6 matches today's hardcoded
+  // bg-black/60 exactly).
+  splashBackdrop: { blur: number; darkness: number };
+  splashShowCountdown: boolean;
+  splashFrequency: SplashFrequency;
+  // When false, this banner is excluded from the normal homepage hero
+  // rotation while still shown as the popup — see the duplicate-popup fix
+  // in app/(public)/page.tsx. Defaults true to preserve today's existing
+  // (both-at-once) behavior for already-live banners; new banners should
+  // be actively pointed at false by an admin who wants popup-only.
+  splashAlsoInRotation: boolean;
   targetPages: ("homepage" | "location" | "service" | "category")[];
   targetLocations: string[];
   targetServices: string[];
@@ -258,7 +291,19 @@ const BannerSchema = new Schema<IBanner>(
     showOnServicePage: { type: Boolean, default: false },
     showOnCategoryPage: { type: Boolean, default: false },
     splashEnabled: { type: Boolean, default: false },
-    splashAutoCloseSeconds: { type: Number, default: 5 },
+    splashAutoCloseSeconds: { type: Number, default: 5, min: 2, max: 15 },
+    splashAnimationStyle: { type: String, enum: [...SPLASH_ANIMATION_STYLES], default: "sparkle" },
+    splashSound: {
+      enabled: { type: Boolean, default: false },
+      effect: { type: String, enum: [...SPLASH_SOUND_EFFECTS], default: "soft-chime" },
+    },
+    splashBackdrop: {
+      blur: { type: Number, default: 0, min: 0, max: 20 },
+      darkness: { type: Number, default: 0.6, min: 0, max: 1 },
+    },
+    splashShowCountdown: { type: Boolean, default: true },
+    splashFrequency: { type: String, enum: [...SPLASH_FREQUENCIES], default: "once-per-session" },
+    splashAlsoInRotation: { type: Boolean, default: true },
     // Derived (see pre('save') hook below) — do not set independently from
     // the four booleans above.
     targetPages: { type: [String], enum: ["homepage", "location", "service", "category"], default: [] },

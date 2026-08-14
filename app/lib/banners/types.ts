@@ -3,6 +3,12 @@
 // ContentBlockTypeDef[] + a switch-based renderer) so "banner template type"
 // is registered/extended the same way "content block type" already is.
 
+import type {
+  SplashAnimationStyle,
+  SplashSoundEffect,
+  SplashFrequency,
+} from "@/app/lib/banners/popupOptions";
+
 export type BannerTemplateType =
   | "premium-hero"
   | "offer"
@@ -246,12 +252,20 @@ export interface BannerDoc {
   showOnLocationPage: boolean;
   showOnServicePage: boolean;
   showOnCategoryPage: boolean;
-  // Only meaningful when showOnHomepage is also true — shows this banner
-  // as an auto-dismissing modal splash on homepage load (in addition to,
-  // not instead of, its normal inline placement) rather than a static
-  // section the visitor has to scroll to. See HomepageOfferSplash.tsx.
+  // Flash Offer Popup — only meaningful when showOnHomepage is also true.
+  // Shows this banner as an auto-dismissing modal on homepage load, in
+  // addition to its normal inline hero placement by default (see
+  // splashAlsoInRotation) rather than a static section the visitor has to
+  // scroll to. See HomepageOfferSplash.tsx and app/(public)/page.tsx's
+  // carouselBanners/splashBanner split.
   splashEnabled: boolean;
   splashAutoCloseSeconds: number;
+  splashAnimationStyle: SplashAnimationStyle;
+  splashSound: { enabled: boolean; effect: SplashSoundEffect };
+  splashBackdrop: { blur: number; darkness: number };
+  splashShowCountdown: boolean;
+  splashFrequency: SplashFrequency;
+  splashAlsoInRotation: boolean;
   targetLocations: string[];
   targetServices: string[];
   targetCategories: string[];
