@@ -10,10 +10,22 @@ import BannerCTASection from "./fields/BannerCTASection";
 import BannerMediaFields from "./fields/BannerMediaFields";
 import BannerTemplateFields from "./fields/BannerTemplateFields";
 import BannerOverlayFields from "./fields/BannerOverlayFields";
+import BannerPresentationFields from "./fields/BannerPresentationFields";
 import BannerTargetingFields from "./fields/BannerTargetingFields";
 import BannerScheduleFields from "./fields/BannerScheduleFields";
 import BannerSmartRulesFields from "./fields/BannerSmartRulesFields";
 import AssetPickerModal from "./fields/AssetPickerModal";
+
+const TABS = [
+  "Content",
+  "Call to Action",
+  "Media",
+  "Presentation & Animation",
+  "Where to Show",
+  "Schedule & Priority",
+  "Advanced",
+] as const;
+type Tab = (typeof TABS)[number];
 
 export default function BannerEditPage() {
   const params = useParams();
@@ -32,6 +44,7 @@ export default function BannerEditPage() {
   const [libraryAssetsRaw, setLibraryAssetsRaw] = useState<any[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [doctors, setDoctors] = useState<{ _id: string; name: string; title: string }[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>("Content");
 
   useEffect(() => {
     // Only the Glass Hero's doctorHighlight picker needs this, but it's
@@ -139,11 +152,11 @@ export default function BannerEditPage() {
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{error}</p>}
 
       {/* Status — deliberately its own prominent bar right under the header,
-          not buried in the Schedule & Priority card below (where the actual
+          not buried in the Schedule & Priority tab below (where the actual
           status dropdown still lives, for reordering/bulk edits) — a banner
           that's fully configured but still "Draft" shows on none of the
           pages selected below, and that was easy to miss as a small select
-          next to "Priority". */}
+          next to "Priority". Always visible regardless of active tab. */}
       {banner.status === "draft" && (
         <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
           <p className="text-sm text-amber-800">
@@ -177,28 +190,69 @@ export default function BannerEditPage() {
         </div>
       )}
 
-      <BannerContentFields banner={banner} set={set} />
-      <BannerCTASection banner={banner} set={set} templateType={templateType} />
-      <BannerMediaFields banner={banner} set={set} templateType={templateType} />
-      <BannerTemplateFields
-        banner={banner}
-        set={set}
-        templateType={templateType}
-        doctors={doctors}
-        experienceAdvanced={experienceAdvanced}
-        setExperienceAdvanced={setExperienceAdvanced}
-        openAssetPicker={openAssetPicker}
-      />
-      <BannerOverlayFields banner={banner} set={set} />
-      <BannerTargetingFields banner={banner} set={set} openAssetPicker={openAssetPicker} />
-      <BannerScheduleFields banner={banner} set={set} />
-      <BannerSmartRulesFields
-        banner={banner}
-        set={set}
-        templateType={templateType}
-        smartRulesEnabled={smartRulesEnabled}
-        setSmartRulesEnabled={setSmartRulesEnabled}
-      />
+      {/* Tab bar */}
+      <div className="flex gap-1 overflow-x-auto border-b border-gray-200 -mb-px">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`shrink-0 px-4 py-2.5 text-sm font-semibold border-b-2 transition whitespace-nowrap ${
+              activeTab === tab
+                ? "border-[#0B2560] text-[#0B2560]"
+                : "border-transparent text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "Content" && (
+        <BannerContentFields banner={banner} set={set} />
+      )}
+
+      {activeTab === "Call to Action" && (
+        <BannerCTASection banner={banner} set={set} templateType={templateType} />
+      )}
+
+      {activeTab === "Media" && (
+        <>
+          <BannerMediaFields banner={banner} set={set} templateType={templateType} />
+          <BannerOverlayFields banner={banner} set={set} />
+          <BannerTemplateFields
+            banner={banner}
+            set={set}
+            templateType={templateType}
+            doctors={doctors}
+            experienceAdvanced={experienceAdvanced}
+            setExperienceAdvanced={setExperienceAdvanced}
+            openAssetPicker={openAssetPicker}
+          />
+        </>
+      )}
+
+      {activeTab === "Presentation & Animation" && (
+        <BannerPresentationFields banner={banner} set={set} openAssetPicker={openAssetPicker} />
+      )}
+
+      {activeTab === "Where to Show" && (
+        <BannerTargetingFields banner={banner} set={set} />
+      )}
+
+      {activeTab === "Schedule & Priority" && (
+        <BannerScheduleFields banner={banner} set={set} />
+      )}
+
+      {activeTab === "Advanced" && (
+        <BannerSmartRulesFields
+          banner={banner}
+          set={set}
+          templateType={templateType}
+          smartRulesEnabled={smartRulesEnabled}
+          setSmartRulesEnabled={setSmartRulesEnabled}
+        />
+      )}
 
       <AssetPickerModal
         open={assetPickerOpen}
