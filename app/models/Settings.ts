@@ -84,6 +84,21 @@ export interface ISettings extends Document {
     hotjarId: string;
     searchConsoleId: string;
   };
+  // Admin Event Manager — Key Events overlay for PREDEFINED events only
+  // (app/lib/analytics/eventRegistry.ts). Custom Events carry their own
+  // isKeyEvent field directly on the CustomAnalyticsEvent document since
+  // those documents are already fully admin-owned; predefined events are
+  // code-only/protected, so "marking one key" has to live as a separate,
+  // admin-mutable overlay rather than touching the registry itself.
+  // Phase 1: checklist/reference only — see the Key Events admin page's
+  // own disclaimer — this does NOT modify what any of the ~20 live
+  // predefined event call sites actually push to the dataLayer, and it
+  // does NOT remotely register a GA4 Key Event (no website-side API for
+  // that exists). Every name here is validated against
+  // PREDEFINED_EVENT_NAMES at save time.
+  analyticsEventManager: {
+    keyEventNames: string[];
+  };
   // Domain Migration dashboard (/admin/marketing-intelligence → Domain
   // Migration) — config for the two server-side, read-only Google API
   // adapters (app/lib/googleAnalytics.ts, app/lib/googleSearchConsole.ts).
@@ -448,6 +463,9 @@ const SettingsSchema = new Schema<ISettings>(
       clarityId:       { type: String, default: '' },
       hotjarId:        { type: String, default: '' },
       searchConsoleId: { type: String, default: '' },
+    },
+    analyticsEventManager: {
+      keyEventNames: { type: [String], default: [] },
     },
     domainMigration: {
       enabled:                  { type: Boolean, default: true },

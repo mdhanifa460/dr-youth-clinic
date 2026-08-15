@@ -36,7 +36,8 @@ export type AdminModule =
   | 'courses'
   | 'animation-library'
   | 'booking-success'
-  | 'integrations';
+  | 'integrations'
+  | 'analytics';
 
 export type AccessLevel = 'full' | 'view' | 'none';
 
@@ -49,7 +50,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'full',
+    integrations: 'full', analytics: 'full',
   },
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
@@ -59,7 +60,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'full',
+    integrations: 'full', analytics: 'full',
   },
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
@@ -69,7 +70,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'none',
+    integrations: 'none', analytics: 'full',
   },
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -79,7 +80,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', journey: 'full', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'view', 'animation-library': 'none', 'booking-success': 'view',
-    integrations: 'none',
+    integrations: 'none', analytics: 'none',
   },
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
@@ -92,7 +93,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none', 'booking-success': 'view',
-    integrations: 'none',
+    integrations: 'none', analytics: 'none',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
@@ -104,7 +105,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'none',
+    integrations: 'none', analytics: 'view',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -114,7 +115,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', journey: 'none', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'none', courses: 'none', 'animation-library': 'none', 'booking-success': 'none',
-    integrations: 'none',
+    integrations: 'none', analytics: 'none',
   },
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -125,7 +126,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none', 'booking-success': 'view',
-    integrations: 'none',
+    integrations: 'none', analytics: 'none',
   },
 };
 

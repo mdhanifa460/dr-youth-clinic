@@ -96,6 +96,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/business-intelligence", label: "🏢 Business Intelligence", module: "intelligence" },
       { href: "/admin/marketing-intelligence", label: "📱 Marketing Intelligence", module: "intelligence" },
       { href: "/admin/ai-intelligence", label: "🧠 AI Intelligence", module: "intelligence" },
+      { href: "/admin/analytics", label: "📈 Analytics Events", module: "analytics" },
       { href: "/admin/seo", label: "🔍 SEO", module: "seo" },
     ],
   },

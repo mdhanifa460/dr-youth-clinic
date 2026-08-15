@@ -3,6 +3,7 @@ import { Inter, Manrope } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
+import CustomEventListener from "@/app/components/analytics/CustomEventListener";
 import { getAnalyticsConfig } from "@/app/lib/analyticsConfig";
 
 // globals.css declares --font-body/--font-headline as "Inter"/"Manrope, Inter"
@@ -155,6 +156,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
 
         <CacheGuard />
+        {/* Admin Event Manager — fetches enabled Custom Events once and
+            wires up click/visibility/page-view triggers, firing through
+            the same pushDataLayerEvent() every predefined event already
+            uses. Renders nothing; a no-op if no custom events exist. */}
+        <CustomEventListener />
         {/* Visually hidden until focused — lets a keyboard user jump past the
             navbar straight to the page content instead of tabbing through
             every nav link and dropdown first. */}
