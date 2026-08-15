@@ -42,7 +42,19 @@ export async function GET(req: NextRequest) {
     }
     if (andConditions.length > 0) query.$and = andConditions;
 
-    const services = await Service.find(query as any).sort({ createdAt: -1 }).lean();
+    // Projected to exactly what the admin list page (app/admin/services/
+    // page.tsx) actually reads — that page deliberately fetches the whole
+    // catalogue once and filters client-side (see its own comment), but
+    // was doing so with the FULL document (narrative content, FAQs,
+    // keywords, meta description, etc.) for every one of ~80+ services on
+    // every single page load — a multi-hundred-KB payload for a list view
+    // that only ever shows name/location/category/price/status. Same "safe
+    // to cut" field-projection precedent already used by the admin
+    // Leads/Intelligence routes.
+    const services = await Service.find(query as any)
+      .select('name location targetLocations category price currency duration status heroImage createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, data: services });
   } catch (error) {
