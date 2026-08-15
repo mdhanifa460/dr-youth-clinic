@@ -23,7 +23,13 @@ import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
 // Display frequency (once per session / once per day / every session) is
 // admin-configurable via splashFrequency — see splashFrequency.ts. Default
 // remains "once per session," the original behavior.
-export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | null }) {
+//
+// forcePreview (admin preview page only): always opens regardless of
+// session/localStorage state, never writes to either storage on close (so
+// previewing repeatedly never suppresses a real visitor's first view or
+// gets suppressed by a prior real visit), and never logs analytics events
+// — a preview open/close/CTA-click is not a real visitor interaction.
+export default function HomepageOfferSplash({ banner, forcePreview = false }: { banner: BannerDoc | null; forcePreview?: boolean }) {
   const [open, setOpen] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -38,10 +44,10 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
 
   useEffect(() => {
     if (!banner) return;
-    if (!shouldShowSplash(String(banner._id), banner.splashFrequency || 'once-per-session')) return;
+    if (!forcePreview && !shouldShowSplash(String(banner._id), banner.splashFrequency || 'once-per-session')) return;
     setOpen(true);
     setRemaining(Math.max(2, banner.splashAutoCloseSeconds || 5));
-    if (viewTrackedForBannerId.current !== String(banner._id)) {
+    if (!forcePreview && viewTrackedForBannerId.current !== String(banner._id)) {
       viewTrackedForBannerId.current = String(banner._id);
       postBannerPopupEvent('flash_offer_view', {
         bannerId: String(banner._id),
@@ -50,7 +56,7 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [banner?._id]);
+  }, [banner?._id, forcePreview]);
 
   useEffect(() => {
     if (!open) return;
@@ -105,7 +111,7 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
 
   function close() {
     setOpen(false);
-    if (banner) {
+    if (banner && !forcePreview) {
       markSplashShown(String(banner._id), banner.splashFrequency || 'once-per-session');
       postBannerPopupEvent('flash_offer_close', {
         bannerId: String(banner._id),
@@ -119,15 +125,19 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
     if (banner) {
       // A real click, same as the 🔊 toggle — safe to play sound here too.
       // Skipped under reduced motion, same combined "minimal experience"
-      // rule the entrance effect follows.
+      // rule the entrance effect follows. Sound stays testable in preview
+      // (an admin clicking the preview CTA genuinely wants to hear it) —
+      // only analytics is preview-suppressed.
       if (!reduced && banner.splashSound?.enabled && banner.splashSound.effect) {
         playPopupSound(banner.splashSound.effect);
       }
-      postBannerPopupEvent('flash_offer_cta_click', {
-        bannerId: String(banner._id),
-        offerName: banner.headline || '',
-        page: 'homepage',
-      });
+      if (!forcePreview) {
+        postBannerPopupEvent('flash_offer_cta_click', {
+          bannerId: String(banner._id),
+          offerName: banner.headline || '',
+          page: 'homepage',
+        });
+      }
     }
     close();
   }
@@ -151,7 +161,7 @@ export default function HomepageOfferSplash({ banner }: { banner: BannerDoc | nu
 
   return (
     <div
-      className={`fixed inset-0 z-[200] flex items-center justify-center p-4 ${reduced ? '' : 'animate-[fadeIn_0.25s_ease-out]'}`}
+      className={`${forcePreview ? 'absolute' : 'fixed'} inset-0 z-[200] flex items-center justify-center p-4 ${reduced ? '' : 'animate-[fadeIn_0.25s_ease-out]'}`}
       style={{
         backgroundColor: `rgba(0,0,0,${backdrop.darkness ?? 0.6})`,
         backdropFilter: backdrop.blur ? `blur(${backdrop.blur}px)` : undefined,
