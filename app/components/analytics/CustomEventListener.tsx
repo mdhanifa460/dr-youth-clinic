@@ -7,12 +7,33 @@ import { resolveCustomEventParams } from '@/app/lib/analytics/resolveCustomEvent
 import type { CustomEventTriggerType, CustomEventParamSource } from '@/app/lib/analytics/customEventOptions';
 
 interface ActiveCustomEvent {
+  _id: string;
   name: string;
   triggerType: CustomEventTriggerType;
   elementId: string;
   pagePath: string;
   parameters: { name: string; source: CustomEventParamSource; value: string }[];
   isKeyEvent: boolean;
+}
+
+// Best-effort firing-history log (Phase 2) — a separate, non-blocking
+// write, never allowed to affect or delay the actual dataLayer push above
+// it. Same fire-and-forget shape as postBannerPopupEvent().
+function logCustomEventFiring(evt: ActiveCustomEvent, params: Record<string, unknown>) {
+  try {
+    fetch('/api/analytics/custom-events/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customEventId: evt._id,
+        name: evt.name,
+        params,
+        page: typeof window !== 'undefined' ? window.location.pathname : '',
+      }),
+    }).catch(() => {});
+  } catch {
+    // Never let logging break the page.
+  }
 }
 
 function fireCustomEvent(evt: ActiveCustomEvent, element: { dataset?: Record<string, string | undefined> } | null) {
@@ -22,6 +43,7 @@ function fireCustomEvent(evt: ActiveCustomEvent, element: { dataset?: Record<str
   // Event (no website-side API exists for that).
   if (evt.isKeyEvent) params.is_key_event = true;
   pushDataLayerEvent(evt.name, params);
+  logCustomEventFiring(evt, params);
 }
 
 // Mounted once in app/layout.tsx. Admin-configured Custom Events (see
@@ -39,6 +61,7 @@ export default function CustomEventListener() {
   const pathname = usePathname();
   const [events, setEvents] = useState<ActiveCustomEvent[] | null>(null);
   const visibleFired = useRef<Set<string>>(new Set());
+  const formStartFired = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +139,51 @@ export default function CustomEventListener() {
       clearTimeout(retry);
       observer.disconnect();
     };
+  }, [events]);
+
+  // Form Start (Phase 2) — elementId here holds a <form>'s own id
+  // attribute, matched via a single delegated 'focusin' listener (bubbles,
+  // unlike plain 'focus'). Fires once per form, the first time any field
+  // inside it receives focus/input.
+  useEffect(() => {
+    if (!events || events.length === 0) return;
+    const formStartEvents = events.filter((e) => e.triggerType === 'form_start' && e.elementId);
+    if (formStartEvents.length === 0) return;
+
+    function onFocusIn(e: FocusEvent) {
+      const target = e.target as HTMLElement | null;
+      const form = target?.closest?.('form[id]') as HTMLFormElement | null;
+      if (!form) return;
+      const match = formStartEvents.find((ev) => ev.elementId === form.id);
+      if (match && !formStartFired.current.has(match.name)) {
+        formStartFired.current.add(match.name);
+        fireCustomEvent(match, form);
+      }
+    }
+    document.addEventListener('focusin', onFocusIn);
+    return () => document.removeEventListener('focusin', onFocusIn);
+  }, [events]);
+
+  // Form Submit (Phase 2) — one delegated 'submit' listener on document.
+  // The native submit event is never dispatched at all when HTML5
+  // validation blocks the attempt, so validation-blocked attempts are
+  // already correctly excluded by the browser itself, not by this code.
+  // Fires every genuine submit (not one-shot, matching button_click/
+  // cta_click's repeat-fire semantics), since a visitor could legitimately
+  // resubmit after fixing an error.
+  useEffect(() => {
+    if (!events || events.length === 0) return;
+    const formSubmitEvents = events.filter((e) => e.triggerType === 'form_submit' && e.elementId);
+    if (formSubmitEvents.length === 0) return;
+
+    function onSubmit(e: SubmitEvent) {
+      const form = e.target as HTMLFormElement | null;
+      if (!form?.id) return;
+      const match = formSubmitEvents.find((ev) => ev.elementId === form.id);
+      if (match) fireCustomEvent(match, form);
+    }
+    document.addEventListener('submit', onSubmit);
+    return () => document.removeEventListener('submit', onSubmit);
   }, [events]);
 
   // Page view — checked on initial load once the event list is ready, and

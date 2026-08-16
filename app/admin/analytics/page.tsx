@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Edit, Trash2, Loader, Info } from "lucide-react";
 import { PREDEFINED_EVENTS } from "@/app/lib/analytics/eventRegistry";
 import { CUSTOM_EVENT_TRIGGER_TYPE_LABELS } from "@/app/lib/analytics/customEventOptions";
+import { HBarChart } from "@/app/admin/intelligence/components/Charts";
 
 const TABS = ["Overview", "Event Library", "Custom Events", "Key Events"] as const;
 type Tab = (typeof TABS)[number];
@@ -35,11 +36,25 @@ export default function AnalyticsEventManagerPage() {
   const [keyEventNames, setKeyEventNames] = useState<string[]>([]);
   const [savingKeyEvents, setSavingKeyEvents] = useState(false);
   const [keyEventsSaved, setKeyEventsSaved] = useState(false);
+  const [volume, setVolume] = useState<{ name: string; count: number }[]>([]);
+  const [volumeLoading, setVolumeLoading] = useState(true);
 
   useEffect(() => {
     loadCustomEvents();
     loadKeyEventNames();
+    loadVolume();
   }, []);
+
+  async function loadVolume() {
+    try {
+      setVolumeLoading(true);
+      const res = await fetch("/api/admin/analytics/custom-events/volume?days=30");
+      const data = await res.json();
+      if (data.success) setVolume(data.data);
+    } finally {
+      setVolumeLoading(false);
+    }
+  }
 
   async function loadCustomEvents() {
     try {
@@ -154,6 +169,22 @@ export default function AnalyticsEventManagerPage() {
             <p className="text-sm font-bold text-[#0B2560]">GTM / GA4 setup →</p>
             <p className="text-xs text-gray-500 mt-0.5">Manage tags &amp; IDs</p>
           </Link>
+
+          <div className="col-span-2 sm:col-span-4 bg-white rounded-2xl border border-gray-100 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-bold text-gray-700">Custom Event Firings — last 30 days</p>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Real Data</span>
+            </div>
+            {volumeLoading ? (
+              <div className="flex justify-center py-8"><Loader className="animate-spin text-gray-300" size={20} /></div>
+            ) : volume.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">
+                No custom events have fired yet. Once one is enabled and visitors trigger it, real counts show up here — predefined events aren't logged this way (see the Event Library note).
+              </p>
+            ) : (
+              <HBarChart data={volume.map((v) => ({ label: v.name, value: v.count }))} />
+            )}
+          </div>
         </div>
       )}
 

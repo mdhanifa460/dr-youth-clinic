@@ -47,6 +47,7 @@ export default function CustomEventForm({ initial, mode }: { initial?: Partial<C
   const set = (patch: Partial<CustomEventFormValue>) => setValue((v) => ({ ...v, ...patch }));
   const needsElementId = CUSTOM_EVENT_TRIGGER_TYPES_NEEDING_ELEMENT_ID.includes(value.triggerType);
   const isPageView = value.triggerType === "page_view";
+  const isFormTrigger = value.triggerType === "form_start" || value.triggerType === "form_submit";
 
   async function handleSave() {
     setSaving(true);
@@ -125,14 +126,19 @@ export default function CustomEventForm({ initial, mode }: { initial?: Partial<C
 
         {needsElementId && (
           <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1 block">Element ID</label>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">{isFormTrigger ? "Form ID" : "Element ID"}</label>
             <input
               value={value.elementId}
               onChange={(e) => set({ elementId: e.target.value })}
-              placeholder="flash-offer-book-now"
+              placeholder={isFormTrigger ? "consultation-form" : "flash-offer-book-now"}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-[11px] text-gray-400 mt-1 flex items-start gap-1"><Info size={12} className="shrink-0 mt-0.5" /> Must exactly match the element's id="..." attribute in the page's HTML — ask a developer if you're not sure what it is.</p>
+            <p className="text-[11px] text-gray-400 mt-1 flex items-start gap-1">
+              <Info size={12} className="shrink-0 mt-0.5" />
+              {isFormTrigger
+                ? "Must exactly match the <form id=\"...\"> attribute in the page's HTML — ask a developer if you're not sure what it is. Form Submit only fires on a genuine submit attempt; a browser-blocked (e.g. required field left empty) attempt never fires it."
+                : "Must exactly match the element's id=\"...\" attribute in the page's HTML — ask a developer if you're not sure what it is."}
+            </p>
           </div>
         )}
 

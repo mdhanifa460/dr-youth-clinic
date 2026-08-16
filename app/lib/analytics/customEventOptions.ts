@@ -6,17 +6,26 @@
 // caused Banner.templateType's enum bug earlier this session, and is the
 // same discipline app/lib/banners/popupOptions.ts already follows.
 
-// Phase 1 subset only — page_view/button_click/cta_click/element_visible
-// are the trigger types that don't need per-element disambiguation logic.
-// form_start/form_submit are deferred (see the plan's Phase 2 notes: they
-// need to identify WHICH form on a page, first-input vs. real-submit vs.
-// validation-blocked-attempt semantics — none of which the simpler
-// triggers below have to solve).
+// Phase 1 shipped page_view/button_click/cta_click/element_visible — the
+// trigger types that don't need per-element disambiguation logic.
+// Phase 2 adds form_start/form_submit, using the SAME elementId field
+// (holding the <form>'s own id attribute, not a button's) since a form is
+// just another single element to match by exact id — no new field needed.
+// form_submit listens for the browser's native `submit` event, which is
+// never dispatched at all when native HTML5 validation blocks the
+// attempt (required fields, etc.) — that's the browser's own behavior,
+// not something this code has to detect itself, and correctly excludes
+// validation-blocked attempts for any form using standard HTML5
+// validation. A form with fully custom JS validation that intercepts a
+// button click instead of a real submit is a known, documented edge case
+// this trigger type won't catch — use cta_click on that button instead.
 export const CUSTOM_EVENT_TRIGGER_TYPES = [
   "page_view",
   "button_click",
   "cta_click",
   "element_visible",
+  "form_start",
+  "form_submit",
 ] as const;
 export type CustomEventTriggerType = (typeof CUSTOM_EVENT_TRIGGER_TYPES)[number];
 
@@ -25,6 +34,8 @@ export const CUSTOM_EVENT_TRIGGER_TYPE_LABELS: Record<CustomEventTriggerType, st
   button_click: "Button Click",
   cta_click: "CTA Click",
   element_visible: "Element Visible",
+  form_start: "Form Start",
+  form_submit: "Form Submit",
 };
 
 // button_click and cta_click behave identically (both are exact-id click
@@ -36,6 +47,8 @@ export const CUSTOM_EVENT_TRIGGER_TYPES_NEEDING_ELEMENT_ID: CustomEventTriggerTy
   "button_click",
   "cta_click",
   "element_visible",
+  "form_start",
+  "form_submit",
 ];
 
 export const CUSTOM_EVENT_PARAM_SOURCES = ["static", "dataAttribute"] as const;
