@@ -171,21 +171,29 @@ function ReviewCard({
           activeClass="bg-[#0B2560]/10 text-[#0B2560]"
           inactiveClass="bg-gray-100 text-gray-500"
         />
-        {review.source !== 'google' && (
-          <button
-            onClick={() => onEdit(review)}
-            className="ml-auto flex items-center gap-1 text-[10px] text-[#3B82C4] hover:text-[#0B2560] font-semibold transition"
-          >
-            <Edit2 size={10} /> Edit
-          </button>
-        )}
+        <button
+          onClick={() => onEdit(review)}
+          className="ml-auto flex items-center gap-1 text-[10px] text-[#3B82C4] hover:text-[#0B2560] font-semibold transition"
+        >
+          <Edit2 size={10} /> {review.source === 'google' ? 'Classify' : 'Edit'}
+        </button>
       </div>
 
-      {/* Sync date for Google reviews */}
-      {review.source === 'google' && review.syncedAt && (
-        <p className="text-[9px] text-gray-300 -mt-1">
-          Synced {new Date(review.syncedAt).toLocaleDateString('en-IN')}
-        </p>
+      {/* Sync date + Maps link for Google reviews */}
+      {review.source === 'google' && (
+        <div className="flex items-center gap-2 -mt-1">
+          {review.syncedAt && (
+            <p className="text-[9px] text-gray-300">
+              Synced {new Date(review.syncedAt).toLocaleDateString('en-IN')}
+            </p>
+          )}
+          {review.meta?.googleMapsUrl && (
+            <a href={review.meta.googleMapsUrl} target="_blank" rel="noopener noreferrer"
+              className="text-[9px] text-[#3B82C4] hover:underline">
+              View on Google ↗
+            </a>
+          )}
+        </div>
       )}
     </div>
   );
@@ -228,6 +236,12 @@ function ReviewModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+  // Google's own content/identity is read-only here — same rule the
+  // backend enforces in app/lib/reviews/googleReviewSync.ts
+  // (stripGoogleProtectedFields), so a disabled field here can never
+  // silently "fail" to save; the server would ignore it anyway even if
+  // this check were removed. Location/Services/presentation stay editable.
+  const isGoogle = form.source === 'google';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,42 +272,70 @@ function ReviewModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl">
-          <h3 className="font-bold text-[#0B2560]">{initial._id ? 'Edit Review' : 'Add Review'}</h3>
+          <h3 className="font-bold text-[#0B2560]">
+            {isGoogle ? 'Classify Google Review' : initial._id ? 'Edit Review' : 'Add Review'}
+          </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {isGoogle && (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 text-[11px] text-blue-800 leading-relaxed">
+              This review came from Google — the reviewer's name, photo, rating, review text, and date are read-only
+              and update automatically on the next sync. You can still classify it (Location/Services) and control how
+              it's presented on the site below.
+              {form.syncedAt && (
+                <p className="mt-1 text-blue-600">Last synced: {new Date(form.syncedAt).toLocaleString('en-IN')}</p>
+              )}
+              {form.meta?.googleMapsUrl && (
+                <a href={form.meta.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block underline">
+                  View reviewer on Google Maps ↗
+                </a>
+              )}
+            </div>
+          )}
+
           {/* Source */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Source</label>
-            <select value={form.source} onChange={(e) => set('source', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-              <option value="manual">Manual (Verified Patient)</option>
-              <option value="video">Video Review</option>
-            </select>
+            {isGoogle ? (
+              <div className="w-full border border-gray-100 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-500 flex items-center gap-1.5">
+                <FaGoogle size={11} /> Google (read-only)
+              </div>
+            ) : (
+              <select value={form.source} onChange={(e) => set('source', e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                <option value="manual">Manual (Verified Patient)</option>
+                <option value="video">Video Review</option>
+              </select>
+            )}
           </div>
 
           {/* Author Name */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Patient Name *</label>
-            <input required value={form.authorName} onChange={(e) => set('authorName', e.target.value)}
-              placeholder="e.g. Priya S." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-xs font-semibold text-gray-600 mb-1">{isGoogle ? 'Reviewer' : 'Patient Name *'}</label>
+            <input required={!isGoogle} disabled={isGoogle} value={form.authorName} onChange={(e) => set('authorName', e.target.value)}
+              placeholder="e.g. Priya S."
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500" />
           </div>
 
           {/* Avatar URL (optional) */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Avatar URL (optional)</label>
-            <input value={form.authorAvatar} onChange={(e) => set('authorAvatar', e.target.value)}
-              placeholder="https://..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-          </div>
+          {!isGoogle && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Avatar URL (optional)</label>
+              <input value={form.authorAvatar} onChange={(e) => set('authorAvatar', e.target.value)}
+                placeholder="https://..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          )}
 
           {/* Rating */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Rating</label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} type="button" onClick={() => set('rating', n)}>
+                <button key={n} type="button" disabled={isGoogle} onClick={() => set('rating', n)}
+                  className="disabled:cursor-not-allowed">
                   {n <= form.rating
-                    ? <AiFillStar className="text-[#F5A623]" size={22} />
+                    ? <AiFillStar className={isGoogle ? 'text-[#F5A623]/50' : 'text-[#F5A623]'} size={22} />
                     : <AiOutlineStar className="text-gray-300" size={22} />}
                 </button>
               ))}
@@ -303,8 +345,9 @@ function ReviewModal({
           {/* Review text */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Review Text</label>
-            <textarea rows={3} value={form.reviewText} onChange={(e) => set('reviewText', e.target.value)}
-              placeholder="What the patient said..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" />
+            <textarea rows={3} disabled={isGoogle} value={form.reviewText} onChange={(e) => set('reviewText', e.target.value)}
+              placeholder="What the patient said..."
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none disabled:bg-gray-50 disabled:text-gray-500" />
           </div>
 
           {/* Video URL (only for video source) */}
@@ -343,9 +386,9 @@ function ReviewModal({
 
           {/* Date */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Review Date</label>
-            <input type="date" value={form.reviewDate} onChange={(e) => set('reviewDate', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-xs font-semibold text-gray-600 mb-1">{isGoogle ? 'Published Date' : 'Review Date'}</label>
+            <input type="date" disabled={isGoogle} value={form.reviewDate?.slice ? form.reviewDate.slice(0, 10) : form.reviewDate} onChange={(e) => set('reviewDate', e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500" />
           </div>
 
           {/* Toggles */}
@@ -403,7 +446,17 @@ export default function ReviewsAdminPage() {
   const [homepageOnly, setHomepageOnly] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [syncIsError, setSyncIsError] = useState(false);
+  const [lastSync, setLastSync] = useState<{ lastSyncAt: string | null; lastSyncStatus: string | null } | null>(null);
   const [modal, setModal] = useState<any | null>(null); // null = closed, {} = new, {...} = edit
+
+  const fetchSyncStatus = async () => {
+    try {
+      const res = await fetch('/api/admin/reviews/sync-status');
+      const d = await res.json();
+      if (d.success) setLastSync(d.state);
+    } catch {}
+  };
 
   // Fetch the full (bounded — API already caps at 200) review list once.
   // Five independent filters (tab/location/rating/featured/homepage) used
@@ -419,7 +472,7 @@ export default function ReviewsAdminPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchReviews(); }, []);
+  useEffect(() => { fetchReviews(); fetchSyncStatus(); }, []);
 
   // Scoped by locationFilter only, same semantic the API previously
   // enforced server-side ("counts must reflect the location filter only,
@@ -490,19 +543,27 @@ export default function ReviewsAdminPage() {
   const syncGoogle = async () => {
     setSyncing(true);
     setSyncMsg('');
+    setSyncIsError(false);
     try {
       const res = await fetch('/api/admin/reviews/sync-google', { method: 'POST' });
       const d = await res.json();
       if (d.success) {
-        setSyncMsg(`✓ Synced ${d.synced} reviews (${d.created} new, ${d.updated} updated)`);
+        const parts = [`Imported: ${d.imported ?? 0}`, `Updated: ${d.updated ?? 0}`, `Unchanged: ${d.unchanged ?? 0}`, `Failed: ${d.failed ?? 0}`];
+        setSyncMsg(`✓ Google Sync Complete — ${parts.join(', ')}`);
+        setSyncIsError(false);
         fetchReviews();
       } else {
+        // Cooldown (429) reads the same as any other blocked attempt — the
+        // message already says how long to wait.
         setSyncMsg(`⚠ ${d.message}`);
+        setSyncIsError(true);
       }
     } catch {
       setSyncMsg('⚠ Sync failed. Check your connection.');
+      setSyncIsError(true);
     }
     setSyncing(false);
+    fetchSyncStatus();
   };
 
   // True global counts from the API's $group aggregation (scoped only by the
@@ -532,28 +593,44 @@ export default function ReviewsAdminPage() {
             Manage patient reviews from all sources. Homepage layout is configured in Homepage → Testimonials.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={syncGoogle}
-            disabled={syncing}
-            className="flex items-center gap-2 border border-[#EA4335] text-[#EA4335] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#EA4335]/5 transition disabled:opacity-60"
-          >
-            {syncing ? <Loader size={14} className="animate-spin" /> : <FaGoogle size={13} />}
-            {syncing ? 'Syncing…' : 'Sync Google'}
-          </button>
-          <button
-            onClick={() => setModal({})}
-            className="flex items-center gap-2 bg-[#0B2560] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#0d2d73] transition"
-          >
-            <Plus size={15} /> Add Review
-          </button>
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={syncGoogle}
+              disabled={syncing}
+              className="flex items-center gap-2 border border-[#EA4335] text-[#EA4335] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#EA4335]/5 transition disabled:opacity-60"
+            >
+              {syncing ? <Loader size={14} className="animate-spin" /> : <FaGoogle size={13} />}
+              {syncing ? 'Syncing…' : 'Sync Google'}
+            </button>
+            <button
+              onClick={() => setModal({})}
+              className="flex items-center gap-2 bg-[#0B2560] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#0d2d73] transition"
+            >
+              <Plus size={15} /> Add Review
+            </button>
+          </div>
+          {lastSync?.lastSyncAt && (
+            <p className="text-[10px] text-gray-400">
+              Last Google Sync: {new Date(lastSync.lastSyncAt).toLocaleString('en-IN')}
+              {lastSync.lastSyncStatus === 'error' && <span className="text-red-500 ml-1">(last attempt failed)</span>}
+            </p>
+          )}
         </div>
       </div>
+
+      {/* Google's own limitation — always visible, not just after a sync,
+          so nobody assumes a full historical import ever happened. */}
+      <p className="text-[11px] text-gray-400 mb-4 flex items-start gap-1.5">
+        <FaGoogle size={10} className="shrink-0 mt-0.5" />
+        Google currently returns up to 5 most relevant reviews per Place Details request. Sync does not represent a
+        complete historical Google review import.
+      </p>
 
       {/* Sync status message */}
       {syncMsg && (
         <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-medium ${
-          syncMsg.startsWith('✓') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+          syncIsError ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' : 'bg-green-50 text-green-700 border border-green-200'
         }`}>
           {syncMsg}
           {syncMsg.includes('GOOGLE_PLACES_API_KEY') && (

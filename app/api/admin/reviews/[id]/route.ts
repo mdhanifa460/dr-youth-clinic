@@ -3,12 +3,23 @@ import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Review } from '@/app/models/Review';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { stripGoogleProtectedFields } from '@/app/lib/reviews/googleReviewSync';
 
 const PATCH_ALLOWED = [
   'isVisible', 'isFeatured', 'showOnHomepage', 'displayOrder',
   'authorName', 'authorAvatar', 'rating', 'reviewText',
   'videoUrl', 'videoThumbnail', 'services', 'location', 'reviewDate',
 ] as const;
+
+// Google's own content/identity is protected via stripGoogleProtectedFields
+// (app/lib/reviews/googleReviewSync.ts) — sync-google/route.ts is the only
+// writer allowed to touch those fields for a source:'google' review. The
+// admin UI hides the inputs for these on a Google review, but that's
+// UI-only; without this, a direct PATCH/PUT call could still overwrite
+// them. Silently dropped (not rejected) rather than failing the whole
+// request, since the admin modal is reused as-is and still submits these
+// fields (disabled, unchanged) alongside a legitimate Location/Services/
+// toggle edit — a hard rejection would break that save for no reason.
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const denied = await requirePermission('reviews', 'full');
@@ -18,10 +29,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     await connectDB();
     const body = await req.json();
     // Allowlist fields — never forward raw body to $set
-    const patch: Record<string, any> = {};
+    let patch: Record<string, any> = {};
     for (const key of PATCH_ALLOWED) {
       if (key in body) patch[key] = body[key];
     }
+
+    const existing = await (Review as any).findById(params.id).select('source').lean();
+    if (!existing) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    if (existing.source === 'google') patch = stripGoogleProtectedFields(patch);
+
     if (Object.keys(patch).length === 0) {
       return NextResponse.json({ success: false, message: 'No valid fields' }, { status: 400 });
     }
@@ -41,7 +57,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     await connectDB();
     const body = await req.json();
-    const update: Record<string, any> = {
+
+    const existing = await (Review as any).findById(params.id).select('source').lean();
+    if (!existing) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+
+    let update: Record<string, any> = {
       authorName: body.authorName?.trim(),
       authorAvatar: body.authorAvatar || '',
       rating: body.rating !== undefined ? Number(body.rating) : undefined,
@@ -58,6 +78,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     };
     // Remove undefined keys
     Object.keys(update).forEach((k) => update[k] === undefined && delete update[k]);
+    if (existing.source === 'google') update = stripGoogleProtectedFields(update);
 
     const review = await (Review as any).findByIdAndUpdate(
       params.id,
