@@ -1,9 +1,14 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SliderCard from '@/app/components/SliderCard';
+
+// Auto-advance interval — same scale as TestimonialsSlider.tsx's 4000ms
+// default (this tray shows partial next/previous cards rather than a full
+// hero image, so it doesn't need BannerCarousel's slower 6000ms).
+const AUTO_SCROLL_MS = 4000;
 
 const FALLBACK_PAIRS = [
   { title: 'Acne Therapy & Scar Solution', description: 'Treatments that smooth, clarify & restore natural skin texture.', category: 'Skin Care' },
@@ -30,6 +35,12 @@ export default function BeforeAfterSection({ data }: { data: any }) {
 
   const displayPairs = (pairs.length > 0 ? pairs : FALLBACK_PAIRS).slice(0, 6);
   const trayRef = useRef<HTMLDivElement>(null);
+  // Paused while the visitor is actively engaging with the tray — hovering
+  // (desktop), touching (mobile swipe), or dragging a card's own
+  // before/after divider (useBeforeAfterDrag.ts) — so auto-advance never
+  // fights a manual scroll or an in-progress divider drag. Same `paused`
+  // pattern as BannerCarousel.tsx.
+  const [paused, setPaused] = useState(false);
 
   const scrollByCard = (dir: 1 | -1) => {
     const el = trayRef.current;
@@ -38,6 +49,22 @@ export default function BeforeAfterSection({ data }: { data: any }) {
     const step = (card?.offsetWidth || el.clientWidth * 0.85) + 20; // + gap
     el.scrollBy({ left: dir * step, behavior: 'smooth' });
   };
+
+  // Auto-advance — one card at a time, wrapping back to the start once the
+  // tray is scrolled (near) all the way to the end. Manual arrow clicks and
+  // touch swipes keep working as before; this just adds a passive tick so
+  // visitors who never touch the arrows still see more than the first row.
+  useEffect(() => {
+    if (paused || displayPairs.length <= 1) return;
+    const timer = setInterval(() => {
+      const el = trayRef.current;
+      if (!el) return;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8;
+      if (atEnd) el.scrollTo({ left: 0, behavior: 'smooth' });
+      else scrollByCard(1);
+    }, AUTO_SCROLL_MS);
+    return () => clearInterval(timer);
+  }, [paused, displayPairs.length]);
 
   return (
     <section id="results" className="py-12 md:py-16 lg:py-20 bg-[#F5F1EC] relative overflow-hidden">
@@ -95,6 +122,10 @@ export default function BeforeAfterSection({ data }: { data: any }) {
         {/* TRAY — 1 card on mobile (with a peek of the next), 2 on tablet, 3 on desktop */}
         <div
           ref={trayRef}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onTouchStart={() => setPaused(true)}
+          onTouchEnd={() => setPaused(false)}
           className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-[#0B2560]/10 [&::-webkit-scrollbar-thumb]:rounded-full"
         >
           {displayPairs.map((pair: any, i: number) => (
