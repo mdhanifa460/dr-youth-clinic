@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { headers, cookies } from "next/headers";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
+import { resolveFooterHref, resolveFooterLocation, LOCATION_COOKIE } from "@/app/lib/footerLinks";
 import type { SiteConfig } from "@/app/lib/siteConfig";
 
 const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
@@ -14,6 +16,15 @@ const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_C
 export default async function Footer({ data, siteConfig }: { data?: any; siteConfig?: SiteConfig }) {
   const resolvedData = data ?? HOMEPAGE_DEFAULTS.footer.data;
   const logoUrl = siteConfig?.logoUrl || DEFAULT_LOGO_URL;
+
+  // Same signals Navbar.tsx uses client-side (current city from the URL,
+  // else the visitor's detected/preferred city) — read server-side here via
+  // the x-pathname header middleware.ts already sets on every request (see
+  // app/admin/layout.tsx for the existing precedent of reading it) plus the
+  // preferred_location cookie middleware.ts already writes.
+  const pathname = headers().get("x-pathname") ?? "";
+  const cookieLocation = cookies().get(LOCATION_COOKIE)?.value || "";
+  const location = resolveFooterLocation(pathname, cookieLocation);
 
   const {
     tagline = "",
@@ -55,7 +66,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
               {quickLinks.map((l: any, i: number) => (
                 <li key={i}>
                   <Link
-                    href={l.href}
+                    href={resolveFooterHref(l.href, l.label, location)}
                     className="block py-1.5 text-white/60 text-sm hover:text-white transition"
                   >
                     {l.label}
@@ -72,7 +83,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
               {procedures.map((p: any, i: number) => (
                 <li key={i}>
                   <Link
-                    href={p.href}
+                    href={resolveFooterHref(p.href, p.label, location)}
                     className="block py-1.5 text-white/60 text-sm hover:text-white transition"
                   >
                     {p.label}

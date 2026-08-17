@@ -436,8 +436,15 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       quickLinks: [
         { label: 'Home', href: '/' },
         { label: 'About Us', href: '/about' },
-        // No bare /services route exists — services are always city-scoped
-        // (/[city]/services). Same fallback Navbar.tsx already uses for this.
+        // '/#services' and '/#contact' are sentinel values, not literal
+        // anchors — no bare /services route exists (services are always
+        // city-scoped, /[city]/services), so Footer.tsx's resolveFooterHref
+        // rewrites these to a real, city-scoped page at render time (the
+        // visitor's current/preferred city, same detection Navbar.tsx uses).
+        // Kept as sentinels (not hardcoded to one city) so the same default
+        // resolves correctly for every visitor regardless of which city
+        // they're browsing. Any href an admin edits to something else via
+        // Admin → Homepage → Footer is left untouched.
         { label: 'Procedures', href: '/#services' },
         { label: 'Results', href: '/results' },
         { label: 'Blog', href: '/blog' },
@@ -446,6 +453,9 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         { label: 'Contact Us', href: '/#contact' },
       ],
       proceduresHeading: 'Our Procedures',
+      // See the sentinel-href note above — each of these resolves to its
+      // own category page (e.g. /[location]/services/hair), not a shared
+      // one, via Footer.tsx's PROCEDURE_CATEGORY_BY_LABEL map.
       procedures: [
         { label: 'Hair Transplant', href: '/#services' },
         { label: 'PRP Therapy', href: '/#services' },
