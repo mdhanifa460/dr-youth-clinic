@@ -5,6 +5,7 @@ import { Settings, getSettings } from '@/app/models/Settings';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { extractSearchConsoleToken } from '@/app/lib/searchConsole';
 import { mergeSettingsUpdate } from '@/app/lib/settingsMerge';
+import { validateTrackingIds, type TrackingIdField } from '@/app/lib/analytics/validateTrackingIds';
 
 export async function GET() {
   const denied = await requirePermission('settings', 'view');
@@ -36,6 +37,29 @@ export async function PUT(req: NextRequest) {
     // only — every other settings field passes through unchanged.
     if (body?.analytics && typeof body.analytics.searchConsoleId === 'string') {
       body.analytics.searchConsoleId = extractSearchConsoleToken(body.analytics.searchConsoleId);
+    }
+
+    // GTM/GA4/Meta Pixel/Clarity/Hotjar IDs are pushed straight into a
+    // live script tag on every public page (see app/layout.tsx) — unlike
+    // searchConsoleId above, an obviously malformed value here isn't
+    // silently corrected, it's rejected outright with a clear message, so
+    // a stray typo can never get persisted and injected as-is. Scoped to
+    // exactly these five fields; everything else in `body.analytics`
+    // (gtmEnabled, gtmAuth, gtmPreview, …) passes through unchanged.
+    if (body?.analytics) {
+      const fieldsToCheck: TrackingIdField[] = ['gtmId', 'ga4Id', 'metaPixelId', 'clarityId', 'hotjarId'];
+      const values: Partial<Record<TrackingIdField, string>> = {};
+      for (const field of fieldsToCheck) {
+        if (typeof body.analytics[field] === 'string') values[field] = body.analytics[field];
+      }
+      const { trimmed, errors } = validateTrackingIds(values);
+      if (Object.keys(errors).length > 0) {
+        return NextResponse.json(
+          { success: false, message: Object.values(errors).join(' '), fieldErrors: errors },
+          { status: 400 }
+        );
+      }
+      Object.assign(body.analytics, trimmed);
     }
 
     const existing = await Settings.findOne({} as any).lean();

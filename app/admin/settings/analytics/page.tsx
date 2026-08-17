@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Save, ChevronDown } from "lucide-react";
+import { validateTrackingIds, type TrackingIdField } from "@/app/lib/analytics/validateTrackingIds";
 
 type AnalyticsSettings = {
   gtmEnabled: boolean;
@@ -78,6 +79,34 @@ function StatusBadge({ status }: { status: "gtm" | "direct" | "off" }) {
   );
 }
 
+function InlineFieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="text-[11px] text-red-600 mt-1.5 flex items-center gap-1">
+      <AlertCircle size={11} className="shrink-0" /> {message}
+    </p>
+  );
+}
+
+// "Configured" (saved to the DB) vs "Detected on this page load" (GTM's own
+// window.google_tag_manager global actually present right now) are two
+// different claims — this never asserts detection proves GA4 itself fired,
+// only that GTM's container executed on this page.
+function DetectionRow({ gtmDetected, dataLayerDetected }: { gtmDetected: boolean; dataLayerDetected: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-gray-400 mt-2">
+      <span className="flex items-center gap-1.5">
+        <span className={`w-1.5 h-1.5 rounded-full inline-block ${gtmDetected ? "bg-emerald-500" : "bg-gray-300"}`} />
+        GTM container {gtmDetected ? "detected on this page load" : "not detected on this page load"}
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className={`w-1.5 h-1.5 rounded-full inline-block ${dataLayerDetected ? "bg-emerald-500" : "bg-gray-300"}`} />
+        dataLayer {dataLayerDetected ? "receiving pushes" : "empty"}
+      </span>
+    </div>
+  );
+}
+
 export default function AnalyticsSettingsPage() {
   const [form, setForm] = useState<AnalyticsSettings>(DEFAULTS);
   const [dmForm, setDmForm] = useState<DomainMigrationSettings>(DM_DEFAULTS);
@@ -86,6 +115,14 @@ export default function AnalyticsSettingsPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [gtmAdvancedOpen, setGtmAdvancedOpen] = useState(false);
+  // GTM's own globals — present once its script has actually executed on
+  // THIS page load, not just whatever's saved in the DB. Read once on
+  // mount so the page can show "Configured" (from the saved value below)
+  // separately from "Detected on this page load" (this admin page loads
+  // GTM/GA4 the exact same way the public site does, via app/layout.tsx —
+  // no separate script injection here).
+  const [gtmDetected, setGtmDetected] = useState(false);
+  const [dataLayerDetected, setDataLayerDetected] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -96,6 +133,10 @@ export default function AnalyticsSettingsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    const w = window as any;
+    setGtmDetected(typeof w.google_tag_manager !== "undefined");
+    setDataLayerDetected(Array.isArray(w.dataLayer) && w.dataLayer.length > 0);
   }, []);
 
   function set<K extends keyof AnalyticsSettings>(key: K, val: AnalyticsSettings[K]) {
@@ -105,7 +146,24 @@ export default function AnalyticsSettingsPage() {
     setDmForm((f) => ({ ...f, [key]: val }));
   }
 
+  // Same validators the server enforces (app/api/admin/settings/route.ts)
+  // — computed live so an admin sees a problem before clicking Save, not
+  // just after a rejected PUT. Empty is always valid (means "not set").
+  const fieldErrors = useMemo(() => {
+    const { errors } = validateTrackingIds({
+      gtmId: form.gtmId,
+      ga4Id: form.ga4Id,
+      metaPixelId: form.metaPixelId,
+      clarityId: form.clarityId,
+      hotjarId: form.hotjarId,
+    });
+    return errors;
+  }, [form.gtmId, form.ga4Id, form.metaPixelId, form.clarityId, form.hotjarId]);
+
   async function save() {
+    const firstError = (Object.values(fieldErrors) as (string | undefined)[]).find(Boolean);
+    if (firstError) { setError(firstError); setSuccess(false); return; }
+
     setSaving(true); setError(""); setSuccess(false);
     try {
       const res = await fetch("/api/admin/settings", {
@@ -220,11 +278,13 @@ export default function AnalyticsSettingsPage() {
                 placeholder="GTM-XXXXXXX"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
               />
+              <InlineFieldError message={fieldErrors.gtmId} />
               <p className="text-[11px] text-gray-400 mt-1.5">
                 Find this in Google Tag Manager → Admin → Container Settings. While this is on, GA4 and Meta Pixel
                 below will NOT load directly — configure them as tags inside this GTM container instead, so nothing
                 fires twice.
               </p>
+              {gtmActive && <DetectionRow gtmDetected={gtmDetected} dataLayerDetected={dataLayerDetected} />}
             </div>
 
             <button
@@ -290,6 +350,7 @@ export default function AnalyticsSettingsPage() {
                 placeholder="G-XXXXXXXXXX"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
               />
+              <InlineFieldError message={fieldErrors.ga4Id} />
             </div>
             <p className="text-[11px] text-gray-400">
               {gtmActive
@@ -323,6 +384,7 @@ export default function AnalyticsSettingsPage() {
                 placeholder="1234567890123"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
               />
+              <InlineFieldError message={fieldErrors.metaPixelId} />
             </div>
             <p className="text-[11px] text-gray-400">
               {gtmActive
@@ -353,6 +415,7 @@ export default function AnalyticsSettingsPage() {
                 placeholder="abc123def"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
               />
+              <InlineFieldError message={fieldErrors.clarityId} />
             </div>
             <p className="text-[11px] text-gray-400">
               Free session recordings and heatmaps. Get it at clarity.microsoft.com
@@ -394,6 +457,7 @@ export default function AnalyticsSettingsPage() {
                 placeholder="1234567"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
               />
+              <InlineFieldError message={fieldErrors.hotjarId} />
             </div>
             <p className="text-[11px] text-gray-400">
               Optional — overlaps with Clarity. Use one or the other.

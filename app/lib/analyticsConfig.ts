@@ -24,6 +24,14 @@ const EMPTY_CONFIG: AnalyticsConfig = {
   ga4Id: '', metaPixelId: '', clarityId: '', hotjarId: '', searchConsoleId: '',
 };
 
+// The single invariant every duplication guard in app/layout.tsx (GA4/Meta
+// direct-load) and app/lp/[slug]/page.tsx (per-LP tags) depends on —
+// pulled out as its own named, pure function so it's independently unit
+// testable without needing to mock connectDB()/getSettings().
+export function deriveGtmActive(gtmEnabled: boolean, gtmId: string): boolean {
+  return gtmEnabled && !!gtmId;
+}
+
 export async function getAnalyticsConfig(): Promise<AnalyticsConfig> {
   try {
     await connectDB();
@@ -35,7 +43,7 @@ export async function getAnalyticsConfig(): Promise<AnalyticsConfig> {
       gtmId,
       gtmAuth:         settings.analytics?.gtmAuth         || '',
       gtmPreview:      settings.analytics?.gtmPreview      || '',
-      gtmActive:       gtmEnabled && !!gtmId,
+      gtmActive:       deriveGtmActive(gtmEnabled, gtmId),
       ga4Id:           settings.analytics?.ga4Id           || '',
       metaPixelId:     settings.analytics?.metaPixelId     || '',
       clarityId:       settings.analytics?.clarityId       || '',
