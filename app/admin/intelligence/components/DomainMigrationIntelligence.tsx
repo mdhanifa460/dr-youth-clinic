@@ -17,6 +17,7 @@
 import { useEffect, useState } from 'react';
 import { SectionHeader, StatCard, HBarChart, DonutChart, InsightCard } from './Charts';
 import { Loader2, AlertCircle, ExternalLink, ShieldCheck, ShieldAlert, ShieldQuestion, HelpCircle } from 'lucide-react';
+import RedirectMappingsPanel from './RedirectMappingsPanel';
 
 interface DomainMigrationData {
   success: boolean;
@@ -101,8 +102,12 @@ export default function DomainMigrationIntelligence({ data: _data }: { data: any
       <div className="space-y-6">
         <SectionHeader title="Domain Migration" subtitle="Compare traffic, SEO, leads, and bookings between the old and new domain." badge="Marketing Analytics" />
         <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-600">
-          This panel is turned off. Enable it in Settings → Analytics → Domain Migration.
+          The traffic-comparison dashboard is turned off. Enable it in Settings → Analytics → Domain Migration.
         </div>
+        {/* URL redirect mapping is independent of the analytics-comparison
+            toggle above — it works purely off the site's own DB/sitemap
+            import, no GA4/GSC config required. */}
+        <RedirectMappingsPanel />
       </div>
     );
   }
@@ -321,6 +326,9 @@ export default function DomainMigrationIntelligence({ data: _data }: { data: any
           Traffic-share trend (vs. just leads/bookings) will appear here once GA4's old-domain-tagged custom dimension is live — see the setup notice above.
         </div>
       </div>
+
+      {/* F — URL redirect mapping (sitemap import → review → approve) */}
+      <RedirectMappingsPanel />
     </div>
   );
 }

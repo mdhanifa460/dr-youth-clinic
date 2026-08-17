@@ -131,6 +131,41 @@ export async function getGscOverview(siteUrl: string, days: number): Promise<Gsc
   }
 }
 
+// A focused, parameterized page-list query — additive, not a replacement
+// for getGscOverview() above (which stays exactly as-is for the dashboard's
+// existing 25-row/N-day contract). Used by the Domain Migration URL-
+// redirect-mapping feature (app/lib/domainMigration/) to pull a much
+// broader page list (higher row limit, longer lookback) as a second
+// old-URL-inventory source alongside a sitemap import — GSC's own crawl
+// history surfaces pages that got real traffic even if a stale/incomplete
+// old sitemap missed them.
+export async function getGscTopPages(siteUrl: string, days: number, rowLimit: number): Promise<GscPageRow[]> {
+  if (!siteUrl) return [];
+  const auth = getAuth();
+  if (!auth) return [];
+
+  const searchconsole = google.searchconsole({ version: 'v1', auth });
+  const endDate = new Date().toISOString().slice(0, 10);
+  const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+
+  try {
+    const res = await searchconsole.searchanalytics.query({
+      siteUrl,
+      requestBody: { startDate, endDate, dimensions: ['page'], rowLimit },
+    });
+    return (res.data.rows || []).map((r) => ({
+      page: r.keys?.[0] || '',
+      clicks: r.clicks || 0,
+      impressions: r.impressions || 0,
+      ctr: r.ctr || 0,
+      position: r.position || 0,
+    }));
+  } catch (e) {
+    console.error('[googleSearchConsole] getGscTopPages query failed', e);
+    return [];
+  }
+}
+
 // Checks whether a specific old-domain URL currently resolves (via the
 // live redirect chain) to a real page on the new domain — the basis for
 // the Domain Migration panel's "flagged" old-URL rows (a 404 or a
