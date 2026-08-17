@@ -28,7 +28,11 @@ const REFERENCE_TYPES = new Set([
   "comparison-block",
 ]);
 
-function isBlockEmpty(block: ContentBlock): boolean {
+// Exported for reuse outside computeContentHealth — e.g. the site-wide
+// /admin/content-health dashboard's "no supporting content" check, which
+// needs to know whether a Service's own embedded before-after block (inside
+// narrativeBlocks) is actually filled in, not just present.
+export function isBlockEmpty(block: ContentBlock): boolean {
   const data = block.data || {};
   switch (block.type) {
     case "heading":

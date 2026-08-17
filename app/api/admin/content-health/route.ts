@@ -7,6 +7,7 @@ import { Video } from '@/app/models/Video';
 import { Result } from '@/app/models/Result';
 import { Faq } from '@/app/models/Faq';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { isBlockEmpty } from '@/app/lib/contentBlocks/health';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export async function GET() {
     await connectDB();
 
     const [services, doctors, blogs, videos, results, faqs] = await Promise.all([
-      (Service as any).find({ status: 'active' }).select('name category seoScore heroImage').lean(),
+      (Service as any).find({ status: 'active' }).select('name category seoScore heroImage narrativeBlocks').lean(),
       (Doctor as any).find({ active: true }).select('name photo bio qualifications').lean(),
       (Blog as any).find({ active: true }).select('title reviewedByDoctorId excerpt').lean(),
       (Video as any).find({ status: 'published' }).select('service').lean(),
@@ -56,6 +57,22 @@ export async function GET() {
     for (const v of videos) if (v.service) servicesWithContent.add(String(v.service));
     for (const r of results) if (r.service) servicesWithContent.add(String(r.service));
     for (const f of faqs) if (f.service) servicesWithContent.add(String(f.service));
+
+    // A service can also carry its own before/after comparison directly
+    // inside its page content (the Content Block Builder's "before-after"
+    // block type, stored in narrativeBlocks) rather than via a standalone
+    // Result document linked through the `service` field above — those are
+    // two different, equally valid ways to add a before/after, and this
+    // check previously only recognized the standalone-Result path. Without
+    // this, a service with a complete, filled-in embedded before/after (and
+    // a passing per-page Content Health score) still showed up here as
+    // having "no supporting content," which is what was actually happening.
+    for (const s of services) {
+      const hasEmbeddedBeforeAfter = (s.narrativeBlocks || []).some(
+        (b: any) => b?.visible && b?.type === 'before-after' && !isBlockEmpty(b)
+      );
+      if (hasEmbeddedBeforeAfter) servicesWithContent.add(String(s._id));
+    }
 
     const contentGapServices = services
       .filter((s: any) => !servicesWithContent.has(String(s._id)))

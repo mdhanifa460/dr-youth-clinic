@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
 import { FocalPointSchema } from '@/app/models/shared/imageSchema';
 import type { FocalPoint } from '@/app/lib/media/focalPoint';
+import { blocksToPlainText } from '@/app/lib/contentBlocks/types';
 
 export interface ILocationSeo {
   location: string;
@@ -345,7 +346,16 @@ export function computeSeoScore(svc: any): number {
   if ((svc.keywords?.length ?? 0) >= 3) score += 10;
   if (svc.urlSlug) score += 5;
   if (svc.heroImage?.url) score += 10;
-  if ((svc.narrative?.length ?? 0) >= 300) score += 15;
+  // Credits whichever body-content field actually has substance — the
+  // legacy plain-text `narrative` field, or the structured Content Block
+  // Builder's `narrativeBlocks` (blocksToPlainText flattens headings/
+  // paragraphs/lists/etc. to text for exactly this kind of length check).
+  // Before this, a service written entirely via the block builder — even
+  // a long, complete one — always scored 0 here because `narrative` itself
+  // stayed empty, which is why the SEO score looked "stuck" despite content
+  // clearly being added.
+  const narrativeBlocksTextLen = blocksToPlainText(svc.narrativeBlocks, 1000).length;
+  if (Math.max(svc.narrative?.length ?? 0, narrativeBlocksTextLen) >= 300) score += 15;
   if (svc.heroDescription) score += 10;
   if ((svc.benefits?.length ?? 0) >= 3) score += 10;
   if ((svc.faq?.length ?? 0) >= 3) score += 10;
