@@ -12,7 +12,18 @@
 // the credential is absent or the API call fails — matching this
 // codebase's existing isConfiguredProviderReady()-style pattern for
 // every other optional external integration.
+//
+// Auth source, in order: Workload Identity Federation (via Vercel OIDC,
+// see app/lib/google/workloadIdentityAuth.ts) when configured, else the
+// original GOOGLE_SERVICE_ACCOUNT_JSON private key — unchanged fallback,
+// since WIF's Google Cloud pool/provider and Vercel OIDC toggle are both
+// external setup steps (see the approved migration plan) not yet done for
+// this deployment. Nothing below this comment changes behavior until
+// GOOGLE_WIF_AUDIENCE/GOOGLE_WIF_SERVICE_ACCOUNT_EMAIL are actually set.
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
+import { getWorkloadIdentityAuthClient, isWifConfigured } from '@/app/lib/google/workloadIdentityAuth';
+
+const SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
 let cachedClient: BetaAnalyticsDataClient | null | undefined;
 
@@ -29,11 +40,18 @@ function getServiceAccountCredentials(): { client_email: string; private_key: st
 }
 
 export function isGa4Configured(): boolean {
-  return !!getServiceAccountCredentials();
+  return isWifConfigured() || !!getServiceAccountCredentials();
 }
 
 function getClient(): BetaAnalyticsDataClient | null {
   if (cachedClient !== undefined) return cachedClient;
+
+  const wifClient = getWorkloadIdentityAuthClient(SCOPES);
+  if (wifClient) {
+    cachedClient = new BetaAnalyticsDataClient({ authClient: wifClient as any });
+    return cachedClient;
+  }
+
   const credentials = getServiceAccountCredentials();
   cachedClient = credentials ? new BetaAnalyticsDataClient({ credentials }) : null;
   return cachedClient;

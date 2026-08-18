@@ -11,9 +11,20 @@
 // property for the OLD domain must exist and have this same service
 // account added under Settings → Users and permissions in Search Console
 // itself — a manual step, not something this adapter can do.
-import { google } from 'googleapis';
+//
+// Auth source, in order: Workload Identity Federation (via Vercel OIDC,
+// see app/lib/google/workloadIdentityAuth.ts) when configured, else the
+// original GOOGLE_SERVICE_ACCOUNT_JSON private key — unchanged fallback,
+// since WIF's Google Cloud pool/provider and Vercel OIDC toggle are both
+// external setup steps (see the approved migration plan) not yet done for
+// this deployment. Nothing below this comment changes behavior until
+// GOOGLE_WIF_AUDIENCE/GOOGLE_WIF_SERVICE_ACCOUNT_EMAIL are actually set.
+const SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly'];
 
-let cachedAuth: InstanceType<typeof google.auth.JWT> | null | undefined;
+import { google } from 'googleapis';
+import { getWorkloadIdentityAuthClient, isWifConfigured } from '@/app/lib/google/workloadIdentityAuth';
+
+let cachedAuth: InstanceType<typeof google.auth.JWT> | ReturnType<typeof getWorkloadIdentityAuthClient> | undefined;
 
 function getServiceAccountCredentials(): { client_email: string; private_key: string } | null {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -28,11 +39,18 @@ function getServiceAccountCredentials(): { client_email: string; private_key: st
 }
 
 export function isGscConfigured(): boolean {
-  return !!getServiceAccountCredentials();
+  return isWifConfigured() || !!getServiceAccountCredentials();
 }
 
 function getAuth() {
   if (cachedAuth !== undefined) return cachedAuth;
+
+  const wifClient = getWorkloadIdentityAuthClient(SCOPES);
+  if (wifClient) {
+    cachedAuth = wifClient;
+    return cachedAuth;
+  }
+
   const creds = getServiceAccountCredentials();
   if (!creds) {
     cachedAuth = null;
@@ -41,7 +59,7 @@ function getAuth() {
   cachedAuth = new google.auth.JWT({
     email: creds.client_email,
     key: creds.private_key,
-    scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+    scopes: SCOPES,
   });
   return cachedAuth;
 }
@@ -82,7 +100,7 @@ export async function getGscOverview(siteUrl: string, days: number): Promise<Gsc
   const auth = getAuth();
   if (!auth) return emptyOverview(siteUrl);
 
-  const searchconsole = google.searchconsole({ version: 'v1', auth });
+  const searchconsole = google.searchconsole({ version: 'v1', auth: auth as any });
   const endDate = new Date().toISOString().slice(0, 10);
   const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
 
@@ -144,7 +162,7 @@ export async function getGscTopPages(siteUrl: string, days: number, rowLimit: nu
   const auth = getAuth();
   if (!auth) return [];
 
-  const searchconsole = google.searchconsole({ version: 'v1', auth });
+  const searchconsole = google.searchconsole({ version: 'v1', auth: auth as any });
   const endDate = new Date().toISOString().slice(0, 10);
   const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
 
