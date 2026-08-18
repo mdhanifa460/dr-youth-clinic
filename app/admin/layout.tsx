@@ -36,6 +36,25 @@ const MODULE_MAP: [string, AdminModule][] = [
   ["/admin/settings",      "settings"],
   ["/admin/team",          "team"],
   ["/admin/profile",       "dashboard"],
+  // Added — each of these previously had no dedicated prefix here, so
+  // every one of these pages was gated on "dashboard" access instead of
+  // its own module (see the API routes under each, which already checked
+  // the correct module all along — only this page-level gate was wrong).
+  // A role with dashboard access but not the specific module could open
+  // the page shell only to have every data fetch 403; a role with the
+  // module but not dashboard access would incorrectly see "Access Denied"
+  // on a page they're actually authorized for.
+  ["/admin/results",            "results"],
+  ["/admin/journey",            "journey"],
+  ["/admin/legal",              "legal"],
+  ["/admin/stories",            "stories"],
+  ["/admin/faqs",               "faqs"],
+  ["/admin/banners",            "banners"],
+  ["/admin/courses",            "courses"],
+  ["/admin/animation-library",  "animation-library"],
+  ["/admin/booking-success",    "booking-success"],
+  ["/admin/integrations",       "integrations"],
+  ["/admin/analytics",          "analytics"],
   ["/admin",               "dashboard"],
 ];
 
