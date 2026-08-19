@@ -24,8 +24,29 @@ export default function AdminLogin() {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [redirectTo, setRedirectTo] = useState("/admin");
+  // Seconds left on an active rate-limit block (app/lib/rateLimit.ts's
+  // Retry-After header) — shown as a live countdown instead of the vague
+  // "try again later" the API message alone gives, and the form stays
+  // disabled for its duration so repeatedly clicking Login can't happen
+  // (every click while blocked still increments the underlying counter,
+  // even though it can't extend the block itself — just wasted attempts).
+  const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
 
   const [idleNotice, setIdleNotice] = useState(false);
+
+  useEffect(() => {
+    if (retryAfterSeconds === null || retryAfterSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setRetryAfterSeconds((s) => (s === null ? null : s <= 1 ? null : s - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [retryAfterSeconds]);
+
+  function formatRetryAfter(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -48,6 +69,14 @@ export default function AdminLogin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, remember }),
       });
+
+      if (res.status === 429) {
+        const retryAfter = Number(res.headers.get("Retry-After"));
+        setRetryAfterSeconds(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60);
+        setError("Too many attempts.");
+        setLoading(false);
+        return;
+      }
 
       const data = await res.json();
 
@@ -185,16 +214,25 @@ export default function AdminLogin() {
             {error && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
                 {error}
+                {retryAfterSeconds !== null && retryAfterSeconds > 0 && (
+                  <span className="block font-semibold mt-0.5">
+                    Try again in {formatRetryAfter(retryAfterSeconds)}
+                  </span>
+                )}
               </p>
             )}
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (retryAfterSeconds !== null && retryAfterSeconds > 0)}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0B2545] text-sm font-bold text-white shadow-[0_14px_28px_rgba(11,37,69,0.24)] transition hover:bg-[#12345c] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <ShieldCheck className="h-4 w-4" />
-              {loading ? "Signing in..." : "Secure Login"}
+              {retryAfterSeconds !== null && retryAfterSeconds > 0
+                ? `Try again in ${formatRetryAfter(retryAfterSeconds)}`
+                : loading
+                ? "Signing in..."
+                : "Secure Login"}
             </button>
           </form>
         </div>
