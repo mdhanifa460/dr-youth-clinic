@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
 import { requirePermission } from '@/app/lib/adminAuth';
-
-function toSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-}
+import { generateUniqueLandingPageSlug } from '@/app/lib/landingPages/uniqueSlug';
 
 export async function GET(req: NextRequest) {
   const denied = await requirePermission('landing-pages', 'view');
@@ -48,23 +42,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    // Generate and ensure unique slug — one query covering every slug this
-    // counter loop could land on (`baseSlug`, `baseSlug-1`, `baseSlug-2`,
-    // ...) instead of one sequential findOne per candidate suffix.
-    const baseSlug = body.slug ? toSlug(body.slug) : toSlug(body.title || 'landing-page');
-    const escapedBase = baseSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const conflictingPages = await (LandingPage as any)
-      .find({ slug: { $regex: `^${escapedBase}(-\\d+)?$` } })
-      .select('slug')
-      .lean();
-    const takenSlugs = new Set((conflictingPages as any[]).map((p) => p.slug));
-
-    let slug = baseSlug;
-    let counter = 1;
-    while (takenSlugs.has(slug)) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
+    const slug = await generateUniqueLandingPageSlug(body.slug || body.title || 'landing-page');
 
     const page = new LandingPage({
       ...body,

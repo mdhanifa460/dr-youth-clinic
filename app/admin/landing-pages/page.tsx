@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Eye, ExternalLink, Loader, Rocket } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Edit, Trash2, Eye, ExternalLink, Loader, Rocket, Copy } from 'lucide-react';
 
 interface LandingPageRow {
   _id: string;
@@ -31,9 +32,11 @@ const TEMPLATE_LABELS: Record<string, string> = {
 };
 
 export default function LandingPagesAdminPage() {
+  const router = useRouter();
   const [pages, setPages] = useState<LandingPageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
   const [status, setStatus] = useState<'' | 'draft' | 'published'>('');
   const [template, setTemplate] = useState('');
 
@@ -64,6 +67,27 @@ export default function LandingPagesAdminPage() {
       return true;
     });
   }, [pages, status, template]);
+
+  // Clones the page's content into a new draft, then jumps straight into
+  // editing it — the common case is "same campaign page, only a couple of
+  // details change," so landing on the edit screen for the new copy
+  // (rather than back on the list) skips a click every time.
+  const duplicatePage = async (id: string) => {
+    setDuplicating(id);
+    try {
+      const res = await fetch(`/api/admin/landing-pages/${id}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        router.push(`/admin/landing-pages/${data.data._id}`);
+      } else {
+        alert(data.message || 'Duplicate failed');
+      }
+    } catch {
+      alert('Network error — duplicate failed');
+    } finally {
+      setDuplicating(null);
+    }
+  };
 
   const deletePage = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -257,6 +281,18 @@ export default function LandingPagesAdminPage() {
                           <Edit size={16} />
                         </button>
                       </Link>
+                      <button
+                        onClick={() => duplicatePage(page._id)}
+                        disabled={duplicating === page._id}
+                        title="Duplicate — same content, new draft to tweak"
+                        className="p-2 text-[#3B82C4] hover:bg-[#3B82C4]/10 rounded-lg transition disabled:opacity-50"
+                      >
+                        {duplicating === page._id ? (
+                          <Loader size={16} className="animate-spin" />
+                        ) : (
+                          <Copy size={16} />
+                        )}
+                      </button>
                       <button
                         onClick={() => deletePage(page._id, page.title)}
                         disabled={deleting === page._id}
