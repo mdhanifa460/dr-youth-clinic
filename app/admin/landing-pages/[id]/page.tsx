@@ -41,6 +41,7 @@ interface LandingPage {
   slug: string;
   status: 'draft' | 'published';
   template: string;
+  city: string;
   seo: { title: string; description: string; keywords: string; ogImage: string };
   sections: Section[];
   form: { fields: FormField[]; submitText: string; successMessage: string; whatsappNotify: boolean };
@@ -176,6 +177,17 @@ const SECTION_DEFAULTS: Record<string, any> = {
     slotsLeft: 5,
     phone: '1800 890 9669',
   },
+};
+
+// Same 4-city set used sitewide (Navbar.tsx, Footer.tsx, admin/reviews) —
+// each landing page can optionally be tagged as one city's own campaign
+// variant, so duplicated per-city copies can be filtered/compared in the
+// admin list by their real Visitors/Leads counts.
+const CITY_LABELS: Record<string, string> = {
+  chennai: 'Chennai',
+  bangalore: 'Bangalore',
+  coimbatore: 'Coimbatore',
+  kochi: 'Kochi',
 };
 
 const SECTION_LABELS: Record<string, { label: string; icon: string }> = {
@@ -1610,6 +1622,19 @@ export default function LandingPageBuilder() {
                       onChange={(e) => updateLp((p) => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))}
                       className="flex-1 px-3 py-2.5 focus:outline-none font-mono text-xs" />
                   </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">City</label>
+                  <select value={lp.city || ''} onChange={(e) => updateLp((p) => ({ ...p, city: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20">
+                    <option value="">— Not city-specific —</option>
+                    {Object.entries(CITY_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Tag which city this page/campaign is for — lets you compare Visitors/Leads across city-duplicated copies in the list.
+                  </p>
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Status</label>

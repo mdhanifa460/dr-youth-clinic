@@ -17,10 +17,12 @@ export async function GET(req: NextRequest) {
     if (status) query.status = status;
     const template = searchParams.get('template');
     if (template) query.template = template;
+    const city = searchParams.get('city');
+    if (city) query.city = city;
 
     const pages = await (LandingPage as any).find(query)
       .sort({ createdAt: -1 })
-      .select('title slug status template analytics createdAt updatedAt')
+      .select('title slug status template city analytics createdAt updatedAt')
       .lean();
 
     return NextResponse.json({ success: true, data: pages });

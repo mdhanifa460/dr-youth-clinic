@@ -36,6 +36,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
       slug,
       status: 'draft',
       template: source.template,
+      // Deliberately not copied — the whole point of duplicating for a
+      // city-wise variant is a fresh, explicit choice per copy; carrying
+      // the source's city over would leave two pages silently claiming the
+      // same city until someone remembers to change it.
+      city: '',
       seo: source.seo,
       sections: source.sections,
       form: source.form,

@@ -11,6 +11,7 @@ interface LandingPageRow {
   slug: string;
   status: 'draft' | 'published';
   template: string;
+  city: string;
   analytics: { visitors: number; leads: number };
   createdAt: string;
 }
@@ -31,6 +32,16 @@ const TEMPLATE_LABELS: Record<string, string> = {
   'doctor-campaign': 'Doctor Campaign',
 };
 
+// Same 4-city set used sitewide — lets an admin filter the list down to
+// "just the Chennai copy of this campaign" and read its own real
+// Visitors/Leads straight off the existing columns, no new aggregation.
+const CITY_LABELS: Record<string, string> = {
+  chennai: 'Chennai',
+  bangalore: 'Bangalore',
+  coimbatore: 'Coimbatore',
+  kochi: 'Kochi',
+};
+
 export default function LandingPagesAdminPage() {
   const router = useRouter();
   const [pages, setPages] = useState<LandingPageRow[]>([]);
@@ -39,6 +50,7 @@ export default function LandingPagesAdminPage() {
   const [duplicating, setDuplicating] = useState<string | null>(null);
   const [status, setStatus] = useState<'' | 'draft' | 'published'>('');
   const [template, setTemplate] = useState('');
+  const [city, setCity] = useState('');
 
   // Fetch the full (small, campaign-scale) landing-page list once —
   // status/template used to each trigger their own fresh server round trip
@@ -64,9 +76,10 @@ export default function LandingPagesAdminPage() {
     return pages.filter((p) => {
       if (status && p.status !== status) return false;
       if (template && p.template !== template) return false;
+      if (city && p.city !== city) return false;
       return true;
     });
-  }, [pages, status, template]);
+  }, [pages, status, template, city]);
 
   // Clones the page's content into a new draft, then jumps straight into
   // editing it — the common case is "same campaign page, only a couple of
@@ -153,9 +166,20 @@ export default function LandingPagesAdminPage() {
             <option key={value} value={value}>{label}</option>
           ))}
         </select>
-        {(status || template) && (
+        <select
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          title="Filter by city — compare Visitors/Leads across city-duplicated copies of a campaign"
+          className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+        >
+          <option value="">All Cities</option>
+          {Object.entries(CITY_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+        {(status || template || city) && (
           <button
-            onClick={() => { setStatus(''); setTemplate(''); }}
+            onClick={() => { setStatus(''); setTemplate(''); setCity(''); }}
             className="text-xs text-gray-400 hover:text-[#0B2560] font-semibold underline"
           >
             Clear filters
@@ -172,16 +196,16 @@ export default function LandingPagesAdminPage() {
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="text-5xl mb-4">🚀</div>
           <p className="text-gray-700 font-bold text-lg mb-2">
-            {status || template ? 'No landing pages match these filters' : 'No landing pages yet'}
+            {status || template || city ? 'No landing pages match these filters' : 'No landing pages yet'}
           </p>
           <p className="text-gray-400 text-sm mb-6">
-            {status || template
+            {status || template || city
               ? 'Try clearing a filter to see more pages.'
               : 'Create your first landing page to start capturing leads from ads.'}
           </p>
-          {status || template ? (
+          {status || template || city ? (
             <button
-              onClick={() => { setStatus(''); setTemplate(''); }}
+              onClick={() => { setStatus(''); setTemplate(''); setCity(''); }}
               className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl hover:bg-gray-200 font-semibold transition"
             >
               Clear filters
@@ -227,7 +251,14 @@ export default function LandingPagesAdminPage() {
                 <tr key={page._id} className="hover:bg-[#f6faff] transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-semibold text-[#0B2560] text-sm">{page.title}</p>
+                      <p className="font-semibold text-[#0B2560] text-sm flex items-center gap-2">
+                        {page.title}
+                        {page.city && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#3B82C4] bg-[#3B82C4]/10 px-1.5 py-0.5 rounded">
+                            {CITY_LABELS[page.city] || page.city}
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-gray-400 mt-0.5">/lp/{page.slug}</p>
                     </div>
                   </td>

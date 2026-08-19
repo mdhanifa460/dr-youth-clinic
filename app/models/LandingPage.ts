@@ -21,6 +21,13 @@ export interface ILandingPage extends Document {
   slug: string;
   status: 'draft' | 'published';
   template: string;
+  // Which city this specific page/URL is the campaign for — lets an admin
+  // duplicate one campaign into a per-city variant (each its own URL, own
+  // analytics.visitors/leads) and then filter/compare them side by side in
+  // the admin list. Deliberately not carried over by the duplicate route —
+  // every copy must have its own city explicitly (re-)selected. Empty
+  // string means "not set / not city-specific", not a fifth city.
+  city: string;
   seo: {
     title: string;
     description: string;
@@ -117,6 +124,10 @@ const LandingPageSchema = new Schema<ILandingPage>(
     template: {
       type: String,
       default: 'hair-prp',
+    },
+    city: {
+      type: String,
+      default: '',
     },
     seo: {
       title: { type: String, default: '' },
