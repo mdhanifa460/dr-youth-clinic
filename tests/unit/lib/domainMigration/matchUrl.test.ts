@@ -77,8 +77,13 @@ describe('matchUrlDeterministic', () => {
     }
   });
 
-  it('handles an old URL with no usable tokens (e.g. just slashes) without throwing', () => {
+  it('maps the old site root to the new site root — a real bug found reviewing a live import: the site\'s own homepage entry is stored as path: \'\', which never exact-matched normalizeOldUrl(\'/\')\'s \'/\' without this special case', () => {
     const r = matchUrlDeterministic('/', INVENTORY);
+    expect(r).toMatchObject({ newUrl: '/', matchType: 'exact', confidence: 100 });
+  });
+
+  it('handles an old URL with no usable tokens beyond the root without throwing', () => {
+    const r = matchUrlDeterministic('///', INVENTORY);
     expect(r.newUrl).toBeNull();
     expect(r.confidence).toBe(0);
   });

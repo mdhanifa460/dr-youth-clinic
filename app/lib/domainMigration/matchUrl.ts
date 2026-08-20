@@ -114,6 +114,18 @@ export function isRealCurrentUrl(newUrl: string, inventory: SiteUrlEntry[]): boo
 export function matchUrlDeterministic(oldPath: string, inventory: SiteUrlEntry[]): MatchCandidate {
   const strippedOld = oldPath.replace(KNOWN_SUFFIXES, '');
 
+  // 0. The homepage itself — special-cased rather than relying on the
+  // general exact-match search below, because the site's own inventory
+  // represents its homepage as path: '' (see siteUrlInventory.ts's
+  // staticRoutes(), which needs that for URL-building in app/sitemap.ts),
+  // while normalizeOldUrl('/') always returns '/' — the two would never
+  // exact-match each other otherwise, and the old site's own root URL
+  // would wrongly fall through to "no match" instead of the one case
+  // that's always unambiguous.
+  if (oldPath === '/') {
+    return { newUrl: '/', matchType: 'exact', confidence: 100, confidenceLevel: 'High', reasoning: 'Old site root maps to the new site root.' };
+  }
+
   // 1. Exact path match, with and without a stripped old-CMS suffix — the
   // strongest possible signal, e.g. old "/about" === new "/about".
   const exact = inventory.find((e) => e.path === oldPath || e.path === strippedOld);
