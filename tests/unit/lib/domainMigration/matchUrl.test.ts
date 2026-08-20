@@ -143,6 +143,31 @@ describe('matchUrlDeterministic — city scoping (real bug found reviewing a liv
   });
 });
 
+describe('matchUrlDeterministic — city-only fallback (deliberate, evidence-based, never a blind homepage guess)', () => {
+  it('falls back to the city page when no specific service page matches confidently, but a city is named', () => {
+    const r = matchUrlDeterministic('/some-totally-unknown-treatment-in-bangalore', MULTI_CITY_INVENTORY);
+    expect(r.newUrl).toBe('/bangalore');
+    expect(r.confidence).toBe(40);
+    expect(r.confidenceLevel).toBe('Low');
+  });
+
+  it('recognizes an old Bangalore-neighborhood term the same way, with no exact city name present at all', () => {
+    const r = matchUrlDeterministic('/some-totally-unknown-treatment-in-kammanahalli', MULTI_CITY_INVENTORY);
+    expect(r.newUrl).toBe('/bangalore');
+  });
+
+  it('still prefers a real specific-page match over the city fallback on a tie or better', () => {
+    const r = matchUrlDeterministic('/services/lip-pigmentation-in-kammanahalli', MULTI_CITY_INVENTORY);
+    expect(r.newUrl).toBe('/bangalore/services/skin/lip-pigmentation');
+    expect(r.confidence).toBeGreaterThanOrEqual(40);
+  });
+
+  it('never falls back to a city page when no city can be identified at all (still no blind guess)', () => {
+    const r = matchUrlDeterministic('/some-completely-generic-old-page-xyz', MULTI_CITY_INVENTORY);
+    expect(r.newUrl).toBeNull();
+  });
+});
+
 describe('matchUrlDeterministic — false-positive fixes (real bad matches found reviewing a live import)', () => {
   it('does not confuse "anti-aging" with "anti-dandruff" (shared "anti" token only)', () => {
     const r = matchUrlDeterministic('/anti-aging-chennai', MULTI_CITY_INVENTORY);

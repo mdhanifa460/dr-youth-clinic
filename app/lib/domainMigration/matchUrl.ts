@@ -159,18 +159,42 @@ export function matchUrlDeterministic(oldPath: string, inventory: SiteUrlEntry[]
     const score = jaccardSimilarity(oldTokens, entryTokens);
     if (!best || score > best.score) best = { entry, score };
   }
+  const bestConfidence = best ? Math.round(best.score * 100) : 0;
+
+  // City-only fallback: when no specific service page scores confidently
+  // (including "nothing at all"), but the old URL's own vocabulary
+  // confidently names a real city — including old Bangalore-neighborhood
+  // terms like Kammanahalli or Hebbal, via CITY_KEYWORDS above — that
+  // city's own page is a deliberately low-confidence but still honest
+  // redirect target. This is grounded in real evidence extracted from the
+  // URL itself, which is exactly what separates it from the "never guess
+  // the homepage" rule this engine otherwise holds to — it's never used
+  // when no city can be identified, and it only ever wins when it beats
+  // whatever the specific-page search actually found.
+  const CITY_FALLBACK_CONFIDENCE = 40;
+  if (detectedCity && CITY_FALLBACK_CONFIDENCE > bestConfidence) {
+    const cityEntry = inventory.find((e) => e.path === `/${detectedCity}`);
+    if (cityEntry) {
+      return {
+        newUrl: cityEntry.path,
+        matchType: 'rule',
+        confidence: CITY_FALLBACK_CONFIDENCE,
+        confidenceLevel: deriveConfidenceLevel(CITY_FALLBACK_CONFIDENCE),
+        reasoning: `No specific service page matched confidently — falling back to the ${detectedCity} city page since the old URL identifies it as ${detectedCity}-specific.`,
+      };
+    }
+  }
 
   if (!best || best.score === 0) {
     return { newUrl: null, matchType: null, confidence: 0, confidenceLevel: null, reasoning: 'No overlapping keywords found against the current site.' };
   }
 
-  const confidence = Math.round(best.score * 100);
   const scopeParts = [detectedCategory && `"${detectedCategory}" category`, detectedCity && `"${detectedCity}" city`].filter(Boolean);
   return {
     newUrl: best.entry.path,
     matchType: 'rule',
-    confidence,
-    confidenceLevel: deriveConfidenceLevel(confidence),
+    confidence: bestConfidence,
+    confidenceLevel: deriveConfidenceLevel(bestConfidence),
     reasoning: scopeParts.length
       ? `Matched within the detected ${scopeParts.join(' + ')} by keyword overlap.`
       : "Matched by keyword overlap against the site's full URL inventory.",
