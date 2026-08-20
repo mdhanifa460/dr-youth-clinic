@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
@@ -13,6 +14,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
     ctaText = 'Book Your Consultation',
   } = data || {};
 
+  const router = useRouter();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [service, setService] = useState('');
@@ -36,7 +38,12 @@ export default function ConsultationFormBar({ data }: { data: any }) {
       if (data.success) {
         setSent(true);
         trackBookingConversion({ bookingId: data.bookingId, service, location: city });
-        setName(''); setPhone(''); setService(''); setCity('');
+        // Same post-booking destination as the dedicated /book page's own
+        // form (app/(public)/book/Form.tsx) — a real Booking row now
+        // exists with this exact ID, so every place that creates one sends
+        // the visitor to the same confirmation page instead of stranding
+        // them on an inline message with no way back to their booking.
+        router.push(`/book/success/${data.bookingId}`);
       } else {
         setError(data.message || 'Booking failed. Please try again.');
       }

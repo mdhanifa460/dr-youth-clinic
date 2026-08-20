@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   MessageCircle, X, Send, Loader2, Sparkles, Stethoscope, Tag, Camera, Calendar,
   ChevronRight, ArrowLeft, CheckCircle, IndianRupee, ThumbsUp, ThumbsDown, Phone, Users, PhoneCall,
@@ -191,6 +192,7 @@ function PanelHeader({ title, onBack }: { title: string; onBack: () => void }) {
 
 // ── Inline Booking ──────────────────────────────────────────────────────
 function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }) {
+  const router = useRouter();
   // `location` is required by the /api/booking Zod schema (bookingSchema)
   // but was missing from this form entirely — every real submission
   // through the AI chat widget was failing with a raw "Invalid input:
@@ -263,7 +265,6 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
       });
       const data = await res.json();
       if (data.success) {
-        setDone(true);
         setBookingId(data.bookingId || '');
         trackBookingConversion({ bookingId: data.bookingId, service: form.service });
         // AI funnel event — same GTM dataLayer bridge, distinct from the
@@ -271,6 +272,15 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
         // fires above, so Marketing Intelligence can tell an AI-chat
         // booking apart from a direct /book submission.
         pushDataLayerEvent('ai_booking_completed', { source: 'ai_chat', service: form.service || undefined });
+        // Same post-booking destination as every other booking-creating
+        // flow on the site (app/(public)/book/Form.tsx,
+        // ConsultationFormBar.tsx) — a real Booking row now exists with
+        // this exact ID. The widget's own inline "done" card (below) is
+        // no longer the final state; router.push replaces the current
+        // page, so it's only ever visible for the brief moment before
+        // navigation completes.
+        if (data.bookingId) router.push(`/book/success/${data.bookingId}`);
+        else setDone(true);
       } else setError(data.message || 'Could not book — please try again.');
     } catch { setError('Network error — please try again.'); }
     finally { setSaving(false); }
@@ -544,6 +554,7 @@ function AssessmentPanel({ onBack, onPickConcern, accent }: { onBack: () => void
 // option here keeps the exact same handoff tracking (POST
 // /api/ai-chat/handoff + ai_human_handoff event) the old pill already had.
 function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: () => void; accent: string; whatsapp?: string; phone?: string; sessionId: string }) {
+  const router = useRouter();
   const branchWhatsApp = useBranchWhatsApp(whatsapp || '');
   const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
   const callHref = phone ? `tel:${phone.replace(/\s/g, '')}` : null;
@@ -570,8 +581,14 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
       });
       const data = await res.json();
       if (data.success) {
-        setDone(true);
         pushDataLayerEvent('ai_human_handoff', { source: 'ai_chat', method: 'callback_request' });
+        // Same post-booking destination as every other booking-creating
+        // flow — a callback request is still a real Booking row
+        // (service: 'Callback Request'), previously created correctly but
+        // with the returned bookingId silently discarded and no
+        // navigation at all.
+        if (data.bookingId) router.push(`/book/success/${data.bookingId}`);
+        else setDone(true);
       } else setError(data.message || 'Could not submit — please try again.');
     } catch { setError('Network error — please try again.'); }
     finally { setSaving(false); }
