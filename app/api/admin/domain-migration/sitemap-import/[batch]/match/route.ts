@@ -20,11 +20,21 @@ export async function POST(req: NextRequest, { params }: { params: { batch: stri
     await connectDB();
     const inventory = await getSiteUrlInventory();
 
-    const rows = await (RedirectMapping as any).find({
-      sitemapImportBatch: params.batch,
-      status: 'suggested',
-      matchType: null,
-    });
+    // `force=true` re-evaluates every row that hasn't been human-approved
+    // yet in this batch (both 'suggested' and 'no_match'), regardless of
+    // whether it already has a matchType — for re-running the matcher
+    // after a real improvement to it (e.g. a new city/category keyword,
+    // a noise-token fix) without having to touch the database directly.
+    // Approved rows are never touched by this route at all, forced or not
+    // — only PATCH/bulk-approve ever change an approved row.
+    const { searchParams } = new URL(req.url);
+    const force = searchParams.get('force') === 'true';
+
+    const rows = await (RedirectMapping as any).find(
+      force
+        ? { sitemapImportBatch: params.batch, status: { $in: ['suggested', 'no_match'] } }
+        : { sitemapImportBatch: params.batch, status: 'suggested', matchType: null }
+    );
 
     let matched = 0;
     let noMatch = 0;
@@ -39,6 +49,11 @@ export async function POST(req: NextRequest, { params }: { params: { batch: stri
         row.status = 'no_match';
         noMatch++;
       } else {
+        // Explicit, not just "already the default" — a forced re-match can
+        // process a row that's currently 'no_match' and now scores above
+        // the floor; without this it would stay stuck as 'no_match'
+        // despite having a good new suggestion.
+        row.status = 'suggested';
         matched++;
       }
       await row.save();
