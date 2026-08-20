@@ -165,7 +165,15 @@ export async function middleware(req: NextRequest) {
     return withPathname(req);
   }
 
-  const response = NextResponse.next();
+  // Also carries x-pathname on every public request now (previously only
+  // set for /admin routes) — required so app/not-found.tsx (Server
+  // Component, no direct access to the failed URL otherwise) can read the
+  // path that 404'd and look it up against approved redirect mappings.
+  // Also fixes a latent gap: Footer.tsx's city-from-URL detection already
+  // reads this same header and was silently falling back to the cookie/
+  // default on any public page with a city segment, since the header was
+  // never set outside /admin before now.
+  const response = withPathname(req);
 
   // Location detection — only run when no cookie is set yet to avoid redundant Set-Cookie on every request
   if (pathname === "/" && !req.cookies.get(LOCATION_COOKIE)?.value) {

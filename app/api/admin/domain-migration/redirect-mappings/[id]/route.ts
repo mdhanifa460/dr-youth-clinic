@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { RedirectMapping, REDIRECT_MAPPING_STATUSES } from '@/app/models/RedirectMapping';
 import { requirePermission, getAdminUser } from '@/app/lib/adminAuth';
@@ -49,6 +50,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     row.reviewedAt = new Date();
 
     await row.save();
+    // Approving/rejecting is exactly what app/lib/domainMigration/
+    // serveRedirect.ts's cached lookup is keyed on — bust it immediately
+    // so an approval takes effect within seconds, not the full 5-minute
+    // cache window.
+    if (status) revalidateTag('redirect-mappings');
     return NextResponse.json({ success: true, data: row });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to update mapping' }, { status: 500 });

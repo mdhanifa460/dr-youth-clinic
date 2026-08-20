@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { RedirectMapping } from '@/app/models/RedirectMapping';
 import { requirePermission, getAdminUser } from '@/app/lib/adminAuth';
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
       approved++;
     }
 
+    if (approved > 0) revalidateTag('redirect-mappings');
     return NextResponse.json({ success: true, data: { batch, floor, candidates: candidates.length, approved, skippedInvalid } });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message || 'Failed to bulk-approve mappings' }, { status: 500 });

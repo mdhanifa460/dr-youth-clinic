@@ -1,7 +1,28 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import { permanentRedirect } from 'next/navigation';
 import { Calendar, Home, Users, ArrowLeft } from 'lucide-react';
+import { normalizeOldUrl } from '@/app/lib/domainMigration/parseSitemap';
+import { getApprovedRedirect } from '@/app/lib/domainMigration/serveRedirect';
 
-export default function NotFound() {
+export default async function NotFound() {
+  // Domain Migration Phase 3 — the only place an approved RedirectMapping
+  // actually serves for a real visitor. This lookup only ever runs for a
+  // request that would already be a dead-end 404 (x-pathname is set on
+  // every public request by middleware.ts); every real, valid page on the
+  // site never reaches this file at all, so this can't add latency or risk
+  // to normal traffic. On no match, or on any lookup failure, falls straight
+  // through to the exact same 404 UI as before — nothing else here changed.
+  const pathname = headers().get('x-pathname');
+  if (pathname) {
+    const newUrl = await getApprovedRedirect(normalizeOldUrl(pathname));
+    // permanentRedirect() issues a 308 — the modern, SEO-equivalent
+    // successor to a literal 301 (Google treats the two as equivalent
+    // permanent-redirect signals); the App Router doesn't expose a way to
+    // emit a literal 301 status code directly.
+    if (newUrl) permanentRedirect(newUrl);
+  }
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#0B2560] flex items-center justify-center px-6">
