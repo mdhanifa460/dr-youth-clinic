@@ -27,9 +27,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // is allowed at any status, always re-validated below.
     if (typeof newUrl === 'string') row.newUrl = newUrl.trim();
 
-    // Approving is the one action that must never create a redirect chain
-    // or a dangling redirect — enforced here, not just as a UI convention,
-    // since this route is the only path that can set status: 'approved'.
+    // Approving is the one action that must never create a redirect chain,
+    // a dangling redirect, or — the one this guard exists for after a real
+    // incident — a self-redirect on a path the site itself still serves.
+    // Enforced here, not just as a UI convention, since this route is the
+    // only path that can set status: 'approved'.
     if (status === 'approved') {
       if (!row.newUrl) {
         return NextResponse.json({ success: false, message: 'Cannot approve a mapping with no target URL — set one first.' }, { status: 400 });
@@ -38,6 +40,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       if (!isRealCurrentUrl(row.newUrl, inventory)) {
         return NextResponse.json(
           { success: false, message: `"${row.newUrl}" is not a real, current page on this site — cannot approve (this would create a dangling redirect or a chain to another old URL).` },
+          { status: 400 }
+        );
+      }
+      // The redirect-serving layer (middleware.ts) matches purely on path,
+      // with no way to tell "this request arrived via the old domain's
+      // forward" apart from "this is a native visit to a page the site
+      // already serves at this exact path" — they're indistinguishable.
+      // Approving a mapping whose oldUrl collides with a real current page
+      // would hijack that page's own live traffic (at best, redirect it
+      // elsewhere; at worst — confirmed in production — a real
+      // self-redirect loop when oldUrl and newUrl are the same path,
+      // e.g. the site root).
+      if (isRealCurrentUrl(row.oldUrl, inventory)) {
+        return NextResponse.json(
+          { success: false, message: `"${row.oldUrl}" is itself a real, current page on this site — approving this would redirect that page's own live traffic away from it. This mapping should stay unapproved; that path already works correctly without any redirect.` },
           { status: 400 }
         );
       }

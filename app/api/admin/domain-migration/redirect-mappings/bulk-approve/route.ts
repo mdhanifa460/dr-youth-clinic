@@ -36,7 +36,16 @@ export async function POST(req: NextRequest) {
     let approved = 0;
     let skippedInvalid = 0;
     for (const row of candidates) {
-      if (!row.newUrl || !isRealCurrentUrl(row.newUrl, inventory)) { skippedInvalid++; continue; }
+      // Same two guards as the single-row PATCH route: newUrl must be a
+      // real current page (no dangling/chained redirect), and oldUrl must
+      // NOT itself be one (middleware.ts matches purely on path, so a
+      // colliding oldUrl would hijack that page's own live traffic — a
+      // real self-redirect loop, confirmed in production, when oldUrl and
+      // newUrl happen to be the same path, e.g. the site root).
+      if (!row.newUrl || !isRealCurrentUrl(row.newUrl, inventory) || isRealCurrentUrl(row.oldUrl, inventory)) {
+        skippedInvalid++;
+        continue;
+      }
       row.status = 'approved';
       row.reviewedBy = user?.email || user?.name || 'admin';
       row.reviewedAt = new Date();
