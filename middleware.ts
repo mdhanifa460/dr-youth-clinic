@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { extractUtmParams, UTM_FIRST_COOKIE, UTM_LAST_COOKIE, UTM_FIRST_MAX_AGE, UTM_LAST_MAX_AGE } from "@/app/lib/utmAttribution";
 import { extractMigrationParams, MIGRATION_FIRST_COOKIE, MIGRATION_FIRST_MAX_AGE } from "@/app/lib/migrationAttribution";
+import { normalizeOldUrl } from "@/app/lib/domainMigration/parseSitemap";
+import { getCachedRedirect } from "@/app/lib/domainMigration/redirectCache";
 
 const ADMIN_COOKIE = "admin_session";
 const LOCATION_COOKIE = "preferred_location";
@@ -163,6 +165,26 @@ export async function middleware(req: NextRequest) {
     }
 
     return withPathname(req);
+  }
+
+  // Domain Migration — approved-redirect check, ahead of everything else
+  // in the public branch. Exists specifically because app/not-found.tsx's
+  // own lookup (Domain Migration Phase 3) doesn't reliably work for old
+  // URLs that happen to collide with a single-segment SSG dynamic route
+  // (app/(public)/[location]/page.tsx) — a confirmed, pre-existing Next.js
+  // 14.2.35 bug where that route's own notFound()/redirect() calls don't
+  // propagate a correct HTTP status. Checking here instead means this can
+  // never depend on any downstream page's rendering pipeline at all — a
+  // hit short-circuits before any of the cookie/attribution work below,
+  // since a request about to redirect away doesn't need any of that.
+  // Cheap Redis GET, never throws (see redirectCache.ts) — a miss (the
+  // overwhelming majority of real page requests) or any Redis hiccup just
+  // falls through to normal handling exactly as if this block didn't
+  // exist; the not-found.tsx lookup remains a second, Mongo-backed
+  // fallback for multi-segment old URLs.
+  const cachedRedirect = await getCachedRedirect(normalizeOldUrl(pathname));
+  if (cachedRedirect) {
+    return NextResponse.redirect(new URL(cachedRedirect, req.url), 308);
   }
 
   // Also carries x-pathname on every public request now (previously only

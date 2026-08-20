@@ -5,6 +5,7 @@ import { RedirectMapping, REDIRECT_MAPPING_STATUSES } from '@/app/models/Redirec
 import { requirePermission, getAdminUser } from '@/app/lib/adminAuth';
 import { getSiteUrlInventory } from '@/app/lib/siteUrlInventory';
 import { isRealCurrentUrl } from '@/app/lib/domainMigration/matchUrl';
+import { setCachedRedirect, deleteCachedRedirect } from '@/app/lib/domainMigration/redirectCache';
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const denied = await requirePermission('intelligence', 'full');
@@ -43,6 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       if (row.matchType === null) row.matchType = 'manual';
     }
 
+    const previousStatus = row.status;
     if (status) row.status = status as any;
 
     const user = await getAdminUser();
@@ -50,6 +52,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     row.reviewedAt = new Date();
 
     await row.save();
+
+    // Keep the Redis mirror (middleware.ts's redirectCache.ts) in sync
+    // immediately — this is what actually makes an approval take live
+    // effect for a real visitor, not just the unstable_cache tag below.
+    if (row.status === 'approved' && row.newUrl) {
+      await setCachedRedirect(row.oldUrl, row.newUrl);
+    } else if (previousStatus === 'approved' && row.status !== 'approved') {
+      await deleteCachedRedirect(row.oldUrl);
+    }
+
     // Approving/rejecting is exactly what app/lib/domainMigration/
     // serveRedirect.ts's cached lookup is keyed on — bust it immediately
     // so an approval takes effect within seconds, not the full 5-minute

@@ -5,6 +5,7 @@ import { RedirectMapping } from '@/app/models/RedirectMapping';
 import { requirePermission, getAdminUser } from '@/app/lib/adminAuth';
 import { getSiteUrlInventory } from '@/app/lib/siteUrlInventory';
 import { isRealCurrentUrl } from '@/app/lib/domainMigration/matchUrl';
+import { setCachedRedirect } from '@/app/lib/domainMigration/redirectCache';
 
 // Approves every 'suggested' row in a batch at/above minConfidence in one
 // action — for a real migration with hundreds of old URLs, reviewing every
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
       row.reviewedBy = user?.email || user?.name || 'admin';
       row.reviewedAt = new Date();
       await row.save();
+      await setCachedRedirect(row.oldUrl, row.newUrl);
       approved++;
     }
 
