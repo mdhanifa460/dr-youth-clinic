@@ -21,6 +21,38 @@ interface LandingPageRow {
   // See app/api/admin/landing-pages/route.ts for the aggregation.
   leadsLive: number;
   leadsAllTime: number;
+  // Real bookings for this page, grouped by which ad platform's utmSource
+  // brought them in (Google / Meta / Other / Direct-Organic) — see
+  // app/api/admin/landing-pages/route.ts for the aggregation.
+  sourceBreakdown: Record<string, number>;
+}
+
+const PLATFORM_META: Record<string, { icon: string; color: string }> = {
+  Google: { icon: '🔍', color: 'text-blue-600' },
+  Meta: { icon: '📘', color: 'text-indigo-600' },
+  'Direct/Organic': { icon: '🌐', color: 'text-gray-500' },
+  Other: { icon: '📡', color: 'text-gray-500' },
+};
+
+// A compact "🔍 3 · 📘 1" row — only worth showing once there's more than
+// one lead to break down; a single lead's "100% Google" isn't a finding,
+// it's just where the one lead happened to come from.
+function SourceBreakdown({ breakdown }: { breakdown: Record<string, number> }) {
+  const entries = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
+  const total = entries.reduce((s, [, n]) => s + n, 0);
+  if (total < 2) return null;
+  return (
+    <div className="flex items-center justify-end gap-2 mt-1" title="Which platform's campaign traffic actually converted, by real bookings">
+      {entries.map(([platform, count]) => {
+        const meta = PLATFORM_META[platform] || PLATFORM_META.Other;
+        return (
+          <span key={platform} className={`text-[10px] font-semibold ${meta.color}`}>
+            {meta.icon} {count}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 function conversionPct(visitors: number, leads: number): string {
@@ -303,6 +335,7 @@ export default function LandingPagesAdminPage() {
                         {page.leadsAllTime.toLocaleString()} all-time
                       </p>
                     )}
+                    <SourceBreakdown breakdown={page.sourceBreakdown || {}} />
                   </td>
                   <td className="px-6 py-4 text-right hidden lg:table-cell">
                     <span

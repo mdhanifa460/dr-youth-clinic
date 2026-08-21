@@ -46,10 +46,40 @@ export async function GET(req: NextRequest) {
       : [];
     const liveCountBySlug = new Map(liveCounts.map((c: any) => [c._id, c.count]));
 
+    // Which ad platform is actually driving each campaign page's real
+    // bookings — not just "did this convert," but "was it worth running on
+    // Google vs Meta specifically." Grouped by the real utmSource captured
+    // at visit time (app/lib/utmAttribution.ts), not the manual `source`
+    // field — same accurate-signal-vs-manual-label distinction as the
+    // Bookings list's own campaign chip. A booking with no utmSource at all
+    // (no ad campaign params on the visit) counts as "Direct/Organic."
+    const sourceCounts = slugs.length
+      ? await (Booking as any).aggregate([
+          { $match: { lpSlug: { $in: slugs } } },
+          { $group: { _id: { lpSlug: '$lpSlug', utmSource: '$utmSource' }, count: { $sum: 1 } } },
+        ])
+      : [];
+    const platformOf = (utmSource: string): string => {
+      const s = (utmSource || '').toLowerCase();
+      if (!s) return 'Direct/Organic';
+      if (s.includes('google')) return 'Google';
+      if (s.includes('facebook') || s.includes('meta') || s.includes('instagram') || s === 'fb' || s === 'ig') return 'Meta';
+      return 'Other';
+    };
+    const breakdownBySlug = new Map<string, Record<string, number>>();
+    for (const row of sourceCounts as any[]) {
+      const slug = row._id.lpSlug;
+      const platform = platformOf(row._id.utmSource);
+      const bucket = breakdownBySlug.get(slug) || {};
+      bucket[platform] = (bucket[platform] || 0) + row.count;
+      breakdownBySlug.set(slug, bucket);
+    }
+
     const data = pages.map((p: any) => ({
       ...p,
       leadsLive: liveCountBySlug.get(p.slug) ?? 0,
       leadsAllTime: p.analytics?.leads ?? 0,
+      sourceBreakdown: breakdownBySlug.get(p.slug) || {},
     }));
 
     return NextResponse.json({ success: true, data });
