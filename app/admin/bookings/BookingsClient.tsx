@@ -43,6 +43,19 @@ interface Booking {
   rescheduleRequest?: { requestedDate: string; requestedTime: string; note?: string; requestedAt: string } | null;
   promoCode?: string;
   promoDiscount?: number;
+  // Real campaign attribution (app/lib/utmAttribution.ts) — captured
+  // automatically from utm_* query params via cookie, independent of the
+  // `source` field above (which is a manual/hardcoded label that defaults
+  // to "website" for every flow except landing pages). This is the
+  // accurate signal for "did this actually come from a Google/Meta ad",
+  // but was previously captured and stored with nowhere in the admin UI
+  // that ever displayed it.
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  landingPage?: string;
+  firstTouchSource?: string;
+  lastTouchSource?: string;
   createdAt: string;
 }
 
@@ -91,6 +104,25 @@ const SOURCE_META: Record<string, { label: string; icon: string; color: string }
   crm:       { label: "CRM",        icon: "🔗", color: "bg-teal-50 text-teal-600"     },
   other:     { label: "Other",      icon: "📌", color: "bg-gray-50 text-gray-500"    },
 };
+
+// Compact "via google/cpc" chip for real campaign attribution — separate
+// from the `source` badge above (which is often just the unhelpful
+// "Website" default; see the Booking interface comment). Only ever
+// rendered when lastTouchSource is actually present, since most bookings
+// today have no UTM data at all (the visit's URL never carried utm_*
+// params) — this makes the presence/absence of real ad-click data
+// visible at a glance, instead of a misleading blank/default everywhere.
+function CampaignChip({ lastTouchSource }: { lastTouchSource?: string }) {
+  if (!lastTouchSource) return null;
+  return (
+    <span
+      title={`Real campaign attribution (utm_source/medium) — captured from the URL this visitor arrived on, distinct from the manual "Source" label`}
+      className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 mt-1"
+    >
+      🎯 {lastTouchSource}
+    </span>
+  );
+}
 
 const SERVICES    = ["Skin", "Hair", "Laser", "Other"];
 const LOCATIONS   = ["Chennai", "Bangalore", "Kochi", "Coimbatore"];
@@ -462,6 +494,49 @@ function BookingDrawer({
                 ))}
               </div>
 
+              {/* Real campaign attribution — the "Source" field above is a
+                  manual/hardcoded label (defaults to "Website" for every
+                  flow except landing pages); this is the actual UTM data
+                  captured from the URL this visitor arrived on, previously
+                  stored on every booking but never shown anywhere in the
+                  admin UI. Only renders when at least one field is
+                  present — most bookings today have none, because the ad
+                  URL that brought the visitor here never carried utm_*
+                  params in the first place. */}
+              {(booking.utmSource || booking.utmCampaign || booking.lastTouchSource || booking.firstTouchSource) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    🎯 Campaign Attribution
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {booking.lastTouchSource && (
+                      <div>
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">This booking's visit</p>
+                        <p className="text-amber-900 font-mono">{booking.lastTouchSource}</p>
+                      </div>
+                    )}
+                    {booking.firstTouchSource && booking.firstTouchSource !== booking.lastTouchSource && (
+                      <div>
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">First ever visit</p>
+                        <p className="text-amber-900 font-mono">{booking.firstTouchSource}</p>
+                      </div>
+                    )}
+                    {booking.utmCampaign && (
+                      <div className="col-span-2">
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Campaign</p>
+                        <p className="text-amber-900 font-semibold">{booking.utmCampaign}</p>
+                      </div>
+                    )}
+                    {booking.landingPage && (
+                      <div className="col-span-2">
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Landed on</p>
+                        <p className="text-amber-900 font-mono truncate">{booking.landingPage}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Patient-requested reschedule, from /my-appointments — separate
                   from the admin's own Preferred Slot editor just below */}
               {reschedRequest && (
@@ -791,10 +866,10 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
 
   function exportCSV() {
     const BOM = "﻿";
-    const header = ["Booking ID","Name","Phone","Email","Service","Location","Date","Time","Status","Source","Value","Concern","Created"].join(",");
+    const header = ["Booking ID","Name","Phone","Email","Service","Location","Date","Time","Status","Source","Campaign Source/Medium","Campaign","Value","Concern","Created"].join(",");
     const rows = bookings.map((b) => [
       b.bookingId, b.name, b.phone, b.email, b.service, b.location, b.date, b.time,
-      b.status, b.source, b.treatmentValue ?? "", b.concern, b.createdAt,
+      b.status, b.source, b.lastTouchSource, b.utmCampaign, b.treatmentValue ?? "", b.concern, b.createdAt,
     ].map((v) => {
       const s = String(v ?? "");
       const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
@@ -1033,6 +1108,9 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${src.color}`}>
                               {src.icon} {src.label}
                             </span>
+                            <div>
+                              <CampaignChip lastTouchSource={b.lastTouchSource} />
+                            </div>
                           </td>
 
                           {/* Actions */}

@@ -27,6 +27,12 @@ type Lead = {
   leadScore?: number | null;
   leadTemperature?: string;
   qualificationBreakdown?: QualificationBreakdownEntry[];
+  // Real campaign attribution (app/lib/utmAttribution.ts) — see the same
+  // field on app/admin/bookings/BookingsClient.tsx's Booking type. This
+  // page reads from the same Booking collection (see /api/admin/leads),
+  // so it was already returned by the API and just never displayed here.
+  lastTouchSource?: string;
+  utmCampaign?: string;
 };
 
 type Doctor = { _id: string; name: string; locations: string[] };
@@ -712,6 +718,20 @@ export default function LeadsClient({
                               <td className="px-4 py-3">
                                 <p className="font-medium text-gray-800">{lead.name || "—"}</p>
                                 <p className="text-xs text-gray-500">{lead.phone || ""}</p>
+                                {/* Real campaign attribution (utm_source/medium), captured
+                                    from the URL this visitor arrived on — distinct from
+                                    (and often more accurate than) the generic booking
+                                    Source field. Only shows when actually present; most
+                                    leads today have none because the originating ad/link
+                                    never carried utm_* params. */}
+                                {lead.lastTouchSource && (
+                                  <span
+                                    title={lead.utmCampaign ? `Campaign: ${lead.utmCampaign}` : undefined}
+                                    className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 mt-1"
+                                  >
+                                    🎯 {lead.lastTouchSource}
+                                  </span>
+                                )}
                               </td>
                               <td className="px-4 py-3 text-gray-700">{lead.service || "—"}</td>
                               <td className="px-4 py-3 text-gray-700">{lead.location || "—"}</td>
