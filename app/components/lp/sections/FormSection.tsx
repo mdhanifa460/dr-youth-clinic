@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader, CheckCircle, Phone, Star, ShieldCheck } from 'lucide-react';
 
@@ -57,6 +58,7 @@ export default function FormSection({
   } = data;
   const resolvedSubmitText = submitText || (consultationFree ? 'Book Free Consultation' : 'Book Consultation');
 
+  const router = useRouter();
   const [form, setForm] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -81,8 +83,18 @@ export default function FormSection({
         }),
       });
       const json = await res.json();
-      if (json.success) setSuccess(true);
-      else setError(json.message || 'Something went wrong. Please try again.');
+      if (json.success) {
+        // Same post-booking destination as every other booking-creating
+        // flow (see ConsultationFormBar.tsx / AiChatWidget.tsx) — a real
+        // Booking row now exists with this exact ID. Keep the inline
+        // "You're All Set!" card as a fallback for the edge case where
+        // the API reports success with no bookingId, so this never
+        // navigates to a broken /book/success/undefined.
+        if (json.bookingId) router.push(`/book/success/${json.bookingId}`);
+        else setSuccess(true);
+      } else {
+        setError(json.message || 'Something went wrong. Please try again.');
+      }
     } catch {
       setError('Network error. Please check your connection and try again.');
     } finally {
