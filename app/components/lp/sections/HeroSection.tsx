@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-react';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
@@ -91,6 +92,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
     : {};
 
   // ── inline form state ──
+  const router = useRouter();
   const [form, setForm] = useState({ name: '', phone: '', email: '', concern: '' });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -115,8 +117,17 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
         }),
       });
       const json = await res.json();
-      if (json.success) setSuccess(true);
-      else setError(json.message || 'Something went wrong. Please try again.');
+      if (json.success) {
+        // Same post-booking destination as every other booking-creating
+        // flow (see FormSection.tsx, the landing page's other form) — a
+        // real Booking row now exists with this exact ID. Keeps the
+        // inline success card only as a fallback if the API reports
+        // success with no bookingId.
+        if (json.bookingId) router.push(`/book/success/${json.bookingId}`);
+        else setSuccess(true);
+      } else {
+        setError(json.message || 'Something went wrong. Please try again.');
+      }
     } catch {
       setError('Network error. Please try again.');
     } finally {
