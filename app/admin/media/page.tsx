@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader, Trash2, Sparkles, RefreshCw, AlertTriangle, CheckCircle, Copy, Search } from "lucide-react";
+import { Loader, Trash2, Sparkles, RefreshCw, AlertTriangle, CheckCircle, Copy, Search, CheckSquare, Square } from "lucide-react";
 
 interface MediaImage {
   publicId: string;
@@ -42,6 +42,11 @@ export default function MediaLibraryPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<MediaImage[] | null>(null);
   const [deleting, setDeleting] = useState(false);
+  // The delete API only takes one publicId per call (Cloudinary's own
+  // constraint) — "Select All" can now queue up dozens at once, so a
+  // progress count matters here in a way it didn't for one-at-a-time
+  // deletes from the hover button.
+  const [deleteProgress, setDeleteProgress] = useState(0);
 
   const loadBasic = async () => {
     setLoading(true);
@@ -97,8 +102,29 @@ export default function MediaLibraryPage() {
     });
   };
 
+  // Selects/deselects every image in the CURRENT view (whatever filter +
+  // search is active) — pairs with the existing filter tabs so "clear out
+  // every unused image" is: click Unused, click Select All, click Delete
+  // Selected, instead of clicking dozens of thumbnails one at a time.
+  const allFilteredSelected = filtered.length > 0 && filtered.every((i) => selected.has(i.publicId));
+  const toggleSelectAll = () => {
+    setSelected((prev) => {
+      if (allFilteredSelected) {
+        // Deselect just this view's images — leaves any selection made
+        // under a different filter/search untouched.
+        const next = new Set(prev);
+        filtered.forEach((i) => next.delete(i.publicId));
+        return next;
+      }
+      const next = new Set(prev);
+      filtered.forEach((i) => next.add(i.publicId));
+      return next;
+    });
+  };
+
   const doDelete = async (targets: MediaImage[]) => {
     setDeleting(true);
+    setDeleteProgress(0);
     for (const img of targets) {
       try {
         await fetch("/api/admin/media", {
@@ -109,6 +135,7 @@ export default function MediaLibraryPage() {
       } catch {
         // continue deleting the rest even if one fails
       }
+      setDeleteProgress((n) => n + 1);
     }
     setDeleting(false);
     setDeleteTarget(null);
@@ -185,15 +212,27 @@ export default function MediaLibraryPage() {
       )}
 
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by filename…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0B2560] w-64"
-          />
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by filename…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0B2560] w-64"
+            />
+          </div>
+          {filtered.length > 0 && (
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+            >
+              {allFilteredSelected ? <CheckSquare size={14} /> : <Square size={14} />}
+              {allFilteredSelected ? `Deselect All (${filtered.length})` : `Select All in View (${filtered.length})`}
+            </button>
+          )}
         </div>
         {selected.size > 0 && (
           <button
@@ -324,7 +363,11 @@ export default function MediaLibraryPage() {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm bg-red-500 text-white font-semibold hover:bg-red-600 transition disabled:opacity-50"
               >
                 {deleting ? <Loader size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                {deleting ? "Deleting…" : "Delete Permanently"}
+                {deleting
+                  ? deleteTarget.length > 1
+                    ? `Deleting ${deleteProgress}/${deleteTarget.length}…`
+                    : "Deleting…"
+                  : "Delete Permanently"}
               </button>
             </div>
           </div>
