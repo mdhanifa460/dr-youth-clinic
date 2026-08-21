@@ -14,6 +14,13 @@ interface LandingPageRow {
   city: string;
   analytics: { visitors: number; leads: number };
   createdAt: string;
+  // Computed at read time from actual Booking rows still matching this
+  // page's slug — unlike analytics.leads (a counter that only ever
+  // increments at submission and never reflects a booking being deleted
+  // afterward), this can't drift from what's really in your pipeline.
+  // See app/api/admin/landing-pages/route.ts for the aggregation.
+  leadsLive: number;
+  leadsAllTime: number;
 }
 
 function conversionPct(visitors: number, leads: number): string {
@@ -235,7 +242,10 @@ export default function LandingPagesAdminPage() {
                 <th className="px-6 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                   Visitors
                 </th>
-                <th className="px-6 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                <th
+                  title="Bookings still in your pipeline for this page right now — not a running total, so it goes down if one gets deleted"
+                  className="px-6 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell"
+                >
                   Leads
                 </th>
                 <th className="px-6 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
@@ -281,18 +291,28 @@ export default function LandingPagesAdminPage() {
                   <td className="px-6 py-4 text-right text-sm font-semibold text-gray-600 hidden lg:table-cell">
                     {(page.analytics?.visitors ?? 0).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 text-right text-sm font-semibold text-[#0B2560] hidden lg:table-cell">
-                    {(page.analytics?.leads ?? 0).toLocaleString()}
+                  <td className="px-6 py-4 text-right hidden lg:table-cell">
+                    <span className="text-sm font-semibold text-[#0B2560]">
+                      {(page.leadsLive ?? 0).toLocaleString()}
+                    </span>
+                    {/* Only shown when it's actually drifted — the common
+                        case (nothing's ever been deleted) stays a single
+                        clean number, matching how this looked before. */}
+                    {page.leadsAllTime > page.leadsLive && (
+                      <p title="Recorded at submission time, includes bookings since deleted" className="text-[10px] text-gray-400 mt-0.5">
+                        {page.leadsAllTime.toLocaleString()} all-time
+                      </p>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right hidden lg:table-cell">
                     <span
                       className={`text-sm font-bold ${
-                        parseFloat(conversionPct(page.analytics?.visitors, page.analytics?.leads)) > 3
+                        parseFloat(conversionPct(page.analytics?.visitors, page.leadsLive)) > 3
                           ? 'text-green-600'
                           : 'text-gray-500'
                       }`}
                     >
-                      {conversionPct(page.analytics?.visitors ?? 0, page.analytics?.leads ?? 0)}
+                      {conversionPct(page.analytics?.visitors ?? 0, page.leadsLive ?? 0)}
                     </span>
                   </td>
                   <td className="px-6 py-4">

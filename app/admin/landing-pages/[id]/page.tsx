@@ -47,6 +47,10 @@ interface LandingPage {
   form: { fields: FormField[]; submitText: string; successMessage: string; whatsappNotify: boolean };
   tracking: { gtmId: string; metaPixelId: string; googleAdsId: string; googleAdsLabel: string };
   analytics: { visitors: number; leads: number };
+  // Computed at read time from actual Booking rows still matching this
+  // page's slug — see app/api/admin/landing-pages/[id]/route.ts.
+  leadsLive?: number;
+  leadsAllTime?: number;
   layoutEngineEnabled?: boolean;
 }
 
@@ -1651,12 +1655,20 @@ export default function LandingPageBuilder() {
                       <p className="text-[9px] text-gray-400 uppercase tracking-wider">Visitors</p>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-2 text-center">
-                      <p className="text-base font-extrabold text-[#0B2560]">{lp.analytics?.leads ?? 0}</p>
+                      <p className="text-base font-extrabold text-[#0B2560]">{lp.leadsLive ?? lp.analytics?.leads ?? 0}</p>
                       <p className="text-[9px] text-gray-400 uppercase tracking-wider">Leads</p>
+                      {/* Only shown when it's actually drifted from the
+                          all-time count — see the list page's identical
+                          comment for why this exists. */}
+                      {(lp.leadsAllTime ?? 0) > (lp.leadsLive ?? 0) && (
+                        <p title="Recorded at submission time, includes bookings since deleted" className="text-[8px] text-gray-400 mt-0.5">
+                          {lp.leadsAllTime} all-time
+                        </p>
+                      )}
                     </div>
                     <div className="bg-gray-50 rounded-xl p-2 text-center">
                       <p className="text-base font-extrabold text-[#3B82C4]">
-                        {lp.analytics?.visitors ? `${((lp.analytics.leads / lp.analytics.visitors) * 100).toFixed(1)}%` : '—'}
+                        {lp.analytics?.visitors ? `${(((lp.leadsLive ?? lp.analytics.leads) / lp.analytics.visitors) * 100).toFixed(1)}%` : '—'}
                       </p>
                       <p className="text-[9px] text-gray-400 uppercase tracking-wider">Conv.</p>
                     </div>

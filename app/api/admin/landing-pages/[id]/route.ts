@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LandingPage } from '@/app/models/LandingPage';
+import Booking from '@/app/models/Booking';
 import { requirePermission } from '@/app/lib/adminAuth';
 
 export async function GET(
@@ -22,7 +23,15 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: page });
+    // Same "counter drifts from reality, live count can't" fix as the
+    // list route (app/api/admin/landing-pages/route.ts) — this page's own
+    // Analytics card was showing analytics.leads (a running total that
+    // never reflects a booking being deleted afterward) with nothing to
+    // indicate it might not match what's actually in the pipeline.
+    const leadsLive = await (Booking as any).countDocuments({ lpSlug: page.slug });
+    const data = { ...page.toObject(), leadsLive, leadsAllTime: page.analytics?.leads ?? 0 };
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Error fetching landing page:', error);
     return NextResponse.json(
