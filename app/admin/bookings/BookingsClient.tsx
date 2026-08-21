@@ -56,6 +56,11 @@ interface Booking {
   landingPage?: string;
   firstTouchSource?: string;
   lastTouchSource?: string;
+  // VPN/proxy/datacenter risk signal (app/lib/ipIntelligence.ts) — a
+  // staff-visible flag only, never a submission gate. undefined = the
+  // lookup never completed or predates this field ("never checked", not
+  // "clean").
+  ipRiskFlagged?: boolean;
   createdAt: string;
 }
 
@@ -1108,8 +1113,16 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${src.color}`}>
                               {src.icon} {src.label}
                             </span>
-                            <div>
+                            <div className="flex flex-wrap gap-1">
                               <CampaignChip lastTouchSource={b.lastTouchSource} />
+                              {b.ipRiskFlagged && (
+                                <span
+                                  title="Submitted via a VPN, proxy, or datacenter IP — a risk signal only, not a reason to reject on its own. Plenty of real patients use a VPN for privacy."
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 mt-1"
+                                >
+                                  🛡️ VPN/Proxy
+                                </span>
+                              )}
                             </div>
                           </td>
 

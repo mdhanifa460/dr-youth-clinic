@@ -100,6 +100,16 @@ const BookingSchema = new mongoose.Schema(
     // ("historical — unavailable"), never silently 'new'.
     originDomain: { type: String, enum: ["old", "new"] },
 
+    // VPN/proxy/datacenter risk signal (app/lib/ipIntelligence.ts) — a flag
+    // for staff visibility, never a submission gate (see that file's
+    // comment for why). Written asynchronously right after creation, not
+    // in the create() call itself, so a slow/failed IP-lookup can never
+    // delay or break a real visitor's booking confirmation. No schema
+    // `default`, same convention as originDomain above: a Booking created
+    // before this field existed, or one whose lookup never completed,
+    // reads back undefined ("never checked"), never silently "clean."
+    ipRiskFlagged: { type: Boolean },
+
     // CRM fields
     internalNote:   { type: String, default: "" },
     assignedTo:     { type: String, default: "" },  // staff member handling this lead

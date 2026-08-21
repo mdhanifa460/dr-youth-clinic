@@ -13,6 +13,7 @@ import { getEffectiveBranchConfig } from "@/app/lib/branchConfig";
 import { getSiteConfig } from "@/app/lib/siteConfig";
 import { pushBookingToCrm } from "@/app/lib/crm/pushBooking";
 import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
+import { checkIpRisk } from "@/app/lib/ipIntelligence";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -103,6 +104,15 @@ export async function POST(req: NextRequest) {
     // push above — never lets a scoring hiccup affect the patient's
     // booking confirmation.
     qualifyAndPersist(booking, { reason: "auto:initial" }).catch(() => {});
+
+    // VPN/proxy/datacenter risk flag — a staff-visible signal, never a
+    // submission gate (see app/lib/ipIntelligence.ts). Same fire-and-
+    // forget pattern as CRM/qualification above: the lookup can be slow
+    // or fail outright, and neither should ever delay or break the
+    // patient's booking confirmation.
+    checkIpRisk(ip).then((r) => {
+      if (r.checked) (Booking as any).updateOne({ _id: booking._id }, { $set: { ipRiskFlagged: r.isVpnOrProxy } }).catch(() => {});
+    }).catch(() => {});
 
     // Resolves this branch's outbound sender number, if one was configured
     // (LocationContent.clinicInfo.whatsappSenderPhoneNumberId) — falls back

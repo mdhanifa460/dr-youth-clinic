@@ -9,6 +9,7 @@ import { sendWhatsAppText } from '@/app/lib/whatsapp';
 import { pushBookingToCrm } from '@/app/lib/crm/pushBooking';
 import { buildAttributionFields } from '@/app/lib/utmAttribution';
 import { qualifyAndPersist } from '@/app/lib/leadQualification/persist';
+import { checkIpRisk } from '@/app/lib/ipIntelligence';
 
 export async function POST(
   req: NextRequest,
@@ -93,6 +94,12 @@ export async function POST(
     // Lead Qualification Engine — same fire-and-forget scoring as the main
     // booking flow (app/api/booking/route.ts); no-ops if not enabled.
     qualifyAndPersist(booking, { reason: 'auto:initial' }).catch(() => {});
+
+    // VPN/proxy/datacenter risk flag — same fire-and-forget pattern as
+    // app/api/booking/route.ts; see app/lib/ipIntelligence.ts.
+    checkIpRisk(ip).then((r) => {
+      if (r.checked) (Booking as any).updateOne({ _id: booking._id }, { $set: { ipRiskFlagged: r.isVpnOrProxy } }).catch(() => {});
+    }).catch(() => {});
 
     // Increment analytics.leads
     const analyticsUpdate: any = { $inc: { 'analytics.leads': 1 } };
