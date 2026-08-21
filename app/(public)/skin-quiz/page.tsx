@@ -272,7 +272,22 @@ export default function SkinQuizPage() {
     }
   }, [campaign, qrSource, clinicLocation, channel, sessionId, assessmentType]);
 
-  const orderedQuestions = typeConfig ? getOrderedQuestions(typeConfig.questions, answers) : [];
+  // extraTags: [assessmentType] — same defensive mechanism Plan My
+  // Journey's getOrderedQuestions() call already relies on (see
+  // assessmentFlow.ts's collectAnsweredTags comment). Without it, a
+  // conditionTags-gated question here depends entirely on some OTHER
+  // answer in this same type's config happening to carry a matching tag
+  // — an easy, silent mistake (confirmed live: it happened once already,
+  // for Hair, where 12 of 13 conditionTags:["hair"]-gated questions were
+  // permanently unreachable because no answer anywhere carried "hair").
+  // Passing the picked type's own key guarantees any question an admin
+  // gates behind conditionTags:["hair"|"skin"|"body"] always shows for
+  // that type, regardless of whether they also remembered to tag a
+  // matching answer — a more specific gate (e.g. ["progression-rapid"])
+  // still depends on its own matching answer tag, unchanged.
+  const orderedQuestions = typeConfig
+    ? getOrderedQuestions(typeConfig.questions, answers, undefined, assessmentType ? [assessmentType] : [])
+    : [];
   const currentQuestionId = path[path.length - 1];
   const currentQuestion = orderedQuestions.find((q) => q.id === currentQuestionId);
   const currentIndex = orderedQuestions.findIndex((q) => q.id === currentQuestionId);

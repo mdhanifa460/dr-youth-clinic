@@ -80,3 +80,44 @@ describe('assessmentFlow — conditionTags-gated questions with no matching answ
     expect(ordered.map((q) => q.id)).toContain('hair-1');
   });
 });
+
+// Same bug shape, reproduced for the Hair/Skin/Body Pre-Consultation
+// Assessment (app/(public)/skin-quiz/page.tsx) — that page's own
+// getOrderedQuestions() call had no extraTags at all until this fix, so
+// it had zero defense against the exact mistake that already hit Hair
+// once (conditionTags-gating a question without also tagging a matching
+// answer). Skin/Body happened to have no conditionTags-gated questions
+// live at the time this was found, which is why the bug never actually
+// manifested in production data — but the next admin who gates a Skin
+// or Body question the same way Hair's "rapid-progression-detail" is
+// gated, without perfectly remembering to tag a matching answer, would
+// have hit this. Mirrors skin-quiz/page.tsx's own fix: pass the picked
+// assessment type's own key as extraTags.
+describe('assessmentFlow — the same gap, for skin-quiz\'s Hair/Skin/Body types (not just Plan My Journey goals)', () => {
+  it('a "skin"-gated question with no matching answer tag anywhere is unreachable without extraTags…', () => {
+    const skinQuestions: AssessmentQuestion[] = [
+      mkQuestion('primary-concern', 1, []),
+      mkQuestion('skin-follow-up', 2, ['skin']),
+    ];
+    const ordered = getOrderedQuestions(skinQuestions, { 'primary-concern': 'primary-concern-a' });
+    expect(ordered.map((q) => q.id)).not.toContain('skin-follow-up');
+  });
+
+  it('…and is guaranteed reachable once the picked type\'s own key is passed as extraTags', () => {
+    const skinQuestions: AssessmentQuestion[] = [
+      mkQuestion('primary-concern', 1, []),
+      mkQuestion('skin-follow-up', 2, ['skin']),
+    ];
+    const ordered = getOrderedQuestions(skinQuestions, {}, undefined, ['skin']);
+    expect(ordered.map((q) => q.id)).toContain('skin-follow-up');
+  });
+
+  it('a "body"-gated question is unaffected by the "skin" extraTag (no cross-type leakage)', () => {
+    const bodyQuestions: AssessmentQuestion[] = [
+      mkQuestion('primary-concern', 1, []),
+      mkQuestion('body-follow-up', 2, ['body']),
+    ];
+    const ordered = getOrderedQuestions(bodyQuestions, {}, undefined, ['skin']);
+    expect(ordered.map((q) => q.id)).not.toContain('body-follow-up');
+  });
+});
