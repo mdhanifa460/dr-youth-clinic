@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
-import { cookies, headers } from 'next/headers';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review } from '@/app/models/Review';
@@ -440,10 +439,20 @@ export default async function Home() {
   const testimonialsConfig = publicSectionOrder.find((s) => s.key === 'testimonials' && s.visible);
   const td = sectionData['testimonials'] ?? {};
 
-  const preferredLocation = cookies().get('preferred_location')?.value || '';
-
-  // Vercel injects x-vercel-ip-city on every request — no external API needed
-  const rawCity = headers().get('x-vercel-ip-city') || '';
+  // NOT read via headers()/cookies() — the exact same unguarded pattern in
+  // Footer.tsx just caused a real, live production incident (every
+  // /[city]/services/[category] page 500ing since Aug 17). This page
+  // wasn't hit yet only because it always has a valid cached copy from the
+  // initial build for stale-while-revalidate to keep serving; the same
+  // static/dynamic conflict would still fire on every background
+  // revalidate attempt (this page's revalidate=300), and would 500 for
+  // real the moment that cached copy is ever evicted. See Footer.tsx's
+  // comment for the full root cause (confirmed via `next build && next
+  // start` that wrapping the calls in try/catch is not sufficient — by
+  // the time either is called, Next.js has already committed to static
+  // output). Both already have a safe "no signal" fallback below.
+  const preferredLocation = '';
+  const rawCity = '';
   const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
 
   // Same 4 city slugs used sitewide (Navbar.tsx, [location] routes) — used

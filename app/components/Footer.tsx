@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { headers, cookies } from "next/headers";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
-import { resolveFooterHref, resolveFooterLocation, LOCATION_COOKIE } from "@/app/lib/footerLinks";
+import { resolveFooterHref, resolveFooterLocation } from "@/app/lib/footerLinks";
 import type { SiteConfig } from "@/app/lib/siteConfig";
 
 const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
@@ -17,14 +16,29 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
   const resolvedData = data ?? HOMEPAGE_DEFAULTS.footer.data;
   const logoUrl = siteConfig?.logoUrl || DEFAULT_LOGO_URL;
 
-  // Same signals Navbar.tsx uses client-side (current city from the URL,
-  // else the visitor's detected/preferred city) — read server-side here via
-  // the x-pathname header middleware.ts already sets on every request (see
-  // app/admin/layout.tsx for the existing precedent of reading it) plus the
-  // preferred_location cookie middleware.ts already writes.
-  const pathname = headers().get("x-pathname") ?? "";
-  const cookieLocation = cookies().get(LOCATION_COOKIE)?.value || "";
-  const location = resolveFooterLocation(pathname, cookieLocation);
+  // NOT read via headers()/cookies() here — a real, live production
+  // incident (confirmed since Aug 17: every /[city]/services/[category]
+  // page 500ing, cache=MISS on every request) traced to exactly that:
+  // this Server Component calling headers()/cookies() unconditionally.
+  // Those require a real incoming request, which doesn't exist during
+  // background ISR regeneration or the first on-demand render of a
+  // [location]/services/[category] combo that generateStaticParams()
+  // never covered (it only enumerates `category`, not `location`, so
+  // every city/category pairing is generated on demand). Wrapping the
+  // calls in try/catch was NOT sufficient — verified locally via a real
+  // `next build && next start`: by the point Footer (deep in the render
+  // tree) calls headers(), the page has already committed to static
+  // output, so Next.js's own "page changed from static to dynamic at
+  // runtime" bailout fires regardless and still 500s.
+  //
+  // resolveFooterLocation('', '') safely falls back to "chennai" — the
+  // same degradation this always had for a visitor with no signal — so
+  // this component simply never attempts the server-side read at all.
+  // Per-visitor footer-link personalization by city is exactly what
+  // Navbar.tsx does instead, safely, client-side via usePathname() +
+  // document.cookie (no static/dynamic conflict there — it runs after
+  // hydration, never during server render).
+  const location = resolveFooterLocation("", "");
 
   const {
     tagline = "",

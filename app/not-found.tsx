@@ -5,6 +5,21 @@ import { Calendar, Home, Users, ArrowLeft } from 'lucide-react';
 import { normalizeOldUrl } from '@/app/lib/domainMigration/parseSitemap';
 import { getApprovedRedirect } from '@/app/lib/domainMigration/serveRedirect';
 
+// The actual root cause of a real, live production incident (every
+// /[city]/services/[category] page 500ing since Aug 17, confirmed via
+// Vercel runtime logs and reproduced locally with `next build && next
+// start`): this file's headers() call. ANY page that can call notFound()
+// gets this boundary bundled into ITS OWN static-generation attempt (Next
+// needs the fallback ready in case notFound() fires) — so headers() here
+// was executing during other pages' SSG/ISR render, with no real request
+// present, throwing "page changed from static to dynamic at runtime" and
+// crashing instead of the intended graceful degradation. force-dynamic
+// tells Next this boundary is never attempted statically — it always
+// renders fresh per real request instead, which is correct for a 404 page
+// anyway (nothing about it benefits from static caching), and stops it
+// from poisoning every OTHER page's static generation.
+export const dynamic = 'force-dynamic';
+
 export default async function NotFound() {
   // Domain Migration Phase 3 — the only place an approved RedirectMapping
   // actually serves for a real visitor. This lookup only ever runs for a
