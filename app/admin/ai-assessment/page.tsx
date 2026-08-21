@@ -11,6 +11,41 @@ import {
 } from "@/app/lib/quizDefaults";
 import { canAccess, type AdminRole } from "@/app/lib/permissions";
 
+// ─── Category tabs ──────────────────────────────────────────────────────────
+//
+// The real, live root cause of a production incident this same session:
+// this editor's ONLY way to say "which patients see this question" was a
+// free-text "comma-separated tags" box, hand-typed against whatever tags
+// Plan My Journey's goals (app/admin/journey) happen to use right now —
+// with nothing checking the two ever actually match. They silently
+// diverged (an admin rewrote every question's tags to a cleaner scheme —
+// "hair"/"skin"/"laser"/"weight loss" — without knowing the goals still
+// pointed at the old one), and three of four goals' follow-up questions
+// went dark with zero indication why.
+//
+// Category is built FROM the live goals list (fetched below), never
+// hand-typed — a question assigned to a category tab is tagged with that
+// goal's own real concernTags, so there is no longer a second, independently-
+// typed copy of the tag to drift out of sync. "universal" is a special,
+// synthetic category (not a real goal) for conditionTags: [] — shown to
+// every patient regardless of what they picked.
+interface Category {
+  slug: string;
+  label: string;
+  icon: string;
+  tags: string[]; // [] for the universal category
+}
+const UNIVERSAL_CATEGORY: Category = { slug: "universal", label: "Everyone", icon: "🌐", tags: [] };
+
+// Which category tab(s) a question currently belongs to — a question with
+// no conditionTags is universal; one whose conditionTags don't overlap ANY
+// current goal's tags belongs to none (surfaced as "Unassigned" so this
+// exact silent-mismatch failure mode is visible instead of hidden).
+function categoriesForQuestion(question: AssessmentQuestion, categories: Category[]): Category[] {
+  if (!question.conditionTags?.length) return [UNIVERSAL_CATEGORY];
+  return categories.filter((c) => c.tags.some((t) => question.conditionTags!.includes(t)));
+}
+
 // ─── Small reusable inputs ─────────────────────────────────────────────────
 
 function Input({ value, onChange, placeholder, className = "" }: {
@@ -132,10 +167,11 @@ function AnswerRow({
 // ─── Question card ───────────────────────────────────────────────────────────
 
 function QuestionCard({
-  question, allQuestions, onChange, onRemove, onMove, isFirst, isLast,
+  question, allQuestions, categories, onChange, onRemove, onMove, isFirst, isLast,
 }: {
   question: AssessmentQuestion;
   allQuestions: AssessmentQuestion[];
+  categories: Category[];
   onChange: (q: AssessmentQuestion) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
@@ -143,7 +179,22 @@ function QuestionCard({
   isLast: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [showAdvancedTags, setShowAdvancedTags] = useState(false);
   const set = (patch: Partial<AssessmentQuestion>) => onChange({ ...question, ...patch });
+
+  const conditionTags = question.conditionTags || [];
+  const activeCategories = categoriesForQuestion(question, categories);
+  // Toggling a category tab adds/removes THAT GOAL'S OWN real tags — never
+  // a hand-typed guess at what they might be, so this can't reproduce the
+  // exact drift that caused the incident this whole picker replaces.
+  const toggleCategory = (cat: Category) => {
+    const isOn = activeCategories.some((c) => c.slug === cat.slug);
+    if (isOn) {
+      set({ conditionTags: conditionTags.filter((t) => !cat.tags.includes(t)) });
+    } else {
+      set({ conditionTags: Array.from(new Set([...conditionTags, ...cat.tags])) });
+    }
+  };
 
   const addAnswer = () => set({ answers: [...question.answers, { id: "", title: "", description: "", icon: "", image: "", score: 0, tags: [], weight: 0, nextQuestionId: "" }] });
   const updateAnswer = (i: number, a: AssessmentAnswer) => set({ answers: question.answers.map((x, idx) => idx === i ? a : x) });
@@ -185,19 +236,65 @@ function QuestionCard({
             <Input value={question.subtitle} onChange={(v) => set({ subtitle: v })} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1 block">
-              Show only for these concerns <span className="font-normal text-gray-400">(comma-separated tags — leave blank to show for every concern)</span>
-            </label>
-            <Input
-              value={(question.conditionTags || []).join(", ")}
-              onChange={(v) => set({ conditionTags: v.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) })}
-              placeholder="e.g. hair, acne, pigmentation"
-            />
-            <p className="text-[10px] text-gray-400 mt-1">
-              Matches the tags on the Concern question's answers (Answer editor below) — e.g. Hair Fall/Hair
-              Thinning/Baldness/Hair Transplant all carry the "hair" tag, so one set of hair follow-up
-              questions can apply to all of them.
+            <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Show this question for</label>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => set({ conditionTags: [] })}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+                  conditionTags.length === 0
+                    ? "bg-[#0B2560] text-white border-[#0B2560]"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                🌐 Everyone
+              </button>
+              {categories.map((cat) => {
+                const isOn = activeCategories.some((c) => c.slug === cat.slug);
+                return (
+                  <button
+                    key={cat.slug}
+                    type="button"
+                    onClick={() => toggleCategory(cat)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+                      isOn ? "bg-[#0B2560] text-white border-[#0B2560]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    {cat.icon} {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1.5">
+              {conditionTags.length === 0
+                ? "Shown to every patient, no matter what they picked."
+                : activeCategories.length > 0
+                  ? `Shown only to patients whose goal matches ${activeCategories.map((c) => c.label).join(" or ")}.`
+                  : "These tags don't match any category patients can actually pick right now."}
             </p>
+            {activeCategories.length === 0 && conditionTags.length > 0 && (
+              <p className="text-[10px] text-red-500 mt-1 font-semibold">
+                ⚠️ This question is currently unreachable — no real patient will ever see it. Pick a category
+                above, or check Advanced below if this is intentional (a custom tag not tied to a goal).
+              </p>
+            )}
+            <details className="mt-2.5">
+              <summary className="text-[10px] text-gray-400 cursor-pointer hover:text-gray-600 select-none">
+                Advanced: edit raw tags directly
+              </summary>
+              <div className="mt-2">
+                <Input
+                  value={conditionTags.join(", ")}
+                  onChange={(v) => set({ conditionTags: v.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) })}
+                  placeholder="e.g. hair, acne, pigmentation"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Only needed for a tag that doesn't correspond to any category above — the buttons do this
+                  safely for the normal case, always using the goal's own real tags instead of a hand-typed
+                  guess.
+                </p>
+              </div>
+            </details>
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-500 mb-1 block">
@@ -1048,10 +1145,23 @@ export default function AiAssessmentAdminPage() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"questions" | "leads" | "analytics" | "qr" | "settings">("questions");
   const [myRole, setMyRole] = useState<AdminRole | null>(null);
+  // Real, live goals from Plan My Journey's own admin (app/admin/journey) —
+  // never hand-copied. This is what makes "Show this question for" above a
+  // set of buttons instead of a free-text field: every category tab here
+  // uses the goal's own current concernTags, so a question assigned
+  // through this UI can't independently drift from what the goal actually
+  // expects, the way the free-text version already once did in production.
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   useEffect(() => {
     fetch("/api/admin/quiz").then((r) => r.json()).then((d) => { if (d.success) setConfig(d.data); }).catch(() => {}).finally(() => setLoading(false));
     fetch("/api/admin/profile").then((r) => r.json()).then((d) => { if (d.success) setMyRole(d.data.role); }).catch(() => {});
+    fetch("/api/admin/journey").then((r) => r.json()).then((d) => {
+      if (!d.success) return;
+      const goals = (d.data?.goals || []).filter((g: any) => g.enabled);
+      setCategories(goals.map((g: any) => ({ slug: g.slug, label: g.label, icon: g.icon || "🎯", tags: g.concernTags || [] })));
+    }).catch(() => {});
   }, []);
 
   // Doctor Review Mode's Save/Approve/Generate Care Plan actions are gated
@@ -1121,13 +1231,19 @@ export default function AiAssessmentAdminPage() {
     setSaved(false);
   };
 
+  // A new question defaults to whichever category tab you're currently
+  // viewing — the same real goal tags "Show this question for" itself
+  // uses, not a separate hand-typed guess. "all" (no specific category
+  // selected) still creates a universal question, matching the previous
+  // always-blank default exactly.
   const addQuestion = () => {
     const id = `question-${Date.now()}`;
+    const activeCat = categories.find((c) => c.slug === activeCategory);
     updateConfig({
       questions: [...config.questions, {
         id, title: "New Question", subtitle: "", description: "", icon: "❓", image: "",
         type: "single", order: config.questions.length + 1, required: true, answers: [],
-        sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: [], requiredTags: [],
+        sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "", conditionTags: activeCat?.tags || [], requiredTags: [],
       }],
     });
   };
@@ -1227,30 +1343,95 @@ export default function AiAssessmentAdminPage() {
         ))}
       </div>
 
-      {tab === "questions" && (
-        <div className="space-y-4">
-          {orderedQuestions.map((q, i) => (
-            <QuestionCard
-              key={q.id} question={q} allQuestions={orderedQuestions}
-              onChange={(v) => updateQuestion(q.id, v)} onRemove={() => removeQuestion(q.id)}
-              onMove={(dir) => moveQuestion(q.id, dir)} isFirst={i === 0} isLast={i === orderedQuestions.length - 1}
-            />
-          ))}
-          <button onClick={addQuestion} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-semibold text-[#0B2560] hover:border-[#0B2560]/40 hover:bg-[#f6faff] transition">
-            + Add Question
-          </button>
-          {missingQuickAddIds.length > 0 && (
-            <button onClick={addQuickAddQuestions} className="w-full py-3 border-2 border-dashed border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:border-purple-400 hover:bg-purple-50 transition">
-              + Add Gender / Age / Photo / Notes
+      {tab === "questions" && (() => {
+        // "All" plus one tab per real, live goal (Plan My Journey's own
+        // admin) plus "Everyone" (universal/conditionTags: []) and
+        // "Unassigned" (only appears if something's actually broken — a
+        // question whose tags don't match any current goal, the exact
+        // silent failure mode this whole tabbed picker exists to prevent).
+        // Counts on every pill so a doctor can see "Laser has 0 questions"
+        // at a glance, without opening a single card.
+        const tabList: (Category & { count: number })[] = [
+          { ...UNIVERSAL_CATEGORY, count: orderedQuestions.filter((q) => !q.conditionTags?.length).length },
+          ...categories.map((c) => ({ ...c, count: orderedQuestions.filter((q) => q.conditionTags?.some((t) => c.tags.includes(t))).length })),
+        ];
+        const unassignedCount = orderedQuestions.filter((q) => q.conditionTags?.length && categoriesForQuestion(q, categories).length === 0).length;
+
+        const visibleQuestions =
+          activeCategory === "all" ? orderedQuestions
+          : activeCategory === "unassigned" ? orderedQuestions.filter((q) => q.conditionTags?.length && categoriesForQuestion(q, categories).length === 0)
+          : activeCategory === UNIVERSAL_CATEGORY.slug ? orderedQuestions.filter((q) => !q.conditionTags?.length)
+          : orderedQuestions.filter((q) => q.conditionTags?.some((t) => categories.find((c) => c.slug === activeCategory)?.tags.includes(t)));
+
+        const activeCatLabel = categories.find((c) => c.slug === activeCategory)?.label;
+
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setActiveCategory("all")}
+                className={`text-xs font-bold px-3.5 py-2 rounded-xl transition ${
+                  activeCategory === "all" ? "bg-[#0B2560] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                All ({orderedQuestions.length})
+              </button>
+              {tabList.map((c) => (
+                <button
+                  key={c.slug}
+                  onClick={() => setActiveCategory(c.slug)}
+                  className={`text-xs font-bold px-3.5 py-2 rounded-xl transition ${
+                    activeCategory === c.slug ? "bg-[#0B2560] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {c.icon} {c.label} ({c.count})
+                </button>
+              ))}
+              {unassignedCount > 0 && (
+                <button
+                  onClick={() => setActiveCategory("unassigned")}
+                  title="Tagged with something that doesn't match any current goal — these questions can never actually reach a real patient"
+                  className={`text-xs font-bold px-3.5 py-2 rounded-xl transition ${
+                    activeCategory === "unassigned" ? "bg-red-600 text-white" : "bg-red-50 text-red-600 hover:bg-red-100"
+                  }`}
+                >
+                  ⚠️ Unassigned ({unassignedCount})
+                </button>
+              )}
+            </div>
+
+            {visibleQuestions.map((q) => {
+              const i = orderedQuestions.indexOf(q);
+              return (
+                <QuestionCard
+                  key={q.id} question={q} allQuestions={orderedQuestions} categories={categories}
+                  onChange={(v) => updateQuestion(q.id, v)} onRemove={() => removeQuestion(q.id)}
+                  onMove={(dir) => moveQuestion(q.id, dir)} isFirst={i === 0} isLast={i === orderedQuestions.length - 1}
+                />
+              );
+            })}
+            {visibleQuestions.length === 0 && (
+              <div className="text-center py-10 text-sm text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                No questions here yet — click "+ Add Question" below to create the first one for {activeCatLabel || "this view"}.
+              </div>
+            )}
+
+            <button onClick={addQuestion} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-semibold text-[#0B2560] hover:border-[#0B2560]/40 hover:bg-[#f6faff] transition">
+              + Add Question{activeCatLabel ? ` to ${activeCatLabel}` : ""}
             </button>
-          )}
-          {!hasWeightLossBranch && (
-            <button onClick={addWeightLossBranch} className="w-full py-3 border-2 border-dashed border-green-200 rounded-xl text-sm font-semibold text-green-700 hover:border-green-400 hover:bg-green-50 transition">
-              + Add Weight Loss Questions
-            </button>
-          )}
-        </div>
-      )}
+            {activeCategory === "all" && missingQuickAddIds.length > 0 && (
+              <button onClick={addQuickAddQuestions} className="w-full py-3 border-2 border-dashed border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:border-purple-400 hover:bg-purple-50 transition">
+                + Add Gender / Age / Photo / Notes
+              </button>
+            )}
+            {activeCategory === "all" && !hasWeightLossBranch && (
+              <button onClick={addWeightLossBranch} className="w-full py-3 border-2 border-dashed border-green-200 rounded-xl text-sm font-semibold text-green-700 hover:border-green-400 hover:bg-green-50 transition">
+                + Add Weight Loss Questions
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {tab === "leads" && <LeadsTab canFullReview={canFullReview} />}
       {tab === "analytics" && <AnalyticsTab />}
