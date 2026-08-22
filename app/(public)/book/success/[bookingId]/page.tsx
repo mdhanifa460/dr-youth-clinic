@@ -10,6 +10,7 @@ import { Offer } from '@/app/models/Offer';
 import { getBookingSuccessConfig } from '@/app/models/BookingSuccessConfig';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { locations } from '@/app/data/locations';
+import { LocationContent } from '@/app/models/LocationContent';
 import BookingSuccessClient from '@/app/components/booking/BookingSuccessClient';
 
 export const metadata: Metadata = {
@@ -31,7 +32,30 @@ export default async function BookingSuccessPage({ params }: { params: { booking
 
   const [config, siteConfig] = await Promise.all([getBookingSuccessConfig(), getSiteConfig()]);
   const branchKey = String(booking.location || '').toLowerCase();
-  const branchInfo = locations[branchKey] || null;
+  const staticBranchInfo = locations[branchKey] || null;
+
+  // This page always knows the REAL branch with certainty (it's the
+  // booking's own `location` field, not guessed from a cookie/pathname
+  // the way Footer.tsx has to) — so, unlike Footer, there's no reason to
+  // resolve this client-side at all. `app/data/locations.ts` is a static,
+  // hardcoded fallback file, and its `phone` field is the exact same
+  // placeholder number ("+919876543210") for all four branches — a real
+  // bug: the "Call Clinic" button here was never showing a branch's
+  // actual number, only that one shared placeholder. LocationContent
+  // (the DB model admins actually edit at Admin → Locations) is the real
+  // source of truth for both fields; the static file's own address values
+  // ARE genuinely distinct per branch already, kept only as the fallback
+  // for a branch with nothing set in the DB yet.
+  const locationContent = branchKey
+    ? await (LocationContent as any).findOne({ location: branchKey }).select('clinicInfo.address clinicInfo.phone').lean().catch(() => null)
+    : null;
+  const branchInfo = staticBranchInfo
+    ? {
+        ...staticBranchInfo,
+        address: locationContent?.clinicInfo?.address || staticBranchInfo.address,
+        phone: locationContent?.clinicInfo?.phone || staticBranchInfo.phone,
+      }
+    : null;
 
   const enabledSections = new Set(
     (config.relatedSections || []).filter((s: any) => s.enabled).map((s: any) => s.key)
