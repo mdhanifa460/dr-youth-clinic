@@ -10,6 +10,7 @@ import { pushBookingToCrm } from '@/app/lib/crm/pushBooking';
 import { buildAttributionFields } from '@/app/lib/utmAttribution';
 import { qualifyAndPersist } from '@/app/lib/leadQualification/persist';
 import { checkIpRisk } from '@/app/lib/ipIntelligence';
+import { normalizeIdempotencyKey, extractIdentity, identitiesMatch, createBookingIdempotent } from '@/app/lib/bookingIdempotency';
 
 export async function POST(
   req: NextRequest,
@@ -66,6 +67,30 @@ export async function POST(
       ? extraFields.map(([k, v]) => `${k}: ${v}`).join('\n')
       : '';
 
+    // Idempotency — same client-generated key contract as app/api/booking/
+    // route.ts (see that file's own comment, and app/lib/bookingIdempotency.ts
+    // for the shared mechanism). Landing pages are a real ad-destination —
+    // exactly the surface most likely to get a slow-network double-tap.
+    const idempotencyKey = normalizeIdempotencyKey(req.headers.get('idempotency-key'));
+    const service = lp.title || 'Landing Page Enquiry';
+    if (idempotencyKey) {
+      const preExisting = await (Booking as any).findOne({ idempotencyKey }).lean();
+      if (preExisting) {
+        const incomingIdentity = extractIdentity({ name, phone: formattedPhone, service, location, date: '', time: '' });
+        if (!identitiesMatch(extractIdentity(preExisting), incomingIdentity)) {
+          return NextResponse.json(
+            { success: false, code: 'IDEMPOTENCY_CONFLICT', message: 'This request has already been processed.' },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json({
+          success: true,
+          message: lp.form?.successMessage || "Thank you! We'll call you within 2 hours.",
+          bookingId: preExisting.bookingId,
+        });
+      }
+    }
+
     const previousBookings = await (Booking as any).countDocuments({ phone: formattedPhone });
 
     const bookingId = 'DR-' + Date.now();
@@ -78,13 +103,13 @@ export async function POST(
     // no UTM/click-id signal at all.
     const resolvedSource = attribution.utmSource || 'landing-page';
 
-    const booking = await Booking.create({
+    const fieldsToSet = {
       bookingId,
       name,
       phone: formattedPhone,
       formattedPhone,
       email: email || '',
-      service: lp.title || 'Landing Page Enquiry',
+      service,
       location,
       source: resolvedSource,
       conversionChannel: 'website',
@@ -94,44 +119,60 @@ export async function POST(
       notes,
       isReturnVisit: previousBookings > 0,
       ...attribution,
-    });
+    };
 
-    // CRM Connector push — non-blocking, no-ops silently if no CRM
-    // connector is configured yet. See app/api/booking/route.ts for the
-    // same pattern.
-    pushBookingToCrm(booking).catch(() => {});
-
-    // Lead Qualification Engine — same fire-and-forget scoring as the main
-    // booking flow (app/api/booking/route.ts); no-ops if not enabled.
-    qualifyAndPersist(booking, { reason: 'auto:initial' }).catch(() => {});
-
-    // VPN/proxy/datacenter risk flag — same fire-and-forget pattern as
-    // app/api/booking/route.ts; see app/lib/ipIntelligence.ts.
-    checkIpRisk(ip).then((r) => {
-      if (r.checked) (Booking as any).updateOne({ _id: booking._id }, { $set: { ipRiskFlagged: r.isVpnOrProxy } }).catch(() => {});
-    }).catch(() => {});
-
-    // Increment analytics.leads
-    const analyticsUpdate: any = { $inc: { 'analytics.leads': 1 } };
-
-    // If A/B test variant B, also increment variantB.leads
-    if (variant === 'B') {
-      analyticsUpdate.$inc['abTest.variantB.leads'] = 1;
+    const result = await createBookingIdempotent(Booking, idempotencyKey, fieldsToSet);
+    if (result.status === 'conflict') {
+      return NextResponse.json(
+        { success: false, code: 'IDEMPOTENCY_CONFLICT', message: 'This request has already been processed.' },
+        { status: 409 }
+      );
     }
+    const booking = result.booking;
 
-    await (LandingPage as any).findByIdAndUpdate(lp._id, analyticsUpdate);
+    // Everything below (CRM push, qualification, VPN flag, analytics
+    // counter, WhatsApp alert) only runs for a genuine new creation — a
+    // replayed result (the narrow concurrent-same-key race) must never
+    // re-trigger any of these, including the analytics.leads counter,
+    // which would otherwise double-count a single real visitor.
+    if (result.status === 'created') {
+      // CRM Connector push — non-blocking, no-ops silently if no CRM
+      // connector is configured yet. See app/api/booking/route.ts for the
+      // same pattern.
+      pushBookingToCrm(booking).catch(() => {});
 
-    // Staff WhatsApp alert — fire-and-forget, same pattern as
-    // app/api/leads/route.ts, so a delivery failure never turns an
-    // already-saved lead into a failure response for the visitor.
-    if (lp.form?.whatsappNotify) {
-      getClinicNotifyNumber(location).then((to) => {
-        if (!to) return;
-        sendWhatsAppText(
-          to,
-          `🆕 New Landing Page Lead\n\nCampaign: ${lp.title}\nName: ${name}\nPhone: ${formattedPhone}${email ? `\nEmail: ${email}` : ''}${location ? `\nLocation: ${location}` : ''}`
-        ).catch(() => {});
+      // Lead Qualification Engine — same fire-and-forget scoring as the main
+      // booking flow (app/api/booking/route.ts); no-ops if not enabled.
+      qualifyAndPersist(booking, { reason: 'auto:initial' }).catch(() => {});
+
+      // VPN/proxy/datacenter risk flag — same fire-and-forget pattern as
+      // app/api/booking/route.ts; see app/lib/ipIntelligence.ts.
+      checkIpRisk(ip).then((r) => {
+        if (r.checked) (Booking as any).updateOne({ _id: booking._id }, { $set: { ipRiskFlagged: r.isVpnOrProxy } }).catch(() => {});
       }).catch(() => {});
+
+      // Increment analytics.leads
+      const analyticsUpdate: any = { $inc: { 'analytics.leads': 1 } };
+
+      // If A/B test variant B, also increment variantB.leads
+      if (variant === 'B') {
+        analyticsUpdate.$inc['abTest.variantB.leads'] = 1;
+      }
+
+      await (LandingPage as any).findByIdAndUpdate(lp._id, analyticsUpdate);
+
+      // Staff WhatsApp alert — fire-and-forget, same pattern as
+      // app/api/leads/route.ts, so a delivery failure never turns an
+      // already-saved lead into a failure response for the visitor.
+      if (lp.form?.whatsappNotify) {
+        getClinicNotifyNumber(location).then((to) => {
+          if (!to) return;
+          sendWhatsAppText(
+            to,
+            `🆕 New Landing Page Lead\n\nCampaign: ${lp.title}\nName: ${name}\nPhone: ${formattedPhone}${email ? `\nEmail: ${email}` : ''}${location ? `\nLocation: ${location}` : ''}`
+          ).catch(() => {});
+        }).catch(() => {});
+      }
     }
 
     return NextResponse.json({
@@ -141,7 +182,7 @@ export async function POST(
       // previously discarded here, so the client had no way to send the
       // visitor to /book/success/{bookingId} like every other
       // booking-creating flow does (see FormSection.tsx).
-      bookingId,
+      bookingId: booking.bookingId,
     });
   } catch (error) {
     console.error('Lead submission error:', error);

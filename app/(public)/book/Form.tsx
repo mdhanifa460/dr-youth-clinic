@@ -7,6 +7,7 @@ import { locations } from '@/app/data/locations';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { postInterestEvent, resolveInterestCategory } from '@/app/lib/personalization';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
+import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 
 const SERVICES = [
   { id: 'Skin', icon: '✨', label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
@@ -35,6 +36,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   const [error, setError] = useState('');
   const formTopRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
+  const getIdempotencyKey = useIdempotencyKey();
 
   // Scroll to the top of the form card (not window top — that would jump
   // past the page's own hero banner above it) whenever the step changes,
@@ -170,7 +172,18 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
     try {
       const res = await fetch('/api/booking', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // Duplicate-submission protection — a network timeout followed
+          // by the user tapping "Confirm Booking" again reuses the SAME
+          // key (nothing in `form` changed), so the backend recognizes
+          // the retry instead of creating a second booking. See
+          // app/lib/useIdempotencyKey.ts / app/lib/bookingIdempotency.ts.
+          'Idempotency-Key': getIdempotencyKey({
+            name: form.name, phone: form.phone, service: form.service,
+            location: form.location, date: form.date, time: form.time,
+          }),
+        },
         body: JSON.stringify({
           ...form,
           phone: form.phone,

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-react';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
+import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 
 interface HeroData {
   badge?: string;
@@ -98,6 +99,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const getIdempotencyKey = useIdempotencyKey();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +109,10 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
     try {
       const res = await fetch(`/api/lp/${slug}/lead`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': getIdempotencyKey({ slug, form }),
+        },
         body: JSON.stringify({
           name: form.name,
           phone: form.phone,

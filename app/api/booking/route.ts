@@ -15,6 +15,7 @@ import { pushBookingToCrm } from "@/app/lib/crm/pushBooking";
 import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
 import { checkIpRisk } from "@/app/lib/ipIntelligence";
 import { checkBookingCapacity, isRealAppointment } from "@/app/lib/bookingCapacity";
+import { normalizeIdempotencyKey, extractIdentity, identitiesMatch, createBookingIdempotent } from "@/app/lib/bookingIdempotency";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -64,13 +65,43 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
+    // Idempotency — a client-generated key naming ONE logical submission
+    // attempt (see app/lib/useIdempotencyKey.ts for how the frontend
+    // derives/reuses it). This upfront check happens BEFORE the capacity
+    // gate deliberately: a replay of an already-processed request must
+    // never re-run capacity (a retry must not consume a second slot) and
+    // must never re-run the WhatsApp alerts/CRM push below — it just
+    // returns the original result. Missing/malformed key degrades safely
+    // to today's exact behavior (see normalizeIdempotencyKey) — never a
+    // 500, never a hard requirement.
+    const idempotencyKey = normalizeIdempotencyKey(req.headers.get("idempotency-key"));
+    if (idempotencyKey) {
+      const preExisting = await (Booking as any).findOne({ idempotencyKey }).lean();
+      if (preExisting) {
+        const incomingIdentity = extractIdentity({ name, phone: formattedPhone, service, location, date: parsed.data.date || "", time: parsed.data.time || "" });
+        if (!identitiesMatch(extractIdentity(preExisting), incomingIdentity)) {
+          return NextResponse.json(
+            { success: false, code: "IDEMPOTENCY_CONFLICT", message: "This booking request has already been processed." },
+            { status: 409 }
+          );
+        }
+        // Same key, same booking details — a legitimate retry (e.g. the
+        // first response never reached the browser). Return the ORIGINAL
+        // result as a normal success, exactly as if this were the first
+        // time — never a second "duplicate booking" error for the patient.
+        return NextResponse.json({ success: true, bookingId: preExisting.bookingId });
+      }
+    }
+
     // Booking Capacity & Availability — a business-capacity policy, NOT
     // the anti-abuse rate limiter above (that stays untouched). Only
     // relevant when this submission actually names a real appointment
     // slot — a callback request or a flow with no date/time step (see
     // bookingSchema) was never a capacity-consuming appointment and must
-    // not be gated by it. Runs BEFORE Booking.create(), so a rejected
-    // request never reaches the database — see app/lib/bookingCapacity.ts.
+    // not be gated by it. Runs BEFORE creation, so a rejected request
+    // never reaches the database — see app/lib/bookingCapacity.ts. Only
+    // reached when no pre-existing idempotent booking was found above, so
+    // a retry can never consume a second capacity slot.
     if (isRealAppointment(parsed.data.date, parsed.data.time)) {
       const capacity = await checkBookingCapacity({ branch: location, date: parsed.data.date!, time: parsed.data.time! });
       if (!capacity.allowed) {
@@ -108,7 +139,7 @@ export async function POST(req: NextRequest) {
     // GA4's own "(direct)" convention, never a guess dressed up as data.
     const resolvedSource = source || attribution.utmSource || "direct";
 
-    const booking = await Booking.create({
+    const fieldsToSet = {
       bookingId,
       name,
       phone: formattedPhone,
@@ -139,44 +170,61 @@ export async function POST(req: NextRequest) {
       ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
       ...attribution,
       originDomain: resolveOriginDomain((name) => req.cookies.get(name)?.value),
-    });
+    };
 
-    // CRM Connector push — non-blocking. The booking is already saved
-    // locally; whatever happens to the CRM sync after this never affects
-    // the response the patient gets. No-ops silently if no CRM connector
-    // is configured yet.
-    pushBookingToCrm(booking).catch(() => {});
+    // Atomic create-or-replay — resolves the one remaining race window
+    // (two requests carrying the SAME key, both passing the upfront check
+    // above at nearly the same instant). See app/lib/bookingIdempotency.ts.
+    const result = await createBookingIdempotent(Booking, idempotencyKey, fieldsToSet);
+    if (result.status === "conflict") {
+      return NextResponse.json(
+        { success: false, code: "IDEMPOTENCY_CONFLICT", message: "This booking request has already been processed." },
+        { status: 409 }
+      );
+    }
+    const booking = result.booking;
 
-    // Lead Qualification Engine — scores this booking against the
-    // admin-configured rules (Settings.leadQualification). No-ops silently
-    // if the engine isn't enabled yet. Fire-and-forget, same as the CRM
-    // push above — never lets a scoring hiccup affect the patient's
-    // booking confirmation.
-    qualifyAndPersist(booking, { reason: "auto:initial" }).catch(() => {});
+    // Everything below — CRM push, lead qualification, VPN flag, WhatsApp
+    // alerts — only runs for a GENUINE new creation. A "replayed" result
+    // (the narrow concurrent-duplicate-key race, resolved above) must
+    // never re-trigger any of these a second time for the same booking.
+    if (result.status === "created") {
+      // CRM Connector push — non-blocking. The booking is already saved
+      // locally; whatever happens to the CRM sync after this never affects
+      // the response the patient gets. No-ops silently if no CRM connector
+      // is configured yet.
+      pushBookingToCrm(booking).catch(() => {});
 
-    // VPN/proxy/datacenter risk flag — a staff-visible signal, never a
-    // submission gate (see app/lib/ipIntelligence.ts). Same fire-and-
-    // forget pattern as CRM/qualification above: the lookup can be slow
-    // or fail outright, and neither should ever delay or break the
-    // patient's booking confirmation.
-    checkIpRisk(ip).then((r) => {
-      if (r.checked) (Booking as any).updateOne({ _id: booking._id }, { $set: { ipRiskFlagged: r.isVpnOrProxy } }).catch(() => {});
-    }).catch(() => {});
+      // Lead Qualification Engine — scores this booking against the
+      // admin-configured rules (Settings.leadQualification). No-ops silently
+      // if the engine isn't enabled yet. Fire-and-forget, same as the CRM
+      // push above — never lets a scoring hiccup affect the patient's
+      // booking confirmation.
+      qualifyAndPersist(booking, { reason: "auto:initial" }).catch(() => {});
 
-    // Resolves this branch's outbound sender number, if one was configured
-    // (LocationContent.clinicInfo.whatsappSenderPhoneNumberId) — falls back
-    // to the global PHONE_NUMBER_ID otherwise, which is every branch today.
-    const branchConfig = await getEffectiveBranchConfig(location).catch(() => null);
-    const sendOpts = branchConfig?.whatsappSenderPhoneNumberId
-      ? { senderPhoneNumberId: branchConfig.whatsappSenderPhoneNumberId }
-      : undefined;
+      // VPN/proxy/datacenter risk flag — a staff-visible signal, never a
+      // submission gate (see app/lib/ipIntelligence.ts). Same fire-and-
+      // forget pattern as CRM/qualification above: the lookup can be slow
+      // or fail outright, and neither should ever delay or break the
+      // patient's booking confirmation.
+      checkIpRisk(ip).then((r) => {
+        if (r.checked) (Booking as any).updateOne({ _id: booking._id }, { $set: { ipRiskFlagged: r.isVpnOrProxy } }).catch(() => {});
+      }).catch(() => {});
 
-    // 1. Clinic staff alert (plain text — the clinic's own number, always
-    // within the messaging window since it's the business's own account).
-    const clinicNotifyNumber = await getClinicNotifyNumber(location);
-    const clinicSend = await sendWhatsAppText(
-      clinicNotifyNumber,
-      `🆕 New Booking
+      // Resolves this branch's outbound sender number, if one was configured
+      // (LocationContent.clinicInfo.whatsappSenderPhoneNumberId) — falls back
+      // to the global PHONE_NUMBER_ID otherwise, which is every branch today.
+      const branchConfig = await getEffectiveBranchConfig(location).catch(() => null);
+      const sendOpts = branchConfig?.whatsappSenderPhoneNumberId
+        ? { senderPhoneNumberId: branchConfig.whatsappSenderPhoneNumberId }
+        : undefined;
+
+      // 1. Clinic staff alert (plain text — the clinic's own number, always
+      // within the messaging window since it's the business's own account).
+      const clinicNotifyNumber = await getClinicNotifyNumber(location);
+      const clinicSend = await sendWhatsAppText(
+        clinicNotifyNumber,
+        `🆕 New Booking
 
 ID: ${bookingId}
 Name: ${name}
@@ -186,27 +234,28 @@ Location: ${location}
 Date: ${date}
 Time: ${time}
 Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscount}% off)` : ""}`,
-      sendOpts
-    );
-    if (!clinicSend.success) console.log("❌ Clinic WhatsApp alert failed:", clinicSend.error);
+        sendOpts
+      );
+      if (!clinicSend.success) console.log("❌ Clinic WhatsApp alert failed:", clinicSend.error);
 
-    // 2. Customer confirmation — must be a pre-approved template (the
-    // patient hasn't messaged in, so plain text isn't deliverable). Failure
-    // here must never turn an already-saved booking into a failure response
-    // for the customer — sendWhatsAppTemplate never throws, only returns
-    // { success: false }, which is exactly why it's safe to just log it.
-    const customerSend = await sendWhatsAppTemplate(
-      formattedPhone,
-      "booking_confirmation_premium", // Meta-approved template name
-      [name, location, service, date, time],
-      "en", // must match the template's approved language exactly — not the patient's `language` preference field, which is a separate, unrelated concept
-      sendOpts
-    );
-    if (!customerSend.success) console.log("❌ Customer WhatsApp confirmation failed:", customerSend.error);
+      // 2. Customer confirmation — must be a pre-approved template (the
+      // patient hasn't messaged in, so plain text isn't deliverable). Failure
+      // here must never turn an already-saved booking into a failure response
+      // for the customer — sendWhatsAppTemplate never throws, only returns
+      // { success: false }, which is exactly why it's safe to just log it.
+      const customerSend = await sendWhatsAppTemplate(
+        formattedPhone,
+        "booking_confirmation_premium", // Meta-approved template name
+        [name, location, service, date, time],
+        "en", // must match the template's approved language exactly — not the patient's `language` preference field, which is a separate, unrelated concept
+        sendOpts
+      );
+      if (!customerSend.success) console.log("❌ Customer WhatsApp confirmation failed:", customerSend.error);
+    }
 
     return NextResponse.json({
       success: true,
-      bookingId,
+      bookingId: booking.bookingId,
     });
 
   } catch (err) {

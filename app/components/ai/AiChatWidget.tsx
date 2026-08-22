@@ -13,6 +13,7 @@ import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConve
 import { useBranchWhatsApp, toWaLink, useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
 import { locations } from '@/app/data/locations';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
+import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
@@ -302,6 +303,7 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
   // confirms a real summary of what they typed, not just a generic submit
   // button.
   const [reviewing, setReviewing] = useState(false);
+  const getIdempotencyKey = useIdempotencyKey();
 
   const selectedDoctor = availResult?.doctors.find(d => d.id === form.doctorId) || null;
   const locationName = form.location ? (locations as any)[form.location]?.name || form.location : '';
@@ -344,7 +346,11 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
       // issue found earlier. Defaulting it here keeps the field honestly
       // optional for the patient without changing the server contract.
       const res = await fetch('/api/booking', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': getIdempotencyKey(form),
+        },
         body: JSON.stringify({ ...form, service: form.service.trim() || 'General Consultation', source: 'ai_chat' }),
       });
       const data = await res.json();
@@ -649,6 +655,7 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
 
   const [showCallbackForm, setShowCallbackForm] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', location: getUrlBranch() });
+  const getIdempotencyKey = useIdempotencyKey();
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -664,7 +671,11 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
     setSaving(true); setError('');
     try {
       const res = await fetch('/api/booking', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': getIdempotencyKey({ ...form, service: 'Callback Request' }),
+        },
         body: JSON.stringify({ ...form, service: 'Callback Request', source: 'ai_chat' }),
       });
       const data = await res.json();

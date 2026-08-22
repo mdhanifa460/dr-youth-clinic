@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
+import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 
 export default function ConsultationFormBar({ data }: { data: any }) {
   const {
@@ -22,6 +23,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const getIdempotencyKey = useIdempotencyKey();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,10 @@ export default function ConsultationFormBar({ data }: { data: any }) {
     try {
       const res = await fetch('/api/booking', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': getIdempotencyKey({ name, phone, service, location: city.toLowerCase() }),
+        },
         body: JSON.stringify({ name, phone, service, location: city.toLowerCase() }),
       });
       const data = await res.json();

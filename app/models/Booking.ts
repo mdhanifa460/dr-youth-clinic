@@ -33,6 +33,23 @@ export type LeadTemperature = "unclassified" | "cold" | "warm" | "hot" | "very_h
 const BookingSchema = new mongoose.Schema(
   {
     bookingId:    { type: String },
+    // Duplicate-submission protection for the human-facing booking-creation
+    // routes (website /api/booking, landing-page /api/lp/[slug]/lead) — a
+    // client-generated key naming ONE logical submission attempt, reused
+    // across a manual retry of that same attempt so a network timeout can
+    // be safely retried without creating a second Booking. Unique + sparse:
+    // sparse so every OTHER creation path (webhook-driven lead sources,
+    // CRM-inbound, admin, AI chat lead capture — none of which send this
+    // header) never collides on a shared "no key" value; unique so two
+    // requests that DO carry the same key can never both succeed in
+    // creating separate documents, even racing concurrently — see
+    // app/lib/bookingIdempotency.ts for the enforcement logic. Deliberately
+    // separate from the webhook-driven sources' own existing
+    // {conversionChannel, sourceAccount, externalId} dedup (buildDedupQuery)
+    // — a different identity shape (client-generated vs. a provider's own
+    // event ID) for a different kind of request, not merged into one
+    // mechanism.
+    idempotencyKey: { type: String, index: true, unique: true, sparse: true },
     name:         { type: String, required: true },
     phone:        { type: String, required: true },
     formattedPhone: { type: String },

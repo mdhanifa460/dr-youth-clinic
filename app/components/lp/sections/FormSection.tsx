@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader, CheckCircle, Phone, Star, ShieldCheck } from 'lucide-react';
+import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 
 interface FormField {
   id: string;
@@ -63,6 +64,7 @@ export default function FormSection({
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const getIdempotencyKey = useIdempotencyKey();
 
   const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
 
@@ -73,7 +75,10 @@ export default function FormSection({
     try {
       const res = await fetch(`/api/lp/${slug}/lead`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': getIdempotencyKey({ slug, variant, form }),
+        },
         body: JSON.stringify({
           name: form['name'] || form['full-name'] || '',
           phone: form['phone'] || form['mobile'] || form['tel'] || '',
