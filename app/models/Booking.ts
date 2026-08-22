@@ -77,6 +77,24 @@ const BookingSchema = new mongoose.Schema(
     lpSlug:    { type: String, default: "" },
     lpVariant: { type: String, default: "" },
 
+    // Third-party lead-source attribution — set on leads ingested through
+    // a "lead_source" Connector (JustDial, IndiaMART, WhatsApp, ...; see
+    // app/lib/leadSource/webhookProcessing.ts). Deliberately kept SEPARATE
+    // from `location` (branch attribution, below) — a multi-branch clinic
+    // has one JustDial listing per branch, so "source = JustDial" alone
+    // never tells you which branch a lead belongs to; sourceAccount/
+    // sourcePhone are the provider's own identifiers (listing/account/
+    // campaign ID and phone number) that a LeadSourceMapping row resolves
+    // into a branch — see app/lib/leadSourceMapping/resolveBranch.ts.
+    sourceAccount: { type: String, default: "" },
+    sourcePhone:   { type: String, default: "" },
+    // True only for a third-party-sourced lead where resolveBranchForLead()
+    // found no matching LeadSourceMapping — `location` is left blank
+    // rather than guessed, and this flag is what a staff member sees to
+    // manually assign the right branch. Never true for a website-sourced
+    // booking (the visitor always picks their own location directly).
+    branchUnresolved: { type: Boolean, default: false },
+
     // Standard UTM campaign attribution, captured the same way as on Lead
     // (see app/lib/utmAttribution.ts / Lead.ts) — populated from the
     // utm_last/utm_first middleware cookies at booking-submission time.

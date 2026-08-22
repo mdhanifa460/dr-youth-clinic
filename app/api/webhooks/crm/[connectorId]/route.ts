@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { connectDB } from "@/app/lib/mongodb";
 import Connector from "@/app/models/Connector";
 import ConnectorWebhookEvent from "@/app/models/ConnectorWebhookEvent";
-import { decryptCredential } from "@/app/lib/crm/encryption";
 import { checkRateLimit, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 import { processCrmWebhookEvent } from "@/app/lib/crm/webhookProcessing";
+import { verifyWebhookSignature } from "@/app/lib/webhookSignature";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: { connectorId
   let payload: any = null;
   try { payload = rawBody ? JSON.parse(rawBody) : null; } catch { /* stored raw below regardless */ }
 
-  const signatureValid = verifySignature(req, rawBody, connector);
+  const signatureValid = verifyWebhookSignature(req, rawBody, connector.webhookSecret);
   const event = payload?.event || payload?.type || req.nextUrl.searchParams.get("event") || "unknown";
 
   const logDoc = await (ConnectorWebhookEvent as any).create({
@@ -70,25 +69,4 @@ export async function POST(req: NextRequest, { params }: { params: { connectorId
   });
 
   return NextResponse.json({ success: true, ...result });
-}
-
-function verifySignature(req: NextRequest, rawBody: string, connector: any): boolean {
-  const secretPayload = connector.webhookSecret;
-  if (!secretPayload?.encrypted) return false;
-
-  const header = req.headers.get("x-webhook-signature") || req.headers.get("x-signature") || "";
-  if (!header) return false;
-
-  try {
-    const secret = decryptCredential({
-      encrypted: secretPayload.encrypted,
-      iv: secretPayload.iv,
-      authTag: secretPayload.authTag,
-    });
-    const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
-    const provided = header.replace(/^sha256=/, "");
-    return provided.length === expected.length && crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
-  } catch {
-    return false;
-  }
 }

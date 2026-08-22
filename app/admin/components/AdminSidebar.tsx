@@ -107,6 +107,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/legal", label: "📜 Legal Pages", module: "legal" },
       { href: "/admin/settings", label: "⚙ Settings", module: "settings" },
       { href: "/admin/integrations/crm", label: "🔌 CRM Sync", module: "integrations" },
+      { href: "/admin/lead-sources", label: "📡 Lead Sources & Branches", module: "integrations" },
       // Moved from "Marketing & AI" — platform/chatbot config, not analytics.
       { href: "/admin/ai", label: "🤖 AI Management", module: "ai" },
     ],

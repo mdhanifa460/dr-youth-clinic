@@ -54,6 +54,7 @@ const MODULE_MAP: [string, AdminModule][] = [
   ["/admin/animation-library",  "animation-library"],
   ["/admin/booking-success",    "booking-success"],
   ["/admin/integrations",       "integrations"],
+  ["/admin/lead-sources",       "integrations"],
   ["/admin/analytics",          "analytics"],
   ["/admin",               "dashboard"],
 ];

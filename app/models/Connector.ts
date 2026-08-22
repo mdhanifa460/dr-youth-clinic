@@ -1,16 +1,29 @@
 import mongoose from "mongoose";
 
 // A single external system the website talks to through the Connector Layer
-// (see the Enterprise Connector Framework review). Phase 1 ships with
-// exactly one row, type "crm" — the schema stays generic so a second
-// connector is a new document, not a schema migration.
-export type ConnectorType = "crm";
+// (see the Enterprise Connector Framework review). Phase 1 shipped with
+// exactly one type, "crm" — the schema stayed generic on purpose so a
+// second connector TYPE is a new enum value + its own webhook receiver,
+// never a schema migration. "lead_source" is that second type: any
+// third-party lead channel (JustDial, IndiaMART, a future SMS gateway or
+// listing site) is a Connector row of this type + a
+// ConnectorFieldMapping (capability: "intake") the admin configures once
+// per provider — never a new code path per provider. See
+// app/lib/leadSource/webhookProcessing.ts and
+// app/api/webhooks/lead-source/[connectorId]/route.ts.
+export type ConnectorType = "crm" | "lead_source";
 export type ConnectorStatus = "active" | "paused" | "error" | "draft";
 
 const ConnectorSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    type: { type: String, enum: ["crm"], default: "crm" },
+    type: { type: String, enum: ["crm", "lead_source"], default: "crm" },
+    // For type "lead_source": the channel this connector represents —
+    // "justdial", "indiamart", "whatsapp", etc. Free text, not an enum
+    // (same reasoning as the CRM case below): a new provider is an admin
+    // action, never a code change. This value is what gets written as
+    // Booking.source and is the `source` LeadSourceMapping rows are
+    // scoped to when resolving which branch a lead belongs to.
     provider: { type: String, default: "" }, // e.g. "leadsquared" — free text, not an enum
     status: { type: String, enum: ["active", "paused", "error", "draft"], default: "draft" },
 
