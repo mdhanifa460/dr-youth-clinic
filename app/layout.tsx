@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
 import CustomEventListener from "@/app/components/analytics/CustomEventListener";
@@ -59,6 +60,17 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const analytics = await getAnalyticsConfig();
+  // Visitor-behavior tracking (GTM/GA4/Meta Pixel/Clarity/Hotjar/the
+  // Custom Event Listener) must never run on the admin panel — staff
+  // using /admin isn't a real visitor, and counting that traffic silently
+  // pollutes session/conversion/geo/device analytics meant to reflect
+  // actual patients. x-pathname is already set on every request
+  // (middleware.ts), same header app/admin/layout.tsx and
+  // app/not-found.tsx already read this same way. Everything else in
+  // this layout (fonts, metadata, CacheGuard, skip-to-content) stays
+  // identical on admin pages — only the tracking scripts are gated.
+  const pathname = headers().get("x-pathname") ?? "";
+  const isAdminPage = pathname.startsWith("/admin");
 
   return (
     <html lang="en" className={`${bodyFont.variable} ${headlineFont.variable}`}>
@@ -76,13 +88,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Google Review avatars */}
         <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
 
-        {analytics.gtmActive && (
+        {!isAdminPage && analytics.gtmActive && (
           <link rel="preconnect" href="https://www.googletagmanager.com" />
         )}
-        {analytics.ga4Id && !analytics.gtmActive && (
+        {!isAdminPage && analytics.ga4Id && !analytics.gtmActive && (
           <link rel="preconnect" href="https://www.google-analytics.com" />
         )}
-        {analytics.metaPixelId && !analytics.gtmActive && (
+        {!isAdminPage && analytics.metaPixelId && !analytics.gtmActive && (
           <link rel="preconnect" href="https://connect.facebook.net" />
         )}
         {analytics.searchConsoleId && (
@@ -94,8 +106,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Google Tag Manager — the primary tracking layer. gtm_auth/
             gtm_preview only get appended when an admin has actually
             pointed this at a non-Live GTM environment/workspace; a
-            normal production container ignores them if absent. */}
-        {analytics.gtmActive && (
+            normal production container ignores them if absent. Never
+            loaded on /admin — see isAdminPage above. */}
+        {!isAdminPage && analytics.gtmActive && (
           <Script id="gtm" strategy="afterInteractive">{`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
             var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
@@ -108,7 +121,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             ONLY when GTM isn't the active layer. When GTM is on, GA4 is
             expected to be configured as a tag inside the GTM container
             instead (see the admin page's "Managed by GTM" status). */}
-        {analytics.ga4Id && !analytics.gtmActive && (
+        {!isAdminPage && analytics.ga4Id && !analytics.gtmActive && (
           <>
             <Script async src={`https://www.googletagmanager.com/gtag/js?id=${analytics.ga4Id}`} strategy="afterInteractive" />
             <Script id="ga4" strategy="afterInteractive">{`
@@ -124,7 +137,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             load unconditionally even when GTM was also active, firing a
             duplicate PageView (and would double any future event routed
             through both paths) whenever both were configured. */}
-        {analytics.metaPixelId && !analytics.gtmActive && (
+        {!isAdminPage && analytics.metaPixelId && !analytics.gtmActive && (
           <Script id="meta-pixel" strategy="afterInteractive">{`
             !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
             n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -136,7 +149,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
 
         {/* Microsoft Clarity */}
-        {analytics.clarityId && (
+        {!isAdminPage && analytics.clarityId && (
           <Script id="clarity" strategy="afterInteractive">{`
             (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
             t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
@@ -146,7 +159,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
 
         {/* Hotjar */}
-        {analytics.hotjarId && (
+        {!isAdminPage && analytics.hotjarId && (
           <Script id="hotjar" strategy="afterInteractive">{`
             (function(h,o,t,j,a,r){h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
             h._hjSettings={hjid:${analytics.hotjarId},hjsv:6};a=o.getElementsByTagName('head')[0];
@@ -156,11 +169,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
 
         <CacheGuard />
-        {/* Admin Event Manager — fetches enabled Custom Events once and
+        {/* Admin-configured Custom Events — fetches enabled events once and
             wires up click/visibility/page-view triggers, firing through
             the same pushDataLayerEvent() every predefined event already
-            uses. Renders nothing; a no-op if no custom events exist. */}
-        <CustomEventListener />
+            uses. Renders nothing; a no-op if no custom events exist. Same
+            "not real visitor traffic" reasoning as the scripts above —
+            never runs on /admin. */}
+        {!isAdminPage && <CustomEventListener />}
         {/* Visually hidden until focused — lets a keyboard user jump past the
             navbar straight to the page content instead of tabbing through
             every nav link and dropdown first. */}
