@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { CONVERSION_CHANNELS } from "@/app/lib/attribution/conversionChannel";
 
 // 8-stage lead pipeline — tracks inquiry through to treatment
 export type BookingStatus =
@@ -110,6 +111,38 @@ const BookingSchema = new mongoose.Schema(
     originalLandingPage: { type: String, default: "" },
     firstTouchSource: { type: String, default: "" },
     lastTouchSource:  { type: String, default: "" },
+
+    // ── Marketing Attribution (Phase 2) ────────────────────────────────
+    // Generic advertising click identifier — see app/lib/utmAttribution.ts's
+    // UtmTouch.clickId comment. ONE pair of fields, never a per-provider
+    // column (gclid/fbclid/... as separate keys): a new ad platform's click
+    // ID is a new clickIdType value, not a schema change.
+    clickId:     { type: String, default: "" },
+    clickIdType: { type: String, default: "" }, // "gclid" | "gbraid" | "wbraid" | "fbclid"
+
+    // HOW this Booking converted — deliberately separate from `source`
+    // above, which stays "WHERE it came from" (google/direct/justdial/...).
+    // A Google Ads visitor who books through the website has
+    // source="google", medium(via utmMedium)="cpc", conversionChannel=
+    // "website"; the same campaign converting via WhatsApp instead has the
+    // identical source/medium/campaign but conversionChannel="whatsapp".
+    // Schema-enforced (unlike `source`, which stays free-text/admin-
+    // configurable) per explicit requirement that this one be a controlled
+    // vocabulary. "" is the deliberate default/historical bucket — a
+    // Booking created before this field existed reads back as `undefined`
+    // (Mongoose never backfills a new field's default onto an existing
+    // document), and the admin UI treats undefined/"" as "unknown — assume
+    // website" for DISPLAY only, never by rewriting the stored value. Every
+    // creation path going forward sets this explicitly.
+    conversionChannel: { type: String, enum: CONVERSION_CHANNELS, default: "" },
+
+    // Stable attribution identity — reuses the EXISTING visitor_id cookie
+    // (middleware.ts's ensureVisitorId(), already 1-year-lived, already
+    // used by the Personalization Engine) rather than a second identity
+    // system. Lets a conversion be traced back to the same visitor across
+    // channels (website → WhatsApp) without inventing new infrastructure.
+    attributionId: { type: String, default: "" },
+
     // Domain Migration dashboard — same rules as Lead.originDomain above:
     // 'old' only when this booking's very first recorded touch carried
     // the old domain's redirect marker (app/lib/migrationAttribution.ts),
@@ -237,5 +270,6 @@ BookingSchema.index({ location: 1, createdAt: -1 });
 BookingSchema.index({ doctorId: 1, createdAt: -1 });
 BookingSchema.index({ pendingSync: 1, createdAt: -1 });
 BookingSchema.index({ leadTemperature: 1, createdAt: -1 });
+BookingSchema.index({ conversionChannel: 1, createdAt: -1 });
 
 export default mongoose.models.Booking || mongoose.model("Booking", BookingSchema);

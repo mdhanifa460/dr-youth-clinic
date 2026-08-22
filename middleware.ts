@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { extractUtmParams, UTM_FIRST_COOKIE, UTM_LAST_COOKIE, UTM_FIRST_MAX_AGE, UTM_LAST_MAX_AGE } from "@/app/lib/utmAttribution";
+import {
+  extractUtmParams, extractClickIds, inferSourceMediumFromClickId, classifyFreshEntrance,
+  UTM_FIRST_COOKIE, UTM_LAST_COOKIE, UTM_FIRST_MAX_AGE, UTM_LAST_MAX_AGE,
+} from "@/app/lib/utmAttribution";
 import { extractMigrationParams, MIGRATION_FIRST_COOKIE, MIGRATION_FIRST_MAX_AGE } from "@/app/lib/migrationAttribution";
 import { normalizeOldUrl } from "@/app/lib/domainMigration/parseSitemap";
 import { getCachedRedirect } from "@/app/lib/domainMigration/redirectCache";
@@ -48,15 +51,47 @@ function ensureVisitorId(req: NextRequest, res: NextResponse) {
 // Lead/Booking.utmSource etc. at submission time (see utmAttribution.ts).
 function captureUtmAttribution(req: NextRequest, res: NextResponse) {
   const utm = extractUtmParams(req.nextUrl.searchParams);
-  if (Object.keys(utm).length === 0) return;
+  const click = extractClickIds(req.nextUrl.searchParams);
+  const cookieOpts = { path: "/", secure: true, sameSite: "lax" as const };
+
+  if (Object.keys(utm).length > 0 || Object.keys(click).length > 0) {
+    // Google Ads/Meta auto-tag a click ID even without utm_* params (a
+    // very common setup — UTMs are opt-in on top of auto-tagging). Only
+    // fills source/medium from the click ID when utm_source wasn't
+    // explicitly provided — real campaign tagging always wins.
+    const inferred = utm.source ? {} : inferSourceMediumFromClickId(click.clickIdType);
+    const payload = JSON.stringify({
+      ...inferred,
+      ...utm,
+      ...click,
+      landingPage: req.nextUrl.pathname,
+      capturedAt: new Date().toISOString(),
+    });
+
+    res.cookies.set(UTM_LAST_COOKIE, payload, { ...cookieOpts, maxAge: UTM_LAST_MAX_AGE });
+    if (!req.cookies.get(UTM_FIRST_COOKIE)?.value) {
+      res.cookies.set(UTM_FIRST_COOKIE, payload, { ...cookieOpts, maxAge: UTM_FIRST_MAX_AGE });
+    }
+    return;
+  }
+
+  // No utm_*/click params on this request — most page loads. Previously a
+  // full no-op here, which left two real gaps: an organic-search or
+  // direct-typed visit was never recorded as a touch at all, and a return
+  // visitor who first arrived via a campaign weeks ago would keep showing
+  // that stale campaign as "last touch" forever, since nothing ever
+  // overwrote it. classifyFreshEntrance() only fires for a genuine new
+  // entrance (no referrer, or an external one) — an ordinary click to
+  // another page on this site returns null and changes nothing, so this
+  // can never overwrite a real campaign touch mid-browse.
+  const fresh = classifyFreshEntrance(req.headers.get("referer"), req.nextUrl.hostname);
+  if (!fresh) return;
 
   const payload = JSON.stringify({
-    ...utm,
+    ...fresh,
     landingPage: req.nextUrl.pathname,
     capturedAt: new Date().toISOString(),
   });
-  const cookieOpts = { path: "/", secure: true, sameSite: "lax" as const };
-
   res.cookies.set(UTM_LAST_COOKIE, payload, { ...cookieOpts, maxAge: UTM_LAST_MAX_AGE });
   if (!req.cookies.get(UTM_FIRST_COOKIE)?.value) {
     res.cookies.set(UTM_FIRST_COOKIE, payload, { ...cookieOpts, maxAge: UTM_FIRST_MAX_AGE });

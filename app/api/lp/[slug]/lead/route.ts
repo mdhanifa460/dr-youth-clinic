@@ -70,6 +70,14 @@ export async function POST(
 
     const bookingId = 'DR-' + Date.now();
 
+    const attribution = buildAttributionFields((name) => req.cookies.get(name)?.value);
+    // Same acquisition-source fix as app/api/booking/route.ts — 'landing-page'
+    // stays the fallback here specifically (not 'direct'), since it's a real,
+    // already-displayed SOURCE_META value and a landing page is itself
+    // usually the intended campaign destination even on the rare visit with
+    // no UTM/click-id signal at all.
+    const resolvedSource = attribution.utmSource || 'landing-page';
+
     const booking = await Booking.create({
       bookingId,
       name,
@@ -78,12 +86,14 @@ export async function POST(
       email: email || '',
       service: lp.title || 'Landing Page Enquiry',
       location,
-      source: 'landing-page',
+      source: resolvedSource,
+      conversionChannel: 'website',
+      attributionId: req.cookies.get('visitor_id')?.value || '',
       lpSlug: params.slug,
       lpVariant: variant === 'B' ? 'B' : 'A',
       notes,
       isReturnVisit: previousBookings > 0,
-      ...buildAttributionFields((name) => req.cookies.get(name)?.value),
+      ...attribution,
     });
 
     // CRM Connector push — non-blocking, no-ops silently if no CRM

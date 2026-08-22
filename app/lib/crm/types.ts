@@ -36,6 +36,19 @@ export interface PlatformLead {
   // actually has a matching field to receive them.
   leadScore?: number;
   leadTemperature?: string;
+  // Marketing attribution (Phase 2) — additive, optional. Only ever reaches
+  // the external CRM if an admin has actually mapped one of these fields in
+  // ConnectorFieldMapping (capability "lead"/"booking", direction "push");
+  // otherwise applyFieldMapping() simply never reads it, exactly like
+  // leadScore/leadTemperature above. Our internal attribution is complete
+  // regardless of what the external CRM can or can't store.
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  conversionChannel?: string;
+  clickId?: string;
+  clickIdType?: string;
+  attributionId?: string;
 }
 
 export interface PlatformBooking extends PlatformLead {

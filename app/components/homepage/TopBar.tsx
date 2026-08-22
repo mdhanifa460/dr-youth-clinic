@@ -86,6 +86,7 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
                 key={item.platform}
                 fallback={item.url}
                 ariaLabel="whatsapp"
+                message="Hi, I'd like to know more"
                 style={{ color: item.color }}
                 className="flex w-11 items-center justify-center hover:bg-white/10 active:bg-white/20 transition"
               >
@@ -141,6 +142,7 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
                     key={i}
                     fallback={s.url}
                     ariaLabel="whatsapp"
+                    message="Hi, I'd like to know more"
                     style={{ color: PLATFORM_COLOR.whatsapp }}
                     className="transition opacity-90 hover:opacity-100"
                   >

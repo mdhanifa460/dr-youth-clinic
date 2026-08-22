@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { CONVERSION_CHANNELS } from "@/app/lib/attribution/conversionChannel";
 
 // Assessment leads — previously an inline schema defined directly inside
 // app/api/leads/route.ts with no way for admin to see them at all. Now a
@@ -64,6 +65,15 @@ const LeadSchema = new mongoose.Schema(
     // ago, then convert today after clicking a Google search ad.
     firstTouchSource: { type: String, default: "" },
     lastTouchSource:  { type: String, default: "" },
+
+    // ── Marketing Attribution (Phase 2) ────────────────────────────────
+    // Same four fields, same reasoning, as Booking.ts's Marketing
+    // Attribution block — see that schema's comment for the full context.
+    clickId:     { type: String, default: "" },
+    clickIdType: { type: String, default: "" },
+    conversionChannel: { type: String, enum: CONVERSION_CHANNELS, default: "" },
+    attributionId: { type: String, default: "" },
+
     // Domain Migration dashboard — 'old' only when this lead's very first
     // recorded touch carried the old domain's redirect marker (see
     // app/lib/migrationAttribution.ts); 'new' otherwise. Deliberately NOT

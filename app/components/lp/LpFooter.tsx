@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
 import { Phone, MapPin, Mail } from 'lucide-react';
+import { useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
 
 interface LpFooterProps {
   phone?: string;
@@ -10,8 +13,9 @@ interface LpFooterProps {
 }
 
 export default function LpFooter({ phone, whatsapp, city, branches, logoUrl }: LpFooterProps) {
+  const waMessage = useAttributedWaText("Hi, I'd like to book a free consultation");
   const waLink = whatsapp
-    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Hi, I'd like to book a free consultation`
+    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`
     : null;
   const locationLabel = branches?.length ? branches.join(' · ') : city;
 

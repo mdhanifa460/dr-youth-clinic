@@ -35,6 +35,15 @@ export async function pushBookingToCrm(bookingDoc: any): Promise<void> {
       // mapped these fields in ConnectorFieldMapping.
       ...(bookingDoc.leadScore != null ? { leadScore: bookingDoc.leadScore } : {}),
       ...(bookingDoc.leadTemperature ? { leadTemperature: bookingDoc.leadTemperature } : {}),
+      // Marketing attribution (Phase 2) — reaches the external CRM only if
+      // an admin has mapped one of these in ConnectorFieldMapping; see
+      // PlatformLead's own comment in ./types.ts.
+      ...(bookingDoc.utmSource ? { utmSource: bookingDoc.utmSource } : {}),
+      ...(bookingDoc.utmMedium ? { utmMedium: bookingDoc.utmMedium } : {}),
+      ...(bookingDoc.utmCampaign ? { utmCampaign: bookingDoc.utmCampaign } : {}),
+      ...(bookingDoc.conversionChannel ? { conversionChannel: bookingDoc.conversionChannel } : {}),
+      ...(bookingDoc.clickId ? { clickId: bookingDoc.clickId, clickIdType: bookingDoc.clickIdType } : {}),
+      ...(bookingDoc.attributionId ? { attributionId: bookingDoc.attributionId } : {}),
     };
 
     const result = isScheduled

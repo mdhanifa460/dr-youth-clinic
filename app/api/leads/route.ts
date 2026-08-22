@@ -53,11 +53,17 @@ export async function POST(req: NextRequest) {
       phone: normalizedPhone,
       preferredClinic: preferredClinic || '',
       city: city || '',
+      // Unlike Booking.source, the skin-quiz's own 'skin-quiz' fallback is
+      // left unchanged here (not switched to 'direct') — it's an
+      // established SOURCE_META/analytics value in its own right, same
+      // reasoning as 'landing-page' on the LP lead route.
       source: source || 'skin-quiz',
       campaign: campaign || '',
       qrSource: !!qrSource,
       clinicLocation: clinicLocation || '',
       channel: channel || '',
+      conversionChannel: 'website',
+      attributionId: req.cookies.get('visitor_id')?.value || '',
       ...buildAttributionFields((name) => req.cookies.get(name)?.value),
       originDomain: resolveOriginDomain((name) => req.cookies.get(name)?.value),
     });

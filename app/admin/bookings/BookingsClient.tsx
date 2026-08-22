@@ -64,6 +64,13 @@ interface Booking {
   landingPage?: string;
   firstTouchSource?: string;
   lastTouchSource?: string;
+  // Marketing Attribution (Phase 2) — HOW this booking converted, kept
+  // separate from `source` above (WHERE it came from). See
+  // app/models/Booking.ts's conversionChannel comment.
+  conversionChannel?: string;
+  clickId?: string;
+  clickIdType?: string;
+  attributionId?: string;
   // VPN/proxy/datacenter risk signal (app/lib/ipIntelligence.ts) — a
   // staff-visible flag only, never a submission gate. undefined = the
   // lookup never completed or predates this field ("never checked", not
@@ -124,8 +131,38 @@ const SOURCE_META: Record<string, { label: string; icon: string; color: string }
   justdial:  { label: "JustDial",   icon: "📇", color: "bg-red-50 text-red-600"       },
   indiamart: { label: "IndiaMART",  icon: "🛒", color: "bg-orange-50 text-orange-700" },
   crm:       { label: "CRM",        icon: "🔗", color: "bg-teal-50 text-teal-600"     },
+  // Marketing Attribution (Phase 2) — the corrected acquisition-source
+  // fallback for a website booking with no UTM/click-ID/referrer signal at
+  // all (previously always fell through to "website" itself; see
+  // app/api/booking/route.ts's resolvedSource comment). Matches GA4's own
+  // "(direct)" convention.
+  direct:    { label: "Direct",     icon: "🔗", color: "bg-slate-50 text-slate-600"   },
   other:     { label: "Other",      icon: "📌", color: "bg-gray-50 text-gray-500"    },
 };
+
+// HOW a booking converted (Phase 2) — deliberately a separate small map
+// from SOURCE_META above, which is WHERE it came from. "" covers a
+// booking that predates this field (undefined) or one this route simply
+// never set — displayed as an honest "Website (assumed)" rather than a
+// confident claim, per the explicit "do not rewrite historical
+// attribution" requirement: this is a DISPLAY fallback only, never
+// written back to the database.
+const CHANNEL_META: Record<string, { label: string; icon: string }> = {
+  website:           { label: "Website",           icon: "🌐" },
+  whatsapp:           { label: "WhatsApp",           icon: "💬" },
+  google_lead_form:  { label: "Google Lead Form",   icon: "📝" },
+  justdial:           { label: "JustDial",           icon: "📇" },
+  indiamart:          { label: "IndiaMART",          icon: "🛒" },
+  other:              { label: "Other",              icon: "📌" },
+};
+function channelLabel(channel?: string, source?: string): { label: string; icon: string; assumed: boolean } {
+  if (channel && CHANNEL_META[channel]) return { ...CHANNEL_META[channel], assumed: false };
+  // No conversionChannel recorded (a booking that predates this field, or
+  // a creation path this phase didn't touch) — infer the most likely
+  // channel from `source` for DISPLAY only; never written back to the DB.
+  if (source && CHANNEL_META[source]) return { ...CHANNEL_META[source], assumed: true };
+  return { ...CHANNEL_META.website, assumed: true };
+}
 
 // Compact "via google/cpc" chip for real campaign attribution — separate
 // from the `source` badge above (which is often just the unhelpful
@@ -583,42 +620,63 @@ function BookingDrawer({
                 </div>
               </div>
 
-              {/* Real campaign attribution — the "Source" field above is a
-                  manual/hardcoded label (defaults to "Website" for every
-                  flow except landing pages); this is the actual UTM data
-                  captured from the URL this visitor arrived on, previously
-                  stored on every booking but never shown anywhere in the
-                  admin UI. Only renders when at least one field is
-                  present — most bookings today have none, because the ad
-                  URL that brought the visitor here never carried utm_*
-                  params in the first place. */}
-              {(booking.utmSource || booking.utmCampaign || booking.lastTouchSource || booking.firstTouchSource) && (
+              {/* Marketing Attribution (Phase 2) — Source/Medium/Campaign
+                  answer WHERE this lead came from; Conversion Channel
+                  answers HOW it converted; both are independent of the
+                  `source` badge shown at the top of this drawer (which,
+                  since Phase 2, already holds the corrected acquisition
+                  source itself — "google"/"direct"/etc. — not a generic
+                  "website" label). Renders whenever there's ANY signal to
+                  show — a real conversionChannel, UTM data, or a click ID —
+                  so a WhatsApp/Google Lead Form conversion with no UTM
+                  fields still shows its channel. */}
+              {(booking.utmSource || booking.utmCampaign || booking.utmMedium || booking.conversionChannel ||
+                booking.lastTouchSource || booking.firstTouchSource || booking.clickId) && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                   <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                    🎯 Campaign Attribution
+                    🎯 Marketing Attribution
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    {booking.lastTouchSource && (
-                      <div>
-                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">This booking's visit</p>
-                        <p className="text-amber-900 font-mono">{booking.lastTouchSource}</p>
-                      </div>
-                    )}
-                    {booking.firstTouchSource && booking.firstTouchSource !== booking.lastTouchSource && (
-                      <div>
-                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">First ever visit</p>
-                        <p className="text-amber-900 font-mono">{booking.firstTouchSource}</p>
-                      </div>
-                    )}
+                    <div>
+                      <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Source</p>
+                      <p className="text-amber-900 font-semibold capitalize">{booking.source || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Medium</p>
+                      <p className="text-amber-900 font-semibold capitalize">{booking.utmMedium || "—"}</p>
+                    </div>
                     {booking.utmCampaign && (
                       <div className="col-span-2">
                         <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Campaign</p>
                         <p className="text-amber-900 font-semibold">{booking.utmCampaign}</p>
                       </div>
                     )}
+                    {(() => {
+                      const ch = channelLabel(booking.conversionChannel, booking.source);
+                      return (
+                        <div className="col-span-2">
+                          <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Conversion Channel</p>
+                          <p className="text-amber-900 font-semibold">
+                            {ch.icon} {ch.label}{ch.assumed && <span className="text-amber-500 font-normal"> (assumed — not recorded)</span>}
+                          </p>
+                        </div>
+                      );
+                    })()}
+                    {booking.clickId && (
+                      <div className="col-span-2">
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Click ID ({booking.clickIdType || "—"})</p>
+                        <p className="text-amber-900 font-mono truncate">{booking.clickId}</p>
+                      </div>
+                    )}
+                    {booking.firstTouchSource && booking.firstTouchSource !== booking.lastTouchSource && (
+                      <div className="col-span-2">
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">First-ever visit (first touch)</p>
+                        <p className="text-amber-900 font-mono">{booking.firstTouchSource}</p>
+                      </div>
+                    )}
                     {booking.landingPage && (
                       <div className="col-span-2">
-                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Landed on</p>
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Landing Page</p>
                         <p className="text-amber-900 font-mono truncate">{booking.landingPage}</p>
                       </div>
                     )}
@@ -955,10 +1013,11 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
 
   function exportCSV() {
     const BOM = "﻿";
-    const header = ["Booking ID","Name","Phone","Email","Service","Location","Date","Time","Status","Source","Campaign Source/Medium","Campaign","Value","Concern","Created"].join(",");
+    const header = ["Booking ID","Name","Phone","Email","Service","Location","Date","Time","Status","Source","Medium","Campaign","Conversion Channel","Campaign Source/Medium","Value","Concern","Created"].join(",");
     const rows = bookings.map((b) => [
       b.bookingId, b.name, b.phone, b.email, b.service, b.location, b.date, b.time,
-      b.status, b.source, b.lastTouchSource, b.utmCampaign, b.treatmentValue ?? "", b.concern, b.createdAt,
+      b.status, b.source, b.utmMedium, b.utmCampaign, b.conversionChannel || channelLabel(b.conversionChannel, b.source).label,
+      b.lastTouchSource, b.treatmentValue ?? "", b.concern, b.createdAt,
     ].map((v) => {
       const s = String(v ?? "");
       const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;

@@ -10,7 +10,7 @@ import {
 import { FaWhatsapp } from 'react-icons/fa';
 import { markdownToHtml } from '@/app/lib/blogMarkdown';
 import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
-import { useBranchWhatsApp, toWaLink } from '@/app/lib/useBranchWhatsApp';
+import { useBranchWhatsApp, toWaLink, useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
 import { locations } from '@/app/data/locations';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 
@@ -556,7 +556,11 @@ function AssessmentPanel({ onBack, onPickConcern, accent }: { onBack: () => void
 function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: () => void; accent: string; whatsapp?: string; phone?: string; sessionId: string }) {
   const router = useRouter();
   const branchWhatsApp = useBranchWhatsApp(whatsapp || '');
-  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
+  const waBase = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
+  const waMessage = useAttributedWaText("Hi, I'd like to know more");
+  const waHref = waBase
+    ? `${waBase}${waBase.includes('?') ? '&' : '?'}text=${encodeURIComponent(waMessage)}`
+    : null;
   const callHref = phone ? `tel:${phone.replace(/\s/g, '')}` : null;
 
   const [showCallbackForm, setShowCallbackForm] = useState(false);
@@ -813,7 +817,11 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
 
   if (!config || !config.enabled) return null;
   const accent = THEME_ACCENT[config.theme] || THEME_ACCENT.luxury;
-  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
+  const waBase = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
+  const waMessage = useAttributedWaText("Hi, I'd like to know more");
+  const waHref = waBase
+    ? `${waBase}${waBase.includes('?') ? '&' : '?'}text=${encodeURIComponent(waMessage)}`
+    : null;
 
   const handleQuickAction = (action: string) => {
     const inline = INLINE_VIEWS[action];

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Phone, CalendarCheck } from 'lucide-react';
 import { pushDataLayerEvent } from '@/app/lib/trackConversion';
+import { useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
 
 interface StickyCtaProps {
   phone?: string;
@@ -20,8 +21,13 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
   const [formVisible, setFormVisible] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Landing pages are the actual ad-destination pages, so the WhatsApp CTA
+  // here is the highest-value place to preserve marketing attribution —
+  // see useBranchWhatsApp.ts's useAttributedWaText for what/why (and why
+  // it's a hook, not a plain function call, in a render body).
+  const waMessage = useAttributedWaText("Hi, I'd like to book a free consultation");
   const waLink = whatsapp
-    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Hi, I'd like to book a free consultation`
+    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`
     : null;
 
   // Hide sticky when the form section is in view — don't distract while booking

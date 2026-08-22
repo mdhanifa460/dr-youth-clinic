@@ -4,7 +4,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { MdPhone } from "react-icons/md";
 import { CalendarCheck } from "lucide-react";
 import Link from "next/link";
-import { useBranchWhatsApp, toWaLink } from "@/app/lib/useBranchWhatsApp";
+import { useBranchWhatsApp, toWaLink, useAttributedWaText } from "@/app/lib/useBranchWhatsApp";
 import { pushDataLayerEvent } from "@/app/lib/trackConversion";
 
 interface Props {
@@ -20,7 +20,14 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
   // phone-derived link is only the fallback until a branch is detected.
   const fallback = whatsappUrl || (phone ? `https://wa.me/${phone.replace(/[^0-9]/g, "")}` : "");
   const branchWhatsApp = useBranchWhatsApp(fallback);
-  const waHref = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
+  const waBase = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
+  // Same attribution-token append as every other WhatsApp CTA (see
+  // useBranchWhatsApp.ts's useAttributedWaText) — this bar is present on
+  // every public page, so it's a high-traffic WhatsApp entry point.
+  const waMessage = useAttributedWaText("Hi, I'd like to book a free consultation");
+  const waHref = waBase
+    ? `${waBase}${waBase.includes('?') ? '&' : '?'}text=${encodeURIComponent(waMessage)}`
+    : null;
 
   // Nothing to show if no contact info at all
   if (!callHref && !waHref) return null;

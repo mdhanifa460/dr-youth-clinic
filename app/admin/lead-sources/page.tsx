@@ -73,7 +73,7 @@ export default function LeadSourcesPage() {
   useEffect(() => { load(); }, [load]);
 
   const addConnector = async () => {
-    const provider = prompt('Provider key (e.g. justdial, indiamart, whatsapp):');
+    const provider = prompt('Provider key (e.g. justdial, indiamart, google_lead_form):');
     if (!provider) return;
     const name = prompt('Display name (e.g. "JustDial — all branches"):', provider) || provider;
     const res = await fetch('/api/admin/lead-source-connectors', {

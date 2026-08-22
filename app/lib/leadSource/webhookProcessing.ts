@@ -28,7 +28,7 @@ export interface LeadSourceWebhookResult {
 }
 
 // Pure, DB-free — the exact idempotency key described in the review:
-// source + sourceAccount + externalId together, never externalId alone
+// channel + sourceAccount + externalId together, never externalId alone
 // (two different provider accounts can independently produce the same
 // externalId string). Returns null when there's no externalId to key on
 // at all, meaning "don't attempt dedup for this lead" — see the longer
@@ -36,9 +36,24 @@ export interface LeadSourceWebhookResult {
 // waiting to be filled in blindly. Separated from the DB call itself so
 // the actual query-shape logic is unit-testable without a database, same
 // reasoning as pickBestMapping in resolveBranch.ts.
-export function buildDedupQuery(source: string, sourceAccount: string, externalId: string): Record<string, string> | null {
+//
+// IMPORTANT (Marketing Attribution, Phase 2): this queries
+// `conversionChannel`, NOT `source` — a real bug caught by live
+// end-to-end verification, not just a naming preference. Since Phase 2,
+// `Booking.source` holds the corrected ACQUISITION source (e.g. a
+// Google Lead Form lead is written with source="google", an attributed
+// WhatsApp conversation with source="google" too) rather than the raw
+// provider/channel key. Querying on `source` would silently fail to find
+// a lead-source webhook's own previously-created Booking on a retry
+// (source="google" in the DB vs. the raw provider "google_lead_form"
+// passed in here), creating a duplicate instead of updating in place.
+// `conversionChannel` is written unconditionally to the same fixed
+// channel identity ("justdial"/"indiamart"/"google_lead_form"/"whatsapp")
+// every single time, regardless of what acquisition source got decoded —
+// exactly the stable identity idempotency needs.
+export function buildDedupQuery(channel: string, sourceAccount: string, externalId: string): Record<string, string> | null {
   if (!externalId) return null;
-  return { externalCrmId: externalId, source, sourceAccount };
+  return { externalCrmId: externalId, conversionChannel: channel, sourceAccount };
 }
 
 // Pure — whether a branch-specific WhatsApp staff alert should even be
@@ -48,6 +63,34 @@ export function buildDedupQuery(source: string, sourceAccount: string, externalI
 // make.
 export function shouldNotifyBranch(resolvedBranch: string | null): boolean {
   return !!resolvedBranch;
+}
+
+export interface LeadSourceAttribution {
+  attributionSource: string;
+  conversionChannel: string;
+  isGoogleLeadForm: boolean;
+}
+
+// Pure, DB-free — Marketing Attribution (Phase 2): separates WHERE a
+// lead_source lead came from (attributionSource, written to Booking.source)
+// from HOW it converted (conversionChannel). Google Lead Form is the one
+// provider whose real-world acquisition source is "google" even though the
+// connector's own provider key is "google_lead_form" (that raw key stays
+// the dedup/branch-routing identity — see the call site's comment); every
+// other lead_source provider today (JustDial, IndiaMART) has its provider
+// key and its acquisition source be the same string, so conversionChannel
+// just mirrors source for them. "other" is the deliberate fallback for any
+// future lead_source provider this list hasn't been extended for yet —
+// never a reason to reject the lead.
+export function deriveLeadSourceAttribution(provider: string): LeadSourceAttribution {
+  const isGoogleLeadForm = provider === "google_lead_form";
+  return {
+    isGoogleLeadForm,
+    attributionSource: isGoogleLeadForm ? "google" : provider,
+    conversionChannel: isGoogleLeadForm
+      ? "google_lead_form"
+      : (provider === "justdial" || provider === "indiamart" ? provider : "other"),
+  };
 }
 
 async function getIntakeMapping(connectorId: string): Promise<MappingFieldDef[]> {
@@ -100,6 +143,11 @@ export async function processLeadSourceWebhookEvent(
   // priority order. Never guesses: an unresolved lead still gets saved
   // (a lead a staff member has to manually route is infinitely better
   // than one silently dropped), just flagged for a human to assign.
+  // Deliberately keyed on the RAW connector provider (e.g.
+  // "google_lead_form"), not the display-friendly acquisition source
+  // below — branch mappings and dedup are configured per-connector, and
+  // must never accidentally collide with an unrelated organic "google"
+  // Booking that happens to share the display source string.
   const resolved = await resolveBranchForLead({ source, providerAccountId, providerPhone });
 
   // Booking.name is a required field — a provider payload that genuinely
@@ -109,17 +157,36 @@ export async function processLeadSourceWebhookEvent(
   // a guess presented as real data.
   const name = String(mapped.name ?? "").trim() || "Unknown Lead";
 
+  const { attributionSource, conversionChannel, isGoogleLeadForm } = deriveLeadSourceAttribution(source);
+
   const fieldsToSet: Record<string, unknown> = {
     name,
     phone,
     email: String(mapped.email ?? ""),
     service: String(mapped.service ?? ""),
     notes: String(mapped.notes ?? ""),
-    source,
+    source: attributionSource,
     sourceAccount: providerAccountId,
     sourcePhone: providerPhone,
     location: resolved.branch || "",
     branchUnresolved: !resolved.branch,
+    conversionChannel,
+    // Campaign/click-id fields — ONLY populated when the admin has
+    // actually mapped them from a real field in this provider's payload
+    // (applyFieldMapping simply won't produce these keys otherwise, so
+    // they default to "" here exactly like every other optional mapped
+    // field above). Never invented for a provider whose payload doesn't
+    // carry them — e.g. JustDial/IndiaMART have no campaign/click-id
+    // concept at all, so these stay blank for those two.
+    utmCampaign: String(mapped.campaign ?? ""),
+    // "cpc" for Google Lead Form isn't a guess — a Lead Form extension can
+    // only ever run on a paid Google Ads campaign (there's no organic
+    // equivalent), so medium is knowable by definition even when the
+    // provider's own payload doesn't literally say so. An explicit mapped
+    // value still always wins if the payload does carry one.
+    utmMedium: String(mapped.medium ?? (isGoogleLeadForm ? "cpc" : "")),
+    clickId: String(mapped.clickId ?? ""),
+    clickIdType: String(mapped.clickIdType ?? ""),
   };
   if (externalId) fieldsToSet.externalCrmId = externalId;
 
@@ -145,7 +212,9 @@ export async function processLeadSourceWebhookEvent(
   // is un-deduplicated (each webhook call creates a new Booking) until
   // that's done deliberately.
   let bookingId: unknown;
-  const dedupQuery = buildDedupQuery(source, providerAccountId, externalId);
+  // conversionChannel here, not the raw `source`/provider key — see
+  // buildDedupQuery's own comment for exactly why this distinction matters.
+  const dedupQuery = buildDedupQuery(conversionChannel, providerAccountId, externalId);
   const existing = dedupQuery ? await (Booking as any).findOne(dedupQuery) : null;
   if (existing) {
     await (Booking as any).findByIdAndUpdate(existing._id, { $set: fieldsToSet });

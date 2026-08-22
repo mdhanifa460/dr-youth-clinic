@@ -69,6 +69,21 @@ export async function POST(req: NextRequest) {
     const previousBookings = await (Booking as any).countDocuments({ phone: formattedPhone });
     const isReturnVisit = previousBookings > 0;
 
+    const attribution = buildAttributionFields((name) => req.cookies.get(name)?.value);
+
+    // The fix for "everything shows as source=website" (Marketing
+    // Attribution, Phase 2): `source` now holds the visitor's real
+    // ACQUISITION source (google/direct/facebook/...) rather than always
+    // "website" — that's what `conversionChannel` below is for. Priority:
+    // an explicit `source` in the request body always wins (nothing sends
+    // one today, but this is a deliberate escape hatch for any future
+    // caller that does); otherwise the last-touch UTM/click-id-derived
+    // source (already resolved by middleware — see utmAttribution.ts,
+    // covers organic search and click-ID-only visits too); otherwise
+    // "direct" — the standard "no referrer, no campaign" bucket, matching
+    // GA4's own "(direct)" convention, never a guess dressed up as data.
+    const resolvedSource = source || attribution.utmSource || "direct";
+
     const booking = await Booking.create({
       bookingId,
       name,
@@ -80,7 +95,17 @@ export async function POST(req: NextRequest) {
       date,
       time,
       concern,
-      source: source || "website",
+      source: resolvedSource,
+      // HOW this booking converted — always "website" for this route (the
+      // one thing this route always knows for certain), independent of
+      // whatever `source` above resolved to. See Booking.ts's
+      // conversionChannel comment.
+      conversionChannel: "website",
+      // Reuses the EXISTING visitor_id cookie (middleware.ts) — no second
+      // identity system. Empty string if the visitor has no cookie yet
+      // (e.g. a very first request that middleware hasn't touched), same
+      // "absent = not yet known" convention as everything else here.
+      attributionId: req.cookies.get("visitor_id")?.value || "",
       isReturnVisit,
       ...(doctorId ? { doctorId } : {}),
       ...(consultationMode ? { consultationMode } : {}),
@@ -88,7 +113,7 @@ export async function POST(req: NextRequest) {
       ...(appointmentType ? { appointmentType } : {}),
       ...(notes ? { notes } : {}),
       ...(promoCode ? { promoCode, promoDiscount: promoDiscount ?? 0 } : {}),
-      ...buildAttributionFields((name) => req.cookies.get(name)?.value),
+      ...attribution,
       originDomain: resolveOriginDomain((name) => req.cookies.get(name)?.value),
     });
 
