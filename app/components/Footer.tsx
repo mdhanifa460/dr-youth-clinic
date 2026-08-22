@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
 import FooterLinks from "@/app/components/FooterLinks";
+import ContactInfo from "@/app/components/ContactInfo";
 import type { SiteConfig } from "@/app/lib/siteConfig";
 
 const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
@@ -75,39 +75,15 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
           {/* COL 5 — CONTACT */}
           <div>
             <h4 className="text-sm font-bold mb-5 tracking-wide">{contactHeading}</h4>
-            <ul className="space-y-4">
-              {contact.address && (
-                <li className="flex gap-2.5 text-white/60 text-sm leading-relaxed">
-                  <MdLocationOn
-                    className="text-[#F5A623] shrink-0 mt-0.5"
-                    size={16}
-                  />
-                  <span>{contact.address}</span>
-                </li>
-              )}
-              {contact.phone && (
-                <li>
-                  <a
-                    href={`tel:${contact.phone.replace(/\s/g, "")}`}
-                    className="flex gap-2.5 text-white/60 text-sm hover:text-white transition"
-                  >
-                    <MdPhone className="text-[#F5A623] shrink-0 mt-0.5" size={16} />
-                    {contact.phone}
-                  </a>
-                </li>
-              )}
-              {contact.email && (
-                <li>
-                  <a
-                    href={`mailto:${contact.email}`}
-                    className="flex gap-2.5 text-white/60 text-sm hover:text-white transition"
-                  >
-                    <MdEmail className="text-[#F5A623] shrink-0 mt-0.5" size={16} />
-                    {contact.email}
-                  </a>
-                </li>
-              )}
-            </ul>
+            {/* Address/phone now resolve to the VISITOR'S actual branch
+                (client-side — see ContactInfo.tsx for why, same reasoning
+                as FooterLinks.tsx), not one fixed branch's info for every
+                visitor. `contact.address`/`contact.phone` (the admin's
+                Homepage → Footer default) are the fallback shown before
+                that resolves and for a branch with nothing of its own set.
+                Email has no per-branch concept in this schema — stays the
+                one admin-configured address. */}
+            <ContactInfo defaultAddress={contact.address} defaultPhone={contact.phone} defaultEmail={contact.email} />
           </div>
         </div>
 

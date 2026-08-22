@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp, Plus, Trash2, Upload, CheckCircle, Loader, Images, Info } from 'lucide-react';
 import { locations } from '@/app/data/locations';
@@ -295,13 +295,18 @@ function ImgField({
 function TextField({ label, value, onChange, multiline = false }: {
   label: string; value: string; onChange: (v: string) => void; multiline?: boolean;
 }) {
+  // useId(), not a slugified label — two fields on the page (in different
+  // sections, both expanded at once) could otherwise share a label like
+  // "Heading" and collide on the same id. React guarantees this is unique
+  // per component instance and stable across re-renders/hydration.
+  const id = useId();
   const cls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560] focus:ring-1 focus:ring-[#0B2560]";
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
       {multiline
-        ? <textarea rows={3} className={cls} value={value || ''} onChange={(e) => onChange(e.target.value)} />
-        : <input type="text" className={cls} value={value || ''} onChange={(e) => onChange(e.target.value)} />}
+        ? <textarea id={id} rows={3} className={cls} value={value || ''} onChange={(e) => onChange(e.target.value)} />
+        : <input id={id} type="text" className={cls} value={value || ''} onChange={(e) => onChange(e.target.value)} />}
     </div>
   );
 }
@@ -335,40 +340,106 @@ function StringListField({ label, value, onChange }: {
 // (Quick Links, Procedures, Patient Care) and, with `withAccent`, the
 // footer's bottom-bar links (where one entry, e.g. "Plan My Journey", can
 // be styled in the site's gold accent instead of the default muted style).
-function LinkListField({ label, value, onChange, withAccent = false }: {
+//
+// Redesigned from a cramped Label+Href pair squeezed side by side (three
+// of these used to sit in a 3-column grid inside an already-narrow
+// max-w-4xl admin panel — with barely 250px per column, both text inputs
+// visibly collapsed/wrapped, which is exactly what read as "confusing").
+// Each row is now its own card with the two fields stacked, each with a
+// real accessible label (not just a shared placeholder), and explicit
+// move up/down controls — previously the only way to fix an out-of-order
+// link was delete-and-retype from scratch.
+function LinkListField({ label, value, onChange, withAccent = false, hint }: {
   label: string; value: Array<{ label: string; href: string; accent?: boolean }>;
   onChange: (v: Array<{ label: string; href: string; accent?: boolean }>) => void;
   withAccent?: boolean;
+  hint?: string;
 }) {
   const items = value || [];
+  // A stable, guaranteed-valid base id for this field instance — `label`
+  // itself (e.g. "Quick Links Column") isn't safe to use directly in an
+  // id (spaces, and two fields could theoretically share the same
+  // label text).
+  const baseId = useId();
   const update = (i: number, patch: Partial<{ label: string; href: string; accent?: boolean }>) => {
-    const next = items.map((it, j) => (j === i ? { ...it, ...patch } : it));
+    onChange(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
+  };
+  const move = (i: number, dir: -1 | 1) => {
+    const target = i + dir;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[i], next[target]] = [next[target], next[i]];
     onChange(next);
   };
+
   return (
-    <div>
-      <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
-      <div className="space-y-2">
+    <div className="bg-white rounded-xl border border-gray-100">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+        <h5 className="text-sm font-bold text-[#0B2560]">{label}</h5>
+        <span className="text-[11px] font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+          {items.length} link{items.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+      {hint && <p className="text-[11px] text-gray-400 px-4 pt-3">{hint}</p>}
+      <div className="p-4 space-y-2.5">
+        {items.length === 0 && (
+          <p className="text-xs text-gray-400 italic py-2">No links yet — click &ldquo;Add link&rdquo; below to add one.</p>
+        )}
         {items.map((item, i) => (
-          <div key={i} className="flex gap-2 items-center">
-            <input type="text" placeholder="Label" value={item.label}
-              onChange={(e) => update(i, { label: e.target.value })}
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#0B2560]" />
-            <input type="text" placeholder="/href or #anchor" value={item.href}
-              onChange={(e) => update(i, { href: e.target.value })}
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-[#0B2560]" />
+          <div key={i} className="border border-gray-100 rounded-lg p-3 bg-gray-50/60">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0 grid sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label htmlFor={`${baseId}-label-${i}`} className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                    Link text
+                  </label>
+                  <input id={`${baseId}-label-${i}`} type="text" placeholder="e.g. Book Appointment" value={item.label}
+                    onChange={(e) => update(i, { label: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-[#0B2560] focus:ring-1 focus:ring-[#0B2560]" />
+                </div>
+                <div>
+                  <label htmlFor={`${baseId}-href-${i}`} className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                    Destination
+                  </label>
+                  <input id={`${baseId}-href-${i}`} type="text" placeholder="/page or #anchor" value={item.href}
+                    onChange={(e) => update(i, { href: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono bg-white focus:outline-none focus:border-[#0B2560] focus:ring-1 focus:ring-[#0B2560]" />
+                </div>
+              </div>
+              {/* Reorder + delete — grouped together, away from the text
+                  fields, so they're not mistaken for part of the input. */}
+              <div className="flex flex-col items-center gap-0.5 shrink-0 pt-4">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0}
+                  aria-label={`Move "${item.label || 'this link'}" up`}
+                  title="Move up"
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-[#0B2560] disabled:opacity-30 disabled:hover:bg-transparent transition">
+                  <ChevronUp size={14} />
+                </button>
+                <button type="button" onClick={() => move(i, 1)} disabled={i === items.length - 1}
+                  aria-label={`Move "${item.label || 'this link'}" down`}
+                  title="Move down"
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-[#0B2560] disabled:opacity-30 disabled:hover:bg-transparent transition">
+                  <ChevronDown size={14} />
+                </button>
+                <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))}
+                  aria-label={`Delete "${item.label || 'this link'}"`}
+                  title="Delete"
+                  className="w-6 h-6 flex items-center justify-center rounded text-red-300 hover:bg-red-50 hover:text-red-600 transition mt-1">
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
             {withAccent && (
-              <label className="flex items-center gap-1 text-[10px] text-gray-500 shrink-0" title="Highlight in gold accent">
-                <input type="checkbox" checked={!!item.accent} onChange={(e) => update(i, { accent: e.target.checked })} />
-                Accent
+              <label className="flex items-center gap-1.5 text-[11px] text-gray-500 mt-2.5" title="Highlight this link in the site's gold accent color">
+                <input type="checkbox" checked={!!item.accent} onChange={(e) => update(i, { accent: e.target.checked })}
+                  className="rounded border-gray-300" />
+                Highlight in gold accent
               </label>
             )}
-            <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))}
-              className="text-red-400 hover:text-red-600 shrink-0"><Trash2 size={14} /></button>
           </div>
         ))}
         <button type="button" onClick={() => onChange([...items, { label: '', href: '', ...(withAccent ? { accent: false } : {}) }])}
-          className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
+          className="w-full flex items-center justify-center gap-1.5 text-xs text-[#0B2560] font-semibold border border-dashed border-gray-200 rounded-lg py-2 hover:bg-[#f6faff] hover:border-[#0B2560]/30 transition">
           <Plus size={12} /> Add link
         </button>
       </div>
@@ -1280,34 +1351,72 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
       );
 
     case 'footer':
+      // Redesigned for readability — the three link-list columns used to
+      // sit side by side in a 3-column grid inside this already-narrow
+      // (max-w-4xl) panel, leaving each Label+Href pair well under 150px
+      // to work with; on a normal screen this visibly collapsed/wrapped,
+      // which is exactly what read as confusing. Each subsection is now
+      // its own clearly-labeled, full-width card instead — more vertical
+      // scroll, but every field is actually legible and each link row has
+      // real (not just placeholder) accessible labels. See LinkListField's
+      // own comment for the per-row redesign.
       return (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
             Every column, link, and the bottom bar below are live on the real site footer — nothing here is
             hardcoded. Social icons are intentionally not shown in the footer (they're already in the top bar).
           </p>
-          <TextField label="Tagline" value={d.tagline} onChange={(v) => set('tagline', v)} multiline />
-          <TextField label="Copyright Text" value={d.copyright} onChange={(v) => set('copyright', v)} />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <TextField label="Column Heading — Quick Links" value={d.quickLinksHeading} onChange={(v) => set('quickLinksHeading', v)} />
-            <TextField label="Column Heading — Procedures" value={d.proceduresHeading} onChange={(v) => set('proceduresHeading', v)} />
-            <TextField label="Column Heading — Patient Care" value={d.patientCareHeading} onChange={(v) => set('patientCareHeading', v)} />
-            <TextField label="Column Heading — Contact" value={d.contactHeading} onChange={(v) => set('contactHeading', v)} />
+
+          <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-4">
+            <h5 className="text-sm font-bold text-[#0B2560]">Brand</h5>
+            <TextField label="Tagline" value={d.tagline} onChange={(v) => set('tagline', v)} multiline />
+            <TextField label="Copyright Text" value={d.copyright} onChange={(v) => set('copyright', v)} />
           </div>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <LinkListField label="Quick Links Column" value={d.quickLinks} onChange={(v) => set('quickLinks', v)} />
-            <LinkListField label="Procedures Column" value={d.procedures} onChange={(v) => set('procedures', v)} />
-            <LinkListField label="Patient Care Column" value={d.patientCare} onChange={(v) => set('patientCare', v)} />
+
+          <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-4">
+            <h5 className="text-sm font-bold text-[#0B2560]">Column Headings</h5>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <TextField label="Quick Links" value={d.quickLinksHeading} onChange={(v) => set('quickLinksHeading', v)} />
+              <TextField label="Procedures" value={d.proceduresHeading} onChange={(v) => set('proceduresHeading', v)} />
+              <TextField label="Patient Care" value={d.patientCareHeading} onChange={(v) => set('patientCareHeading', v)} />
+              <TextField label="Contact" value={d.contactHeading} onChange={(v) => set('contactHeading', v)} />
+            </div>
           </div>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <TextField label="Contact Address" value={d.contact?.address} onChange={(v) => set('contact.address', v)} multiline />
-            <TextField label="Contact Phone" value={d.contact?.phone} onChange={(v) => set('contact.phone', v)} />
-            <TextField label="Contact Email" value={d.contact?.email} onChange={(v) => set('contact.email', v)} />
+
+          <LinkListField
+            label="Quick Links Column"
+            value={d.quickLinks}
+            onChange={(v) => set('quickLinks', v)}
+            hint={'Use /#services or /#contact as the destination for an automatic, branch-aware link — it resolves to the visitor’s own city (e.g. /chennai/services) instead of one fixed city.'}
+          />
+          <LinkListField
+            label="Procedures Column"
+            value={d.procedures}
+            onChange={(v) => set('procedures', v)}
+            hint={'Same /#services convention as Quick Links — each procedure name maps to its own treatment category automatically.'}
+          />
+          <LinkListField label="Patient Care Column" value={d.patientCare} onChange={(v) => set('patientCare', v)} />
+
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <h5 className="text-sm font-bold text-[#0B2560] mb-4">Contact Info</h5>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <TextField label="Address" value={d.contact?.address} onChange={(v) => set('contact.address', v)} multiline />
+              </div>
+              <TextField label="Phone" value={d.contact?.phone} onChange={(v) => set('contact.phone', v)} />
+              <TextField label="Email" value={d.contact?.email} onChange={(v) => set('contact.email', v)} />
+            </div>
           </div>
+
           {/* Same fallback reasoning as the Locations stats above — a
               section saved before this field existed shows the real live
               defaults here rather than an empty list. */}
-          <LinkListField label="Bottom Bar Links" value={d.bottomLinks ?? HOMEPAGE_DEFAULTS.footer.data.bottomLinks} onChange={(v) => set('bottomLinks', v)} withAccent />
+          <LinkListField
+            label="Bottom Bar Links"
+            value={d.bottomLinks ?? HOMEPAGE_DEFAULTS.footer.data.bottomLinks}
+            onChange={(v) => set('bottomLinks', v)}
+            withAccent
+          />
         </div>
       );
 
