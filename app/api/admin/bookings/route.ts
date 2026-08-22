@@ -51,10 +51,20 @@ export async function GET(req: NextRequest) {
 
   if (search) {
     const safeSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Extended beyond name/phone/email — a lead's concern text ("Permanent
+    // Tattoo removal treatment") and campaign identity (utmSource/
+    // utmMedium/utmCampaign — often just a raw numeric Google Ads campaign
+    // ID, not a human-readable name) are exactly what staff actually need
+    // to find a specific lead by when following up on ad performance, and
+    // neither was searchable before this.
     query.$or = [
       { name:  { $regex: safeSearch, $options: "i" } },
       { phone: { $regex: safeSearch, $options: "i" } },
       { email: { $regex: safeSearch, $options: "i" } },
+      { concern: { $regex: safeSearch, $options: "i" } },
+      { utmCampaign: { $regex: safeSearch, $options: "i" } },
+      { utmSource: { $regex: safeSearch, $options: "i" } },
+      { utmMedium: { $regex: safeSearch, $options: "i" } },
     ];
   }
 

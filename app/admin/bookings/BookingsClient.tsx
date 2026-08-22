@@ -1111,7 +1111,7 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search name, phone, email…"
+                  placeholder="Search name, phone, email, concern, campaign…"
                   className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0B2560]"
                 />
               </div>
