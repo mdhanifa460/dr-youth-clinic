@@ -114,6 +114,15 @@ const SOURCE_META: Record<string, { label: string; icon: string; color: string }
   phone:     { label: "Phone Call", icon: "📞", color: "bg-gray-50 text-gray-600"    },
   whatsapp:  { label: "WhatsApp",   icon: "💬", color: "bg-emerald-50 text-emerald-600"},
   just_dial: { label: "Just Dial",  icon: "📇", color: "bg-red-50 text-red-600"       },
+  // Lead-source connector providers (app/admin/lead-sources) write their
+  // own `provider` value straight to Booking.source — "justdial"/
+  // "indiamart" (lowercase, no space) is the convention the connector
+  // creation UI itself suggests, distinct from just_dial above (the
+  // pre-existing manual-entry value from Settings.booking.sources,
+  // "Just Dial" with a space — a staff member picking a source by hand
+  // for a phone-in booking, not a webhook-driven one).
+  justdial:  { label: "JustDial",   icon: "📇", color: "bg-red-50 text-red-600"       },
+  indiamart: { label: "IndiaMART",  icon: "🛒", color: "bg-orange-50 text-orange-700" },
   crm:       { label: "CRM",        icon: "🔗", color: "bg-teal-50 text-teal-600"     },
   other:     { label: "Other",      icon: "📌", color: "bg-gray-50 text-gray-500"    },
 };
