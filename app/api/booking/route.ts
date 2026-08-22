@@ -14,6 +14,7 @@ import { getSiteConfig } from "@/app/lib/siteConfig";
 import { pushBookingToCrm } from "@/app/lib/crm/pushBooking";
 import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
 import { checkIpRisk } from "@/app/lib/ipIntelligence";
+import { checkBookingCapacity, isRealAppointment } from "@/app/lib/bookingCapacity";
 
 export async function GET() {
   return NextResponse.json({ message: "API working ✅" });
@@ -62,6 +63,29 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
+
+    // Booking Capacity & Availability — a business-capacity policy, NOT
+    // the anti-abuse rate limiter above (that stays untouched). Only
+    // relevant when this submission actually names a real appointment
+    // slot — a callback request or a flow with no date/time step (see
+    // bookingSchema) was never a capacity-consuming appointment and must
+    // not be gated by it. Runs BEFORE Booking.create(), so a rejected
+    // request never reaches the database — see app/lib/bookingCapacity.ts.
+    if (isRealAppointment(parsed.data.date, parsed.data.time)) {
+      const capacity = await checkBookingCapacity({ branch: location, date: parsed.data.date!, time: parsed.data.time! });
+      if (!capacity.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: capacity.code,
+            message: capacity.message,
+            sameDayRequestAvailable: capacity.sameDayRequestAvailable,
+            nextAvailableDate: capacity.nextAvailableDate,
+          },
+          { status: 409 }
+        );
+      }
+    }
 
     const bookingId = "DR-" + Date.now();
 

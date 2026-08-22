@@ -263,8 +263,12 @@ export default function LocationsAdminPage() {
     hours: [{ day: 'Monday - Saturday', hours: '' }, { day: 'Sunday', hours: 'Closed' }],
     operatingHours: DAYS_OF_WEEK.map((day) => ({ day, isOpen: day !== 'sunday', openTime: '09:00', closeTime: '19:00' })),
     holidays: [] as { date: string; label: string }[],
-    bookingRules: { consultationDuration: undefined, consultationFee: undefined, requirePhone: undefined } as any,
+    bookingRules: {
+      consultationDuration: undefined, consultationFee: undefined, requirePhone: undefined,
+      dailyAppointmentCapacity: undefined, bookingEnabled: undefined, sameDayBookingEnabled: undefined, advanceBookingDays: undefined,
+    } as any,
     slotConfig: { slotDurationMinutes: 30, availableTimes: [] as string[] },
+    timezone: 'Asia/Kolkata',
     languages: [] as string[],
     rating: 0, reviewCount: 0, serviceCount: 0, doctorCount: 0,
     description: '', specialties: [] as string[], whyUs: [] as { icon: string; title: string; desc: string }[],
@@ -315,6 +319,7 @@ export default function LocationsAdminPage() {
           holidays:     dci?.holidays || [],
           bookingRules: dci?.bookingRules || EMPTY_CLINIC_INFO.bookingRules,
           slotConfig:   dci?.slotConfig || EMPTY_CLINIC_INFO.slotConfig,
+          timezone:     dci?.timezone || EMPTY_CLINIC_INFO.timezone,
           languages:    dci?.languages || [],
           rating:       dci?.rating       ?? loc?.rating       ?? 0,
           reviewCount:  dci?.reviewCount  ?? loc?.reviewCount  ?? 0,
@@ -788,6 +793,81 @@ export default function LocationsAdminPage() {
                       <option value="true">Required</option>
                       <option value="false">Not required</option>
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Capacity & Availability overrides — same
+                  global-default-unless-overridden pattern as the block
+                  above, kept as its own group since capacity has one extra
+                  wrinkle: "Use global setting" (undefined) and "Unlimited"
+                  (explicit null) are two DIFFERENT states, not one, so the
+                  capacity/advance-window fields get an explicit
+                  global-vs-override selector rather than a bare number
+                  input with a blank-means-global placeholder. */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                  Booking Capacity & Availability <span className="font-normal text-gray-400">(optional overrides)</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Booking Enabled</label>
+                    <select value={data.clinicInfo.bookingRules?.bookingEnabled === undefined ? '' : String(data.clinicInfo.bookingRules.bookingEnabled)}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, bookingEnabled: e.target.value === '' ? undefined : e.target.value === 'true' } } }))}
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560] bg-white">
+                      <option value="">Use global setting</option>
+                      <option value="true">Enabled</option>
+                      <option value="false">Disabled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Same-Day Booking</label>
+                    <select value={data.clinicInfo.bookingRules?.sameDayBookingEnabled === undefined ? '' : String(data.clinicInfo.bookingRules.sameDayBookingEnabled)}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, sameDayBookingEnabled: e.target.value === '' ? undefined : e.target.value === 'true' } } }))}
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560] bg-white">
+                      <option value="">Use global setting</option>
+                      <option value="true">Enabled</option>
+                      <option value="false">Disabled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Timezone</label>
+                    <input type="text" value={data.clinicInfo.timezone || ''}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, timezone: e.target.value } }))}
+                      placeholder="Asia/Kolkata"
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560] font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Daily Appointment Capacity</label>
+                    <select value={data.clinicInfo.bookingRules?.dailyAppointmentCapacity === undefined ? 'global' : 'custom'}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, dailyAppointmentCapacity: e.target.value === 'global' ? undefined : null } } }))}
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560] bg-white mb-1.5">
+                      <option value="global">Use global setting</option>
+                      <option value="custom">Override for this branch</option>
+                    </select>
+                    {data.clinicInfo.bookingRules?.dailyAppointmentCapacity !== undefined && (
+                      <input type="number" min={0}
+                        value={data.clinicInfo.bookingRules?.dailyAppointmentCapacity ?? ''}
+                        onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, dailyAppointmentCapacity: e.target.value === '' ? null : Math.max(0, Number(e.target.value)) } } }))}
+                        placeholder="Unlimited"
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560]" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Advance Booking Days</label>
+                    <select value={data.clinicInfo.bookingRules?.advanceBookingDays === undefined ? 'global' : 'custom'}
+                      onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, advanceBookingDays: e.target.value === 'global' ? undefined : null } } }))}
+                      className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560] bg-white mb-1.5">
+                      <option value="global">Use global setting</option>
+                      <option value="custom">Override for this branch</option>
+                    </select>
+                    {data.clinicInfo.bookingRules?.advanceBookingDays !== undefined && (
+                      <input type="number" min={0}
+                        value={data.clinicInfo.bookingRules?.advanceBookingDays ?? ''}
+                        onChange={(e) => setData((d: any) => ({ ...d, clinicInfo: { ...d.clinicInfo, bookingRules: { ...d.clinicInfo.bookingRules, advanceBookingDays: e.target.value === '' ? null : Math.max(0, Number(e.target.value)) } } }))}
+                        placeholder="Unlimited"
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-[#0B2560]" />
+                    )}
                   </div>
                 </div>
               </div>

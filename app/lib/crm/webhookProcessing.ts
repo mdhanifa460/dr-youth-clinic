@@ -4,6 +4,8 @@ import ConnectorFieldMapping from "@/app/models/ConnectorFieldMapping";
 import { applyFieldMapping, type MappingFieldDef } from "./fieldMapping";
 import { normalizePhone } from "@/app/lib/phone";
 import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
+import { reserveCapacitySlot, isRealAppointment } from "@/app/lib/bookingCapacity";
+import { getEffectiveBranchConfig } from "@/app/lib/branchConfig";
 
 // Leads and invoices are event-driven (your CRM calls our webhook the
 // moment one is created/updated), not polled — no "getLeads"/"getInvoices"
@@ -56,17 +58,29 @@ async function processInboundLead(connectorId: string, payload: Record<string, u
   }
 
   const existing = await (Booking as any).findOne({ externalCrmId: externalId });
-  const fieldsToSet = {
+  const location = String(mapped.location ?? "");
+  // Booking Capacity — a CRM-side lead has no appointment concept by
+  // default (staff logging a phone enquiry directly in the CRM, not a
+  // booked slot); date/time are only set here when the admin has actually
+  // mapped them from a real CRM field ("Leads coming in" field mapping),
+  // matching the exact same "never invented" rule the lead-source
+  // connectors use. Only a genuinely dated CRM record consumes capacity —
+  // see isRealAppointment()'s comment.
+  const mappedDate = mapped.date ? String(mapped.date) : "";
+  const mappedTime = mapped.time ? String(mapped.time) : "";
+  const fieldsToSet: Record<string, unknown> = {
     name: String(mapped.name ?? existing?.name ?? ""),
     phone,
     email: String(mapped.email ?? ""),
     service: String(mapped.service ?? ""),
-    location: String(mapped.location ?? ""),
+    location,
     notes: String(mapped.notes ?? ""),
     source: "crm",
     externalCrmId: externalId,
     pendingSync: false, // it already exists in the CRM — nothing to push back
   };
+  if (mappedDate) fieldsToSet.date = mappedDate;
+  if (mappedTime) fieldsToSet.time = mappedTime;
 
   let bookingId: unknown;
   if (existing) {
@@ -83,6 +97,16 @@ async function processInboundLead(connectorId: string, payload: Record<string, u
     { ...fieldsToSet, _id: bookingId, leadTemperature: existing?.leadTemperature },
     { reason: "auto:initial" }
   ).catch(() => {});
+
+  // Booking Capacity accounting — fire-and-forget, never blocking/
+  // rejecting the CRM's own webhook call (see the identical reasoning in
+  // app/lib/leadSource/webhookProcessing.ts). Only when a branch is known
+  // and this is a genuinely dated appointment, not a plain lead.
+  if (location && isRealAppointment(mappedDate, mappedTime)) {
+    getEffectiveBranchConfig(location)
+      .then((cfg) => reserveCapacitySlot(location, mappedDate, cfg.timezone))
+      .catch((err) => console.error(`Booking capacity accounting failed for CRM-inbound booking ${bookingId}:`, err));
+  }
 
   return { processed: true };
 }

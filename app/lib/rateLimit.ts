@@ -83,6 +83,46 @@ export async function checkRateLimit(
   }
 }
 
+// The same atomic INCR primitive checkRateLimit() uses internally,
+// exposed directly for a caller that needs its own key/threshold/TTL
+// semantics rather than the fixed "N requests per rolling window" shape
+// above — e.g. Booking Capacity's daily-appointment counter, keyed by
+// branch+local-date and TTL'd to branch-local midnight instead of a
+// rolling window (see app/lib/bookingCapacity.ts). Same Redis-if-
+// configured / in-memory-fallback split as checkRateLimit, and the same
+// caveat applies: the in-memory fallback is "per serverless instance,"
+// not a distributed guarantee — a caller relying on strict atomicity
+// across concurrent requests must have Redis configured; this is
+// documented, not silently assumed away.
+export async function atomicIncrement(key: string, ttlSeconds: number): Promise<number> {
+  if (!redis) return atomicIncrementInMemory(key, ttlSeconds);
+  try {
+    const redisKey = `counter:${key}`;
+    const count = await redis.incr(redisKey);
+    if (count === 1) {
+      await redis.expire(redisKey, Math.max(1, Math.ceil(ttlSeconds)));
+    }
+    return count;
+  } catch (e) {
+    console.error('[rateLimit] Redis atomicIncrement failed, falling back to in-memory', e);
+    return atomicIncrementInMemory(key, ttlSeconds);
+  }
+}
+
+// Synchronous Map mutation, no `await` between read and write — inherently
+// atomic within Node's single-threaded event loop even under concurrent
+// Promise.all() callers, exactly like checkRateLimitInMemory above.
+function atomicIncrementInMemory(key: string, ttlSeconds: number): number {
+  const now = Date.now();
+  const entry = memoryStore.get(key);
+  if (!entry || now > entry.resetAt) {
+    memoryStore.set(key, { count: 1, resetAt: now + ttlSeconds * 1000 });
+    return 1;
+  }
+  entry.count++;
+  return entry.count;
+}
+
 export function getClientIp(req: Request): string {
   return (
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||

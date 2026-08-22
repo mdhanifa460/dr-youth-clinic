@@ -63,6 +63,18 @@ export interface IBookingRules {
   consultationDuration?: number;
   consultationFee?: number;
   requirePhone?: boolean;
+  // Booking Capacity & Availability — same override-the-global-default
+  // pattern as the three fields above, see app/lib/branchConfig.ts's
+  // getEffectiveBranchConfig() for the merge order. dailyAppointmentCapacity
+  // is a CLINIC CAPACITY policy ("how many real appointments can this
+  // branch handle today"), deliberately distinct from the unrelated
+  // per-IP API rate limiter in app/lib/rateLimit.ts — null/unset means
+  // unlimited, never a silent 0.
+  dailyAppointmentCapacity?: number | null;
+  bookingEnabled?: boolean;
+  sameDayBookingEnabled?: boolean;
+  // null/unset means no advance-window restriction (unlimited how-far-ahead).
+  advanceBookingDays?: number | null;
 }
 
 export interface ISlotConfig {
@@ -103,6 +115,13 @@ export interface IClinicInfo {
   holidays: IHoliday[];
   bookingRules?: IBookingRules;
   slotConfig?: ISlotConfig;
+  // IANA timezone for this branch's "what day is it right now" math (daily
+  // appointment capacity resets at LOCAL midnight, not UTC — see
+  // app/lib/branchTimezone.ts). Defaults to Asia/Kolkata since every real
+  // branch today is in India, but this is a per-branch, fully admin-
+  // editable string, not hardcoded logic — a future non-India branch just
+  // sets its own IANA zone here, no code change needed.
+  timezone?: string;
   languages: string[];
   rating: number;
   reviewCount: number;
@@ -189,6 +208,10 @@ const BookingRulesSchema = new Schema<IBookingRules>(
     consultationDuration: { type: Number },
     consultationFee: { type: Number },
     requirePhone: { type: Boolean },
+    dailyAppointmentCapacity: { type: Number, default: null },
+    bookingEnabled: { type: Boolean },
+    sameDayBookingEnabled: { type: Boolean },
+    advanceBookingDays: { type: Number, default: null },
   },
   { _id: false }
 );
@@ -222,6 +245,7 @@ const ClinicInfoSchema = new Schema<IClinicInfo>(
     holidays:     { type: [HolidaySchema], default: [] },
     bookingRules: { type: BookingRulesSchema, default: undefined },
     slotConfig:   { type: SlotConfigSchema, default: undefined },
+    timezone:     { type: String, default: 'Asia/Kolkata' },
     languages:    { type: [String], default: [] },
     rating:       { type: Number, default: 0 },
     reviewCount:  { type: Number, default: 0 },

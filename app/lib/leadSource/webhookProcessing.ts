@@ -8,6 +8,7 @@ import { resolveBranchForLead } from "@/app/lib/leadSourceMapping/resolveBranch"
 import { getClinicNotifyNumber } from "@/app/lib/clinicNotify";
 import { getEffectiveBranchConfig } from "@/app/lib/branchConfig";
 import { sendWhatsAppText } from "@/app/lib/whatsapp";
+import { reserveCapacitySlot, isRealAppointment } from "@/app/lib/bookingCapacity";
 
 // The generic bridge for EVERY third-party lead channel — JustDial,
 // IndiaMART, WhatsApp, and whatever comes after them. Onboarding a new
@@ -190,6 +191,20 @@ export async function processLeadSourceWebhookEvent(
   };
   if (externalId) fieldsToSet.externalCrmId = externalId;
 
+  // Booking Capacity — date/time are ONLY set here if the admin has
+  // actually mapped them from a real field in this provider's payload
+  // (same "never invented" rule as campaign/click-id above). Most
+  // JustDial/IndiaMART leads have no chosen appointment slot at all — a
+  // directory enquiry, not a booked time — and stay a Lead exactly as
+  // today; only a provider whose payload genuinely carries a preferred
+  // date/time (mapped explicitly by an admin) is treated as a real,
+  // capacity-consuming appointment. See isRealAppointment()'s own comment
+  // for the exact "Lead vs. Appointment" distinction this reuses.
+  const mappedDate = mapped.date ? String(mapped.date) : "";
+  const mappedTime = mapped.time ? String(mapped.time) : "";
+  if (mappedDate) fieldsToSet.date = mappedDate;
+  if (mappedTime) fieldsToSet.time = mappedTime;
+
   // Idempotency: externalId ALONE is not a safe dedup key — two different
   // accounts on the same provider (Chennai's JustDial listing and
   // Bangalore's) each run their own ID sequence and could independently
@@ -227,6 +242,21 @@ export async function processLeadSourceWebhookEvent(
   // Lead Qualification Engine — same fire-and-forget scoring every other
   // booking-creating flow gets; no-ops if the engine isn't enabled.
   qualifyAndPersist({ ...fieldsToSet, _id: bookingId }, { reason: "auto:initial" }).catch(() => {});
+
+  // Booking Capacity accounting — only when this lead genuinely became a
+  // real, dated appointment (see the mappedDate/mappedTime comment above)
+  // AND a branch actually resolved (capacity is inherently per-branch;
+  // there's nothing to charge it against otherwise). Deliberately
+  // fire-and-forget and NEVER blocking/rejecting: a webhook delivering a
+  // real third-party lead must never be dropped because the branch is
+  // already busy — it still gets recorded (and still counts toward the
+  // SAME shared counter app/api/booking/route.ts's interactive gate
+  // checks), just without refusing the third party's webhook call itself.
+  if (resolved.branch && isRealAppointment(mappedDate, mappedTime)) {
+    getEffectiveBranchConfig(resolved.branch)
+      .then((cfg) => reserveCapacitySlot(resolved.branch as string, mappedDate, cfg.timezone))
+      .catch((err) => console.error(`Booking capacity accounting failed for lead-source booking ${bookingId}:`, err));
+  }
 
   // Staff WhatsApp alert, branch-specific — reuses the exact same two
   // resolution calls app/api/booking/route.ts already uses for the

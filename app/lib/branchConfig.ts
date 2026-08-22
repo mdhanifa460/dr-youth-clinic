@@ -3,12 +3,30 @@ import { LocationContent, type IBookingRules, type IOperatingHour, type IHoliday
 import { getSettings } from '@/app/models/Settings';
 
 export interface EffectiveBranchConfig {
-  bookingRules: Required<IBookingRules>;
+  // Scoped to just the three original fields this object literal has
+  // always built — the four new Booking Capacity fields below are
+  // resolved as their own top-level properties instead (matching how
+  // every caller already reads them, e.g. config.dailyAppointmentCapacity,
+  // not config.bookingRules.dailyAppointmentCapacity).
+  bookingRules: Required<Pick<IBookingRules, 'consultationDuration' | 'consultationFee' | 'requirePhone'>>;
   operatingHours: IOperatingHour[];
   holidays: IHoliday[];
   slotConfig?: ISlotConfig;
   languages: string[];
   whatsappSenderPhoneNumberId?: string;
+  // Booking Capacity & Availability — resolved the same way every other
+  // field in this interface already is (branch override ?? global default
+  // ?? hardcoded fallback). See app/lib/bookingCapacity.ts for what reads
+  // these. `dailyAppointmentCapacity`/`advanceBookingDays` stay `null` for
+  // "unlimited" all the way through this merge — never coerced to a number.
+  dailyAppointmentCapacity: number | null;
+  bookingEnabled: boolean;
+  sameDayBookingEnabled: boolean;
+  advanceBookingDays: number | null;
+  // IANA timezone this branch's "today"/midnight math runs in — see
+  // app/lib/branchTimezone.ts. Always resolves to a real string (defaults
+  // to Asia/Kolkata), never undefined.
+  timezone: string;
 }
 
 // The single place that resolves "what actually applies to booking X at
@@ -37,5 +55,10 @@ export async function getEffectiveBranchConfig(location: string): Promise<Effect
     slotConfig: content?.clinicInfo?.slotConfig,
     languages: content?.clinicInfo?.languages || [],
     whatsappSenderPhoneNumberId: content?.clinicInfo?.whatsappSenderPhoneNumberId || undefined,
+    dailyAppointmentCapacity: branchRules.dailyAppointmentCapacity ?? settings.booking?.dailyAppointmentCapacity ?? null,
+    bookingEnabled: branchRules.bookingEnabled ?? settings.booking?.bookingEnabled ?? true,
+    sameDayBookingEnabled: branchRules.sameDayBookingEnabled ?? settings.booking?.sameDayBookingEnabled ?? true,
+    advanceBookingDays: branchRules.advanceBookingDays ?? settings.booking?.advanceBookingDays ?? null,
+    timezone: content?.clinicInfo?.timezone || 'Asia/Kolkata',
   };
 }

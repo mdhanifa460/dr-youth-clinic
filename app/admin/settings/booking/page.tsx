@@ -16,6 +16,13 @@ type BookingSettings = {
   consultationFee: number;
   emiBankPartners: string;
   sources: string[];
+  // Booking Capacity & Availability — GLOBAL DEFAULT, overridable per
+  // branch in Admin → Locations → that branch's Booking Rules. This is a
+  // clinic CAPACITY policy, separate from API rate limiting.
+  dailyAppointmentCapacity: number | null;
+  bookingEnabled: boolean;
+  sameDayBookingEnabled: boolean;
+  advanceBookingDays: number | null;
 };
 
 const DEFAULTS: BookingSettings = {
@@ -30,6 +37,10 @@ const DEFAULTS: BookingSettings = {
   consultationFee: 500,
   emiBankPartners: "HDFC, ICICI, Axis Bank",
   sources: ["Website", "Instagram", "Facebook", "Google", "WhatsApp", "Referral", "Walk-in", "Phone", "Just Dial", "Other"],
+  dailyAppointmentCapacity: null,
+  bookingEnabled: true,
+  sameDayBookingEnabled: true,
+  advanceBookingDays: null,
 };
 
 const PATIENT_FIELDS: { key: keyof BookingSettings; label: string; desc: string; badge?: string }[] = [
@@ -152,6 +163,62 @@ export default function BookingSettingsPage() {
                 <Toggle on={form[key] as boolean} onChange={() => key !== "requirePhone" && set(key, !form[key])} />
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Booking Capacity & Availability */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-50">
+            <h2 className="font-bold text-[#0B2560] text-sm">Booking Capacity & Availability</h2>
+            <p className="text-gray-400 text-xs mt-0.5">
+              How many real appointments a branch can take in a day, and when patients can book them. This is the
+              clinic's own capacity policy — separate from the site's anti-spam API limits, which stay unaffected.
+              Every branch inherits these defaults unless it overrides them in Admin → Locations → that branch's Booking Rules.
+            </p>
+          </div>
+          <div className="divide-y divide-gray-50">
+            <div className="flex items-center justify-between px-6 py-4 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Booking Enabled</p>
+                <p className="text-xs text-gray-400 mt-0.5">Turn off to pause online booking entirely (e.g. during a temporary closure).</p>
+              </div>
+              <Toggle on={form.bookingEnabled} onChange={() => set("bookingEnabled", !form.bookingEnabled)} />
+            </div>
+            <div className="flex items-center justify-between px-6 py-4 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Same-Day Booking</p>
+                <p className="text-xs text-gray-400 mt-0.5">Allow patients to book an appointment for today.</p>
+              </div>
+              <Toggle on={form.sameDayBookingEnabled} onChange={() => set("sameDayBookingEnabled", !form.sameDayBookingEnabled)} />
+            </div>
+            <div className="px-6 py-4">
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Daily Appointment Capacity</label>
+              <div className="flex items-center gap-2">
+                <input type="number" min={0}
+                  value={form.dailyAppointmentCapacity ?? ""}
+                  onChange={(e) => set("dailyAppointmentCapacity", e.target.value === "" ? null : Math.max(0, +e.target.value))}
+                  placeholder="Unlimited"
+                  className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]" />
+                <p className="text-xs text-gray-400">
+                  {form.dailyAppointmentCapacity == null ? "Unlimited — no cap on appointments per day." : `Max ${form.dailyAppointmentCapacity} real appointments per day.`}
+                  {" "}Leave blank for unlimited.
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-4">
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Advance Booking Window</label>
+              <div className="flex items-center gap-2">
+                <input type="number" min={0}
+                  value={form.advanceBookingDays ?? ""}
+                  onChange={(e) => set("advanceBookingDays", e.target.value === "" ? null : Math.max(0, +e.target.value))}
+                  placeholder="Unlimited"
+                  className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#0B2560]" />
+                <p className="text-xs text-gray-400">
+                  {form.advanceBookingDays == null ? "Patients can book any date ahead." : `Patients can book up to ${form.advanceBookingDays} days ahead.`}
+                  {" "}Leave blank for no limit.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

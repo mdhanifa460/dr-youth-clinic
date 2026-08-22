@@ -37,6 +37,21 @@ export interface ISettings extends Document {
     // so a clinic can add e.g. "Just Dial" without a code change; the
     // underlying field is a plain string, not a fixed enum, to match.
     sources: string[];
+    // Booking Capacity & Availability — GLOBAL DEFAULT, overridable per
+    // branch in LocationContent.clinicInfo.bookingRules (see
+    // app/lib/branchConfig.ts's getEffectiveBranchConfig() for the merge
+    // order: branch override ?? this global default ?? hardcoded
+    // fallback). This is a CLINIC CAPACITY business policy — "how many
+    // real appointments can a branch handle in a day" — deliberately kept
+    // separate from the unrelated per-IP anti-abuse rate limiter in
+    // app/lib/rateLimit.ts, which stays completely untouched by this.
+    // null = unlimited, never a silent 0.
+    dailyAppointmentCapacity: number | null;
+    bookingEnabled: boolean;
+    sameDayBookingEnabled: boolean;
+    // null = no advance-window restriction (how many days ahead a patient
+    // may book).
+    advanceBookingDays: number | null;
   };
   display: {
     showPriceOnCards: boolean;
@@ -432,6 +447,14 @@ const SettingsSchema = new Schema<ISettings>(
         type: [String],
         default: ['Website', 'Instagram', 'Facebook', 'Google', 'WhatsApp', 'Referral', 'Walk-in', 'Phone', 'Just Dial', 'Other'],
       },
+      // Booking Capacity & Availability — defaults chosen so that until an
+      // admin explicitly configures anything, EVERY existing booking flow
+      // behaves exactly as it does today (unlimited capacity, booking
+      // enabled, same-day enabled, no advance-window restriction).
+      dailyAppointmentCapacity: { type: Number, default: null },
+      bookingEnabled:           { type: Boolean, default: true },
+      sameDayBookingEnabled:    { type: Boolean, default: true },
+      advanceBookingDays:       { type: Number, default: null },
     },
     display: {
       showPriceOnCards:        { type: Boolean, default: true },

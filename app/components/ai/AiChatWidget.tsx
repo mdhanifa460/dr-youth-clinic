@@ -700,8 +700,12 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
   // Branch-aware — resolves to the visitor's actual clinic's WhatsApp
   // number once their location is known, falling back to the sitewide
   // `whatsapp` prop until then. Must be called unconditionally before the
-  // `!config` early return below (Rules of Hooks).
+  // `!config` early return below (Rules of Hooks) — same reason
+  // useAttributedWaText right after it must be too (a real
+  // react-hooks/rules-of-hooks violation caught by lint, not hypothetical:
+  // it was originally placed after the early return, below).
   const branchWhatsApp = useBranchWhatsApp(whatsapp || '');
+  const waMessage = useAttributedWaText("Hi, I'd like to know more");
 
   useEffect(() => {
     const { id, isReturning } = getSessionId();
@@ -818,7 +822,6 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
   if (!config || !config.enabled) return null;
   const accent = THEME_ACCENT[config.theme] || THEME_ACCENT.luxury;
   const waBase = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
-  const waMessage = useAttributedWaText("Hi, I'd like to know more");
   const waHref = waBase
     ? `${waBase}${waBase.includes('?') ? '&' : '?'}text=${encodeURIComponent(waMessage)}`
     : null;
