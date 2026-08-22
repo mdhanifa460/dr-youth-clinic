@@ -29,6 +29,14 @@ interface Booking {
   email?: string;
   service?: string;
   location?: string;
+  // Set when this booking came in through a third-party lead-source
+  // connector (JustDial/IndiaMART/...) whose provider account/phone
+  // didn't match any configured Branch Mapping row — see
+  // app/lib/leadSourceMapping/resolveBranch.ts. `location` is left blank
+  // rather than guessed; this is what tells staff it needs assigning.
+  branchUnresolved?: boolean;
+  sourceAccount?: string;
+  sourcePhone?: string;
   date?: string;
   time?: string;
   concern?: string;
@@ -284,6 +292,17 @@ function BookingDrawer({
   const [value,      setValue]      = useState(String(booking.treatmentValue || ""));
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingNote,   setSavingNote]   = useState(false);
+
+  // Branch assignment — mirrors saveNote's own PATCH pattern exactly.
+  // Authorization is enforced the same way every other field in this
+  // drawer already is: server-side, by /api/admin/bookings/[id]'s own
+  // requirePermission("bookings", "full") — status/notes/reschedule have
+  // no separate client-side gate either, so a one-off check here would be
+  // inconsistent with this component's own established convention rather
+  // than an added safeguard.
+  const [location,     setLocationVal] = useState(booking.location || "");
+  const [savingLocation, setSavingLocation] = useState(false);
+  const [locationSaved,  setLocationSaved]  = useState(false);
   const [history,    setHistory]    = useState<{ bookings: any[]; appointments: any[]; timeline: any[]; totalVisits: number } | null>(null);
   const [histLoading,setHistLoading]= useState(false);
   const [showConvert,setShowConvert]= useState(false);
@@ -389,6 +408,26 @@ function BookingDrawer({
     setSavingNote(false);
   }
 
+  async function saveLocation(newLocation: string) {
+    if (!newLocation || newLocation === location) return;
+    setSavingLocation(true);
+    const res = await fetch(`/api/admin/bookings/${booking._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ location: newLocation }),
+    });
+    if (res.ok) {
+      setLocationVal(newLocation);
+      // The PATCH route always clears branchUnresolved server-side once a
+      // real location is set — mirrored here so the "needs assignment"
+      // warning disappears immediately without waiting on a full refetch.
+      onUpdate({ location: newLocation, branchUnresolved: false });
+      setLocationSaved(true);
+      setTimeout(() => setLocationSaved(false), 2000);
+    }
+    setSavingLocation(false);
+  }
+
   const src = SOURCE_META[booking.source || "website"] || SOURCE_META.other;
 
   return (
@@ -488,7 +527,6 @@ function BookingDrawer({
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "Service",    value: booking.service  || "—" },
-                  { label: "Location",   value: booking.location || "—" },
                   { label: "Booking ID", value: booking.bookingId || "—" },
                   { label: "Source",     value: src.label },
                 ].map(({ label, value }) => (
@@ -497,6 +535,43 @@ function BookingDrawer({
                     <p className="text-sm font-semibold text-gray-700">{value}</p>
                   </div>
                 ))}
+              </div>
+
+              {/* Branch — editable, not just displayed. Was read-only text
+                  before this; the PATCH API already accepted a location
+                  update, nothing in the UI let staff actually send one.
+                  Matters most for a lead-source booking (JustDial/
+                  IndiaMART/...) that came in with no matching Branch
+                  Mapping row — booking.branchUnresolved flags exactly
+                  that case, shown here as a warning instead of a quiet
+                  blank field, since an unassigned branch means nobody
+                  knows which clinic should follow up. */}
+              <div className={`rounded-xl p-3 ${booking.branchUnresolved ? "bg-amber-50 border border-amber-200" : "bg-gray-50"}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-wide mb-1.5 flex items-center gap-1 ${booking.branchUnresolved ? "text-amber-700" : "text-gray-400"}`}>
+                  {booking.branchUnresolved && <AlertCircle size={11} />}
+                  Branch{booking.branchUnresolved ? " — needs assignment" : ""}
+                </p>
+                {booking.branchUnresolved && (
+                  <p className="text-xs text-amber-700 mb-2">
+                    This lead came in from {booking.source || "an external source"} with no matching branch
+                    mapping — pick the right clinic below.
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={location}
+                    onChange={(e) => saveLocation(e.target.value)}
+                    disabled={savingLocation}
+                    className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-[#0B2560] disabled:opacity-50 capitalize"
+                  >
+                    <option value="">Select branch…</option>
+                    {LOCATIONS.map((l) => (
+                      <option key={l} value={l.toLowerCase()}>{l}</option>
+                    ))}
+                  </select>
+                  {savingLocation && <Loader2 size={14} className="animate-spin text-gray-400 shrink-0" />}
+                  {locationSaved && <CheckCircle size={14} className="text-emerald-500 shrink-0" />}
+                </div>
               </div>
 
               {/* Real campaign attribution — the "Source" field above is a

@@ -70,7 +70,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (phone         !== undefined) $set.phone         = phone;
   if (email         !== undefined) $set.email         = email;
   if (service       !== undefined) $set.service       = service;
-  if (location      !== undefined) $set.location      = location;
+  // Setting a real location here always clears branchUnresolved — this is
+  // the manual-assignment path app/lib/leadSourceMapping/resolveBranch.ts's
+  // own comment calls for: a lead-source booking that couldn't be
+  // auto-routed gets fixed by a staff member picking the branch here,
+  // same PATCH every other field on this booking already goes through.
+  // Deliberately server-side (not left to the client to remember to also
+  // send branchUnresolved:false) so this can never be forgotten.
+  if (location      !== undefined) {
+    $set.location = location;
+    if (location) $set.branchUnresolved = false;
+  }
   if (date          !== undefined) $set.date          = date;
   if (time          !== undefined) $set.time          = time;
   if (concern       !== undefined) $set.concern       = concern;
