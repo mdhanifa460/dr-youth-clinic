@@ -61,7 +61,10 @@ interface Booking {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   landingPage?: string;
+  originalLandingPage?: string;
   firstTouchSource?: string;
   lastTouchSource?: string;
   // Marketing Attribution (Phase 2) — HOW this booking converted, kept
@@ -171,14 +174,14 @@ function channelLabel(channel?: string, source?: string): { label: string; icon:
 // today have no UTM data at all (the visit's URL never carried utm_*
 // params) — this makes the presence/absence of real ad-click data
 // visible at a glance, instead of a misleading blank/default everywhere.
-function CampaignChip({ lastTouchSource }: { lastTouchSource?: string }) {
+function CampaignChip({ lastTouchSource, utmCampaign }: { lastTouchSource?: string; utmCampaign?: string }) {
   if (!lastTouchSource) return null;
   return (
     <span
-      title={`Real campaign attribution (utm_source/medium) — captured from the URL this visitor arrived on, distinct from the manual "Source" label`}
+      title={`Real campaign attribution (source/medium${utmCampaign ? "/campaign" : ""}) — captured from the URL this visitor arrived on, distinct from the manual "Source" label`}
       className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 mt-1"
     >
-      🎯 {lastTouchSource}
+      🎯 {lastTouchSource}{utmCampaign ? ` · ${utmCampaign}` : ""}
     </span>
   );
 }
@@ -503,6 +506,9 @@ function BookingDrawer({
                 <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${src.color}`}>
                   {src.icon} {src.label}
                 </span>
+                {/* Campaign visible at a glance, not just buried in the
+                    Details tab — same chip the list row already uses. */}
+                <CampaignChip lastTouchSource={booking.lastTouchSource} utmCampaign={booking.utmCampaign} />
                 <span className="text-[11px] text-gray-400">{timeAgo(booking.createdAt)}</span>
               </div>
             </div>
@@ -662,6 +668,22 @@ function BookingDrawer({
                         </div>
                       );
                     })()}
+                    {(booking.utmTerm || booking.utmContent) && (
+                      <>
+                        {booking.utmTerm && (
+                          <div>
+                            <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Search Term / Keyword</p>
+                            <p className="text-amber-900 font-mono truncate">{booking.utmTerm}</p>
+                          </div>
+                        )}
+                        {booking.utmContent && (
+                          <div>
+                            <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Ad / Content Variant</p>
+                            <p className="text-amber-900 font-mono truncate">{booking.utmContent}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
                     {booking.clickId && (
                       <div className="col-span-2">
                         <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Click ID ({booking.clickIdType || "—"})</p>
@@ -677,7 +699,25 @@ function BookingDrawer({
                     {booking.landingPage && (
                       <div className="col-span-2">
                         <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Landing Page</p>
-                        <p className="text-amber-900 font-mono truncate">{booking.landingPage}</p>
+                        <a
+                          href={typeof window !== 'undefined' ? `${window.location.origin}${booking.landingPage}` : booking.landingPage}
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-amber-900 font-mono text-xs underline decoration-amber-300 hover:text-amber-700 break-all"
+                        >
+                          {booking.landingPage}
+                        </a>
+                      </div>
+                    )}
+                    {booking.originalLandingPage && booking.originalLandingPage !== booking.landingPage && (
+                      <div className="col-span-2">
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">First-ever Entry Page</p>
+                        <a
+                          href={typeof window !== 'undefined' ? `${window.location.origin}${booking.originalLandingPage}` : booking.originalLandingPage}
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-amber-900 font-mono text-xs underline decoration-amber-300 hover:text-amber-700 break-all"
+                        >
+                          {booking.originalLandingPage}
+                        </a>
                       </div>
                     )}
                   </div>
@@ -1257,7 +1297,7 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                               {src.icon} {src.label}
                             </span>
                             <div className="flex flex-wrap gap-1">
-                              <CampaignChip lastTouchSource={b.lastTouchSource} />
+                              <CampaignChip lastTouchSource={b.lastTouchSource} utmCampaign={b.utmCampaign} />
                               {b.ipRiskFlagged && (
                                 <span
                                   title="Submitted via a VPN, proxy, or datacenter IP — a risk signal only, not a reason to reject on its own. Plenty of real patients use a VPN for privacy."
