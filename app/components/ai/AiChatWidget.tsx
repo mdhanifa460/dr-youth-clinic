@@ -356,7 +356,16 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
       const data = await res.json();
       if (data.success) {
         setBookingId(data.bookingId || '');
-        trackBookingConversion({ bookingId: data.bookingId, service: form.service });
+        trackBookingConversion({
+          bookingId: data.bookingId,
+          service: form.service,
+          location: form.location,
+          source: data.source,
+          medium: data.medium,
+          campaign: data.campaign,
+          sourceAccount: data.sourceAccount,
+          alreadyProcessed: data.alreadyProcessed,
+        });
         // AI funnel event — same GTM dataLayer bridge, distinct from the
         // sitewide booking_confirmed trackBookingConversion() already
         // fires above, so Marketing Intelligence can tell an AI-chat

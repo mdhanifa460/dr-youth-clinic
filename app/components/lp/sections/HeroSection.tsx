@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-react';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
+import { trackBookingConversion } from '@/app/lib/trackConversion';
 
 interface HeroData {
   badge?: string;
@@ -123,6 +124,19 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
       });
       const json = await res.json();
       if (json.success) {
+        // Same gap-fix as FormSection.tsx — this form previously never
+        // fired any booking conversion event at all.
+        if (json.bookingId) {
+          trackBookingConversion({
+            bookingId: json.bookingId,
+            location: json.location,
+            source: json.source,
+            medium: json.medium,
+            campaign: json.campaign,
+            sourceAccount: json.sourceAccount,
+            alreadyProcessed: json.alreadyProcessed,
+          });
+        }
         // Same post-booking destination as every other booking-creating
         // flow (see FormSection.tsx, the landing page's other form) — a
         // real Booking row now exists with this exact ID. Keeps the

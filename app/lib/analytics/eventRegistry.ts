@@ -33,6 +33,20 @@ export const PREDEFINED_EVENTS: PredefinedEventDef[] = [
     ],
   },
   {
+    name: "booking_completed",
+    category: "conversion",
+    description: "The single source-of-truth booking conversion event for GTM/GA4 — fires alongside booking_confirmed, only for a genuine new booking (never on a manually reopened success-page view, never on an idempotent retry of the same booking).",
+    params: ["booking_id", "branch", "location", "source", "source_account", "campaign", "medium"],
+    sources: [
+      "app/lib/trackConversion.ts (trackBookingConversion)",
+      "app/components/homepage/ConsultationFormBar.tsx",
+      "app/(public)/book/Form.tsx",
+      "app/components/ai/AiChatWidget.tsx",
+      "app/components/lp/sections/FormSection.tsx",
+      "app/components/lp/sections/HeroSection.tsx",
+    ],
+  },
+  {
     name: "lead_submitted",
     category: "lead",
     description: "A skin-quiz or Plan My Journey lead-capture form was submitted.",

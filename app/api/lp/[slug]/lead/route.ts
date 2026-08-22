@@ -83,10 +83,20 @@ export async function POST(
             { status: 409 }
           );
         }
+        // Same alreadyProcessed/attribution contract as app/api/booking/
+        // route.ts — read off the ORIGINAL booking's own persisted record,
+        // never recomputed, so trackBookingConversion() on the client can
+        // skip booking_completed for this replay.
         return NextResponse.json({
           success: true,
           message: lp.form?.successMessage || "Thank you! We'll call you within 2 hours.",
           bookingId: preExisting.bookingId,
+          alreadyProcessed: true,
+          location: preExisting.location || undefined,
+          source: preExisting.source || undefined,
+          medium: preExisting.utmMedium || undefined,
+          campaign: preExisting.utmCampaign || undefined,
+          sourceAccount: preExisting.sourceAccount || undefined,
         });
       }
     }
@@ -175,6 +185,9 @@ export async function POST(
       }
     }
 
+    // Same alreadyProcessed contract as app/api/booking/route.ts — see that
+    // file's own comment. source/medium/campaign/sourceAccount/location are
+    // read straight off the persisted booking, not recomputed.
     return NextResponse.json({
       success: true,
       message: lp.form?.successMessage || "Thank you! We'll call you within 2 hours.",
@@ -183,6 +196,12 @@ export async function POST(
       // visitor to /book/success/{bookingId} like every other
       // booking-creating flow does (see FormSection.tsx).
       bookingId: booking.bookingId,
+      alreadyProcessed: result.status !== "created",
+      location: booking.location || undefined,
+      source: booking.source || undefined,
+      medium: booking.utmMedium || undefined,
+      campaign: booking.utmCampaign || undefined,
+      sourceAccount: booking.sourceAccount || undefined,
     });
   } catch (error) {
     console.error('Lead submission error:', error);

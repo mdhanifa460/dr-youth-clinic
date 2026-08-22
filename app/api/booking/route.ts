@@ -78,7 +78,16 @@ export async function POST(req: NextRequest) {
     if (idempotencyKey) {
       const preExisting = await (Booking as any).findOne({ idempotencyKey }).lean();
       if (preExisting) {
-        const incomingIdentity = extractIdentity({ name, phone: formattedPhone, service, location, date: parsed.data.date || "", time: parsed.data.time || "" });
+        // Reuses the SAME `date`/`time` (with the "To be scheduled"
+        // fallback already applied above) that actually gets persisted —
+        // comparing against `parsed.data.date || ""` here instead was a
+        // real bug: it would mismatch every stored booking that has no
+        // date/time (a callback-only submission, e.g. ConsultationFormBar),
+        // since the persisted record always has "To be scheduled" while
+        // this recomputed it as "". A same-key, same-details retry of
+        // exactly that kind of booking incorrectly 409'd as a false
+        // conflict instead of replaying cleanly.
+        const incomingIdentity = extractIdentity({ name, phone: formattedPhone, service, location, date, time });
         if (!identitiesMatch(extractIdentity(preExisting), incomingIdentity)) {
           return NextResponse.json(
             { success: false, code: "IDEMPOTENCY_CONFLICT", message: "This booking request has already been processed." },
@@ -89,7 +98,20 @@ export async function POST(req: NextRequest) {
         // first response never reached the browser). Return the ORIGINAL
         // result as a normal success, exactly as if this were the first
         // time — never a second "duplicate booking" error for the patient.
-        return NextResponse.json({ success: true, bookingId: preExisting.bookingId });
+        // alreadyProcessed:true tells the client this is a replay, not a
+        // new booking, so trackBookingConversion() skips booking_completed
+        // instead of double-firing the GA4/GTM conversion for one booking.
+        // The attribution fields below are read off the ORIGINAL booking's
+        // own persisted record, not re-derived from today's cookies.
+        return NextResponse.json({
+          success: true,
+          bookingId: preExisting.bookingId,
+          alreadyProcessed: true,
+          source: preExisting.source || undefined,
+          medium: preExisting.utmMedium || undefined,
+          campaign: preExisting.utmCampaign || undefined,
+          sourceAccount: preExisting.sourceAccount || undefined,
+        });
       }
     }
 
@@ -253,9 +275,21 @@ Concern: ${concern || "N/A"}${promoCode ? `\nPromo: ${promoCode} (${promoDiscoun
       if (!customerSend.success) console.log("❌ Customer WhatsApp confirmation failed:", customerSend.error);
     }
 
+    // alreadyProcessed:false only for a genuine first-time creation — a
+    // "replayed" result here is the narrow concurrent-same-key race
+    // (resolved atomically in createBookingIdempotent), same intent as the
+    // upfront replay branch above: the client must not fire
+    // booking_completed twice for one real booking. source/medium/campaign/
+    // sourceAccount are read straight off the persisted booking — already
+    // computed above as `fieldsToSet`/`resolvedSource`, not recomputed.
     return NextResponse.json({
       success: true,
       bookingId: booking.bookingId,
+      alreadyProcessed: result.status !== "created",
+      source: booking.source || undefined,
+      medium: booking.utmMedium || undefined,
+      campaign: booking.utmCampaign || undefined,
+      sourceAccount: booking.sourceAccount || undefined,
     });
 
   } catch (err) {

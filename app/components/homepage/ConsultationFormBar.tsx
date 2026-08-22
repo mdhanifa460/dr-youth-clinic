@@ -42,7 +42,16 @@ export default function ConsultationFormBar({ data }: { data: any }) {
       const data = await res.json();
       if (data.success) {
         setSent(true);
-        trackBookingConversion({ bookingId: data.bookingId, service, location: city });
+        trackBookingConversion({
+          bookingId: data.bookingId,
+          service,
+          location: city,
+          source: data.source,
+          medium: data.medium,
+          campaign: data.campaign,
+          sourceAccount: data.sourceAccount,
+          alreadyProcessed: data.alreadyProcessed,
+        });
         // Same post-booking destination as the dedicated /book page's own
         // form (app/(public)/book/Form.tsx) — a real Booking row now
         // exists with this exact ID, so every place that creates one sends

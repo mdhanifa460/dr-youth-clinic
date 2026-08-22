@@ -192,7 +192,16 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       });
       const data = await res.json();
       if (data.success) {
-        trackBookingConversion({ bookingId: data.bookingId, service: form.service, location: form.location });
+        trackBookingConversion({
+          bookingId: data.bookingId,
+          service: form.service,
+          location: form.location,
+          source: data.source,
+          medium: data.medium,
+          campaign: data.campaign,
+          sourceAccount: data.sourceAccount,
+          alreadyProcessed: data.alreadyProcessed,
+        });
         // AI Beauty Journey Module 9 — close the loop: this booking
         // originated from a journey session (arrived via the prefilled
         // link above), so mark that session converted. Fire-and-forget,

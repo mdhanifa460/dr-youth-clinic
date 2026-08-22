@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader, CheckCircle, Phone, Star, ShieldCheck } from 'lucide-react';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
+import { trackBookingConversion } from '@/app/lib/trackConversion';
 
 interface FormField {
   id: string;
@@ -89,6 +90,22 @@ export default function FormSection({
       });
       const json = await res.json();
       if (json.success) {
+        // Landing-page leads previously never fired ANY booking conversion
+        // event — the same shared call every other booking-creating flow
+        // already makes (ConsultationFormBar.tsx / app/(public)/book/
+        // Form.tsx / AiChatWidget.tsx), so ad-funded LP traffic wasn't
+        // reaching GA4/GTM as a conversion at all.
+        if (json.bookingId) {
+          trackBookingConversion({
+            bookingId: json.bookingId,
+            location: json.location,
+            source: json.source,
+            medium: json.medium,
+            campaign: json.campaign,
+            sourceAccount: json.sourceAccount,
+            alreadyProcessed: json.alreadyProcessed,
+          });
+        }
         // Same post-booking destination as every other booking-creating
         // flow (see ConsultationFormBar.tsx / AiChatWidget.tsx) — a real
         // Booking row now exists with this exact ID. Keep the inline
