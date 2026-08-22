@@ -25,6 +25,16 @@ export interface IConversation extends Document {
   location?: string;
   handedOffToWhatsApp: boolean;
   leadPhone?: string;
+  // Additive — the visitor's name, captured alongside leadPhone (see
+  // leadCaptured below). leadPhone existed on this schema long before
+  // anything actually wrote to it; both are populated by
+  // /api/ai-chat/capture-lead now.
+  leadName?: string;
+  // True once the visitor has either shared their contact info or
+  // explicitly dismissed the prompt — either way, /api/ai-chat's stream
+  // stops emitting the 'lead_prompt' event for this session, so a
+  // patient is never asked twice in the same conversation.
+  leadCaptured: boolean;
   startedAt: Date;
   lastMessageAt: Date;
   createdAt: Date;
@@ -47,6 +57,8 @@ const ConversationSchema = new Schema<IConversation>({
   location: { type: String, default: '' },
   handedOffToWhatsApp: { type: Boolean, default: false },
   leadPhone: { type: String, default: '' },
+  leadName: { type: String, default: '' },
+  leadCaptured: { type: Boolean, default: false },
   startedAt: { type: Date, default: Date.now },
   lastMessageAt: { type: Date, default: Date.now },
 }, { timestamps: true });

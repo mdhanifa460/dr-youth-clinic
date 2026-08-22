@@ -181,6 +181,90 @@ function TypingDots() {
   );
 }
 
+// Progressive lead capture — appears once, inline in the chat thread,
+// right after the visitor's first real AI response (never before it, and
+// never a second time this session — see the showLeadPrompt/leadCaptured
+// wiring in the parent). Deliberately never blocks the conversation:
+// "Skip for now" is always one tap away and the visitor can keep chatting
+// immediately either way. On submit, reuses the exact same Booking shape
+// (and CRM push/qualification/WhatsApp-alert pipeline) as the existing
+// "Request a Callback" flow in SupportPanel below — this is the same kind
+// of lead, just captured passively instead of by an explicit click.
+function LeadCapturePrompt({ sessionId, accent, onDone }: { sessionId: string; accent: string; onDone: () => void }) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+
+  const submit = async () => {
+    if (!name.trim()) { setError('Please enter your name'); return; }
+    if (!isValidIndianMobile(phone)) { setError(INVALID_MOBILE_MESSAGE); return; }
+    setSaving(true); setError('');
+    try {
+      const res = await fetch('/api/ai-chat/capture-lead', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, name: name.trim(), phone, location: getUrlBranch() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        pushDataLayerEvent('ai_chat_lead_captured', { source: 'ai_chat' });
+        setDone(true);
+        setTimeout(onDone, 1800);
+      } else {
+        setError(data.message || 'Could not save — please try again.');
+      }
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const skip = async () => {
+    onDone(); // dismiss immediately — never make declining feel like it costs a step
+    fetch('/api/ai-chat/capture-lead', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, skipped: true }),
+    }).catch(() => {});
+  };
+
+  if (done) {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[92%] w-full bg-green-50 border border-green-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
+          <CheckCircle size={15} className="text-green-600 shrink-0" />
+          <p className="text-xs text-green-700 font-semibold">Thanks! Our team may reach out to help further.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-start">
+      <div className="max-w-[92%] w-full bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3.5">
+        <p className="text-xs text-gray-600 mb-2.5">Want our team to follow up if you need anything else? Leave your name & number — totally optional.</p>
+        {error && <p className="text-[11px] text-red-500 mb-2">{error}</p>}
+        <div className="flex flex-col gap-2">
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560]" />
+          <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" type="tel"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560]" />
+          <div className="flex items-center gap-2 mt-0.5">
+            <button onClick={submit} disabled={saving}
+              className={`flex-1 flex items-center justify-center gap-1.5 bg-gradient-to-br ${accent} text-white text-xs font-bold py-2 rounded-xl disabled:opacity-50`}>
+              {saving ? <Loader2 size={12} className="animate-spin" /> : null} Share
+            </button>
+            <button onClick={skip} disabled={saving} className="text-xs font-semibold text-gray-400 hover:text-gray-600 px-2">
+              Skip for now
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PanelHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 shrink-0">
@@ -693,6 +777,13 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState('');
   const [disabled, setDisabled] = useState(false);
+  // Progressive lead capture — never shown before the visitor's first real
+  // AI response (see app/api/ai-chat/route.ts's showLeadPrompt), and never
+  // shown again once leadCaptured (true whether they shared contact info
+  // OR explicitly skipped — restored from history on reload so a patient
+  // who already answered isn't asked twice mid-session).
+  const [showLeadPrompt, setShowLeadPrompt] = useState(false);
+  const [leadCaptured, setLeadCaptured] = useState(false);
   const sessionIdRef = useRef('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const loadedHistory = useRef(false);
@@ -718,7 +809,10 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
     loadedHistory.current = true;
     fetch(`/api/ai-chat?sessionId=${encodeURIComponent(sessionIdRef.current)}`)
       .then(r => r.json())
-      .then(d => { if (d.success && d.messages?.length) setMessages(d.messages); })
+      .then(d => {
+        if (d.success && d.messages?.length) setMessages(d.messages);
+        if (d.success && d.leadCaptured) setLeadCaptured(true);
+      })
       .catch(() => {});
   }, [open]);
 
@@ -786,6 +880,8 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
               if (last?.role === 'assistant') last.createdAt = evt.createdAt;
               return next;
             });
+          } else if (evt.type === 'lead_prompt') {
+            setShowLeadPrompt(true);
           } else if (evt.type === 'disabled') {
             setDisabled(true);
           } else if (evt.type === 'error') {
@@ -943,6 +1039,10 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
                     </div>
                   </div>
                 ))}
+
+                {showLeadPrompt && !leadCaptured && !streaming && (
+                  <LeadCapturePrompt sessionId={sessionIdRef.current} accent={accent} onDone={() => setLeadCaptured(true)} />
+                )}
 
                 {error && <p className="text-xs text-red-500 text-center">{error}</p>}
               </div>

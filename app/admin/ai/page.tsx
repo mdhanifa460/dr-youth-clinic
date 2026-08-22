@@ -768,6 +768,11 @@ function ConversationsTab() {
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-[#0B2560] truncate">{c.firstUserMessage || '(no message)'}</p>
                 <p className="text-[11px] text-gray-400 mt-0.5">{new Date(c.lastMessageAt).toLocaleString()} · {c.messageCount} messages{c.location ? ` · ${c.location}` : ''}</p>
+                {/* Progressive lead capture — shown only once a visitor
+                    actually shared contact info via the in-chat prompt. */}
+                {c.leadPhone && (
+                  <p className="text-[11px] font-semibold text-emerald-700 mt-0.5">📇 {c.leadName || 'Unnamed'} · {c.leadPhone}</p>
+                )}
               </div>
               {c.handedOffToWhatsApp && <span className="text-[10px] font-bold bg-green-50 text-green-600 px-2 py-1 rounded-full shrink-0">WhatsApp</span>}
             </button>

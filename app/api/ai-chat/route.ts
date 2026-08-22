@@ -27,10 +27,18 @@ export async function GET(req: NextRequest) {
 
   try {
     await connectDB();
-    const conversation = await (Conversation as any).findOne({ sessionId }).select('messages').lean();
-    return Response.json({ success: true, messages: conversation?.messages ?? [] });
+    const conversation = await (Conversation as any).findOne({ sessionId }).select('messages leadCaptured').lean();
+    return Response.json({
+      success: true,
+      messages: conversation?.messages ?? [],
+      // Lets the widget know NOT to show the lead-capture prompt again
+      // after a page reload mid-conversation — leadCaptured is set true
+      // the moment the visitor either shares contact info or dismisses
+      // the prompt, whichever comes first.
+      leadCaptured: conversation?.leadCaptured ?? false,
+    });
   } catch {
-    return Response.json({ success: true, messages: [] });
+    return Response.json({ success: true, messages: [], leadCaptured: false });
   }
 }
 
@@ -97,6 +105,11 @@ export async function POST(req: NextRequest) {
     content: m.content,
   }));
   const isFirstMessage = priorMessages.length === 0;
+  // Progressive lead capture — never before the first message (that would
+  // just be a form wearing a chat costume), and never twice in the same
+  // session once the visitor has answered either way. See
+  // app/api/ai-chat/capture-lead/route.ts for what handles the response.
+  const showLeadPrompt = isFirstMessage && !conversation.leadCaptured;
 
   conversation.messages.push({ role: 'user', content: message, createdAt: new Date() });
 
@@ -132,6 +145,7 @@ export async function POST(req: NextRequest) {
             controller.enqueue(ndjson({ type: 'delta', text: predefined.answer }));
             controller.enqueue(ndjson({ type: 'cards', cards: [] }));
             controller.enqueue(ndjson({ type: 'meta', createdAt: assistantCreatedAt.toISOString() }));
+            if (showLeadPrompt) controller.enqueue(ndjson({ type: 'lead_prompt' }));
             controller.enqueue(ndjson({ type: 'done' }));
             controller.close();
           },
@@ -177,6 +191,7 @@ export async function POST(req: NextRequest) {
             controller.enqueue(ndjson({ type: 'delta', text: simple.text }));
             controller.enqueue(ndjson({ type: 'cards', cards: simple.cards }));
             controller.enqueue(ndjson({ type: 'meta', createdAt: assistantCreatedAt.toISOString() }));
+            if (showLeadPrompt) controller.enqueue(ndjson({ type: 'lead_prompt' }));
             controller.enqueue(ndjson({ type: 'done' }));
             controller.close();
           },
@@ -366,6 +381,7 @@ export async function POST(req: NextRequest) {
 
         controller.enqueue(ndjson({ type: 'cards', cards }));
         controller.enqueue(ndjson({ type: 'meta', createdAt: assistantCreatedAt.toISOString() }));
+        if (showLeadPrompt) controller.enqueue(ndjson({ type: 'lead_prompt' }));
         controller.enqueue(ndjson({ type: 'done' }));
         controller.close();
       }

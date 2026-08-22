@@ -15,7 +15,7 @@ export async function GET() {
     // thread — keeps the admin list fast even as conversations accumulate.
     const conversations = await (Conversation as any)
       .find({})
-      .select('sessionId location handedOffToWhatsApp startedAt lastMessageAt messages')
+      .select('sessionId location handedOffToWhatsApp startedAt lastMessageAt messages leadName leadPhone')
       .sort({ lastMessageAt: -1 })
       .limit(100)
       .lean();
@@ -29,6 +29,11 @@ export async function GET() {
       lastMessageAt: c.lastMessageAt,
       messageCount: c.messages?.length ?? 0,
       firstUserMessage: c.messages?.find((m: any) => m.role === 'user')?.content ?? '',
+      // Progressive lead capture — set once a visitor shares contact info
+      // via the in-chat prompt (app/api/ai-chat/capture-lead). Empty when
+      // they declined or haven't been asked yet.
+      leadName: c.leadName || '',
+      leadPhone: c.leadPhone || '',
     }));
 
     return NextResponse.json({ success: true, data: summarized });
