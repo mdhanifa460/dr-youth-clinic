@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
-import { resolveFooterHref, resolveFooterLocation } from "@/app/lib/footerLinks";
+import FooterLinks from "@/app/components/FooterLinks";
 import type { SiteConfig } from "@/app/lib/siteConfig";
 
 const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
@@ -15,30 +15,6 @@ const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_C
 export default async function Footer({ data, siteConfig }: { data?: any; siteConfig?: SiteConfig }) {
   const resolvedData = data ?? HOMEPAGE_DEFAULTS.footer.data;
   const logoUrl = siteConfig?.logoUrl || DEFAULT_LOGO_URL;
-
-  // NOT read via headers()/cookies() here — a real, live production
-  // incident (confirmed since Aug 17: every /[city]/services/[category]
-  // page 500ing, cache=MISS on every request) traced to exactly that:
-  // this Server Component calling headers()/cookies() unconditionally.
-  // Those require a real incoming request, which doesn't exist during
-  // background ISR regeneration or the first on-demand render of a
-  // [location]/services/[category] combo that generateStaticParams()
-  // never covered (it only enumerates `category`, not `location`, so
-  // every city/category pairing is generated on demand). Wrapping the
-  // calls in try/catch was NOT sufficient — verified locally via a real
-  // `next build && next start`: by the point Footer (deep in the render
-  // tree) calls headers(), the page has already committed to static
-  // output, so Next.js's own "page changed from static to dynamic at
-  // runtime" bailout fires regardless and still 500s.
-  //
-  // resolveFooterLocation('', '') safely falls back to "chennai" — the
-  // same degradation this always had for a visitor with no signal — so
-  // this component simply never attempts the server-side read at all.
-  // Per-visitor footer-link personalization by city is exactly what
-  // Navbar.tsx does instead, safely, client-side via usePathname() +
-  // document.cookie (no static/dynamic conflict there — it runs after
-  // hydration, never during server render).
-  const location = resolveFooterLocation("", "");
 
   const {
     tagline = "",
@@ -74,38 +50,10 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
           </div>
 
           {/* COL 2 — QUICK LINKS */}
-          <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">{quickLinksHeading}</h4>
-            <ul className="space-y-3">
-              {quickLinks.map((l: any, i: number) => (
-                <li key={i}>
-                  <Link
-                    href={resolveFooterHref(l.href, l.label, location)}
-                    className="block py-1.5 text-white/60 text-sm hover:text-white transition"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterLinks heading={quickLinksHeading} links={quickLinks} />
 
           {/* COL 3 — OUR PROCEDURES */}
-          <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">{proceduresHeading}</h4>
-            <ul className="space-y-3">
-              {procedures.map((p: any, i: number) => (
-                <li key={i}>
-                  <Link
-                    href={resolveFooterHref(p.href, p.label, location)}
-                    className="block py-1.5 text-white/60 text-sm hover:text-white transition"
-                  >
-                    {p.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterLinks heading={proceduresHeading} links={procedures} />
 
           {/* COL 4 — PATIENT CARE */}
           <div>
