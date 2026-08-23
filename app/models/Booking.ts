@@ -106,6 +106,61 @@ const BookingSchema = new mongoose.Schema(
     // into a branch — see app/lib/leadSourceMapping/resolveBranch.ts.
     sourceAccount: { type: String, default: "" },
     sourcePhone:   { type: String, default: "" },
+    // A provider-supplied STANDARD demographic field — same tier as name/
+    // phone/email, not a custom form question. Meta's Lead Ads native field
+    // library includes "gender" alongside full_name/email as a first-class
+    // standard field type, so it's mapped through the exact same
+    // ConnectorFieldMapping mechanism as email/service (see PLATFORM_FIELDS
+    // in app/admin/lead-sources/page.tsx and webhookProcessing.ts), not
+    // treated as a dynamic custom answer. Free text, not an enum — the
+    // clinic's intake form doesn't constrain this either.
+    gender: { type: String, default: "" },
+    // Meta Lead Ads (and any future dynamic-question provider) — form
+    // questions vary per form and are unbounded (a new form is an admin
+    // action on Meta's side, never a code change here), so this is
+    // deliberately NOT one column per question. Mirrors the existing
+    // precedent of app/models/Lead.ts's `answers: Mixed` field, but keeps
+    // question TEXT and ANSWER TYPE alongside each answer (Lead.ts's field
+    // doesn't), since a staff member reading these later needs to know
+    // WHAT was asked, not just what was answered — different forms can ask
+    // completely different questions. `answer` is Mixed (not String) so a
+    // multiple_choice answer stays a real array, never collapses to
+    // "[object Object]" or a stringified blob; any answer shape Meta sends
+    // that doesn't match a known type is still preserved here as-is via
+    // answerType:"unknown", never silently dropped. Never populated by the
+    // website's own booking flow (app/api/booking/route.ts) — only by
+    // lead-source webhook providers whose payload genuinely carries
+    // dynamic, per-form questions.
+    customAnswers: {
+      type: [
+        {
+          questionId:  { type: String, default: "" },
+          question:    { type: String, default: "" },
+          answer:      { type: mongoose.Schema.Types.Mixed },
+          answerType:  { type: String, default: "unknown" }, // "text" | "single_choice" | "multiple_choice" | "boolean" | "number" | "date" | "unknown"
+        },
+      ],
+      default: [],
+    },
+    // Meta-specific (but generically named/reusable by a future provider
+    // with the same shape) identifiers that don't already have a home on
+    // this schema. Deliberately NOT the connector ID and NOT a new
+    // Connector-per-form — formId is metadata belonging to the INDIVIDUAL
+    // LEAD, exactly as required: one Meta Connector can and does receive
+    // leads carrying many different formIds here. pageId reuses the
+    // EXISTING sourceAccount field above (it plays the identical role
+    // JustDial's listing ID already plays — the account-level identifier
+    // LeadSourceMapping resolves into a branch); campaign NAME reuses the
+    // EXISTING utmCampaign field below; leadgen_id reuses the EXISTING
+    // externalCrmId field (the exact dedup key buildDedupQuery() already
+    // uses) — none of those are duplicated here.
+    providerMeta: {
+      formId:     { type: String, default: "" },
+      formName:   { type: String, default: "" },
+      adId:       { type: String, default: "" },
+      adSetId:    { type: String, default: "" },
+      campaignId: { type: String, default: "" },
+    },
     // True only for a third-party-sourced lead where resolveBranchForLead()
     // found no matching LeadSourceMapping — `location` is left blank
     // rather than guessed, and this flag is what a staff member sees to

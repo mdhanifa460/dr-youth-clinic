@@ -4,6 +4,7 @@ import { requirePermission } from "@/app/lib/adminAuth";
 import Connector from "@/app/models/Connector";
 import ConnectorFieldMapping from "@/app/models/ConnectorFieldMapping";
 import ConnectorWebhookEvent from "@/app/models/ConnectorWebhookEvent";
+import ConnectorCredential from "@/app/models/ConnectorCredential";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,14 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   await (ConnectorFieldMapping as any).deleteMany({ connectorId: params.id });
   await (ConnectorWebhookEvent as any).deleteMany({ connectorId: params.id });
+  // Additive — no lead_source provider used ConnectorCredential before
+  // Meta (JustDial/IndiaMART/WhatsApp are inbound-receive-only, no
+  // outbound-authenticated call, so this was never previously reachable
+  // for this route). Meta's Graph API access token/App Secret/verify
+  // token now live here (see app/api/admin/lead-source-connectors/[id]/
+  // credential/route.ts) — leaving it behind on delete would silently
+  // orphan an encrypted credential forever.
+  await (ConnectorCredential as any).deleteMany({ connectorId: params.id });
 
   return NextResponse.json({ success: true });
 }

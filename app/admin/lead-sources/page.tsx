@@ -39,6 +39,11 @@ const PLATFORM_FIELDS = [
   { key: 'name', label: 'Name' },
   { key: 'phone', label: 'Phone (required)' },
   { key: 'email', label: 'Email' },
+  // Standard demographic field (same tier as name/phone/email) — Meta's
+  // Lead Ads native field library includes "gender" as a first-class
+  // standard field type, distinct from a form's own custom questions
+  // (those need no mapping at all — see Dynamic Answers below).
+  { key: 'gender', label: 'Gender' },
   { key: 'service', label: 'Service / Enquiry' },
   { key: 'notes', label: 'Notes' },
   { key: 'externalId', label: 'Their lead/enquiry ID (for update-in-place)' },
@@ -73,7 +78,7 @@ export default function LeadSourcesPage() {
   useEffect(() => { load(); }, [load]);
 
   const addConnector = async () => {
-    const provider = prompt('Provider key (e.g. justdial, indiamart, google_lead_form):');
+    const provider = prompt('Provider key (e.g. justdial, indiamart, google_lead_form, meta_lead_form):');
     if (!provider) return;
     const name = prompt('Display name (e.g. "JustDial — all branches"):', provider) || provider;
     const res = await fetch('/api/admin/lead-source-connectors', {
@@ -232,6 +237,19 @@ function ConnectorCard({
   const [fields, setFields] = useState<MappingField[]>([]);
   const [savingFields, setSavingFields] = useState(false);
 
+  // Meta Lead Ads uses a DIFFERENT webhook (GET handshake + App Secret,
+  // not the generic signing-secret box above it) and a 3-field credential
+  // (access token + app secret + verify token) instead of the generic
+  // webhookSecret — see app/lib/leadSource/metaWebhookProcessing.ts's own
+  // comment for why this isn't the same mechanism. Purely additive: every
+  // other provider's UI below is completely unchanged.
+  const isMeta = connector.provider === 'meta_lead_form';
+  const [credLast4, setCredLast4] = useState('');
+  const [accessTokenInput, setAccessTokenInput] = useState('');
+  const [appSecretInput, setAppSecretInput] = useState('');
+  const [verifyTokenInput, setVerifyTokenInput] = useState('');
+  const [savingCred, setSavingCred] = useState(false);
+
   useEffect(() => {
     if (!expanded) return;
     fetch(`/api/admin/lead-source-connectors/${connector._id}/webhook-secret`).then((r) => r.json()).then((d) => {
@@ -240,7 +258,12 @@ function ConnectorCard({
     fetch(`/api/admin/lead-source-connectors/${connector._id}/mapping`).then((r) => r.json()).then((d) => {
       if (d.success) setFields(d.data);
     });
-  }, [expanded, connector._id]);
+    if (isMeta) {
+      fetch(`/api/admin/lead-source-connectors/${connector._id}/credential`).then((r) => r.json()).then((d) => {
+        if (d.success) setCredLast4(d.data?.last4 || '');
+      });
+    }
+  }, [expanded, connector._id, isMeta]);
 
   const saveSecret = async () => {
     if (!secretInput) return;
@@ -252,6 +275,26 @@ function ConnectorCard({
     setSavingSecret(false);
     onChanged();
   };
+
+  const saveCredential = async () => {
+    if (!accessTokenInput) return;
+    setSavingCred(true);
+    const res = await fetch(`/api/admin/lead-source-connectors/${connector._id}/credential`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: accessTokenInput, appSecret: appSecretInput, verifyToken: verifyTokenInput }),
+    }).then((r) => r.json());
+    setAccessTokenInput(''); setAppSecretInput(''); setVerifyTokenInput('');
+    setSavingCred(false);
+    if (res.success) {
+      fetch(`/api/admin/lead-source-connectors/${connector._id}/credential`).then((r) => r.json()).then((d) => {
+        if (d.success) setCredLast4(d.data?.last4 || '');
+      });
+    } else {
+      alert(res.message || 'Save failed');
+    }
+  };
+
+  const metaWebhookUrl = `/api/webhooks/meta-leads/${connector._id}`;
 
   const addField = () => setFields((f) => [...f, { platformField: 'phone', externalField: '', transform: '', required: true, staticValue: '' }]);
   const updateField = (i: number, patch: Partial<MappingField>) => setFields((f) => f.map((x, idx) => idx === i ? { ...x, ...patch } : x));
@@ -281,32 +324,72 @@ function ConnectorCard({
 
       {expanded && (
         <div className="px-5 pb-5 border-t border-gray-50 pt-4 space-y-5">
-          {/* Webhook URL + secret */}
-          <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-            <p className="text-xs font-bold text-gray-500 flex items-center gap-1.5"><Link2 size={12} /> Webhook URL — give this to {connector.provider}</p>
-            {webhookUrl && (
+          {isMeta ? (
+            /* Meta Lead Ads — one connector, one webhook, ALL forms/campaigns
+               under this Meta App. formId/campaign travel as metadata on
+               each individual lead, not as separate connectors/webhooks —
+               see app/lib/leadSource/metaWebhookProcessing.ts. */
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+              <p className="text-xs font-bold text-gray-500 flex items-center gap-1.5"><Link2 size={12} /> Meta webhook URL — register this in the Meta App dashboard&rsquo;s Webhooks product (subscribe to &ldquo;leadgen&rdquo;)</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 truncate">{typeof window !== 'undefined' ? window.location.origin : ''}{webhookUrl}</code>
+                <code className="flex-1 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 truncate">{typeof window !== 'undefined' ? window.location.origin : ''}{metaWebhookUrl}</code>
                 <button
-                  onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${webhookUrl}`); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+                  onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${metaWebhookUrl}`); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
                   className="p-2 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-[#0B2560]"
                 >
                   {copied ? <Check size={13} /> : <Copy size={13} />}
                 </button>
               </div>
-            )}
-            <p className="text-xs font-bold text-gray-500 mt-3">Signing secret {connector.webhookSecret?.last4 && <span className="font-normal text-gray-400">(currently ending in …{connector.webhookSecret.last4})</span>}</p>
-            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-gray-500 mt-3">Meta credentials {credLast4 && <span className="font-normal text-gray-400">(access token currently ending in …{credLast4})</span>}</p>
               <input
-                type="password" value={secretInput} onChange={(e) => setSecretInput(e.target.value)}
-                placeholder="Paste the secret this provider signs requests with"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs"
+                type="password" value={accessTokenInput} onChange={(e) => setAccessTokenInput(e.target.value)}
+                placeholder="Page Access Token (from the Meta App dashboard)"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs mb-2"
               />
-              <button onClick={saveSecret} disabled={savingSecret || !secretInput} className="px-3 py-2 bg-[#0B2560] text-white rounded-lg text-xs font-semibold disabled:opacity-40">
-                {savingSecret ? <Loader2 size={12} className="animate-spin" /> : 'Save'}
-              </button>
+              <input
+                type="password" value={appSecretInput} onChange={(e) => setAppSecretInput(e.target.value)}
+                placeholder="App Secret — verifies X-Hub-Signature-256 on inbound leads"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs mb-2"
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="text" value={verifyTokenInput} onChange={(e) => setVerifyTokenInput(e.target.value)}
+                  placeholder="Verify Token — any string you choose, enter the SAME one in the Meta webhook subscription screen"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs"
+                />
+                <button onClick={saveCredential} disabled={savingCred || !accessTokenInput} className="px-3 py-2 bg-[#0B2560] text-white rounded-lg text-xs font-semibold disabled:opacity-40 whitespace-nowrap">
+                  {savingCred ? <Loader2 size={12} className="animate-spin" /> : 'Save'}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* Webhook URL + secret — every other provider (JustDial, IndiaMART, ...) */
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+              <p className="text-xs font-bold text-gray-500 flex items-center gap-1.5"><Link2 size={12} /> Webhook URL — give this to {connector.provider}</p>
+              {webhookUrl && (
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 truncate">{typeof window !== 'undefined' ? window.location.origin : ''}{webhookUrl}</code>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${webhookUrl}`); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+                    className="p-2 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-[#0B2560]"
+                  >
+                    {copied ? <Check size={13} /> : <Copy size={13} />}
+                  </button>
+                </div>
+              )}
+              <p className="text-xs font-bold text-gray-500 mt-3">Signing secret {connector.webhookSecret?.last4 && <span className="font-normal text-gray-400">(currently ending in …{connector.webhookSecret.last4})</span>}</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="password" value={secretInput} onChange={(e) => setSecretInput(e.target.value)}
+                  placeholder="Paste the secret this provider signs requests with"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs"
+                />
+                <button onClick={saveSecret} disabled={savingSecret || !secretInput} className="px-3 py-2 bg-[#0B2560] text-white rounded-lg text-xs font-semibold disabled:opacity-40">
+                  {savingSecret ? <Loader2 size={12} className="animate-spin" /> : 'Save'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Field mapping */}
           <div>
@@ -340,7 +423,15 @@ function ConnectorCard({
               "their JSON field name" is whatever key {connector.provider}'s webhook payload actually uses for
               that value — check their docs/a sample payload. Map "Provider account / listing ID" and/or
               "Provider-side phone" so Branch Mapping below can route this lead to the right clinic.
+              {isMeta && (
+                <> For Meta, use the field&rsquo;s internal name (e.g. &ldquo;full_name&rdquo;, &ldquo;phone_number&rdquo;, &ldquo;email&rdquo;, &ldquo;gender&rdquo;) — map &ldquo;Provider account / listing ID&rdquo; to your Page ID for branch routing.</>
+              )}
             </p>
+            {isMeta && (
+              <p className="text-[10px] text-gray-400 mt-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                Every OTHER question on every Meta form — no matter how many forms this connector receives, or how different their questions are — is captured automatically as a dynamic answer on the lead, with no mapping needed here. See it in the lead&rsquo;s detail view in Booking Leads.
+              </p>
+            )}
           </div>
         </div>
       )}

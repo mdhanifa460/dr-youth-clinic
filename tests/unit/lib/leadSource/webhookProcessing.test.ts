@@ -63,6 +63,12 @@ describe('deriveLeadSourceAttribution — Marketing Attribution (Phase 2): sourc
     });
   });
 
+  it('Meta Lead Ads: source becomes the real acquisition source "meta", conversionChannel stays "meta_lead_form" — same pattern as Google Lead Form', () => {
+    expect(deriveLeadSourceAttribution('meta_lead_form')).toEqual({
+      attributionSource: 'meta', conversionChannel: 'meta_lead_form', isGoogleLeadForm: false,
+    });
+  });
+
   it('an unrecognized future provider falls back to conversionChannel "other" — never rejected', () => {
     expect(deriveLeadSourceAttribution('some_new_directory')).toEqual({
       attributionSource: 'some_new_directory', conversionChannel: 'other', isGoogleLeadForm: false,

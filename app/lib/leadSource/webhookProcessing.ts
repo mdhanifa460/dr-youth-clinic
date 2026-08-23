@@ -80,16 +80,24 @@ export interface LeadSourceAttribution {
 // the dedup/branch-routing identity — see the call site's comment); every
 // other lead_source provider today (JustDial, IndiaMART) has its provider
 // key and its acquisition source be the same string, so conversionChannel
-// just mirrors source for them. "other" is the deliberate fallback for any
-// future lead_source provider this list hasn't been extended for yet —
-// never a reason to reject the lead.
+// just mirrors source for them. Meta Lead Ads follows the EXACT SAME
+// pattern as Google Lead Form, not the JustDial/IndiaMART one — the
+// connector's provider key is the compound "meta_lead_form" (describes the
+// actual product, and is the stable dedup/branch-routing identity a form
+// question could never quietly change), while the real acquisition source
+// shown to staff is simplified to "meta" (a Lead Ads form can only ever
+// run on a paid Meta campaign, so "meta" is knowable by definition, same
+// reasoning as Google Lead Form's implicit "cpc" medium below). "other" is
+// the deliberate fallback for any future lead_source provider this list
+// hasn't been extended for yet — never a reason to reject the lead.
 export function deriveLeadSourceAttribution(provider: string): LeadSourceAttribution {
   const isGoogleLeadForm = provider === "google_lead_form";
+  const isMetaLeadForm = provider === "meta_lead_form";
   return {
     isGoogleLeadForm,
-    attributionSource: isGoogleLeadForm ? "google" : provider,
-    conversionChannel: isGoogleLeadForm
-      ? "google_lead_form"
+    attributionSource: isGoogleLeadForm ? "google" : (isMetaLeadForm ? "meta" : provider),
+    conversionChannel: isGoogleLeadForm || isMetaLeadForm
+      ? provider
       : (provider === "justdial" || provider === "indiamart" ? provider : "other"),
   };
 }
@@ -140,38 +148,21 @@ export async function processLeadSourceWebhookEvent(
   const providerPhone = String(mapped.providerPhone ?? "");
   const externalId = String(mapped.externalId ?? "");
 
-  // Branch resolution — see resolveBranch.ts's own comment for the full
-  // priority order. Never guesses: an unresolved lead still gets saved
-  // (a lead a staff member has to manually route is infinitely better
-  // than one silently dropped), just flagged for a human to assign.
-  // Deliberately keyed on the RAW connector provider (e.g.
-  // "google_lead_form"), not the display-friendly acquisition source
-  // below — branch mappings and dedup are configured per-connector, and
-  // must never accidentally collide with an unrelated organic "google"
-  // Booking that happens to share the display source string.
-  const resolved = await resolveBranchForLead({ source, providerAccountId, providerPhone });
-
   // Booking.name is a required field — a provider payload that genuinely
   // has no name (rare, but some listing sites only pass a phone number)
   // still gets saved rather than dropped; "Unknown Lead" is a visible,
   // honest placeholder a staff member will immediately want to fix, not
   // a guess presented as real data.
   const name = String(mapped.name ?? "").trim() || "Unknown Lead";
+  const service = String(mapped.service ?? "");
 
   const { attributionSource, conversionChannel, isGoogleLeadForm } = deriveLeadSourceAttribution(source);
 
   const fieldsToSet: Record<string, unknown> = {
-    name,
-    phone,
     email: String(mapped.email ?? ""),
-    service: String(mapped.service ?? ""),
+    service,
     notes: String(mapped.notes ?? ""),
     source: attributionSource,
-    sourceAccount: providerAccountId,
-    sourcePhone: providerPhone,
-    location: resolved.branch || "",
-    branchUnresolved: !resolved.branch,
-    conversionChannel,
     // Campaign/click-id fields — ONLY populated when the admin has
     // actually mapped them from a real field in this provider's payload
     // (applyFieldMapping simply won't produce these keys otherwise, so
@@ -189,7 +180,6 @@ export async function processLeadSourceWebhookEvent(
     clickId: String(mapped.clickId ?? ""),
     clickIdType: String(mapped.clickIdType ?? ""),
   };
-  if (externalId) fieldsToSet.externalCrmId = externalId;
 
   // Booking Capacity — date/time are ONLY set here if the admin has
   // actually mapped them from a real field in this provider's payload
@@ -204,6 +194,69 @@ export async function processLeadSourceWebhookEvent(
   const mappedTime = mapped.time ? String(mapped.time) : "";
   if (mappedDate) fieldsToSet.date = mappedDate;
   if (mappedTime) fieldsToSet.time = mappedTime;
+
+  return finalizeLeadSourceBooking({
+    source, providerAccountId, providerPhone, externalId, conversionChannel,
+    name, phone, service, fieldsToSet,
+  });
+}
+
+export interface FinalizeLeadSourceBookingInput {
+  // Raw connector provider key (e.g. "justdial", "google_lead_form",
+  // "meta_lead_form") — used for branch resolution AND the WhatsApp alert
+  // text, deliberately the SAME identity dedup already keys on. Never the
+  // display-friendly acquisition source (fieldsToSet.source), which can
+  // differ (see deriveLeadSourceAttribution's own comment).
+  source: string;
+  providerAccountId: string;
+  providerPhone: string;
+  externalId: string;
+  conversionChannel: string;
+  name: string;
+  phone: string;
+  service: string;
+  // Everything else the caller has already assembled for this Booking
+  // (email, notes, source, utm*, click*, plus provider-specific additions
+  // like gender/customAnswers/providerMeta) — name/phone/location/
+  // branchUnresolved/externalCrmId are added here, not by the caller,
+  // since they depend on branch resolution/dedup this function itself
+  // performs.
+  fieldsToSet: Record<string, unknown>;
+}
+
+// The shared tail EVERY lead-source provider ends with, regardless of how
+// its own payload got translated into the inputs above — branch
+// resolution, dedup, Booking create/update, lead qualification, capacity
+// accounting, and the staff WhatsApp alert. Extracted (not rewritten) from
+// processLeadSourceWebhookEvent's own previous body so JustDial/IndiaMART/
+// Google Lead Form behave byte-for-byte identically to before (verified by
+// the existing test suite, unchanged) — Meta Lead Ads (see
+// metaWebhookProcessing.ts) is simply a second caller that needed a very
+// different FRONT half (a Graph API fetch instead of one flat webhook
+// payload) but the exact same back half.
+export async function finalizeLeadSourceBooking(input: FinalizeLeadSourceBookingInput): Promise<LeadSourceWebhookResult> {
+  // Branch resolution — see resolveBranch.ts's own comment for the full
+  // priority order. Never guesses: an unresolved lead still gets saved
+  // (a lead a staff member has to manually route is infinitely better
+  // than one silently dropped), just flagged for a human to assign.
+  const resolved = await resolveBranchForLead({
+    source: input.source, providerAccountId: input.providerAccountId, providerPhone: input.providerPhone,
+  });
+
+  const fieldsToSet: Record<string, unknown> = {
+    ...input.fieldsToSet,
+    name: input.name,
+    phone: input.phone,
+    sourceAccount: input.providerAccountId,
+    sourcePhone: input.providerPhone,
+    location: resolved.branch || "",
+    branchUnresolved: !resolved.branch,
+    conversionChannel: input.conversionChannel,
+  };
+  if (input.externalId) fieldsToSet.externalCrmId = input.externalId;
+
+  const mappedDate = fieldsToSet.date ? String(fieldsToSet.date) : "";
+  const mappedTime = fieldsToSet.time ? String(fieldsToSet.time) : "";
 
   // Idempotency: externalId ALONE is not a safe dedup key — two different
   // accounts on the same provider (Chennai's JustDial listing and
@@ -221,15 +274,14 @@ export async function processLeadSourceWebhookEvent(
   // case — someone calls back, or two family members share a phone) would
   // be silently merged into one lead, and neither JustDial's nor
   // IndiaMART's actual webhook payload shape has been inspected to know
-  // whether they reliably supply a stable ID in practice. That fallback
-  // needs a real sample payload from each provider before it's designed,
-  // not a guess baked in now — every provider without a mapped externalId
-  // is un-deduplicated (each webhook call creates a new Booking) until
-  // that's done deliberately.
+  // whether they reliably supply a stable ID in practice. Meta IS
+  // deduplicated from day one, unlike those two — leadgen_id is always
+  // present on every real Meta webhook event, mapped 1:1 onto externalId
+  // here (see metaWebhookProcessing.ts).
   let bookingId: unknown;
   // conversionChannel here, not the raw `source`/provider key — see
   // buildDedupQuery's own comment for exactly why this distinction matters.
-  const dedupQuery = buildDedupQuery(conversionChannel, providerAccountId, externalId);
+  const dedupQuery = buildDedupQuery(input.conversionChannel, input.providerAccountId, input.externalId);
   const existing = dedupQuery ? await (Booking as any).findOne(dedupQuery) : null;
   if (existing) {
     await (Booking as any).findByIdAndUpdate(existing._id, { $set: fieldsToSet });
@@ -271,7 +323,8 @@ export async function processLeadSourceWebhookEvent(
   // already successfully created.
   if (shouldNotifyBranch(resolved.branch)) {
     notifyBranchOfLeadSourceBooking(resolved.branch as string, {
-      bookingId, name, phone, source, sourceAccount: providerAccountId, service: String(mapped.service ?? ""),
+      bookingId, name: input.name, phone: input.phone, source: input.source,
+      sourceAccount: input.providerAccountId, service: input.service,
     }).catch((err) => {
       console.error(`Lead-source WhatsApp notify failed for booking ${bookingId} (branch ${resolved.branch}):`, err);
     });

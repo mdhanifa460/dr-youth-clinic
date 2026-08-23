@@ -74,6 +74,14 @@ interface Booking {
   clickId?: string;
   clickIdType?: string;
   attributionId?: string;
+  gender?: string;
+  // Meta Lead Ads (and any future dynamic-question provider) — a form's
+  // custom questions vary per form and are unbounded, so these are never
+  // fixed columns; see app/models/Booking.ts's own comment. Purely
+  // additive/optional — every non-dynamic-question lead simply has an
+  // empty array here.
+  customAnswers?: { questionId: string; question: string; answer: unknown; answerType: string }[];
+  providerMeta?: { formId?: string; formName?: string; adId?: string; adSetId?: string; campaignId?: string };
   // VPN/proxy/datacenter risk signal (app/lib/ipIntelligence.ts) — a
   // staff-visible flag only, never a submission gate. undefined = the
   // lookup never completed or predates this field ("never checked", not
@@ -721,6 +729,46 @@ function BookingDrawer({
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Dynamic form answers — Meta Lead Ads (and any future
+                  provider whose forms carry different custom questions).
+                  Every form asks something different, so this is never a
+                  fixed set of columns — questionId/question/answer/
+                  answerType are all preserved exactly as the provider sent
+                  them (see app/models/Booking.ts's customAnswers comment
+                  and app/lib/leadSource/metaWebhookProcessing.ts's
+                  normalizeMetaAnswers) rather than collapsed into a single
+                  string, so a multiple_choice answer stays a real list a
+                  staff member can actually read, not "[object Object]". */}
+              {((booking.customAnswers && booking.customAnswers.length > 0) || booking.gender || booking.providerMeta?.formId) && (
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
+                  <p className="text-[10px] font-bold text-violet-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    📋 Form Answers
+                  </p>
+                  {booking.gender && (
+                    <div className="mb-2">
+                      <p className="text-violet-500 font-semibold uppercase tracking-wide text-[9px]">Gender</p>
+                      <p className="text-violet-900 text-sm">{booking.gender}</p>
+                    </div>
+                  )}
+                  {(booking.customAnswers || []).map((a, i) => (
+                    <div key={a.questionId || i} className="mb-2 last:mb-0">
+                      <p className="text-violet-500 font-semibold text-[11px] leading-snug">{a.question}</p>
+                      <p className="text-violet-900 text-sm">
+                        {Array.isArray(a.answer) ? a.answer.join(", ") : String(a.answer ?? "—")}
+                      </p>
+                    </div>
+                  ))}
+                  {booking.providerMeta?.formId && (
+                    <div className="mt-3 pt-3 border-t border-violet-200 grid grid-cols-2 gap-2 text-[10px] font-mono text-violet-400">
+                      <span>Form: {booking.providerMeta.formName || booking.providerMeta.formId}</span>
+                      {booking.providerMeta.campaignId && <span>Campaign ID: {booking.providerMeta.campaignId}</span>}
+                      {booking.providerMeta.adId && <span>Ad ID: {booking.providerMeta.adId}</span>}
+                      {booking.providerMeta.adSetId && <span>Ad Set ID: {booking.providerMeta.adSetId}</span>}
+                    </div>
+                  )}
                 </div>
               )}
 

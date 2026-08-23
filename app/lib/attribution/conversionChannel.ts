@@ -16,6 +16,7 @@ export const CONVERSION_CHANNELS = [
   "google_lead_form",
   "justdial",
   "indiamart",
+  "meta_lead_form",
   "other",
 ] as const;
 
