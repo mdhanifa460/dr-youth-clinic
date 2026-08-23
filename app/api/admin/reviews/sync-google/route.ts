@@ -132,9 +132,16 @@ export async function POST() {
         // Update ONLY Google-owned content — isVisible/showOnHomepage/
         // isFeatured/location/services/displayOrder are never in this
         // $set, so an admin's own presentation choices survive untouched.
+        // Same for reply/report/aiAnalysis fields (admin-tracked, never
+        // Google-owned — see Review.ts's own comments on each). A reviewer
+        // CAN edit their review after posting — reviewUpdatedAt records
+        // when that genuinely happened, distinct from syncedAt (which
+        // updates on every sync attempt regardless of whether anything
+        // changed) and distinct from reviewDate (the original post date,
+        // untouched here).
         await (Review as any).updateOne(
           { source: 'google', sourceId },
-          { $set: { ...incoming, syncedAt: new Date() } }
+          { $set: { ...incoming, syncedAt: new Date(), reviewUpdatedAt: new Date() } }
         );
         updated++;
       } catch (rowErr: any) {

@@ -6,8 +6,38 @@ import { FaGoogle, FaPlay } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import {
   Eye, EyeOff, Star, Home, Trash2, RefreshCw, Plus, X, Loader,
-  Edit2, CheckCircle,
+  Edit2, CheckCircle, AlertTriangle, Sparkles, MessageSquare, Flag, ChevronDown, ChevronUp, ExternalLink,
 } from 'lucide-react';
+
+// ── Review Management (local-only — see the investigation report this
+// followed: Google's API has no delete/report/status-check endpoint for a
+// customer's review, so none of this ever calls Google. It's this app's
+// own tracking of an admin-run, manual workflow.) ─────────────────────────
+
+const REPORT_REASON_LABELS: Record<string, string> = {
+  spam: 'Spam',
+  fake_engagement: 'Fake engagement',
+  off_topic: 'Off-topic',
+  inappropriate_content: 'Inappropriate content',
+  harassment_or_bullying: 'Harassment / bullying',
+  conflict_of_interest: 'Conflict of interest',
+  illegal_content: 'Illegal content',
+  other: 'Other',
+};
+const REPORT_STATUS_LABELS: Record<string, { label: string; className: string }> = {
+  not_reported: { label: 'Not reported', className: 'bg-gray-100 text-gray-500' },
+  reported: { label: 'Reported', className: 'bg-amber-100 text-amber-700' },
+  under_review: { label: 'Under review', className: 'bg-blue-100 text-blue-700' },
+  removed: { label: 'Removed by Google', className: 'bg-green-100 text-green-700' },
+  rejected: { label: 'Rejected by Google', className: 'bg-red-100 text-red-700' },
+};
+// Google gives no per-review deep link (the Places API this sync uses
+// exposes no permalink — see app/lib/reviews/googleReviewSync.ts's own
+// comment) — this is the closest genuinely correct thing to link to: the
+// Business Profile's own Reviews dashboard, where an admin manually finds
+// the review (by author/date/text) and reports it themselves. Never a
+// fabricated per-review URL.
+const GOOGLE_BUSINESS_REVIEWS_URL = 'https://business.google.com/reviews';
 
 // ── Source badge config ───────────────────────────────────────────────────────
 const SOURCE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
@@ -61,14 +91,26 @@ function ReviewCard({
   onToggle,
   onDelete,
   onEdit,
+  onManageUpdate,
+  onAnalyze,
 }: {
   review: any;
   onToggle: (id: string, field: 'isVisible' | 'isFeatured' | 'showOnHomepage', val: boolean) => void;
   onDelete: (id: string) => void;
   onEdit: (review: any) => void;
+  onManageUpdate: (id: string, patch: Record<string, any>) => Promise<void>;
+  onAnalyze: (id: string) => Promise<void>;
 }) {
   const src = getSrc(review.source);
   const initials = review.authorName?.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const needsAttention = typeof review.rating === 'number' && review.rating <= 2;
+
+  const [manageOpen, setManageOpen] = useState(false);
+  const [replyDraft, setReplyDraft] = useState(review.replyText || '');
+  const [savingReply, setSavingReply] = useState(false);
+  const [reportReasonDraft, setReportReasonDraft] = useState(review.reportReason || '');
+  const [savingReport, setSavingReport] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   return (
     <div className={`bg-white rounded-2xl border p-5 flex flex-col gap-3 shadow-sm transition ${
@@ -87,6 +129,19 @@ function ReviewCard({
             {src.label}
           </span>
           {review.rating && <Stars rating={review.rating} />}
+          {needsAttention && (
+            <span
+              title="1–2 star review — a low rating alone is never a reason to report/remove it; review the content yourself"
+              className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full bg-red-50 text-red-600"
+            >
+              <AlertTriangle size={9} /> Needs Attention
+            </span>
+          )}
+          {review.reported && (
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full ${REPORT_STATUS_LABELS[review.reportStatus as string]?.className || 'bg-gray-100 text-gray-500'}`}>
+              <Flag size={9} /> {REPORT_STATUS_LABELS[review.reportStatus as string]?.label || 'Reported'}
+            </span>
+          )}
           {review.location && (
             <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full capitalize">
               {review.location}
@@ -193,6 +248,133 @@ function ReviewCard({
               View on Google ↗
             </a>
           )}
+        </div>
+      )}
+
+      {/* Manage — reply drafting + report tracking + AI assist. Purely
+          local to this app; see the header note on GOOGLE_BUSINESS_REVIEWS_URL
+          for why there's no per-review "report" button that actually calls
+          Google (no such API exists). */}
+      <button
+        onClick={() => setManageOpen((v) => !v)}
+        className="flex items-center justify-center gap-1 text-[10px] font-semibold text-gray-400 hover:text-[#0B2560] pt-1 border-t border-gray-50"
+      >
+        {manageOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />} Manage
+      </button>
+
+      {manageOpen && (
+        <div className="space-y-3 pt-1">
+          {/* AI Assist */}
+          <div className="bg-violet-50 border border-violet-100 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] font-bold text-violet-700 uppercase tracking-wide flex items-center gap-1">
+                <Sparkles size={10} /> AI Assist
+              </p>
+              <button
+                onClick={async () => { setAnalyzing(true); await onAnalyze(review._id); setAnalyzing(false); }}
+                disabled={analyzing || !review.reviewText}
+                className="text-[10px] font-semibold text-violet-700 hover:underline disabled:opacity-40"
+              >
+                {analyzing ? 'Analyzing…' : review.aiAnalysis ? 'Re-analyze' : 'Analyze'}
+              </button>
+            </div>
+            {!review.reviewText && <p className="text-[10px] text-violet-400">No review text to analyze.</p>}
+            {review.aiAnalysis?.analyzedAt ? (
+              <div className="text-[11px] text-violet-900 space-y-1">
+                <p>Sentiment: <span className="font-semibold capitalize">{review.aiAnalysis.sentiment || '—'}</span> · Severity: <span className="font-semibold capitalize">{review.aiAnalysis.severity || '—'}</span></p>
+                <p>
+                  Possible policy violation: <span className="font-semibold">{review.aiAnalysis.possiblePolicyViolation ? `Yes — ${REPORT_REASON_LABELS[review.aiAnalysis.possibleReason] || review.aiAnalysis.possibleReason}` : 'No'}</span>
+                  {review.aiAnalysis.confidence != null && <span className="text-violet-500"> ({Math.round(review.aiAnalysis.confidence * 100)}% confidence)</span>}
+                </p>
+                {review.aiAnalysis.rawExplanation && <p className="text-violet-600 italic">&ldquo;{review.aiAnalysis.rawExplanation}&rdquo;</p>}
+                <p className="text-[9px] text-violet-400 pt-0.5">
+                  This is a suggestion for you to consider — a low rating alone is never grounds for reporting/removing a review. You decide.
+                </p>
+              </div>
+            ) : (
+              !analyzing && review.reviewText && <p className="text-[10px] text-violet-400">Not analyzed yet.</p>
+            )}
+          </div>
+
+          {/* Reply draft */}
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+            <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+              <MessageSquare size={10} /> Reply {review.source === 'google' && '(draft here, post it yourself on Google)'}
+            </p>
+            <textarea
+              rows={2}
+              value={replyDraft}
+              onChange={(e) => setReplyDraft(e.target.value)}
+              placeholder="Draft a reply…"
+              className="w-full border border-blue-200 rounded-lg px-2.5 py-1.5 text-xs resize-none bg-white"
+            />
+            <div className="flex items-center justify-between mt-1.5">
+              <select
+                value={review.replyStatus || 'none'}
+                onChange={(e) => onManageUpdate(review._id, { replyStatus: e.target.value })}
+                className="border border-blue-200 rounded-lg px-2 py-1 text-[10px] bg-white"
+              >
+                <option value="none">Not replied</option>
+                <option value="draft">Draft saved</option>
+                <option value="sent">Sent on Google</option>
+              </select>
+              <button
+                onClick={async () => {
+                  setSavingReply(true);
+                  await onManageUpdate(review._id, { replyText: replyDraft, replyStatus: review.replyStatus === 'none' ? 'draft' : review.replyStatus });
+                  setSavingReply(false);
+                }}
+                disabled={savingReply}
+                className="text-[10px] font-semibold text-blue-700 hover:underline disabled:opacity-40"
+              >
+                {savingReply ? 'Saving…' : 'Save Draft'}
+              </button>
+            </div>
+          </div>
+
+          {/* Report tracking */}
+          <div className="bg-amber-50 border border-amber-100 rounded-lg p-3">
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+              <Flag size={10} /> Report to Google
+            </p>
+            <p className="text-[9px] text-amber-600 mb-1.5">
+              Google has no API to report/remove a review — this only tracks your own manual report, filed on Google&rsquo;s own site.
+            </p>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <select
+                value={reportReasonDraft}
+                onChange={(e) => setReportReasonDraft(e.target.value)}
+                className="flex-1 border border-amber-200 rounded-lg px-2 py-1 text-[10px] bg-white"
+              >
+                <option value="">Reason (only if a real violation)…</option>
+                {Object.entries(REPORT_REASON_LABELS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+              <a href={GOOGLE_BUSINESS_REVIEWS_URL} target="_blank" rel="noopener noreferrer"
+                className="shrink-0 flex items-center gap-1 text-[10px] font-semibold text-amber-700 hover:underline">
+                Open Google <ExternalLink size={9} />
+              </a>
+            </div>
+            <div className="flex items-center justify-between">
+              <select
+                value={review.reportStatus || 'not_reported'}
+                onChange={(e) => onManageUpdate(review._id, { reportStatus: e.target.value, reported: e.target.value !== 'not_reported' })}
+                className="border border-amber-200 rounded-lg px-2 py-1 text-[10px] bg-white"
+              >
+                {Object.entries(REPORT_STATUS_LABELS).map(([k, meta]) => <option key={k} value={k}>{meta.label}</option>)}
+              </select>
+              <button
+                onClick={async () => {
+                  setSavingReport(true);
+                  await onManageUpdate(review._id, { reportReason: reportReasonDraft, reported: true, reportStatus: review.reportStatus === 'not_reported' ? 'reported' : review.reportStatus });
+                  setSavingReport(false);
+                }}
+                disabled={savingReport || !reportReasonDraft}
+                className="text-[10px] font-semibold text-amber-700 hover:underline disabled:opacity-40"
+              >
+                {savingReport ? 'Saving…' : 'Mark as Reported'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -444,6 +626,7 @@ export default function ReviewsAdminPage() {
   const [ratingFilter, setRatingFilter] = useState('');
   const [featuredOnly, setFeaturedOnly] = useState(false);
   const [homepageOnly, setHomepageOnly] = useState(false);
+  const [needsAttentionOnly, setNeedsAttentionOnly] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const [syncIsError, setSyncIsError] = useState(false);
@@ -495,9 +678,12 @@ export default function ReviewsAdminPage() {
       if (ratingFilter && r.rating !== Number(ratingFilter)) return false;
       if (featuredOnly && !r.isFeatured) return false;
       if (homepageOnly && !r.showOnHomepage) return false;
+      // A rating <=2 alone, NOT a policy-violation claim — see the
+      // "Needs Attention" badge on ReviewCard for the same wording.
+      if (needsAttentionOnly && !(typeof r.rating === 'number' && r.rating <= 2)) return false;
       return true;
     });
-  }, [reviews, tab, locationFilter, ratingFilter, featuredOnly, homepageOnly]);
+  }, [reviews, tab, locationFilter, ratingFilter, featuredOnly, homepageOnly, needsAttentionOnly]);
 
   const toggle = async (id: string, field: 'isVisible' | 'isFeatured' | 'showOnHomepage', val: boolean) => {
     const res = await fetch(`/api/admin/reviews/${id}`, {
@@ -514,6 +700,27 @@ export default function ReviewsAdminPage() {
     const res = await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.success) setReviews((prev) => prev.filter((r) => r._id !== id));
+  };
+
+  // Generic patch for the Manage panel's reply/report fields — same PATCH
+  // route/allowlist toggle() above already uses, just a wider field set.
+  const manageUpdate = async (id: string, patch: Record<string, any>) => {
+    const res = await fetch(`/api/admin/reviews/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    const data = await res.json();
+    if (data.success) setReviews((prev) => prev.map((r) => r._id === id ? { ...r, ...patch } : r));
+  };
+
+  // AI Assist — admin-triggered only, never automatic; writes only
+  // aiAnalysis, never reported/reportStatus (see app/lib/reviews/
+  // analyzeReview.ts's own comment).
+  const analyzeReview = async (id: string) => {
+    const res = await fetch(`/api/admin/reviews/${id}/analyze`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) setReviews((prev) => prev.map((r) => r._id === id ? { ...r, aiAnalysis: data.aiAnalysis } : r));
   };
 
   const saveReview = async (data: any) => {
@@ -692,10 +899,19 @@ export default function ReviewsAdminPage() {
         >
           <Home size={13} /> Homepage Only
         </button>
+        <button
+          onClick={() => setNeedsAttentionOnly((v) => !v)}
+          title="1–2 star reviews — a low rating alone, never a claim these violate any policy"
+          className={`flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-xl transition ${
+            needsAttentionOnly ? 'bg-red-50 text-red-600' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+          }`}
+        >
+          <AlertTriangle size={13} /> Needs Attention
+        </button>
 
-        {(locationFilter || ratingFilter || featuredOnly || homepageOnly) && (
+        {(locationFilter || ratingFilter || featuredOnly || homepageOnly || needsAttentionOnly) && (
           <button
-            onClick={() => { setLocationFilter(''); setRatingFilter(''); setFeaturedOnly(false); setHomepageOnly(false); }}
+            onClick={() => { setLocationFilter(''); setRatingFilter(''); setFeaturedOnly(false); setHomepageOnly(false); setNeedsAttentionOnly(false); }}
             className="text-xs text-gray-400 hover:text-[#0B2560] font-semibold underline"
           >
             Clear filters
@@ -731,6 +947,8 @@ export default function ReviewsAdminPage() {
               onToggle={toggle}
               onDelete={deleteReview}
               onEdit={(rev) => setModal({ ...rev, services: rev.services?.join(', ') || '' })}
+              onManageUpdate={manageUpdate}
+              onAnalyze={analyzeReview}
             />
           ))}
         </div>

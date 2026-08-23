@@ -9,6 +9,10 @@ const PATCH_ALLOWED = [
   'isVisible', 'isFeatured', 'showOnHomepage', 'displayOrder',
   'authorName', 'authorAvatar', 'rating', 'reviewText',
   'videoUrl', 'videoThumbnail', 'services', 'location', 'reviewDate',
+  // Admin-tracked reply/report workflow (see app/models/Review.ts's own
+  // comments) — never in GOOGLE_PROTECTED_FIELDS, so these stay editable
+  // on a Google-sourced review even though its content fields aren't.
+  'replyText', 'replyStatus', 'reported', 'reportReason', 'reportStatus',
 ] as const;
 
 // Google's own content/identity is protected via stripGoogleProtectedFields
