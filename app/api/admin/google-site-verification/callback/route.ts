@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePermission, getAdminUser } from '@/app/lib/adminAuth';
 import { verifySignedState, completeAuthorization, OAUTH_STATE_COOKIE } from '@/app/lib/google/siteVerificationOAuth';
 
 export const dynamic = 'force-dynamic';
@@ -23,12 +22,21 @@ function resultPage(status: 'ok' | 'error', message: string) {
   });
 }
 
+// No requirePermission()/getAdminUser() here on purpose — this route is
+// only ever reached via Google's own cross-site redirect, on which the
+// SameSite=Strict admin_session cookie is withheld by every browser (see
+// middleware.ts's matching exact-path exception for the same route, and
+// its own comment for the full explanation). The admin's identity is
+// carried instead inside the signed `state` value itself — embedded at
+// /authorize time, where the session cookie DOES work correctly — and
+// verified below via verifySignedState(), which checks the HMAC signature
+// (tamper-proof), the expiry window (anti-replay), AND is matched against
+// the separate gsv_oauth_state double-submit cookie (SameSite=Lax, which
+// DOES survive this redirect). That combination is what actually proves
+// this request is a genuine continuation of an authenticated /authorize
+// call — not a weaker check than the session cookie, a different one that
+// actually works for this specific cross-site-redirect shape.
 export async function GET(req: NextRequest) {
-  const denied = await requirePermission('settings', 'full');
-  if (denied) return denied;
-  const admin = await getAdminUser();
-  if (!admin) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-
   const { searchParams } = new URL(req.url);
   const stateCookie = req.cookies.get(OAUTH_STATE_COOKIE)?.value;
 
@@ -57,14 +65,14 @@ export async function GET(req: NextRequest) {
     return clearStateCookie(resultPage('error', 'This authorization link is invalid or expired. Please start over.'));
   }
   const verified = verifySignedState(state);
-  if (!verified.valid) {
-    console.error('[google-site-verification] state signature invalid:', verified.reason);
+  if (!verified.valid || !verified.adminId || !verified.adminEmail) {
+    console.error('[google-site-verification] state signature invalid:', verified.reason || 'missing embedded admin identity');
     return clearStateCookie(resultPage('error', 'This authorization link is invalid or expired. Please start over.'));
   }
 
   let result;
   try {
-    result = await completeAuthorization(code, admin);
+    result = await completeAuthorization(code, { _id: verified.adminId, email: verified.adminEmail });
   } catch (err) {
     // getOAuth2ClientFromEnv() throwing (missing env config) lands here —
     // never an unhandled rejection / raw 500, and never a secret in the

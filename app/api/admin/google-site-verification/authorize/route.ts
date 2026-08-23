@@ -23,7 +23,11 @@ export async function GET(_req: NextRequest) {
   let state: string;
   try {
     const oauth2Client = getOAuth2ClientFromEnv();
-    state = generateSignedState();
+    // Embeds this admin's identity in the signed state itself — see
+    // signState()'s own comment for why the callback can't re-derive it
+    // from the session cookie (SameSite=Strict is dropped on Google's
+    // cross-site redirect back).
+    state = generateSignedState({ _id: admin._id, email: admin.email });
     authUrl = buildAuthorizationUrl(oauth2Client, state);
   } catch (err) {
     // Missing env config — a clear, actionable message, never a stack

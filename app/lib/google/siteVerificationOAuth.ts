@@ -81,10 +81,29 @@ function signPayload(payload: string, secret: string): string {
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }
 
-// nonce.issuedAtMs.signature — exported as a pure function of its inputs
-// (secret passed in) so it's directly unit-testable without env vars.
-export function signState(nonce: string, issuedAtMs: number, secret: string): string {
-  const payload = `${nonce}.${issuedAtMs}`;
+function encodePart(s: string): string {
+  return Buffer.from(s, 'utf8').toString('base64url');
+}
+
+function decodePart(s: string): string {
+  return Buffer.from(s, 'base64url').toString('utf8');
+}
+
+// nonce.issuedAtMs.adminId.adminEmail.signature — the admin's identity is
+// embedded IN the signed state itself, not read back from the session
+// cookie at callback time. This is deliberate, not an extra feature: the
+// callback is only ever reached via Google's own redirect, which is a
+// cross-site top-level navigation — the admin_session cookie is
+// SameSite=Strict (see adminAuth.ts) and browsers withhold Strict cookies
+// on exactly that kind of request, so requirePermission() at the callback
+// can never see the admin as logged in, no matter what. The state's HMAC
+// signature (checked against the double-submit httpOnly cookie set at
+// /authorize — see OAUTH_STATE_COOKIE) is what actually proves this
+// browser session was a genuinely authenticated admin moments ago; reusing
+// that same proof to identify WHO is the natural fix, not a new admin
+// auth path bolted onto the callback route.
+export function signState(nonce: string, issuedAtMs: number, adminId: string, adminEmail: string, secret: string): string {
+  const payload = `${nonce}.${issuedAtMs}.${encodePart(adminId)}.${encodePart(adminEmail)}`;
   return `${payload}.${signPayload(payload, secret)}`;
 }
 
@@ -92,17 +111,20 @@ export interface VerifyStateResult {
   valid: boolean;
   reason?: 'malformed' | 'bad_signature' | 'expired';
   nonce?: string;
+  adminId?: string;
+  adminEmail?: string;
 }
 
 export function verifyState(raw: string, secret: string, nowMs: number, maxAgeMs = STATE_MAX_AGE_MS): VerifyStateResult {
   const parts = (raw || '').split('.');
-  if (parts.length !== 3) return { valid: false, reason: 'malformed' };
-  const [nonce, issuedAtStr, signature] = parts;
+  if (parts.length !== 5) return { valid: false, reason: 'malformed' };
+  const [nonce, issuedAtStr, adminIdEnc, adminEmailEnc, signature] = parts;
   const issuedAtMs = Number(issuedAtStr);
   if (!nonce || !issuedAtStr || !signature || !Number.isFinite(issuedAtMs)) {
     return { valid: false, reason: 'malformed' };
   }
-  const expected = signPayload(`${nonce}.${issuedAtStr}`, secret);
+  const payload = `${nonce}.${issuedAtStr}.${adminIdEnc}.${adminEmailEnc}`;
+  const expected = signPayload(payload, secret);
   const left = Buffer.from(signature);
   const right = Buffer.from(expected);
   if (left.length !== right.length || !crypto.timingSafeEqual(left, right)) {
@@ -111,14 +133,24 @@ export function verifyState(raw: string, secret: string, nowMs: number, maxAgeMs
   if (nowMs - issuedAtMs > maxAgeMs || nowMs < issuedAtMs) {
     return { valid: false, reason: 'expired' };
   }
-  return { valid: true, nonce };
+  let adminId = '';
+  let adminEmail = '';
+  try {
+    adminId = decodePart(adminIdEnc);
+    adminEmail = decodePart(adminEmailEnc);
+  } catch {
+    return { valid: false, reason: 'malformed' };
+  }
+  return { valid: true, nonce, adminId, adminEmail };
 }
 
 // Convenience wrapper used by the /authorize route — reads the real
-// secret/clock, generates a fresh nonce.
-export function generateSignedState(): string {
+// secret/clock, generates a fresh nonce, embeds the admin who is
+// authorizing (read there via the normal, same-site — and therefore
+// working — session cookie check).
+export function generateSignedState(admin: { _id: string; email: string }): string {
   const nonce = crypto.randomBytes(24).toString('hex');
-  return signState(nonce, Date.now(), stateSecret());
+  return signState(nonce, Date.now(), admin._id, admin.email, stateSecret());
 }
 
 export function verifySignedState(raw: string): VerifyStateResult {

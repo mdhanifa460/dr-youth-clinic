@@ -181,6 +181,22 @@ export async function middleware(req: NextRequest) {
       return withPathname(req);
     }
 
+    // Same exception, same reason as /api/admin/login above — this exact
+    // path is only ever reached via Google's own cross-site redirect back
+    // from accounts.google.com, which the browser treats as a top-level
+    // cross-site navigation. The admin_session cookie is SameSite=Strict
+    // (by design, everywhere else) and is withheld on exactly that kind of
+    // request, so this blanket check can never see it here regardless of
+    // whether the admin is genuinely logged in. Exact-path only — never a
+    // prefix/wildcard — so no other /api/admin/* route is affected. The
+    // route itself (see its own comment) validates the request through the
+    // signed OAuth `state` + double-submit cookie instead, which DOES
+    // survive this redirect (SameSite=Lax) and is what actually proves
+    // this is a continuation of a genuinely-authenticated /authorize call.
+    if (pathname === "/api/admin/google-site-verification/callback") {
+      return withPathname(req);
+    }
+
     const hasSession = await hasValidSignedSession(
       req.cookies.get(ADMIN_COOKIE)?.value
     );

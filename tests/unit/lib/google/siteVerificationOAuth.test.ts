@@ -53,17 +53,29 @@ describe('buildAuthorizationUrl', () => {
 describe('signState / verifyState', () => {
   const secret = 'test-secret-not-real';
 
-  it('round-trips a fresh state as valid', () => {
+  it('round-trips a fresh state as valid, including the embedded admin identity', () => {
     const now = Date.now();
-    const state = signState('nonce-abc', now, secret);
+    const state = signState('nonce-abc', now, 'admin-id-123', 'admin@example.com', secret);
     const result = verifyState(state, secret, now + 1000);
     expect(result.valid).toBe(true);
     expect(result.nonce).toBe('nonce-abc');
+    // This is what the callback route now relies on instead of the
+    // (unavailable, cross-site-redirect-dropped) session cookie — see
+    // callback/route.ts's own comment.
+    expect(result.adminId).toBe('admin-id-123');
+    expect(result.adminEmail).toBe('admin@example.com');
+  });
+
+  it('correctly round-trips an email containing special characters (., +, @)', () => {
+    const now = Date.now();
+    const state = signState('nonce-abc', now, 'admin-id-123', 'first.last+test@example.co.in', secret);
+    const result = verifyState(state, secret, now);
+    expect(result.adminEmail).toBe('first.last+test@example.co.in');
   });
 
   it('rejects a state signed with a different secret', () => {
     const now = Date.now();
-    const state = signState('nonce-abc', now, 'other-secret');
+    const state = signState('nonce-abc', now, 'admin-id-123', 'admin@example.com', 'other-secret');
     const result = verifyState(state, secret, now);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('bad_signature');
@@ -71,16 +83,27 @@ describe('signState / verifyState', () => {
 
   it('rejects a tampered nonce even if the signature format looks right', () => {
     const now = Date.now();
-    const state = signState('nonce-abc', now, secret);
+    const state = signState('nonce-abc', now, 'admin-id-123', 'admin@example.com', secret);
     const tampered = state.replace('nonce-abc', 'nonce-xyz');
     const result = verifyState(tampered, secret, now);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('bad_signature');
   });
 
+  it('rejects a tampered embedded admin identity (privilege-escalation attempt)', () => {
+    const now = Date.now();
+    const state = signState('nonce-abc', now, 'admin-id-123', 'admin@example.com', secret);
+    const parts = state.split('.');
+    // Swap in a different admin id, keep the original (now-invalid) signature.
+    const forged = [parts[0], parts[1], Buffer.from('someone-elses-id', 'utf8').toString('base64url'), parts[3], parts[4]].join('.');
+    const result = verifyState(forged, secret, now);
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe('bad_signature');
+  });
+
   it('rejects an expired state', () => {
     const issuedAt = Date.now() - 20 * 60 * 1000; // 20 minutes ago
-    const state = signState('nonce-abc', issuedAt, secret);
+    const state = signState('nonce-abc', issuedAt, 'admin-id-123', 'admin@example.com', secret);
     const result = verifyState(state, secret, Date.now(), 10 * 60 * 1000);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('expired');
@@ -89,6 +112,9 @@ describe('signState / verifyState', () => {
   it('rejects a malformed state value', () => {
     expect(verifyState('not-a-real-state', secret, Date.now()).valid).toBe(false);
     expect(verifyState('', secret, Date.now()).valid).toBe(false);
+    // Old 3-part format (pre-identity-embedding) must not be accepted as
+    // if it were valid — it has no admin identity to trust.
+    expect(verifyState('nonce.123456.deadbeef', secret, Date.now()).valid).toBe(false);
   });
 });
 
