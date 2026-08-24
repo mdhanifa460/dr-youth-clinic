@@ -8,6 +8,19 @@ import { extractMigrationParams, MIGRATION_FIRST_COOKIE, MIGRATION_FIRST_MAX_AGE
 import { normalizeOldUrl } from "@/app/lib/domainMigration/parseSitemap";
 import { getCachedRedirect } from "@/app/lib/domainMigration/redirectCache";
 
+// Canonical www -> non-www redirect. Confirmed LIVE before adding this
+// (not assumed): both hostnames already resolve to this exact Vercel
+// deployment right now — they just serve identical content independently
+// with no canonicalizing redirect between them, which is a real Google
+// Search Console duplicate-content/indexing concern even though neither
+// hostname itself errors. Reuses the SAME canonical-domain source of
+// truth every other file already reads (app/layout.tsx's metadataBase/
+// canonical, app/sitemap.ts, app/robots.ts) rather than a second,
+// driftable hardcoded copy of the domain name.
+const CANONICAL_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://dryouthclinics.com";
+const CANONICAL_HOSTNAME = new URL(CANONICAL_SITE_URL).hostname;
+const WWW_HOSTNAME = `www.${CANONICAL_HOSTNAME}`;
+
 const ADMIN_COOKIE = "admin_session";
 const LOCATION_COOKIE = "preferred_location";
 // Must mirror the exact fallback chain in app/lib/adminAuth.ts — that file
@@ -172,6 +185,23 @@ function withPathname(req: NextRequest) {
 }
 
 export async function middleware(req: NextRequest) {
+  // Exact hostname match only — never a prefix/substring check — so this
+  // can never accidentally catch a Vercel preview deployment
+  // (*.vercel.app), localhost, or any other unrelated host. 308: matches
+  // this file's own existing redirect (the domain-migration cached
+  // redirect below) and next/navigation's permanentRedirect() convention
+  // used elsewhere in this app — a real permanent redirect, method- and
+  // body-preserving. Path + query string are carried through unchanged.
+  // Reads the actual `Host` request header, NOT req.nextUrl.hostname —
+  // confirmed live during verification that nextUrl.hostname reports
+  // "localhost" in Next.js dev mode regardless of the real incoming Host
+  // header, which would have made this check silently never fire in any
+  // environment where that same quirk applies. The Host header itself is
+  // what both curl and a real browser/Vercel actually send.
+  if (req.headers.get("host") === WWW_HOSTNAME) {
+    return NextResponse.redirect(new URL(req.nextUrl.pathname + req.nextUrl.search, CANONICAL_SITE_URL), 308);
+  }
+
   const { pathname } = req.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
