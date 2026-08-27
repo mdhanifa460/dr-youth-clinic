@@ -63,7 +63,13 @@ const nextConfig = {
             // for Fast Refresh / source maps, and without it the CSP silently blocks
             // all client JS from executing, so the app never hydrates (no onClick
             // handlers attach anywhere). Production bundles don't use eval().
-            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' "}https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com https://www.youtube.com`,
+            // https://www.google.com / googleadservices.com / pagead2.googlesyndication.com /
+            // googleads.g.doubleclick.net — added per Google's official Tag Manager CSP guide
+            // (developers.google.com/tag-platform/security/guides/csp), the Google Ads
+            // conversion/remarketing tag's own required script-src-elem hosts. GTM's
+            // container itself only needs googletagmanager.com (already present); these
+            // four are for the Ads conversion tag GTM loads inside it.
+            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' "}https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com https://www.googleadservices.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com https://www.youtube.com`,
             "style-src 'self' 'unsafe-inline'",
             // img.youtube.com/i.ytimg.com serve the hotlinked thumbnail Video.ts
             // auto-generates from a youtubeId (see the pre('save') hook) whenever
@@ -83,7 +89,15 @@ const nextConfig = {
             // country-specific host from https://www.google.com already
             // below — a CSP host-source match is exact-host, not
             // TLD-agnostic, so the existing .com entry doesn't cover it.
-            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.in https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
+            // https://*.google.com (wildcard, distinct from the bare www.google.com
+            // already here) + googleadservices.com / pagead2.googlesyndication.com /
+            // googleads.g.doubleclick.net — per Google's official Tag Manager CSP guide's
+            // GA4 and Google Ads sections. The guide's GA4 entry is actually
+            // "https://*.google.<TLD>" — a per-country-TLD placeholder, not a literal
+            // host — so it is NOT added verbatim as "https://*.google" (that matches no
+            // real host); the one country TLD this site actually needs,
+            // https://www.google.co.in, is already present just below.
+            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://*.google.com https://www.google.co.in https://www.googleadservices.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
             "font-src 'self' data:",
             // ad.doubleclick.net (Google Ads conversion collect endpoint,
             // /cm/s/collect) is a DIFFERENT hostname from g.doubleclick.net —
@@ -96,12 +110,18 @@ const nextConfig = {
             // wildcard already below — a CSP wildcard host-source only
             // matches subdomains, never the bare domain itself. Both stay,
             // since real traffic uses both forms.
-            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
+            // https://*.google.com (wildcard) + pagead2.googlesyndication.com /
+            // googleadservices.com / googleads.g.doubleclick.net — same Google Ads/GA4
+            // official CSP guide sections as img-src/script-src above; ad.doubleclick.net
+            // and the bare www.google.com host were already added in an earlier pass.
+            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
             "media-src 'self' https://res.cloudinary.com",
             // youtube-nocookie.com is the privacy-enhanced embed domain some
             // browsers/extensions rewrite youtube.com embeds to — allow both so
             // a visitor's own privacy settings can't reintroduce this block.
-            "frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://www.youtube-nocookie.com",
+            // googletagmanager.com — per Google's official Tag Manager CSP guide's GA4/
+            // frame-src requirement (used by some GTM-loaded consent/preview UI frames).
+            "frame-src https://www.googletagmanager.com https://www.google.com https://maps.google.com https://www.youtube.com https://www.youtube-nocookie.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
