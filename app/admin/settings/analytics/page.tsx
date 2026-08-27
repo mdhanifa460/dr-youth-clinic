@@ -79,6 +79,28 @@ function StatusBadge({ status }: { status: "gtm" | "direct" | "off" }) {
   );
 }
 
+// Persistent (never auto-dismisses like the page-level save toast) —
+// tells you what's ACTUALLY in the database for this exact field, not
+// just what's sitting in the input. `savedValue === null` means the
+// initial GET hasn't resolved yet, so this deliberately renders nothing
+// rather than a misleading default.
+function SavedStatus({ currentValue, savedValue }: { currentValue: string; savedValue: string | null }) {
+  if (savedValue === null) return null;
+  if (currentValue === savedValue) {
+    return currentValue ? (
+      <p className="text-[11px] text-emerald-600 mt-1.5 flex items-center gap-1">
+        <CheckCircle size={11} className="shrink-0" /> Saved to database
+      </p>
+    ) : null;
+  }
+  return (
+    <p className="text-[11px] text-amber-600 mt-1.5 flex items-center gap-1">
+      <AlertCircle size={11} className="shrink-0" />
+      Not saved yet — database currently has {savedValue ? <code className="font-mono">{savedValue}</code> : "nothing"}. Click Save to apply this change.
+    </p>
+  );
+}
+
 function InlineFieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
@@ -109,6 +131,16 @@ function DetectionRow({ gtmDetected, dataLayerDetected }: { gtmDetected: boolean
 
 export default function AnalyticsSettingsPage() {
   const [form, setForm] = useState<AnalyticsSettings>(DEFAULTS);
+  // What the database actually has right now — set once on load, and
+  // again only after a save genuinely succeeds. `form` above is just the
+  // editable draft; comparing the two is what lets a field honestly say
+  // "saved" vs "not saved yet" instead of a 3-second toast that's easy to
+  // miss and tells you nothing once it's gone. Real incident this fixes:
+  // an admin saw GTM-NX462ZPQ/G-0K4NNXXBND sitting in these inputs and
+  // reasonably assumed they were live — the database still had "" for
+  // both. A toast that already vanished couldn't have told them that;
+  // this can, indefinitely, without needing to click Save again to find out.
+  const [savedForm, setSavedForm] = useState<AnalyticsSettings | null>(null);
   const [dmForm, setDmForm] = useState<DomainMigrationSettings>(DM_DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -128,7 +160,10 @@ export default function AnalyticsSettingsPage() {
     fetch("/api/admin/settings")
       .then((r) => r.json())
       .then((d) => {
-        if (d.success && d.data?.analytics) setForm({ ...DEFAULTS, ...d.data.analytics });
+        if (d.success && d.data?.analytics) {
+          setForm({ ...DEFAULTS, ...d.data.analytics });
+          setSavedForm({ ...DEFAULTS, ...d.data.analytics });
+        }
         if (d.success && d.data?.domainMigration) setDmForm({ ...DM_DEFAULTS, ...d.data.domainMigration });
         setLoading(false);
       })
@@ -173,6 +208,10 @@ export default function AnalyticsSettingsPage() {
       });
       const data = await res.json();
       if (!data.success) { setError(data.message || "Save failed"); return; }
+      // Only advance the "actually saved" snapshot on a genuine 2xx +
+      // success — never optimistically, so this can never claim something
+      // is saved when the request actually failed.
+      setSavedForm(form);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch {
@@ -279,6 +318,7 @@ export default function AnalyticsSettingsPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono"
               />
               <InlineFieldError message={fieldErrors.gtmId} />
+              <SavedStatus currentValue={form.gtmId} savedValue={savedForm?.gtmId ?? null} />
               <p className="text-[11px] text-gray-400 mt-1.5">
                 Find this in Google Tag Manager → Admin → Container Settings. While this is on, GA4 and Meta Pixel
                 below will NOT load directly — configure them as tags inside this GTM container instead, so nothing
@@ -351,6 +391,7 @@ export default function AnalyticsSettingsPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#0B2560] font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
               />
               <InlineFieldError message={fieldErrors.ga4Id} />
+              <SavedStatus currentValue={form.ga4Id} savedValue={savedForm?.ga4Id ?? null} />
             </div>
             <p className="text-[11px] text-gray-400">
               {gtmActive
