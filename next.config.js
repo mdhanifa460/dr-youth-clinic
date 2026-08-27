@@ -81,7 +81,13 @@ const nextConfig = {
             // a bare hostname doesn't cover.
             "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
             "font-src 'self' data:",
-            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
+            // ad.doubleclick.net (Google Ads conversion collect endpoint,
+            // /cm/s/collect) is a DIFFERENT hostname from g.doubleclick.net —
+            // the existing https://*.g.doubleclick.net wildcard only matches
+            // subdomains of g.doubleclick.net and does not cover this one.
+            // Added per Tag Assistant's own exact reported block. Everything
+            // else on this line is unchanged.
+            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
             "media-src 'self' https://res.cloudinary.com",
             // youtube-nocookie.com is the privacy-enhanced embed domain some
             // browsers/extensions rewrite youtube.com embeds to — allow both so
