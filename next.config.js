@@ -70,9 +70,18 @@ const nextConfig = {
             // an admin hasn't uploaded a custom Cloudinary thumbnail — without
             // these origins, any video relying on that default silently shows
             // a broken image.
-            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
+            // https://*.google-analytics.com (wildcard, not the bare www. host) and
+            // https://*.g.doubleclick.net / https://www.google.com — added per Google
+            // Tag Assistant's own live CSP diagnostic against production (stats.g.
+            // doubleclick.net and google.com image-beacon pixels used by GA4/Google
+            // Ads conversion tracking, not covered by the narrower hosts already
+            // here). Matches Google's own published Tag CSP guidance, which
+            // recommends the wildcard specifically because GA4 sends hits to
+            // dynamic regional subdomains (e.g. region1.google-analytics.com) that
+            // a bare hostname doesn't cover.
+            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
             "font-src 'self' data:",
-            "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
+            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
             "media-src 'self' https://res.cloudinary.com",
             // youtube-nocookie.com is the privacy-enhanced embed domain some
             // browsers/extensions rewrite youtube.com embeds to — allow both so
