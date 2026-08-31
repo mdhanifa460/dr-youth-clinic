@@ -44,8 +44,20 @@ export interface BookingConversionParams {
 export function buildBookingCompletedParams(params: BookingConversionParams): Record<string, string> {
   const out: Record<string, string> = { booking_id: params.bookingId };
   if (params.location) {
-    out.branch = params.location;
-    out.location = params.location;
+    // Normalized to lowercase — the app's own booking entry points don't
+    // agree on casing (the main /book form sends "Chennai", the AI chat
+    // widget forces "chennai" via its own URL-param lowercasing, others
+    // pass through whatever a dropdown/server response happened to hold).
+    // Without this, a GTM trigger written for one exact case (e.g. branch
+    // equals "chennai") would silently miss bookings from whichever entry
+    // points use a different case — a real, hard-to-notice gap in
+    // branch-wise conversion tracking. Lowercasing here (not a hardcoded
+    // branch list) fixes every current and future entry point/branch in
+    // one place, with zero risk to routing, the database, or the booking
+    // API — this only affects the analytics event payload.
+    const normalized = params.location.trim().toLowerCase();
+    out.branch = normalized;
+    out.location = normalized;
   }
   if (params.source) out.source = params.source;
   if (params.sourceAccount) out.source_account = params.sourceAccount;

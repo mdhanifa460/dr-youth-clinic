@@ -18,6 +18,18 @@ describe('buildBookingCompletedParams', () => {
     expect(params.location).toBe('chennai');
   });
 
+  // The app's own booking entry points don't agree on casing (main /book
+  // form sends "Chennai", the AI chat widget forces lowercase, others pass
+  // through a dropdown/server value as-is) — without normalization, a GTM
+  // trigger written for one exact case would silently miss bookings from
+  // whichever entry points use a different one. This is the actual bug
+  // this normalization fixes.
+  it('normalizes location casing/whitespace so every entry point produces the same branch value', () => {
+    const params = buildBookingCompletedParams({ bookingId: 'DR-123', location: '  Chennai ' });
+    expect(params.branch).toBe('chennai');
+    expect(params.location).toBe('chennai');
+  });
+
   it('includes source, source_account, campaign, and medium when present', () => {
     const params = buildBookingCompletedParams({
       bookingId: 'DR-123',
