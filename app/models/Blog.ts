@@ -41,6 +41,22 @@ export interface IBlog extends Document {
   // zones roll out one post at a time, side by side with the fixed article
   // body + TOC sidebar.
   layoutEngineEnabled?: boolean;
+  // Location targeting — same pattern as Service.targetLocations: which
+  // cities this post is also shown at under /[location]/blog/[slug], in
+  // addition to the always-available generic /blog/[slug]. Empty/unset
+  // means the post only exists at the generic URL, unchanged from today's
+  // behavior — fully backward compatible with every existing post.
+  targetLocations?: string[];
+  // Sparse per-city overrides of metaTitle/metaDescription only — mirrors
+  // Service.locationSeo, minus urlSlug: a blog post's slug is a single
+  // globally-unique field (BlogSchema's unique index), never varied per
+  // city, so there's nothing else here to override.
+  locationSeo?: Array<{
+    location: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    isCustomized?: boolean;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -79,6 +95,17 @@ const BlogSchema = new Schema<IBlog>({
   medicalReferences:  [{ label: { type: String, required: true }, url: { type: String, required: true }, _id: false }],
   sourceVideoId: { type: Schema.Types.ObjectId, ref: 'Video' },
   layoutEngineEnabled: { type: Boolean, default: false },
+  targetLocations: { type: [String], default: undefined },
+  locationSeo: {
+    type: [{
+      location: { type: String, required: true },
+      metaTitle: { type: String, maxlength: 60 },
+      metaDescription: { type: String, maxlength: 160 },
+      isCustomized: { type: Boolean, default: false },
+      _id: false,
+    }],
+    default: undefined,
+  },
 }, { timestamps: true });
 
 BlogSchema.index({ slug: 1 }, { unique: true });

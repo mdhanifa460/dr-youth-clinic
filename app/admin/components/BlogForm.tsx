@@ -13,8 +13,10 @@ import ArticleIntelligenceCard from './ArticleIntelligenceCard';
 import LayoutEngineSectionBuilder from './builder/LayoutEngineSectionBuilder';
 import { markdownToBlocks, blocksToPlainText } from '@/app/lib/contentBlocks/types';
 import { BLOG_CATEGORIES } from '@/app/lib/blogCategories';
+import { ALL_BLOG_CITIES } from '@/app/lib/blogSeo';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+const CITY_LABEL: Record<string, string> = { chennai: 'Chennai', bangalore: 'Bangalore', coimbatore: 'Coimbatore', kochi: 'Kochi' };
 
 const STEP_LABELS = ['Basic Info', 'Trust & Review', 'Content', 'SEO Setup', 'Publish'];
 const TOTAL_STEPS = STEP_LABELS.length;
@@ -42,6 +44,10 @@ interface FormData {
   keywords: string;
   ogImage: { url: string; publicId: string };
   layoutEngineEnabled: boolean;
+  // Location targeting — see app/lib/blogSeo.ts. Empty means the post only
+  // ever shows at the generic /blog/[slug] URL, unchanged default behavior.
+  targetLocations: string[];
+  locationSeo: Array<{ location: string; metaTitle: string; metaDescription: string; isCustomized: boolean }>;
 }
 
 function slugify(text: string) {
@@ -59,6 +65,8 @@ const EMPTY_FORM: FormData = {
   metaTitle: '', metaDescription: '', canonicalUrl: '', keywords: '',
   ogImage: { url: '', publicId: '' },
   layoutEngineEnabled: false,
+  targetLocations: [],
+  locationSeo: [],
 };
 
 export default function BlogForm({ initialData }: { initialData?: any }) {
@@ -82,6 +90,10 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
           coverImage: initialData.coverImage ?? EMPTY_FORM.coverImage,
           ogImage: initialData.ogImage ?? EMPTY_FORM.ogImage,
           bodyBlocks: initialData.bodyBlocks ?? [],
+          targetLocations: initialData.targetLocations ?? [],
+          locationSeo: (initialData.locationSeo ?? []).map((l: any) => ({
+            location: l.location, metaTitle: l.metaTitle || '', metaDescription: l.metaDescription || '', isCustomized: !!l.isCustomized,
+          })),
         }
       : EMPTY_FORM
   );
@@ -136,6 +148,10 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
           // in place instead of clearing it.
           reviewedByDoctorId: form.reviewedByDoctorId || null,
           medicalReferences: form.medicalReferences.filter((r) => r.label.trim() && r.url.trim()),
+          // Drop an override that has nothing actually set in it — a blank
+          // {location, metaTitle:'', metaDescription:''} row is meaningless
+          // noise, not a real customization.
+          locationSeo: form.locationSeo.filter((l) => l.metaTitle.trim() || l.metaDescription.trim()),
         }),
       });
       const data = await res.json();
@@ -412,6 +428,81 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
               placeholder={`${SITE_URL}/blog/${form.slug || '{slug}'}`} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono" />
           </div>
 
+          <div className="pt-2 border-t border-gray-100">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Show at Specific Cities <span className="font-normal text-gray-400">(optional)</span></label>
+            <p className="text-xs text-gray-400 mb-3">
+              Leave unselected and this post only ever appears at /blog/{form.slug || '{slug}'}. Select cities to
+              also make it reachable at /city/blog/{form.slug || '{slug}'} — useful for city-specific SEO targeting.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {ALL_BLOG_CITIES.map((city) => {
+                const checked = form.targetLocations.includes(city);
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => {
+                      const next = checked
+                        ? form.targetLocations.filter((c) => c !== city)
+                        : [...form.targetLocations, city];
+                      updateForm({
+                        targetLocations: next,
+                        // Drop the override too once a city is deselected —
+                        // otherwise a stale override sits invisibly in the
+                        // document forever with no city checkbox to surface it.
+                        locationSeo: checked ? form.locationSeo.filter((l) => l.location !== city) : form.locationSeo,
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                      checked ? 'bg-[#0B2560] border-[#0B2560] text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-[#0B2560]/40'
+                    }`}
+                  >
+                    {CITY_LABEL[city]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {form.targetLocations.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-gray-500">
+                  Shown at {form.targetLocations.length} {form.targetLocations.length === 1 ? 'city' : 'cities'} — sharing the same
+                  article content. Give any city its own meta title/description below, or leave blank to inherit the shared ones above.
+                </p>
+                {form.targetLocations.map((city) => {
+                  const override = form.locationSeo.find((l) => l.location === city);
+                  const setOverride = (patch: Partial<{ metaTitle: string; metaDescription: string }>) => {
+                    const exists = form.locationSeo.some((l) => l.location === city);
+                    const next = exists
+                      ? form.locationSeo.map((l) => (l.location === city ? { ...l, ...patch, isCustomized: true } : l))
+                      : [...form.locationSeo, { location: city, metaTitle: '', metaDescription: '', isCustomized: true, ...patch }];
+                    updateForm({ locationSeo: next });
+                  };
+                  return (
+                    <div key={city} className="border border-gray-100 rounded-xl p-3 bg-[#f6faff]">
+                      <p className="text-xs font-bold text-[#0B2560] mb-2">{CITY_LABEL[city]}</p>
+                      <input
+                        value={override?.metaTitle || ''}
+                        onChange={(e) => setOverride({ metaTitle: e.target.value })}
+                        placeholder={form.metaTitle || form.title || 'Inherits the shared meta title above'}
+                        maxLength={60}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs mb-2"
+                      />
+                      <textarea
+                        rows={2}
+                        value={override?.metaDescription || ''}
+                        onChange={(e) => setOverride({ metaDescription: e.target.value })}
+                        placeholder={form.metaDescription || 'Inherits the shared meta description above'}
+                        maxLength={160}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs resize-none"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Keywords <span className="font-normal text-gray-400">(comma-separated)</span></label>
             <input value={form.keywords} onChange={(e) => updateForm({ keywords: e.target.value })} placeholder="hair prp, hair restoration chennai" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm" />
@@ -461,7 +552,12 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
               <p><span className="text-gray-500">Blocks:</span> <span className="font-semibold">{form.bodyBlocks.length}</span></p>
             </div>
             {form.slug && (
-              <p className="text-xs text-gray-400 font-mono pt-1 border-t border-blue-50">URL: /blog/{form.slug}</p>
+              <div className="text-xs text-gray-400 font-mono pt-1 border-t border-blue-50 space-y-0.5">
+                <p>URL: /blog/{form.slug}</p>
+                {form.targetLocations.map((city) => (
+                  <p key={city}>URL: /{city}/blog/{form.slug}</p>
+                ))}
+              </div>
             )}
           </div>
 

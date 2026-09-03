@@ -8,6 +8,7 @@ import { Result } from '@/app/models/Result';
 import { Video } from '@/app/models/Video';
 import { Course } from '@/app/models/Course';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
+import { getBlogCities } from '@/app/lib/blogSeo';
 
 // The current site's complete real-page URL inventory — extracted out of
 // app/sitemap.ts (which still owns the SITE_URL prefix / MetadataRoute
@@ -78,7 +79,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
       .select('_id name updatedAt')
       .lean() as Promise<any[]>,
     Blog.find({ active: true } as any)
-      .select('slug title updatedAt')
+      .select('slug title updatedAt targetLocations')
       .lean() as Promise<any[]>,
     LandingPage.find({ status: 'published' } as any)
       .select('slug updatedAt')
@@ -128,6 +129,21 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
       priority: 0.7,
       label: p.title,
     }));
+
+  // Location-targeted duplicates of the same post, same reasoning as
+  // serviceUrls above — one document, one URL per city it was explicitly
+  // opted into via targetLocations (see app/lib/blogSeo.ts).
+  const locationBlogUrls: SiteUrlEntry[] = blogPosts
+    .filter((p) => p.slug)
+    .flatMap((p) =>
+      getBlogCities(p).map((city): SiteUrlEntry => ({
+        path: `/${city}/blog/${p.slug}`,
+        lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.7,
+        label: p.title,
+      }))
+    );
 
   const landingPageUrls: SiteUrlEntry[] = landingPages
     .filter((lp) => lp.slug)
@@ -182,6 +198,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     ...serviceUrls,
     ...doctorUrls,
     ...blogUrls,
+    ...locationBlogUrls,
     ...landingPageUrls,
     ...storyUrls,
     ...resultUrls,

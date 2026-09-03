@@ -49,10 +49,10 @@ function formatDate(d?: string) {
   return d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 }
 
-function ArticleCard({ post }: { post: Post }) {
+function ArticleCard({ post, basePath }: { post: Post; basePath: string }) {
   return (
     <Link
-      href={`/blog/${post.slug}`}
+      href={`${basePath}/${post.slug}`}
       className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
       {/* 16:9 — the site's Blog Cover ratio standard (was 16:10) */}
@@ -94,11 +94,16 @@ export default function BlogPageClient({
   trendingServices,
   videos,
   postsPerPage = 9,
+  basePath = '/blog',
 }: {
   posts: Post[];
   postsPerPage?: number;
   trendingServices: TrendingService[];
   videos: VideoItem[];
+  // Set to `/${location}/blog` by the location-targeted listing route so
+  // every card/featured-post link stays within that city's URL space —
+  // defaults to the generic '/blog', unchanged for the existing page.
+  basePath?: string;
 }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -230,7 +235,7 @@ export default function BlogPageClient({
           <>
             {/* ── Featured article ── */}
             {featured && (
-              <Link href={`/blog/${featured.slug}`} className="group block mb-14">
+              <Link href={`${basePath}/${featured.slug}`} className="group block mb-14">
                 <div className="grid lg:grid-cols-2 gap-0 bg-white rounded-3xl overflow-hidden shadow-sm ring-1 ring-[#e8eff7] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                   <div className="relative aspect-[16/9] lg:aspect-auto lg:min-h-[360px] bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] overflow-hidden">
                     {featured.coverImage?.url ? (
@@ -278,7 +283,7 @@ export default function BlogPageClient({
               <section id="latest-articles" className="mb-16">
                 <h2 className="text-lg font-bold text-[#0B2560] mb-6">{isFiltering ? 'Results' : 'Latest Articles'}</h2>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {pagedPosts.map((p) => <ArticleCard key={p._id} post={p} />)}
+                  {pagedPosts.map((p) => <ArticleCard key={p._id} post={p} basePath={basePath} />)}
                 </div>
 
                 {totalPages > 1 && (
@@ -337,7 +342,7 @@ export default function BlogPageClient({
             <p className="text-xs font-bold text-[#3B82C4] uppercase tracking-widest mb-1">Doctor Recommended</p>
             <h2 className="text-lg font-bold text-[#0B2560] mb-6">Reviewed & Recommended Reads</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {doctorRecommended.map((p) => <ArticleCard key={p._id} post={p} />)}
+              {doctorRecommended.map((p) => <ArticleCard key={p._id} post={p} basePath={basePath} />)}
             </div>
           </section>
         )}
