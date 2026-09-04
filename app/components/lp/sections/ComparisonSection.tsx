@@ -49,12 +49,20 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
         </div>
 
+        {/* Column widths were fixed at w-28/w-24 (112px/96px) regardless of
+            viewport — on a narrow phone that reserves ~240px+ for the two
+            value columns alone before padding, leaving too little room for
+            the grid to fit its own width, so it silently overflowed the
+            viewport and clipped "Other Clinics" off the right edge (the
+            bug reported live). Narrower on mobile, same size from sm: up —
+            fits every column on-screen down to a 320px viewport, unchanged
+            on tablet/desktop. */}
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Header row */}
-          <div className="grid grid-cols-[1fr_auto_auto] bg-[#0B2560] text-white text-xs font-extrabold uppercase tracking-wider px-5 py-3.5 gap-4">
+          <div className="grid grid-cols-[1fr_auto_auto] bg-[#0B2560] text-white text-[10px] sm:text-xs font-extrabold uppercase tracking-wider px-3 sm:px-5 py-3.5 gap-2 sm:gap-4">
             <span>Feature</span>
-            <span className="w-28 text-center text-[#F5A623]">{usLabel}</span>
-            <span className="w-24 text-center text-white/50">{othersLabel}</span>
+            <span className="w-14 sm:w-28 text-center text-[#F5A623]">{usLabel}</span>
+            <span className="w-14 sm:w-24 text-center text-white/50">{othersLabel}</span>
           </div>
 
           {/* Rows */}
@@ -62,24 +70,28 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
             {rowsToShow.map((row, i) => (
               <div
                 key={i}
-                className={`grid grid-cols-[1fr_auto_auto] px-5 py-4 gap-4 items-center transition-colors ${
+                className={`grid grid-cols-[1fr_auto_auto] px-3 sm:px-5 py-4 gap-2 sm:gap-4 items-center transition-colors ${
                   i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                 }`}
               >
-                <span className="text-sm font-semibold text-gray-700">{row.label}</span>
-                <div className="w-28 flex justify-center">
+                <span className="text-xs sm:text-sm font-semibold text-gray-700">{row.label}</span>
+                <div className="w-14 sm:w-28 flex justify-center">
                   {row.us !== false ? (
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
-                      <CheckCircle size={13} /> Yes
+                    <span className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-3 py-1 rounded-full border border-green-100">
+                      <CheckCircle size={12} className="sm:hidden" />
+                      <CheckCircle size={13} className="hidden sm:block" />
+                      <span className="hidden sm:inline">Yes</span>
                     </span>
                   ) : (
                     <XCircle size={18} className="text-gray-300" />
                   )}
                 </div>
-                <div className="w-24 flex justify-center">
+                <div className="w-14 sm:w-24 flex justify-center">
                   {row.others ? (
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
-                      <CheckCircle size={13} /> Yes
+                    <span className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-3 py-1 rounded-full border border-green-100">
+                      <CheckCircle size={12} className="sm:hidden" />
+                      <CheckCircle size={13} className="hidden sm:block" />
+                      <span className="hidden sm:inline">Yes</span>
                     </span>
                   ) : (
                     <XCircle size={18} className="text-red-300" />

@@ -156,7 +156,14 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
         </>
       )}
 
-      <div className={`min-h-screen bg-white ${isPreview && lp.status !== 'published' ? 'pt-8' : ''}`}>
+      {/* pb-20 reserves space for StickyCta's fixed mobile bottom bar
+          (~64-70px tall) — without it, the last bit of real content (the
+          form's submit button/trust badge, or the footer's own last row)
+          sits directly under the fixed bar with zero clearance and gets
+          visually covered whenever the bar is showing. lg:pb-0 because the
+          bar is mobile-only (StickyCta's own `lg:hidden`) — desktop uses a
+          different, non-overlapping right-side strip. */}
+      <div className={`min-h-screen bg-white pb-20 lg:pb-0 ${isPreview && lp.status !== 'published' ? 'pt-8' : ''}`}>
         <LpHeader
           phone={phone}
           whatsapp={whatsapp}

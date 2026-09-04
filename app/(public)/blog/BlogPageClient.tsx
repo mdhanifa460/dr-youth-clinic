@@ -11,6 +11,9 @@ import FocalImage from '@/app/components/media/FocalImage';
 import { focalPointToObjectPosition } from '@/app/lib/media/focalPoint';
 import { BLOG_CATEGORIES, CATEGORY_COLOR } from '@/app/lib/blogCategories';
 import { useScrollOnChange } from '@/app/lib/useScrollOnChange';
+import { ALL_BLOG_CITIES } from '@/app/lib/blogSeo';
+
+const CITY_LABEL: Record<string, string> = { chennai: 'Chennai', bangalore: 'Bangalore', coimbatore: 'Coimbatore', kochi: 'Kochi' };
 
 interface Post {
   _id: string;
@@ -24,6 +27,7 @@ interface Post {
   publishedAt: string;
   featured: boolean;
   reviewedByDoctorId?: { name: string; title?: string; photo?: { url: string } } | null;
+  targetLocations?: string[];
 }
 
 interface TrendingService {
@@ -107,9 +111,20 @@ export default function BlogPageClient({
 }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  // Only meaningful on the generic /blog listing (basePath === '/blog') —
+  // a /[location]/blog page is already scoped to one city server-side, so
+  // showing a redundant branch filter there would just be confusing noise.
+  // 'All' means every post regardless of targeting, matching today's
+  // unfiltered behavior exactly when nothing is selected.
+  const [activeBranch, setActiveBranch] = useState('All');
   const [videoCategory, setVideoCategory] = useState('All');
   const [page, setPage] = useState(1);
   const gridRef = useScrollOnChange(activeCategory);
+
+  const isLocationScoped = basePath !== '/blog';
+  // Only show the filter at all if at least one visible post actually has
+  // branch targeting — an empty/useless filter row is worse than no filter.
+  const hasBranchTargeting = !isLocationScoped && posts.some((p) => p.targetLocations && p.targetLocations.length > 0);
 
   const popularSearches = useMemo(() => {
     const freq: Record<string, number> = {};
@@ -117,19 +132,25 @@ export default function BlogPageClient({
     return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([t]) => t);
   }, [posts]);
 
-  const isFiltering = !!search.trim() || activeCategory !== 'All';
+  const isFiltering = !!search.trim() || activeCategory !== 'All' || activeBranch !== 'All';
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     const byCategory = activeCategory === 'All' ? posts : posts.filter((p) => p.category === activeCategory);
-    if (!q) return byCategory;
-    return byCategory.filter(
+    // Consistent with what /[location]/blog itself shows for the same
+    // city — a post with no targeting at all is general/sitewide content,
+    // not specifically a "Chennai" post, so it's correctly excluded once a
+    // specific branch is selected (same as visiting /chennai/blog directly
+    // would only ever show posts actually targeted at Chennai).
+    const byBranch = activeBranch === 'All' ? byCategory : byCategory.filter((p) => p.targetLocations?.includes(activeBranch));
+    if (!q) return byBranch;
+    return byBranch.filter(
       (p) =>
         p.title.toLowerCase().includes(q) ||
         (p.excerpt || '').toLowerCase().includes(q) ||
         (p.tags || []).some((t) => t.toLowerCase().includes(q))
     );
-  }, [posts, activeCategory, search]);
+  }, [posts, activeCategory, activeBranch, search]);
 
   const featured = !isFiltering ? posts.find((p) => p.featured) || posts[0] : null;
 
@@ -157,7 +178,7 @@ export default function BlogPageClient({
   };
 
   // Reset to page 1 whenever the visible set changes underneath the pager.
-  useEffect(() => { setPage(1); }, [search, activeCategory]);
+  useEffect(() => { setPage(1); }, [search, activeCategory, activeBranch]);
 
   const videoCategories = useMemo(
     () => ['All', ...Array.from(new Set(videos.map((v) => v.category).filter(Boolean)))],
@@ -210,10 +231,21 @@ export default function BlogPageClient({
       <div ref={gridRef} className="max-w-7xl mx-auto px-4 md:px-6 py-10">
         {/* ── Category pills ── */}
         {!search && (
-          <div className="flex flex-wrap gap-2 mb-10">
+          <div className="flex flex-wrap gap-2 mb-4">
             <CategoryPill label="All" active={activeCategory === 'All'} onClick={() => setActiveCategory('All')} />
             {BLOG_CATEGORIES.map((c) => (
               <CategoryPill key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(c)} />
+            ))}
+          </div>
+        )}
+
+        {/* ── Branch pills — only when at least one post is branch-targeted ── */}
+        {!search && hasBranchTargeting && (
+          <div className="flex flex-wrap items-center gap-2 mb-10">
+            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mr-1">Branch:</span>
+            <CategoryPill label="All Branches" active={activeBranch === 'All'} onClick={() => setActiveBranch('All')} />
+            {ALL_BLOG_CITIES.map((city) => (
+              <CategoryPill key={city} label={CITY_LABEL[city]} active={activeBranch === city} onClick={() => setActiveBranch(city)} />
             ))}
           </div>
         )}

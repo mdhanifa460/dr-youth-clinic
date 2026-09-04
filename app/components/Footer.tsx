@@ -32,7 +32,15 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
   return (
     <footer className="bg-[#0B2560] text-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-10">
+      {/* pb-10 on its own only clears the fixed MobileStickyBar because
+          the layout's `mobile-sticky-offset` wrapper (app/(public)/layout.tsx)
+          only wraps {children}, not Footer — Footer renders after it, so
+          without its own reserve the copyright/legal-links row below sat
+          with zero clearance and was covered by the bar whenever a visitor
+          scrolled to the actual bottom of any public page. Same class of
+          bug reported and fixed on the LP page's own footer/sticky-bar
+          overlap. lg:pb-10 restores the original desktop-only padding. */}
+      <div className="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-[calc(72px+env(safe-area-inset-bottom,0px)+2.5rem)] lg:pb-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10">
 
           {/* COL 1 — BRAND */}
