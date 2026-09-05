@@ -51,6 +51,18 @@ function SliderPair({ pair, onDragStart }: { pair: BeforeAfterPair; onDragStart?
     <div
       ref={containerRef}
       className="relative aspect-square rounded-2xl overflow-hidden select-none cursor-col-resize shadow-xl"
+      // touch-action: pan-y — this is the actual fix for "can't drag the
+      // handle" on mobile. Nesting SliderPair inside the new horizontally-
+      // scrollable carousel track gave the browser a real native
+      // horizontal-scroll gesture on this element's ancestor; without this,
+      // a horizontal touch-drag on the image gets captured by that native
+      // scroll instead of reaching onTouchMove below (onTouchMove never
+      // called preventDefault, and couldn't reliably anyway — React attaches
+      // touchmove as a passive listener by default). pan-y explicitly cedes
+      // ONLY horizontal touch gestures on this element to this component's
+      // own JS, while still letting vertical page scroll pass through
+      // natively if a visitor's drag starts on the image but moves vertically.
+      style={{ touchAction: 'pan-y' }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}

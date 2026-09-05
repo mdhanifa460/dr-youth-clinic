@@ -57,7 +57,17 @@ export default function ProblemSection({ data }: { data: ProblemData }) {
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+        {/* Mobile/tablet: a fixed 2-column grid meant at least 2 rows even
+            for just 4 cards, filling most of the viewport before a visitor
+            reached anything else on the page (reported live). A horizontal
+            scroll-snap strip — same convention as the homepage's own
+            before/after carousel (app/components/homepage/BeforeAfterSection.tsx)
+            — shows every card at a comfortable reading size in one row
+            instead, with the next card visibly peeking in to signal it's
+            swipeable. lg: reverts to the original grid, unchanged — that
+            layout wasn't part of the reported issue and reads fine as a
+            real grid once there's enough width for it. */}
+        <div className="flex lg:grid lg:grid-cols-4 gap-4 md:gap-5 overflow-x-auto lg:overflow-visible snap-x snap-mandatory pb-2 lg:pb-0 -mx-5 px-5 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-[#0B2560]/10 [&::-webkit-scrollbar-thumb]:rounded-full">
           {cards.map((card, i) => {
             const Icon = ICONS[i % ICONS.length];
             return (
@@ -67,10 +77,7 @@ export default function ProblemSection({ data }: { data: ProblemData }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.5, delay: i * 0.1, ease: 'easeOut' }}
-                // Same odd-count fix as BenefitsSection: on the mobile 2-col
-                // grid, a lone trailing card gets centered instead of
-                // stranded on the left with empty space beside it.
-                className="group bg-[#f6faff] border border-gray-100 rounded-2xl p-5 md:p-6 hover:border-[#F5A623] hover:shadow-lg transition-all duration-300 [&:last-child:nth-child(odd)]:col-span-2 [&:last-child:nth-child(odd)]:max-w-[calc(50%-0.5rem)] [&:last-child:nth-child(odd)]:mx-auto lg:[&:last-child:nth-child(odd)]:col-span-1 lg:[&:last-child:nth-child(odd)]:max-w-none lg:[&:last-child:nth-child(odd)]:mx-0"
+                className="group shrink-0 w-[72vw] max-w-[280px] lg:w-auto lg:max-w-none snap-center bg-[#f6faff] border border-gray-100 rounded-2xl p-5 md:p-6 hover:border-[#F5A623] hover:shadow-lg transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 group-hover:bg-[#F5A623] group-hover:border-[#F5A623] flex items-center justify-center mb-4 transition-colors duration-300">
                   {card.icon ? (
@@ -85,6 +92,9 @@ export default function ProblemSection({ data }: { data: ProblemData }) {
             );
           })}
         </div>
+        {cards.length > 1 && (
+          <p className="lg:hidden text-center text-[11px] text-gray-400 mt-3">Swipe to see more</p>
+        )}
       </div>
     </section>
   );

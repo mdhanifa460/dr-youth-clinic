@@ -160,6 +160,7 @@ export default function LpRenderer({ sections, form, slug, variant = 'A', consul
               key={`solution-group-${i}`}
               slides={group.items.map((s) => <SolutionSection key={s.id} data={s.data} />)}
               intervalMs={carouselIntervalMs}
+              inlineDots
             />
           );
         }

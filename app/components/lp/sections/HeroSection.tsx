@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import NextImage from 'next/image';
 import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-react';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
@@ -89,9 +90,17 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
     trustedByLabel = 'Patients',
   } = data;
 
-  const bgStyle = backgroundImage
-    ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : {};
+  // Was a plain CSS `background-image: url(...)` on the section — that
+  // serves whatever full-resolution file was uploaded, completely
+  // unoptimized, with no responsive sizing and no load priority, unlike
+  // every other hero/banner image in this app (see GlassHeroBanner.tsx's
+  // <Image fill priority sizes="100vw" />, the established pattern this
+  // now matches). On a slow mobile connection that multi-MB original could
+  // take long enough to not have painted yet by the time a visitor actually
+  // looks at the page — reported live as "banner image not visible on
+  // mobile." Switching to next/image gets automatic responsive
+  // sizing/format negotiation (avif/webp) and `priority` marks it for
+  // earliest possible load, same as everywhere else this pattern is used.
 
   // ── inline form state ──
   const router = useRouter();
@@ -155,7 +164,18 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
   };
 
   return (
-    <section className="relative min-h-[100dvh] flex items-center overflow-hidden" style={bgStyle}>
+    <section className="relative min-h-[100dvh] flex items-center overflow-hidden">
+      {backgroundImage && (
+        <NextImage
+          src={backgroundImage}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+          aria-hidden="true"
+        />
+      )}
       {/* Overlay / gradient */}
       <div
         className="absolute inset-0"

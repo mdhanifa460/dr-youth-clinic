@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 interface HeroData {
   badge?: string;
   headline?: string;
@@ -32,10 +34,14 @@ export default function HeroSection({ data }: { data: HeroData }) {
 
   return (
     <>
-      <section
-        className="relative bg-[#0B2560] overflow-hidden"
-        style={backgroundImage ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-      >
+      <section className="relative bg-[#0B2560] overflow-hidden">
+        {/* Was a plain CSS background-image — unoptimized, no responsive
+            sizing, no load priority, unlike every other hero image in the
+            app (see GlassHeroBanner.tsx's <Image fill priority sizes>).
+            Same fix as the LP HeroSection's identical issue. */}
+        {backgroundImage && (
+          <Image src={backgroundImage} alt="" fill priority sizes="100vw" className="object-cover" aria-hidden="true" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] via-[#0B2560]/95 to-[#0B2560]/80" />
         <div className="absolute -top-40 -right-40 w-[36rem] h-[36rem] rounded-full bg-white/5 pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 w-96 h-96 rounded-full bg-[#F5A623]/10 pointer-events-none" />
