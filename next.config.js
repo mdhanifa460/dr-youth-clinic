@@ -45,7 +45,17 @@ const nextConfig = {
         { key: 'X-Frame-Options',         value: 'SAMEORIGIN' },
         { key: 'X-XSS-Protection',        value: '1; mode=block' },
         { key: 'Referrer-Policy',         value: 'strict-origin-when-cross-origin' },
-        { key: 'Permissions-Policy',      value: 'camera=(), microphone=(), geolocation=()' },
+        // geolocation=(self) — not geolocation=() — HomepageLocations.tsx and
+        // DoctorsSection.tsx both deliberately call navigator.geolocation to
+        // auto-detect the visitor's nearest branch (falling back to the
+        // server-detected city if denied/unavailable — never breaks either
+        // way). geolocation=() blocked this outright for every visitor, on
+        // every browser, regardless of whether they'd have allowed it —
+        // caught live via a real "Permissions policy violation" console
+        // warning, not a hypothetical. (self) still blocks any third-party
+        // iframe from requesting it; camera/microphone stay fully denied —
+        // nothing in this codebase uses either.
+        { key: 'Permissions-Policy',      value: 'camera=(), microphone=(), geolocation=(self)' },
         // HSTS and CSP's upgrade-insecure-requests only make sense once the site is
         // actually served over HTTPS. Chromium treats `localhost` as a secure origin
         // and honors both directives there too — sending them from `next dev` (plain
