@@ -377,8 +377,11 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
         // this exact ID. The widget's own inline "done" card (below) is
         // no longer the final state; router.push replaces the current
         // page, so it's only ever visible for the brief moment before
-        // navigation completes.
-        if (data.bookingId) router.push(`/book/success/${data.bookingId}`);
+        // navigation completes. Fixed /book/success path + bookingId/
+        // location as query params — see app/(public)/book/Form.tsx's own
+        // comment for why (a stable path an external ad tool can
+        // configure Thank-You-page tracking against).
+        if (data.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(data.bookingId)}&location=${encodeURIComponent((form.location || '').toLowerCase())}`);
         else setDone(true);
       } else setError(data.message || 'Could not book — please try again.');
     } catch { setError('Network error — please try again.'); }
@@ -694,8 +697,11 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
         // flow — a callback request is still a real Booking row
         // (service: 'Callback Request'), previously created correctly but
         // with the returned bookingId silently discarded and no
-        // navigation at all.
-        if (data.bookingId) router.push(`/book/success/${data.bookingId}`);
+        // navigation at all. Fixed /book/success path + bookingId/location
+        // as query params — see app/(public)/book/Form.tsx's own comment
+        // for why (a stable path an external ad tool can configure
+        // Thank-You-page tracking against).
+        if (data.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(data.bookingId)}&location=${encodeURIComponent((form.location || '').toLowerCase())}`);
         else setDone(true);
       } else setError(data.message || 'Could not submit — please try again.');
     } catch { setError('Network error — please try again.'); }

@@ -112,7 +112,12 @@ export default function FormSection({
         // "You're All Set!" card as a fallback for the edge case where
         // the API reports success with no bookingId, so this never
         // navigates to a broken /book/success/undefined.
-        if (json.bookingId) router.push(`/book/success/${json.bookingId}`);
+        // Fixed /book/success path + bookingId/location as query params —
+        // see app/(public)/book/Form.tsx's own comment on this exact line
+        // for why (a stable path an external ad tool can configure
+        // Thank-You-page tracking against). json.location may be empty
+        // for a location-less LP form; encodeURIComponent('') is harmless.
+        if (json.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(json.bookingId)}&location=${encodeURIComponent((json.location || '').toLowerCase())}`);
         else setSuccess(true);
       } else {
         setError(json.message || 'Something went wrong. Please try again.');

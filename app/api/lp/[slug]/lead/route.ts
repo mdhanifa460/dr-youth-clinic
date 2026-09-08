@@ -193,7 +193,7 @@ export async function POST(
       message: lp.form?.successMessage || "Thank you! We'll call you within 2 hours.",
       // A real Booking row (with this exact bookingId) is created above —
       // previously discarded here, so the client had no way to send the
-      // visitor to /book/success/{bookingId} like every other
+      // visitor to /book/success?bookingId=... like every other
       // booking-creating flow does (see FormSection.tsx).
       bookingId: booking.bookingId,
       alreadyProcessed: result.status !== "created",

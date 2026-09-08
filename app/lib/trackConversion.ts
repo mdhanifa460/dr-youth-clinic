@@ -89,7 +89,7 @@ export function trackBookingConversion(params: BookingConversionParams) {
   // above (which keeps firing unchanged for whatever it's already wired to
   // in the live GTM container) rather than a rename, so nothing already
   // live can break. Only ever called right after a successful booking-
-  // creation POST response — never on a page view of /book/success/{id} —
+  // creation POST response — never on a page view of /book/success —
   // so a manually reopened success URL can never create a fake conversion.
   // Skipped on a replayed idempotent response so a retry never fires twice
   // for the same booking.

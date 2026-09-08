@@ -219,10 +219,21 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
           }).catch(() => {});
         }
         // Configurable Booking Success page (app/admin/booking-success) —
-        // replaces the old inline "thank you" div below with a dedicated,
-        // shareable/bookmarkable route carrying real appointment details,
-        // CTAs, and the pre-visit checklist.
-        router.push(`/book/success/${data.bookingId}`);
+        // a dedicated route carrying real appointment details, CTAs, and
+        // the pre-visit checklist. The PATH is a fixed, stable
+        // /book/success for every booking — bookingId/location travel as
+        // query params instead of a path segment, specifically so an
+        // external ad tool (Google Ads/Meta "Thank You Page" URL
+        // matching) has one unchanging path to configure against, rather
+        // than a different URL per booking that can't be matched at all.
+        // bookingId is still required — the success page looks up the
+        // real Booking record by it server-side — this only moves where
+        // it lives in the URL, it doesn't remove it. location is
+        // lowercased for the same reason buildBookingCompletedParams()
+        // normalizes casing — this app's own entry points don't agree on
+        // casing, so every one of them is normalized here to the one
+        // canonical value external tools can rely on.
+        router.push(`/book/success?bookingId=${encodeURIComponent(data.bookingId)}&location=${encodeURIComponent(form.location.toLowerCase())}`);
         return;
       }
       else setError(data.message || 'Booking failed. Please try again.');

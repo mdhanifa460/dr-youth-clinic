@@ -57,7 +57,11 @@ export default function ConsultationFormBar({ data }: { data: any }) {
         // exists with this exact ID, so every place that creates one sends
         // the visitor to the same confirmation page instead of stranding
         // them on an inline message with no way back to their booking.
-        router.push(`/book/success/${data.bookingId}`);
+        // Fixed /book/success path + bookingId/location as query params —
+        // see Form.tsx's own comment on this exact line for why (a stable
+        // path an external ad tool can configure Thank-You-page tracking
+        // against).
+        router.push(`/book/success?bookingId=${encodeURIComponent(data.bookingId)}&location=${encodeURIComponent(city.toLowerCase())}`);
       } else {
         setError(data.message || 'Booking failed. Please try again.');
       }

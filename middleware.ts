@@ -268,6 +268,37 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL(cachedRedirect, req.url), 308);
   }
 
+  // Booking success page — same confirmed Next.js 14.2.35 bug as the
+  // comment above (page-level redirect()/notFound() calls don't reliably
+  // set the real HTTP status here either): verified live against a real
+  // production build — a plain redirect()/notFound() in
+  // app/(public)/book/success/[bookingId]/page.tsx and
+  // app/(public)/book/success/page.tsx both returned 200 with no
+  // Location header and rendered the wrong content. Handling both cases
+  // here instead, mirroring the Domain Migration fix's exact approach,
+  // is what actually works.
+  //
+  // Legacy /book/success/{bookingId} path (every booking flow now
+  // navigates straight to /book/success?bookingId=... instead — see
+  // app/(public)/book/Form.tsx's own comment for why: a stable path an
+  // external ad tool can configure Thank-You-page tracking against) —
+  // 308 (permanent) to the new query-param shape for any already-shared/
+  // bookmarked old-style link.
+  const legacyBookingSuccessMatch = pathname.match(/^\/book\/success\/([^\/]+)$/);
+  if (legacyBookingSuccessMatch) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/book/success";
+    url.searchParams.set("bookingId", legacyBookingSuccessMatch[1]);
+    return NextResponse.redirect(url, 308);
+  }
+  // /book/success with no bookingId at all (typed by hand, or an
+  // incomplete/stale link) — nothing real to show; 307 (temporary, this
+  // isn't a moved URL) back to the booking form instead of relying on the
+  // page's own notFound().
+  if (pathname === "/book/success" && !req.nextUrl.searchParams.get("bookingId")) {
+    return NextResponse.redirect(new URL("/book", req.url), 307);
+  }
+
   // Also carries x-pathname on every public request now (previously only
   // set for /admin routes) — required so app/not-found.tsx (Server
   // Component, no direct access to the failed URL otherwise) can read the

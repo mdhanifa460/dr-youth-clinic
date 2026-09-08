@@ -151,7 +151,11 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
         // real Booking row now exists with this exact ID. Keeps the
         // inline success card only as a fallback if the API reports
         // success with no bookingId.
-        if (json.bookingId) router.push(`/book/success/${json.bookingId}`);
+        // Fixed /book/success path + bookingId/location as query params —
+        // see app/(public)/book/Form.tsx's own comment for why (a stable
+        // path an external ad tool can configure Thank-You-page tracking
+        // against).
+        if (json.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(json.bookingId)}&location=${encodeURIComponent((json.location || '').toLowerCase())}`);
         else setSuccess(true);
       } else {
         setError(json.message || 'Something went wrong. Please try again.');
