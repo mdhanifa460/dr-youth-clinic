@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cloudImgFocal } from '@/app/lib/cloudinary-url';
 import { focalPointToObjectPosition, type FocalPoint } from '@/app/lib/media/focalPoint';
-import { useBeforeAfterDrag } from '@/app/lib/useBeforeAfterDrag';
 
 interface Pair {
   before: { url: string; publicId?: string };
@@ -33,78 +32,53 @@ function focalSrc(img: { url: string; publicId?: string }, focalPoint?: FocalPoi
     : img.url;
 }
 
+// Before and After render as two separate, always-visible panes side by
+// side — no drag-to-reveal comparison slider.
 function CompareSlider({ pair, serviceName }: { pair: Pair; serviceName: string }) {
-  const { pos, setPos, containerRef, dragHandlers } = useBeforeAfterDrag(50);
   const objectPosition = focalPointToObjectPosition(pair.focalPoint);
 
   return (
     <div
-      ref={containerRef}
-      className="relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm select-none touch-none"
+      className="relative flex rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
       style={{ aspectRatio: '1 / 1' }}
-      {...dragHandlers}
     >
-      {/* After (base layer) */}
-      <Image
-        src={focalSrc(pair.after, pair.focalPoint)}
-        alt={`${serviceName} after`}
-        fill
-        sizes="(max-width: 768px) 100vw, 50vw"
-        className="object-cover"
-        style={{ objectPosition }}
-        draggable={false}
-      />
-      {/* Before (clipped overlay) — same objectPosition as After, so the
-          two frames line up identically as the slider moves. */}
-      <Image
-        src={focalSrc(pair.before, pair.focalPoint)}
-        alt={`${serviceName} before`}
-        fill
-        sizes="(max-width: 768px) 100vw, 50vw"
-        className="object-cover"
-        style={{ objectPosition, clipPath: `inset(0 ${100 - pos}% 0 0)` }}
-        draggable={false}
-      />
-
-      {/* Divider line + handle */}
-      <div
-        className="absolute inset-y-0 pointer-events-none"
-        style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}
-      >
-        <div className="w-[2px] h-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.7)]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-[0_4px_20px_rgba(11,37,96,0.18)] flex items-center justify-center cursor-ew-resize">
-          <svg width="14" height="9" viewBox="0 0 16 10" fill="none">
-            <path d="M1 5H15M1 5L4 2M1 5L4 8M15 5L12 2M15 5L12 8" stroke="#0B2560" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+      <div className="relative flex-1 min-w-0">
+        <Image
+          src={focalSrc(pair.before, pair.focalPoint)}
+          alt={`${serviceName} before`}
+          fill
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="object-cover"
+          style={{ objectPosition }}
+          draggable={false}
+        />
+        <span className="pointer-events-none absolute top-3 left-3 bg-white/85 backdrop-blur text-[#0B2560] text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border border-gray-100 shadow-sm">Before</span>
       </div>
 
-      {/* Labels */}
-      <span className="pointer-events-none absolute top-3 left-3 bg-white/85 backdrop-blur text-[#0B2560] text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border border-gray-100 shadow-sm">Before</span>
-      <span className="pointer-events-none absolute top-3 right-3 bg-[#F5A623]/90 text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">After</span>
+      {/* Divider — static, purely visual separation between the two panes */}
+      <div className="w-[2px] self-stretch shrink-0 bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.7)] z-10" />
+
+      <div className="relative flex-1 min-w-0">
+        <Image
+          src={focalSrc(pair.after, pair.focalPoint)}
+          alt={`${serviceName} after`}
+          fill
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="object-cover"
+          style={{ objectPosition }}
+          draggable={false}
+        />
+        <span className="pointer-events-none absolute top-3 right-3 bg-[#F5A623]/90 text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">After</span>
+      </div>
 
       {/* Concern badge */}
       {pair.concern && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
           <span className="bg-white/90 backdrop-blur text-[#0B2560] text-[10px] font-bold px-3 py-1 rounded-full shadow">
             {pair.concern}
           </span>
         </div>
       )}
-
-      {/* Keyboard-accessible fallback — drag itself is handled by the
-          container's pointer handlers above (see
-          app/lib/useBeforeAfterDrag.ts). */}
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={Math.round(pos)}
-        onChange={(e) => setPos(Number(e.target.value))}
-        className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-        style={{ margin: 0 }}
-        aria-label={`Compare before and after for ${serviceName}`}
-      />
     </div>
   );
 }
@@ -153,15 +127,7 @@ export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
         </div>
       )}
 
-      {/* Drag hint */}
-      <div className="flex items-center gap-2 text-xs text-gray-500">
-        <svg width="13" height="9" viewBox="0 0 15 10" fill="none">
-          <path d="M1 5H14M1 5L3.5 2.5M1 5L3.5 7.5M14 5L11.5 2.5M14 5L11.5 7.5" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        Drag the slider to compare
-      </div>
-
-      {/* Slider */}
+      {/* Comparison */}
       <div className="relative">
         <CompareSlider pair={pair} serviceName={serviceName} />
 

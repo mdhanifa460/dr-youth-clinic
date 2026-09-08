@@ -21,106 +21,49 @@ interface BeforeAfterData {
   pairs?: BeforeAfterPair[];
 }
 
-// `onDragStart` marks the carousel as user-interacted (see BeforeAfterSection
-// below) — the drag handle's own touch gesture takes priority within the
-// image itself, but the very first touch/drag anywhere on a card is also a
-// reasonable signal that the visitor is actively engaging, so auto-advance
-// stops there rather than yanking a card away mid-comparison.
-function SliderPair({ pair, onDragStart }: { pair: BeforeAfterPair; onDragStart?: () => void }) {
-  const [position, setPosition] = useState(50);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-
-  const updatePosition = useCallback((clientX: number) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    const pct = Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100));
-    setPosition(pct);
-  }, []);
-
-  const onMouseDown = () => { isDragging.current = true; onDragStart?.(); };
-  const onMouseMove = (e: React.MouseEvent) => { if (isDragging.current) updatePosition(e.clientX); };
-  const onMouseUp = () => { isDragging.current = false; };
-  const onTouchStart = () => { onDragStart?.(); };
-  const onTouchMove = (e: React.TouchEvent) => { updatePosition(e.touches[0].clientX); };
-
+// Before and After render as two separate, always-visible panes side by
+// side — no drag-to-reveal comparison slider.
+function SliderPair({ pair }: { pair: BeforeAfterPair }) {
   const objectPosition = focalPointToObjectPosition(pair.focalPoint);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative aspect-square rounded-2xl overflow-hidden select-none cursor-col-resize shadow-xl"
-      // touch-action: pan-y — this is the actual fix for "can't drag the
-      // handle" on mobile. Nesting SliderPair inside the new horizontally-
-      // scrollable carousel track gave the browser a real native
-      // horizontal-scroll gesture on this element's ancestor; without this,
-      // a horizontal touch-drag on the image gets captured by that native
-      // scroll instead of reaching onTouchMove below (onTouchMove never
-      // called preventDefault, and couldn't reliably anyway — React attaches
-      // touchmove as a passive listener by default). pan-y explicitly cedes
-      // ONLY horizontal touch gestures on this element to this component's
-      // own JS, while still letting vertical page scroll pass through
-      // natively if a visitor's drag starts on the image but moves vertically.
-      style={{ touchAction: 'pan-y' }}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-    >
-      {/* After image (full bg) */}
-      <Image
-        src={pair.after!.url!}
-        alt="After"
-        fill
-        sizes="(max-width: 768px) 88vw, 448px"
-        className="object-cover"
-        style={{ objectPosition }}
-        draggable={false}
-      />
-
-      {/* Before image (clipped to left portion) — same objectPosition as
-          After so the two frames line up as the slider moves. */}
-      <div
-        className="absolute inset-0"
-        style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
-      >
+    <div className="relative flex aspect-square rounded-2xl overflow-hidden shadow-xl">
+      <div className="relative flex-1 min-w-0">
         <Image
           src={pair.before!.url!}
           alt="Before"
           fill
-          sizes="(max-width: 768px) 88vw, 448px"
+          sizes="(max-width: 768px) 44vw, 224px"
           className="object-cover"
           style={{ objectPosition }}
           draggable={false}
         />
+        <span className="absolute top-3 left-3 bg-black/60 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
+          BEFORE
+        </span>
       </div>
 
-      {/* Slider handle */}
-      <div
-        className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg pointer-events-none"
-        style={{ left: `${position}%` }}
-      >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-2xl flex items-center justify-center border-2 border-[#0B2560]">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M6 9L2 5M6 9L2 13M12 9L16 5M12 9L16 13" stroke="#0B2560" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </div>
-      </div>
+      {/* Divider — static, purely visual separation between the two panes */}
+      <div className="w-0.5 self-stretch shrink-0 bg-white shadow-lg z-10" />
 
-      {/* Labels */}
-      <span className="absolute top-3 left-3 bg-black/60 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
-        BEFORE
-      </span>
-      <span className="absolute top-3 right-3 bg-[#0B2560]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
-        AFTER
-      </span>
+      <div className="relative flex-1 min-w-0">
+        <Image
+          src={pair.after!.url!}
+          alt="After"
+          fill
+          sizes="(max-width: 768px) 44vw, 224px"
+          className="object-cover"
+          style={{ objectPosition }}
+          draggable={false}
+        />
+        <span className="absolute top-3 right-3 bg-[#0B2560]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
+          AFTER
+        </span>
+      </div>
 
       {/* Treatment badge */}
       {pair.label && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-[#0B2560] text-xs font-bold px-3 py-1.5 rounded-full shadow whitespace-nowrap pointer-events-none">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-[#0B2560] text-xs font-bold px-3 py-1.5 rounded-full shadow whitespace-nowrap pointer-events-none z-10">
           {pair.label}
         </div>
       )}
@@ -136,11 +79,9 @@ function SliderPair({ pair, onDragStart }: { pair: BeforeAfterPair; onDragStart?
 //
 // Auto-advance + manual are both supported, but manual always wins outright
 // rather than the two fighting for control: a gentle auto-advance runs
-// every 4.5s until the FIRST sign of real engagement (the user scrolls the
-// strip themselves, or starts dragging a card's own before/after handle) —
-// at that point it stops permanently for this page view. Auto-rotating a
-// comparison a visitor is actively mid-drag on would yank it away under
-// their thumb, which is worse than not auto-advancing at all.
+// every 4.5s until the FIRST sign of real engagement (the visitor scrolls
+// the strip themselves) — at that point it stops permanently for this page
+// view.
 function MobileCarousel({ pairs }: { pairs: BeforeAfterPair[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const userInteractedRef = useRef(false);
@@ -187,7 +128,7 @@ function MobileCarousel({ pairs }: { pairs: BeforeAfterPair[] }) {
       >
         {pairs.map((pair, i) => (
           <div key={i} className="shrink-0 w-[88vw] max-w-xs snap-center">
-            <SliderPair pair={pair} onDragStart={stopAutoAdvance} />
+            <SliderPair pair={pair} />
           </div>
         ))}
       </div>
@@ -212,7 +153,7 @@ function MobileCarousel({ pairs }: { pairs: BeforeAfterPair[] }) {
           ))}
         </div>
       )}
-      <p className="text-center text-[11px] text-gray-400 mt-2">Swipe to see more · drag a photo to compare</p>
+      <p className="text-center text-[11px] text-gray-400 mt-2">Swipe to see more</p>
     </div>
   );
 }
@@ -238,7 +179,6 @@ export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) 
             Transformations
           </p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
-          <p className="text-sm text-gray-500 mt-3 hidden md:block">Drag the slider left or right to reveal the transformation</p>
         </div>
 
         {/* Mobile: horizontal swipe carousel of every case (the fix for the

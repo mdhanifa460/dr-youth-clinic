@@ -4,10 +4,10 @@ import CTAButton from "@/app/components/banners/shared/CTAButton";
 import BeforeAfterSlider from "@/app/components/banners/shared/BeforeAfterSlider";
 import ImageOverlay from "@/app/components/banners/shared/ImageOverlay";
 
-// Headline/trust-message/CTA laid out around the compare-slider mechanics
-// (BeforeAfterSlider, adapted from the existing app/components/SliderCard.tsx
-// rather than a fork of the drag-compare math) — falls back to a single
-// static image when beforeImage isn't set, same "hasImages" guard SliderCard
+// Headline/trust-message/CTA laid out around the Before/After comparison
+// (BeforeAfterSlider — two separate side-by-side panes, adapted from the
+// existing app/components/SliderCard.tsx) — falls back to a single static
+// image when beforeImage isn't set, same "hasImages" guard SliderCard
 // already uses.
 export default function BeforeAfterBanner({ banner }: { banner: BannerDoc }) {
   const hasPair = !!(banner.beforeImage?.url && banner.desktopImage?.url);
@@ -29,8 +29,7 @@ export default function BeforeAfterBanner({ banner }: { banner: BannerDoc }) {
         <div>
           {hasPair ? (
             // Overlay is deliberately not applied here — it would sit on
-            // top of the drag-to-compare divider/handle and obscure the
-            // interaction it's meant to highlight.
+            // top of the Before/After labels and obscure the comparison.
             <BeforeAfterSlider before={banner.beforeImage.url} after={banner.desktopImage.url} title={banner.headline} />
           ) : banner.desktopImage?.url ? (
             <div className="rounded-3xl overflow-hidden shadow-[0_8px_34px_rgba(11,37,96,0.08)] border border-gray-100 relative h-[260px] sm:h-[320px]">

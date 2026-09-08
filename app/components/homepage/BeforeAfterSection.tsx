@@ -21,11 +21,10 @@ const FALLBACK_PAIRS = [
 // section) — previously this showed exactly one card at a time
 // regardless of screen size, with a JS pager (arrows/dots/auto-advance)
 // to move between them. A native scroll tray means the visible card
-// count adjusts itself per breakpoint with no JS "how many fit" logic,
-// and dragging to scroll the tray no longer conflicts with dragging the
-// before/after divider inside a card, since scrolling happens on the
-// horizontal axis at the tray level while the divider drag is a
-// container-scoped pointer capture (see useBeforeAfterDrag.ts).
+// count adjusts itself per breakpoint with no JS "how many fit" logic.
+// Each card (SliderCard) shows Before/After as two separate side-by-side
+// panes, not a drag-to-reveal comparison, so there's no divider-drag
+// gesture to conflict with the tray's own horizontal scroll either way.
 export default function BeforeAfterSection({ data }: { data: any }) {
   const {
     headline = 'Real Results, Real Confidence',
@@ -36,10 +35,8 @@ export default function BeforeAfterSection({ data }: { data: any }) {
   const displayPairs = (pairs.length > 0 ? pairs : FALLBACK_PAIRS).slice(0, 6);
   const trayRef = useRef<HTMLDivElement>(null);
   // Paused while the visitor is actively engaging with the tray — hovering
-  // (desktop), touching (mobile swipe), or dragging a card's own
-  // before/after divider (useBeforeAfterDrag.ts) — so auto-advance never
-  // fights a manual scroll or an in-progress divider drag. Same `paused`
-  // pattern as BannerCarousel.tsx.
+  // (desktop) or touching (mobile swipe) — so auto-advance never fights a
+  // manual scroll. Same `paused` pattern as BannerCarousel.tsx.
   const [paused, setPaused] = useState(false);
 
   const scrollByCard = (dir: 1 | -1) => {
@@ -109,13 +106,13 @@ export default function BeforeAfterSection({ data }: { data: any }) {
           )}
         </div>
 
-        {/* DRAG HINT */}
+        {/* SWIPE HINT */}
         <div className="mb-5 md:mb-6">
           <span className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#EBE8E3] rounded-full px-4 py-2 text-xs text-[#9CA3AF] font-medium shadow-sm">
             <svg width="15" height="10" viewBox="0 0 15 10" fill="none">
               <path d="M1 5H14M1 5L3.5 2.5M1 5L3.5 7.5M14 5L11.5 2.5M14 5L11.5 7.5" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Drag each photo to compare — swipe to see more
+            Swipe to see more
           </span>
         </div>
 

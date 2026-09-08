@@ -83,15 +83,6 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
       {/* FILTER + GRID */}
       <section ref={gridRef} className="max-w-7xl mx-auto px-6 md:px-10 py-12">
 
-        {/* Drag hint */}
-        <div className="mb-6">
-          <span className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#EBE8E3] rounded-full px-4 py-2 text-xs text-[#9CA3AF] font-medium shadow-sm">
-            <svg width="15" height="10" viewBox="0 0 15 10" fill="none">
-              <path d="M1 5H14M1 5L3.5 2.5M1 5L3.5 7.5M14 5L11.5 2.5M14 5L11.5 7.5" stroke="#9CA3AF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Drag the slider on each card to compare
-          </span>
-        </div>
 
         {/* Category filter */}
         <div className="flex flex-wrap gap-2 mb-8">
