@@ -7,6 +7,7 @@ import {
 import { extractMigrationParams, MIGRATION_FIRST_COOKIE, MIGRATION_FIRST_MAX_AGE } from "@/app/lib/migrationAttribution";
 import { normalizeOldUrl } from "@/app/lib/domainMigration/parseSitemap";
 import { getCachedRedirect } from "@/app/lib/domainMigration/redirectCache";
+import { parseAdminAllowlist, isIpAllowed, getRequestIp } from "@/app/lib/adminIpAllowlist";
 
 // Canonical www -> non-www redirect. Confirmed LIVE before adding this
 // (not assumed): both hostnames already resolve to this exact Vercel
@@ -22,6 +23,9 @@ const CANONICAL_HOSTNAME = new URL(CANONICAL_SITE_URL).hostname;
 const WWW_HOSTNAME = `www.${CANONICAL_HOSTNAME}`;
 
 const ADMIN_COOKIE = "admin_session";
+// Short-lived, path-scoped — holds the post-login destination instead of a
+// ?next= query param. See its own set-site for why.
+const ADMIN_LOGIN_NEXT_COOKIE = "admin_login_next";
 const LOCATION_COOKIE = "preferred_location";
 // Must mirror the exact fallback chain in app/lib/adminAuth.ts — that file
 // signs session cookies with this same chain, so if the two ever diverge,
@@ -207,6 +211,24 @@ export async function middleware(req: NextRequest) {
   const isAdminApi = pathname.startsWith("/api/admin");
 
   if (isAdminPage || isAdminApi) {
+    // Optional network-level restriction, checked before anything else in
+    // this block (including the login page itself and the Google OAuth
+    // callback — both are still requests FROM the admin's own browser, on
+    // the admin's own network, so there's no reason to exempt them). OFF
+    // by default: ADMIN_IP_ALLOWLIST unset/empty means unrestricted,
+    // exactly today's behavior. A blanket 404 (not a 403 explaining why)
+    // for a blocked request — outside the allowed network, this should
+    // look like nothing is there at all, not confirm an admin panel
+    // exists to probe further. See app/lib/adminIpAllowlist.ts's own
+    // comment for why this is env-var-configured rather than DB/UI-driven
+    // (so a wrong entry can never lock the admin out with no way back in).
+    const allowlist = parseAdminAllowlist(process.env.ADMIN_IP_ALLOWLIST);
+    if (!isIpAllowed(getRequestIp(req), allowlist)) {
+      return isAdminApi
+        ? NextResponse.json({ success: false, message: "Not found" }, { status: 404 })
+        : new NextResponse("Not found", { status: 404 });
+    }
+
     if (pathname === "/admin/login" || pathname === "/api/admin/login") {
       return withPathname(req);
     }
@@ -239,10 +261,29 @@ export async function middleware(req: NextRequest) {
         );
       }
 
-      const loginUrl = req.nextUrl.clone();
-      loginUrl.pathname = "/admin/login";
-      loginUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(loginUrl);
+      // The intended post-login destination used to travel as a
+      // ?next=/admin/... query parameter. Confirmed LIVE (via a direct
+      // curl through a Zscaler-secured network) that a corporate security
+      // gateway was blocking exactly that URL shape — the bare
+      // /admin/login loaded fine, but /admin/login?next=%2Fadmin%2F...
+      // came back as a Zscaler block page, almost certainly a generic
+      // anti-open-redirect heuristic many proxies apply to any
+      // next=/redirect=/return_to=-shaped query string, regardless of
+      // whether it's actually exploitable (this one always was — the
+      // login page itself already validates it's an /admin path — but a
+      // corporate proxy has no way to know that). Moving it to a
+      // short-lived, path-scoped cookie means the redirect URL is just
+      // /admin/login with no query string at all, so there's nothing
+      // left for that kind of pattern-matching to trip on. See
+      // app/admin/login/page.tsx's getSafeRedirectPath() for the reader.
+      const res = NextResponse.redirect(new URL("/admin/login", req.url));
+      res.cookies.set(ADMIN_LOGIN_NEXT_COOKIE, pathname, {
+        path: "/admin",
+        maxAge: 300,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+      return res;
     }
 
     return withPathname(req);

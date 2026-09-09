@@ -6,8 +6,22 @@ import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 
 const logoSrc = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
 
+// Reads the post-login destination from a cookie rather than a ?next=
+// query param — middleware.ts sets ADMIN_LOGIN_NEXT_COOKIE ("admin_login_
+// next") instead of a query string specifically because a corporate
+// security gateway (confirmed live: Zscaler) was blocking the
+// query-param form outright, almost certainly a generic anti-open-
+// redirect heuristic on any next=/redirect=-shaped parameter. See
+// middleware.ts's own comment at the cookie's set-site for the full story.
+const ADMIN_LOGIN_NEXT_COOKIE = "admin_login_next";
+
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 const getSafeRedirectPath = () => {
-  const next = new URLSearchParams(window.location.search).get("next");
+  const next = readCookie(ADMIN_LOGIN_NEXT_COOKIE);
 
   if (!next || !next.startsWith("/admin") || next.startsWith("/admin/login")) {
     return "/admin";
