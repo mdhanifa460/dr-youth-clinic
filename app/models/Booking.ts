@@ -79,6 +79,18 @@ const BookingSchema = new mongoose.Schema(
       enum: ["new","contacted","follow_up","confirmed","arrived","completed","no_show","cancelled"],
       default: "new",
     },
+    // Abandoned-form recovery — set true when a visitor typed their own
+    // phone number (and usually name) into an LP form but left before
+    // hitting Submit (see app/api/lp/[slug]/partial-lead/route.ts). Still
+    // lands in the normal "New Lead" pipeline (status stays "new") so
+    // nothing else about the CRM changes — this flag exists purely so
+    // staff know to use honest "we noticed you were checking out our
+    // site..." outreach rather than treating it as a completed booking.
+    // Set back to false the moment the same visitor actually completes
+    // the real form (see that same route's own comment on the upgrade
+    // path) — a partial record never stays partial once it becomes real.
+    isPartial:     { type: Boolean, default: false },
+    partialSavedAt: { type: Date, default: null },
 
     // Where did this lead come from? Not an enum — the list of valid
     // sources is admin-configurable (Settings.booking.sources), not fixed

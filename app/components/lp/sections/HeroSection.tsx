@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -110,6 +110,48 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
   const [error, setError] = useState('');
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const getIdempotencyKey = useIdempotencyKey();
+
+  // Abandoned-form recovery — a visitor who types their own real phone
+  // number and then leaves without hitting Submit currently has that data
+  // thrown away entirely. Fires once per page load (partialSentRef guards
+  // against firing again on every subsequent blur/unload), only once the
+  // phone number actually looks valid, via a dedicated best-effort route
+  // (app/api/lp/[slug]/partial-lead/route.ts) that never surfaces an
+  // error — this is a background save, not something the visitor asked
+  // for. formRef holds the latest form values so the beforeunload
+  // listener (registered once on mount) always reads current data, not a
+  // stale closure from the first render.
+  const partialSentRef = useRef(false);
+  const formRef = useRef(form);
+  formRef.current = form;
+
+  const sendPartial = () => {
+    if (partialSentRef.current || success) return;
+    const f = formRef.current;
+    if (!isValidIndianMobile(f.phone)) return;
+    partialSentRef.current = true;
+    fetch(`/api/lp/${slug}/partial-lead`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: f.name, phone: f.phone, email: f.email }),
+      keepalive: true,
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    const onLeave = () => sendPartial();
+    // visibilitychange is the one that actually fires reliably on mobile —
+    // iOS Safari in particular often skips beforeunload entirely when a
+    // tab is backgrounded/swiped away rather than a real page unload.
+    const onVisibility = () => { if (document.visibilityState === 'hidden') sendPartial(); };
+    window.addEventListener('beforeunload', onLeave);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', onLeave);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -374,14 +416,24 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                         type="tel"
                         value={form.phone}
                         onChange={(e) => set('phone', e.target.value)}
+                        onBlur={sendPartial}
                         placeholder={phonePlaceholder}
                         required
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
                       />
+                      {/* Transparent, not silent — tells the visitor
+                          exactly what's happening rather than quietly
+                          capturing their number the moment they blur the
+                          field. This is the honest alternative to how a
+                          lot of sites do this invisibly. */}
+                      <p className="text-[11px] text-gray-400 -mt-1.5 flex items-center gap-1">
+                        💾 We save your progress as you go — no need to finish in one go.
+                      </p>
                       <input
                         type="email"
                         value={form.email}
                         onChange={(e) => set('email', e.target.value)}
+                        onBlur={sendPartial}
                         placeholder={emailPlaceholder}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
                       />

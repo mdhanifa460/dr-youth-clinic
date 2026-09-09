@@ -103,6 +103,63 @@ export async function POST(
 
     const previousBookings = await (Booking as any).countDocuments({ phone: formattedPhone });
 
+    // Upgrade path for a partial-lead record (see
+    // app/api/lp/[slug]/partial-lead/route.ts) — the same visitor who
+    // abandoned this exact form earlier and got auto-saved is now
+    // completing it for real. Update that existing document in place
+    // (isPartial:false, same bookingId) instead of creating a second
+    // record for one person. Same 24h window as the partial-save route so
+    // the two stay consistent about what counts as "the same visit." Runs
+    // regardless of whether an idempotencyKey was sent — that check above
+    // only short-circuits a retry of THIS SAME submission attempt, an
+    // orthogonal concern to "does an earlier partial exist for this phone."
+    {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const existingPartial = await (Booking as any).findOne({
+        formattedPhone, lpSlug: params.slug, isPartial: true, createdAt: { $gte: since },
+      });
+      if (existingPartial) {
+        const attribution = buildAttributionFields((n) => req.cookies.get(n)?.value);
+        const resolvedSource = attribution.utmSource || 'landing-page';
+        Object.assign(existingPartial, {
+          name, email: email || '', isPartial: false, notes,
+          isReturnVisit: previousBookings > 1, source: resolvedSource, ...attribution,
+          // Saved so a genuine network retry of this exact submission (not
+          // to be confused with a return visit — same idempotencyKey) is
+          // still caught by the idempotencyKey lookup at the top of this
+          // function, same as the normal creation path below.
+          ...(idempotencyKey ? { idempotencyKey } : {}),
+        });
+        await existingPartial.save();
+        const booking = existingPartial.toObject();
+
+        pushBookingToCrm(booking).catch(() => {});
+        qualifyAndPersist(booking, { reason: 'auto:initial' }).catch(() => {});
+        checkIpRisk(ip).then((r) => {
+          if (r.checked) (Booking as any).updateOne({ _id: booking._id }, { $set: { ipRiskFlagged: r.isVpnOrProxy } }).catch(() => {});
+        }).catch(() => {});
+        await (LandingPage as any).findByIdAndUpdate(lp._id, { $inc: { 'analytics.leads': 1, ...(variant === 'B' ? { 'abTest.variantB.leads': 1 } : {}) } });
+        if (lp.form?.whatsappNotify) {
+          getClinicNotifyNumber(location).then((to) => {
+            if (!to) return;
+            sendWhatsAppText(to, `🆕 New Landing Page Lead\n\nCampaign: ${lp.title}\nName: ${name}\nPhone: ${formattedPhone}${email ? `\nEmail: ${email}` : ''}${location ? `\nLocation: ${location}` : ''}`).catch(() => {});
+          }).catch(() => {});
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: lp.form?.successMessage || "Thank you! We'll call you within 2 hours.",
+          bookingId: booking.bookingId,
+          alreadyProcessed: false,
+          location: booking.location || undefined,
+          source: booking.source || undefined,
+          medium: booking.utmMedium || undefined,
+          campaign: booking.utmCampaign || undefined,
+          sourceAccount: booking.sourceAccount || undefined,
+        });
+      }
+    }
+
     const bookingId = 'DR-' + Date.now();
 
     const attribution = buildAttributionFields((name) => req.cookies.get(name)?.value);

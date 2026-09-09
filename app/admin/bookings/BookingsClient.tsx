@@ -45,6 +45,8 @@ interface Booking {
   internalNote?: string;
   treatmentValue?: number;
   isReturnVisit?: boolean;
+  // Abandoned-form recovery — see app/models/Booking.ts's own comment.
+  isPartial?: boolean;
   assignedTo?: string;
   contactedAt?: string;
   convertedToAppointmentId?: string;
@@ -533,6 +535,19 @@ function BookingDrawer({
               </div>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <StatusBadge status={status} />
+                {/* Abandoned-form recovery (app/api/lp/[slug]/partial-lead)
+                    — this visitor typed their own number but never hit
+                    Submit. Flagged distinctly so staff open with an
+                    honest "we noticed you were checking out our site..."
+                    rather than treating it as a completed booking. */}
+                {booking.isPartial && (
+                  <span
+                    title="This visitor typed their details but didn't complete the form — reach out with an honest 'we noticed you were checking out our site' opener, not as a completed booking"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+                  >
+                    💾 Partial — didn&apos;t complete
+                  </span>
+                )}
                 <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${src.color}`}>
                   {src.icon} {src.label}
                 </span>

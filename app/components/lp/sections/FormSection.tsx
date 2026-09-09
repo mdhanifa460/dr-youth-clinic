@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader, CheckCircle, Phone, Star, ShieldCheck } from 'lucide-react';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { isValidIndianMobile } from '@/app/lib/phone';
 
 interface FormField {
   id: string;
@@ -68,6 +69,41 @@ export default function FormSection({
   const getIdempotencyKey = useIdempotencyKey();
 
   const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
+
+  // Abandoned-form recovery — same reasoning and mechanism as
+  // HeroSection.tsx's own sendPartial (see that file's comment). Field ids
+  // here are admin-configurable, not fixed, so the same
+  // name/phone/email lookup the real submit handler below already uses
+  // (form['phone'] || form['mobile'] || form['tel']) is reused here too.
+  const partialSentRef = useRef(false);
+  const formRef = useRef(form);
+  formRef.current = form;
+
+  const sendPartial = () => {
+    if (partialSentRef.current || success) return;
+    const f = formRef.current;
+    const phone = f['phone'] || f['mobile'] || f['tel'] || '';
+    if (!isValidIndianMobile(phone)) return;
+    partialSentRef.current = true;
+    fetch(`/api/lp/${slug}/partial-lead`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: f['name'] || f['full-name'] || '', phone, email: f['email'] || '' }),
+      keepalive: true,
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    const onLeave = () => sendPartial();
+    const onVisibility = () => { if (document.visibilityState === 'hidden') sendPartial(); };
+    window.addEventListener('beforeunload', onLeave);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', onLeave);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,10 +258,18 @@ export default function FormSection({
                           type={field.type}
                           value={form[field.id] || ''}
                           onChange={(e) => set(field.id, e.target.value)}
+                          onBlur={sendPartial}
                           placeholder={field.placeholder}
                           required={field.required}
                           className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
                         />
+                      )}
+                      {/* Transparent, not silent — same reasoning as
+                          HeroSection.tsx's identical microcopy. */}
+                      {field.type === 'tel' && (
+                        <p className="text-[11px] text-gray-400 mt-1.5">
+                          💾 We save your progress as you go — no need to finish in one go.
+                        </p>
                       )}
                     </div>
                   );
