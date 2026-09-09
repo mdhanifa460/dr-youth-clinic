@@ -151,6 +151,28 @@ const SOURCE_META: Record<string, { label: string; icon: string; color: string }
   other:     { label: "Other",      icon: "📌", color: "bg-gray-50 text-gray-500"    },
 };
 
+// `Booking.source` is open-ended — app/api/booking/route.ts's own
+// resolvedSource falls back to the RAW utm_source string verbatim
+// ("adwords", "bing", any ad platform's own value), not a fixed enum, so
+// SOURCE_META above can never have every real key covered. The previous
+// inline lookup, `SOURCE_META[source || "website"] || SOURCE_META.other`,
+// silently displayed a real, correctly-captured source (e.g. "adwords")
+// as the generic, unhelpful "Other" whenever it wasn't one of the
+// hand-picked keys — reported live as "unable to check the UTM" even
+// though the actual UTM data was fully present in the Marketing
+// Attribution section right below it. "Other" should mean "genuinely no
+// source data," never "a real value we didn't bother to add a label
+// for." Preserves the exact existing behavior for a genuinely empty
+// source (defaults to "website", unchanged) — only the "non-empty but
+// unrecognized" case is different: it now shows the real value itself
+// (capitalized) instead of "Other".
+function getSourceMeta(source?: string) {
+  const key = source || "website";
+  if (SOURCE_META[key]) return SOURCE_META[key];
+  if (!source) return SOURCE_META.other;
+  return { label: source.charAt(0).toUpperCase() + source.slice(1), icon: SOURCE_META.other.icon, color: SOURCE_META.other.color };
+}
+
 // HOW a booking converted (Phase 2) — deliberately a separate small map
 // from SOURCE_META above, which is WHERE it came from. "" covers a
 // booking that predates this field (undefined) or one this route simply
@@ -485,7 +507,7 @@ function BookingDrawer({
     setSavingLocation(false);
   }
 
-  const src = SOURCE_META[booking.source || "website"] || SOURCE_META.other;
+  const src = getSourceMeta(booking.source);
 
   return (
     <>
@@ -1101,10 +1123,17 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
 
   function exportCSV() {
     const BOM = "﻿";
-    const header = ["Booking ID","Name","Phone","Email","Service","Location","Date","Time","Status","Source","Medium","Campaign","Conversion Channel","Campaign Source/Medium","Value","Concern","Created"].join(",");
+    // Term/Click ID/Landing Page added — all three are already captured on
+    // every ad-driven lead (see e.g. a real Google Ads lead's utmTerm,
+    // clickId, landingPage fields) but weren't in this export, which is
+    // exactly the "unable to check the UTM" gap reported live: the
+    // Source/Medium/Campaign columns alone don't show which search term or
+    // landing page actually drove a given lead.
+    const header = ["Booking ID","Name","Phone","Email","Service","Location","Date","Time","Status","Source","Medium","Campaign","Term","Click ID","Landing Page","Conversion Channel","Campaign Source/Medium","Value","Concern","Created"].join(",");
     const rows = bookings.map((b) => [
       b.bookingId, b.name, b.phone, b.email, b.service, b.location, b.date, b.time,
-      b.status, b.source, b.utmMedium, b.utmCampaign, b.conversionChannel || channelLabel(b.conversionChannel, b.source).label,
+      b.status, b.source, b.utmMedium, b.utmCampaign, b.utmTerm, b.clickId, b.landingPage,
+      b.conversionChannel || channelLabel(b.conversionChannel, b.source).label,
       b.lastTouchSource, b.treatmentValue ?? "", b.concern, b.createdAt,
     ].map((v) => {
       const s = String(v ?? "");
@@ -1268,7 +1297,7 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {bookings.map((b) => {
-                      const src = SOURCE_META[b.source || "website"] || SOURCE_META.other;
+                      const src = getSourceMeta(b.source);
                       const waNum = (b.phone || "").replace(/\D/g, "");
                       return (
                         <tr
