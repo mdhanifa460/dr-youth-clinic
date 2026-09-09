@@ -180,9 +180,14 @@ export const PHONE_MASK_TOGGLE_ROLES: AdminRole[] = [
   'clinic_owner',
 ];
 
-// Which booking fields each role may export (data masking)
+// Which booking fields each role may export (data masking). Attribution
+// fields (source/medium/campaign/click ID/landing page) were added
+// alongside this same export pipeline being extended to the Bookings CRM
+// page (which previously had its own separate, unaudited CSV export) —
+// this is the one place marketing actually asked to see UTM data in an
+// export, now served through the audited path instead of a bypass.
 export const EXPORT_FIELDS_BY_ROLE: Partial<Record<AdminRole, string[]>> = {
-  super_admin:       ['bookingId', 'name', 'phone', 'service', 'location', 'date', 'time', 'status', 'concern', 'promoCode', 'promoDiscount', 'createdAt'],
-  clinic_owner:      ['bookingId', 'name', 'phone', 'service', 'location', 'date', 'time', 'status', 'concern', 'promoCode', 'promoDiscount', 'createdAt'],
-  marketing_manager: ['name', 'phone', 'service', 'location', 'status', 'createdAt'],
+  super_admin:       ['bookingId', 'name', 'phone', 'email', 'service', 'location', 'date', 'time', 'status', 'concern', 'promoCode', 'promoDiscount', 'source', 'utmMedium', 'utmCampaign', 'utmTerm', 'clickId', 'landingPage', 'conversionChannel', 'lastTouchSource', 'createdAt'],
+  clinic_owner:      ['bookingId', 'name', 'phone', 'email', 'service', 'location', 'date', 'time', 'status', 'concern', 'promoCode', 'promoDiscount', 'source', 'utmMedium', 'utmCampaign', 'utmTerm', 'clickId', 'landingPage', 'conversionChannel', 'lastTouchSource', 'createdAt'],
+  marketing_manager: ['name', 'phone', 'email', 'service', 'location', 'status', 'source', 'utmMedium', 'utmCampaign', 'utmTerm', 'clickId', 'landingPage', 'conversionChannel', 'lastTouchSource', 'createdAt'],
 };

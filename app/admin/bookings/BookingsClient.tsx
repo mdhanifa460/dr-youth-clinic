@@ -8,8 +8,9 @@ import {
   IndianRupee, Filter, Download, Plus, History, StickyNote,
   Info, Repeat2, Trash2, Copy, Check,
 } from "lucide-react";
-import type { AdminRole } from "@/app/lib/permissions";
+import { EXPORT_ALLOWED_ROLES, type AdminRole } from "@/app/lib/permissions";
 import ConvertToAppointmentModal from "@/app/admin/components/ConvertToAppointmentModal";
+import LeadExportModal from "@/app/admin/components/LeadExportModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1294,31 +1295,25 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
     fetchStats();
   }
 
-  function exportCSV() {
-    const BOM = "﻿";
-    // Term/Click ID/Landing Page added — all three are already captured on
-    // every ad-driven lead (see e.g. a real Google Ads lead's utmTerm,
-    // clickId, landingPage fields) but weren't in this export, which is
-    // exactly the "unable to check the UTM" gap reported live: the
-    // Source/Medium/Campaign columns alone don't show which search term or
-    // landing page actually drove a given lead.
-    const header = ["Booking ID","Name","Phone","Email","Service","Location","Date","Time","Status","Source","Medium","Campaign","Term","Click ID","Landing Page","Conversion Channel","Campaign Source/Medium","Value","Concern","Created"].join(",");
-    const rows = bookings.map((b) => [
-      b.bookingId, b.name, b.phone, b.email, b.service, b.location, b.date, b.time,
-      b.status, b.source, b.utmMedium, b.utmCampaign, b.utmTerm, b.clickId, b.landingPage,
-      b.conversionChannel || channelLabel(b.conversionChannel, b.source).label,
-      b.lastTouchSource, b.treatmentValue ?? "", b.concern, b.createdAt,
-    ].map((v) => {
-      const s = String(v ?? "");
-      const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
-      return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-    }).join(","));
-    const csv  = BOM + [header, ...rows].join("\n");
-    const link = document.createElement("a");
-    link.href  = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-    link.download = `bookings-${new Date().toISOString().slice(0,10)}.csv`;
-    link.click();
-  }
+  // Export used to be a plain client-side button that dumped whatever was
+  // already loaded in the browser (name/phone/email/UTM data for every
+  // visible lead) straight to a CSV file — no auth check beyond "can this
+  // role open the Bookings page at all," no filter requirement, no record
+  // of who did it. That meant every role that can view Bookings —
+  // including receptionist and customer_support, neither of whom are on
+  // EXPORT_ALLOWED_ROLES — could silently walk away with the entire lead
+  // database (a real risk: a bulk patient-contact list is exactly what a
+  // competing clinic or a data reseller would pay for). Now routed through
+  // the SAME secure, audited pipeline app/admin/leads already uses:
+  // password re-auth, a mandatory filter (no unfiltered full-DB dump),
+  // role+field allow-lists, a one-time signed download token, and a
+  // permanent audit-log row (name/email/IP/filters/record count) — see
+  // app/admin/components/LeadExportModal.tsx and
+  // app/api/admin/leads/export/route.ts for the full mechanism.
+  const canExport = EXPORT_ALLOWED_ROLES.includes(userRole);
+  const [showExport, setShowExport] = useState(false);
+  const exportFilters = { dateFrom, dateTo, location, status, service };
+  const hasExportFilter = Boolean(dateFrom || dateTo || location || status || service);
 
   return (
     <div className="min-h-screen bg-[#f6faff]">
@@ -1336,10 +1331,14 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
                 className="flex items-center gap-1.5 text-xs font-semibold border border-gray-200 bg-white text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-50 transition">
                 <RefreshCw size={13} /> Refresh
               </button>
-              <button onClick={exportCSV}
-                className="flex items-center gap-1.5 text-xs font-semibold border border-gray-200 bg-white text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-50 transition">
-                <Download size={13} /> Export
-              </button>
+              {canExport && (
+                <button onClick={() => setShowExport(true)}
+                  disabled={!hasExportFilter}
+                  title={!hasExportFilter ? "Apply at least one filter (date, branch, status, or service) to enable export" : "Securely export filtered leads — this is logged"}
+                  className="flex items-center gap-1.5 text-xs font-semibold border border-gray-200 bg-white text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                  <Download size={13} /> Export
+                </button>
+              )}
               {canWrite && checkedIds.size > 0 && (
                 <button onClick={deleteSelected} disabled={deleting}
                   className="flex items-center gap-1.5 text-xs font-semibold border border-red-200 bg-red-50 text-red-600 px-3 py-2 rounded-xl hover:bg-red-100 transition disabled:opacity-50">
@@ -1632,6 +1631,11 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
           onClose={() => setSelected(null)}
           onUpdate={(patch) => handleUpdate(selected._id, patch)}
         />
+      )}
+
+      {/* ── Export modal (secure/audited — see canExport's own comment) ── */}
+      {showExport && (
+        <LeadExportModal filters={exportFilters} onClose={() => setShowExport(false)} />
       )}
     </div>
   );

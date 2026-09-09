@@ -12,6 +12,7 @@ const FIELD_HEADERS: Record<string, string> = {
   bookingId:     "Booking ID",
   name:          "Patient Name",
   phone:         "Phone",
+  email:         "Email",
   service:       "Service",
   location:      "Branch",
   date:          "Appointment Date",
@@ -20,6 +21,16 @@ const FIELD_HEADERS: Record<string, string> = {
   concern:       "Concern",
   promoCode:     "Promo Code",
   promoDiscount: "Promo Discount",
+  // Marketing attribution (see app/lib/utmAttribution.ts) — added when this
+  // export pipeline was extended to also serve the Bookings CRM page.
+  source:            "Source",
+  utmMedium:         "Medium",
+  utmCampaign:       "Campaign",
+  utmTerm:           "Search Term",
+  clickId:           "Ad Click ID",
+  landingPage:       "Landing Page",
+  conversionChannel: "Conversion Channel",
+  lastTouchSource:   "Campaign Source/Medium",
   createdAt:     "Lead Date",
 };
 
