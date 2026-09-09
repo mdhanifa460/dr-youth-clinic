@@ -6,7 +6,7 @@ import {
   MessageCircle, Phone, Calendar, ArrowRight, AlertCircle,
   CheckCircle, Clock, TrendingUp, Users, Loader2, Edit2,
   IndianRupee, Filter, Download, Plus, History, StickyNote,
-  Info, Repeat2, Trash2,
+  Info, Repeat2, Trash2, Copy, Check,
 } from "lucide-react";
 import type { AdminRole } from "@/app/lib/permissions";
 import ConvertToAppointmentModal from "@/app/admin/components/ConvertToAppointmentModal";
@@ -216,6 +216,123 @@ function CampaignChip({ lastTouchSource, utmCampaign }: { lastTouchSource?: stri
       🎯 {lastTouchSource}{utmCampaign ? ` · ${utmCampaign}` : ""}
     </span>
   );
+}
+
+// A raw gclid/fbclid/campaign-ID string means nothing to a non-technical
+// reader on its own — it's genuinely just an opaque token that ad
+// platforms use internally to join a click to a conversion. Rather than
+// hide it (staff sometimes DO need to hand it to Google/Meta support, or
+// search it in Ads Manager), show it small, labeled with what platform it
+// belongs to, with one line explaining what it's FOR, and a one-tap copy
+// button instead of expecting anyone to select/copy raw monospace text.
+function CopyableValue({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(value);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          // Clipboard permission denied or unavailable — the value is
+          // still visible on screen to select manually, so this just
+          // silently skips the convenience, never breaks the view.
+        }
+      }}
+      title="Copy to clipboard"
+      className="inline-flex items-center gap-1 max-w-full font-mono text-amber-900 hover:text-amber-700 text-left"
+    >
+      <span className="truncate">{value}</span>
+      {copied
+        ? <Check size={11} className="shrink-0 text-emerald-600" />
+        : <Copy size={11} className="shrink-0 opacity-50" />}
+    </button>
+  );
+}
+
+// Which ad platform a click ID belongs to, and — the actual point of this
+// request — a plain-English sentence for what it's even FOR, since
+// "gclid" / "fbclid" mean nothing to non-technical staff.
+const CLICK_ID_META: Record<string, { platform: string; explainer: string }> = {
+  gclid:  { platform: "Google Ads",              explainer: "Google's own reference number for this exact ad click. Not something to read — it lets this lead be matched back to the precise Google Ads campaign/keyword if ever needed." },
+  gbraid: { platform: "Google Ads (iOS app)",     explainer: "Google's privacy-safe click reference for an app-attributed ad click on iPhone." },
+  wbraid: { platform: "Google Ads (web, privacy-safe)", explainer: "Google's privacy-safe click reference for a web ad click." },
+  fbclid: { platform: "Meta Ads (Facebook / Instagram)", explainer: "Meta's own reference number for this exact ad click. Lets this lead be matched back to the precise Facebook/Instagram ad if ever needed." },
+};
+
+// The single, plain-English "how did this person find us" sentence — the
+// same job Google Ads/Meta Ads Manager do natively by leading with a
+// Campaign name and only showing raw IDs as a secondary detail, and the
+// same idea as GA4's "Default channel group" or a CRM's "Original
+// Source" field. Built specifically because a bare grid of Source/
+// Medium/Click-ID fields makes every reader reassemble the story
+// themselves — and for several real leads (an organic search, a native
+// Meta Lead Form ad with no campaign name yet fetched) that grid can look
+// "empty" even though real signal exists. This never changes what's
+// stored — display only, computed fresh from whatever fields the booking
+// actually has.
+function getChannelStory(booking: Booking): { icon: string; headline: string; note?: string } {
+  const source = (booking.utmSource || booking.source || "").toLowerCase();
+  const medium = (booking.utmMedium || "").toLowerCase();
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // A native lead-ad form (visitor never even reached the website —
+  // Meta/Google collected the lead inside their own app) is its own,
+  // unambiguous story, and by definition always a paid ad.
+  if (booking.conversionChannel === "meta_lead_form" || booking.providerMeta?.formId) {
+    return {
+      icon: "📘",
+      headline: "Submitted a Meta (Facebook/Instagram) Lead Form ad",
+      note: booking.utmCampaign
+        ? `Campaign: ${booking.utmCampaign}`
+        : "Campaign name wasn't auto-fetched — see the Meta Ads reference below to look it up in Ads Manager.",
+    };
+  }
+  if (booking.conversionChannel === "google_lead_form") {
+    return {
+      icon: "🔴",
+      headline: "Submitted a Google Lead Form ad",
+      note: booking.utmCampaign ? `Campaign: ${booking.utmCampaign}` : "Never visited the website — collected directly inside Google's ad format.",
+    };
+  }
+
+  // A click ID is the strongest signal available on a real website visit
+  // — it means an ad platform itself tagged the click, regardless of
+  // whether utm_medium happened to be set correctly too.
+  if (booking.clickIdType === "fbclid") {
+    return { icon: "📘", headline: "Clicked a paid Meta ad (Facebook/Instagram)", note: booking.utmCampaign ? `Campaign: ${booking.utmCampaign}` : undefined };
+  }
+  if (booking.clickIdType === "gclid" || booking.clickIdType === "gbraid" || booking.clickIdType === "wbraid") {
+    return { icon: "🔴", headline: "Clicked a paid Google ad", note: booking.utmCampaign ? `Campaign: ${booking.utmCampaign}` : undefined };
+  }
+
+  const PAID_MEDIUMS = ["cpc", "ppc", "paid", "paidsearch", "paid-search", "display"];
+  if (PAID_MEDIUMS.includes(medium)) {
+    return { icon: "📢", headline: `Clicked a paid ad${source ? ` on ${cap(source)}` : ""}`, note: booking.utmCampaign ? `Campaign: ${booking.utmCampaign}` : undefined };
+  }
+
+  const SEARCH_ENGINES = ["google", "bing", "yahoo", "duckduckgo", "baidu"];
+  if (medium === "organic" && SEARCH_ENGINES.includes(source)) {
+    return { icon: "🔍", headline: `Found us via ${cap(source)} Search`, note: "Unpaid, organic search result — not an ad click." };
+  }
+
+  const SOCIAL_SITES = ["facebook", "instagram", "linkedin", "twitter", "youtube"];
+  if (medium === "social" || SOCIAL_SITES.includes(source)) {
+    return { icon: "📱", headline: `Found us via ${cap(source || "social media")}`, note: "An organic post, bio link, or shared link — not a paid ad." };
+  }
+
+  if (medium === "referral") {
+    return { icon: "🔗", headline: `Came from another website${source ? ` (${source})` : ""}` };
+  }
+
+  if (source === "direct" || medium === "none" || (!source && !medium && !booking.clickId)) {
+    return { icon: "⌨️", headline: "Typed the website directly, or used a bookmark/saved link", note: "No ad, search engine, or referring link detected for this visit." };
+  }
+
+  return { icon: "📌", headline: source ? cap(source) : "Source unclear" };
 }
 
 const SERVICES    = ["Skin", "Hair", "Laser", "Other"];
@@ -682,11 +799,24 @@ function BookingDrawer({
                   so a WhatsApp/Google Lead Form conversion with no UTM
                   fields still shows its channel. */}
               {(booking.utmSource || booking.utmCampaign || booking.utmMedium || booking.conversionChannel ||
-                booking.lastTouchSource || booking.firstTouchSource || booking.clickId) && (
+                booking.lastTouchSource || booking.firstTouchSource || booking.clickId ||
+                booking.providerMeta?.campaignId || booking.providerMeta?.adId || booking.providerMeta?.adSetId) && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                   <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                     🎯 Marketing Attribution
                   </p>
+                  {(() => {
+                    const story = getChannelStory(booking);
+                    return (
+                      <div className="flex items-start gap-2 mb-3 pb-3 border-b border-amber-200">
+                        <span className="text-lg leading-none shrink-0">{story.icon}</span>
+                        <div className="min-w-0">
+                          <p className="text-amber-900 font-bold text-sm leading-snug">{story.headline}</p>
+                          {story.note && <p className="text-amber-600/90 text-[11px] mt-0.5 leading-snug">{story.note}</p>}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Source</p>
@@ -696,10 +826,14 @@ function BookingDrawer({
                       <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Medium</p>
                       <p className="text-amber-900 font-semibold capitalize">{booking.utmMedium || "—"}</p>
                     </div>
-                    {booking.utmCampaign && (
+                    {(booking.utmCampaign || booking.providerMeta?.campaignId) && (
                       <div className="col-span-2">
                         <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Campaign</p>
-                        <p className="text-amber-900 font-semibold">{booking.utmCampaign}</p>
+                        {booking.utmCampaign ? (
+                          <p className="text-amber-900 font-semibold">{booking.utmCampaign}</p>
+                        ) : (
+                          <p className="text-amber-700 text-xs italic">Name not available yet — matched by ID in the Meta Ads reference below</p>
+                        )}
                       </div>
                     )}
                     {(() => {
@@ -729,10 +863,33 @@ function BookingDrawer({
                         )}
                       </>
                     )}
-                    {booking.clickId && (
+                    {booking.clickId && (() => {
+                      const idMeta = CLICK_ID_META[booking.clickIdType || ""] || { platform: booking.clickIdType || "Unknown platform", explainer: "An ad platform's own reference number for this specific click." };
+                      return (
+                        <div className="col-span-2">
+                          <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Ad Click Reference — {idMeta.platform}</p>
+                          <CopyableValue value={booking.clickId} />
+                          <p className="text-amber-500/80 text-[10px] mt-0.5 leading-snug">{idMeta.explainer}</p>
+                        </div>
+                      );
+                    })()}
+                    {(booking.providerMeta?.campaignId || booking.providerMeta?.adId || booking.providerMeta?.adSetId) && (
                       <div className="col-span-2">
-                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Click ID ({booking.clickIdType || "—"})</p>
-                        <p className="text-amber-900 font-mono truncate">{booking.clickId}</p>
+                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Meta Ads Reference</p>
+                        <p className="text-amber-500/80 text-[10px] mb-1 leading-snug">
+                          Meta&apos;s own IDs for the exact campaign/ad this lead came from — search these in Meta Ads Manager if the campaign name above isn&apos;t showing.
+                        </p>
+                        <div className="space-y-0.5">
+                          {booking.providerMeta?.campaignId && (
+                            <div className="flex items-center gap-1"><span className="text-amber-500 text-[10px] shrink-0">Campaign ID:</span> <CopyableValue value={booking.providerMeta.campaignId} /></div>
+                          )}
+                          {booking.providerMeta?.adSetId && (
+                            <div className="flex items-center gap-1"><span className="text-amber-500 text-[10px] shrink-0">Ad Set ID:</span> <CopyableValue value={booking.providerMeta.adSetId} /></div>
+                          )}
+                          {booking.providerMeta?.adId && (
+                            <div className="flex items-center gap-1"><span className="text-amber-500 text-[10px] shrink-0">Ad ID:</span> <CopyableValue value={booking.providerMeta.adId} /></div>
+                          )}
+                        </div>
                       </div>
                     )}
                     {booking.firstTouchSource && booking.firstTouchSource !== booking.lastTouchSource && (
@@ -799,11 +956,12 @@ function BookingDrawer({
                     </div>
                   ))}
                   {booking.providerMeta?.formId && (
-                    <div className="mt-3 pt-3 border-t border-violet-200 grid grid-cols-2 gap-2 text-[10px] font-mono text-violet-400">
+                    <div className="mt-3 pt-3 border-t border-violet-200 text-[10px] font-mono text-violet-400">
+                      {/* Which form these answers came from — campaign/ad/ad-set
+                          identity now lives in the Marketing Attribution panel
+                          above, alongside the rest of "where this lead came
+                          from," instead of split across two unrelated panels. */}
                       <span>Form: {booking.providerMeta.formName || booking.providerMeta.formId}</span>
-                      {booking.providerMeta.campaignId && <span>Campaign ID: {booking.providerMeta.campaignId}</span>}
-                      {booking.providerMeta.adId && <span>Ad ID: {booking.providerMeta.adId}</span>}
-                      {booking.providerMeta.adSetId && <span>Ad Set ID: {booking.providerMeta.adSetId}</span>}
                     </div>
                   )}
                 </div>
