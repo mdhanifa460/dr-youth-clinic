@@ -14,6 +14,7 @@ import { useBranchWhatsApp, toWaLink, useAttributedWaText } from '@/app/lib/useB
 import { locations } from '@/app/data/locations';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
+import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
 
 type Card = { type: 'doctor' | 'service' | 'offer' | 'result' | 'location'; id?: string; title: string; subtitle?: string; href?: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string; cards?: Card[]; streaming?: boolean; createdAt?: string; feedback?: 'up' | 'down' | null };
@@ -377,11 +378,10 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
         // this exact ID. The widget's own inline "done" card (below) is
         // no longer the final state; router.push replaces the current
         // page, so it's only ever visible for the brief moment before
-        // navigation completes. Fixed /book/success path + bookingId/
-        // location as query params — see app/(public)/book/Form.tsx's own
-        // comment for why (a stable path an external ad tool can
-        // configure Thank-You-page tracking against).
-        if (data.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(data.bookingId)}&location=${encodeURIComponent((form.location || '').toLowerCase())}`);
+        // navigation completes. Fixed, genuinely static /book/success path
+        // (bookingId travels via cookie, not the URL) — see
+        // app/lib/bookingSuccessRedirect.ts's own comment for why.
+        if (data.bookingId) goToBookingSuccess(router, data.bookingId);
         else setDone(true);
       } else setError(data.message || 'Could not book — please try again.');
     } catch { setError('Network error — please try again.'); }
@@ -697,11 +697,10 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
         // flow — a callback request is still a real Booking row
         // (service: 'Callback Request'), previously created correctly but
         // with the returned bookingId silently discarded and no
-        // navigation at all. Fixed /book/success path + bookingId/location
-        // as query params — see app/(public)/book/Form.tsx's own comment
-        // for why (a stable path an external ad tool can configure
-        // Thank-You-page tracking against).
-        if (data.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(data.bookingId)}&location=${encodeURIComponent((form.location || '').toLowerCase())}`);
+        // navigation at all. Fixed, genuinely static /book/success path
+        // (bookingId travels via cookie, not the URL) — see
+        // app/lib/bookingSuccessRedirect.ts's own comment for why.
+        if (data.bookingId) goToBookingSuccess(router, data.bookingId);
         else setDone(true);
       } else setError(data.message || 'Could not submit — please try again.');
     } catch { setError('Network error — please try again.'); }

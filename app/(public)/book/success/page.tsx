@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { Calendar } from 'lucide-react';
+import { BOOKING_SUCCESS_ID_COOKIE } from '@/app/lib/bookingSuccessRedirect';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import '@/app/models/Doctor';
@@ -60,22 +62,30 @@ function BookingNotFoundFallback() {
   );
 }
 
-// A fixed path (/book/success) with bookingId/location as query params,
-// not a dynamic [bookingId] path segment — every real booking used to get
-// its own unique URL, which made it impossible for an external ad tool
+// A fixed path (/book/success) — not a dynamic [bookingId] path segment,
+// and (as of the cookie-based lookup below) not even a bookingId query
+// param on the happy path either — every real booking used to get its
+// own unique URL, which made it impossible for an external ad tool
 // (Google Ads/Meta "Thank You Page" URL matching) to configure conversion
-// tracking against a single stable page, since the path itself changed on
-// every booking. bookingId is still required — this page still looks up
-// the exact Booking record by it, server-side, with full certainty; only
-// where it lives in the URL changed. The old dynamic route now redirects
-// here for any already-shared/bookmarked link (see
-// app/(public)/book/success/[bookingId]/page.tsx).
+// tracking against a single stable page. Query-param bookingId turned out
+// to still be one bookingId too many for at least one ad platform: its
+// thank-you-page trigger requires an EXACT URL match, not "contains", and
+// an exact match against a value that's different on every single
+// booking can only ever fire once (whatever sample URL it was configured
+// with). See app/lib/bookingSuccessRedirect.ts's own comment for the full
+// story — bookingId now travels in a short-lived cookie instead, so the
+// real, live URL an ad platform's trigger sees is always the exact same
+// literal string, every time. bookingId is still required — this page
+// still looks up the exact Booking record by it, server-side, with full
+// certainty; only where it lives changed. The query param is kept as a
+// fallback (not the primary path) for the legacy dynamic route/any
+// already-shared link (see app/(public)/book/success/[bookingId]/page.tsx).
 export default async function BookingSuccessPage({ searchParams }: { searchParams: { bookingId?: string } }) {
-  const bookingId = searchParams.bookingId;
-  // Normally unreachable — middleware.ts redirects a bookingId-less
-  // request to /book before it gets here. Kept as a defensive fallback
-  // only (see BookingNotFoundFallback's own comment for why this isn't
-  // notFound()).
+  const bookingId = cookies().get(BOOKING_SUCCESS_ID_COOKIE)?.value || searchParams.bookingId;
+  // Normally unreachable — middleware.ts redirects a request with neither
+  // the cookie nor the legacy query param to /book before it gets here.
+  // Kept as a defensive fallback only (see BookingNotFoundFallback's own
+  // comment for why this isn't notFound()).
   if (!bookingId) return <BookingNotFoundFallback />;
 
   const booking = await getBookingData(bookingId);

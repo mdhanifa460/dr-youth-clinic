@@ -9,6 +9,7 @@ import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-r
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
 
 interface HeroData {
   badge?: string;
@@ -193,11 +194,10 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
         // real Booking row now exists with this exact ID. Keeps the
         // inline success card only as a fallback if the API reports
         // success with no bookingId.
-        // Fixed /book/success path + bookingId/location as query params —
-        // see app/(public)/book/Form.tsx's own comment for why (a stable
-        // path an external ad tool can configure Thank-You-page tracking
-        // against).
-        if (json.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(json.bookingId)}&location=${encodeURIComponent((json.location || '').toLowerCase())}`);
+        // Fixed, genuinely static /book/success path (bookingId travels via
+        // cookie, not the URL) — see app/lib/bookingSuccessRedirect.ts's
+        // own comment for why.
+        if (json.bookingId) goToBookingSuccess(router, json.bookingId);
         else setSuccess(true);
       } else {
         setError(json.message || 'Something went wrong. Please try again.');

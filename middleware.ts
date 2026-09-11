@@ -8,6 +8,7 @@ import { extractMigrationParams, MIGRATION_FIRST_COOKIE, MIGRATION_FIRST_MAX_AGE
 import { normalizeOldUrl } from "@/app/lib/domainMigration/parseSitemap";
 import { getCachedRedirect } from "@/app/lib/domainMigration/redirectCache";
 import { parseAdminAllowlist, isIpAllowed, getRequestIp } from "@/app/lib/adminIpAllowlist";
+import { BOOKING_SUCCESS_ID_COOKIE } from "@/app/lib/bookingSuccessRedirect";
 
 // Canonical www -> non-www redirect. Confirmed LIVE before adding this
 // (not assumed): both hostnames already resolve to this exact Vercel
@@ -319,12 +320,16 @@ export async function middleware(req: NextRequest) {
   // here instead, mirroring the Domain Migration fix's exact approach,
   // is what actually works.
   //
-  // Legacy /book/success/{bookingId} path (every booking flow now
-  // navigates straight to /book/success?bookingId=... instead — see
-  // app/(public)/book/Form.tsx's own comment for why: a stable path an
-  // external ad tool can configure Thank-You-page tracking against) —
-  // 308 (permanent) to the new query-param shape for any already-shared/
-  // bookmarked old-style link.
+  // Legacy /book/success/{bookingId} path — kept only for any already-
+  // shared/bookmarked old-style link; every current booking flow now
+  // navigates straight to a bare /book/success instead (see
+  // app/lib/bookingSuccessRedirect.ts's own comment: at least one ad
+  // platform's Thank-You-page trigger needs a truly static, exact-match
+  // URL, which ruled out even a query param). This legacy redirect still
+  // lands on the ?bookingId= shape rather than the cookie — nothing sets
+  // the cookie for an old link being opened fresh — and the success page
+  // below still accepts that as a fallback, so this keeps working
+  // unchanged; 308 (permanent) since the path itself really did move.
   const legacyBookingSuccessMatch = pathname.match(/^\/book\/success\/([^\/]+)$/);
   if (legacyBookingSuccessMatch) {
     const url = req.nextUrl.clone();
@@ -335,8 +340,16 @@ export async function middleware(req: NextRequest) {
   // /book/success with no bookingId at all (typed by hand, or an
   // incomplete/stale link) — nothing real to show; 307 (temporary, this
   // isn't a moved URL) back to the booking form instead of relying on the
-  // page's own notFound().
-  if (pathname === "/book/success" && !req.nextUrl.searchParams.get("bookingId")) {
+  // page's own notFound(). Checks BOTH the legacy query param and the
+  // current cookie-based signal (see app/lib/bookingSuccessRedirect.ts) —
+  // a real booking's redirect now carries the id via the cookie only, so
+  // checking the query param alone would incorrectly bounce every
+  // genuine success-page visit back to /book.
+  if (
+    pathname === "/book/success" &&
+    !req.nextUrl.searchParams.get("bookingId") &&
+    !req.cookies.get(BOOKING_SUCCESS_ID_COOKIE)?.value
+  ) {
     return NextResponse.redirect(new URL("/book", req.url), 307);
   }
 

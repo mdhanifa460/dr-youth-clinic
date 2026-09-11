@@ -7,6 +7,7 @@ import { Loader, CheckCircle, Phone, Star, ShieldCheck } from 'lucide-react';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { isValidIndianMobile } from '@/app/lib/phone';
+import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
 
 interface FormField {
   id: string;
@@ -148,12 +149,10 @@ export default function FormSection({
         // "You're All Set!" card as a fallback for the edge case where
         // the API reports success with no bookingId, so this never
         // navigates to a broken /book/success/undefined.
-        // Fixed /book/success path + bookingId/location as query params —
-        // see app/(public)/book/Form.tsx's own comment on this exact line
-        // for why (a stable path an external ad tool can configure
-        // Thank-You-page tracking against). json.location may be empty
-        // for a location-less LP form; encodeURIComponent('') is harmless.
-        if (json.bookingId) router.push(`/book/success?bookingId=${encodeURIComponent(json.bookingId)}&location=${encodeURIComponent((json.location || '').toLowerCase())}`);
+        // Fixed, genuinely static /book/success path (bookingId travels via
+        // cookie, not the URL) — see app/lib/bookingSuccessRedirect.ts's
+        // own comment for why.
+        if (json.bookingId) goToBookingSuccess(router, json.bookingId);
         else setSuccess(true);
       } else {
         setError(json.message || 'Something went wrong. Please try again.');

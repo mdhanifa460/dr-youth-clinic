@@ -8,6 +8,7 @@ import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { postInterestEvent, resolveInterestCategory } from '@/app/lib/personalization';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
+import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
 
 const SERVICES = [
   { id: 'Skin', icon: '✨', label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
@@ -220,20 +221,19 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         }
         // Configurable Booking Success page (app/admin/booking-success) —
         // a dedicated route carrying real appointment details, CTAs, and
-        // the pre-visit checklist. The PATH is a fixed, stable
-        // /book/success for every booking — bookingId/location travel as
-        // query params instead of a path segment, specifically so an
-        // external ad tool (Google Ads/Meta "Thank You Page" URL
-        // matching) has one unchanging path to configure against, rather
-        // than a different URL per booking that can't be matched at all.
+        // the pre-visit checklist. The PATH is fixed AND, as of
+        // app/lib/bookingSuccessRedirect.ts, genuinely static — no query
+        // string at all — specifically so an external ad tool's
+        // "Thank You Page" trigger has ONE unchanging, exact-match-safe
+        // URL to configure against. A query-param bookingId (this file's
+        // earlier approach) still broke that for at least one platform
+        // whose trigger only supports an exact match, not "contains": a
+        // value that's different on every booking can never match twice.
         // bookingId is still required — the success page looks up the
-        // real Booking record by it server-side — this only moves where
-        // it lives in the URL, it doesn't remove it. location is
-        // lowercased for the same reason buildBookingCompletedParams()
-        // normalizes casing — this app's own entry points don't agree on
-        // casing, so every one of them is normalized here to the one
-        // canonical value external tools can rely on.
-        router.push(`/book/success?bookingId=${encodeURIComponent(data.bookingId)}&location=${encodeURIComponent(form.location.toLowerCase())}`);
+        // real Booking record by it server-side — it now travels via a
+        // short-lived cookie instead of the URL. See that file's own
+        // comment for the full story.
+        goToBookingSuccess(router, data.bookingId);
         return;
       }
       else setError(data.message || 'Booking failed. Please try again.');
