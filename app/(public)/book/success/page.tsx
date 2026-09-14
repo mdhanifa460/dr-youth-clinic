@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { Calendar } from 'lucide-react';
+import { Calendar, CheckCircle, MapPin, Phone } from 'lucide-react';
 import { BOOKING_SUCCESS_ID_COOKIE } from '@/app/lib/bookingSuccessRedirect';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
@@ -15,6 +15,7 @@ import { getSiteConfig } from '@/app/lib/siteConfig';
 import { locations } from '@/app/data/locations';
 import { LocationContent } from '@/app/models/LocationContent';
 import BookingSuccessClient from '@/app/components/booking/BookingSuccessClient';
+import { toWaLink } from '@/app/lib/waLink';
 
 export const metadata: Metadata = {
   title: 'Booking Confirmed | DR Youth Clinic',
@@ -62,6 +63,107 @@ function BookingNotFoundFallback() {
   );
 }
 
+// Shared by both the real-booking path and the generic no-bookingId path
+// below — resolves a branch key to its display info exactly once, same
+// DB-over-static-fallback precedence either way.
+async function resolveBranchInfo(branchKey: string) {
+  const staticBranchInfo = locations[branchKey] || null;
+  if (!staticBranchInfo) return null;
+  const locationContent = await (LocationContent as any)
+    .findOne({ location: branchKey })
+    .select('clinicInfo.address clinicInfo.phone')
+    .lean()
+    .catch(() => null);
+  return {
+    ...staticBranchInfo,
+    address: locationContent?.clinicInfo?.address || staticBranchInfo.address,
+    phone: locationContent?.clinicInfo?.phone || staticBranchInfo.phone,
+  };
+}
+
+// A visitor who lands here with a real, valid `location` but no
+// identifiable booking at all — no cookie (expired, cleared, or never
+// set), no legacy bookingId query param. This is exactly the shape an ad
+// platform's own Thank-You-Page trigger uses going forward (see
+// app/lib/bookingSuccessRedirect.ts: bookingId deliberately never
+// appears in the URL anymore), and at least one platform's own setup
+// flow actually FETCHES the configured URL itself to confirm it resolves
+// before saving the conversion action — bouncing this to /book (this
+// page's older behavior) would fail that check every time, even though
+// every real conversion already carries the cookie and would never hit
+// this branch in practice. Never fabricates a booking ID, date, or name —
+// only ever shows real, branch-level information that's true regardless
+// of which specific visitor is looking at it.
+function GenericBranchThankYou({
+  branchInfo,
+  siteConfig,
+}: {
+  branchInfo: Awaited<ReturnType<typeof resolveBranchInfo>>;
+  siteConfig: { publicWhatsApp?: string; publicPhone?: string };
+}) {
+  const waHref = toWaLink(branchInfo?.phone || siteConfig.publicWhatsApp || '');
+  const phone = branchInfo?.phone || siteConfig.publicPhone || '';
+  return (
+    <main className="min-h-[60vh] flex items-center justify-center px-6 py-20">
+      <div className="max-w-md w-full text-center">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5">
+          <CheckCircle size={32} className="text-emerald-500" />
+        </div>
+        <h1 className="text-2xl font-headline font-extrabold text-[#0B2560] mb-2">
+          Thank You!
+        </h1>
+        <p className="text-gray-500 text-sm leading-relaxed mb-8">
+          {branchInfo
+            ? `We've received your enquiry for our ${branchInfo.name} branch. Our team will reach out shortly to confirm your appointment.`
+            : "We've received your enquiry. Our team will reach out shortly to confirm your appointment."}
+        </p>
+
+        {branchInfo && (
+          <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-5 text-left mb-8 space-y-3">
+            <div className="flex items-start gap-2.5 text-sm text-gray-700">
+              <MapPin size={16} className="text-[#0B2560] shrink-0 mt-0.5" />
+              <span>{branchInfo.address}</span>
+            </div>
+            {phone && (
+              <div className="flex items-center gap-2.5 text-sm text-gray-700">
+                <Phone size={16} className="text-[#0B2560] shrink-0" />
+                <span>{phone}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {phone && (
+            <a
+              href={`tel:${phone.replace(/\s/g, '')}`}
+              className="inline-flex items-center justify-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-md"
+            >
+              <Phone size={15} /> Call Clinic
+            </a>
+          )}
+          {waHref && (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-[#25D366]/10 text-[#128C4A] border border-[#25D366]/30 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-[#25D366]/20 transition"
+            >
+              WhatsApp Clinic
+            </a>
+          )}
+          <Link
+            href="/book"
+            className="inline-flex items-center justify-center gap-2 border border-gray-200 text-gray-600 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition"
+          >
+            <Calendar size={13} /> Book a Consultation
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 // A fixed path (/book/success) — not a dynamic [bookingId] path segment,
 // and (as of the cookie-based lookup below) not even a bookingId query
 // param on the happy path either — every real booking used to get its
@@ -80,43 +182,52 @@ function BookingNotFoundFallback() {
 // certainty; only where it lives changed. The query param is kept as a
 // fallback (not the primary path) for the legacy dynamic route/any
 // already-shared link (see app/(public)/book/success/[bookingId]/page.tsx).
-export default async function BookingSuccessPage({ searchParams }: { searchParams: { bookingId?: string } }) {
+export default async function BookingSuccessPage({ searchParams }: { searchParams: { bookingId?: string; location?: string } }) {
   const bookingId = cookies().get(BOOKING_SUCCESS_ID_COOKIE)?.value || searchParams.bookingId;
-  // Normally unreachable — middleware.ts redirects a request with neither
-  // the cookie nor the legacy query param to /book before it gets here.
-  // Kept as a defensive fallback only (see BookingNotFoundFallback's own
-  // comment for why this isn't notFound()).
-  if (!bookingId) return <BookingNotFoundFallback />;
+
+  // No identifiable booking at all — the cookie expired/was cleared, or
+  // (as of the URL now permanently carrying `location` for ad-platform
+  // matching — see app/lib/bookingSuccessRedirect.ts) this is a direct
+  // hit with only `location` and no bookingId anywhere. See
+  // GenericBranchThankYou's own comment for why that's an expected,
+  // legitimate case to handle well, not just a defensive fallback.
+  if (!bookingId) {
+    const genericBranchKey = String(searchParams.location || '').toLowerCase();
+    if (locations[genericBranchKey]) {
+      await connectDB();
+      const [branchInfo, genericSiteConfig] = await Promise.all([
+        resolveBranchInfo(genericBranchKey),
+        getSiteConfig(),
+      ]);
+      return (
+        <GenericBranchThankYou
+          branchInfo={branchInfo}
+          siteConfig={{ publicWhatsApp: genericSiteConfig.publicWhatsApp, publicPhone: genericSiteConfig.publicPhone }}
+        />
+      );
+    }
+    // Normally unreachable otherwise — middleware.ts redirects a request
+    // with neither the cookie, the legacy bookingId param, nor a
+    // recognized location to /book before it gets here. Kept as a
+    // defensive fallback only (see BookingNotFoundFallback's own comment
+    // for why this isn't notFound()).
+    return <BookingNotFoundFallback />;
+  }
 
   const booking = await getBookingData(bookingId);
   if (!booking) return <BookingNotFoundFallback />;
 
   const [config, siteConfig] = await Promise.all([getBookingSuccessConfig(), getSiteConfig()]);
   const branchKey = String(booking.location || '').toLowerCase();
-  const staticBranchInfo = locations[branchKey] || null;
 
   // This page always knows the REAL branch with certainty (it's the
   // booking's own `location` field, not guessed from a cookie/pathname
   // the way Footer.tsx has to) — so, unlike Footer, there's no reason to
-  // resolve this client-side at all. `app/data/locations.ts` is a static,
-  // hardcoded fallback file, and its `phone` field is the exact same
-  // placeholder number ("+919876543210") for all four branches — a real
-  // bug: the "Call Clinic" button here was never showing a branch's
-  // actual number, only that one shared placeholder. LocationContent
-  // (the DB model admins actually edit at Admin → Locations) is the real
-  // source of truth for both fields; the static file's own address values
-  // ARE genuinely distinct per branch already, kept only as the fallback
-  // for a branch with nothing set in the DB yet.
-  const locationContent = branchKey
-    ? await (LocationContent as any).findOne({ location: branchKey }).select('clinicInfo.address clinicInfo.phone').lean().catch(() => null)
-    : null;
-  const branchInfo = staticBranchInfo
-    ? {
-        ...staticBranchInfo,
-        address: locationContent?.clinicInfo?.address || staticBranchInfo.address,
-        phone: locationContent?.clinicInfo?.phone || staticBranchInfo.phone,
-      }
-    : null;
+  // resolve this client-side at all. See resolveBranchInfo's own comment
+  // for the DB-over-static-fallback precedence (also shared with the
+  // generic no-bookingId path above).
+  await connectDB();
+  const branchInfo = await resolveBranchInfo(branchKey);
 
   const enabledSections = new Set(
     (config.relatedSections || []).filter((s: any) => s.enabled).map((s: any) => s.key)

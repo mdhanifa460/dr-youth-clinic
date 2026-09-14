@@ -337,18 +337,26 @@ export async function middleware(req: NextRequest) {
     url.searchParams.set("bookingId", legacyBookingSuccessMatch[1]);
     return NextResponse.redirect(url, 308);
   }
-  // /book/success with no bookingId at all (typed by hand, or an
-  // incomplete/stale link) — nothing real to show; 307 (temporary, this
-  // isn't a moved URL) back to the booking form instead of relying on the
-  // page's own notFound(). Checks BOTH the legacy query param and the
-  // current cookie-based signal (see app/lib/bookingSuccessRedirect.ts) —
-  // a real booking's redirect now carries the id via the cookie only, so
-  // checking the query param alone would incorrectly bounce every
-  // genuine success-page visit back to /book.
+  // /book/success with nothing real to identify at all (typed by hand, or
+  // an incomplete/stale link) — 307 (temporary, this isn't a moved URL)
+  // back to the booking form instead of relying on the page's own
+  // notFound(). Checks the legacy bookingId query param, the current
+  // cookie-based signal (see app/lib/bookingSuccessRedirect.ts), AND a
+  // recognized `location` — that last one matters because the URL an ad
+  // platform's Thank-You-Page trigger actually targets going forward is
+  // exactly "/book/success?location=<branch>" with NO bookingId anywhere
+  // (deliberately — see that file's own comment), and at least one
+  // platform's own setup flow fetches that URL itself to confirm it
+  // resolves before saving the conversion action. Bouncing that straight
+  // to /book would fail that check every time even though it's a
+  // perfectly legitimate hit; the success page itself renders a real
+  // (non-personalized) confirmation for this exact case — see
+  // GenericBranchThankYou in app/(public)/book/success/page.tsx.
   if (
     pathname === "/book/success" &&
     !req.nextUrl.searchParams.get("bookingId") &&
-    !req.cookies.get(BOOKING_SUCCESS_ID_COOKIE)?.value
+    !req.cookies.get(BOOKING_SUCCESS_ID_COOKIE)?.value &&
+    !VALID_LOCATIONS.includes((req.nextUrl.searchParams.get("location") || "").toLowerCase())
   ) {
     return NextResponse.redirect(new URL("/book", req.url), 307);
   }

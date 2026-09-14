@@ -16,11 +16,12 @@ import { encodeAttributionToken, type WaAttributionPayload } from '@/app/lib/wha
 
 const CITY_SLUGS = Object.keys(locations);
 
-export function toWaLink(value: string): string {
-  if (!value) return '';
-  if (value.includes('wa.me') || value.includes('whatsapp.com')) return value;
-  return `https://wa.me/${value.replace(/\D/g, '')}`;
-}
+// Re-exported unchanged — see app/lib/waLink.ts's own comment for why
+// this pure function now actually lives in its own directive-free file
+// (a Server Component needed it too, which this 'use client' file can't
+// safely provide). Every existing `import { toWaLink } from
+// '@/app/lib/useBranchWhatsApp'` call site keeps working exactly as-is.
+export { toWaLink } from '@/app/lib/waLink';
 
 function readCookie(name: string): string | undefined {
   if (typeof document === 'undefined') return undefined;
