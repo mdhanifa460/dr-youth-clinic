@@ -381,7 +381,7 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
         // navigation completes. Fixed, genuinely static /book/success path
         // (bookingId travels via cookie, not the URL) — see
         // app/lib/bookingSuccessRedirect.ts's own comment for why.
-        if (data.bookingId) goToBookingSuccess(router, data.bookingId);
+        if (data.bookingId) goToBookingSuccess(router, data.bookingId, form.location);
         else setDone(true);
       } else setError(data.message || 'Could not book — please try again.');
     } catch { setError('Network error — please try again.'); }
@@ -700,7 +700,7 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
         // navigation at all. Fixed, genuinely static /book/success path
         // (bookingId travels via cookie, not the URL) — see
         // app/lib/bookingSuccessRedirect.ts's own comment for why.
-        if (data.bookingId) goToBookingSuccess(router, data.bookingId);
+        if (data.bookingId) goToBookingSuccess(router, data.bookingId, form.location);
         else setDone(true);
       } else setError(data.message || 'Could not submit — please try again.');
     } catch { setError('Network error — please try again.'); }

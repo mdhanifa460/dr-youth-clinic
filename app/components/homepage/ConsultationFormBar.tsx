@@ -62,7 +62,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
         // cookie, not the URL) — see app/lib/bookingSuccessRedirect.ts's
         // own comment for why (an external ad tool's Thank-You-page
         // trigger needs one exact-match URL, which a query param broke).
-        goToBookingSuccess(router, data.bookingId);
+        goToBookingSuccess(router, data.bookingId, city);
       } else {
         setError(data.message || 'Booking failed. Please try again.');
       }

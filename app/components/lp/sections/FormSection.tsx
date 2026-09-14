@@ -152,7 +152,7 @@ export default function FormSection({
         // Fixed, genuinely static /book/success path (bookingId travels via
         // cookie, not the URL) — see app/lib/bookingSuccessRedirect.ts's
         // own comment for why.
-        if (json.bookingId) goToBookingSuccess(router, json.bookingId);
+        if (json.bookingId) goToBookingSuccess(router, json.bookingId, json.location);
         else setSuccess(true);
       } else {
         setError(json.message || 'Something went wrong. Please try again.');

@@ -233,7 +233,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         // real Booking record by it server-side — it now travels via a
         // short-lived cookie instead of the URL. See that file's own
         // comment for the full story.
-        goToBookingSuccess(router, data.bookingId);
+        goToBookingSuccess(router, data.bookingId, form.location);
         return;
       }
       else setError(data.message || 'Booking failed. Please try again.');
