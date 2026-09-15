@@ -178,7 +178,7 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
       </div>
 
       {/* ── DESKTOP ROW: [logo] [nav] [phone + CTA] ── */}
-      <div className="hidden xl:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-4 gap-3 xl:gap-5">
+      <div className="hidden xl:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-2.5 gap-3 xl:gap-5">
 
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">

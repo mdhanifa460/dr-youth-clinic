@@ -25,7 +25,7 @@ import UnifiedJourneyResults, { type PatientReport } from "@/app/components/asse
 import PhotoCaptureScreen, { type CapturedPhoto } from "@/app/components/assessment/PhotoCaptureScreen";
 import AiObservationsScreen, { type AiObservationsResult } from "@/app/components/assessment/AiObservationsScreen";
 
-type Screen = "intro" | "goal-pick" | "question" | "photo-capture" | "ai-observations" | "lead" | "results";
+type Screen = "intro" | "goal-pick" | "question" | "photo-capture" | "ai-observations" | "lead" | "analyzing" | "results";
 type LeadStatus = "idle" | "sending" | "sent" | "error";
 const GENERIC_LEAD_ERROR = "Something went wrong — please check your details and try again.";
 
@@ -347,7 +347,14 @@ function PlanMyJourneyFlow({
       // category slug (hair/skin/laser/weight-loss), no mapping needed.
       // See the same note in skin-quiz/page.tsx's trackEvent.
       if (goal) postInterestEvent("assessment_completed", goal);
-      setScreen("results");
+      // Was setScreen("results") directly — the actual AI write-up
+      // (aiExplanation below) only starts fetching once results are
+      // already on screen, so it used to just pop in silently seconds
+      // later with zero indication anything was happening, reported live
+      // as "no AI analyzing animation/progress." AnalyzingScreen now
+      // covers exactly that gap and the fetch itself moved to fire during
+      // it (see the effect below) instead of after.
+      setScreen("analyzing");
     } catch {
       setLeadError(GENERIC_LEAD_ERROR);
       setLeadStatus("error");
@@ -371,9 +378,43 @@ function PlanMyJourneyFlow({
   // assessmentType: "journey" here routes this lead through
   // /api/patient-report's assessmentType branch (percentage-based, never
   // names a treatment).
+  //
+  // Used to be keyed on screen === "results" — meaning it only started
+  // fetching AFTER results were already visible, so aiExplanation just
+  // silently popped in seconds later with no indication anything was
+  // happening (reported live: "no AI analyzing animation/progress").
+  // Moved to fire during the new "analyzing" screen instead, which is
+  // also what actually drives the transition to "results" now — with a
+  // minimum display time (so a fast response doesn't just flash by,
+  // undermining the "AI is doing real work" impression this is FOR) and
+  // a hard max timeout (so a slow/failed AI call can never leave the
+  // visitor stuck on a spinner — the deterministic journeyResult below
+  // never depended on aiExplanation anyway, it's shown with or without it).
   useEffect(() => {
-    if (screen !== "results" || !leadId || resultsPatched.current || journeyResult.categoryScores.length === 0) return;
+    if (screen !== "analyzing" || !leadId || resultsPatched.current) return;
     resultsPatched.current = true;
+
+    const MIN_DISPLAY_MS = 2600;
+    const MAX_WAIT_MS = 7000;
+    const startedAt = Date.now();
+    let settled = false;
+    const proceed = () => {
+      if (settled) return;
+      settled = true;
+      const remaining = Math.max(0, MIN_DISPLAY_MS - (Date.now() - startedAt));
+      setTimeout(() => setScreen("results"), remaining);
+    };
+    const safetyNet = setTimeout(proceed, MAX_WAIT_MS);
+
+    if (journeyResult.categoryScores.length === 0) {
+      // No clinical intake to report on for this goal's path (e.g.
+      // weight-loss's straight-to-lead flow) — nothing to fetch, just let
+      // the staged animation run its minimum course.
+      clearTimeout(safetyNet);
+      proceed();
+      return () => clearTimeout(safetyNet);
+    }
+
     fetch("/api/leads", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -393,7 +434,10 @@ function PlanMyJourneyFlow({
       })
       .then((res) => res.json())
       .then((data) => { if (data.success && data.data?.aiExplanation) setAiExplanation(data.data.aiExplanation); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { clearTimeout(safetyNet); proceed(); });
+
+    return () => clearTimeout(safetyNet);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, leadId]);
 
@@ -439,6 +483,7 @@ function PlanMyJourneyFlow({
         {screen === "lead" && (
           <LeadCaptureScreen lead={lead} setLead={setLead} status={leadStatus} errorMessage={leadError} onSubmit={submitLead} goalLabel={goal ? goalMap[goal]?.label || "" : ""} />
         )}
+        {screen === "analyzing" && <AnalyzingScreen goalLabel={goal ? goalMap[goal]?.label || "" : ""} />}
       </div>
 
       {screen === "results" && goal && goalMap[goal] && (() => {
@@ -449,21 +494,6 @@ function PlanMyJourneyFlow({
         const meta = goalMap[goal];
         return (
           <div>
-            {/* Sticky goal switcher */}
-            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100 py-3">
-              <div className="max-w-4xl mx-auto px-4 flex items-center gap-2 overflow-x-auto">
-                {goals.map((g) => (
-                  <button
-                    key={g.slug}
-                    onClick={() => { setGoal(g.slug); setServiceId(String(bundles[g.slug]?.services?.[0]?._id || "")); }}
-                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${g.slug === goal ? "bg-[#0B2560] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-                  >
-                    {g.icon} {g.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-10">
               <UnifiedJourneyResults
                 resultSections={quizConfig.resultSections?.length ? quizConfig.resultSections : DEFAULT_QUIZ_CONFIG.resultSections}
@@ -494,6 +524,34 @@ function PlanMyJourneyFlow({
                 leadName={lead.name}
                 leadPhone={lead.phone}
               />
+
+              {/* Was a full-width sticky chip row for every goal, pinned to
+                  the very top of the screen — the first thing visible the
+                  instant results loaded, before the visitor had even seen
+                  their own personalized result. Reported live as
+                  "unnecessary chips" cluttering the page right after
+                  loading. Switching concerns is still useful (someone
+                  curious about a second treatment), so kept — just moved
+                  below the actual result and clearly labeled, instead of
+                  competing with it for attention on arrival. */}
+              {goals.length > 1 && (
+                <div className="mt-10 pt-6 border-t border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                    Exploring something else?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {goals.filter((g) => g.slug !== goal).map((g) => (
+                      <button
+                        key={g.slug}
+                        onClick={() => { setGoal(g.slug); setServiceId(String(bundles[g.slug]?.services?.[0]?._id || "")); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition"
+                      >
+                        {g.icon} {g.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -538,6 +596,73 @@ function IntroScreen({ goals, onStart }: { goals: IJourneyGoal[]; onStart: () =>
       </button>
 
       <p className="mt-4 text-xs text-gray-500">Takes about a minute. No sign-up required to start.</p>
+    </div>
+  );
+}
+
+// Fills the exact gap reported live: results used to appear instantly
+// while the actual AI write-up (aiExplanation) silently fetched in the
+// background and just popped in seconds later, with nothing on screen
+// telling the visitor anything was happening. This gives the "AI is
+// doing real work" moment the feature's own "AI-Personalised" framing
+// promises, staged as three sequential steps rather than a single bare
+// spinner. Purely presentational — timing is driven by the parent's own
+// effect (a minimum display time + hard timeout either way), this just
+// animates through the same duration regardless of how long the real
+// fetch actually takes.
+const ANALYZING_STAGES = [
+  "Analyzing your responses",
+  "Matching you with the right doctor",
+  "Building your personalized plan",
+];
+
+function AnalyzingScreen({ goalLabel }: { goalLabel: string }) {
+  const [activeStage, setActiveStage] = useState(0);
+
+  useEffect(() => {
+    const timers = ANALYZING_STAGES.slice(1).map((_, i) =>
+      setTimeout(() => setActiveStage(i + 1), (i + 1) * 900)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center text-center py-16 md:py-24">
+      <div className="relative w-16 h-16 mb-8">
+        <div className="absolute inset-0 rounded-full border-4 border-[#0B2560]/10" />
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#F5A623] animate-spin" />
+        <Sparkles size={22} className="absolute inset-0 m-auto text-[#0B2560]" />
+      </div>
+
+      <h2 className="text-xl md:text-2xl font-extrabold text-[#0B2560] mb-2">
+        {goalLabel ? `Building your ${goalLabel} plan…` : "Building your plan…"}
+      </h2>
+      <p className="text-gray-500 text-sm mb-8">This only takes a moment.</p>
+
+      <div className="flex flex-col gap-3 text-left w-full max-w-xs">
+        {ANALYZING_STAGES.map((stage, i) => {
+          const done = i < activeStage;
+          const active = i === activeStage;
+          return (
+            <div key={stage} className="flex items-center gap-3">
+              <span
+                className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
+                  done ? "bg-emerald-500" : active ? "bg-[#0B2560]" : "bg-gray-200"
+                }`}
+              >
+                {done ? (
+                  <Check size={12} className="text-white" />
+                ) : active ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                ) : null}
+              </span>
+              <span className={`text-sm font-medium ${done || active ? "text-[#0B2560]" : "text-gray-400"}`}>
+                {stage}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
