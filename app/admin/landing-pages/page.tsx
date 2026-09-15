@@ -165,7 +165,7 @@ export default function LandingPagesAdminPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <Rocket className="text-[#3B82C4]" size={28} />
+            <Rocket className="text-[#2A6BA8]" size={28} />
             Landing Pages
           </h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -229,7 +229,7 @@ export default function LandingPagesAdminPage() {
       {/* TABLE */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader className="w-8 h-8 text-[#3B82C4] animate-spin" />
+          <Loader className="w-8 h-8 text-[#2A6BA8] animate-spin" />
         </div>
       ) : filteredPages.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -296,7 +296,7 @@ export default function LandingPagesAdminPage() {
                       <p className="font-semibold text-[#0B2560] text-sm flex items-center gap-2">
                         {page.title}
                         {page.city && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#3B82C4] bg-[#3B82C4]/10 px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#2A6BA8] bg-[#3B82C4]/10 px-1.5 py-0.5 rounded">
                             {CITY_LABELS[page.city] || page.city}
                           </span>
                         )}
@@ -356,7 +356,7 @@ export default function LandingPagesAdminPage() {
                         rel="noopener noreferrer"
                         title={page.status === 'published' ? 'View live page' : 'Preview draft'}
                       >
-                        <button className="p-2 text-[#3B82C4] hover:bg-[#3B82C4]/10 rounded-lg transition">
+                        <button className="p-2 text-[#2A6BA8] hover:bg-[#3B82C4]/10 rounded-lg transition">
                           <ExternalLink size={16} />
                         </button>
                       </a>
@@ -369,7 +369,7 @@ export default function LandingPagesAdminPage() {
                         onClick={() => duplicatePage(page._id)}
                         disabled={duplicating === page._id}
                         title="Duplicate — same content, new draft to tweak"
-                        className="p-2 text-[#3B82C4] hover:bg-[#3B82C4]/10 rounded-lg transition disabled:opacity-50"
+                        className="p-2 text-[#2A6BA8] hover:bg-[#3B82C4]/10 rounded-lg transition disabled:opacity-50"
                       >
                         {duplicating === page._id ? (
                           <Loader size={16} className="animate-spin" />

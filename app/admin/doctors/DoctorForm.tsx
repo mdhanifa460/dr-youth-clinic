@@ -110,7 +110,7 @@ export default function DoctorForm({
           </h2>
           {doctor?._id && (
             <a href={`/doctors/${doctor._id}`} target="_blank" rel="noopener noreferrer"
-              className="text-[10px] text-[#3B82C4] hover:underline flex items-center gap-1 mt-0.5">
+              className="text-[10px] text-[#2A6BA8] hover:underline flex items-center gap-1 mt-0.5">
               View profile on site <ExternalLink size={9} />
             </a>
           )}
@@ -221,7 +221,7 @@ export default function DoctorForm({
                   <span className="text-sm font-medium text-gray-700">{loc.label}</span>
                   {loc.note && <span className="text-xs text-gray-400">— {loc.note}</span>}
                   {loc.value === 'all' && isAllSelected && (
-                    <span className="ml-auto text-[10px] text-[#3B82C4] font-bold">ACTIVE</span>
+                    <span className="ml-auto text-[10px] text-[#2A6BA8] font-bold">ACTIVE</span>
                   )}
                   {loc.value !== 'all' && selected && !isAllSelected && (
                     <span className="ml-auto text-[10px] text-emerald-500 font-bold">ACTIVE</span>

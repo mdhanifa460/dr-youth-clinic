@@ -43,7 +43,7 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
     <section className="bg-[#f6faff] py-14 md:py-20">
       <div className="max-w-3xl mx-auto px-5">
         <div className="text-center mb-10">
-          <span className="inline-block text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#F5A623] bg-[#F5A623]/10 px-3 py-1.5 rounded-full mb-4">
+          <span className="inline-block text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#A25607] bg-[#F5A623]/10 px-3 py-1.5 rounded-full mb-4">
             {badge}
           </span>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
@@ -61,7 +61,7 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
           {/* Header row */}
           <div className="grid grid-cols-[1fr_auto_auto] bg-[#0B2560] text-white text-[10px] sm:text-xs font-extrabold uppercase tracking-wider px-3 sm:px-5 py-3.5 gap-2 sm:gap-4">
             <span>Feature</span>
-            <span className="w-14 sm:w-28 text-center text-[#F5A623]">{usLabel}</span>
+            <span className="w-14 sm:w-28 text-center text-[#A25607]">{usLabel}</span>
             <span className="w-14 sm:w-24 text-center text-white/50">{othersLabel}</span>
           </div>
 

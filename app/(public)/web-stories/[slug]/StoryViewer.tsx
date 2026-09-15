@@ -42,7 +42,7 @@ function ElementView({ el, entities, siteConfig }: any) {
     case 'title':
       return <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-white leading-tight drop-shadow-lg">{d.text}</h1>;
     case 'subtitle':
-      return <p className="text-base md:text-lg font-bold text-[#F5A623] drop-shadow">{d.text}</p>;
+      return <p className="text-base md:text-lg font-bold text-[#A25607] drop-shadow">{d.text}</p>;
     case 'description':
       return <p className="text-sm text-white/90 leading-relaxed drop-shadow">{d.text}</p>;
     case 'quote':
@@ -74,7 +74,7 @@ function ElementView({ el, entities, siteConfig }: any) {
       if (!offer) return null;
       return (
         <Link href="/offers" className="flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg">
-          <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0"><Tag size={14} className="text-[#F5A623]" /></div>
+          <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0"><Tag size={14} className="text-[#A25607]" /></div>
           <p className="text-xs font-bold text-[#0B2560] truncate">{offer.title}</p>
         </Link>
       );
@@ -84,7 +84,7 @@ function ElementView({ el, entities, siteConfig }: any) {
       if (!result) return null;
       return (
         <Link href={result.slug ? `/results/${result.slug}` : '/results'} className="flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg">
-          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0"><Camera size={14} className="text-[#3B82C4]" /></div>
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0"><Camera size={14} className="text-[#2A6BA8]" /></div>
           <p className="text-xs font-bold text-[#0B2560] truncate">{result.title}</p>
         </Link>
       );
@@ -101,7 +101,7 @@ function ElementView({ el, entities, siteConfig }: any) {
     case 'call_button':
       return d.phone ? <a href={`tel:${d.phone}`} className="flex items-center justify-center gap-2 bg-white/90 text-[#0B2560] font-bold text-sm py-3 rounded-2xl shadow-lg"><Phone size={14} /> Call Us</a> : null;
     case 'location_card':
-      return d.branch ? <div className="flex items-center gap-2 bg-white/90 rounded-2xl p-3 shadow-lg"><MapPin size={14} className="text-[#F5A623]" /><span className="text-xs font-bold text-[#0B2560] capitalize">{d.branch} Clinic</span></div> : null;
+      return d.branch ? <div className="flex items-center gap-2 bg-white/90 rounded-2xl p-3 shadow-lg"><MapPin size={14} className="text-[#A25607]" /><span className="text-xs font-bold text-[#0B2560] capitalize">{d.branch} Clinic</span></div> : null;
     case 'countdown':
       return <CountdownEl target={d.targetDate} label={d.label} />;
     default:
@@ -267,7 +267,7 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
           <div className="flex gap-3 overflow-x-auto scrollbar-hide">
             {entities.recommendations.map((r: any, i: number) => (
               <a key={i} href={r.href} className="shrink-0 w-40 bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition">
-                <span className="text-[10px] font-bold text-[#F5A623] uppercase">{r.type}</span>
+                <span className="text-[10px] font-bold text-[#A25607] uppercase">{r.type}</span>
                 <p className="text-xs text-white mt-1 line-clamp-2">{r.title}</p>
               </a>
             ))}

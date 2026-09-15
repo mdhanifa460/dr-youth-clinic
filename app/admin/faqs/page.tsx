@@ -142,7 +142,7 @@ function GenerateFaqModal({ services, onAdded, onClose }: any) {
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-bold text-[#0B2560] flex items-center gap-2"><Sparkles size={16} className="text-[#F5A623]" /> Generate FAQs with AI</h2>
+          <h2 className="text-base font-bold text-[#0B2560] flex items-center gap-2"><Sparkles size={16} className="text-[#A25607]" /> Generate FAQs with AI</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
         </div>
 
@@ -248,7 +248,7 @@ export default function FaqsAdminPage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowGenerate(true)} className="flex items-center gap-2 bg-white border border-[#0B2560]/20 text-[#0B2560] px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-[#f6faff]">
-            <Sparkles size={15} className="text-[#F5A623]" /> Generate with AI
+            <Sparkles size={15} className="text-[#A25607]" /> Generate with AI
           </button>
           <button onClick={openNew} className="flex items-center gap-2 bg-[#0B2560] text-white px-4 py-2.5 rounded-xl text-sm font-bold">
             <Plus size={15} /> Add FAQ
@@ -269,7 +269,7 @@ export default function FaqsAdminPage() {
               filtered.map(f => (
                 <button key={f._id} onClick={() => openEdit(f)} className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-[#f6faff] flex items-center justify-between gap-2 ${selected?._id === f._id ? 'bg-[#eef4ff]' : ''}`}>
                   <div className="min-w-0">
-                    {f.category && <span className="text-[10px] font-bold text-[#3B82C4] bg-blue-50 px-1.5 py-0.5 rounded mr-1">{f.category}</span>}
+                    {f.category && <span className="text-[10px] font-bold text-[#2A6BA8] bg-blue-50 px-1.5 py-0.5 rounded mr-1">{f.category}</span>}
                     <p className="text-sm font-semibold text-[#0B2560] line-clamp-1 mt-1">{f.question}</p>
                   </div>
                   <ChevronRight size={13} className="text-gray-300 shrink-0" />

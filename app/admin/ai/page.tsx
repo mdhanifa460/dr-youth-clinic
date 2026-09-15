@@ -662,7 +662,7 @@ function KnowledgeBaseTab() {
             {chunks.map((c: any) => (
               <div key={c._id} className="border border-gray-100 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[9px] font-bold uppercase bg-blue-50 text-[#3B82C4] px-1.5 py-0.5 rounded">{c.sourceType}</span>
+                  <span className="text-[9px] font-bold uppercase bg-blue-50 text-[#2A6BA8] px-1.5 py-0.5 rounded">{c.sourceType}</span>
                   <p className="text-xs font-bold text-[#0B2560] truncate">{c.title}</p>
                 </div>
                 <p className="text-[11px] text-gray-400 line-clamp-2">{c.text}</p>

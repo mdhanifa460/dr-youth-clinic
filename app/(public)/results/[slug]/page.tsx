@@ -165,22 +165,22 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
             <div className="flex flex-wrap gap-2 text-sm">
               {result.doctor?.name && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <User size={12} className="text-[#F5A623]" /> Dr. {result.doctor.name}
+                  <User size={12} className="text-[#A25607]" /> Dr. {result.doctor.name}
                 </span>
               )}
               {branch && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <MapPin size={12} className="text-[#F5A623]" /> {branch} Clinic
+                  <MapPin size={12} className="text-[#A25607]" /> {branch} Clinic
                 </span>
               )}
               {result.duration && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <Clock size={12} className="text-[#F5A623]" /> {result.duration}
+                  <Clock size={12} className="text-[#A25607]" /> {result.duration}
                 </span>
               )}
               {result.sessions && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <Repeat size={12} className="text-[#F5A623]" /> {result.sessions}
+                  <Repeat size={12} className="text-[#A25607]" /> {result.sessions}
                 </span>
               )}
               {result.patientAge && (
@@ -240,7 +240,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                       <Link key={String(s._id)} href={href}
                         className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
                         <h3 className="font-bold text-[#0B2560] text-sm">{s.name}</h3>
-                        <p className="text-[#3B82C4] text-xs mt-1 flex items-center gap-1">
+                        <p className="text-[#2A6BA8] text-xs mt-1 flex items-center gap-1">
                           View treatment <ChevronRight size={11} />
                         </p>
                       </Link>
@@ -322,7 +322,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{r.title}</h3>
+                      <h3 className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 group-hover:text-[#2A6BA8] transition">{r.title}</h3>
                       {r.category && <p className="text-gray-500 text-xs mt-1.5">{r.category}</p>}
                     </div>
                   </Link>

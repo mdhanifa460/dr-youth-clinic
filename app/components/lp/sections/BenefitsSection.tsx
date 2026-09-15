@@ -43,7 +43,7 @@ export default function BenefitsSection({ data }: { data: BenefitsData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">Our Advantages</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">Our Advantages</p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
@@ -70,7 +70,7 @@ export default function BenefitsSection({ data }: { data: BenefitsData }) {
                   {hasEmoji ? (
                     <span className="text-2xl">{item.icon}</span>
                   ) : (
-                    <Icon size={24} className="text-[#3B82C4] group-hover:text-white transition-colors duration-300" />
+                    <Icon size={24} className="text-[#2A6BA8] group-hover:text-white transition-colors duration-300" />
                   )}
                 </div>
                 <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{item.title}</h3>

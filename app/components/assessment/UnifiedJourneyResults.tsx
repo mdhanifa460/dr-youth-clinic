@@ -117,7 +117,7 @@ function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
       <div className="flex items-center gap-6 mb-6">
         <Ring percent={result.overallConcern} />
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-1">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-1">
             {result.severity} Concern
           </p>
           <p className="text-sm text-gray-500 leading-relaxed">
@@ -144,7 +144,7 @@ function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
         <>
           <hr className="border-gray-100 my-5" />
           <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B2560] mb-2">What We Found</p>
-          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#F5A623]">
+          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#A25607]">
             {whatWeFound.map((line) => <li key={line}>{line}</li>)}
           </ul>
         </>
@@ -154,7 +154,7 @@ function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
         <>
           <hr className="border-gray-100 my-5" />
           <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B2560] mb-2">Possible Contributing Factors</p>
-          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#F5A623]">
+          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#A25607]">
             {result.contributingFactors.map((f, i) => <li key={i}>{f.label}</li>)}
           </ul>
         </>
@@ -173,7 +173,7 @@ function ReportList({ title, icon, items }: { title: string; icon: string; items
       <ul className="space-y-1.5">
         {items.map((item, i) => (
           <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
-            <span className="text-[#F5A623] mt-1 shrink-0">•</span> {item}
+            <span className="text-[#A25607] mt-1 shrink-0">•</span> {item}
           </li>
         ))}
       </ul>
@@ -246,7 +246,7 @@ function AiSummaryReportCard({
 
   return (
     <div className="bg-gradient-to-br from-[#0B2560] to-[#1a3a7a] rounded-2xl p-6 text-white">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-3 flex items-center gap-1.5">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#A25607] mb-3 flex items-center gap-1.5">
         <Sparkles size={13} /> Your AI Summary
       </p>
       {status === "loading" ? (
@@ -418,7 +418,7 @@ export default function UnifiedJourneyResults({
           ) : (
             <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
               <p className="text-sm text-gray-500">Photos for this goal are being curated.</p>
-              <Link href="/results" className="text-xs font-semibold text-[#3B82C4] hover:underline mt-1 inline-block">See all patient results →</Link>
+              <Link href="/results" className="text-xs font-semibold text-[#2A6BA8] hover:underline mt-1 inline-block">See all patient results →</Link>
             </div>
           )}
         </div>

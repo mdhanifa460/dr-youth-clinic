@@ -150,7 +150,7 @@ const GuidedTour = forwardRef<GuidedTourHandle, GuidedTourProps>(({ tourId, step
       >
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#0B2560] uppercase tracking-wider">
-            <Sparkles size={12} className="text-[#F5A623]" /> Step {stepIndex + 1} of {steps.length}
+            <Sparkles size={12} className="text-[#A25607]" /> Step {stepIndex + 1} of {steps.length}
           </div>
           <button onClick={close} aria-label="Close guide" className="text-gray-300 hover:text-gray-500 shrink-0">
             <X size={16} />

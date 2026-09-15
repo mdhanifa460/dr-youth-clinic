@@ -50,7 +50,7 @@ function ReviewCard({ review }: { review: ReviewItem }) {
         <div className="min-w-0">
           <p className="font-bold text-[#0B2560] text-sm truncate">{name}</p>
           {review.treatment && (
-            <span className="inline-block mt-0.5 text-[10px] bg-[#3B82C4]/10 text-[#3B82C4] font-semibold px-2 py-0.5 rounded-full">
+            <span className="inline-block mt-0.5 text-[10px] bg-[#3B82C4]/10 text-[#2A6BA8] font-semibold px-2 py-0.5 rounded-full">
               {review.treatment}
             </span>
           )}
@@ -58,7 +58,7 @@ function ReviewCard({ review }: { review: ReviewItem }) {
       </div>
       <div className="flex items-center gap-0.5 mb-3">
         {Array.from({ length: 5 }, (_, i) => (
-          <Star key={i} size={15} className={i < stars ? 'text-[#F5A623]' : 'text-gray-200'} fill={i < stars ? '#F5A623' : 'none'} />
+          <Star key={i} size={15} className={i < stars ? 'text-[#A25607]' : 'text-gray-200'} fill={i < stars ? '#F5A623' : 'none'} />
         ))}
       </div>
       <p className="text-sm text-gray-600 leading-relaxed flex-1 line-clamp-4">&ldquo;{review.text}&rdquo;</p>
@@ -123,7 +123,7 @@ export default function ReviewsSection({ data }: { data: ReviewsData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-10"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">Patient Stories</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">Patient Stories</p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>

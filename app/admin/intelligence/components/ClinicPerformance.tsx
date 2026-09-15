@@ -40,11 +40,11 @@ export default function ClinicPerformance({ data }: { data: any }) {
                   <span className="text-2xl">{LOC_ICONS[loc.location] || '📍'}</span>
                   <div>
                     <p className={`font-extrabold text-base ${isTop ? 'text-white' : 'text-[#0B2560]'}`}>{cap}</p>
-                    {isTop && <span className="text-[10px] text-[#F5A623] font-bold uppercase tracking-wider">Top Performer</span>}
+                    {isTop && <span className="text-[10px] text-[#A25607] font-bold uppercase tracking-wider">Top Performer</span>}
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`text-lg font-extrabold ${isTop ? 'text-[#F5A623]' : 'text-[#0B2560]'}`}>{share}%</p>
+                  <p className={`text-lg font-extrabold ${isTop ? 'text-[#A25607]' : 'text-[#0B2560]'}`}>{share}%</p>
                   <p className={`text-[10px] ${isTop ? 'text-white/70' : 'text-gray-400'}`}>booking share</p>
                 </div>
               </div>
@@ -66,7 +66,7 @@ export default function ClinicPerformance({ data }: { data: any }) {
                 {loc.avgRating > 0 && (
                   <div className="flex items-center gap-1">
                     <span className="text-sm">⭐</span>
-                    <span className={`text-xs font-bold ${isTop ? 'text-[#F5A623]' : 'text-amber-600'}`}>{loc.avgRating}</span>
+                    <span className={`text-xs font-bold ${isTop ? 'text-[#A25607]' : 'text-amber-600'}`}>{loc.avgRating}</span>
                     <span className={`text-[10px] ${isTop ? 'text-white/60' : 'text-gray-400'}`}>({loc.reviewCount} reviews)</span>
                   </div>
                 )}
@@ -102,7 +102,7 @@ export default function ClinicPerformance({ data }: { data: any }) {
               <p className="font-bold text-gray-500">{loc.charAt(0).toUpperCase() + loc.slice(1)}</p>
             </div>
             <p className="text-xs text-gray-400">No bookings recorded for this location yet.</p>
-            <p className="text-[11px] text-[#3B82C4] mt-2 font-medium">→ Add services and enable bookings for this branch</p>
+            <p className="text-[11px] text-[#2A6BA8] mt-2 font-medium">→ Add services and enable bookings for this branch</p>
           </div>
         ))}
       </div>

@@ -752,7 +752,7 @@ function BlockEditForm({
         <div className="space-y-2">
           {items.map((item, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="text-[#F5A623] shrink-0">✓</span>
+              <span className="text-[#A25607] shrink-0">✓</span>
               <input
                 value={item}
                 onChange={(e) => setItem(i, e.target.value)}

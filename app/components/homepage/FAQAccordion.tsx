@@ -23,7 +23,7 @@ export default function FAQAccordion({ data }: { data: any }) {
           <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight">
             {headline}
           </h2>
-          <a href={viewAllHref} className="mt-4 min-h-11 inline-flex items-center gap-1 text-[#3B82C4] font-semibold text-sm hover:text-[#0B2560] transition">
+          <a href={viewAllHref} className="mt-4 min-h-11 inline-flex items-center gap-1 text-[#2A6BA8] font-semibold text-sm hover:text-[#0B2560] transition">
             {viewAllText} →
           </a>
         </div>

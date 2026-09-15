@@ -246,7 +246,7 @@ export default function OfferBannerSection({
             <div className="mt-5 max-w-xs mx-auto">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-white/80">Slots Remaining</span>
-                <span className="text-xs font-extrabold text-[#F5A623]">{slotsLeft} left</span>
+                <span className="text-xs font-extrabold text-[#A25607]">{slotsLeft} left</span>
               </div>
               <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                 <div
@@ -262,7 +262,7 @@ export default function OfferBannerSection({
 
           {/* EMI badge */}
           {emiAvailable && emiText && (
-            <p className="mt-4 text-[#F5A623] text-sm font-semibold">
+            <p className="mt-4 text-[#A25607] text-sm font-semibold">
               ✦ {emiText}
             </p>
           )}

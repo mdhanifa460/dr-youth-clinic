@@ -11,7 +11,7 @@ export default function ValuesSection({ data }: { data: ValuesData }) {
         {missionQuote && (
           <div className="bg-[#0B2560] rounded-3xl p-8 md:p-12 relative overflow-hidden mb-14">
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#F5A623]/10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-4 relative">Our Mission</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-4 relative">Our Mission</p>
             <blockquote className="text-white text-xl md:text-2xl font-headline font-bold leading-snug relative">
               &ldquo;{missionQuote}&rdquo;
             </blockquote>

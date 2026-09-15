@@ -47,7 +47,7 @@ export default function FullImageBanner({ banner }: { banner: BannerDoc }) {
 
       <div className="relative max-w-3xl mx-auto px-6 md:px-10 py-16 sm:py-20 flex flex-col items-center text-center gap-4">
         {banner.subtitle && (
-          <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-xs sm:text-sm font-bold uppercase tracking-widest">
+          <span className="inline-flex items-center gap-1.5 text-[#A25607] text-xs sm:text-sm font-bold uppercase tracking-widest">
             {banner.subtitle}
           </span>
         )}

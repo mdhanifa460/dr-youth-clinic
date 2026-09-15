@@ -22,7 +22,7 @@ export default async function PrivacyPolicyPage() {
       {/* ── HERO ── */}
       <section className="bg-[#0B2560] py-16 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Legal</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">Legal</p>
           <h1 className="text-3xl md:text-4xl font-headline font-extrabold text-white leading-tight">
             Privacy Policy
           </h1>
@@ -62,7 +62,7 @@ export default async function PrivacyPolicyPage() {
         <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
             Have a question about your data?{' '}
-            <a href={`mailto:${contactEmail}`} className="font-semibold text-[#0B2560] hover:text-[#3B82C4] transition underline underline-offset-2">
+            <a href={`mailto:${contactEmail}`} className="font-semibold text-[#0B2560] hover:text-[#2A6BA8] transition underline underline-offset-2">
               {contactEmail}
             </a>
           </p>

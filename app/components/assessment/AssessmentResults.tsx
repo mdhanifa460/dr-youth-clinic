@@ -101,7 +101,7 @@ export default function AssessmentResults({
   return (
     <div className="py-6 md:py-10">
       <div id="assessment-print-area" className="rounded-3xl bg-[#0B2560] text-white p-6 md:p-8 shadow-xl max-w-md mx-auto">
-        <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#F5A623] mb-1">
+        <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#A25607] mb-1">
           {resultHeadline}
         </p>
 
@@ -115,7 +115,7 @@ export default function AssessmentResults({
             <Ring percent={result.riskScore} label="Risk Level" gradientId="riskGrad" colors={['#3B82C4', '#60A5FA']} />
           )}
         </div>
-        <p className="text-center text-[#F5A623] font-bold text-xs tracking-wide mb-6">
+        <p className="text-center text-[#A25607] font-bold text-xs tracking-wide mb-6">
           {result.severity.toUpperCase()} CONCERN{result.riskLevel ? ` · ${result.riskLevel.toUpperCase()} RISK` : ''}
         </p>
 
@@ -138,8 +138,8 @@ export default function AssessmentResults({
 
         {whatWeFound.length > 0 && (
           <>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">What We Found</p>
-            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-[#F5A623]">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">What We Found</p>
+            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-[#A25607]">
               {whatWeFound.map((line) => <li key={line}>{line}</li>)}
             </ul>
           </>
@@ -147,9 +147,9 @@ export default function AssessmentResults({
 
         {result.contributingFactors.length > 0 && (
           <>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">Possible Contributing Factors</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">Possible Contributing Factors</p>
             <p className="text-[11px] text-white/50 mb-2">Based on your responses, possible contributing factors may include:</p>
-            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-[#F5A623]">
+            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-[#A25607]">
               {result.contributingFactors.map((f) => <li key={f.tag}>{f.label}</li>)}
             </ul>
           </>
@@ -158,7 +158,7 @@ export default function AssessmentResults({
         {aiExplanation && (
           <>
             <hr className="border-white/10 mb-5" />
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">In Your Own Words</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">In Your Own Words</p>
             <p className="text-xs text-white/80 leading-relaxed mb-5">{aiExplanation}</p>
           </>
         )}
@@ -166,7 +166,7 @@ export default function AssessmentResults({
         {cta && (
           <>
             <hr className="border-white/10 mb-5" />
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">What's Next?</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">What's Next?</p>
             <p className="text-xs text-white/80 mb-4 leading-relaxed">{cta.headline} {cta.body}</p>
             <div className="space-y-2">
               {cta.buttons.map((btn, i) => (

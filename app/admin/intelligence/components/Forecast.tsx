@@ -44,7 +44,7 @@ export default function Forecast({ data }: { data: any }) {
       <div className="bg-[#0B2560] rounded-2xl p-6 text-white">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-1">Next Month Forecast</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#A25607] mb-1">Next Month Forecast</p>
             <p className="text-sm text-white/60">Based on 12-month trend analysis</p>
           </div>
           <div className="text-right">
@@ -73,7 +73,7 @@ export default function Forecast({ data }: { data: any }) {
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs text-white/70">Forecast Confidence</span>
-            <span className="text-xs font-bold text-[#F5A623]">{Math.round(confidence)}%</span>
+            <span className="text-xs font-bold text-[#A25607]">{Math.round(confidence)}%</span>
           </div>
           <div className="h-2 bg-white/20 rounded-full overflow-hidden">
             <div className="h-full bg-[#F5A623] rounded-full transition-all duration-700"
@@ -123,12 +123,12 @@ export default function Forecast({ data }: { data: any }) {
             })}
             {/* Forecast bar */}
             <div className="flex-1 flex flex-col items-center gap-1 relative">
-              <div className="absolute -top-5 text-[9px] text-[#F5A623] font-bold whitespace-nowrap">
+              <div className="absolute -top-5 text-[9px] text-[#A25607] font-bold whitespace-nowrap">
                 Forecast: {nextBookings}
               </div>
               <div className="w-full rounded-t border-2 border-dashed border-[#F5A623] bg-[#F5A623]/20"
                 style={{ height: `${Math.max(4, (nextBookings / Math.max(...m12.map((x: any) => x.count), nextBookings, 1)) * 112)}px` }} />
-              <span className="text-[9px] text-[#F5A623] font-bold truncate w-full text-center">Next</span>
+              <span className="text-[9px] text-[#A25607] font-bold truncate w-full text-center">Next</span>
             </div>
           </div>
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">

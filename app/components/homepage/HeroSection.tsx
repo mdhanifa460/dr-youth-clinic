@@ -178,7 +178,7 @@ export default function HeroSection({ data }: { data: any }) {
           <h1 className="text-[2.15rem] sm:text-[2.75rem] md:text-6xl font-headline font-extrabold text-[#0B2560] leading-[1.08] md:leading-tight whitespace-pre-line">
             {s.headline}
             {'\n'}
-            <span className="text-[#F5A623]">{s.highlightText}</span>
+            <span className="text-[#A25607]">{s.highlightText}</span>
           </h1>
 
           <p className="text-gray-700 text-base md:text-lg leading-relaxed font-semibold max-w-lg">{s.description}</p>

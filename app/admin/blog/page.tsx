@@ -28,7 +28,7 @@ function PostCard({ post, onToggle, onToggleFeatured, onDelete }: {
 
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-[#3B82C4] uppercase tracking-wider mb-1">{post.category}</p>
+          <p className="text-xs font-bold text-[#2A6BA8] uppercase tracking-wider mb-1">{post.category}</p>
           <p className="text-sm font-bold text-[#0B2560] leading-snug line-clamp-2">{post.title}</p>
         </div>
         <button onClick={() => onDelete(post._id)} className="text-gray-300 hover:text-red-500 transition shrink-0">
@@ -58,7 +58,7 @@ function PostCard({ post, onToggle, onToggleFeatured, onDelete }: {
           }`}>
           <Star size={10} /> {post.featured ? 'Featured' : 'Normal'}
         </button>
-        <Link href={`/admin/blog/${post._id}`} className="ml-auto flex items-center gap-1 text-[10px] text-[#3B82C4] hover:text-[#0B2560] font-semibold transition">
+        <Link href={`/admin/blog/${post._id}`} className="ml-auto flex items-center gap-1 text-[10px] text-[#2A6BA8] hover:text-[#0B2560] font-semibold transition">
           <Edit2 size={10} /> Edit
         </Link>
       </div>

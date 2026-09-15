@@ -75,7 +75,7 @@ export default function TreatmentIntelligence({ data }: { data: any }) {
                 return (
                   <div key={i} className="group">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-[#F5A623] w-5 shrink-0">#{i + 1}</span>
+                      <span className="text-xs font-bold text-[#A25607] w-5 shrink-0">#{i + 1}</span>
                       <span className="text-xs font-semibold text-gray-800 flex-1 truncate">{s.name}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: catColors[s.category] + '20', color: catColors[s.category] }}>{s.category}</span>
                       <span className="text-xs font-bold text-gray-700 shrink-0">{s.count}</span>
@@ -175,7 +175,7 @@ export default function TreatmentIntelligence({ data }: { data: any }) {
                 <span className="text-sm font-bold text-[#0B2560] bg-[#e8eff7] rounded-lg px-2.5 py-1 shrink-0">{i + 1}</span>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-[#0B2560]">{s.name}</p>
-                  <p className="text-[11px] text-[#3B82C4] mt-0.5">→ {getUpsell(s.name)}</p>
+                  <p className="text-[11px] text-[#2A6BA8] mt-0.5">→ {getUpsell(s.name)}</p>
                 </div>
                 <span className="ml-auto text-[10px] text-gray-400 shrink-0">{s.count} patients</span>
               </div>

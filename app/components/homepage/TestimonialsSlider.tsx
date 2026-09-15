@@ -19,7 +19,7 @@ function Stars({ rating }: { rating: number }) {
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((n) =>
         n <= rating
-          ? <AiFillStar key={n} className="text-[#F5A623]" size={16} />
+          ? <AiFillStar key={n} className="text-[#A25607]" size={16} />
           : <AiOutlineStar key={n} className="text-gray-300" size={16} />
       )}
     </div>
@@ -82,7 +82,7 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
           <p className="text-[#0B2560] font-bold text-sm truncate">{review.authorName}</p>
           <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
             {review.location && <span className="text-gray-500 text-xs capitalize">{review.location}</span>}
-            {review.services?.[0] && <span className="text-[#3B82C4] text-xs">{review.services[0]}</span>}
+            {review.services?.[0] && <span className="text-[#2A6BA8] text-xs">{review.services[0]}</span>}
             {showDate && review.reviewDate && (
               <span className="text-gray-300 text-xs">
                 {new Date(review.reviewDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
@@ -176,7 +176,7 @@ export default function TestimonialsSlider({ data }: { data: any }) {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
 
         <div className="text-center mb-8 md:mb-12">
-          <p className="text-[#F5A623] font-bold text-xs tracking-[0.2em] uppercase mb-3">Patient Reviews</p>
+          <p className="text-[#A25607] font-bold text-xs tracking-[0.2em] uppercase mb-3">Patient Reviews</p>
           <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm leading-relaxed">{subheadline}</p>
         </div>

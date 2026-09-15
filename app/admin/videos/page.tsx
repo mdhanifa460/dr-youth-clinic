@@ -286,7 +286,7 @@ export default function VideosPage() {
                         </div>
                       </div>
                       <span className="font-semibold text-gray-700 flex items-center gap-1.5">
-                        {v.featured && <Star size={12} className="text-[#F5A623] fill-[#F5A623]" />}
+                        {v.featured && <Star size={12} className="text-[#A25607] fill-[#F5A623]" />}
                         {v.title}
                       </span>
                     </div>

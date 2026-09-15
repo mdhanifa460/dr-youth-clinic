@@ -105,7 +105,7 @@ export default function GrowthOpportunities({ data }: { data: any }) {
 
       {/* Total potential */}
       <div className="bg-[#0B2560] rounded-2xl p-5 text-white">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#F5A623] mb-2">Total Growth Potential</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#A25607] mb-2">Total Growth Potential</p>
         <p className="text-3xl font-extrabold">₹3–8 Lakhs</p>
         <p className="text-sm text-white/70 mt-1">additional monthly revenue if all high-priority opportunities are executed</p>
         <div className="grid grid-cols-3 gap-3 mt-4">
@@ -161,7 +161,7 @@ export default function GrowthOpportunities({ data }: { data: any }) {
           ].map((r, i) => (
             <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-[#f6faff] border border-[#e8eff7]">
               <div className="w-20 shrink-0">
-                <p className="text-[10px] font-bold text-[#F5A623] uppercase">{r.phase}</p>
+                <p className="text-[10px] font-bold text-[#A25607] uppercase">{r.phase}</p>
                 <p className="text-xs font-bold text-[#0B2560]">{r.title}</p>
               </div>
               <p className="text-xs text-gray-600 leading-relaxed">{r.desc}</p>

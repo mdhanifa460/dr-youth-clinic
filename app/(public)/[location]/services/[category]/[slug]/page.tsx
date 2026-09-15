@@ -426,7 +426,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </span>
               <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight">
                 {svc.name}
-                <span className="block text-[#F5A623] text-xl md:text-3xl mt-1 font-bold">in {cityName}</span>
+                <span className="block text-[#A25607] text-xl md:text-3xl mt-1 font-bold">in {cityName}</span>
               </h1>
               {svc.heroDescription && (
                 <p className="text-white/70 text-base md:text-[17px] leading-relaxed max-w-lg">{svc.heroDescription}</p>
@@ -435,16 +435,16 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               {/* Quick stat badges */}
               <div className="flex flex-wrap gap-2 text-sm">
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <Clock size={12} className="text-[#F5A623]" /> {svc.duration} min
+                  <Clock size={12} className="text-[#A25607]" /> {svc.duration} min
                 </span>
                 {svc.sessionsRequired && (
                   <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                    <Zap size={12} className="text-[#F5A623]" /> {svc.sessionsRequired}
+                    <Zap size={12} className="text-[#A25607]" /> {svc.sessionsRequired}
                   </span>
                 )}
                 {svc.recoveryTime && (
                   <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                    <BadgeCheck size={12} className="text-[#F5A623]" /> {svc.recoveryTime}
+                    <BadgeCheck size={12} className="text-[#A25607]" /> {svc.recoveryTime}
                   </span>
                 )}
               </div>
@@ -463,12 +463,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="flex flex-wrap gap-5 text-xs text-white/50 border-t border-white/10 pt-4">
                 {siteConfig.showPriceOnCards && (
                   <span className="flex items-center gap-1.5">
-                    <IndianRupee size={11} className="text-[#F5A623]" />
+                    <IndianRupee size={11} className="text-[#A25607]" />
                     From <strong className="text-white ml-0.5">₹{svc.price.toLocaleString('en-IN')}</strong>
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                  <MapPin size={11} className="text-[#F5A623]" /> {cityName} Clinic
+                  <MapPin size={11} className="text-[#A25607]" /> {cityName} Clinic
                 </span>
               </div>
             </div>
@@ -507,7 +507,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             ].map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex items-center gap-3 text-white">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <Icon size={14} className="text-[#F5A623]" />
+                  <Icon size={14} className="text-[#A25607]" />
                 </div>
                 <div>
                   <p className="font-bold text-xs">{label}</p>
@@ -625,7 +625,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   <div className="flex flex-wrap gap-2">
                     {svc.idealFor.map((tag: string, i: number) => (
                       <span key={i} className="inline-flex items-center gap-1.5 bg-white border border-blue-100 text-[#0B2560] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm">
-                        <CheckCircle size={10} className="text-[#3B82C4]" /> {tag}
+                        <CheckCircle size={10} className="text-[#2A6BA8]" /> {tag}
                       </span>
                     ))}
                   </div>
@@ -638,7 +638,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="bg-gradient-to-br from-[#0B2560] to-[#1e3a8a] rounded-3xl p-8 text-white">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
-                    <Cpu size={18} className="text-[#F5A623]" />
+                    <Cpu size={18} className="text-[#A25607]" />
                   </div>
                   <h2 className="text-xl font-headline font-bold">What Powers This Treatment</h2>
                 </div>
@@ -772,14 +772,14 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                             {r.rating && (
                               <span className="flex items-center gap-0.5">
                                 {[...Array(5)].map((_, s) => (
-                                  <Star key={s} size={10} className={s < (r.rating ?? 0) ? 'text-[#F5A623] fill-[#F5A623]' : 'text-gray-200 fill-gray-200'} />
+                                  <Star key={s} size={10} className={s < (r.rating ?? 0) ? 'text-[#A25607] fill-[#F5A623]' : 'text-gray-200 fill-gray-200'} />
                                 ))}
                               </span>
                             )}
                           </div>
                           {r.reviewText && (
                             <p className="text-gray-600 text-sm leading-relaxed">
-                              <Quote size={12} className="inline text-[#3B82C4] mr-1 -mt-0.5" />
+                              <Quote size={12} className="inline text-[#2A6BA8] mr-1 -mt-0.5" />
                               {r.reviewText}
                             </p>
                           )}
@@ -800,7 +800,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="grid sm:grid-cols-2 gap-3">
                 {(svc.whyChooseUs?.length ? svc.whyChooseUs : DEFAULT_WHY_US).map((point: string, i: number) => (
                   <div key={i} className="flex items-start gap-3 bg-white rounded-xl p-4 border border-gray-50 shadow-sm">
-                    <CheckCircle size={15} className="text-[#3B82C4] mt-0.5 shrink-0" />
+                    <CheckCircle size={15} className="text-[#2A6BA8] mt-0.5 shrink-0" />
                     <p className="text-gray-700 text-sm leading-relaxed">{point}</p>
                   </div>
                 ))}
@@ -843,13 +843,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     },
                     { label: 'Duration', value: `${svc.duration} min` },
                     svc.sessionsRequired && { label: 'Sessions', value: svc.sessionsRequired },
-                    svc.recoveryTime && { label: 'Recovery', value: svc.recoveryTime, color: 'text-[#3B82C4]' },
+                    svc.recoveryTime && { label: 'Recovery', value: svc.recoveryTime, color: 'text-[#2A6BA8]' },
                   ].filter(Boolean).map((row: any, i, arr) => (
                     <div key={i} className={`flex justify-between items-center py-2.5 ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>
                       <span className="text-xs text-gray-500">{row.label}</span>
                       <span className="text-right">
                         <span className={`block font-semibold text-sm ${row.bold ? 'text-2xl font-extrabold text-[#0B2560]' : row.color ?? 'text-gray-700'}`}>{row.value}</span>
-                        {row.sub && <span className="block text-[11px] font-semibold text-[#F5A623]">{row.sub}</span>}
+                        {row.sub && <span className="block text-[11px] font-semibold text-[#A25607]">{row.sub}</span>}
                       </span>
                     </div>
                   ))}
@@ -871,16 +871,16 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="rounded-3xl border border-gray-100 p-5 bg-[#f6faff] space-y-3">
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.18em]">Our {cityName} Clinic</p>
                 <div className="flex items-start gap-2 text-sm text-gray-600">
-                  <MapPin size={13} className="text-[#3B82C4] mt-0.5 shrink-0" />
+                  <MapPin size={13} className="text-[#2A6BA8] mt-0.5 shrink-0" />
                   <span className="text-xs">{loc.address}</span>
                 </div>
                 {loc.hours?.[0] && (
                   <div className="flex items-start gap-2 text-gray-500">
-                    <Clock size={13} className="text-[#3B82C4] mt-0.5 shrink-0" />
+                    <Clock size={13} className="text-[#2A6BA8] mt-0.5 shrink-0" />
                     <span className="text-xs">{loc.hours[0].day}: {loc.hours[0].hours}</span>
                   </div>
                 )}
-                <Link href={`/${params.location}`} className="text-xs font-semibold text-[#3B82C4] hover:text-[#0B2560] transition flex items-center gap-1 pt-1">
+                <Link href={`/${params.location}`} className="text-xs font-semibold text-[#2A6BA8] hover:text-[#0B2560] transition flex items-center gap-1 pt-1">
                   View full clinic details <ChevronRight size={11} />
                 </Link>
               </div>
@@ -892,7 +892,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   {otherLocations.map((o: any) => (
                     <Link key={o.location} href={`/${o.location}/services/${catSlug}/${o.urlSlug}`} className="flex items-center justify-between hover:bg-[#f6faff] rounded-xl p-2 -mx-2 transition group">
                       <span className="text-sm font-semibold text-[#0B2560] capitalize">{locations[o.location]?.name ?? o.location}</span>
-                      <ChevronRight size={13} className="text-gray-300 group-hover:text-[#3B82C4] transition" />
+                      <ChevronRight size={13} className="text-gray-300 group-hover:text-[#2A6BA8] transition" />
                     </Link>
                   ))}
                 </div>
@@ -955,7 +955,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#0B2560] text-sm">{doc.name}</h3>
-                      <p className="text-[#3B82C4] text-xs mt-0.5">{doc.title}</p>
+                      <p className="text-[#2A6BA8] text-xs mt-0.5">{doc.title}</p>
                       {doc.experience > 0 && (
                         <p className="text-gray-500 text-xs mt-1">{doc.experience}+ years experience</p>
                       )}
@@ -994,7 +994,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-[#F5A623]/[0.05] -translate-x-1/3 translate-y-1/3" />
           </div>
           <div className="max-w-2xl mx-auto px-6 relative">
-            <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-3">Ready to begin?</p>
+            <p className="text-[#A25607] text-xs font-bold uppercase tracking-widest mb-3">Ready to begin?</p>
             <h2 className="text-2xl md:text-4xl font-headline font-extrabold tracking-tight mb-3">
               Start Your {svc.name} Journey
             </h2>

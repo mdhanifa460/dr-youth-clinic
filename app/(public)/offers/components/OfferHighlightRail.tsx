@@ -22,7 +22,7 @@ export default function OfferHighlightRail({ offers }: { offers: any[] }) {
 
   return (
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5A623] mb-3">Limited Period Offers</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A25607] mb-3">Limited Period Offers</p>
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 lg:flex-col lg:overflow-visible">
         {offers.map((offer) => {
           const pct = discountPct(offer.originalPrice, offer.discountedPrice);
@@ -43,7 +43,7 @@ export default function OfferHighlightRail({ offers }: { offers: any[] }) {
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-white leading-snug truncate">{offer.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {pct > 0 && <span className="text-[10px] font-extrabold text-[#F5A623]">Save {pct}%</span>}
+                  {pct > 0 && <span className="text-[10px] font-extrabold text-[#A25607]">Save {pct}%</span>}
                   <span className="text-xs font-bold text-white/70">₹{offer.discountedPrice?.toLocaleString('en-IN')}</span>
                 </div>
               </div>

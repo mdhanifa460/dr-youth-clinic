@@ -137,7 +137,7 @@ export default async function OffersPage() {
       <section className="relative bg-[#0B2560] py-14 overflow-hidden">
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[#F5A623]/10 backdrop-blur-3xl pointer-events-none" />
         <div className="relative max-w-3xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Tailored for You</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">Tailored for You</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             Can't Find the Right Package?
           </h2>

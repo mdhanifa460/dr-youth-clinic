@@ -130,7 +130,7 @@ export default function CoursesPage() {
                         <div className="w-16 h-10 bg-gray-100 rounded-lg shrink-0" />
                       )}
                       <span className="font-semibold text-gray-700 flex items-center gap-1.5">
-                        {c.featured && <Star size={12} className="text-[#F5A623] fill-[#F5A623]" />}
+                        {c.featured && <Star size={12} className="text-[#A25607] fill-[#F5A623]" />}
                         {c.title}
                       </span>
                     </div>

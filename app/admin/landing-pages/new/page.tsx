@@ -186,7 +186,7 @@ export default function NewLandingPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Rocket size={22} className="text-[#3B82C4]" />
+            <Rocket size={22} className="text-[#2A6BA8]" />
             New Landing Page
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -261,7 +261,7 @@ export default function NewLandingPage() {
               />
             </div>
             {form.slug && (
-              <p className="text-[10px] text-[#3B82C4] font-semibold mt-1">
+              <p className="text-[10px] text-[#2A6BA8] font-semibold mt-1">
                 Live URL: {typeof window !== 'undefined' ? window.location.origin : ''}/lp/{form.slug}
               </p>
             )}

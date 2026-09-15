@@ -162,7 +162,7 @@ export default function PaidMarketingPage() {
 
                 {/* Highlight */}
                 <div className="bg-[#f0f7ff] border border-blue-100 rounded-xl px-4 py-2.5 mb-4 flex items-center gap-2">
-                  <span className="text-[#3B82C4]">✓</span>
+                  <span className="text-[#2A6BA8]">✓</span>
                   <p className="text-xs font-semibold text-[#0B2560]">{tool.highlight}</p>
                 </div>
 
@@ -182,7 +182,7 @@ export default function PaidMarketingPage() {
                 {tool.internal ? (
                   <Link
                     href={tool.link}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3B82C4] hover:text-[#0B2560] transition"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2A6BA8] hover:text-[#0B2560] transition"
                   >
                     {tool.linkLabel}
                   </Link>
@@ -191,7 +191,7 @@ export default function PaidMarketingPage() {
                     href={tool.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3B82C4] hover:text-[#0B2560] transition"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2A6BA8] hover:text-[#0B2560] transition"
                   >
                     {tool.linkLabel} <ExternalLink size={11} />
                   </a>
@@ -212,7 +212,7 @@ export default function PaidMarketingPage() {
             ].map((row) => (
               <div key={row.label} className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[#F5A623] font-bold text-sm w-10 shrink-0">{row.pct}</span>
+                  <span className="text-[#A25607] font-bold text-sm w-10 shrink-0">{row.pct}</span>
                   <div>
                     <p className="text-sm font-semibold">{row.label}</p>
                     <p className="text-[10px] text-white/50">{row.note}</p>

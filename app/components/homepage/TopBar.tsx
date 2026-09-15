@@ -125,6 +125,14 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
                 <span>{email}</span>
               </a>
             )}
+            {/* This whole bar renders on a dark navy background
+                (bg-[#0B2560] above) — deliberately kept at the original
+                bright #F5A623, not the darkened #A25607 used everywhere
+                else that color appears as text on a LIGHT surface (see
+                that commit). Confirmed via a real Lighthouse audit: the
+                darkened version scored 2.67:1 here (fails) vs. 7.16:1 for
+                the original bright value — darkening was correct for the
+                light-background majority case, wrong for this one. */}
             {badge && (
               <span className="flex items-center gap-1 text-[#F5A623] font-semibold">
                 <AiFillStar size={12} />
@@ -154,6 +162,12 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    // Real Lighthouse/axe finding (link-name): an icon-only
+                    // link with no text content has no accessible name at
+                    // all for a screen reader — it just announces "link".
+                    // The mobile version of this same list already had
+                    // aria-label={item.platform}; this desktop one didn't.
+                    aria-label={s.platform}
                     style={PLATFORM_COLOR[s.platform] ? { color: PLATFORM_COLOR[s.platform] } : undefined}
                     className={PLATFORM_COLOR[s.platform] ? 'transition opacity-90 hover:opacity-100' : 'hover:text-[#F5A623] transition'}
                   >

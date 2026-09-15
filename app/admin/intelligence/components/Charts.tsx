@@ -177,7 +177,7 @@ export function SectionHeader({
   return (
     <div className="mb-6">
       {badge && (
-        <span className="inline-block text-[10px] font-bold tracking-[0.18em] uppercase text-[#F5A623] bg-[#F5A623]/10 px-3 py-1 rounded-full mb-2">
+        <span className="inline-block text-[10px] font-bold tracking-[0.18em] uppercase text-[#A25607] bg-[#F5A623]/10 px-3 py-1 rounded-full mb-2">
           {badge}
         </span>
       )}

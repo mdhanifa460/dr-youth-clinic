@@ -282,7 +282,7 @@ function SectionEditor({
     case 'leadership':
       return (
         <div className="space-y-4">
-          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+          <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Shown as a full-width, premium photo feature — ideal for your CEO or founder.
           </p>
           <FieldInput label="Eyebrow" value={d.eyebrow} onChange={(v) => set('eyebrow', v)} />
@@ -299,7 +299,7 @@ function SectionEditor({
     case 'experts':
       return (
         <div className="space-y-4">
-          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+          <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Doctor profiles shown here come live from Admin → Doctors — add or edit doctors there.
           </p>
           <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
@@ -386,7 +386,7 @@ function SectionEditor({
 
     case 'reviews':
       return (
-        <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+        <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
           Shows the same patient testimonials configured in Admin → Homepage → Testimonials — nothing to edit here.
         </p>
       );
@@ -396,7 +396,7 @@ function SectionEditor({
         <div className="space-y-4">
           <FieldInput label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
           <FieldInput label="Subheading" value={d.subheading} onChange={(v) => set('subheading', v)} type="textarea" />
-          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+          <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Questions themselves come from Admin → Homepage → FAQ (General category) — edit them there.
           </p>
         </div>

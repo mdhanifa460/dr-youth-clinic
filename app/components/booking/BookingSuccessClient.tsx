@@ -323,7 +323,7 @@ export default function BookingSuccessClient({
         {/* ── Prepare for Your Consultation checklist ── */}
         {config.checklistEnabled && enabledChecklist.length > 0 && (
           <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
-            <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-1">📝 Next Steps</p>
+            <p className="text-xs font-bold text-[#A25607] uppercase tracking-widest mb-1">📝 Next Steps</p>
             <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-4">Prepare for Your Consultation</h2>
             <ul className="space-y-2.5">
               <ChecklistRow done label="Appointment Booked" />
@@ -400,7 +400,7 @@ export default function BookingSuccessClient({
             <ul className="space-y-2">
               {config.preVisitInstructions.map((instr, i) => (
                 <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
-                  <span className="text-[#F5A623] mt-1 shrink-0">•</span> {instr}
+                  <span className="text-[#A25607] mt-1 shrink-0">•</span> {instr}
                 </li>
               ))}
             </ul>
@@ -437,7 +437,7 @@ export default function BookingSuccessClient({
                     <p className="font-bold text-sm">Not sure what to expect? Take our 2-minute AI Assessment</p>
                     <p className="text-white/60 text-xs mt-1">Helps your doctor prepare a personalised plan before you arrive</p>
                   </div>
-                  <Sparkles size={22} className="text-[#F5A623] shrink-0" />
+                  <Sparkles size={22} className="text-[#A25607] shrink-0" />
                 </Link>
               </RelatedSection>
             );
@@ -449,7 +449,7 @@ export default function BookingSuccessClient({
                   {related.successStories.slice(0, 3).map((r: any) => (
                     <div key={r._id} className="border border-gray-100 rounded-xl p-4">
                       <div className="flex items-center gap-1 mb-1.5">
-                        {Array.from({ length: r.rating || 5 }).map((_, i) => <Star key={i} size={12} fill="#F5A623" className="text-[#F5A623]" />)}
+                        {Array.from({ length: r.rating || 5 }).map((_, i) => <Star key={i} size={12} fill="#F5A623" className="text-[#A25607]" />)}
                       </div>
                       <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">{r.reviewText}</p>
                       <p className="text-xs font-semibold text-[#0B2560] mt-1.5">{r.authorName}</p>
@@ -533,7 +533,7 @@ function RelatedSection({ title, icon: Icon, children }: { title: string; icon: 
   return (
     <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
       <h2 className="text-sm font-bold text-[#0B2560] uppercase tracking-widest mb-4 flex items-center gap-2">
-        <Icon size={14} className="text-[#F5A623]" /> {title}
+        <Icon size={14} className="text-[#A25607]" /> {title}
       </h2>
       {children}
     </div>

@@ -175,7 +175,7 @@ export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) 
     <section className="bg-[#f6faff] py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-5">
         <div className="text-center mb-12">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">
             Transformations
           </p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>

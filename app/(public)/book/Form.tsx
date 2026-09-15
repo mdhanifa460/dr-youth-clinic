@@ -259,7 +259,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       <div className="p-6 md:p-10 space-y-6">
         {/* Step label */}
         <div>
-          <p className="text-[10px] font-bold text-[#3B82C4] uppercase tracking-widest">Step {step} of 4</p>
+          <p className="text-[10px] font-bold text-[#2A6BA8] uppercase tracking-widest">Step {step} of 4</p>
           <h2 className="text-xl font-headline font-bold text-[#0B2560] mt-0.5">
             {step === 1 && 'Tell us about yourself'}
             {step === 2 && 'What are you looking for?'}
@@ -372,7 +372,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
               <button
                 type="button"
                 onClick={() => setPromoOpen(o => !o)}
-                className="text-xs text-[#3B82C4] font-semibold hover:text-[#0B2560] transition flex items-center gap-1"
+                className="text-xs text-[#2A6BA8] font-semibold hover:text-[#0B2560] transition flex items-center gap-1"
               >
                 {promoOpen ? '▲' : '▼'} Have a promo code?
               </button>

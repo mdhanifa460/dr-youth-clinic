@@ -27,7 +27,7 @@ export default function DoctorBanner({ banner }: { banner: BannerDoc }) {
 
         <div className="max-w-xl space-y-3 order-2">
           {banner.subtitle && (
-            <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-xs sm:text-sm font-bold uppercase tracking-widest">
+            <span className="inline-flex items-center gap-1.5 text-[#A25607] text-xs sm:text-sm font-bold uppercase tracking-widest">
               {banner.subtitle}
             </span>
           )}
@@ -38,7 +38,7 @@ export default function DoctorBanner({ banner }: { banner: BannerDoc }) {
             <ul className="space-y-2 pt-1">
               {banner.achievements.map((a, i) => (
                 <li key={i} className="flex items-center gap-2.5 text-white/90 font-medium">
-                  <span className="shrink-0 w-5 h-5 rounded-full bg-[#F5A623]/20 text-[#F5A623] flex items-center justify-center">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-[#F5A623]/20 text-[#A25607] flex items-center justify-center">
                     <Check size={13} strokeWidth={3} />
                   </span>
                   {a}

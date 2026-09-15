@@ -8,7 +8,7 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
     <section className="bg-[#f6faff] py-14 md:py-20">
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-2">The Difference</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-2">The Difference</p>
           {headline && <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>}
         </div>
         <div className="bg-white rounded-3xl ring-1 ring-[#e8eff7] shadow-sm divide-y divide-gray-100">

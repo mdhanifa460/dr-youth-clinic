@@ -85,7 +85,7 @@ export default function SectionCard({
               type="button"
               onClick={onSaveAsTemplate}
               title="Save as Template"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-50 hover:text-[#F5A623] transition"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-50 hover:text-[#A25607] transition"
             >
               <BookmarkPlus size={14} />
             </button>

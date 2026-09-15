@@ -406,7 +406,7 @@ function VideoUploader({
         )}
       </div>
       {progress && (
-        <p className={`text-xs mt-1.5 ${progress.includes('failed') || progress.includes('error') ? 'text-red-500' : 'text-[#3B82C4]'}`}>
+        <p className={`text-xs mt-1.5 ${progress.includes('failed') || progress.includes('error') ? 'text-red-500' : 'text-[#2A6BA8]'}`}>
           {progress}
         </p>
       )}
@@ -556,7 +556,7 @@ function SectionEditor({
               ))}
             </div>
           </div>
-          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+          <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Icons: users, clock, activity, star, stethoscope
           </p>
         </div>
@@ -923,7 +923,7 @@ function SectionEditor({
             <FieldInput label="Slots Left (0 = hidden)" value={d.slotsLeft ?? ''} onChange={(v) => set('slotsLeft', v ? Number(v) : 0)} type="number" />
             <FieldInput label="Phone (left panel)" value={d.phone} onChange={(v) => set('phone', v)} />
           </div>
-          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+          <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Form fields are configured in the &quot;Form&quot; tab in the sidebar.
           </p>
         </div>
@@ -1142,7 +1142,7 @@ function SectionEditor({
             </div>
             <span className="text-xs font-semibold text-gray-600">Autoplay muted loop (ambient mode)</span>
           </label>
-          <p className="text-xs text-[#3B82C4] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
+          <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Default: thumbnail + click-to-play with sound. Ambient mode: loops silently, no click needed.
           </p>
         </div>
@@ -1342,13 +1342,13 @@ function AiTab({ lpId }: { lpId: string }) {
             <button onClick={() => generate(action.type)} disabled={!!loading}
               className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-[#0B2560] hover:bg-[#f6faff] transition disabled:opacity-60">
               <span>{action.icon}</span> {action.label}
-              {loading === action.type && <Loader size={13} className="animate-spin ml-auto text-[#3B82C4]" />}
+              {loading === action.type && <Loader size={13} className="animate-spin ml-auto text-[#2A6BA8]" />}
             </button>
             {results[action.type] && (
               <div className="border-t border-gray-100 px-3 py-2">
                 <div className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">{results[action.type]}</div>
                 <button onClick={() => copy(action.type, results[action.type])}
-                  className="flex items-center gap-1 text-[10px] font-bold text-[#3B82C4] mt-2 hover:underline">
+                  className="flex items-center gap-1 text-[10px] font-bold text-[#2A6BA8] mt-2 hover:underline">
                   {copied === action.type ? <><Check size={10} /> Copied!</> : 'Copy result'}
                 </button>
               </div>
@@ -1525,7 +1525,7 @@ export default function LandingPageBuilder() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader className="w-8 h-8 text-[#3B82C4] animate-spin" />
+        <Loader className="w-8 h-8 text-[#2A6BA8] animate-spin" />
       </div>
     );
   }
@@ -1566,12 +1566,12 @@ export default function LandingPageBuilder() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className={`text-[10px] font-semibold ${saveStatus === 'saving' ? 'text-[#3B82C4]' : saveStatus === 'saved' ? 'text-green-600' : saveStatus === 'error' ? 'text-red-500' : 'text-transparent'}`}>
+          <span className={`text-[10px] font-semibold ${saveStatus === 'saving' ? 'text-[#2A6BA8]' : saveStatus === 'saved' ? 'text-green-600' : saveStatus === 'error' ? 'text-red-500' : 'text-transparent'}`}>
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Save failed' : '.'}
           </span>
 
           <a href={`/lp/${lp.slug}${lp.status !== 'published' ? '?preview=1' : ''}`} target="_blank" rel="noopener noreferrer">
-            <button className="flex items-center gap-1.5 text-xs font-semibold text-[#3B82C4] hover:underline">
+            <button className="flex items-center gap-1.5 text-xs font-semibold text-[#2A6BA8] hover:underline">
               <ExternalLink size={13} /> {lp.status === 'published' ? 'View Live' : 'Preview'}
             </button>
           </a>
@@ -1667,7 +1667,7 @@ export default function LandingPageBuilder() {
                       )}
                     </div>
                     <div className="bg-gray-50 rounded-xl p-2 text-center">
-                      <p className="text-base font-extrabold text-[#3B82C4]">
+                      <p className="text-base font-extrabold text-[#2A6BA8]">
                         {lp.analytics?.visitors ? `${(((lp.leadsLive ?? lp.analytics.leads) / lp.analytics.visitors) * 100).toFixed(1)}%` : '—'}
                       </p>
                       <p className="text-[9px] text-gray-400 uppercase tracking-wider">Conv.</p>

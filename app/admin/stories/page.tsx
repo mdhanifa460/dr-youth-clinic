@@ -206,7 +206,7 @@ export default function StoriesAdminPage() {
               </button>
               <div className="flex items-center justify-between px-3 pb-3 pt-1 border-t border-gray-50">
                 {s.status === 'published' && s.slug ? (
-                  <a href={`/web-stories/${s.slug}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#3B82C4] font-semibold flex items-center gap-1">
+                  <a href={`/web-stories/${s.slug}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#2A6BA8] font-semibold flex items-center gap-1">
                     View <ExternalLink size={10} />
                   </a>
                 ) : <span />}

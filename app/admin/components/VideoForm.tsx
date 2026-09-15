@@ -424,7 +424,7 @@ function AiGenerateCard({ videoId, flags, form, updateForm }: {
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-5">
       <div>
-        <h2 className="text-2xl font-bold text-[#0B2560] flex items-center gap-2"><Sparkles size={20} className="text-[#F5A623]" /> AI Generate</h2>
+        <h2 className="text-2xl font-bold text-[#0B2560] flex items-center gap-2"><Sparkles size={20} className="text-[#A25607]" /> AI Generate</h2>
         <p className="text-sm text-gray-500 mt-1">On-demand only — nothing here runs automatically. Each result is added to the form for you to review and edit before Save.</p>
       </div>
 

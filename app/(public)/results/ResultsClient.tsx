@@ -60,7 +60,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
 
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-6 h-[2px] bg-[#F5A623]" />
-            <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
+            <span className="text-[#A25607] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
           </div>
 
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
@@ -109,7 +109,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
           <div className="text-center py-20">
             <p className="text-4xl mb-3">🔍</p>
             <p className="text-gray-500 font-medium">No results in this category yet.</p>
-            <button onClick={() => setActiveCategory('All')} className="mt-4 text-[#3B82C4] text-sm underline">
+            <button onClick={() => setActiveCategory('All')} className="mt-4 text-[#2A6BA8] text-sm underline">
               View all
             </button>
           </div>

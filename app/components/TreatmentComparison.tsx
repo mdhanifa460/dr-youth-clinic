@@ -47,12 +47,12 @@ export default function TreatmentComparison({
                 <th
                   key={s._id}
                   className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-center ${
-                    s._id === current._id ? 'text-[#F5A623]' : 'text-white/70'
+                    s._id === current._id ? 'text-[#A25607]' : 'text-white/70'
                   }`}
                 >
                   {s.name}
                   {s._id === current._id && (
-                    <span className="block text-[9px] font-semibold normal-case text-[#F5A623]/80 mt-0.5">This treatment</span>
+                    <span className="block text-[9px] font-semibold normal-case text-[#A25607]/80 mt-0.5">This treatment</span>
                   )}
                 </th>
               ))}
@@ -79,7 +79,7 @@ export default function TreatmentComparison({
       </div>
 
       <div className="flex items-start gap-2 mt-3 text-xs text-gray-500">
-        <CheckCircle size={13} className="text-[#3B82C4] mt-0.5 shrink-0" />
+        <CheckCircle size={13} className="text-[#2A6BA8] mt-0.5 shrink-0" />
         <span>Every treatment plan is finalised by your doctor based on your specific skin/hair assessment — figures above are typical ranges.</span>
       </div>
     </div>

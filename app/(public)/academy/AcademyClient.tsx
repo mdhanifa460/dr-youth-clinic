@@ -105,7 +105,7 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
                 )}
               </div>
               <div className="p-4">
-                <span className="text-[10px] font-bold text-[#3B82C4] uppercase tracking-wider">{v.category}</span>
+                <span className="text-[10px] font-bold text-[#2A6BA8] uppercase tracking-wider">{v.category}</span>
                 <h3 className="font-headline font-bold text-[#0B2560] text-sm mt-1 leading-snug line-clamp-2">
                   {v.title}
                 </h3>

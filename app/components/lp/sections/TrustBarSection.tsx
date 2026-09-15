@@ -97,7 +97,7 @@ export default function TrustBarSection({ data }: { data: TrustBarData }) {
                 transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}
                 className="flex flex-col items-center text-center py-7 px-6 md:px-4 shrink-0 min-w-[40vw] md:min-w-0"
               >
-                <Icon size={22} className="text-[#F5A623] mb-2.5" />
+                <Icon size={22} className="text-[#A25607] mb-2.5" />
                 <div className="text-2xl md:text-3xl font-extrabold text-white">
                   <AnimatedNumber raw={stat.value} start={inView} />
                 </div>

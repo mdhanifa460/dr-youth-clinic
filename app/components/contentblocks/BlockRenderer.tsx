@@ -51,14 +51,14 @@ function BlockItem({
     case "paragraph":
       return data.html ? (
         <div
-          className="mb-6 text-gray-600 leading-[1.9] text-[15px] [&_strong]:text-[#0B2560] [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_a]:text-[#3B82C4] [&_a]:underline [&_mark]:bg-[#F5A623]/30 [&_mark]:rounded [&_mark]:px-0.5"
+          className="mb-6 text-gray-600 leading-[1.9] text-[15px] [&_strong]:text-[#0B2560] [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_a]:text-[#2A6BA8] [&_a]:underline [&_mark]:bg-[#F5A623]/30 [&_mark]:rounded [&_mark]:px-0.5"
           dangerouslySetInnerHTML={{ __html: data.html }}
         />
       ) : null;
 
     case "bullet-list":
       return Array.isArray(data.items) && data.items.filter(Boolean).length > 0 ? (
-        <ul className="mb-6 pl-6 space-y-2 list-disc marker:text-[#F5A623]">
+        <ul className="mb-6 pl-6 space-y-2 list-disc marker:text-[#A25607]">
           {data.items.filter(Boolean).map((item: string, i: number) => (
             <li key={i} className="text-gray-600 leading-relaxed text-[15px]">{item}</li>
           ))}
@@ -67,7 +67,7 @@ function BlockItem({
 
     case "numbered-list":
       return Array.isArray(data.items) && data.items.filter(Boolean).length > 0 ? (
-        <ol className="mb-6 pl-6 space-y-2 list-decimal marker:text-[#3B82C4] marker:font-bold">
+        <ol className="mb-6 pl-6 space-y-2 list-decimal marker:text-[#2A6BA8] marker:font-bold">
           {data.items.filter(Boolean).map((item: string, i: number) => (
             <li key={i} className="text-gray-600 leading-relaxed text-[15px]">{item}</li>
           ))}
@@ -213,7 +213,7 @@ function BlockItem({
             {items.map((item: any, i: number) => (
               <div key={i} className="flex gap-3 p-4 rounded-xl bg-[#f6faff] border border-blue-50">
                 {item.timeframe && (
-                  <span className="shrink-0 text-xs font-bold text-[#3B82C4] bg-white px-2.5 py-1 rounded-full border border-blue-100 h-fit">{item.timeframe}</span>
+                  <span className="shrink-0 text-xs font-bold text-[#2A6BA8] bg-white px-2.5 py-1 rounded-full border border-blue-100 h-fit">{item.timeframe}</span>
                 )}
                 <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
               </div>
@@ -254,7 +254,7 @@ function BlockItem({
             <p className="font-bold text-[#0B2560] text-sm">{data.label || info.title}</p>
             {info.subtitle && <p className="text-gray-500 text-xs mt-0.5">{info.subtitle}</p>}
           </div>
-          <span className="text-[#3B82C4] group-hover:translate-x-1 transition-transform shrink-0">→</span>
+          <span className="text-[#2A6BA8] group-hover:translate-x-1 transition-transform shrink-0">→</span>
         </Link>
       );
     }
@@ -344,11 +344,11 @@ function BlockItem({
       if (items.length === 0) return null;
       return (
         <div className="mb-8 p-6 rounded-2xl border border-[#F5A623]/20 bg-[#fffbf0]">
-          <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-3">Key Takeaways</p>
+          <p className="text-xs font-bold text-[#A25607] uppercase tracking-widest mb-3">Key Takeaways</p>
           <ul className="space-y-2.5">
             {items.map((item: string, i: number) => (
               <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700 leading-relaxed">
-                <span className="text-[#F5A623] font-bold mt-0.5 shrink-0">✓</span> {item}
+                <span className="text-[#A25607] font-bold mt-0.5 shrink-0">✓</span> {item}
               </li>
             ))}
           </ul>
@@ -475,7 +475,7 @@ function BlockItem({
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map((s: any, i: number) => (
             <div key={i} className="text-center p-4 rounded-2xl bg-[#f6faff] border border-blue-50">
-              <p className="text-2xl md:text-3xl font-headline font-extrabold text-[#F5A623]">{s.value}</p>
+              <p className="text-2xl md:text-3xl font-headline font-extrabold text-[#A25607]">{s.value}</p>
               <p className="text-xs text-[#0B2560] font-semibold mt-1">{s.label}</p>
             </div>
           ))}
@@ -494,7 +494,7 @@ function BlockItem({
               <li key={i} className="text-xs text-gray-500 leading-relaxed">
                 [{i + 1}] {c.source && <span className="font-semibold text-gray-600">{c.source} — </span>}
                 {c.url ? (
-                  <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-[#3B82C4] hover:underline">{c.text}</a>
+                  <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-[#2A6BA8] hover:underline">{c.text}</a>
                 ) : c.text}
               </li>
             ))}

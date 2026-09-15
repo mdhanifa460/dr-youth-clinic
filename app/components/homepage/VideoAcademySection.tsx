@@ -40,7 +40,7 @@ export default function VideoAcademySection({ data }: { data: Data }) {
     <section id="academy" className="bg-white py-16 md:py-24 px-6 md:px-10">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <p className="text-[#3B82C4] font-bold text-xs tracking-[0.2em] uppercase mb-3">🎥 Video Academy</p>
+          <p className="text-[#2A6BA8] font-bold text-xs tracking-[0.2em] uppercase mb-3">🎥 Video Academy</p>
           <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>
           {subheadline && <p className="text-gray-600 mt-3 max-w-xl mx-auto">{subheadline}</p>}
         </div>
@@ -123,7 +123,7 @@ export default function VideoAcademySection({ data }: { data: Data }) {
                 )}
               </div>
               <div className="p-4">
-                <span className="text-[10px] font-bold text-[#3B82C4] uppercase tracking-wider">{v.category}</span>
+                <span className="text-[10px] font-bold text-[#2A6BA8] uppercase tracking-wider">{v.category}</span>
                 <h3 className="font-headline font-bold text-[#0B2560] text-sm mt-1 leading-snug line-clamp-2">{v.title}</h3>
                 {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}
               </div>

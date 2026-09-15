@@ -50,11 +50,11 @@ export default function OfferHero({
         <div>
           <div className="flex items-center gap-2 mb-4">
             <span className="w-8 h-0.5 bg-[#F5A623]" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623]">Limited Time</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607]">Limited Time</p>
           </div>
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold text-white leading-tight mb-4">
             Exclusive Offers &<br />
-            <span className="text-[#F5A623]">Packages</span>
+            <span className="text-[#A25607]">Packages</span>
           </h1>
           <p className="text-white/60 max-w-xl text-sm md:text-base leading-relaxed mb-8">
             Premium skin, hair & laser treatments at unbeatable prices — trusted by {patientsCount} patients across {cityCount} cities. Book before they expire.
@@ -81,20 +81,20 @@ export default function OfferHero({
               href={`/book?offer=${encodeURIComponent(featuredOffer.title)}`}
               className="block rounded-3xl bg-white/10 backdrop-blur-sm border border-white/15 p-6 hover:bg-white/[0.13] transition-colors duration-200"
             >
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5A623] mb-2">🔥 Limited Time Offer</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A25607] mb-2">🔥 Limited Time Offer</p>
               {featuredPct > 0 && (
                 <p className="text-white text-3xl font-extrabold mb-1">
-                  Up to <span className="text-[#F5A623]">{featuredPct}%</span> OFF
+                  Up to <span className="text-[#A25607]">{featuredPct}%</span> OFF
                 </p>
               )}
               <p className="text-white/70 text-sm mb-4">{featuredOffer.title}</p>
-              <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-sm font-bold">
+              <span className="inline-flex items-center gap-1.5 text-[#A25607] text-sm font-bold">
                 Explore Offer <ArrowRight size={14} />
               </span>
             </Link>
           ) : (
             <div className="rounded-3xl bg-white/10 backdrop-blur-sm border border-white/15 p-6">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5A623] mb-2">Coming Soon</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A25607] mb-2">Coming Soon</p>
               <p className="text-white text-lg font-extrabold mb-1">New Offers Being Prepared</p>
               <p className="text-white/60 text-sm">Book a {consultationBadge.toLowerCase()} to hear about them first.</p>
             </div>
@@ -103,7 +103,7 @@ export default function OfferHero({
           <div className="grid grid-cols-2 gap-3">
             {TRUST_ITEMS.map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-3.5 py-3">
-                <Icon size={16} className="text-[#F5A623] shrink-0" />
+                <Icon size={16} className="text-[#A25607] shrink-0" />
                 <span className="text-[11px] font-semibold text-white/80 leading-tight">{label}</span>
               </div>
             ))}

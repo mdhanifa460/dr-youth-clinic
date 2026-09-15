@@ -188,6 +188,11 @@ export default function QuestionStep({
         </div>
         <input
           type="range"
+          // Real Lighthouse/axe finding (label): a range input with no
+          // label/aria-label announces as an unnamed control to a screen
+          // reader — the visible current-value number above it isn't
+          // programmatically associated with the slider at all.
+          aria-label={question.title}
           min={question.sliderMin}
           max={question.sliderMax}
           step={question.sliderStep || 1}

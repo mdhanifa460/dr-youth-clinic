@@ -15,7 +15,7 @@ export default function FaqAccordion({ faq }: { faq?: Array<{ question: string; 
           <details key={i} className="group border border-gray-100 rounded-2xl overflow-hidden hover:border-[#3B82C4]/30 transition-colors">
             <summary className="flex items-center justify-between px-5 py-4 cursor-pointer font-semibold text-[#0B2560] text-sm leading-snug [list-style:none] [&::-webkit-details-marker]:hidden select-none hover:bg-[#f6faff] transition-colors">
               <span className="pr-4">{item.question}</span>
-              <span className="text-[#3B82C4] text-xl font-light shrink-0 group-open:rotate-45 transition-transform duration-200 inline-block">+</span>
+              <span className="text-[#2A6BA8] text-xl font-light shrink-0 group-open:rotate-45 transition-transform duration-200 inline-block">+</span>
             </summary>
             <div className="px-5 pb-4 pt-1 text-gray-600 text-sm leading-relaxed border-t border-gray-50">
               {item.answer}

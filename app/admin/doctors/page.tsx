@@ -74,7 +74,7 @@ function PageContentPanel() {
       <div className="px-6 py-4 border-b border-gray-100 shrink-0">
         <h2 className="font-bold text-[#0B2560] text-sm">Meet Our Doctors — Page Content</h2>
         <p className="text-xs text-gray-400 mt-0.5">
-          Controls text shown on <a href="/doctors" target="_blank" rel="noopener noreferrer" className="text-[#3B82C4] hover:underline">/doctors</a> and individual doctor pages
+          Controls text shown on <a href="/doctors" target="_blank" rel="noopener noreferrer" className="text-[#2A6BA8] hover:underline">/doctors</a> and individual doctor pages
         </p>
       </div>
 
@@ -118,7 +118,7 @@ function PageContentPanel() {
         <div className="rounded-xl bg-[#f0f5ff] border border-blue-50 px-4 py-3">
           <p className="text-xs font-semibold text-[#0B2560] mb-1">How it looks on the website</p>
           <div className="text-xs text-gray-500 space-y-1">
-            <p>• <strong>Hero:</strong> {(form.heroHeading || '').split(' ').slice(0, -1).join(' ')} <span className="text-[#F5A623]">{(form.heroHeading || '').split(' ').at(-1)}</span></p>
+            <p>• <strong>Hero:</strong> {(form.heroHeading || '').split(' ').slice(0, -1).join(' ')} <span className="text-[#A25607]">{(form.heroHeading || '').split(' ').at(-1)}</span></p>
             <p>• <strong>Grid:</strong> {form.gridHeading}</p>
             <p>• <strong>CTA:</strong> {form.ctaHeading}</p>
           </div>
@@ -307,7 +307,7 @@ export default function DoctorsAdminPage() {
               <div className="text-center py-12 px-4">
                 <MapPin size={28} className="mx-auto text-gray-200 mb-2" />
                 <p className="text-sm text-gray-400">No doctors at this location</p>
-                <button onClick={openNew} className="mt-3 text-xs text-[#3B82C4] font-semibold hover:underline">Add one →</button>
+                <button onClick={openNew} className="mt-3 text-xs text-[#2A6BA8] font-semibold hover:underline">Add one →</button>
               </div>
             ) : (
               filteredDoctors.map((doc) => (

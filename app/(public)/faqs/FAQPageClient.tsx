@@ -117,11 +117,11 @@ export default function FAQPageClient({
       {/* ── Hero ── */}
       <section className="bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0B2560] text-white pt-16 pb-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-4">
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#A25607] mb-4">
             Support Centre
           </span>
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
-            Frequently Asked <span className="text-[#F5A623]">Questions</span>
+            Frequently Asked <span className="text-[#A25607]">Questions</span>
           </h1>
           <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
             Everything you need to know about our treatments, pricing, safety, and booking — answered by our doctors.
@@ -151,7 +151,7 @@ export default function FAQPageClient({
               { value: heroStats?.ratingValue || '4.9★', label: 'Patient satisfaction' },
             ].map((s) => (
               <div key={s.label} className="bg-white/10 rounded-2xl py-3 px-2">
-                <p className="text-xl font-extrabold text-[#F5A623]">{s.value}</p>
+                <p className="text-xl font-extrabold text-[#A25607]">{s.value}</p>
                 <p className="text-[10px] text-white/60 mt-0.5">{s.label}</p>
               </div>
             ))}
@@ -192,7 +192,7 @@ export default function FAQPageClient({
             {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;{search}&rdquo;
             <button
               onClick={() => updateSearch('')}
-              className="ml-2 text-[#3B82C4] font-semibold hover:underline"
+              className="ml-2 text-[#2A6BA8] font-semibold hover:underline"
             >
               Clear
             </button>
@@ -219,7 +219,7 @@ export default function FAQPageClient({
                   disabled={assistantLoading}
                   className="flex items-center gap-1.5 text-sm bg-white border border-[#F5A623] text-[#0B2560] px-5 py-2.5 rounded-xl font-semibold disabled:opacity-60"
                 >
-                  <Sparkles size={15} className="text-[#F5A623]" />
+                  <Sparkles size={15} className="text-[#A25607]" />
                   {assistantLoading ? 'Thinking…' : 'Ask our AI Assistant instead'}
                 </button>
               )}
@@ -236,7 +236,7 @@ export default function FAQPageClient({
                     <p className="text-sm text-gray-600 leading-relaxed">
                       We don&apos;t have a specific answer for that yet. Book a free consultation and our doctors will help directly.
                     </p>
-                    <Link href="/book" className="mt-3 inline-flex items-center gap-1.5 text-[#3B82C4] text-xs font-semibold hover:text-[#0B2560] transition">
+                    <Link href="/book" className="mt-3 inline-flex items-center gap-1.5 text-[#2A6BA8] text-xs font-semibold hover:text-[#0B2560] transition">
                       Book a consultation →
                     </Link>
                   </div>
@@ -254,7 +254,7 @@ export default function FAQPageClient({
 
                 {assistantResult.type === 'ai-grounded' && (
                   <div className="border border-[#F5A623]/40 rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-white shadow-sm">
-                    <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">
+                    <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A25607] mb-2">
                       <Sparkles size={12} /> AI-generated answer
                     </p>
                     <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{assistantResult.answer}</p>
@@ -262,7 +262,7 @@ export default function FAQPageClient({
                       <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
                         {assistantResult.sources.map((s, i) => (
                           s.url ? (
-                            <Link key={i} href={s.url} className="text-[11px] text-[#3B82C4] hover:underline">
+                            <Link key={i} href={s.url} className="text-[11px] text-[#2A6BA8] hover:underline">
                               {s.title}
                             </Link>
                           ) : (
@@ -348,7 +348,7 @@ export default function FAQPageClient({
                                 <p className="text-gray-600 text-sm leading-relaxed">{item.answer}</p>
                                 <Link
                                   href="/book"
-                                  className="mt-4 inline-flex items-center gap-1.5 text-[#3B82C4] text-xs font-semibold hover:text-[#0B2560] transition"
+                                  className="mt-4 inline-flex items-center gap-1.5 text-[#2A6BA8] text-xs font-semibold hover:text-[#0B2560] transition"
                                 >
                                   Still have questions? Book a {consultationFree ? 'free ' : ''}consultation →
                                 </Link>

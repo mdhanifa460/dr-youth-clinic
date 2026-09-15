@@ -176,7 +176,7 @@ export default function IntelligenceShell({
             {lastUpdated ? `Updated ${lastUpdated}` : 'Loading…'}
           </p>
           <button onClick={() => fetchData(selectedBranch)} disabled={loading}
-            className="mt-1 text-[10px] font-semibold text-[#3B82C4] hover:underline disabled:opacity-40">
+            className="mt-1 text-[10px] font-semibold text-[#2A6BA8] hover:underline disabled:opacity-40">
             ↻ Refresh data
           </button>
         </div>

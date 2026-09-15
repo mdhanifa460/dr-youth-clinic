@@ -10,7 +10,7 @@ export default function GallerySection({ data }: { data: GalleryData }) {
     <section className="bg-white py-14 md:py-20">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-2">Take a Look Inside</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-2">Take a Look Inside</p>
           {headline && <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>}
           {subheading && <p className="text-gray-500 mt-3 text-sm max-w-xl mx-auto">{subheading}</p>}
         </div>

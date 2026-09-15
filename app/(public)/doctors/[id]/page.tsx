@@ -142,7 +142,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
             {/* Name block */}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl md:text-4xl font-headline font-extrabold text-white leading-tight">{doctor.name}</h1>
-              <p className="text-[#F5A623] font-bold text-sm md:text-base mt-1">{doctor.title}</p>
+              <p className="text-[#A25607] font-bold text-sm md:text-base mt-1">{doctor.title}</p>
 
               {/* Qualifications under designation */}
               {doctor.qualifications && (
@@ -153,17 +153,17 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
               <div className="flex flex-wrap items-center gap-2 mt-4">
                 {doctor.experience > 0 && (
                   <span className="flex items-center gap-1.5 text-xs bg-white/10 text-white px-3 py-1.5 rounded-full font-medium">
-                    <Award size={11} className="text-[#F5A623]" /> {doctor.experience}+ yrs experience
+                    <Award size={11} className="text-[#A25607]" /> {doctor.experience}+ yrs experience
                   </span>
                 )}
                 {locationLabel && (
                   <span className="flex items-center gap-1.5 text-xs bg-white/10 text-white px-3 py-1.5 rounded-full font-medium capitalize">
-                    <MapPin size={11} className="text-[#F5A623]" /> {locationLabel}
+                    <MapPin size={11} className="text-[#A25607]" /> {locationLabel}
                   </span>
                 )}
                 {doctor.languages?.length > 0 && (
                   <span className="flex items-center gap-1.5 text-xs bg-white/10 text-white px-3 py-1.5 rounded-full font-medium">
-                    <Languages size={11} className="text-[#F5A623]" /> {doctor.languages.join(', ')}
+                    <Languages size={11} className="text-[#A25607]" /> {doctor.languages.join(', ')}
                   </span>
                 )}
               </div>
@@ -253,7 +253,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Patient Results by {doctor.name}</h2>
-                <Link href="/results" className="text-xs font-semibold text-[#3B82C4] hover:underline">View all</Link>
+                <Link href="/results" className="text-xs font-semibold text-[#2A6BA8] hover:underline">View all</Link>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 {doctorResults.map((r: any) => (
@@ -291,7 +291,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
             <div className="rounded-3xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
               {doctor.experience > 0 && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <Award size={14} className="text-[#F5A623] shrink-0" />
+                  <Award size={14} className="text-[#A25607] shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Experience</p>
                     <p className="text-sm font-bold text-[#0B2560]">{doctor.experience}+ Years</p>
@@ -300,7 +300,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
               )}
               {locationLabel && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <MapPin size={14} className="text-[#F5A623] shrink-0" />
+                  <MapPin size={14} className="text-[#A25607] shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Available At</p>
                     <p className="text-sm font-bold text-[#0B2560] capitalize">{locationLabel}</p>
@@ -309,7 +309,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
               )}
               {doctor.languages?.length > 0 && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <Languages size={14} className="text-[#F5A623] shrink-0" />
+                  <Languages size={14} className="text-[#A25607] shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Languages</p>
                     <p className="text-sm font-bold text-[#0B2560]">{doctor.languages.join(' · ')}</p>
@@ -328,7 +328,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
       {/* ── BOTTOM CTA ── */}
       <section className="bg-[#0B2560] py-14">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#A25607] mb-3">Ready to Begin?</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             {ctaHeading}
           </h2>

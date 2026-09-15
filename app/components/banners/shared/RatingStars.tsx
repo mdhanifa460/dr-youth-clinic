@@ -10,7 +10,7 @@ export default function RatingStars({ value, reviewCount }: { value: number; rev
           <Star
             key={i}
             size={15}
-            className={i < rounded ? "fill-[#F5A623] text-[#F5A623]" : "fill-gray-200 text-gray-200"}
+            className={i < rounded ? "fill-[#F5A623] text-[#A25607]" : "fill-gray-200 text-gray-200"}
           />
         ))}
       </div>

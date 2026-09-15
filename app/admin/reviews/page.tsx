@@ -58,7 +58,7 @@ function Stars({ rating }: { rating: number }) {
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((n) =>
         n <= rating
-          ? <AiFillStar key={n} className="text-[#F5A623]" size={13} />
+          ? <AiFillStar key={n} className="text-[#A25607]" size={13} />
           : <AiOutlineStar key={n} className="text-gray-300" size={13} />
       )}
     </div>
@@ -168,7 +168,7 @@ function ReviewCard({
         <div>
           <p className="text-sm font-bold text-[#0B2560]">{review.authorName}</p>
           {review.services?.length > 0 && (
-            <p className="text-[10px] text-[#3B82C4]">{review.services.slice(0, 2).join(', ')}</p>
+            <p className="text-[10px] text-[#2A6BA8]">{review.services.slice(0, 2).join(', ')}</p>
           )}
         </div>
       </div>
@@ -228,7 +228,7 @@ function ReviewCard({
         />
         <button
           onClick={() => onEdit(review)}
-          className="ml-auto flex items-center gap-1 text-[10px] text-[#3B82C4] hover:text-[#0B2560] font-semibold transition"
+          className="ml-auto flex items-center gap-1 text-[10px] text-[#2A6BA8] hover:text-[#0B2560] font-semibold transition"
         >
           <Edit2 size={10} /> {review.source === 'google' ? 'Classify' : 'Edit'}
         </button>
@@ -244,7 +244,7 @@ function ReviewCard({
           )}
           {review.meta?.googleMapsUrl && (
             <a href={review.meta.googleMapsUrl} target="_blank" rel="noopener noreferrer"
-              className="text-[9px] text-[#3B82C4] hover:underline">
+              className="text-[9px] text-[#2A6BA8] hover:underline">
               View on Google ↗
             </a>
           )}
@@ -517,7 +517,7 @@ function ReviewModal({
                 <button key={n} type="button" disabled={isGoogle} onClick={() => set('rating', n)}
                   className="disabled:cursor-not-allowed">
                   {n <= form.rating
-                    ? <AiFillStar className={isGoogle ? 'text-[#F5A623]/50' : 'text-[#F5A623]'} size={22} />
+                    ? <AiFillStar className={isGoogle ? 'text-[#A25607]/50' : 'text-[#A25607]'} size={22} />
                     : <AiOutlineStar className="text-gray-300" size={22} />}
                 </button>
               ))}

@@ -63,7 +63,7 @@ function AnalyzingProgress() {
       </div>
 
       <div className="w-full max-w-sm bg-white border border-gray-100 rounded-2xl shadow-sm px-5 py-5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#F5A623] mb-1">◈ AI Analysis</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#A25607] mb-1">◈ AI Analysis</p>
         <h3 className="text-base font-extrabold text-[#0B2560] mb-4">Calculating your personalised plan</h3>
         <ul className="space-y-3">
           {ANALYSIS_STEPS.map((step, i) => {

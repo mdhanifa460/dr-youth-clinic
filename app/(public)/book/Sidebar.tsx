@@ -57,7 +57,7 @@ export default function Sidebar({ step }: { step: number }) {
             'WhatsApp confirmation within minutes',
           ].map((point) => (
             <li key={point} className="flex items-start gap-2.5 text-xs text-white/70">
-              <CheckCircle size={13} className="text-[#F5A623] mt-0.5 shrink-0" />
+              <CheckCircle size={13} className="text-[#A25607] mt-0.5 shrink-0" />
               {point}
             </li>
           ))}
@@ -68,7 +68,7 @@ export default function Sidebar({ step }: { step: number }) {
       <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Clinic Hours</p>
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <Clock size={13} className="text-[#3B82C4]" />
+          <Clock size={13} className="text-[#2A6BA8]" />
           <span>Mon – Sat: 9:00 AM – 7:00 PM</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -80,9 +80,9 @@ export default function Sidebar({ step }: { step: number }) {
             {CITIES.map((city) => (
               <div key={city} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5 text-gray-500">
-                  <MapPin size={10} className="text-[#3B82C4]" /> {city}
+                  <MapPin size={10} className="text-[#2A6BA8]" /> {city}
                 </div>
-                <a href={`tel:${publicPhone.replace(/\s+/g, '')}`} className="flex items-center gap-1 text-[#0B2560] font-semibold hover:text-[#3B82C4] transition">
+                <a href={`tel:${publicPhone.replace(/\s+/g, '')}`} className="flex items-center gap-1 text-[#0B2560] font-semibold hover:text-[#2A6BA8] transition">
                   <Phone size={10} /> {publicPhone}
                 </a>
               </div>

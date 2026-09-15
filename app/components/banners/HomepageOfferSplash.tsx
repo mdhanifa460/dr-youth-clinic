@@ -244,7 +244,7 @@ export default function HomepageOfferSplash({ banner, forcePreview = false }: { 
 
           <div className="flex-1 p-6 text-center sm:text-left space-y-2">
             {banner.subtitle && (
-              <span className="inline-block text-[#F5A623] text-[11px] font-bold uppercase tracking-widest">{banner.subtitle}</span>
+              <span className="inline-block text-[#A25607] text-[11px] font-bold uppercase tracking-widest">{banner.subtitle}</span>
             )}
             <h2 className="text-xl font-headline font-extrabold text-[#0B2560] leading-snug whitespace-pre-line">{banner.headline}</h2>
             {banner.description && <p className="text-gray-500 text-sm">{banner.description}</p>}

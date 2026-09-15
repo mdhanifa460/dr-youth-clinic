@@ -231,7 +231,7 @@ export default function FormSection({
               </motion.div>
               <h3 className="text-2xl font-extrabold text-[#0B2560] mb-2">You&apos;re All Set!</h3>
               <p className="text-gray-500">{successMessage}</p>
-              <p className="text-sm text-[#3B82C4] font-semibold mt-4 flex items-center justify-center gap-1.5">
+              <p className="text-sm text-[#2A6BA8] font-semibold mt-4 flex items-center justify-center gap-1.5">
                 <span className="w-2 h-2 bg-[#3B82C4] rounded-full animate-pulse" />
                 Our team will contact you shortly.
               </p>
@@ -239,7 +239,7 @@ export default function FormSection({
           ) : (
             <>
               <div className="text-center mb-7">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F5A623] bg-[#F5A623]/15 px-3 py-1.5 rounded-full mb-4">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#A25607] bg-[#F5A623]/15 px-3 py-1.5 rounded-full mb-4">
                   <Star size={11} fill="#F5A623" /> {consultationFree ? 'Free Consultation' : 'Consultation'}
                 </span>
                 <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] leading-tight">{headline}</h2>
@@ -329,13 +329,13 @@ export default function FormSection({
 
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-5">
                 <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <ShieldCheck size={13} className="text-[#3B82C4]" />
+                  <ShieldCheck size={13} className="text-[#2A6BA8]" />
                   100% secure &amp; never shared
                 </p>
                 {phone && (
                   <a
                     href={`tel:${phone.replace(/\s/g, '')}`}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-[#3B82C4] hover:underline"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-[#2A6BA8] hover:underline"
                   >
                     <Phone size={13} /> {phone}
                   </a>

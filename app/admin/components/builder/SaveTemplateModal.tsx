@@ -45,7 +45,7 @@ export default function SaveTemplateModal({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-[#F5A623]/10 flex items-center justify-center">
-              <BookmarkPlus size={16} className="text-[#F5A623]" />
+              <BookmarkPlus size={16} className="text-[#A25607]" />
             </div>
             <h3 className="font-bold text-[#0B2560]">Save as Template</h3>
           </div>

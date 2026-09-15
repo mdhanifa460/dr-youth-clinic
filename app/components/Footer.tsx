@@ -65,7 +65,10 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
           {/* COL 4 — PATIENT CARE */}
           <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">{patientCareHeading}</h4>
+            {/* h3, not h4 — see FooterLinks.tsx's own comment on the same
+                heading-order fix, applied consistently across every
+                footer column. */}
+            <h3 className="text-sm font-bold mb-5 tracking-wide">{patientCareHeading}</h3>
             <ul className="space-y-3">
               {patientCare.map((p: any, i: number) => (
                 <li key={i}>
@@ -82,7 +85,8 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
 
           {/* COL 5 — CONTACT */}
           <div>
-            <h4 className="text-sm font-bold mb-5 tracking-wide">{contactHeading}</h4>
+            {/* h3, not h4 — see FooterLinks.tsx's own comment. */}
+            <h3 className="text-sm font-bold mb-5 tracking-wide">{contactHeading}</h3>
             {/* Address/phone now resolve to the VISITOR'S actual branch
                 (client-side — see ContactInfo.tsx for why, same reasoning
                 as FooterLinks.tsx), not one fixed branch's info for every
@@ -105,8 +109,17 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
               <Link
                 key={i}
                 href={l.href}
+                // Footer is a dark navy background — same dark-background
+                // exception as TopBar.tsx (see that file's own comment):
+                // the darkened #A25607 at 70% opacity measured 1.85:1 here
+                // in a real Lighthouse audit (badly fails); the original
+                // bright #F5A623 at full opacity is 7.16:1. Dropping the
+                // /70 entirely rather than restoring it, since even the
+                // ORIGINAL 70%-opacity version only reached ~4.08:1 —
+                // marginal at best for 12px text — full opacity is the
+                // one that's actually safe.
                 className={l.accent
-                  ? "text-[#F5A623]/70 text-xs hover:text-[#F5A623] transition font-medium"
+                  ? "text-[#F5A623] text-xs hover:text-white transition font-medium"
                   : "text-white/60 text-xs hover:text-white/90 transition"}
               >
                 {l.label}

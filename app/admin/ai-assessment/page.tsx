@@ -607,7 +607,7 @@ function DoctorReviewPanel({ lead, onUpdate, doctorNoteTemplates, canFullReview 
           below already reads these same Lead fields server-side. */}
       {lead.assessmentType && lead.assessmentResult && (
         <div className="bg-[#0B2560] text-white rounded-xl p-3.5 space-y-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#F5A623]">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#A25607]">
             {lead.assessmentType.charAt(0).toUpperCase() + lead.assessmentType.slice(1)} Assessment Result
           </p>
           <div className="flex gap-4 text-xs">

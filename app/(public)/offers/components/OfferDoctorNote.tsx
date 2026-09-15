@@ -10,7 +10,7 @@ export default function OfferDoctorNote({ doctors }: { doctors: any[] }) {
   return (
     <section className="bg-white py-14">
       <div className="max-w-5xl mx-auto px-6 text-center">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-2">Doctor Reviewed</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-2">Doctor Reviewed</p>
         <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] mb-3">
           Every Offer, Reviewed by Our Specialists
         </h2>
@@ -34,7 +34,7 @@ export default function OfferDoctorNote({ doctors }: { doctors: any[] }) {
           ))}
         </div>
 
-        <Link href="/doctors" className="inline-flex items-center gap-2 text-[#3B82C4] font-semibold text-sm hover:text-[#0B2560] transition">
+        <Link href="/doctors" className="inline-flex items-center gap-2 text-[#2A6BA8] font-semibold text-sm hover:text-[#0B2560] transition">
           Meet Our Doctors <ArrowRight size={14} />
         </Link>
       </div>

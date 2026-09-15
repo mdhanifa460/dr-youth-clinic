@@ -63,7 +63,7 @@ export default function SliderCard({ pair }: { pair: any }) {
             </div>
             <div className="w-[1.5px] bg-[#0B2560]/10 self-stretch" />
             <div className="flex-1 bg-gradient-to-br from-[#EBF3FF] to-[#DDE9FF] flex items-center justify-center">
-              <span className="text-xs font-semibold text-[#3B82C4]/50 tracking-widest uppercase">After</span>
+              <span className="text-xs font-semibold text-[#2A6BA8]/50 tracking-widest uppercase">After</span>
             </div>
           </div>
         )}
@@ -76,7 +76,7 @@ export default function SliderCard({ pair }: { pair: any }) {
           <p className="text-gray-500 text-sm mt-1.5 leading-relaxed">{pair.description}</p>
         )}
         {pair.category && (
-          <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-[#f6faff] text-[#3B82C4] text-xs font-semibold">
+          <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-[#f6faff] text-[#2A6BA8] text-xs font-semibold">
             {pair.category}
           </span>
         )}

@@ -39,7 +39,13 @@ export default function FooterLinks({
 
   return (
     <div>
-      <h4 className="text-sm font-bold mb-5 tracking-wide">{heading}</h4>
+      {/* h3, not h4 — real Lighthouse/axe finding (heading-order): no h4
+          anywhere on the page had a preceding h3, since nothing on this
+          site actually uses h3 before the footer. Page structure is h1 ->
+          section h2s -> here, so h3 is the correct next level down, not a
+          skip. Purely a semantic/structure fix — text-sm font-bold styling
+          means it looks identical either way. */}
+      <h3 className="text-sm font-bold mb-5 tracking-wide">{heading}</h3>
       <ul className="space-y-3">
         {links.map((l, i) => (
           <li key={i}>

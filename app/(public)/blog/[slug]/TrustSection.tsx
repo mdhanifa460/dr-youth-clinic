@@ -38,8 +38,8 @@ export default function TrustSection({
           )}
           <div>
             <div className="flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-[#3B82C4]" />
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#3B82C4]">Reviewed By</p>
+              <ShieldCheck size={14} className="text-[#2A6BA8]" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#2A6BA8]">Reviewed By</p>
             </div>
             <p className="font-bold text-[#0B2560] mt-1">{doctor.name}</p>
             {doctor.title && <p className="text-xs text-gray-500 mt-0.5">{doctor.title}</p>}
@@ -59,7 +59,7 @@ export default function TrustSection({
           </div>
           <div>
             <p className="font-bold text-[#0B2560]">{author}</p>
-            <p className="text-xs text-[#3B82C4] mt-0.5">{authorTitle}</p>
+            <p className="text-xs text-[#2A6BA8] mt-0.5">{authorTitle}</p>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
               Medically reviewed content from the DR Youth Clinic specialist team — committed to accurate, evidence-based skin and hair care information.
             </p>
@@ -76,7 +76,7 @@ export default function TrustSection({
           <ul className="space-y-1">
             {references.map((ref, i) => (
               <li key={i} className="text-xs">
-                <a href={ref.url} target="_blank" rel="noopener noreferrer" className="text-[#3B82C4] hover:underline">
+                <a href={ref.url} target="_blank" rel="noopener noreferrer" className="text-[#2A6BA8] hover:underline">
                   {ref.label}
                 </a>
               </li>

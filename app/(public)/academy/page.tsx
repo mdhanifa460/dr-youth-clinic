@@ -72,11 +72,11 @@ export default async function AcademyPage() {
         <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
           <div className="flex items-center gap-2 mb-4">
             <span className="w-8 h-0.5 bg-[#F5A623]" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623]">Video Academy</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607]">Video Academy</p>
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight mb-4">
             🎥 Skin &amp; Hair<br />
-            <span className="text-[#F5A623]">Academy</span>
+            <span className="text-[#A25607]">Academy</span>
           </h1>
           <p className="text-white/60 max-w-xl text-sm md:text-base leading-relaxed mb-8">
             Expert-led videos on skin, hair, laser and aesthetic treatments — straight from our specialists. Learn what to expect, before you book.
@@ -113,7 +113,7 @@ export default async function AcademyPage() {
           ) : (
             <>
               <div className="mb-8">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3B82C4] mb-2">Watch &amp; Learn</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#2A6BA8] mb-2">Watch &amp; Learn</p>
                 <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">All Videos</h2>
                 <p className="text-gray-500 text-sm mt-1">
                   {videos.length} video{videos.length !== 1 ? 's' : ''} available
@@ -131,7 +131,7 @@ export default async function AcademyPage() {
       {/* ── BOTTOM CTA ── */}
       <section className="bg-[#0B2560] py-14">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">Ready to Begin?</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             Have Questions After Watching?
           </h2>

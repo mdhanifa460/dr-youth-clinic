@@ -87,12 +87,12 @@ export default async function DoctorsPage() {
             it, not the button's own position), so the fix has to come from
             the space above. */}
         <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-24">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">
             DR Youth Clinic
           </p>
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold text-white leading-tight max-w-2xl">
             {headingMain}<br />
-            <span className="text-[#F5A623]">{headingGold}</span>
+            <span className="text-[#A25607]">{headingGold}</span>
           </h1>
           <p className="text-white/60 mt-4 max-w-lg text-sm md:text-base leading-relaxed">
             {heroSubheading}
@@ -103,7 +103,7 @@ export default async function DoctorsPage() {
             {STATS.map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
-                  <Icon size={18} className="text-[#F5A623]" />
+                  <Icon size={18} className="text-[#A25607]" />
                 </div>
                 <div>
                   <p className="text-xl font-extrabold text-white leading-none">{value}</p>
@@ -130,7 +130,7 @@ export default async function DoctorsPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3B82C4] mb-2">Our Specialists</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#2A6BA8] mb-2">Our Specialists</p>
               <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">
                 {gridHeading}
               </h2>
@@ -152,7 +152,7 @@ export default async function DoctorsPage() {
       {/* ── BOTTOM CTA ── */}
       <section className="bg-[#0B2560] py-14">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">Ready to Begin?</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             {ctaHeading}
           </h2>

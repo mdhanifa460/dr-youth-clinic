@@ -179,7 +179,7 @@ export default function StoryBuilderPage() {
           {saved && <span className="text-xs text-green-600 flex items-center gap-1"><CheckCircle size={13} /> Saved</span>}
           {error && <span className="text-xs text-red-500 flex items-center gap-1"><AlertCircle size={13} /> {error}</span>}
           {story.status === 'published' && story.slug && (
-            <a href={`/web-stories/${story.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3B82C4] font-semibold flex items-center gap-1"><ExternalLink size={12} /> View</a>
+            <a href={`/web-stories/${story.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#2A6BA8] font-semibold flex items-center gap-1"><ExternalLink size={12} /> View</a>
           )}
           <select value={story.status} onChange={e => set('status', e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold">
             <option value="draft">Draft</option>

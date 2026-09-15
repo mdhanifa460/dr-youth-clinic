@@ -77,7 +77,7 @@ export default function BeforeAfterSection({ data }: { data: any }) {
           <div className="max-w-2xl">
             <div className="flex items-center gap-2.5 mb-4">
               <div className="w-6 h-[2px] bg-[#F5A623]" />
-              <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
+              <span className="text-[#A25607] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
             </div>
             <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
               {headline}

@@ -42,7 +42,7 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">The Process</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">The Process</p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
@@ -83,7 +83,7 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
                     >
                       <Icon className="text-white" size={26} />
                     </div>
-                    <span className="text-xs font-extrabold text-[#F5A623] uppercase tracking-wider mb-1">
+                    <span className="text-xs font-extrabold text-[#A25607] uppercase tracking-wider mb-1">
                       Step {step.number ?? i + 1}
                     </span>
                     <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{step.title}</h3>
@@ -120,7 +120,7 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
                   )}
                 </div>
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4 shadow-sm flex-1">
-                  <span className="text-xs font-extrabold text-[#F5A623] uppercase tracking-wider">
+                  <span className="text-xs font-extrabold text-[#A25607] uppercase tracking-wider">
                     Step {step.number ?? i + 1}
                   </span>
                   <h3 className="font-bold text-[#0B2560] text-sm mt-0.5 mb-1">{step.title}</h3>

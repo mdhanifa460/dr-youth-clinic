@@ -38,11 +38,11 @@ export default function PublicError({ error, reset }: { error: Error & { digest?
         <div className="mt-8 pt-6 border-t border-gray-100">
           <p className="text-xs text-gray-500 mb-3">Or reach us directly</p>
           <div className="flex items-center justify-center gap-4 text-xs">
-            <Link href="/book" className="flex items-center gap-1 text-[#3B82C4] hover:underline font-semibold">
+            <Link href="/book" className="flex items-center gap-1 text-[#2A6BA8] hover:underline font-semibold">
               <Calendar size={11} /> Book Consultation
             </Link>
             <span className="text-gray-300">·</span>
-            <a href="tel:18008909669" className="text-[#3B82C4] hover:underline font-semibold">
+            <a href="tel:18008909669" className="text-[#2A6BA8] hover:underline font-semibold">
               1800 890 9669
             </a>
           </div>

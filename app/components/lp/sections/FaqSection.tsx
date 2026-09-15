@@ -27,7 +27,7 @@ export default function FaqSection({ data }: { data: FaqData }) {
     <section className="bg-white py-14 md:py-20">
       <div className="max-w-3xl mx-auto px-5">
         <div className="text-center mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">
             Got Questions?
           </p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
@@ -52,7 +52,7 @@ export default function FaqSection({ data }: { data: FaqData }) {
                 </span>
                 <ChevronDown
                   size={18}
-                  className={`shrink-0 text-[#3B82C4] transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}
+                  className={`shrink-0 text-[#2A6BA8] transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}
                 />
               </button>
 

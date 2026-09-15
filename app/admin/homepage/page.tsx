@@ -945,7 +945,7 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                 Add, edit, reorder, and delete individual results (title, category, before/after images) from
                 the dedicated Results page — changes there show up on <a href="/results" target="_blank" rel="noopener noreferrer" className="underline">/results</a> immediately.
               </p>
-              <a href="/admin/results" className="text-xs font-semibold text-[#3B82C4] hover:underline">
+              <a href="/admin/results" className="text-xs font-semibold text-[#2A6BA8] hover:underline">
                 Go to Admin → Results →
               </a>
             </div>
@@ -1043,7 +1043,7 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                 Individual doctor records (photo, bio, specializations, location) are now controlled from the
                 dedicated Doctors page. They are automatically shown here filtered by the visitor's location.
               </p>
-              <a href="/admin/doctors" className="text-xs font-semibold text-[#3B82C4] hover:underline">
+              <a href="/admin/doctors" className="text-xs font-semibold text-[#2A6BA8] hover:underline">
                 Go to Admin → Doctors →
               </a>
             </div>
@@ -1106,7 +1106,7 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                 Create, edit, and publish stories from the dedicated Web Stories builder. Featured/published
                 stories appear here automatically, newest first.
               </p>
-              <a href="/admin/stories" className="text-xs font-semibold text-[#3B82C4] hover:underline">
+              <a href="/admin/stories" className="text-xs font-semibold text-[#2A6BA8] hover:underline">
                 Go to Admin → Web Stories →
               </a>
             </div>

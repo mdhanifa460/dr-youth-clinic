@@ -114,7 +114,16 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                   className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#0B2560] placeholder:text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
                   required
                 />
+                {/* aria-label on both — real Lighthouse/axe finding
+                    (select-name): neither had any accessible name at all
+                    (no <label>, no aria-label), so a screen reader user
+                    couldn't tell these two dropdowns apart. The visible
+                    "Select Service"/"Select City" placeholder option text
+                    isn't enough — it's the CURRENT VALUE readout, not a
+                    field label, and disappears entirely once a real
+                    option is chosen. */}
                 <select
+                  aria-label="Select Service"
                   value={service}
                   onChange={(e) => setService(e.target.value)}
                   className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
@@ -126,6 +135,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                   ))}
                 </select>
                 <select
+                  aria-label="Select City"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"

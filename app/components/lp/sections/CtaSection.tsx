@@ -59,7 +59,7 @@ export default function CtaSection({
             <div className="flex flex-wrap gap-x-6 gap-y-3 mt-7">
               {badges.map((b) => (
                 <span key={b} className="flex items-center gap-2 text-sm font-semibold text-white/90">
-                  <CheckCircle size={16} className="text-[#F5A623] shrink-0" />
+                  <CheckCircle size={16} className="text-[#A25607] shrink-0" />
                   {b}
                 </span>
               ))}

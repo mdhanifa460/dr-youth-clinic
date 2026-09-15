@@ -139,7 +139,7 @@ export default function BookingSuccessAdminPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {ANALYTICS_ROWS.map(({ key, label, icon: Icon }) => (
           <div key={key} className="bg-white rounded-2xl border border-gray-100 p-4">
-            <Icon size={16} className="text-[#F5A623] mb-2" />
+            <Icon size={16} className="text-[#A25607] mb-2" />
             <p className="text-2xl font-extrabold text-[#0B2560]">{analytics[key] ?? 0}</p>
             <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mt-0.5">{label}</p>
           </div>

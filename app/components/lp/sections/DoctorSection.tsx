@@ -104,7 +104,7 @@ export default function DoctorSection({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3"
+              className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3"
             >
               Meet Our Expert
             </motion.p>
@@ -126,7 +126,7 @@ export default function DoctorSection({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="text-[#F5A623] font-semibold mt-1.5 text-sm md:text-base"
+              className="text-[#A25607] font-semibold mt-1.5 text-sm md:text-base"
             >
               {qualification}
             </motion.p>
@@ -182,7 +182,7 @@ export default function DoctorSection({
             >
               {bullets.map((b, i) => (
                 <li key={i} className="flex items-center gap-2.5 text-sm text-white/90">
-                  <CheckCircle size={16} className="text-[#F5A623] shrink-0" />
+                  <CheckCircle size={16} className="text-[#A25607] shrink-0" />
                   {b}
                 </li>
               ))}
@@ -196,9 +196,9 @@ export default function DoctorSection({
               viewport={{ once: true, margin: '-80px' }}
               className="mt-6 bg-[#F5A623]/15 border border-[#F5A623]/30 rounded-2xl p-5"
             >
-              <Quote size={20} className="text-[#F5A623] mb-2" />
+              <Quote size={20} className="text-[#A25607] mb-2" />
               <p className="text-white/90 italic text-sm md:text-base leading-relaxed">{testimonial}</p>
-              <p className="text-[#F5A623] text-xs font-bold mt-2.5">— {name}</p>
+              <p className="text-[#A25607] text-xs font-bold mt-2.5">— {name}</p>
             </motion.div>
 
             <motion.button

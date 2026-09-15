@@ -564,13 +564,13 @@ function IntroScreen({ goals, onStart }: { goals: IJourneyGoal[]; onStart: () =>
   return (
     <div className="flex flex-col items-center text-center py-6 md:py-10">
       <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
-        <Sparkles size={12} className="text-[#F5A623]" />
+        <Sparkles size={12} className="text-[#A25607]" />
         AI-Personalised · Real Doctors · Real Results
       </span>
 
       <h1 className="text-3xl md:text-5xl font-extrabold text-[#0B2560] leading-tight mb-4 max-w-xl tracking-tight">
         Plan Your<br />
-        <span className="text-[#F5A623]">Treatment Journey</span>
+        <span className="text-[#A25607]">Treatment Journey</span>
       </h1>
 
       <p className="text-gray-500 text-base md:text-lg max-w-md mb-10 leading-relaxed">
@@ -592,7 +592,7 @@ function IntroScreen({ goals, onStart }: { goals: IJourneyGoal[]; onStart: () =>
         className="group relative px-10 py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-3"
       >
         Get Started
-        <ArrowRight size={18} className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200" />
+        <ArrowRight size={18} className="text-[#A25607] group-hover:translate-x-1 transition-transform duration-200" />
       </button>
 
       <p className="mt-4 text-xs text-gray-500">Takes about a minute. No sign-up required to start.</p>
@@ -786,7 +786,7 @@ function HighlightedTitle({ title }: { title: string }) {
     <>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
-          <span key={i} className="text-[#F5A623]">{part}</span>
+          <span key={i} className="text-[#A25607]">{part}</span>
         ) : (
           <span key={i}>{part}</span>
         )
@@ -825,7 +825,7 @@ function BranchSelectionCards({ value, onChange }: { value: string; onChange: (k
               <MapPin size={11} className="shrink-0" /> {loc.address}
             </p>
             <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-              <Star size={11} className="fill-[#F5A623] text-[#F5A623] shrink-0" /> {loc.rating} ({loc.reviewCount} reviews) · {loc.doctorCount} specialists
+              <Star size={11} className="fill-[#F5A623] text-[#A25607] shrink-0" /> {loc.rating} ({loc.reviewCount} reviews) · {loc.doctorCount} specialists
             </p>
           </button>
         );

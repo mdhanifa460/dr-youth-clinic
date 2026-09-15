@@ -29,7 +29,7 @@ export default function CoursesComingSoon({ whatsapp }: { whatsapp?: string }) {
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <div className="text-center mb-10">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-2">🚧 Coming Soon</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-2">🚧 Coming Soon</p>
         <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">Certification Programs</h2>
         <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">Not live yet — batches and curriculum are on the way. Ask us for the latest.</p>
       </div>

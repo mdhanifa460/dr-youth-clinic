@@ -39,7 +39,7 @@ export default function OfferFAQSection() {
     <section className="bg-white py-12">
       <div className="max-w-3xl mx-auto px-6">
         <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-1 flex items-center gap-2">
-          <CheckCircle size={18} className="text-[#3B82C4]" /> Terms & Frequently Asked Questions
+          <CheckCircle size={18} className="text-[#2A6BA8]" /> Terms & Frequently Asked Questions
         </h2>
         <p className="text-sm text-gray-500 mb-6">Everything you should know before booking an offer.</p>
 

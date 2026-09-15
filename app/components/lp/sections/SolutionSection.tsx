@@ -40,7 +40,7 @@ export default function SolutionSection({ data }: { data: SolutionData }) {
 
           {/* Content */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">
               The DR Youth Difference
             </p>
             <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560] leading-tight">

@@ -208,7 +208,7 @@ export default function CompetitorIntelligence({ data }: { data: any }) {
             { icon: '🔍', title: 'Keyword Expansion', detail: `You rank for ~${us.keywords} keywords vs Oliva's 1,240+. Target "${[...data?.byService || []].slice(0, 2).map((s: any) => s.name).join('", "')} in [city]" keyword variations.` },
           ].map((r, i) => (
             <div key={i} className="bg-white/10 rounded-xl p-3">
-              <p className="text-sm font-bold text-[#F5A623] mb-1">{r.icon} {r.title}</p>
+              <p className="text-sm font-bold text-[#A25607] mb-1">{r.icon} {r.title}</p>
               <p className="text-[11px] text-white/80 leading-relaxed">{r.detail}</p>
             </div>
           ))}

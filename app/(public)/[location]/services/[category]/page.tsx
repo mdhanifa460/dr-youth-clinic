@@ -249,7 +249,7 @@ export default async function CategoryPage({ params }: PageProps) {
             {services.length >= 2 && (
               <div className="mt-16">
                 <div className="text-center mb-6">
-                  <p className="text-[#3B82C4] text-xs font-bold uppercase tracking-widest mb-1">Treatment Comparison Center</p>
+                  <p className="text-[#2A6BA8] text-xs font-bold uppercase tracking-widest mb-1">Treatment Comparison Center</p>
                   <h3 className="text-2xl font-headline font-bold text-[#0B2560]">Compare {meta.label} Treatments</h3>
                   <p className="text-gray-500 text-sm mt-1">Side-by-side overview to help you find the right fit</p>
                 </div>
@@ -286,7 +286,7 @@ export default async function CategoryPage({ params }: PageProps) {
                           <td key={String(s._id)} className="py-3 px-4">
                             <Link
                               href={`/${params.location}/services/${catSlug}/${s.urlSlug}`}
-                              className="inline-flex items-center gap-1 text-xs font-bold text-[#0B2560] hover:text-[#3B82C4] transition"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[#0B2560] hover:text-[#2A6BA8] transition"
                             >
                               View <ArrowRight size={11} />
                             </Link>
@@ -399,7 +399,7 @@ function ServiceCard({
           <div className="flex flex-wrap gap-2 mb-3">
             {svc.sessionsRequired && (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-blue-50 text-[#0B2560] px-2 py-1 rounded-full">
-                <Zap size={9} className="text-[#3B82C4]" /> {svc.sessionsRequired}
+                <Zap size={9} className="text-[#2A6BA8]" /> {svc.sessionsRequired}
               </span>
             )}
             {svc.recoveryTime && (

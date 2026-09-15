@@ -39,7 +39,7 @@ export default function HairTimelineSection({ data }: { data: HairTimelineData }
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">Growth Timeline</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">Growth Timeline</p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>

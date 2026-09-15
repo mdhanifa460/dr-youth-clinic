@@ -39,7 +39,7 @@ export default function DoctorCard({ doc }: { doc: any }) {
         <Link href={`/doctors/${doc._id}`} className="block">{inner}</Link>
       ) : inner}
       <div className="px-4 pb-4 md:px-5 md:pb-5 flex items-center justify-between -mt-1">
-        <span className="text-xs text-[#3B82C4] font-semibold">{experience}</span>
+        <span className="text-xs text-[#2A6BA8] font-semibold">{experience}</span>
         {doc.linkedIn && doc.linkedIn !== '#' && (
           <a
             href={doc.linkedIn}

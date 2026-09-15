@@ -108,7 +108,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
             </span>
             <h1 className="text-5xl md:text-[64px] font-headline font-extrabold leading-[1.05] mb-6 tracking-tight">
               {siteConfig.servicesHubHeadline}<br />
-              <span className="text-[#F5A623]">{siteConfig.servicesHubHeadlineAccent}</span>
+              <span className="text-[#A25607]">{siteConfig.servicesHubHeadlineAccent}</span>
             </h1>
             <p className="text-[17px] text-white/65 max-w-lg leading-relaxed mb-10">
               {heroDescription}
@@ -150,7 +150,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
           </div>
           <Link
             href="/book"
-            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-[#0B2560] hover:text-[#3B82C4] transition"
+            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-[#0B2560] hover:text-[#2A6BA8] transition"
           >
             Free first consultation <ArrowRight size={14} />
           </Link>

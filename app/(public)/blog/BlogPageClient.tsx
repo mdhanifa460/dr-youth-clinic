@@ -77,7 +77,7 @@ function ArticleCard({ post, basePath }: { post: Post; basePath: string }) {
           pinned to the bottom regardless of title/excerpt length, so cards
           in the same grid row line up instead of drifting per-card. */}
       <div className="flex flex-col flex-1 p-5 md:p-6">
-        <h3 className="font-bold text-[#0B2560] text-base leading-snug line-clamp-2 group-hover:text-[#3B82C4] transition">{post.title}</h3>
+        <h3 className="font-bold text-[#0B2560] text-base leading-snug line-clamp-2 group-hover:text-[#2A6BA8] transition">{post.title}</h3>
         {post.excerpt && <p className="text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>}
         <div className="flex items-center justify-between mt-auto pt-4">
           <div className="flex items-center gap-3 text-gray-500 text-xs">
@@ -85,7 +85,7 @@ function ArticleCard({ post, basePath }: { post: Post; basePath: string }) {
             <span className="flex items-center gap-1"><Clock size={10} />{post.readTime}</span>
           </div>
           {post.reviewedByDoctorId?.name && (
-            <span className="text-[10px] font-semibold text-[#3B82C4] bg-[#f6faff] px-2 py-1 rounded-full">✓ Doctor Reviewed</span>
+            <span className="text-[10px] font-semibold text-[#2A6BA8] bg-[#f6faff] px-2 py-1 rounded-full">✓ Doctor Reviewed</span>
           )}
         </div>
       </div>
@@ -195,11 +195,11 @@ export default function BlogPageClient({
           scrolling. */}
       <section className="bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0B2560] text-white pt-16 pb-32 lg:pb-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-4">
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#A25607] mb-4">
             Medical Knowledge Center
           </span>
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
-            Trusted Skin & Hair <span className="text-[#F5A623]">Education</span>
+            Trusted Skin & Hair <span className="text-[#A25607]">Education</span>
           </h1>
           <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
             Evidence-based articles, expert insights and treatment guides to help you make the right decisions.
@@ -253,7 +253,7 @@ export default function BlogPageClient({
         {search && (
           <p className="text-sm text-gray-500 mb-8">
             {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;{search}&rdquo;
-            <button onClick={() => setSearch('')} className="ml-2 text-[#3B82C4] font-semibold hover:underline">Clear</button>
+            <button onClick={() => setSearch('')} className="ml-2 text-[#2A6BA8] font-semibold hover:underline">Clear</button>
           </p>
         )}
 
@@ -285,13 +285,13 @@ export default function BlogPageClient({
                     <span className={`absolute top-4 left-4 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white px-3 py-1.5 rounded-full ${CATEGORY_COLOR[featured.category] || 'bg-[#3B82C4]'}`}>
                       {featured.category}
                     </span>
-                    <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider text-[#F5A623] border border-[#F5A623]/50 px-2.5 py-1 rounded-full bg-black/20 backdrop-blur-sm">
+                    <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider text-[#A25607] border border-[#F5A623]/50 px-2.5 py-1 rounded-full bg-black/20 backdrop-blur-sm">
                       Featured
                     </span>
                   </div>
                   <div className="p-8 md:p-10 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#3B82C4] mb-3">Featured Article</p>
-                    <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] leading-tight group-hover:text-[#3B82C4] transition">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#2A6BA8] mb-3">Featured Article</p>
+                    <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] leading-tight group-hover:text-[#2A6BA8] transition">
                       {featured.title}
                     </h2>
                     {featured.excerpt && <p className="text-gray-500 mt-3 text-sm leading-relaxed line-clamp-3">{featured.excerpt}</p>}
@@ -299,10 +299,10 @@ export default function BlogPageClient({
                       <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(featured.publishedAt)}</span>
                       <span className="flex items-center gap-1"><Clock size={11} />{featured.readTime}</span>
                       {featured.reviewedByDoctorId?.name && (
-                        <span className="flex items-center gap-1 text-[#3B82C4] font-semibold">✓ Reviewed by {featured.reviewedByDoctorId.name}</span>
+                        <span className="flex items-center gap-1 text-[#2A6BA8] font-semibold">✓ Reviewed by {featured.reviewedByDoctorId.name}</span>
                       )}
                     </div>
-                    <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-[#0B2560] group-hover:text-[#3B82C4] transition">
+                    <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-[#0B2560] group-hover:text-[#2A6BA8] transition">
                       Read Article <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
@@ -371,7 +371,7 @@ export default function BlogPageClient({
         {/* ── Doctor-recommended reads ── */}
         {!isFiltering && doctorRecommended.length > 0 && (
           <section className="mb-16">
-            <p className="text-xs font-bold text-[#3B82C4] uppercase tracking-widest mb-1">Doctor Recommended</p>
+            <p className="text-xs font-bold text-[#2A6BA8] uppercase tracking-widest mb-1">Doctor Recommended</p>
             <h2 className="text-lg font-bold text-[#0B2560] mb-6">Reviewed & Recommended Reads</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {doctorRecommended.map((p) => <ArticleCard key={p._id} post={p} basePath={basePath} />)}
@@ -398,7 +398,7 @@ export default function BlogPageClient({
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-1 group-hover:text-[#3B82C4] transition">{s.name}</p>
+                    <p className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-1 group-hover:text-[#2A6BA8] transition">{s.name}</p>
                     {s.heroDescription && <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{s.heroDescription}</p>}
                   </div>
                 </Link>

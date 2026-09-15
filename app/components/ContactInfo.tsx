@@ -54,14 +54,14 @@ export default function ContactInfo({
     <ul className="space-y-4">
       {address && (
         <li className="flex gap-2.5 text-white/60 text-sm leading-relaxed">
-          <MdLocationOn className="text-[#F5A623] shrink-0 mt-0.5" size={16} />
+          <MdLocationOn className="text-[#A25607] shrink-0 mt-0.5" size={16} />
           <span>{address}</span>
         </li>
       )}
       {phone && (
         <li>
           <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex gap-2.5 text-white/60 text-sm hover:text-white transition">
-            <MdPhone className="text-[#F5A623] shrink-0 mt-0.5" size={16} />
+            <MdPhone className="text-[#A25607] shrink-0 mt-0.5" size={16} />
             {phone}
           </a>
         </li>
@@ -69,7 +69,7 @@ export default function ContactInfo({
       {defaultEmail && (
         <li>
           <a href={`mailto:${defaultEmail}`} className="flex gap-2.5 text-white/60 text-sm hover:text-white transition">
-            <MdEmail className="text-[#F5A623] shrink-0 mt-0.5" size={16} />
+            <MdEmail className="text-[#A25607] shrink-0 mt-0.5" size={16} />
             {defaultEmail}
           </a>
         </li>

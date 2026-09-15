@@ -52,13 +52,13 @@ function DoctorCard({ doc }: { doc: any }) {
       <div className="flex flex-col flex-1 p-5 space-y-3">
         <div>
           <h3 className="text-base font-extrabold text-[#0B2560] leading-snug">{doc.name}</h3>
-          <p className="text-sm text-[#3B82C4] font-medium mt-0.5 line-clamp-1">{doc.title}</p>
+          <p className="text-sm text-[#2A6BA8] font-medium mt-0.5 line-clamp-1">{doc.title}</p>
         </div>
 
         {/* Badges */}
         {expLabel && (
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Award size={11} className="text-[#F5A623] shrink-0" />
+            <Award size={11} className="text-[#A25607] shrink-0" />
             {expLabel}
           </div>
         )}
@@ -153,7 +153,7 @@ export default function DoctorsGrid({ doctors }: { doctors: any[] }) {
         <div className="text-center py-20">
           <p className="text-4xl mb-3">🔍</p>
           <p className="text-gray-500 font-semibold">No specialists at this location yet.</p>
-          <button onClick={() => setActiveFilter('')} className="mt-3 text-sm text-[#3B82C4] font-semibold hover:underline">
+          <button onClick={() => setActiveFilter('')} className="mt-3 text-sm text-[#2A6BA8] font-semibold hover:underline">
             View all locations
           </button>
         </div>

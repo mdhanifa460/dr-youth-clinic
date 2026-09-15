@@ -162,7 +162,7 @@ export default function HomepageLocations({ data }: { data: any }) {
 
         {/* ── Section header ── */}
         <div className="text-center mb-10">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-[#F5A623] flex items-center justify-center gap-2 mb-3">
+          <p className="text-xs font-bold tracking-[0.2em] uppercase text-[#A25607] flex items-center justify-center gap-2 mb-3">
             <MapPin size={13} /> OUR LOCATIONS
           </p>
           <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight mb-3">
@@ -225,11 +225,11 @@ export default function HomepageLocations({ data }: { data: any }) {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <MapPin size={11} className="text-[#F5A623] shrink-0" />
+                        <MapPin size={11} className="text-[#A25607] shrink-0" />
                         <span className={`font-bold text-sm truncate ${active ? 'text-[#0B2560]' : 'text-gray-800'}`}>{city}</span>
                       </div>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Star size={10} className="text-[#F5A623] fill-[#F5A623]" />
+                        <Star size={10} className="text-[#A25607] fill-[#F5A623]" />
                         <span className="text-xs text-gray-600 font-semibold">{crating > 0 ? crating : '—'}</span>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                           status.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
@@ -306,7 +306,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                   </h3>
                   {rating > 0 && (
                     <div className="flex items-center gap-1.5">
-                      <Star size={13} className="text-[#F5A623] fill-[#F5A623]" />
+                      <Star size={13} className="text-[#A25607] fill-[#F5A623]" />
                       <span className="font-bold text-sm text-gray-800">{rating}</span>
                       {reviewCount > 0 && <span className="text-xs text-gray-500">({reviewCount} Google reviews)</span>}
                     </div>
@@ -317,13 +317,13 @@ export default function HomepageLocations({ data }: { data: any }) {
                 <div className="space-y-2.5 text-sm">
                   {address && (
                     <div className="flex gap-2.5 text-gray-600">
-                      <MapPin size={14} className="text-[#F5A623] shrink-0 mt-0.5" />
+                      <MapPin size={14} className="text-[#A25607] shrink-0 mt-0.5" />
                       <span className="leading-snug">{address}</span>
                     </div>
                   )}
                   {hours[0] && (
                     <div className="flex gap-2.5 text-gray-600 items-center">
-                      <Clock size={14} className="text-[#F5A623] shrink-0" />
+                      <Clock size={14} className="text-[#A25607] shrink-0" />
                       <span>{hours[0].hours}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                         openStatus.isOpen ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'
@@ -334,13 +334,13 @@ export default function HomepageLocations({ data }: { data: any }) {
                   )}
                   {doctorCount > 0 && (
                     <div className="flex gap-2.5 text-gray-600 items-center">
-                      <Users size={14} className="text-[#F5A623] shrink-0" />
+                      <Users size={14} className="text-[#A25607] shrink-0" />
                       <span>{doctorCount} Doctors</span>
                     </div>
                   )}
                   {serviceCount > 0 && (
                     <div className="flex gap-2.5 text-gray-600 items-center">
-                      <Stethoscope size={14} className="text-[#F5A623] shrink-0" />
+                      <Stethoscope size={14} className="text-[#A25607] shrink-0" />
                       <span>{serviceCount}+ Treatments Available</span>
                     </div>
                   )}

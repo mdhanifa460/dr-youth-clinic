@@ -90,7 +90,7 @@ export default function AiJourneySimulator({
     <div className="rounded-3xl border border-blue-50 bg-gradient-to-br from-[#f6faff] to-white p-6 md:p-8">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 rounded-xl bg-[#0B2560] flex items-center justify-center shrink-0">
-          <Sparkles size={18} className="text-[#F5A623]" />
+          <Sparkles size={18} className="text-[#A25607]" />
         </div>
         <h2 className="text-xl font-headline font-bold text-[#0B2560]">
           {autoStart ? `Your Personalised ${serviceName} Journey` : `Simulate Your ${serviceName} Journey`}
@@ -144,7 +144,7 @@ export default function AiJourneySimulator({
           <div className="grid sm:grid-cols-2 gap-3">
             {journey.phases.map((p, i) => (
               <div key={i} className="bg-white rounded-2xl p-4 border border-blue-50">
-                <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wider">{p.sessionRange}</span>
+                <span className="text-[10px] font-bold text-[#A25607] uppercase tracking-wider">{p.sessionRange}</span>
                 <h3 className="font-bold text-[#0B2560] text-sm mt-1 mb-1.5">{p.title}</h3>
                 <p className="text-gray-500 text-xs leading-relaxed">{p.description}</p>
               </div>

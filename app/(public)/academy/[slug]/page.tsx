@@ -182,10 +182,10 @@ export default async function VideoDetailPage({ params }: PageProps) {
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-extrabold text-[#0B2560] text-base leading-snug truncate">{doctor.name}</h3>
-                  {doctor.title && <p className="text-[#3B82C4] text-sm font-medium truncate">{doctor.title}</p>}
+                  {doctor.title && <p className="text-[#2A6BA8] text-sm font-medium truncate">{doctor.title}</p>}
                   {doctor.experience > 0 && (
                     <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                      <Award size={11} className="text-[#F5A623] shrink-0" />
+                      <Award size={11} className="text-[#A25607] shrink-0" />
                       {doctor.experience}+ Years Experience
                     </p>
                   )}

@@ -14,7 +14,7 @@ export default function StatsBar({ data }: { data: any }) {
             {s.showStars && (
               <div className="flex justify-center gap-0.5 my-1">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <AiFillStar key={n} className="text-[#F5A623] text-sm" />
+                  <AiFillStar key={n} className="text-[#A25607] text-sm" />
                 ))}
               </div>
             )}

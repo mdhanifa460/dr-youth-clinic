@@ -43,7 +43,7 @@ export function OfferCard({ offer }: { offer: any }) {
         <>
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#F5A623] to-[#3B82C4] z-10" />
           <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-[#0B2560] text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
-            <Sparkles size={10} className="text-[#F5A623]" /> Most Popular
+            <Sparkles size={10} className="text-[#A25607]" /> Most Popular
           </div>
         </>
       )}
@@ -89,7 +89,7 @@ export function OfferCard({ offer }: { offer: any }) {
 
       {/* Card body */}
       <div className="flex flex-col flex-1 p-5 bg-white">
-        <h3 className="text-base font-extrabold text-[#0B2560] leading-snug mb-2 group-hover:text-[#3B82C4] transition-colors">
+        <h3 className="text-base font-extrabold text-[#0B2560] leading-snug mb-2 group-hover:text-[#2A6BA8] transition-colors">
           {offer.title}
         </h3>
         {offer.description && (

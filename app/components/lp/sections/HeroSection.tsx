@@ -288,7 +288,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="inline-flex items-center gap-2 bg-[#F5A623]/20 border border-[#F5A623]/40 text-[#F5A623] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-5 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 bg-[#F5A623]/20 border border-[#F5A623]/40 text-[#A25607] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-5 backdrop-blur-sm"
             >
               <span className="w-2 h-2 rounded-full bg-[#F5A623] inline-block" />
               {badge}
@@ -303,7 +303,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
               className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-white leading-[1.1]"
             >
               {headline}{' '}
-              <span className="text-[#F5A623]">{headlineAccent}</span>
+              <span className="text-[#A25607]">{headlineAccent}</span>
             </motion.h1>
 
             <motion.p
@@ -327,7 +327,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
             >
               {features.map((f) => (
                 <span key={f} className="flex items-center gap-1.5 text-sm font-semibold text-white/90">
-                  <CheckCircle size={15} className="text-[#F5A623] shrink-0" />
+                  <CheckCircle size={15} className="text-[#A25607] shrink-0" />
                   {f}
                 </span>
               ))}
@@ -392,7 +392,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
               <p className="text-sm text-white/85 font-semibold">
                 {patientCount} Happy Patients
                 <span className="text-white/40 mx-1.5">·</span>
-                <span className="text-[#F5A623]">{rating} ★</span> Google Rating
+                <span className="text-[#A25607]">{rating} ★</span> Google Rating
               </p>
             </motion.div>
           </div>
@@ -415,7 +415,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                   headline on every screen width the badge shows at, not
                   just narrow ones. */}
               <div className="absolute -top-6 -left-6 z-20 hidden sm:flex flex-col items-center justify-center w-20 h-20 rounded-full bg-[#0B2560] border-4 border-[#F5A623] shadow-xl text-center">
-                <span className="text-[#F5A623] font-extrabold text-base leading-none">{yearsExperience}</span>
+                <span className="text-[#A25607] font-extrabold text-base leading-none">{yearsExperience}</span>
                 <span className="text-white text-[7px] font-bold uppercase tracking-wider mt-1 leading-tight px-1">
                   {yearsExperienceLabel}
                 </span>
@@ -510,7 +510,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                     </form>
 
                     <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-500 mt-4">
-                      <ShieldCheck size={13} className="text-[#3B82C4]" />
+                      <ShieldCheck size={13} className="text-[#2A6BA8]" />
                       Trusted by {patientCount} {trustedByLabel}
                     </p>
                   </>

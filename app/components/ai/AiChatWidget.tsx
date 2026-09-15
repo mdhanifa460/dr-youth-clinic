@@ -167,7 +167,7 @@ function CardChip({ card }: { card: Card }) {
       </div>
       <p className="text-xs font-bold text-[#0B2560] leading-snug line-clamp-2">{card.title}</p>
       {card.subtitle && <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">{card.subtitle}</p>}
-      <span className="text-[10px] font-semibold text-[#3B82C4] flex items-center gap-0.5 mt-1.5">View <ChevronRight size={10} /></span>
+      <span className="text-[10px] font-semibold text-[#2A6BA8] flex items-center gap-0.5 mt-1.5">View <ChevronRight size={10} /></span>
     </div>
   );
   return card.href ? <Link href={card.href} target="_blank">{content}</Link> : content;
@@ -596,7 +596,7 @@ function OffersPanel({ onBack }: { onBack: () => void }) {
           <div key={o._id} className="border border-gray-100 rounded-2xl p-3.5 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-bold text-[#0B2560] leading-snug">{o.title}</p>
-              {o.badge && <span className="shrink-0 text-[9px] font-bold bg-amber-50 text-[#F5A623] px-2 py-0.5 rounded-full whitespace-nowrap">{o.badge}</span>}
+              {o.badge && <span className="shrink-0 text-[9px] font-bold bg-amber-50 text-[#A25607] px-2 py-0.5 rounded-full whitespace-nowrap">{o.badge}</span>}
             </div>
             {o.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{o.description}</p>}
             {o.discountedPrice && (

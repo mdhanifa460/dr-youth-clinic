@@ -51,12 +51,12 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
       </span>
 
       {clinicLabel && (
-        <p className="text-sm font-semibold text-[#F5A623] mb-2">Welcome to our {clinicLabel} Clinic</p>
+        <p className="text-sm font-semibold text-[#A25607] mb-2">Welcome to our {clinicLabel} Clinic</p>
       )}
 
       <h1 className="text-3xl md:text-5xl font-extrabold text-[#0B2560] leading-tight mb-4 max-w-xl tracking-tight">
         Let's Prepare For<br />
-        <span className="text-[#F5A623]">Your Consultation</span>
+        <span className="text-[#A25607]">Your Consultation</span>
       </h1>
 
       <p className="text-gray-500 text-base md:text-lg max-w-md mb-10 leading-relaxed">
@@ -82,7 +82,7 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
         className="group relative px-10 py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#0B2560]/30 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-3"
       >
         Start Analysis
-        <span className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200">→</span>
+        <span className="text-[#A25607] group-hover:translate-x-1 transition-transform duration-200">→</span>
       </button>
 
       <p className="mt-4 text-xs text-gray-500">No sign-up required. Takes about 30-60 seconds.</p>
@@ -490,7 +490,7 @@ export default function SkinQuizPage() {
         <div>
           <p className="text-4xl mb-4">🩺</p>
           <p className="text-lg font-bold text-[#0B2560] mb-2">This assessment is temporarily unavailable</p>
-          <Link href="/book" className="text-sm text-[#3B82C4] underline">Book a consultation instead →</Link>
+          <Link href="/book" className="text-sm text-[#2A6BA8] underline">Book a consultation instead →</Link>
         </div>
       </div>
     );
@@ -500,7 +500,7 @@ export default function SkinQuizPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#f6faff] via-white to-[#edf4fc]">
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100/80 shadow-sm print:hidden">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-[#0B2560] hover:text-[#F5A623] transition-colors text-sm font-semibold group">
+          <Link href="/" className="flex items-center gap-2 text-[#0B2560] hover:text-[#A25607] transition-colors text-sm font-semibold group">
             <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>

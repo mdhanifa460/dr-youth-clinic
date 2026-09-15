@@ -39,7 +39,7 @@ export default function OfferCategoryShowcase({ summaries }: { summaries: Catego
     <section className="bg-white py-14 md:py-16">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-2">Browse by Category</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-2">Browse by Category</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">Find Your Perfect Treatment</h2>
         </div>
 
@@ -74,7 +74,7 @@ export default function OfferCategoryShowcase({ summaries }: { summaries: Catego
                     <p className="text-xs text-gray-500 mb-3">Ask about pricing at your consultation</p>
                   )}
                   <div className="flex-1" />
-                  <span className="inline-flex items-center gap-1 text-[#3B82C4] text-xs font-bold group-hover:text-[#0B2560] transition-colors">
+                  <span className="inline-flex items-center gap-1 text-[#2A6BA8] text-xs font-bold group-hover:text-[#0B2560] transition-colors">
                     {hasOffers ? 'View Offers' : 'Learn More'} <ArrowRight size={12} />
                   </span>
                 </div>

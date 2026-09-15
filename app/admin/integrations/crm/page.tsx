@@ -292,7 +292,7 @@ export default function CrmSyncPage() {
         <div className="flex items-center gap-2">
           <button onClick={() => tourRef.current?.start()}
             className="inline-flex items-center gap-1.5 border border-[#F5A623]/40 bg-[#F5A623]/10 text-[#0B2560] px-3 py-1.5 rounded-full text-xs font-bold hover:bg-[#F5A623]/20 transition">
-            <Sparkles size={13} className="text-[#F5A623]" /> Replay Guide
+            <Sparkles size={13} className="text-[#A25607]" /> Replay Guide
           </button>
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${meta.cls}`}>
             <StatusIcon size={13} /> {meta.label}
@@ -305,15 +305,15 @@ export default function CrmSyncPage() {
         <p className="text-xs font-bold uppercase tracking-wider text-white/60 mb-3">How this works, in plain terms</p>
         <div className="grid sm:grid-cols-3 gap-4 text-sm">
           <div className="flex gap-2.5">
-            <ArrowUpFromLine size={16} className="text-[#F5A623] shrink-0 mt-0.5" />
+            <ArrowUpFromLine size={16} className="text-[#A25607] shrink-0 mt-0.5" />
             <div><p className="font-semibold">We send them</p><p className="text-white/60 text-xs mt-0.5">Every website enquiry/booking, automatically, the moment it happens.</p></div>
           </div>
           <div className="flex gap-2.5">
-            <RefreshCw size={16} className="text-[#F5A623] shrink-0 mt-0.5" />
+            <RefreshCw size={16} className="text-[#A25607] shrink-0 mt-0.5" />
             <div><p className="font-semibold">We check periodically</p><p className="text-white/60 text-xs mt-0.5">Doctor list & branch info — these rarely change, so we poll instead of needing a live feed.</p></div>
           </div>
           <div className="flex gap-2.5">
-            <ArrowDownToLine size={16} className="text-[#F5A623] shrink-0 mt-0.5" />
+            <ArrowDownToLine size={16} className="text-[#A25607] shrink-0 mt-0.5" />
             <div><p className="font-semibold">They send us</p><p className="text-white/60 text-xs mt-0.5">Leads &amp; invoices, the instant one is created in their CRM — one URL, no polling needed on their side.</p></div>
           </div>
         </div>

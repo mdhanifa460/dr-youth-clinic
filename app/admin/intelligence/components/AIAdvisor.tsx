@@ -144,7 +144,7 @@ export default function AIAdvisor({ data }: { data: Record<string, unknown> }) {
     <div className="space-y-6">
       {/* Header */}
       <div className="mb-2">
-        <span className="inline-block text-[10px] font-bold tracking-[0.18em] uppercase text-[#F5A623] bg-[#F5A623]/10 px-3 py-1 rounded-full mb-2">
+        <span className="inline-block text-[10px] font-bold tracking-[0.18em] uppercase text-[#A25607] bg-[#F5A623]/10 px-3 py-1 rounded-full mb-2">
           AI Business Advisor
         </span>
         <h2 className="text-xl font-extrabold text-[#0B2560]">AI Business Advisor</h2>
@@ -256,7 +256,7 @@ export default function AIAdvisor({ data }: { data: Record<string, unknown> }) {
                   <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
                   AI analysis complete — powered by Claude Haiku
                 </p>
-                <button onClick={generate} className="text-xs font-semibold text-[#3B82C4] hover:underline flex items-center gap-1">
+                <button onClick={generate} className="text-xs font-semibold text-[#2A6BA8] hover:underline flex items-center gap-1">
                   <span>↻</span> Regenerate
                 </button>
               </div>
@@ -270,7 +270,7 @@ export default function AIAdvisor({ data }: { data: Record<string, unknown> }) {
                       <p className="text-sm font-semibold text-gray-900">{ins.title}</p>
                       <p className="text-sm text-gray-600 leading-relaxed">{ins.detail}</p>
                       {ins.metric && (
-                        <p className="text-xs font-bold text-[#3B82C4] bg-[#e8eff7] inline-block px-2 py-0.5 rounded-full">
+                        <p className="text-xs font-bold text-[#2A6BA8] bg-[#e8eff7] inline-block px-2 py-0.5 rounded-full">
                           {ins.metric}
                         </p>
                       )}
@@ -284,11 +284,11 @@ export default function AIAdvisor({ data }: { data: Record<string, unknown> }) {
                 <div className="bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] rounded-2xl p-6 text-white">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#F5A623] mb-1">Top Growth Opportunity</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#A25607] mb-1">Top Growth Opportunity</p>
                       <p className="text-base font-extrabold">{result.opportunity.title}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-[#F5A623]">{result.opportunity.revenueImpact}</p>
+                      <p className="text-sm font-bold text-[#A25607]">{result.opportunity.revenueImpact}</p>
                       <p className="text-[10px] text-white/60">{result.opportunity.confidence} confidence</p>
                     </div>
                   </div>
@@ -330,7 +330,7 @@ export default function AIAdvisor({ data }: { data: Record<string, unknown> }) {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-sm font-bold text-[#0B2560]">AI-suggested actions</p>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#F5A623]">Claude</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#A25607]">Claude</span>
               </div>
               <div className="space-y-3">
                 {(result.recommendations || []).map((rec, i) => {

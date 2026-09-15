@@ -44,7 +44,7 @@ export default function EMICalculator({ price }: Props) {
         </div>
         <ChevronDown
           size={18}
-          className={`text-[#F5A623] transition-transform duration-300 shrink-0 ml-3 ${
+          className={`text-[#A25607] transition-transform duration-300 shrink-0 ml-3 ${
             open ? 'rotate-180' : ''
           }`}
         />

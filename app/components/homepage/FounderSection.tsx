@@ -77,7 +77,7 @@ export default function FounderSection({ data }: { data: FounderData }) {
 
           {quote && (
             <blockquote className="relative pl-6 border-l-4 border-[#F5A623] mb-7">
-              <span className="absolute -left-1 -top-3 text-6xl font-serif text-[#F5A623]/20 select-none">"</span>
+              <span className="absolute -left-1 -top-3 text-6xl font-serif text-[#A25607]/20 select-none">"</span>
               <p className="text-gray-600 text-lg md:text-xl leading-relaxed italic font-medium">{quote}</p>
             </blockquote>
           )}
@@ -90,7 +90,7 @@ export default function FounderSection({ data }: { data: FounderData }) {
             )}
             <div>
               <p className="font-bold text-[#0B2560] text-lg">{name}</p>
-              <p className="text-[#3B82C4] text-sm font-semibold">{title}</p>
+              <p className="text-[#2A6BA8] text-sm font-semibold">{title}</p>
             </div>
           </div>
 

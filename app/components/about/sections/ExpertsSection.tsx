@@ -37,7 +37,7 @@ export default function ExpertsSection({ data, doctors }: { data: ExpertsData; d
     <section className="bg-[#f6faff] py-14 md:py-20">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-2">Our Team</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-2">Our Team</p>
           <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>
           {subheading && <p className="text-gray-500 mt-3 text-sm max-w-lg mx-auto">{subheading}</p>}
         </div>
@@ -72,7 +72,7 @@ export default function ExpertsSection({ data, doctors }: { data: ExpertsData; d
                     </div>
                   )}
                   <h3 className="font-headline font-bold text-[#0B2560] text-base">{doc.name}</h3>
-                  <p className="text-[#F5A623] text-xs font-bold uppercase tracking-wider mt-1">{doc.title}</p>
+                  <p className="text-[#A25607] text-xs font-bold uppercase tracking-wider mt-1">{doc.title}</p>
                   {doc.experience > 0 && (
                     <p className="text-gray-500 text-xs mt-1">{doc.experience} Years Experience</p>
                   )}
@@ -88,7 +88,7 @@ export default function ExpertsSection({ data, doctors }: { data: ExpertsData; d
         )}
 
         <div className="text-center mt-8">
-          <Link href="/doctors" className="inline-flex items-center gap-2 text-sm font-bold text-[#0B2560] hover:text-[#3B82C4] transition">
+          <Link href="/doctors" className="inline-flex items-center gap-2 text-sm font-bold text-[#0B2560] hover:text-[#2A6BA8] transition">
             View All Doctors →
           </Link>
         </div>

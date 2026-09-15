@@ -29,7 +29,7 @@ export default function CTAStrip({ data }: { data: any }) {
             ))}
           </ul>
           {rewards.ctaText && rewards.ctaHref && rewards.ctaHref !== '#' && (
-            <Link href={rewards.ctaHref} className="min-h-11 text-[#F5A623] text-sm font-semibold mt-2 hover:underline flex items-center gap-1">
+            <Link href={rewards.ctaHref} className="min-h-11 text-[#A25607] text-sm font-semibold mt-2 hover:underline flex items-center gap-1">
               {rewards.ctaText} →
             </Link>
           )}
@@ -67,7 +67,7 @@ export default function CTAStrip({ data }: { data: any }) {
           <ul className="space-y-3">
             {(whyUs.reasons || []).map((r: string, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                <MdCheck size={18} className="text-[#F5A623] shrink-0 mt-0.5" />
+                <MdCheck size={18} className="text-[#A25607] shrink-0 mt-0.5" />
                 {r}
               </li>
             ))}

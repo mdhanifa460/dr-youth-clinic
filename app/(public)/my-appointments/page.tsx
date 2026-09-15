@@ -134,19 +134,19 @@ export default function MyAppointmentsPage() {
               </div>
               <div className="grid sm:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2.5">
-                  <Stethoscope size={15} className="text-[#3B82C4] shrink-0" />
+                  <Stethoscope size={15} className="text-[#2A6BA8] shrink-0" />
                   <span className="text-gray-700">{data.current.service || 'Not specified'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <MapPin size={15} className="text-[#3B82C4] shrink-0" />
+                  <MapPin size={15} className="text-[#2A6BA8] shrink-0" />
                   <span className="text-gray-700">{LOCATION_LABELS[data.current.location] || data.current.location}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Calendar size={15} className="text-[#3B82C4] shrink-0" />
+                  <Calendar size={15} className="text-[#2A6BA8] shrink-0" />
                   <span className="text-gray-700">{data.current.date || 'To be scheduled'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Clock size={15} className="text-[#3B82C4] shrink-0" />
+                  <Clock size={15} className="text-[#2A6BA8] shrink-0" />
                   <span className="text-gray-700">{data.current.time || 'To be scheduled'}</span>
                 </div>
               </div>

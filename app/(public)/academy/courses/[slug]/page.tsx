@@ -129,7 +129,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     <ul className="mt-3 space-y-1.5">
                       {mod.topics.map((t: string, j: number) => (
                         <li key={j} className="text-gray-600 text-sm flex items-start gap-2">
-                          <span className="text-[#F5A623] mt-1">•</span> {t}
+                          <span className="text-[#A25607] mt-1">•</span> {t}
                         </li>
                       ))}
                     </ul>
@@ -157,10 +157,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-extrabold text-[#0B2560] text-sm leading-snug truncate">{doc.name}</h3>
-                      {doc.title && <p className="text-[#3B82C4] text-xs font-medium truncate">{doc.title}</p>}
+                      {doc.title && <p className="text-[#2A6BA8] text-xs font-medium truncate">{doc.title}</p>}
                       {doc.experience > 0 && (
                         <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-1">
-                          <Award size={10} className="text-[#F5A623] shrink-0" />
+                          <Award size={10} className="text-[#A25607] shrink-0" />
                           {doc.experience}+ Years Experience
                         </p>
                       )}
@@ -177,7 +177,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <ul className="space-y-1.5">
                 {course.eligibility.map((e: string, i: number) => (
                   <li key={i} className="text-gray-600 text-sm flex items-start gap-2">
-                    <span className="text-[#F5A623] mt-1">•</span> {e}
+                    <span className="text-[#A25607] mt-1">•</span> {e}
                   </li>
                 ))}
               </ul>
@@ -215,7 +215,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </div>
             {course.fee?.amount > 0 && (
               <div className="flex items-center gap-2 text-gray-700">
-                <IndianRupee size={15} className="text-[#F5A623]" />
+                <IndianRupee size={15} className="text-[#A25607]" />
                 <p className="font-bold text-lg">
                   {course.fee.discountedAmount ? course.fee.discountedAmount.toLocaleString('en-IN') : course.fee.amount.toLocaleString('en-IN')}
                   {course.fee.discountedAmount && (
@@ -229,7 +229,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <ul className="space-y-1.5 pt-2 border-t border-gray-50">
                 {course.highlights.map((h: string, i: number) => (
                   <li key={i} className="text-gray-600 text-xs flex items-start gap-1.5">
-                    <Users size={11} className="text-[#3B82C4] mt-0.5 shrink-0" /> {h}
+                    <Users size={11} className="text-[#2A6BA8] mt-0.5 shrink-0" /> {h}
                   </li>
                 ))}
               </ul>

@@ -206,7 +206,7 @@ export default function FreeLabelsSettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">Footer link</span>
-              <span className="text-xs font-semibold text-[#F5A623]">
+              <span className="text-xs font-semibold text-[#A25607]">
                 {skinQuizLabel}
               </span>
             </div>

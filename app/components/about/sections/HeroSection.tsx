@@ -51,11 +51,11 @@ export default function HeroSection({ data }: { data: HeroData }) {
           {badge && (
             <div className="flex items-center gap-2 mb-4">
               <span className="w-8 h-0.5 bg-[#F5A623]" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623]">{badge}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607]">{badge}</p>
             </div>
           )}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight mb-4">
-            {before}{headlineAccent && <span className="text-[#F5A623]">{headlineAccent}</span>}{after}
+            {before}{headlineAccent && <span className="text-[#A25607]">{headlineAccent}</span>}{after}
           </h1>
           {subheading && (
             <p className="text-white/70 text-base md:text-xl font-medium mb-6">{subheading}</p>

@@ -26,7 +26,7 @@ export default function AftercareCalendar({ items, serviceName }: { items: After
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <h3 className="font-bold text-[#0B2560] text-sm">{item.activity}</h3>
                   {item.waitPeriod && (
-                    <span className="text-[10px] font-bold text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                    <span className="text-[10px] font-bold text-[#A25607] bg-[#F5A623]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                       {item.waitPeriod}
                     </span>
                   )}

@@ -15,7 +15,7 @@ export default function StorySection({ data }: { data: StoryData }) {
         <div className={`grid ${image ? 'md:grid-cols-2 gap-10 md:gap-14 items-center' : ''}`}>
           <div className={image ? '' : 'max-w-3xl mx-auto text-center'}>
             {eyebrow && (
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">{eyebrow}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">{eyebrow}</p>
             )}
             {headline && (
               <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight mb-4">

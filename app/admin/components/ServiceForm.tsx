@@ -512,7 +512,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               </button>
             </div>
             {form.targetLocations.length > 1 && (
-              <p className="text-xs text-[#3B82C4] mt-2">
+              <p className="text-xs text-[#2A6BA8] mt-2">
                 Shown at {form.targetLocations.length} cities, sharing the same treatment content — you can give any city its own title/description/URL on the SEO step.
               </p>
             )}

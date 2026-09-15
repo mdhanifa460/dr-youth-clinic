@@ -34,7 +34,7 @@ export default function GuaranteeSection({ data }: { data: GuaranteeData }) {
     <section className="bg-white py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-5">
         <div className="text-center mb-12">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#3B82C4] mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">
             Our Commitment
           </p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
@@ -65,7 +65,7 @@ export default function GuaranteeSection({ data }: { data: GuaranteeData }) {
               key={i}
               className="flex items-center gap-2 bg-[#0B2560]/5 border border-[#0B2560]/10 text-[#0B2560] text-xs font-bold px-4 py-2 rounded-full"
             >
-              <span className="text-[#F5A623]">✦</span>
+              <span className="text-[#A25607]">✦</span>
               {seal}
             </div>
           ))}

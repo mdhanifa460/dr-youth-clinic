@@ -27,7 +27,7 @@ export default function BookingPage() {
           <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-[#F5A623]/[0.05] -translate-x-1/3" />
         </div>
         <div className="max-w-7xl mx-auto relative">
-          <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">{consultationSub}</p>
+          <p className="text-[#A25607] text-xs font-bold uppercase tracking-widest mb-2">{consultationSub}</p>
           <h1 className="text-3xl md:text-4xl font-headline font-extrabold mb-2 leading-tight">
             {consultationCta}
           </h1>
@@ -39,7 +39,7 @@ export default function BookingPage() {
             {TRUST.map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <Icon size={14} className="text-[#F5A623]" />
+                  <Icon size={14} className="text-[#A25607]" />
                 </div>
                 <div>
                   <p className="font-bold text-xs">{label}</p>

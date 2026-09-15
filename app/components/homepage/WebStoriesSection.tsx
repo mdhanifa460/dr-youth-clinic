@@ -30,7 +30,7 @@ export default function WebStoriesSection({ data }: { data: Data }) {
           <div>
             <div className="flex items-center gap-2.5 mb-3">
               <div className="w-6 h-[2px] bg-[#F5A623]" />
-              <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
+              <span className="text-[#A25607] text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>
             <p className="text-gray-500 text-sm mt-1.5 max-w-md">{subheadline}</p>

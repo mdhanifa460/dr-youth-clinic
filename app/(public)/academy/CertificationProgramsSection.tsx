@@ -46,7 +46,7 @@ export default function CertificationProgramsSection({ courses, siteConfig }: { 
                     </p>
                     {c.instructors?.length > 0 && (
                       <p className="text-gray-500 text-[11px] mt-2 flex items-center gap-1">
-                        <Award size={11} className="text-[#F5A623]" /> {c.instructors.map((i: any) => i.name).filter(Boolean).join(', ')}
+                        <Award size={11} className="text-[#A25607]" /> {c.instructors.map((i: any) => i.name).filter(Boolean).join(', ')}
                       </p>
                     )}
                   </div>

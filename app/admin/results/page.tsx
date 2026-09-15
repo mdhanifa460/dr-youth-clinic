@@ -75,7 +75,7 @@ function ResultItem({ result, selected, onSelect }: { result: any; selected: boo
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
           {result.category && (
-            <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-[#3B82C4]">{result.category}</span>
+            <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-[#2A6BA8]">{result.category}</span>
           )}
           {result.featured && <span className="text-[10px]">⭐</span>}
         </div>
@@ -145,7 +145,7 @@ function ResultForm({ result, services, doctors, onSaved, onDeleted, onCancel }:
         <div className="flex items-center gap-3">
           {!isNew && form.status === 'published' && form.slug && (
             <a href={`/results/${form.slug}`} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-[#3B82C4] font-semibold flex items-center gap-1 hover:underline">
+              className="text-xs text-[#2A6BA8] font-semibold flex items-center gap-1 hover:underline">
               View live <ExternalLink size={11} />
             </a>
           )}

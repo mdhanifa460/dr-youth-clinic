@@ -68,7 +68,7 @@ function ServiceCard({ r, location, showPriceOnCards, arrows }: {
         )}
       </div>
       <div className="p-5">
-        <h3 className="font-bold text-[#0B2560] mb-2 text-sm leading-snug group-hover:text-[#3B82C4] transition">{r.name}</h3>
+        <h3 className="font-bold text-[#0B2560] mb-2 text-sm leading-snug group-hover:text-[#2A6BA8] transition">{r.name}</h3>
         <div className="flex items-center justify-between text-sm">
           {showPriceOnCards && <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>}
           <span className="text-gray-500 text-xs">{r.duration} min</span>
@@ -139,14 +139,23 @@ export default function RelatedServicesPager({
           {related.length > 1 && (
             <div className="flex items-center justify-center gap-1.5 mt-4">
               {related.map((_, i) => (
+                // Real Lighthouse/axe finding (target-size): the visible
+                // dot is only 8x8px, well under the 24x24px minimum touch
+                // target — a real mobile-tap-accuracy issue, not just an
+                // audit nitpick, on the exact pager the mobile layout uses.
+                // Keeps the small dot as a visual-only inner span; the
+                // button itself now has enough padding to be a real
+                // 24x24+ tappable area.
                 <button
                   key={i}
                   onClick={() => setMobileIndex(i)}
                   aria-label={`Go to treatment ${i + 1}`}
-                  className={`rounded-full transition-all ${
+                  className="flex items-center justify-center p-2.5 -m-2.5"
+                >
+                  <span className={`block rounded-full transition-all ${
                     i === mobileIndex ? 'w-6 h-2 bg-[#0B2560]' : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
-                  }`}
-                />
+                  }`} />
+                </button>
               ))}
             </div>
           )}
@@ -172,14 +181,17 @@ export default function RelatedServicesPager({
 
             <div className="flex items-center gap-2">
               {Array.from({ length: totalPages }).map((_, i) => (
+                // Same target-size fix as the mobile dots above.
                 <button
                   key={i}
                   onClick={() => setPage(i)}
                   aria-label={`Go to page ${i + 1}`}
-                  className={`rounded-full transition-all ${
+                  className="flex items-center justify-center p-2.5 -m-2.5"
+                >
+                  <span className={`block rounded-full transition-all ${
                     i === page ? 'w-6 h-2 bg-[#0B2560]' : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
-                  }`}
-                />
+                  }`} />
+                </button>
               ))}
             </div>
 

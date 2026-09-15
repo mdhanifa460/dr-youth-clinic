@@ -177,7 +177,7 @@ export default function MediaLibraryPage() {
 
       {!analyzed && !analyzing && (
         <div className="bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
-          <Sparkles size={16} className="text-[#3B82C4] mt-0.5 shrink-0" />
+          <Sparkles size={16} className="text-[#2A6BA8] mt-0.5 shrink-0" />
           <p className="text-sm text-blue-800">
             Click <strong>Analyze for Cleanup</strong> to check every image against every service, doctor, blog
             post, offer, video, homepage/landing page section, and Clinical Intake question/patient photo —

@@ -160,7 +160,7 @@ export default function VideoPlayer({ platform = 'youtube', youtubeId, instagram
                 activeChapter === i ? 'bg-[#f6faff]' : 'hover:bg-[#f6faff]'
               }`}
             >
-              <span className="text-xs font-bold text-[#3B82C4] tabular-nums shrink-0 w-14">
+              <span className="text-xs font-bold text-[#2A6BA8] tabular-nums shrink-0 w-14">
                 {chapter.time}
               </span>
               <span className="text-sm text-[#0B2560] font-medium">{chapter.label}</span>
