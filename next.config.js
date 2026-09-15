@@ -128,7 +128,11 @@ const nextConfig = {
             // Website Call Conversion fix as script-src above; adservice.google.com needs no
             // separate entry here since the existing https://*.google.com wildcard already
             // covers it.
-            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://www.google.co.in https://www.googleadservices.com https://pagead2.googlesyndication.com https://ade.googlesyndication.com https://googleads.g.doubleclick.net https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
+            // https://c.clarity.ms — caught by actually loading the live site in a real
+            // browser post-deploy and capturing a real violation: Microsoft Clarity's own
+            // heatmap pixel (/c.gif) loads from this subdomain, distinct from
+            // www.clarity.ms (script-src only) already present.
+            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://www.google.co.in https://www.googleadservices.com https://pagead2.googlesyndication.com https://ade.googlesyndication.com https://googleads.g.doubleclick.net https://www.facebook.com https://img.youtube.com https://i.ytimg.com https://c.clarity.ms",
             "font-src 'self' data:",
             // ad.doubleclick.net (Google Ads conversion collect endpoint,
             // /cm/s/collect) is a DIFFERENT hostname from g.doubleclick.net —
@@ -150,7 +154,14 @@ const nextConfig = {
             // script itself likely makes its own follow-up calls); adservice.google.com
             // and ad.doubleclick.net were already covered here (the *.google.com wildcard
             // and an explicit ad.doubleclick.net entry, respectively).
-            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://pagead2.googlesyndication.com https://ade.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.gstatic.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
+            // https://www.google.co.in — caught by ACTUALLY LOADING the live site in a
+            // real browser and capturing real securitypolicyviolation events after
+            // shipping the fix above (not just static analysis): the WCM attribution
+            // ping itself (/pagead/attribution/wcm) goes to the .co.in TLD for this
+            // site's Indian traffic, same "country-TLD isn't covered by the .com
+            // wildcard" gotcha already documented for img-src, just never applied here
+            // too until this was caught live.
+            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://www.google.co.in https://pagead2.googlesyndication.com https://ade.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.gstatic.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
             "media-src 'self' https://res.cloudinary.com",
             // youtube-nocookie.com is the privacy-enhanced embed domain some
             // browsers/extensions rewrite youtube.com embeds to — allow both so
