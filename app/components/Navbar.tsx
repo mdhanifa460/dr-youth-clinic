@@ -157,11 +157,14 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
 
         {/* Center: logo */}
         <Link href={homeLink} className="flex items-center">
+          {/* Was 130x44 — trimmed alongside the desktop logo below to
+              reduce the header's own footprint (reported live: too much
+              space around it). */}
           <Image
             src={logoUrl}
             alt="DR Youth Clinic"
-            width={130}
-            height={44}
+            width={108}
+            height={37}
             className="object-contain"
             priority
           />
@@ -182,11 +185,15 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
 
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
+          {/* Was 150x52 — the earlier py-4->py-2.5 padding fix shrank the
+              row's own padding, but the logo itself was still the tallest
+              thing in it, so it kept dictating a taller header than
+              needed. Reported live as still too much space. */}
           <Image
             src={logoUrl}
             alt="DR Youth Clinic"
-            width={150}
-            height={52}
+            width={122}
+            height={42}
             className="object-contain"
             priority
           />
