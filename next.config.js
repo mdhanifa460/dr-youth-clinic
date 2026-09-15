@@ -79,7 +79,22 @@ const nextConfig = {
             // conversion/remarketing tag's own required script-src-elem hosts. GTM's
             // container itself only needs googletagmanager.com (already present); these
             // four are for the Ads conversion tag GTM loads inside it.
-            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' "}https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com https://www.googleadservices.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com https://www.youtube.com`,
+            // https://www.gstatic.com / ade.googlesyndication.com / adservice.google.com —
+            // added after Google Ads support flagged a live CSP issue blocking Website Call
+            // Conversion (WCC) tracking. Confirmed directly against this site's actual live
+            // GTM container (fetched googletagmanager.com/gtm.js?id=GTM-NX462ZPQ and grepped
+            // it, not assumed): it literally references
+            // "https://www.gstatic.com/wcm/loader.js" ("WCM" = Website Call Metrics — Google's
+            // own script for the WCC/dynamic-number-insertion feature), plus real endpoints at
+            // ade.googlesyndication.com (/ddm/activity) and adservice.google.com
+            // (/pagead/regclk, the Ads click-registration endpoint) — none of which were
+            // previously allowed anywhere in this policy, so the browser was silently
+            // refusing to load them. This is exactly why lead-form conversions kept tracking
+            // (that path never needed these scripts) while phone-call conversion tracking
+            // didn't. ad.doubleclick.net was already allowed in connect-src only (its /activity
+            // and /collect endpoints are XHR/beacon calls) — added here too since the same
+            // container also references it directly.
+            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval' "}https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com https://www.googleadservices.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.gstatic.com https://ade.googlesyndication.com https://adservice.google.com https://ad.doubleclick.net https://connect.facebook.net https://www.clarity.ms https://static.hotjar.com https://www.youtube.com`,
             "style-src 'self' 'unsafe-inline'",
             // img.youtube.com/i.ytimg.com serve the hotlinked thumbnail Video.ts
             // auto-generates from a youtubeId (see the pre('save') hook) whenever
@@ -107,7 +122,13 @@ const nextConfig = {
             // host — so it is NOT added verbatim as "https://*.google" (that matches no
             // real host); the one country TLD this site actually needs,
             // https://www.google.co.in, is already present just below.
-            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://*.google.com https://www.google.co.in https://www.googleadservices.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
+            // https://www.gstatic.com (the bare host — maps.gstatic.com just above is a
+            // DIFFERENT exact host, CSP host-source matching isn't prefix/suffix-based) /
+            // ade.googlesyndication.com / ad.doubleclick.net — same live-container-verified
+            // Website Call Conversion fix as script-src above; adservice.google.com needs no
+            // separate entry here since the existing https://*.google.com wildcard already
+            // covers it.
+            "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com https://*.google-analytics.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://www.google.co.in https://www.googleadservices.com https://pagead2.googlesyndication.com https://ade.googlesyndication.com https://googleads.g.doubleclick.net https://www.facebook.com https://img.youtube.com https://i.ytimg.com",
             "font-src 'self' data:",
             // ad.doubleclick.net (Google Ads conversion collect endpoint,
             // /cm/s/collect) is a DIFFERENT hostname from g.doubleclick.net —
@@ -124,7 +145,12 @@ const nextConfig = {
             // googleadservices.com / googleads.g.doubleclick.net — same Google Ads/GA4
             // official CSP guide sections as img-src/script-src above; ad.doubleclick.net
             // and the bare www.google.com host were already added in an earlier pass.
-            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
+            // https://www.gstatic.com / ade.googlesyndication.com — same live-container-
+            // verified Website Call Conversion fix as script-src above (the WCM loader
+            // script itself likely makes its own follow-up calls); adservice.google.com
+            // and ad.doubleclick.net were already covered here (the *.google.com wildcard
+            // and an explicit ad.doubleclick.net entry, respectively).
+            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://*.google.com https://pagead2.googlesyndication.com https://ade.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.gstatic.com https://connect.facebook.net https://www.clarity.ms https://www.hotjar.com https://vc.hotjar.io https://api.cloudinary.com https://graph.facebook.com",
             "media-src 'self' https://res.cloudinary.com",
             // youtube-nocookie.com is the privacy-enhanced embed domain some
             // browsers/extensions rewrite youtube.com embeds to — allow both so
