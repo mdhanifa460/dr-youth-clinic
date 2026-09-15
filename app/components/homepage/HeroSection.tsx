@@ -149,13 +149,22 @@ export default function HeroSection({ data }: { data: any }) {
   return (
     <section
       id="home"
-      className={`relative flex min-h-[calc(100svh-96px)] md:min-h-[82vh] items-center overflow-hidden bg-gradient-to-br ${s.accentBg} transition-colors duration-700`}
+      // Was md:min-h-[82vh] with items-center — forced the section to at
+      // least 82% of the viewport regardless of how tall this slide's own
+      // content actually is, so shorter slides just centered inside a
+      // mostly-empty box, reading as a large dead gap between the header
+      // and the actual content (reported live, screenshot showed it
+      // directly). min-h-0 lets it size to content on desktop instead;
+      // the mobile calc(100svh-96px) is untouched — mobile's hero
+      // deliberately fills the screen on load, a different, intentional
+      // design decision from desktop's.
+      className={`relative flex min-h-[calc(100svh-96px)] md:min-h-0 items-center overflow-hidden bg-gradient-to-br ${s.accentBg} transition-colors duration-700`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {/* Animated content wrapper */}
       <div
-        className={`max-w-7xl mx-auto px-4 md:px-6 lg:px-8 w-full grid md:grid-cols-2 gap-7 md:gap-10 lg:gap-12 items-center py-10 sm:py-12 md:py-16 lg:py-20 transition-all duration-500 ease-out ${
+        className={`max-w-7xl mx-auto px-4 md:px-6 lg:px-8 w-full grid md:grid-cols-2 gap-7 md:gap-10 lg:gap-12 items-center py-10 sm:py-10 md:py-10 lg:py-12 transition-all duration-500 ease-out ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
         }`}
       >

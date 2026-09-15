@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader, CheckCircle, Phone, Star, ShieldCheck } from 'lucide-react';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
-import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
 import { isValidIndianMobile } from '@/app/lib/phone';
 import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
 
@@ -69,7 +69,40 @@ export default function FormSection({
   const [error, setError] = useState('');
   const getIdempotencyKey = useIdempotencyKey();
 
-  const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
+  // Funnel-step tracking — same reasoning and event names as
+  // HeroSection.tsx's own copy (see that file's comment): viewed ->
+  // started -> submit_attempted, each fired at most once per page load,
+  // so a GTM/GA4 funnel can finally show WHERE a low conversion rate is
+  // actually happening instead of just visits-vs-completed with nothing
+  // in between.
+  const formViewedFiredRef = useRef(false);
+  const formStartedFiredRef = useRef(false);
+  const formElRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    const el = formElRef.current;
+    if (!el || formViewedFiredRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && !formViewedFiredRef.current) {
+          formViewedFiredRef.current = true;
+          pushDataLayerEvent('lp_form_viewed', { slug });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [slug]);
+
+  const set = (key: string, val: string) => {
+    if (!formStartedFiredRef.current) {
+      formStartedFiredRef.current = true;
+      pushDataLayerEvent('lp_form_started', { slug });
+    }
+    setForm((f) => ({ ...f, [key]: val }));
+  };
 
   // Abandoned-form recovery — same reasoning and mechanism as
   // HeroSection.tsx's own sendPartial (see that file's comment). Field ids
@@ -108,6 +141,10 @@ export default function FormSection({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Fired on every real submit click — see HeroSection.tsx's own
+    // comment on the same event for why this includes attempts that
+    // then fail server-side validation too.
+    pushDataLayerEvent('lp_form_submit_attempted', { slug });
     setSubmitting(true);
     setError('');
     try {
@@ -221,7 +258,7 @@ export default function FormSection({
                 </div>
               )}
 
-              <form onSubmit={submit} className="grid sm:grid-cols-2 gap-4">
+              <form ref={formElRef} onSubmit={submit} className="grid sm:grid-cols-2 gap-4">
                 {displayFields.map((field) => {
                   const fullWidth = field.type === 'textarea' || field.type === 'select' || field.type === 'email';
                   return (

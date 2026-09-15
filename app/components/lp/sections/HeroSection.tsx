@@ -8,7 +8,7 @@ import NextImage from 'next/image';
 import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-react';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
-import { trackBookingConversion } from '@/app/lib/trackConversion';
+import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
 import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
 
 interface HeroData {
@@ -109,8 +109,48 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const getIdempotencyKey = useIdempotencyKey();
+
+  // Funnel-step tracking — built to actually answer "where in the funnel
+  // are we losing people", instead of guessing from the one number that
+  // was visible before (visits vs. completed bookings, with nothing in
+  // between). Three steps, each fired at most once per page load:
+  // viewed (the form scrolled into view) -> started (typed into any
+  // field) -> submit_attempted (hit the button, whether or not it
+  // actually succeeds — that's what trackBookingConversion's existing
+  // booking_completed event already covers). A GTM/GA4 funnel built on
+  // these four events (view -> start -> attempt -> completed) is what
+  // actually shows whether a low conversion rate is a traffic-quality
+  // problem (few views), a hook problem (viewed but never started), or a
+  // friction/trust problem (started but never attempted/completed).
+  const formViewedFiredRef = useRef(false);
+  const formStartedFiredRef = useRef(false);
+  const formElRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    const el = formElRef.current;
+    if (!el || formViewedFiredRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && !formViewedFiredRef.current) {
+          formViewedFiredRef.current = true;
+          pushDataLayerEvent('lp_form_viewed', { slug });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [slug]);
+
+  const set = (k: keyof typeof form, v: string) => {
+    if (!formStartedFiredRef.current) {
+      formStartedFiredRef.current = true;
+      pushDataLayerEvent('lp_form_started', { slug });
+    }
+    setForm((f) => ({ ...f, [k]: v }));
+  };
 
   // Abandoned-form recovery — a visitor who types their own real phone
   // number and then leaves without hitting Submit currently has that data
@@ -156,6 +196,10 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Fired on every real submit click, including one that then fails
+    // client-side validation right below — a wrong-looking phone number
+    // is itself a real funnel signal (friction), not noise to exclude.
+    pushDataLayerEvent('lp_form_submit_attempted', { slug });
     if (!isValidIndianMobile(form.phone)) { setError(INVALID_MOBILE_MESSAGE); return; }
     setSubmitting(true);
     setError('');
@@ -404,7 +448,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                       </div>
                     )}
 
-                    <form onSubmit={submit} className="space-y-3 mt-5">
+                    <form ref={formElRef} onSubmit={submit} className="space-y-3 mt-5">
                       <input
                         value={form.name}
                         onChange={(e) => set('name', e.target.value)}
