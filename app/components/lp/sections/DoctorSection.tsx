@@ -104,7 +104,7 @@ export default function DoctorSection({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3"
+              className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3"
             >
               Meet Our Expert
             </motion.p>
@@ -126,7 +126,7 @@ export default function DoctorSection({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="text-[#A25607] font-semibold mt-1.5 text-sm md:text-base"
+              className="text-[#F5A623] font-semibold mt-1.5 text-sm md:text-base"
             >
               {qualification}
             </motion.p>

@@ -152,7 +152,7 @@ export default async function DoctorsPage() {
       {/* ── BOTTOM CTA ── */}
       <section className="bg-[#0B2560] py-14">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">Ready to Begin?</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
           <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             {ctaHeading}
           </h2>

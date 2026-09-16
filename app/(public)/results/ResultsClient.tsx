@@ -60,7 +60,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
 
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-6 h-[2px] bg-[#F5A623]" />
-            <span className="text-[#A25607] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
+            <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
           </div>
 
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">

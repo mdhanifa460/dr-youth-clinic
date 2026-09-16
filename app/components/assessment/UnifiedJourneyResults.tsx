@@ -246,7 +246,7 @@ function AiSummaryReportCard({
 
   return (
     <div className="bg-gradient-to-br from-[#0B2560] to-[#1a3a7a] rounded-2xl p-6 text-white">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#A25607] mb-3 flex items-center gap-1.5">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-3 flex items-center gap-1.5">
         <Sparkles size={13} /> Your AI Summary
       </p>
       {status === "loading" ? (

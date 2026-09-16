@@ -22,7 +22,7 @@ export default function OfferBanner({ banner }: { banner: BannerDoc }) {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 grid md:grid-cols-2 gap-8 items-center py-12 sm:py-16 md:py-20">
         <div className="max-w-xl space-y-4">
           {banner.subtitle && (
-            <span className="inline-flex items-center gap-1.5 text-[#A25607] text-xs sm:text-sm font-bold uppercase tracking-widest">
+            <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-xs sm:text-sm font-bold uppercase tracking-widest">
               {banner.subtitle}
             </span>
           )}

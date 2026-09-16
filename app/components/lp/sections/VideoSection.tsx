@@ -84,7 +84,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
             transition={{ duration: 0.5 }}
             className="text-center mb-8 md:mb-10"
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">{badge}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">{badge}</p>
             <h2 className="text-2xl md:text-4xl font-extrabold text-white">{headline}</h2>
             {subtitle && (
               <p className="text-white/60 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>

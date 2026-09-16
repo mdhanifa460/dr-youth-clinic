@@ -30,7 +30,7 @@ export default function NewsletterSignup({ source = 'blog' }: { source?: string 
 
   return (
     <section className="bg-[#0B2560] rounded-3xl px-6 py-10 md:py-12 md:px-12 text-center">
-      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">Stay Informed</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Stay Informed</p>
       <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">Get Expert Tips in Your Inbox</h2>
       <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
         Skin & hair care tips, new treatment guides, and offers — no spam, unsubscribe anytime.
@@ -38,7 +38,7 @@ export default function NewsletterSignup({ source = 'blog' }: { source?: string 
 
       {status === 'done' ? (
         <div className="flex items-center justify-center gap-2 text-white font-semibold max-w-md mx-auto">
-          <CheckCircle size={18} className="text-[#A25607]" /> You&apos;re subscribed! Check your inbox.
+          <CheckCircle size={18} className="text-[#F5A623]" /> You&apos;re subscribed! Check your inbox.
         </div>
       ) : (
         <form onSubmit={submit} className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto">

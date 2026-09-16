@@ -22,7 +22,7 @@ export default async function PrivacyPolicyPage() {
       {/* ── HERO ── */}
       <section className="bg-[#0B2560] py-16 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">Legal</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Legal</p>
           <h1 className="text-3xl md:text-4xl font-headline font-extrabold text-white leading-tight">
             Privacy Policy
           </h1>

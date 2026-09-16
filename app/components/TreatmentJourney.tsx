@@ -51,7 +51,7 @@ export default function TreatmentJourney({ sessions, treatmentName, phases: cust
           {phases.map((phase) => (
             <div key={phase.number} className="flex flex-col items-center text-center">
               <div className="relative z-10 w-14 h-14 rounded-full bg-[#0B2560] text-white flex flex-col items-center justify-center shadow-lg ring-4 ring-white mb-4 shrink-0">
-                <span className="text-[9px] font-bold text-[#A25607] uppercase tracking-wide leading-none">
+                <span className="text-[9px] font-bold text-[#F5A623] uppercase tracking-wide leading-none">
                   Phase
                 </span>
                 <span className="text-xl font-extrabold leading-none">{phase.number}</span>
@@ -73,7 +73,7 @@ export default function TreatmentJourney({ sessions, treatmentName, phases: cust
           {phases.map((phase) => (
             <div key={phase.number} className="flex gap-4 relative">
               <div className="shrink-0 z-10 w-14 h-14 rounded-full bg-[#0B2560] text-white flex flex-col items-center justify-center shadow-lg ring-4 ring-white">
-                <span className="text-[9px] font-bold text-[#A25607] uppercase leading-none">
+                <span className="text-[9px] font-bold text-[#F5A623] uppercase leading-none">
                   Phase
                 </span>
                 <span className="text-lg font-extrabold leading-none">{phase.number}</span>

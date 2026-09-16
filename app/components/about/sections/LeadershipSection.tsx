@@ -34,7 +34,7 @@ export default function LeadershipSection({ data }: { data: LeadershipData }) {
           {/* Content */}
           <div className="order-1 md:order-2">
             {eyebrow && (
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-4">{eyebrow}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-4">{eyebrow}</p>
             )}
             {quote && (
               <blockquote className="text-white text-xl md:text-3xl font-headline font-bold leading-snug mb-6">
@@ -45,7 +45,7 @@ export default function LeadershipSection({ data }: { data: LeadershipData }) {
             {name && (
               <div>
                 <p className="text-white font-headline font-extrabold text-lg">{name}</p>
-                {title && <p className="text-[#A25607] text-sm font-semibold mt-0.5">{title}</p>}
+                {title && <p className="text-[#F5A623] text-sm font-semibold mt-0.5">{title}</p>}
               </div>
             )}
           </div>

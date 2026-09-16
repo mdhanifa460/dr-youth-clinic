@@ -47,12 +47,12 @@ export default function TreatmentComparison({
                 <th
                   key={s._id}
                   className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-center ${
-                    s._id === current._id ? 'text-[#A25607]' : 'text-white/70'
+                    s._id === current._id ? 'text-[#F5A623]' : 'text-white/70'
                   }`}
                 >
                   {s.name}
                   {s._id === current._id && (
-                    <span className="block text-[9px] font-semibold normal-case text-[#A25607]/80 mt-0.5">This treatment</span>
+                    <span className="block text-[9px] font-semibold normal-case text-[#F5A623]/80 mt-0.5">This treatment</span>
                   )}
                 </th>
               ))}

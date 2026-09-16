@@ -437,7 +437,7 @@ export default function BookingSuccessClient({
                     <p className="font-bold text-sm">Not sure what to expect? Take our 2-minute AI Assessment</p>
                     <p className="text-white/60 text-xs mt-1">Helps your doctor prepare a personalised plan before you arrive</p>
                   </div>
-                  <Sparkles size={22} className="text-[#A25607] shrink-0" />
+                  <Sparkles size={22} className="text-[#F5A623] shrink-0" />
                 </Link>
               </RelatedSection>
             );

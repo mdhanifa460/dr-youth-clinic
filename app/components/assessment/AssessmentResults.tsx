@@ -101,7 +101,7 @@ export default function AssessmentResults({
   return (
     <div className="py-6 md:py-10">
       <div id="assessment-print-area" className="rounded-3xl bg-[#0B2560] text-white p-6 md:p-8 shadow-xl max-w-md mx-auto">
-        <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#A25607] mb-1">
+        <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#F5A623] mb-1">
           {resultHeadline}
         </p>
 

@@ -82,7 +82,7 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
         className="group relative px-10 py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#0B2560]/30 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-3"
       >
         Start Analysis
-        <span className="text-[#A25607] group-hover:translate-x-1 transition-transform duration-200">→</span>
+        <span className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200">→</span>
       </button>
 
       <p className="mt-4 text-xs text-gray-500">No sign-up required. Takes about 30-60 seconds.</p>

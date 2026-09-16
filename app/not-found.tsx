@@ -44,7 +44,7 @@ export default async function NotFound() {
         <div className="text-center max-w-lg w-full">
 
           {/* Logo text */}
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-[#A25607] mb-8">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-[#F5A623] mb-8">
             DR Youth Clinic
           </p>
 

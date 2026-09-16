@@ -415,7 +415,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                   headline on every screen width the badge shows at, not
                   just narrow ones. */}
               <div className="absolute -top-6 -left-6 z-20 hidden sm:flex flex-col items-center justify-center w-20 h-20 rounded-full bg-[#0B2560] border-4 border-[#F5A623] shadow-xl text-center">
-                <span className="text-[#A25607] font-extrabold text-base leading-none">{yearsExperience}</span>
+                <span className="text-[#F5A623] font-extrabold text-base leading-none">{yearsExperience}</span>
                 <span className="text-white text-[7px] font-bold uppercase tracking-wider mt-1 leading-tight px-1">
                   {yearsExperienceLabel}
                 </span>

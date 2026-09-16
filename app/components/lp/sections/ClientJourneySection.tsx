@@ -108,7 +108,7 @@ export default function ClientJourneySection({ data }: { data: ClientJourneyData
 
       <div className="max-w-5xl mx-auto px-5 relative">
         <div className="text-center mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#A25607] mb-3">{eyebrow}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">{eyebrow}</p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-white">{headline}</h2>
           <p className="text-white/60 mt-3 text-sm md:text-base max-w-xl mx-auto">{subheadline}</p>
           {(patientName || patientTag) && (

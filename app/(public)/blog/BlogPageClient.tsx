@@ -195,11 +195,11 @@ export default function BlogPageClient({
           scrolling. */}
       <section className="bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0B2560] text-white pt-16 pb-32 lg:pb-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#A25607] mb-4">
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-4">
             Medical Knowledge Center
           </span>
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
-            Trusted Skin & Hair <span className="text-[#A25607]">Education</span>
+            Trusted Skin & Hair <span className="text-[#F5A623]">Education</span>
           </h1>
           <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
             Evidence-based articles, expert insights and treatment guides to help you make the right decisions.

@@ -27,7 +27,7 @@ export default function DoctorBanner({ banner }: { banner: BannerDoc }) {
 
         <div className="max-w-xl space-y-3 order-2">
           {banner.subtitle && (
-            <span className="inline-flex items-center gap-1.5 text-[#A25607] text-xs sm:text-sm font-bold uppercase tracking-widest">
+            <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-xs sm:text-sm font-bold uppercase tracking-widest">
               {banner.subtitle}
             </span>
           )}

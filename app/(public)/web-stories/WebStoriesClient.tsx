@@ -74,7 +74,7 @@ export default function WebStoriesClient({ stories, types }: { stories: any[]; t
         <div className="max-w-6xl mx-auto px-6 relative">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-6 h-[2px] bg-[#F5A623]" />
-            <span className="text-[#A25607] text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
+            <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
           </div>
           <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4 max-w-2xl">
             Real Journeys, Told in Seconds
