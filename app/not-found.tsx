@@ -1,46 +1,31 @@
 import Link from 'next/link';
-import { headers } from 'next/headers';
-import { permanentRedirect } from 'next/navigation';
 import { Calendar, Home, Users, ArrowLeft } from 'lucide-react';
-import { normalizeOldUrl } from '@/app/lib/domainMigration/parseSitemap';
-import { getApprovedRedirect } from '@/app/lib/domainMigration/serveRedirect';
+import NotFoundRedirectCheck from './not-found-redirect-check';
 
-// The actual root cause of a real, live production incident (every
-// /[city]/services/[category] page 500ing since Aug 17, confirmed via
-// Vercel runtime logs and reproduced locally with `next build && next
-// start`): this file's headers() call. ANY page that can call notFound()
-// gets this boundary bundled into ITS OWN static-generation attempt (Next
-// needs the fallback ready in case notFound() fires) — so headers() here
-// was executing during other pages' SSG/ISR render, with no real request
-// present, throwing "page changed from static to dynamic at runtime" and
-// crashing instead of the intended graceful degradation. force-dynamic
-// tells Next this boundary is never attempted statically — it always
-// renders fresh per real request instead, which is correct for a 404 page
-// anyway (nothing about it benefits from static caching), and stops it
-// from poisoning every OTHER page's static generation.
-export const dynamic = 'force-dynamic';
+// This file previously called headers() directly (to read x-pathname and
+// look up Domain Migration's approved-redirect mapping — see git history /
+// app/api/domain-migration/check-redirect/route.ts for the full writeup).
+// That call was ALSO the actual root cause of a real, live production
+// incident (every /[city]/services/[category] page 500ing since Aug 17,
+// confirmed via Vercel runtime logs and reproduced locally with `next
+// build && next start`): ANY page that can call notFound() gets this
+// boundary bundled into ITS OWN static-generation attempt (Next needs the
+// fallback ready in case notFound() fires), so headers() here ran during
+// OTHER pages' SSG/ISR render too. `dynamic = 'force-dynamic'` (previously
+// set here) only stopped the crash — confirmed via a `dynamic = 'error'`
+// build probe on "/" that this boundary's headers() call was STILL forcing
+// every other page on the site (home, /blog, ...) into full per-request
+// dynamic rendering, losing ISR/static caching site-wide. The redirect
+// lookup itself now happens client-side (NotFoundRedirectCheck, via a tiny
+// API route) instead, which can't affect any other page's render at all —
+// this file has zero dynamic API calls now and is free to prerender as a
+// plain static shell.
 
-export default async function NotFound() {
-  // Domain Migration Phase 3 — the only place an approved RedirectMapping
-  // actually serves for a real visitor. This lookup only ever runs for a
-  // request that would already be a dead-end 404 (x-pathname is set on
-  // every public request by middleware.ts); every real, valid page on the
-  // site never reaches this file at all, so this can't add latency or risk
-  // to normal traffic. On no match, or on any lookup failure, falls straight
-  // through to the exact same 404 UI as before — nothing else here changed.
-  const pathname = headers().get('x-pathname');
-  if (pathname) {
-    const newUrl = await getApprovedRedirect(normalizeOldUrl(pathname));
-    // permanentRedirect() issues a 308 — the modern, SEO-equivalent
-    // successor to a literal 301 (Google treats the two as equivalent
-    // permanent-redirect signals); the App Router doesn't expose a way to
-    // emit a literal 301 status code directly.
-    if (newUrl) permanentRedirect(newUrl);
-  }
-
+export default function NotFound() {
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#0B2560] flex items-center justify-center px-6">
+        <NotFoundRedirectCheck />
         <div className="text-center max-w-lg w-full">
 
           {/* Logo text */}

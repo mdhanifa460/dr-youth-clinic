@@ -11,8 +11,8 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
+import FillImageWithFallback from '@/app/components/media/FillImageWithFallback';
 import { Calendar, Clock, ArrowLeft, Tag, ShieldCheck } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
@@ -194,7 +194,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
               {/* Deliberately full-bleed/cinematic, not a discrete cropped
                   card — no fixed aspect ratio here by design, matching the
                   same choice on GlassHeroBanner. Focal point still applies. */}
-              <Image
+              <FillImageWithFallback
                 src={post.coverImage.url}
                 alt={post.title}
                 fill

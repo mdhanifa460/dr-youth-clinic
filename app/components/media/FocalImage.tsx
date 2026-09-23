@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import { cloudImgFocal } from '@/app/lib/cloudinary-url';
 import { focalPointToObjectPosition, type FocalPoint } from '@/app/lib/media/focalPoint';
@@ -55,9 +58,21 @@ export default function FocalImage({
     ? cloudImgFocal(image.publicId, { w: sourceWidth, h: targetHeight, focalPoint: image.focalPoint })
     : image?.url;
 
+  // A missing `src` was already handled below (empty string/undefined), but
+  // a URL that's PRESENT and still fails to load (a stale/deleted Cloudinary
+  // asset — confirmed happening live: two published blog posts' cover
+  // images 404 at Cloudinary right now, still real, on published content)
+  // rendered the browser's native broken-image icon instead, with its alt
+  // text overlapping any `children` overlay (a category badge, in the blog
+  // grid's case) absolutely positioned assuming the image actually painted.
+  // `onError` catches that runtime failure the same way a missing `src`
+  // already degrades — same gradient+emoji placeholder either way.
+  const [failed, setFailed] = useState(false);
+  const showFallback = !src || failed;
+
   return (
     <div className={`relative overflow-hidden ${className}`} style={{ aspectRatio }}>
-      {src ? (
+      {!showFallback ? (
         <Image
           src={src}
           alt={alt}
@@ -66,6 +81,7 @@ export default function FocalImage({
           priority={priority}
           className={`object-cover ${imgClassName}`}
           style={{ objectPosition }}
+          onError={() => setFailed(true)}
         />
       ) : (
         <div className="h-full w-full flex items-center justify-center text-4xl bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]">
