@@ -7,6 +7,7 @@ const VALID_TYPES = new Set<BannerPopupEventType>([
   'flash_offer_view',
   'flash_offer_close',
   'flash_offer_cta_click',
+  'flash_offer_lead_submitted',
 ]);
 
 // Public, unauthenticated, fire-and-forget from the homepage — same

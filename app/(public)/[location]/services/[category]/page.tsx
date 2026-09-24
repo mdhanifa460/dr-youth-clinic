@@ -12,6 +12,7 @@ import { getCachedCategories } from '@/app/lib/getCachedCategories';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
+import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 
 export const revalidate = 300;
 export const dynamic = 'force-dynamic';
@@ -113,17 +114,24 @@ export default async function CategoryPage({ params }: PageProps) {
     resolveBanner({ page: 'category', location: params.location, category: catSlug }),
   ]);
   const city = loc.name;
+  // Flash Offer Popup — see app/(public)/page.tsx's splashBanner/
+  // carouselBanners split.
+  const splashBanner = categoryBanners.find((b: any) => b.splashEnabled) || null;
+  const carouselBanners = splashBanner && splashBanner.splashAlsoInRotation === false
+    ? categoryBanners.filter((b: any) => String(b._id) !== String(splashBanner._id))
+    : categoryBanners;
 
   return (
     <main className="bg-white min-h-screen">
+      <HomepageOfferSplash banner={splashBanner} page="category" />
 
       {/* ── HERO — active, targeted Banner(s) take over this slot when any
           exist, as a carousel when there's more than one; otherwise this
           category's existing gradient header renders exactly as before.
           Same override-else-fallback pattern used on the homepage/
           location/service pages. ── */}
-      {categoryBanners.length > 0 ? (
-        <BannerCarousel slides={categoryBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
+      {carouselBanners.length > 0 ? (
+        <BannerCarousel slides={carouselBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
       ) : (
       <section className={`relative overflow-hidden bg-gradient-to-br ${meta.heroGrad} text-white`}>
         <div className="absolute inset-0 pointer-events-none">

@@ -25,6 +25,7 @@ import EligibilityChecker from '@/app/components/EligibilityChecker';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
+import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 import CostEstimator from '@/app/components/CostEstimator';
 import RelatedServicesPager from '@/app/components/RelatedServicesPager';
 import BeforeAfterGallery from '@/app/components/BeforeAfterGallery';
@@ -338,6 +339,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   // principle, differ from the URL segment's matched category doc.
   const catByDbKey = (categories as any[]).find((c) => c.dbKey === svc.category);
   const catIcon = catByDbKey?.icon ?? '🏥';
+
+  // Flash Offer Popup — see app/(public)/page.tsx's splashBanner/
+  // carouselBanners split.
+  const splashBanner = serviceBanners.find((b: any) => b.splashEnabled) || null;
+  const carouselServiceBanners = splashBanner && splashBanner.splashAlsoInRotation === false
+    ? serviceBanners.filter((b: any) => String(b._id) !== String(splashBanner._id))
+    : serviceBanners;
   const cityName = loc.name;
   const catLabel = catBySlug.label ?? svc.category;
   const beforeAfterPairs = svc.beforeAfterImages?.filter((p: any) => p.before?.url && p.after?.url) ?? [];
@@ -382,6 +390,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
       <ServiceSchemas svc={svc} cityName={cityName} params={params} schemaType={siteConfig.schemaType} />
       <InterestTracker eventType="page_view" category={resolveInterestCategory(svc.category)} />
 
+      <HomepageOfferSplash banner={splashBanner} page="service" />
       <main className="bg-white">
 
         {/* ── BREADCRUMB ── */}
@@ -403,8 +412,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         {/* Matching Banner(s) (admin-configured) take over this slot when
             any exist — as a carousel when there's more than one; otherwise
             the original hardcoded hero below renders unchanged. */}
-        {serviceBanners.length > 0 ? (
-          <BannerCarousel slides={serviceBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
+        {carouselServiceBanners.length > 0 ? (
+          <BannerCarousel slides={carouselServiceBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
         ) : (
         <section className="relative bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">

@@ -18,6 +18,7 @@ import FocalImage from '@/app/components/media/FocalImage';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
+import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getSettings } from '@/app/models/Settings';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
@@ -123,6 +124,14 @@ export default async function LocationPage({ params }: { params: { location: str
     getSiteConfig(),
     getSettings(),
   ]);
+  // Flash Offer Popup — see app/(public)/page.tsx's own comment for the
+  // exact same splashBanner/carouselBanners split (this page previously
+  // never mounted the popup at all, only the plain inline carousel).
+  const splashBanner = locationBanners.find((b: any) => b.splashEnabled) || null;
+  const carouselBanners = splashBanner && splashBanner.splashAlsoInRotation === false
+    ? locationBanners.filter((b: any) => String(b._id) !== String(splashBanner._id))
+    : locationBanners;
+
   const otherCities = Object.entries(locations).filter(([k]) => k !== cityKey);
   const hasHero    = !!(content?.heroImage?.url);
   const hasPairs   = (content?.beforeAfterPairs?.length ?? 0) > 0;
@@ -166,6 +175,7 @@ export default async function LocationPage({ params }: { params: { location: str
         reviewCount={reviewCount}
         schemaType={siteConfig.schemaType}
       />
+      <HomepageOfferSplash banner={splashBanner} page="location" />
       <main>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
@@ -175,8 +185,8 @@ export default async function LocationPage({ params }: { params: { location: str
             its mobile-spacing fix (py-8 md:py-24 etc. trims enough vertical
             rhythm that the CTA row clears the fixed mobile WhatsApp/Call/
             Book bar). */}
-        {locationBanners.length > 0 ? (
-          <BannerCarousel slides={locationBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={settings.display?.carouselIntervalMs ?? 6000} />
+        {carouselBanners.length > 0 ? (
+          <BannerCarousel slides={carouselBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={settings.display?.carouselIntervalMs ?? 6000} />
         ) : (
         <section id="home" className="py-8 md:py-24 px-6 md:px-10 bg-background">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-start">

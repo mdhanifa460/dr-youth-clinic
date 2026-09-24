@@ -12,7 +12,11 @@ export type BannerSlot =
   | { page: "homepage"; location?: string }
   | { page: "location"; location: string }
   | { page: "service"; location: string; service: string }
-  | { page: "category"; location: string; category: string };
+  | { page: "category"; location: string; category: string }
+  // Landing pages have no location concept of their own (an LP is a
+  // standalone campaign page, not nested under /[location]) — targeting is
+  // by slug only.
+  | { page: "landing"; slug: string };
 
 // Derives the admin-list-display-only `targetPages` field from the three
 // show*Page booleans that are the actual source of truth — called
@@ -24,12 +28,14 @@ export function deriveTargetPages(banner: {
   showOnLocationPage?: boolean;
   showOnServicePage?: boolean;
   showOnCategoryPage?: boolean;
-}): ("homepage" | "location" | "service" | "category")[] {
-  const pages: ("homepage" | "location" | "service" | "category")[] = [];
+  showOnLandingPage?: boolean;
+}): ("homepage" | "location" | "service" | "category" | "landing")[] {
+  const pages: ("homepage" | "location" | "service" | "category" | "landing")[] = [];
   if (banner.showOnHomepage) pages.push("homepage");
   if (banner.showOnLocationPage) pages.push("location");
   if (banner.showOnServicePage) pages.push("service");
   if (banner.showOnCategoryPage) pages.push("category");
+  if (banner.showOnLandingPage) pages.push("landing");
   return pages;
 }
 
@@ -154,6 +160,9 @@ export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc[]> {
         { $or: [{ targetCategories: { $size: 0 } }, { targetCategories: slot.category }] },
         { $or: [{ targetLocations: { $size: 0 } }, { targetLocations: slot.location }] },
       ];
+    } else if (slot.page === "landing") {
+      query.showOnLandingPage = true;
+      query.$or = [{ targetLandingPages: { $size: 0 } }, { targetLandingPages: slot.slug }];
     } else {
       query.showOnServicePage = true;
       // Both service AND location targeting apply to a service-page banner

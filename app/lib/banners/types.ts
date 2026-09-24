@@ -212,6 +212,13 @@ export interface BannerDoc {
   primaryCTA: CTAData;
   secondaryCTA: CTAData;
   tertiaryCTA: CTAData;
+  // Inline Lead Form — see the matching comment on app/models/Banner.ts's
+  // IBanner.formEnabled.
+  formEnabled: boolean;
+  formCollectEmail: boolean;
+  formSuccessMessage: string;
+  // "Story View" — see the matching comment on IBanner.storySlides.
+  storySlides: { url: string; publicId: string; type: "image" | "video"; focalPoint?: import("@/app/lib/media/focalPoint").FocalPoint }[];
   trustBadges: TrustBadgeData[];
   statBadges: StatBadgeData[];
   rating: { enabled: boolean; value: number; reviewCount: number };
@@ -252,12 +259,13 @@ export interface BannerDoc {
   showOnLocationPage: boolean;
   showOnServicePage: boolean;
   showOnCategoryPage: boolean;
-  // Flash Offer Popup — only meaningful when showOnHomepage is also true.
-  // Shows this banner as an auto-dismissing modal on homepage load, in
-  // addition to its normal inline hero placement by default (see
-  // splashAlsoInRotation) rather than a static section the visitor has to
-  // scroll to. See HomepageOfferSplash.tsx and app/(public)/page.tsx's
-  // carouselBanners/splashBanner split.
+  showOnLandingPage: boolean;
+  // Flash Offer Popup — used to require showOnHomepage specifically; now
+  // works on any enabled "Where to Show" surface. Shows this banner as an
+  // auto-dismissing modal on page load, in addition to its normal inline
+  // placement by default (see splashAlsoInRotation) rather than a static
+  // section the visitor has to scroll to. See HomepageOfferSplash.tsx and
+  // app/(public)/page.tsx's carouselBanners/splashBanner split.
   splashEnabled: boolean;
   splashAutoCloseSeconds: number;
   splashAnimationStyle: SplashAnimationStyle;
@@ -269,6 +277,7 @@ export interface BannerDoc {
   targetLocations: string[];
   targetServices: string[];
   targetCategories: string[];
+  targetLandingPages: string[];
   smartRules?: {
     daysOfWeek: number[];
     timeWindowStart: string | null;

@@ -18,7 +18,11 @@ import { CATEGORY_MAP } from "@/app/lib/serviceCategories";
 // (unlike service pages) because they ARE cheaply enumerable — only 4
 // categories x N cities, unlike the unbounded set of individual services.
 export function revalidateBannerPaths(
-  banner: { showOnLocationPage?: boolean; targetLocations?: string[]; showOnCategoryPage?: boolean; targetCategories?: string[] } | null | undefined
+  banner: {
+    showOnLocationPage?: boolean; targetLocations?: string[];
+    showOnCategoryPage?: boolean; targetCategories?: string[];
+    showOnLandingPage?: boolean; targetLandingPages?: string[];
+  } | null | undefined
 ) {
   revalidateTag("banners");
   revalidatePath("/");
@@ -32,5 +36,14 @@ export function revalidateBannerPaths(
     for (const city of cities) {
       for (const category of categories) revalidatePath(`/${city}/services/${category}`);
     }
+  }
+  // Landing pages, like categories (and unlike the unbounded set of
+  // individual services), are cheaply enumerable when specific slugs are
+  // targeted — revalidated explicitly here. Targeting "every landing page"
+  // (empty targetLandingPages) relies on the existing 300s ISR window
+  // instead, same accepted tradeoff as the untargeted service-page case,
+  // rather than querying every LandingPage document from this helper.
+  if (banner?.showOnLandingPage && banner.targetLandingPages?.length) {
+    for (const slug of banner.targetLandingPages) revalidatePath(`/lp/${slug}`);
   }
 }

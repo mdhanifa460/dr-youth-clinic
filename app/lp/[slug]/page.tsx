@@ -10,6 +10,8 @@ import LpHeader from '@/app/components/lp/LpHeader';
 import LpFooter from '@/app/components/lp/LpFooter';
 import StickyCta from '@/app/components/lp/StickyCta';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
+import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
 
@@ -110,6 +112,15 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
       })
     : null;
 
+  // Flash Offer Popup — landing pages have no existing Banner
+  // carousel/hero-takeover mechanism (an LP is its own fully custom
+  // lp.sections build), so this is purely an additional overlay, not a
+  // replacement for anything already there. Skipped in preview mode, same
+  // "not a real visitor" reasoning as the tracking scripts and visit-count
+  // increment just above.
+  const lpBanners = isPreview ? [] : await resolveBanner({ page: 'landing', slug: params.slug });
+  const splashBanner = lpBanners.find((b: any) => b.splashEnabled) || null;
+
   return (
     <>
       {/* Draft preview banner */}
@@ -118,6 +129,8 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
           ⚠️ PREVIEW — This page is in <span className="uppercase">{lp.status}</span> mode and not publicly visible
         </div>
       )}
+
+      <HomepageOfferSplash banner={splashBanner} page="landing" />
 
       {/* LP-specific tracking scripts (skip in preview) */}
       {!isPreview && tracking.gtmId && (

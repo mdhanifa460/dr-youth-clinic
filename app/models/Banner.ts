@@ -30,6 +30,24 @@ export interface IBanner extends Document {
   // two roles, so this is additive rather than a migration to a generic
   // CTA array.
   tertiaryCTA: { label: string; href: string };
+  // Inline Lead Form — an alternative to primaryCTA for the Flash Offer
+  // Popup specifically (HomepageOfferSplash.tsx): instead of linking away,
+  // the visitor submits name/phone right inside the dialog and sees an
+  // inline "thank you" without ever leaving the page they were on. This is
+  // the real, proven higher-converting pattern for a popup (vs. a link
+  // that just adds a navigation step) — see app/api/banner-popup/lead/
+  // route.ts for the submit handler. primaryCTA stays fully functional and
+  // unaffected when this is off (the default) — existing banners render
+  // exactly as before.
+  formEnabled: boolean;
+  formCollectEmail: boolean;
+  formSuccessMessage: string;
+  // "Story View" — an optional sequence of swipeable slides (image or
+  // video, Instagram/WhatsApp-Stories-style) shown in place of the single
+  // desktop/mobile image, for a popup with more than one thing to show
+  // (e.g. 3 before/afters). Empty (the default) falls through to the
+  // existing single-image rendering untouched — this is purely additive.
+  storySlides: { url: string; publicId: string; type: "image" | "video"; focalPoint?: FocalPoint }[];
   trustBadges: { icon: string; text: string }[];
   statBadges: { value: string; label: string }[];
   rating: { enabled: boolean; value: number; reviewCount: number };
@@ -97,13 +115,20 @@ export interface IBanner extends Document {
   // may want to target individual service pages without targeting the
   // coarser category-listing page, or vice versa.
   showOnCategoryPage: boolean;
-  // Flash Offer Popup — only meaningful when showOnHomepage is also true.
-  // See the matching comment on BannerDoc in app/lib/banners/types.ts.
-  // "splashEnabled" is the one field that turns this banner into a popup;
-  // every field below it only matters when splashEnabled is true, and all
-  // default to reproducing today's plain-fade/no-sound/no-blur behavior so
-  // existing splash banners render identically until an admin opts into
-  // the new controls.
+  // Landing Pages — the 5th targeting surface (Homepage/Location/Service/
+  // Category already existed). Empty targetLandingPages = eligible on
+  // every LP, same convention as targetServices/targetCategories.
+  showOnLandingPage: boolean;
+  targetLandingPages: string[];
+  // Flash Offer Popup — used to require showOnHomepage specifically; now
+  // works on whichever "Where to Show" surface(s) are enabled (homepage,
+  // location, service, category, or landing page) — see resolveBanner.ts
+  // and each page's own splash-mount call. See the matching comment on
+  // BannerDoc in app/lib/banners/types.ts. "splashEnabled" is the one field
+  // that turns this banner into a popup; every field below it only matters
+  // when splashEnabled is true, and all default to reproducing today's
+  // plain-fade/no-sound/no-blur behavior so existing splash banners render
+  // identically until an admin opts into the new controls.
   splashEnabled: boolean;
   splashAutoCloseSeconds: number;
   // 'none' disables the entrance effect entirely. 'lottie' reuses the
@@ -126,7 +151,7 @@ export interface IBanner extends Document {
   // (both-at-once) behavior for already-live banners; new banners should
   // be actively pointed at false by an admin who wants popup-only.
   splashAlsoInRotation: boolean;
-  targetPages: ("homepage" | "location" | "service" | "category")[];
+  targetPages: ("homepage" | "location" | "service" | "category" | "landing")[];
   targetLocations: string[];
   targetServices: string[];
   // Values match CATEGORY_MAP keys (app/lib/serviceCategories.ts):
@@ -207,6 +232,13 @@ const BannerSchema = new Schema<IBanner>(
     // template for simplicity, admin UI hides the field for other types.
     beforeImage: ImageSubSchema,
     video: ImageSubSchema,
+    // "Story View" — see the matching IBanner comment. _id:false on each
+    // slide: these are display-order list items, never referenced
+    // individually by id elsewhere.
+    storySlides: {
+      type: [{ ...ImageWithFocalSubSchema, type: { type: String, enum: ["image", "video"], default: "image" } }],
+      default: [],
+    },
 
     overlay: {
       enabled: { type: Boolean, default: false },
@@ -217,6 +249,10 @@ const BannerSchema = new Schema<IBanner>(
     primaryCTA: { type: CTASubSchema, required: true },
     secondaryCTA: { type: CTASubSchema, default: () => ({ label: "", href: "" }) },
     tertiaryCTA: { type: CTASubSchema, default: () => ({ label: "", href: "" }) },
+    // Inline Lead Form — see the matching IBanner comment.
+    formEnabled: { type: Boolean, default: false },
+    formCollectEmail: { type: Boolean, default: false },
+    formSuccessMessage: { type: String, default: "Thank you! We'll call you within 2 hours." },
 
     trustBadges: { type: [{ icon: String, text: String }], default: [] },
     statBadges: { type: [{ value: String, label: String }], default: [] },
@@ -290,6 +326,7 @@ const BannerSchema = new Schema<IBanner>(
     showOnLocationPage: { type: Boolean, default: false },
     showOnServicePage: { type: Boolean, default: false },
     showOnCategoryPage: { type: Boolean, default: false },
+    showOnLandingPage: { type: Boolean, default: false },
     splashEnabled: { type: Boolean, default: false },
     splashAutoCloseSeconds: { type: Number, default: 5, min: 2, max: 15 },
     splashAnimationStyle: { type: String, enum: [...SPLASH_ANIMATION_STYLES], default: "sparkle" },
@@ -305,13 +342,15 @@ const BannerSchema = new Schema<IBanner>(
     splashFrequency: { type: String, enum: [...SPLASH_FREQUENCIES], default: "once-per-session" },
     splashAlsoInRotation: { type: Boolean, default: true },
     // Derived (see pre('save') hook below) — do not set independently from
-    // the four booleans above.
-    targetPages: { type: [String], enum: ["homepage", "location", "service", "category"], default: [] },
+    // the five booleans above.
+    targetPages: { type: [String], enum: ["homepage", "location", "service", "category", "landing"], default: [] },
 
     // Empty array = eligible everywhere, same convention as Service.targetLocations.
     targetLocations: { type: [String], default: [] },
     targetServices: { type: [String], default: [] },
     targetCategories: { type: [String], default: [] },
+    // Values are LandingPage.slug — empty = eligible on every landing page.
+    targetLandingPages: { type: [String], default: [] },
 
     // Whole subdocument optional (no default object) — its presence/absence
     // is itself the "has rules attached" signal resolveBanner() checks.

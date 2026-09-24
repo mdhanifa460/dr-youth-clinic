@@ -66,6 +66,17 @@ export default function BannerTargetingFields({ banner, set }: { banner: any; se
           </div>
         </div>
       )}
+      <Toggle checked={!!banner.showOnLandingPage} onChange={(v) => set({ showOnLandingPage: v })} label="Landing Pages (campaign pages, e.g. /lp/bangalore-hair-transplant)" />
+      {banner.showOnLandingPage && (
+        <div className="pl-4">
+          <p className="text-xs text-gray-400 mb-1.5">Leave blank to show on every landing page. Enter LP URL slugs, comma-separated.</p>
+          <Input
+            value={(banner.targetLandingPages || []).join(", ")}
+            onChange={(v) => set({ targetLandingPages: v.split(",").map((x) => x.trim()).filter(Boolean) })}
+            placeholder="e.g. bangalore-hair-transplant, chennai-skin-glow"
+          />
+        </div>
+      )}
     </div>
   );
 }

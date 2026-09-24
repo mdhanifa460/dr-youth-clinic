@@ -8,16 +8,20 @@ import {
   SPLASH_SOUND_EFFECTS,
   SPLASH_SOUND_EFFECT_LABELS,
 } from "@/app/lib/banners/popupOptions";
-import { Toggle } from "./shared";
+import ImageUpload from "@/app/admin/components/ImageUpload";
+import { Toggle, Input } from "./shared";
 
 // Presentation & Animation — the Flash Offer Popup config, relocated here
 // (Phase 3b) from inside "Where to Show"'s Homepage toggle, since this is
-// a presentation concern, not a targeting one. Still only meaningful when
-// showOnHomepage is on — rather than re-nesting the whole block behind
-// that toggle again (which would put it back in a targeting-owned tab),
-// this tab shows an explanatory hint and leaves the config visible-but-
-// inert until Homepage is enabled under Where to Show, so nothing an
-// admin already configured here is ever hidden or lost by switching tabs.
+// a presentation concern, not a targeting one. Used to be meaningful only
+// when showOnHomepage was on; the popup now works on any enabled "Where to
+// Show" surface (homepage/location/service/category/landing page — see
+// resolveBanner.ts and each page's own splash-mount call), so the hint
+// below just checks that at least one is on, rather than homepage
+// specifically. This tab shows the hint and leaves the config
+// visible-but-inert until something is enabled under Where to Show, so
+// nothing an admin already configured here is ever hidden or lost by
+// switching tabs.
 export default function BannerPresentationFields({
   banner, set, openAssetPicker,
 }: {
@@ -25,20 +29,24 @@ export default function BannerPresentationFields({
   set: (patch: Record<string, any>) => void;
   openAssetPicker: (assetType: "lottie" | "rive") => void;
 }) {
+  const hasAnyTargetSurface = !!(
+    banner.showOnHomepage || banner.showOnLocationPage || banner.showOnServicePage ||
+    banner.showOnCategoryPage || banner.showOnLandingPage
+  );
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
       <p className="text-sm font-bold text-gray-700">Presentation</p>
 
-      {!banner.showOnHomepage && (
+      {!hasAnyTargetSurface && (
         <p className="text-[11px] text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-          Flash Offer Popup only shows on the homepage — enable "Homepage" under the Where to Show tab first.
+          Flash Offer Popup needs at least one page enabled under the Where to Show tab first.
         </p>
       )}
 
       <Toggle
         checked={!!banner.splashEnabled}
         onChange={(v) => set({ splashEnabled: v })}
-        label="✨ Flash Offer Popup — also show as a premium auto-closing popup on homepage load"
+        label="✨ Flash Offer Popup — also show as a premium auto-closing popup on page load"
       />
       {banner.splashEnabled && (
         <div className="space-y-3">
@@ -62,8 +70,78 @@ export default function BannerPresentationFields({
           <Toggle
             checked={banner.splashAlsoInRotation !== false}
             onChange={(v) => set({ splashAlsoInRotation: v })}
-            label="Also show in normal homepage banner rotation (uncheck to show ONLY as the popup)"
+            label="Also show in normal banner rotation (uncheck to show ONLY as the popup)"
           />
+
+          <div className="border-t border-gray-100 pt-3 space-y-2">
+            <Toggle
+              checked={!!banner.formEnabled}
+              onChange={(v) => set({ formEnabled: v })}
+              label="📝 Collect a lead directly in this popup (name + phone, no navigating away)"
+            />
+            {banner.formEnabled && (
+              <div className="pl-4 space-y-2">
+                <p className="text-[11px] text-gray-400">
+                  The Call to Action tab's button is hidden while this is on — the visitor submits right here instead of clicking through.
+                </p>
+                <Toggle
+                  checked={!!banner.formCollectEmail}
+                  onChange={(v) => set({ formCollectEmail: v })}
+                  label="Also ask for email (optional field)"
+                />
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Success message</label>
+                  <Input
+                    value={banner.formSuccessMessage ?? "Thank you! We'll call you within 2 hours."}
+                    onChange={(v) => set({ formSuccessMessage: v })}
+                    placeholder="Thank you! We'll call you within 2 hours."
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-gray-100 pt-3 space-y-2">
+            <p className="text-xs font-semibold text-gray-600">
+              🎞️ Story Slides — swipeable, Instagram/WhatsApp-Stories-style (optional)
+            </p>
+            <p className="text-[11px] text-gray-400">
+              Add 2 or more images to show them as swipeable slides instead of one static image — e.g. several before/after photos in one popup. Leave empty to use the single image set in the Media tab.
+            </p>
+            <div className="space-y-2">
+              {(banner.storySlides || []).map((slide: any, i: number) => (
+                <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl p-2">
+                  <span className="text-xs text-gray-400 w-5 shrink-0 text-center">{i + 1}</span>
+                  <div className="flex-1">
+                    <ImageUpload
+                      label={`Slide ${i + 1}`}
+                      folder="dr-youth-clinic/banners"
+                      currentPublicId={slide.publicId}
+                      onUpload={(img) => {
+                        const next = [...(banner.storySlides || [])];
+                        next[i] = { ...next[i], ...img, type: "image" };
+                        set({ storySlides: next });
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => set({ storySlides: (banner.storySlides || []).filter((_: any, j: number) => j !== i) })}
+                    className="text-xs font-semibold text-red-500 hover:text-red-700 shrink-0"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => set({ storySlides: [...(banner.storySlides || []), { url: "", publicId: "", type: "image" }] })}
+                className="text-xs font-bold text-[#0B2560] hover:text-[#1a3a6e]"
+              >
+                + Add a slide
+              </button>
+            </div>
+          </div>
 
           <div className="space-y-1">
             <label className="text-xs text-gray-500">Popup frequency</label>

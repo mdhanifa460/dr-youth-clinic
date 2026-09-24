@@ -4,7 +4,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 // separate from Banner itself, same "high-write append-only log vs.
 // low-write CMS record" reasoning as BookingSuccessEvent.ts, which this
 // model is a direct structural copy of.
-export type BannerPopupEventType = 'flash_offer_view' | 'flash_offer_close' | 'flash_offer_cta_click';
+export type BannerPopupEventType = 'flash_offer_view' | 'flash_offer_close' | 'flash_offer_cta_click' | 'flash_offer_lead_submitted';
 
 export interface IBannerPopupEvent extends Document {
   bannerId: string;
@@ -28,7 +28,7 @@ const BannerPopupEventSchema = new Schema<IBannerPopupEvent>(
     eventType: {
       type: String,
       required: true,
-      enum: ['flash_offer_view', 'flash_offer_close', 'flash_offer_cta_click'],
+      enum: ['flash_offer_view', 'flash_offer_close', 'flash_offer_cta_click', 'flash_offer_lead_submitted'],
       index: true,
     },
     offerName: { type: String, default: '' },
