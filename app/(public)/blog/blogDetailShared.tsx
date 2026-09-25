@@ -35,6 +35,20 @@ import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
 import { isBlogAtCity, getEffectiveBlogSeo } from '@/app/lib/blogSeo';
 
+function InlineConsultCta({ text }: { text?: string }) {
+  return (
+    <aside className="not-prose my-8 rounded-2xl bg-[#0B2560] p-5 text-white flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="flex-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5A623] mb-1">Have questions about your skin or hair?</p>
+        <p className="text-sm text-white/80 leading-snug">{text || 'Talk to our dermatologists — honest advice, no commitment.'}</p>
+      </div>
+      <Link href="/book" className="inline-flex items-center justify-center rounded-xl bg-[#F5A623] px-5 py-3 text-sm font-extrabold text-[#0B2560] whitespace-nowrap">
+        Book a Consultation
+      </Link>
+    </aside>
+  );
+}
+
 const getPost = cache(async (slug: string) => {
   try {
     await connectDB();
@@ -188,29 +202,35 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
 
       <main>
         {/* ── HERO ── */}
-        <section className="relative min-h-[70vh] md:min-h-[80vh] flex items-end bg-[#0B2560] overflow-hidden">
+        <section className="relative flex flex-col md:min-h-[80vh] md:flex-row md:items-end bg-[#0B2560] overflow-hidden">
           {post.coverImage?.url ? (
             <>
               {/* Deliberately full-bleed/cinematic, not a discrete cropped
                   card — no fixed aspect ratio here by design, matching the
                   same choice on GlassHeroBanner. Focal point still applies. */}
-              <FillImageWithFallback
-                src={post.coverImage.url}
-                alt={post.title}
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover"
-                style={{ objectPosition: focalPointToObjectPosition(post.coverImage.focalPoint) }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#020e24]/95 via-[#020e24]/50 to-[#020e24]/20" />
+              {/* Mobile: a plain 16:9 image BELOW the title block (order-2),
+                  so the reader reaches the headline immediately instead of
+                  a 70vh photo. md+: same element becomes the absolute
+                  full-bleed cinematic background it always was. */}
+              <div className="relative order-2 aspect-video w-full md:order-none md:absolute md:inset-0 md:aspect-auto">
+                <FillImageWithFallback
+                  src={post.coverImage.url}
+                  alt={post.title}
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover"
+                  style={{ objectPosition: focalPointToObjectPosition(post.coverImage.focalPoint) }}
+                />
+              </div>
+              <div className="absolute inset-0 hidden md:block bg-gradient-to-t from-[#020e24]/95 via-[#020e24]/50 to-[#020e24]/20" />
             </>
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0f2040]" />
           )}
 
-          <div className="relative z-10 max-w-4xl mx-auto px-6 pb-14 md:pb-20 w-full">
-            <Link href={basePath} className="inline-flex items-center gap-1.5 text-white/50 hover:text-white text-xs font-semibold mb-6 transition">
+          <div className="relative z-10 order-1 max-w-4xl mx-auto px-5 sm:px-6 pt-6 pb-7 md:pt-0 md:pb-20 w-full">
+            <Link href={basePath} className="inline-flex items-center gap-1.5 text-white/60 hover:text-white text-xs font-semibold mb-4 md:mb-6 transition">
               <ArrowLeft size={13} /> All Articles
             </Link>
 
@@ -223,15 +243,15 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
               )}
             </div>
 
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight max-w-3xl">
+            <h1 className="text-[1.75rem] sm:text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight max-w-3xl">
               {post.title}
             </h1>
 
             {post.excerpt && (
-              <p className="text-white/70 mt-4 text-base md:text-lg max-w-2xl leading-relaxed">{post.excerpt}</p>
+              <p className="text-white/70 mt-3 md:mt-4 text-base md:text-lg max-w-2xl leading-relaxed">{post.excerpt}</p>
             )}
 
-            <div className="flex flex-wrap items-center gap-4 mt-6 text-white/50 text-sm">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 md:mt-6 text-white/60 text-sm">
               <span className="flex items-center gap-1.5">
                 <Calendar size={13} /> {dateFormatted}
               </span>
@@ -253,9 +273,9 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
         </section>
 
         {/* ── ARTICLE BODY ── */}
-        <section className="bg-white py-14 md:py-20">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="grid lg:grid-cols-[1fr_280px] gap-12 xl:gap-16 items-start">
+        <section className="bg-white py-8 md:py-20">
+          <div className="max-w-6xl mx-auto px-5 sm:px-6">
+            <div className="grid lg:grid-cols-[1fr_280px] gap-8 lg:gap-12 xl:gap-16 items-start">
 
               {/* Article content */}
               <article>
@@ -264,17 +284,31 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
                 </div>
 
                 {hasBlocks ? (
-                  <div className="text-[17px] text-gray-700 leading-[1.85]">
-                    <BlockRenderer
-                      blocks={post.bodyBlocks}
-                      relatedLinks={relatedLinks}
-                      serviceContext={{ doctors: referencedDoctors, videos: referencedVideos }}
-                    />
+                  <div className="text-[17px] text-gray-700 leading-[1.75] md:leading-[1.85] break-words">
+                    {(() => {
+                      const blocks = post.bodyBlocks;
+                      const renderPart = (part: any[]) => (
+                        <BlockRenderer
+                          blocks={part}
+                          relatedLinks={relatedLinks}
+                          serviceContext={{ doctors: referencedDoctors, videos: referencedVideos }}
+                        />
+                      );
+                      if (blocks.length < 6) return renderPart(blocks);
+                      const mid = Math.ceil(blocks.length / 2);
+                      return (
+                        <>
+                          {renderPart(blocks.slice(0, mid))}
+                          <InlineConsultCta text={siteConfig.consultationCta} />
+                          {renderPart(blocks.slice(mid))}
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div
                     className="
-                      text-[17px] text-gray-700 leading-[1.85]
+                      text-[17px] text-gray-700 leading-[1.75] md:leading-[1.85] break-words
                       [&_h2]:text-2xl [&_h2]:md:text-3xl [&_h2]:font-headline [&_h2]:font-extrabold [&_h2]:text-[#0B2560] [&_h2]:mt-14 [&_h2]:mb-5 [&_h2]:pb-3 [&_h2]:border-b [&_h2]:border-gray-100
                       [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#0B2560] [&_h3]:mt-10 [&_h3]:mb-3
                       [&_p]:mb-7 [&_p]:leading-[1.9]
@@ -283,6 +317,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
                       [&_blockquote]:border-l-4 [&_blockquote]:border-[#F5A623] [&_blockquote]:pl-6 [&_blockquote]:pr-4 [&_blockquote]:py-4 [&_blockquote]:my-10 [&_blockquote]:bg-[#fffbf0] [&_blockquote]:rounded-r-2xl [&_blockquote]:text-gray-600 [&_blockquote]:italic [&_blockquote]:text-lg
                       [&_strong]:text-[#0B2560] [&_strong]:font-bold
                       [&_em]:italic [&_em]:text-gray-600
+                      [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_img]:max-w-full [&_img]:h-auto [&_pre]:overflow-x-auto [&_pre]:max-w-full
                     "
                     dangerouslySetInnerHTML={{ __html: html }}
                   />

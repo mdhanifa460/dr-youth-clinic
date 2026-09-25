@@ -57,35 +57,36 @@ function ArticleCard({ post, basePath }: { post: Post; basePath: string }) {
   return (
     <Link
       href={`${basePath}/${post.slug}`}
-      className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className="group flex flex-row sm:flex-col bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl sm:hover:-translate-y-1 transition-all duration-300"
     >
       {/* 16:9 — the site's Blog Cover ratio standard (was 16:10) */}
       <FocalImage
         image={post.coverImage}
         aspectRatio="16/9"
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        sizes="(max-width: 640px) 128px, (max-width: 1024px) 50vw, 33vw"
         alt={post.title}
-        className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]"
-        imgClassName="group-hover:scale-105 transition duration-500"
+        className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] w-32 shrink-0 self-start m-3 rounded-xl sm:m-0 sm:rounded-none sm:w-full sm:self-auto"
+        imgClassName="md:group-hover:scale-105 transition duration-500"
         fallbackEmoji="📝"
       >
-        <span className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full ${CATEGORY_COLOR[post.category] || 'bg-[#3B82C4]'}`}>
+        <span className={`hidden sm:block absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full ${CATEGORY_COLOR[post.category] || 'bg-[#3B82C4]'}`}>
           {post.category}
         </span>
       </FocalImage>
       {/* flex-col + flex-1 + mt-auto footer: keeps the date/read-time row
           pinned to the bottom regardless of title/excerpt length, so cards
           in the same grid row line up instead of drifting per-card. */}
-      <div className="flex flex-col flex-1 p-5 md:p-6">
-        <h3 className="font-bold text-[#0B2560] text-base leading-snug line-clamp-2 group-hover:text-[#2A6BA8] transition">{post.title}</h3>
-        {post.excerpt && <p className="text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>}
-        <div className="flex items-center justify-between mt-auto pt-4">
+      <div className="flex flex-col flex-1 min-w-0 py-3 pr-3 sm:p-5 md:p-6">
+        <span className={`sm:hidden self-start text-[9px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full mb-1.5 ${CATEGORY_COLOR[post.category] || 'bg-[#3B82C4]'}`}>{post.category}</span>
+        <h3 className="font-bold text-[#0B2560] text-[15px] sm:text-base leading-snug line-clamp-3 sm:line-clamp-2 group-hover:text-[#2A6BA8] transition">{post.title}</h3>
+        {post.excerpt && <p className="hidden sm:block text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>}
+        <div className="flex items-center justify-between mt-auto pt-2 sm:pt-4">
           <div className="flex items-center gap-3 text-gray-500 text-xs">
             <span className="flex items-center gap-1"><Calendar size={10} />{formatDate(post.publishedAt)}</span>
             <span className="flex items-center gap-1"><Clock size={10} />{post.readTime}</span>
           </div>
           {post.reviewedByDoctorId?.name && (
-            <span className="text-[10px] font-semibold text-[#2A6BA8] bg-[#f6faff] px-2 py-1 rounded-full">✓ Doctor Reviewed</span>
+            <span className="hidden sm:inline text-[10px] font-semibold text-[#2A6BA8] bg-[#f6faff] px-2 py-1 rounded-full">✓ Doctor Reviewed</span>
           )}
         </div>
       </div>
@@ -314,7 +315,7 @@ export default function BlogPageClient({
             {gridPosts.length > 0 ? (
               <section id="latest-articles" className="mb-16">
                 <h2 className="text-lg font-bold text-[#0B2560] mb-6">{isFiltering ? 'Results' : 'Latest Articles'}</h2>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {pagedPosts.map((p) => <ArticleCard key={p._id} post={p} basePath={basePath} />)}
                 </div>
 
