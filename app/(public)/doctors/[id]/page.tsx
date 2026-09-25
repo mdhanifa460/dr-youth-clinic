@@ -62,6 +62,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   if (!doctor) return { title: 'Doctor Not Found' };
   return {
     title: `${doctor.name} – ${doctor.title}`,
+    // Without this, the page inherits the root layout's canonical (the
+    // homepage), so Google treats every doctor page as a duplicate of "/".
+    alternates: { canonical: `${(process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')}/doctors/${params.id}` },
     description: doctor.bio
       ? doctor.bio.slice(0, 155) + (doctor.bio.length > 155 ? '…' : '')
       : `Meet ${doctor.name}, ${doctor.title} at DR Youth Clinic.`,

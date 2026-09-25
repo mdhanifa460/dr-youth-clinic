@@ -20,11 +20,16 @@ import { getBlogCities } from '@/app/lib/blogSeo';
 // app/sitemap.ts, which ignores those two fields.
 export interface SiteUrlEntry {
   path: string;
-  lastModified: Date;
+  // Undefined = no honest modification date (static/aggregate pages). Emitting
+  // "now" on every request teaches Google to ignore lastmod entirely.
+  lastModified?: Date;
   changeFrequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   priority: number;
   category?: string;
   label?: string;
+  // true = the page declares a different canonical (or is noindex), so it
+  // must not be submitted in the sitemap.
+  excludeFromSitemap?: boolean;
 }
 
 const LOCATIONS = ['chennai', 'bangalore', 'kochi', 'coimbatore'] as const;
@@ -35,30 +40,28 @@ const SERVICE_CATEGORIES = ['skin', 'hair', 'laser'] as const;
 // getSiteUrlInventory() below fails — this function alone is pure/
 // synchronous and can't be the cause of that failure.
 export function staticRoutes(): SiteUrlEntry[] {
-  const now = new Date();
   return [
-    { path: '', lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { path: '/about', lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { path: '/book', lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { path: '/blog', lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { path: '/faqs', lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { path: '/results', lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { path: '/academy', lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { path: '/doctors', lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { path: '/offers', lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { path: '/web-stories', lastModified: now, changeFrequency: 'daily', priority: 0.8 },
-    { path: '/privacy-policy', lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { path: '/terms', lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { path: '', changeFrequency: 'daily', priority: 1 },
+    { path: '/about', changeFrequency: 'monthly', priority: 0.7 },
+    { path: '/book', changeFrequency: 'monthly', priority: 0.9 },
+    { path: '/blog', changeFrequency: 'weekly', priority: 0.7 },
+    { path: '/faqs', changeFrequency: 'monthly', priority: 0.7 },
+    { path: '/results', changeFrequency: 'weekly', priority: 0.7 },
+    { path: '/academy', changeFrequency: 'weekly', priority: 0.7 },
+    { path: '/doctors', changeFrequency: 'weekly', priority: 0.8 },
+    { path: '/offers', changeFrequency: 'weekly', priority: 0.8 },
+    { path: '/web-stories', changeFrequency: 'daily', priority: 0.8 },
+    { path: '/privacy-policy', changeFrequency: 'yearly', priority: 0.3 },
+    { path: '/terms', changeFrequency: 'yearly', priority: 0.3 },
     ...LOCATIONS.map((city): SiteUrlEntry => ({
-      path: `/${city}`, lastModified: now, changeFrequency: 'weekly', priority: 0.9, label: city,
+      path: `/${city}`, changeFrequency: 'weekly', priority: 0.9, label: city,
     })),
     ...LOCATIONS.map((city): SiteUrlEntry => ({
-      path: `/${city}/services`, lastModified: now, changeFrequency: 'weekly', priority: 0.8, label: `${city} services`,
+      path: `/${city}/services`, changeFrequency: 'weekly', priority: 0.8, label: `${city} services`,
     })),
     ...LOCATIONS.flatMap((city) =>
       SERVICE_CATEGORIES.map((cat): SiteUrlEntry => ({
         path: `/${city}/services/${cat}`,
-        lastModified: now,
         changeFrequency: 'weekly',
         priority: 0.8,
         category: cat,
@@ -79,7 +82,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
       .select('_id name updatedAt')
       .lean() as Promise<any[]>,
     Blog.find({ active: true } as any)
-      .select('slug title updatedAt targetLocations')
+      .select('slug title updatedAt targetLocations canonicalUrl')
       .lean() as Promise<any[]>,
     LandingPage.find({ status: 'published' } as any)
       .select('slug updatedAt')
@@ -104,7 +107,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
       const cities = getServiceCities(s);
       return cities.map((city): SiteUrlEntry => ({
         path: `/${city}/services/${s.category.toLowerCase()}/${getEffectiveSlug(s, city)}`,
-        lastModified: s.updatedAt ? new Date(s.updatedAt) : new Date(),
+        lastModified: s.updatedAt ? new Date(s.updatedAt) : undefined,
         changeFrequency: 'weekly',
         priority: 0.8,
         category: s.category.toLowerCase(),
@@ -114,7 +117,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
 
   const doctorUrls: SiteUrlEntry[] = doctors.map((d) => ({
     path: `/doctors/${d._id}`,
-    lastModified: d.updatedAt ? new Date(d.updatedAt) : new Date(),
+    lastModified: d.updatedAt ? new Date(d.updatedAt) : undefined,
     changeFrequency: 'monthly',
     priority: 0.6,
     label: d.name,
@@ -124,7 +127,8 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .filter((p) => p.slug)
     .map((p) => ({
       path: `/blog/${p.slug}`,
-      lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+      excludeFromSitemap: !!p.canonicalUrl && !p.canonicalUrl.replace(/\/$/, '').endsWith(`/blog/${p.slug}`),
+      lastModified: p.updatedAt ? new Date(p.updatedAt) : undefined,
       changeFrequency: 'monthly',
       priority: 0.7,
       label: p.title,
@@ -138,7 +142,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .flatMap((p) =>
       getBlogCities(p).map((city): SiteUrlEntry => ({
         path: `/${city}/blog/${p.slug}`,
-        lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+        lastModified: p.updatedAt ? new Date(p.updatedAt) : undefined,
         changeFrequency: 'monthly',
         priority: 0.7,
         label: p.title,
@@ -149,7 +153,9 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .filter((lp) => lp.slug)
     .map((lp) => ({
       path: `/lp/${lp.slug}`,
-      lastModified: lp.updatedAt ? new Date(lp.updatedAt) : new Date(),
+      // Landing pages are always robots noindex (app/lp/[slug]/page.tsx).
+      excludeFromSitemap: true,
+      lastModified: lp.updatedAt ? new Date(lp.updatedAt) : undefined,
       changeFrequency: 'weekly',
       priority: 0.6,
     }));
@@ -158,7 +164,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .filter((s) => s.slug)
     .map((s) => ({
       path: `/web-stories/${s.slug}`,
-      lastModified: s.updatedAt ? new Date(s.updatedAt) : new Date(),
+      lastModified: s.updatedAt ? new Date(s.updatedAt) : undefined,
       changeFrequency: 'weekly',
       priority: 0.7,
     }));
@@ -167,7 +173,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .filter((r) => r.slug)
     .map((r) => ({
       path: `/results/${r.slug}`,
-      lastModified: r.updatedAt ? new Date(r.updatedAt) : new Date(),
+      lastModified: r.updatedAt ? new Date(r.updatedAt) : undefined,
       changeFrequency: 'monthly',
       priority: 0.6,
       label: r.title,
@@ -177,7 +183,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .filter((v) => v.slug)
     .map((v) => ({
       path: `/academy/${v.slug}`,
-      lastModified: v.updatedAt ? new Date(v.updatedAt) : new Date(),
+      lastModified: v.updatedAt ? new Date(v.updatedAt) : undefined,
       changeFrequency: 'monthly',
       priority: 0.6,
       label: v.title,
@@ -187,7 +193,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .filter((c) => c.slug)
     .map((c) => ({
       path: `/academy/courses/${c.slug}`,
-      lastModified: c.updatedAt ? new Date(c.updatedAt) : new Date(),
+      lastModified: c.updatedAt ? new Date(c.updatedAt) : undefined,
       changeFrequency: 'monthly',
       priority: 0.6,
       label: c.title,

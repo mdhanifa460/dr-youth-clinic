@@ -15,6 +15,7 @@ import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
 import { Result } from '@/app/models/Result';
 import SliderCard from '@/app/components/SliderCard';
+import { withCityInTitle } from '@/app/lib/blogSeo';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getSettings } from '@/app/models/Settings';
@@ -216,7 +217,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const catSlug = params.category.toLowerCase();
   const seo = getEffectiveSeo(svc, params.location.toLowerCase());
   return {
-    title: seo.metaTitle || `${svc.name} in ${city}`,
+    // Admins often reuse one metaTitle for every city; without the city in it,
+    // each city's page shows as a duplicate title in search results.
+    title: seo.metaTitle ? withCityInTitle(seo.metaTitle, city) : `${svc.name} in ${city}`,
     description: seo.metaDescription || `Book ${svc.name} at DR Youth Clinic ${city}. Expert dermatologists, proven results.`,
     keywords: svc.keywords?.join(', '),
     alternates: { canonical: `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}` },

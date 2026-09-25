@@ -11,6 +11,12 @@ import { getCachedCategories } from '@/app/lib/getCachedCategories';
 
 export const revalidate = 300;
 
+// Pre-render each city at build time. Without this the page is only
+// rendered on first request (3-5s cold), which is exactly what a crawler hits.
+export function generateStaticParams() {
+  return Object.keys(locations).map((location) => ({ location }));
+}
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 const GLYPH_CLS = 'opacity-[0.07] select-none pointer-events-none absolute -bottom-4 -right-4 text-[140px] leading-none';

@@ -56,3 +56,14 @@ export function getEffectiveBlogSeo(post: BlogSeoShapeLike, city: string) {
 export function isBlogAtCity(post: BlogLocationShapeLike, city: string): boolean {
   return getBlogCities(post).includes(city);
 }
+
+/**
+ * Adds the city to a page title when it isn't already there, placing it before
+ * any trailing "| DR Youth Clinic" brand suffix (the root layout's title
+ * template re-appends the brand, so leaving it in would double it).
+ */
+export function withCityInTitle(title: string, cityName: string): string {
+  const stripped = title.replace(/\s*[|\u2013-]\s*DR Youth Clinic\s*$/i, '').trim();
+  if (stripped.toLowerCase().includes(cityName.toLowerCase())) return stripped;
+  return `${stripped} in ${cityName}`;
+}

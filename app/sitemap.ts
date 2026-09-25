@@ -20,7 +20,7 @@ function toSitemapEntry(e: SiteUrlEntry): MetadataRoute.Sitemap[number] {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const entries = await getSiteUrlInventory();
-    return entries.map(toSitemapEntry);
+    return entries.filter((e) => !e.excludeFromSitemap).map(toSitemapEntry);
   } catch {
     // staticRoutes() is pure/synchronous — safe to call here even though
     // the DB-querying half of getSiteUrlInventory() just failed above.

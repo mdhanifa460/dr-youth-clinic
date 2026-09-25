@@ -33,7 +33,7 @@ import { BreadcrumbSchema, BlogPostingSchema, FAQSchema } from '@/app/components
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
-import { isBlogAtCity, getEffectiveBlogSeo } from '@/app/lib/blogSeo';
+import { isBlogAtCity, getEffectiveBlogSeo, withCityInTitle } from '@/app/lib/blogSeo';
 
 function InlineConsultCta({ text }: { text?: string }) {
   return (
@@ -101,6 +101,11 @@ export async function generateBlogDetailMetadata(slug: string, location?: string
     metaTitle: post.metaTitle || post.title,
     metaDescription: post.metaDescription || post.excerpt || post.title,
   };
+  // A city URL of the same post must not share an identical title with the
+  // generic URL (or another city's) — add the city when it's not already there.
+  if (location) {
+    seo.metaTitle = withCityInTitle(seo.metaTitle, location.charAt(0).toUpperCase() + location.slice(1));
+  }
   const ogImage = post.ogImage?.url || post.coverImage?.url;
   const canonicalPath = location ? `/${location}/blog/${slug}` : `/blog/${slug}`;
   return {
