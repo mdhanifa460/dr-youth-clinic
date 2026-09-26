@@ -11,4 +11,7 @@ describe('withCityInTitle', () => {
   it('handles a title with no brand suffix', () => {
     expect(withCityInTitle('Laser Hair Removal', 'Kochi')).toBe('Laser Hair Removal in Kochi');
   });
+  it('does not append the city when the title already names its region', () => {
+    expect(withCityInTitle('Hair Exosome GFC in Kerala | DR Youth Clinic', 'Kochi')).toBe('Hair Exosome GFC in Kerala');
+  });
 });

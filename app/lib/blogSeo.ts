@@ -57,6 +57,15 @@ export function isBlogAtCity(post: BlogLocationShapeLike, city: string): boolean
   return getBlogCities(post).includes(city);
 }
 
+// A title that already names the city's region (e.g. "... in Kerala" for Kochi)
+// is already location-specific — appending the city would read "in Kerala in Kochi".
+const CITY_ALIASES: Record<string, string[]> = {
+  kochi: ['Kerala', 'Cochin'],
+  bangalore: ['Bengaluru', 'Karnataka'],
+  chennai: ['Tamil Nadu'],
+  coimbatore: ['Tamil Nadu'],
+};
+
 /**
  * Adds the city to a page title when it isn't already there, placing it before
  * any trailing "| DR Youth Clinic" brand suffix (the root layout's title
@@ -64,6 +73,8 @@ export function isBlogAtCity(post: BlogLocationShapeLike, city: string): boolean
  */
 export function withCityInTitle(title: string, cityName: string): string {
   const stripped = title.replace(/\s*[|\u2013-]\s*DR Youth Clinic\s*$/i, '').trim();
-  if (stripped.toLowerCase().includes(cityName.toLowerCase())) return stripped;
+  const lower = stripped.toLowerCase();
+  const names = [cityName, ...(CITY_ALIASES[cityName.toLowerCase()] ?? [])];
+  if (names.some((n) => lower.includes(n.toLowerCase()))) return stripped;
   return `${stripped} in ${cityName}`;
 }

@@ -437,7 +437,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 {catIcon} {svc.category} Treatment
               </span>
               <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight">
-                {svc.name}
+                {svc.name}{' '}
                 <span className="block text-[#A25607] text-xl md:text-3xl mt-1 font-bold">in {cityName}</span>
               </h1>
               {svc.heroDescription && (
