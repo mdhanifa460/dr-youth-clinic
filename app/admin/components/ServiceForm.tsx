@@ -38,6 +38,7 @@ interface FormData {
   metaTitle: string;
   metaDescription: string;
   keywords: string;
+  concerns: string;
   narrative: string;
   narrativeBlocks: Array<{ id: string; type: string; visible: boolean; data: Record<string, any> }>;
   heroDescription: string;
@@ -108,6 +109,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           keywords: Array.isArray(initialData.keywords)
             ? initialData.keywords.join(", ")
             : initialData.keywords ?? "",
+          concerns: Array.isArray(initialData.concerns) ? initialData.concerns.join(", ") : "",
           targetLocations: getServiceCities(initialData),
           locationSeo: (initialData.locationSeo ?? []).map((l: any) => ({
             location: l.location,
@@ -152,6 +154,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           metaTitle: "",
           metaDescription: "",
           keywords: "",
+          concerns: "",
           narrative: "",
           narrativeBlocks: [],
           heroDescription: "",
@@ -296,6 +299,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
         body: JSON.stringify({
           ...form,
           keywords: form.keywords.split(",").map((k) => k.trim()).filter(Boolean),
+          concerns: form.concerns.split(",").map((k) => k.trim()).filter(Boolean),
         }),
       });
       const data = await response.json();
@@ -527,6 +531,14 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
               <option value="Laser">Laser</option>
               <option value="Other">Other</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Concerns Treated <span className="text-gray-400 font-normal">(comma-separated, optional)</span>
+            </label>
+            <input type="text" value={form.concerns} onChange={(e) => updateForm({ concerns: e.target.value })} placeholder="e.g., Acne, Pigmentation, Hair Fall" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p className="text-xs text-gray-400 mt-1">Used for the “By Concern” group in the website’s Services menu. Reuse the same spelling across treatments so they group together.</p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

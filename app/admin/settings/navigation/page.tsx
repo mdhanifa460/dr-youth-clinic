@@ -42,8 +42,8 @@ const DEFAULT_ITEMS: NavItem[] = [
   { id: "locations", label: "Locations", linkType: "locations", href: "", order: 9, visible: true, children: [] },
 ];
 
-type MegaMenu = { enabled: boolean; maxPerCategory: number; showBookCta: boolean; bookLabel: string; bookHref: string };
-const DEFAULT_MEGA: MegaMenu = { enabled: true, maxPerCategory: 8, showBookCta: true, bookLabel: "Book Appointment", bookHref: "/book" };
+type MegaMenu = { enabled: boolean; maxPerCategory: number; showBookCta: boolean; bookLabel: string; bookHref: string; showConcerns: boolean };
+const DEFAULT_MEGA: MegaMenu = { enabled: true, maxPerCategory: 8, showBookCta: true, bookLabel: "Book Appointment", bookHref: "/book", showConcerns: true };
 
 function uid() {
   return (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`).slice(0, 12);
@@ -181,6 +181,13 @@ export default function NavigationSettingsPage() {
               <input type="checkbox" checked={mega.showBookCta} onChange={(e) => setMega({ ...mega, showBookCta: e.target.checked })} className="h-4 w-4 accent-[#0B2560]" />
             </label>
           </div>
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <span>
+              <span className="block text-sm font-semibold text-gray-700">Show “By Concern” group</span>
+              <span className="block text-xs text-gray-400">Lists treatments grouped by the concerns you tag on each service (Services → edit → Concerns Treated).</span>
+            </span>
+            <input type="checkbox" checked={mega.showConcerns} onChange={(e) => setMega({ ...mega, showConcerns: e.target.checked })} className="h-4 w-4 accent-[#0B2560]" />
+          </label>
           {mega.showBookCta && (
             <div className="grid sm:grid-cols-2 gap-3">
               <input value={mega.bookLabel} onChange={(e) => setMega({ ...mega, bookLabel: e.target.value })} placeholder="Button label" className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />

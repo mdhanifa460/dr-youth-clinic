@@ -25,6 +25,9 @@ export interface IService extends Document {
   // (a specific city, or 'all' meaning every city) everywhere this is read.
   targetLocations?: string[];
   category: 'Skin' | 'Hair' | 'Laser' | 'Other';
+  // Patient-facing concerns this treatment addresses (e.g. 'Acne',
+  // 'Pigmentation') — drives the navbar mega menu's "By Concern" group.
+  concerns?: string[];
 
   // SEO
   metaTitle: string;
@@ -172,6 +175,7 @@ const ServiceSchema = new Schema<IService>(
       match: /^[a-z0-9-]+$/,
       index: true,
     },
+    concerns: { type: [String], default: [] },
     keywords: [String],
     seoScore: {
       type: Number,

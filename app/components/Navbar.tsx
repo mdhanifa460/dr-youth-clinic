@@ -27,6 +27,7 @@ export interface MegaMenuConfig {
   enabled?: boolean;
   maxPerCategory?: number;
   showBookCta?: boolean;
+  showConcerns?: boolean;
   bookLabel?: string;
   bookHref?: string;
 }
@@ -37,6 +38,11 @@ interface MegaCategory {
   icon: string;
   tagline: string;
   services: { name: string; slug: string }[];
+}
+
+interface MegaConcern {
+  name: string;
+  services: { name: string; slug: string; category: string }[];
 }
 
 const CITIES = ["Chennai", "Bangalore", "Coimbatore", "Kochi"];
@@ -72,6 +78,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
   const [megaOpen, setMegaOpen] = useState(false);
   const [megaCat, setMegaCat] = useState(0);
   const [megaData, setMegaData] = useState<MegaCategory[] | null>(null);
+  const [megaConcerns, setMegaConcerns] = useState<MegaConcern[]>([]);
   const [mobileCat, setMobileCat] = useState<string | null>(null);
   const megaCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
@@ -106,7 +113,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
     megaCityRef.current = megaCity;
     fetch(`/api/nav-services?city=${megaCity}`)
       .then((r) => r.json())
-      .then((d) => setMegaData(Array.isArray(d.categories) ? d.categories : []))
+      .then((d) => {
+        setMegaData(Array.isArray(d.categories) ? d.categories : []);
+        setMegaConcerns(Array.isArray(d.concerns) ? d.concerns : []);
+      })
       .catch(() => setMegaData([]));
   };
   const openMega = () => {
@@ -309,7 +319,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
             if (item.linkType === "services" && megaEnabled) {
               const isActiveSvc = active === item.id || pathname.includes("/services");
               const cats = megaData || [];
-              const cur = cats[Math.min(megaCat, Math.max(0, cats.length - 1))];
+              const hasConcerns = megaMenu?.showConcerns !== false && megaConcerns.length > 0;
+              // Index === cats.length is the synthetic "By Concern" entry.
+              const concernSel = hasConcerns && megaCat === cats.length;
+              const cur = concernSel ? undefined : cats[Math.min(megaCat, Math.max(0, cats.length - 1))];
               return (
                 <div
                   key={item.id}
@@ -362,11 +375,48 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                               </Link>
                             </li>
                           ))}
+                          {hasConcerns && (
+                            <li className="pt-1 mt-1 border-t border-gray-100">
+                              <button
+                                type="button"
+                                onMouseEnter={() => setMegaCat(cats.length)}
+                                onFocus={() => setMegaCat(cats.length)}
+                                onClick={() => setMegaCat(cats.length)}
+                                className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${
+                                  concernSel ? "bg-[#0B2560]/[0.06] text-[#0B2560]" : "text-gray-600 hover:bg-[#f6faff] hover:text-[#0B2560]"
+                                }`}
+                              >
+                                <span className="flex items-center gap-2"><span aria-hidden>🎯</span>By Concern</span>
+                                <MdChevronRight size={18} className={concernSel ? "text-[#F5A623]" : "text-gray-300"} />
+                              </button>
+                            </li>
+                          )}
                         </ul>
 
                         {/* Right: the highlighted category's services */}
                         <div className="py-5 pl-8 flex flex-col">
-                          {cur ? (
+                          {concernSel ? (
+                            <>
+                              <p className="text-base font-extrabold text-[#0B2560]">Treatments by concern</p>
+                              <p className="text-xs text-gray-500 mb-3">Find what helps with what you’re dealing with.</p>
+                              <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-4">
+                                {megaConcerns.slice(0, 6).map((cn) => (
+                                  <div key={cn.name}>
+                                    <p className="text-sm font-bold text-[#0B2560] mb-1">{cn.name}</p>
+                                    <ul>
+                                      {cn.services.slice(0, Math.min(megaMax, 4)).map((sv) => (
+                                        <li key={cn.name + sv.slug}>
+                                          <Link href={`/${megaCity}/services/${sv.category}/${sv.slug}`} className="block py-1 text-sm text-gray-600 hover:text-[#0B2560] hover:translate-x-0.5 transition">
+                                            {sv.name}
+                                          </Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          ) : cur ? (
                             <>
                               <div className="flex items-baseline justify-between gap-4 mb-3">
                                 <div>
@@ -539,6 +589,37 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                   {isOpen && (
                     <div className="pl-3 pb-1">
                       {megaData === null && <p className="px-3 py-2 text-sm text-gray-400">Loading…</p>}
+                      {megaMenu?.showConcerns !== false && megaConcerns.length > 0 && (
+                        <div>
+                          <button
+                            onClick={() => setMobileCat(mobileCat === "__concerns" ? null : "__concerns")}
+                            aria-expanded={mobileCat === "__concerns"}
+                            className="min-h-11 w-full flex items-center justify-between gap-2 text-sm font-semibold py-2 px-3 rounded-xl text-[#0B2560] hover:bg-[#f6faff]"
+                          >
+                            <span className="flex items-center gap-2"><span aria-hidden>🎯</span>By Concern</span>
+                            <span className={`text-[10px] text-gray-400 transition-transform ${mobileCat === "__concerns" ? "rotate-180" : ""}`}>▼</span>
+                          </button>
+                          {mobileCat === "__concerns" && (
+                            <div className="pl-6 border-l border-gray-100 ml-4 mb-1">
+                              {megaConcerns.slice(0, 8).map((cn) => (
+                                <div key={cn.name} className="py-1">
+                                  <p className="px-3 pt-1 text-xs font-bold uppercase tracking-wide text-gray-400">{cn.name}</p>
+                                  {cn.services.slice(0, 4).map((sv) => (
+                                    <Link
+                                      key={cn.name + sv.slug}
+                                      href={`/${megaCity}/services/${sv.category}/${sv.slug}`}
+                                      onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
+                                      className="min-h-10 flex items-center text-sm py-2 px-3 rounded-lg text-gray-600 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                                    >
+                                      {sv.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {cats.map((c) => {
                         const catOpen = mobileCat === c.slug;
                         return (

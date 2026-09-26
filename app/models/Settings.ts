@@ -278,6 +278,7 @@ export interface ISettings extends Document {
       showBookCta: boolean;
       bookLabel: string;
       bookHref: string;
+      showConcerns?: boolean;
     };
     items: Array<{
       id: string;
@@ -661,6 +662,7 @@ const SettingsSchema = new Schema<ISettings>(
         showBookCta: { type: Boolean, default: true },
         bookLabel: { type: String, default: 'Book Appointment' },
         bookHref: { type: String, default: '/book' },
+        showConcerns: { type: Boolean, default: true },
       },
       items: {
         type: [{
