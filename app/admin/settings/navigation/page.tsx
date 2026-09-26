@@ -42,6 +42,9 @@ const DEFAULT_ITEMS: NavItem[] = [
   { id: "locations", label: "Locations", linkType: "locations", href: "", order: 9, visible: true, children: [] },
 ];
 
+type MegaMenu = { enabled: boolean; maxPerCategory: number; showBookCta: boolean; bookLabel: string; bookHref: string };
+const DEFAULT_MEGA: MegaMenu = { enabled: true, maxPerCategory: 8, showBookCta: true, bookLabel: "Book Appointment", bookHref: "/book" };
+
 function uid() {
   return (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`).slice(0, 12);
 }
@@ -56,6 +59,7 @@ function move<T>(arr: T[], from: number, to: number): T[] {
 
 export default function NavigationSettingsPage() {
   const [items, setItems] = useState<NavItem[]>([]);
+  const [mega, setMega] = useState<MegaMenu>(DEFAULT_MEGA);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,6 +71,7 @@ export default function NavigationSettingsPage() {
       .then((r) => r.json())
       .then((d) => {
         const loaded = d.success && d.data?.navigation?.items?.length ? d.data.navigation.items : DEFAULT_ITEMS;
+        setMega({ ...DEFAULT_MEGA, ...(d.data?.navigation?.megaMenu || {}) });
         setItems([...loaded].sort((a: NavItem, b: NavItem) => a.order - b.order));
         setLoading(false);
       })
@@ -101,7 +106,7 @@ export default function NavigationSettingsPage() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ navigation: { items } }),
+        body: JSON.stringify({ navigation: { items, megaMenu: mega } }),
       });
       const data = await res.json();
       if (!data.success) { setError(data.message || "Save failed"); return; }
@@ -151,6 +156,38 @@ export default function NavigationSettingsPage() {
             <AlertCircle size={14} /> {error}
           </div>
         )}
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 space-y-4">
+          <div>
+            <p className="text-sm font-bold text-[#0B2560]">Services Mega Menu</p>
+            <p className="text-xs text-gray-400">
+              Hovering the “Services (auto)” item below opens a full-width panel: categories on the left, the
+              highlighted category’s real services on the right (accordion on mobile). Turn it off to keep a plain link.
+            </p>
+          </div>
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <span className="text-sm font-semibold text-gray-700">Enable mega menu</span>
+            <input type="checkbox" checked={mega.enabled} onChange={(e) => setMega({ ...mega, enabled: e.target.checked })} className="h-4 w-4 accent-[#0B2560]" />
+          </label>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="block">
+              <span className="block text-xs font-semibold text-gray-600 mb-1">Max services listed per category</span>
+              <input type="number" min={1} max={20} value={mega.maxPerCategory}
+                onChange={(e) => setMega({ ...mega, maxPerCategory: Math.max(1, Math.min(20, Number(e.target.value) || 1)) })}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+            </label>
+            <label className="flex items-center justify-between gap-4 cursor-pointer self-end pb-2">
+              <span className="text-sm font-semibold text-gray-700">Show Book button in panel</span>
+              <input type="checkbox" checked={mega.showBookCta} onChange={(e) => setMega({ ...mega, showBookCta: e.target.checked })} className="h-4 w-4 accent-[#0B2560]" />
+            </label>
+          </div>
+          {mega.showBookCta && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <input value={mega.bookLabel} onChange={(e) => setMega({ ...mega, bookLabel: e.target.value })} placeholder="Button label" className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+              <input value={mega.bookHref} onChange={(e) => setMega({ ...mega, bookHref: e.target.value })} placeholder="/book" className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+            </div>
+          )}
+        </div>
 
         <div className="space-y-3">
           {items.map((item, i) => {

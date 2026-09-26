@@ -270,6 +270,15 @@ export interface ISettings extends Document {
   // the previous hardcoded nav exactly, so nothing changes until an admin
   // edits it.
   navigation: {
+    // Services mega menu (Navbar): hover the Services item to see every
+    // category with its real services. Optional so older docs still load.
+    megaMenu?: {
+      enabled: boolean;
+      maxPerCategory: number;
+      showBookCta: boolean;
+      bookLabel: string;
+      bookHref: string;
+    };
     items: Array<{
       id: string;
       label: string;
@@ -646,6 +655,13 @@ const SettingsSchema = new Schema<ISettings>(
       },
     },
     navigation: {
+      megaMenu: {
+        enabled: { type: Boolean, default: true },
+        maxPerCategory: { type: Number, default: 8 },
+        showBookCta: { type: Boolean, default: true },
+        bookLabel: { type: String, default: 'Book Appointment' },
+        bookHref: { type: String, default: '/book' },
+      },
       items: {
         type: [{
           id: String,

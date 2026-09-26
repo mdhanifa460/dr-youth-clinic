@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MdPhone, MdMenu, MdClose, MdPhotoLibrary } from "react-icons/md";
+import { MdPhone, MdMenu, MdClose, MdPhotoLibrary, MdChevronRight } from "react-icons/md";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 
 export interface NavChild {
@@ -21,6 +21,22 @@ export interface NavItem {
   order: number;
   visible: boolean;
   children: NavChild[];
+}
+
+export interface MegaMenuConfig {
+  enabled?: boolean;
+  maxPerCategory?: number;
+  showBookCta?: boolean;
+  bookLabel?: string;
+  bookHref?: string;
+}
+
+interface MegaCategory {
+  slug: string;
+  label: string;
+  icon: string;
+  tagline: string;
+  services: { name: string; slug: string }[];
 }
 
 const CITIES = ["Chennai", "Bangalore", "Coimbatore", "Kochi"];
@@ -44,7 +60,7 @@ const FALLBACK_NAV_ITEMS: NavItem[] = [
 
 const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
 
-export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[] }) {
+export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?: NavItem[]; megaMenu?: MegaMenuConfig | null }) {
   const siteConfig = useSiteConfig();
   const logoUrl   = siteConfig.logoUrl || DEFAULT_LOGO_URL;
   const phone     = siteConfig.publicPhone    || "1800 890 9669";
@@ -53,6 +69,11 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileDropdown, setMobileDropdown] = useState<string | null>(null);
+  const [megaOpen, setMegaOpen] = useState(false);
+  const [megaCat, setMegaCat] = useState(0);
+  const [megaData, setMegaData] = useState<MegaCategory[] | null>(null);
+  const [mobileCat, setMobileCat] = useState<string | null>(null);
+  const megaCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
   const currentLocation = pathname.split("/")[1] || "";
 
@@ -72,6 +93,46 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
     if (CITY_SLUGS.includes(value)) {
       setDetectedLocation(value);
     }
+  }, []);
+
+  // Services mega menu — data is fetched lazily the first time the menu is
+  // opened (desktop hover/click or mobile menu), never on page load.
+  const megaEnabled = megaMenu?.enabled !== false;
+  const megaMax = Math.max(1, Math.min(20, Number(megaMenu?.maxPerCategory ?? 8)));
+  const megaCity = CITY_SLUGS.includes(currentLocation) ? currentLocation : detectedLocation;
+  const megaCityRef = useRef(megaCity);
+  const loadMega = () => {
+    if (megaData !== null && megaCityRef.current === megaCity) return;
+    megaCityRef.current = megaCity;
+    fetch(`/api/nav-services?city=${megaCity}`)
+      .then((r) => r.json())
+      .then((d) => setMegaData(Array.isArray(d.categories) ? d.categories : []))
+      .catch(() => setMegaData([]));
+  };
+  const openMega = () => {
+    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    loadMega();
+    setOpenDropdown(null);
+    setMegaOpen(true);
+  };
+  // Small grace delay so the pointer can travel from the nav label down into
+  // the panel without the menu flickering shut.
+  const closeMegaSoon = () => {
+    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    megaCloseTimer.current = setTimeout(() => setMegaOpen(false), 160);
+  };
+  useEffect(() => {
+    setMegaOpen(false);
+    setMobileCat(null);
+  }, [pathname]);
+  useEffect(() => {
+    if (mobileOpen && megaEnabled) loadMega();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileOpen]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMegaOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   // On route change, reset active to "home" so the scroll tracker takes over cleanly
@@ -101,6 +162,7 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
     };
 
     const handleClickOutside = () => {
+      setMegaOpen(false);
       setOpenDropdown(null);
       setMobileOpen(false);
     };
@@ -244,6 +306,119 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
               );
             }
 
+            if (item.linkType === "services" && megaEnabled) {
+              const isActiveSvc = active === item.id || pathname.includes("/services");
+              const cats = megaData || [];
+              const cur = cats[Math.min(megaCat, Math.max(0, cats.length - 1))];
+              return (
+                <div
+                  key={item.id}
+                  onMouseEnter={openMega}
+                  onMouseLeave={closeMegaSoon}
+                  onFocus={openMega}
+                >
+                  <div className="flex items-center gap-1">
+                    <Link
+                      href={resolveHref(item)}
+                      className={`relative text-[13px] xl:text-[14px] font-semibold transition-all duration-200 whitespace-nowrap ${
+                        isActiveSvc || megaOpen ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
+                      }`}
+                    >
+                      {item.label}
+                      <span className={`absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full transition-all duration-300 ${isActiveSvc || megaOpen ? "w-full" : "w-0"}`} />
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={`${item.label} menu`}
+                      aria-expanded={megaOpen}
+                      onClick={(e) => { e.stopPropagation(); megaOpen ? setMegaOpen(false) : openMega(); }}
+                      className="text-[10px] text-gray-500 hover:text-[#0B2560] p-1"
+                    >
+                      <span className={`inline-block transition-transform duration-200 ${megaOpen ? "rotate-180" : ""}`}>▼</span>
+                    </button>
+                  </div>
+
+                  {megaOpen && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute left-0 right-0 top-full z-[999] bg-white border-t border-gray-100 shadow-[0_24px_40px_rgba(11,37,96,0.12)]"
+                    >
+                      <div className="max-w-7xl mx-auto px-6 xl:px-8 grid grid-cols-[260px_1fr] min-h-[300px]">
+                        {/* Left: categories */}
+                        <ul className="py-4 pr-4 border-r border-gray-100 space-y-1">
+                          {megaData === null && <li className="px-4 py-3 text-sm text-gray-400">Loading…</li>}
+                          {cats.map((c, i) => (
+                            <li key={c.slug}>
+                              <Link
+                                href={`/${megaCity}/services/${c.slug}`}
+                                onMouseEnter={() => setMegaCat(i)}
+                                onFocus={() => setMegaCat(i)}
+                                className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${
+                                  i === megaCat ? "bg-[#0B2560]/[0.06] text-[#0B2560]" : "text-gray-600 hover:bg-[#f6faff] hover:text-[#0B2560]"
+                                }`}
+                              >
+                                <span className="flex items-center gap-2"><span aria-hidden>{c.icon}</span>{c.label}</span>
+                                <MdChevronRight size={18} className={i === megaCat ? "text-[#F5A623]" : "text-gray-300"} />
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Right: the highlighted category's services */}
+                        <div className="py-5 pl-8 flex flex-col">
+                          {cur ? (
+                            <>
+                              <div className="flex items-baseline justify-between gap-4 mb-3">
+                                <div>
+                                  <p className="text-base font-extrabold text-[#0B2560]">{cur.label}</p>
+                                  {cur.tagline && <p className="text-xs text-gray-500">{cur.tagline}</p>}
+                                </div>
+                                <Link href={`/${megaCity}/services/${cur.slug}`} className="text-xs font-bold text-[#0B2560] hover:text-[#F5A623] whitespace-nowrap">
+                                  View all {cur.services.length} →
+                                </Link>
+                              </div>
+                              <ul className="grid grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-1">
+                                {cur.services.slice(0, megaMax).map((sv) => (
+                                  <li key={sv.slug}>
+                                    <Link
+                                      href={`/${megaCity}/services/${cur.slug}/${sv.slug}`}
+                                      className="block py-2 text-sm text-gray-700 hover:text-[#0B2560] hover:translate-x-0.5 transition"
+                                    >
+                                      {sv.name}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                              {cur.services.length > megaMax && (
+                                <Link href={`/${megaCity}/services/${cur.slug}`} className="mt-2 text-sm font-semibold text-[#F5A623] hover:underline">
+                                  +{cur.services.length - megaMax} more in {cur.label}
+                                </Link>
+                              )}
+                            </>
+                          ) : megaData !== null ? (
+                            <p className="text-sm text-gray-400">No treatments listed yet.</p>
+                          ) : null}
+                          <div className="mt-auto pt-4 flex items-center gap-3">
+                            {megaMenu?.showBookCta !== false && (
+                              <Link
+                                href={megaMenu?.bookHref || "/book"}
+                                className="bg-[#0B2560] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:-translate-y-0.5 transition"
+                              >
+                                {megaMenu?.bookLabel || "Book Appointment"}
+                              </Link>
+                            )}
+                            <Link href={resolveHref(item)} className="text-sm font-semibold text-[#0B2560] hover:text-[#F5A623]">
+                              All services →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             const isActive = active === item.id;
             const linkClassName = `relative text-[13px] xl:text-[14px] font-semibold transition-all duration-200 whitespace-nowrap ${
               isActive ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
@@ -344,6 +519,71 @@ export default function Navbar({ navItems: navItemsProp }: { navItems?: NavItem[
                       {city}
                     </Link>
                   ))}
+                </div>
+              );
+            }
+
+            if (item.linkType === "services" && megaEnabled) {
+              const isOpen = mobileDropdown === item.id;
+              const cats = megaData || [];
+              return (
+                <div key={item.id}>
+                  <button
+                    onClick={() => setMobileDropdown(isOpen ? null : item.id)}
+                    aria-expanded={isOpen}
+                    className="min-h-11 flex items-center justify-between gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition w-full text-gray-700 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                  >
+                    <span>{item.label}</span>
+                    <span className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>▼</span>
+                  </button>
+                  {isOpen && (
+                    <div className="pl-3 pb-1">
+                      {megaData === null && <p className="px-3 py-2 text-sm text-gray-400">Loading…</p>}
+                      {cats.map((c) => {
+                        const catOpen = mobileCat === c.slug;
+                        return (
+                          <div key={c.slug}>
+                            <button
+                              onClick={() => setMobileCat(catOpen ? null : c.slug)}
+                              aria-expanded={catOpen}
+                              className="min-h-11 w-full flex items-center justify-between gap-2 text-sm font-semibold py-2 px-3 rounded-xl text-[#0B2560] hover:bg-[#f6faff]"
+                            >
+                              <span className="flex items-center gap-2"><span aria-hidden>{c.icon}</span>{c.label}</span>
+                              <span className={`text-[10px] text-gray-400 transition-transform ${catOpen ? "rotate-180" : ""}`}>▼</span>
+                            </button>
+                            {catOpen && (
+                              <div className="pl-6 border-l border-gray-100 ml-4 mb-1">
+                                {c.services.slice(0, megaMax).map((sv) => (
+                                  <Link
+                                    key={sv.slug}
+                                    href={`/${megaCity}/services/${c.slug}/${sv.slug}`}
+                                    onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
+                                    className="min-h-10 flex items-center text-sm py-2 px-3 rounded-lg text-gray-600 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                                  >
+                                    {sv.name}
+                                  </Link>
+                                ))}
+                                <Link
+                                  href={`/${megaCity}/services/${c.slug}`}
+                                  onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
+                                  className="min-h-10 flex items-center text-sm font-semibold py-2 px-3 text-[#F5A623]"
+                                >
+                                  View all {c.label} →
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <Link
+                        href={resolveHref(item)}
+                        onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
+                        className="min-h-11 flex items-center text-sm font-semibold py-2 px-3 text-[#0B2560]"
+                      >
+                        All services →
+                      </Link>
+                    </div>
+                  )}
                 </div>
               );
             }

@@ -46,12 +46,12 @@ const getCachedNavItems = unstable_cache(
     try {
       await connectDB();
       const settings = await getSettings();
-      return settings.navigation?.items ?? [];
+      return { items: settings.navigation?.items ?? [], megaMenu: settings.navigation?.megaMenu ?? null };
     } catch {
-      return [];
+      return { items: [], megaMenu: null };
     }
   },
-  ["public-nav-items"],
+  ["public-nav-items-v2"],
   { revalidate: 60, tags: ["settings"] }
 );
 
@@ -189,7 +189,7 @@ export default async function PublicLayout({
         schemaType={siteConfig.schemaType}
       />
       {topbar.visible && <TopBar data={topbar.data} siteConfig={siteConfig} />}
-      <Navbar navItems={navItems as any} />
+      <Navbar navItems={navItems.items as any} megaMenu={navItems.megaMenu as any} />
       <div className="mobile-sticky-offset lg:pb-0">{children}</div>
       <Footer data={footer} siteConfig={siteConfig} />
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
