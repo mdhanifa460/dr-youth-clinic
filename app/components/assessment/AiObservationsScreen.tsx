@@ -90,12 +90,14 @@ function AnalyzingProgress() {
 
 export default function AiObservationsScreen({
   goalLabel,
-  photoUrl,
+  photoUrls,
+  angles,
   disclaimerText,
   onDone,
 }: {
   goalLabel: string;
-  photoUrl: string;
+  photoUrls: string[];
+  angles?: string[];
   disclaimerText: string;
   onDone: (result: AiObservationsResult | null) => void;
 }) {
@@ -111,7 +113,7 @@ export default function AiObservationsScreen({
       const res = await fetch("/api/patient-observations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl, goalLabel, disclaimerAcknowledged: true }),
+        body: JSON.stringify({ photoUrls, angles, goalLabel, disclaimerAcknowledged: true }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Could not generate observations");

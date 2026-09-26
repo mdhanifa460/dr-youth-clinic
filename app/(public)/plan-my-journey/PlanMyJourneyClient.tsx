@@ -470,12 +470,13 @@ function PlanMyJourneyFlow({
           />
         )}
         {screen === "photo-capture" && (
-          <PhotoCaptureScreen goalLabel={goal ? goalMap[goal]?.label || "" : ""} onDone={handlePhotoCaptureDone} />
+          <PhotoCaptureScreen goalLabel={goal ? goalMap[goal]?.label || "" : ""} goalSlug={goal || ""} onDone={handlePhotoCaptureDone} />
         )}
-        {screen === "ai-observations" && photos[0] && (
+        {screen === "ai-observations" && photos.length > 0 && (
           <AiObservationsScreen
             goalLabel={goal ? goalMap[goal]?.label || "" : ""}
-            photoUrl={photos[0].url}
+            photoUrls={photos.map((p) => p.url)}
+            angles={photos.map((p) => p.angle)}
             disclaimerText={aiObservationsDisclaimer}
             onDone={handleAiObservationsDone}
           />

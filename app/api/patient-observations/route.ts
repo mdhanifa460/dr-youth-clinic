@@ -38,7 +38,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "AI Observations is currently unavailable" }, { status: 403 });
     }
 
-    const { photoUrl, goalLabel, disclaimerAcknowledged } = await req.json();
+    const body = await req.json();
+    const { goalLabel, disclaimerAcknowledged } = body;
+    // Accepts one photo (legacy `photoUrl`) or up to 4 guided-angle photos.
+    const rawUrls: unknown[] = Array.isArray(body.photoUrls) ? body.photoUrls : [body.photoUrl];
+    const photoUrls = rawUrls.filter((u): u is string => typeof u === "string").slice(0, 4);
+    const angles: string[] = Array.isArray(body.angles) ? body.angles.map((a: unknown) => String(a).slice(0, 30)) : [];
 
     // The UI gates the request button on this same checkbox, but a public
     // POST route can be called directly — the disclaimer acknowledgment is
@@ -52,24 +57,34 @@ export async function POST(req: NextRequest) {
     // at an arbitrary externally hosted image to burn the clinic's AI quota.
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const expectedPrefix = `https://res.cloudinary.com/${cloudName}/image/upload/`;
-    if (!photoUrl || typeof photoUrl !== "string" || !cloudName || !photoUrl.startsWith(expectedPrefix) || !photoUrl.includes("/dr-youth-clinic/assessment-photos/")) {
+    const validUrl = (u: string) =>
+      !!cloudName && u.startsWith(expectedPrefix) && u.includes("/dr-youth-clinic/assessment-photos/");
+    if (photoUrls.length === 0 || !photoUrls.every(validUrl)) {
       return NextResponse.json({ success: false, message: "A valid uploaded photo is required" }, { status: 400 });
     }
 
-    const imgRes = await fetch(toResizedUrl(photoUrl));
-    if (!imgRes.ok) throw new Error("Could not fetch the uploaded photo");
-    const contentType = imgRes.headers.get("content-type") || "image/jpeg";
-    const buffer = await imgRes.arrayBuffer();
-    if (buffer.byteLength > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ success: false, message: "Image too large to analyze" }, { status: 400 });
+    const imageBlocks: any[] = [];
+    let totalBytes = 0;
+    for (const u of photoUrls) {
+      const imgRes = await fetch(toResizedUrl(u));
+      if (!imgRes.ok) throw new Error("Could not fetch the uploaded photo");
+      const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+      const buffer = await imgRes.arrayBuffer();
+      totalBytes += buffer.byteLength;
+      if (buffer.byteLength > MAX_IMAGE_BYTES || totalBytes > MAX_IMAGE_BYTES * 2) {
+        return NextResponse.json({ success: false, message: "Image too large to analyze" }, { status: 400 });
+      }
+      imageBlocks.push({ type: "image", source: { type: "base64", media_type: contentType, data: Buffer.from(buffer).toString("base64") } });
     }
-    const base64 = Buffer.from(buffer).toString("base64");
+    const angleNote = photoUrls.length > 1
+      ? `\nThe ${photoUrls.length} photos are in order${angles.length ? `: ${angles.slice(0, photoUrls.length).join(", ")}` : ""}. Consider them together as views of the same person.`
+      : "";
 
     const safeGoalLabel = typeof goalLabel === "string" ? goalLabel.slice(0, 60) : "their goal";
 
     const prompt = `${CLINICAL_AI_GUARDRAILS}
 
-You are giving a PATIENT (not a doctor) general, friendly observations about their own photo, submitted as part of an AI-guided treatment journey for "${safeGoalLabel}" at DR Youth Clinic. This text goes directly to the patient, who has already seen and acknowledged that this is not a diagnosis.
+You are giving a PATIENT (not a doctor) general, friendly observations about their own photo(s), submitted as part of an AI-guided treatment journey for "${safeGoalLabel}" at DR Youth Clinic. This text goes directly to the patient, who has already seen and acknowledged that this is not a diagnosis.
 
 Write 2-3 short, warm, general sentences about what's visibly apparent in the photo — plain everyday language, never medical or clinical terminology.
 - Never name or imply a specific medical condition, disease, or diagnosis, even in hedged form.
@@ -78,19 +93,19 @@ Write 2-3 short, warm, general sentences about what's visibly apparent in the ph
 - Keep the tone encouraging and non-alarming — this should help the patient feel informed, never worried.
 - If the image is unclear, poorly lit, or doesn't show a usable skin/hair area, say so plainly and suggest a retake, instead of guessing at what it shows.
 
-Return ONLY the observations as 2-3 plain sentences — no bullet points, no headings, no disclaimer text (the disclaimer is already shown in the UI).`;
+Return ONLY the observations as 2-4 plain sentences — no bullet points, no headings, no disclaimer text (the disclaimer is already shown in the UI).${angleNote}`;
 
     const analysis = await generateChat(
       [
         {
           role: "user",
           content: [
-            { type: "image", source: { type: "base64", media_type: contentType, data: base64 } },
+            ...imageBlocks,
             { type: "text", text: prompt },
           ],
         },
       ],
-      { maxTokens: 250 }
+      { maxTokens: 300 }
     );
 
     return NextResponse.json({ success: true, data: { text: analysis } });
