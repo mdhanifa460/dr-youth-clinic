@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
@@ -28,6 +29,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const body = await req.json();
     const doctor = await (Doctor as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!doctor) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+    revalidateTag('doctors');
     return NextResponse.json({ success: true, data: doctor });
   } catch (error: any) {
     if (error.name === 'ValidationError') {
@@ -49,6 +51,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     if (doctor.photo?.publicId) await deleteImage(doctor.photo.publicId).catch(console.error);
     await (Doctor as any).findByIdAndDelete(params.id);
     removeChunk('doctor', params.id).catch(console.error);
+    revalidateTag('doctors');
     return NextResponse.json({ success: true, message: 'Doctor deleted' });
   } catch {
     return NextResponse.json({ success: false, message: 'Failed to delete doctor' }, { status: 500 });

@@ -3,9 +3,13 @@
 // See that file's header comment for why the shared logic lives there and
 // not in either page.tsx.
 import type { Metadata } from 'next';
-import { generateBlogDetailMetadata, renderBlogDetailPage } from '../blogDetailShared';
+import { generateBlogDetailMetadata, renderBlogDetailPage, getBlogStaticParams } from '../blogDetailShared';
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return (await getBlogStaticParams()).map(({ slug }) => ({ slug }));
+}
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   return generateBlogDetailMetadata(params.slug);

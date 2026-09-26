@@ -9,6 +9,7 @@
 // module, outside any route segment, is the fix, and is also just the
 // architecturally correct place for logic two routes both need.
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -33,7 +34,7 @@ import { BreadcrumbSchema, BlogPostingSchema, FAQSchema } from '@/app/components
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
-import { isBlogAtCity, getEffectiveBlogSeo, withCityInTitle } from '@/app/lib/blogSeo';
+import { isBlogAtCity, getBlogCities, getEffectiveBlogSeo, withCityInTitle } from '@/app/lib/blogSeo';
 
 function InlineConsultCta({ text }: { text?: string }) {
   return (
@@ -49,20 +50,34 @@ function InlineConsultCta({ text }: { text?: string }) {
   );
 }
 
-const getPost = cache(async (slug: string) => {
+// Build-time route list for both blog detail routes. WITHOUT generateStaticParams
+// a dynamic-segment page is rendered fresh on EVERY request on Vercel
+// (Cache-Control: private, no-store, X-Vercel-Cache: MISS, streamed loading
+// skeleton -> footer layout shift, ~1.5s TTFB) even with `revalidate` set;
+// declaring it (any list, even a partial one) turns on-demand ISR caching.
+// A DB hiccup during the build must not fail it — [] still enables ISR.
+export async function getBlogStaticParams(): Promise<{ slug: string; cities: string[] }[]> {
+  try {
+    await connectDB();
+    const posts = (await Blog.find({ active: true } as any).select('slug targetLocations').lean()) as any[];
+    return posts.filter((p) => p.slug).map((p) => ({ slug: p.slug, cities: getBlogCities(p) }));
+  } catch { return []; }
+}
+
+const getPost = cache(unstable_cache(async (slug: string) => {
   try {
     await connectDB();
     const post = await Blog.findOne({ slug, active: true } as any).lean();
     if (!post) return null;
     return JSON.parse(JSON.stringify(post));
   } catch { return null; }
-});
+}, ['blog-post-by-slug'], { revalidate: 300, tags: ['blog'] }));
 
 // `location`, when given, restricts related posts to ones that actually
 // target that city too — otherwise a related-post card on a location page
 // could link to a post that then 404s under that same location's /blog/
 // (renderBlogDetailPage's own isBlogAtCity guard below).
-async function getRelatedPosts(slug: string, category: string, location?: string) {
+const getRelatedPosts = unstable_cache(async (slug: string, category: string, location?: string) => {
   try {
     await connectDB();
     const locationFilter = location ? { targetLocations: location } : {};
@@ -75,9 +90,9 @@ async function getRelatedPosts(slug: string, category: string, location?: string
     }
     return JSON.parse(JSON.stringify(posts));
   } catch { return []; }
-}
+}, ['blog-related-posts'], { revalidate: 300, tags: ['blog'] });
 
-async function getReviewingDoctor(doctorId?: string) {
+const getReviewingDoctor = unstable_cache(async (doctorId?: string) => {
   if (!doctorId) return null;
   try {
     await connectDB();
@@ -85,7 +100,7 @@ async function getReviewingDoctor(doctorId?: string) {
     if (!doctor) return null;
     return JSON.parse(JSON.stringify(doctor));
   } catch { return null; }
-}
+}, ['blog-reviewing-doctor'], { revalidate: 300, tags: ['blog', 'doctors'] });
 
 // Shared by both /blog/[slug] (location omitted) and /[location]/blog/[slug]
 // (the new location-targeted route) — same reasoning as Service's single

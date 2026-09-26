@@ -6,13 +6,17 @@
 // for posts an admin explicitly opted in via targetLocations — it never
 // makes every post reachable under every city by default.
 import type { Metadata } from 'next';
-import { generateBlogDetailMetadata, renderBlogDetailPage } from '../../../blog/blogDetailShared';
+import { generateBlogDetailMetadata, renderBlogDetailPage, getBlogStaticParams } from '../../../blog/blogDetailShared';
 
 interface PageProps {
   params: { location: string; slug: string };
 }
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return (await getBlogStaticParams()).flatMap(({ slug, cities }) => cities.map((location) => ({ location, slug })));
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   return generateBlogDetailMetadata(params.slug, params.location);

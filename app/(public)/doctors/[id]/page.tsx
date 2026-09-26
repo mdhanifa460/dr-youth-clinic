@@ -34,7 +34,7 @@ const getCachedPageContent = unstable_cache(
   { revalidate: 300, tags: ['doctors-page'] }
 );
 
-async function getDoctorResults(doctorId: string) {
+const getDoctorResults = unstable_cache(async (doctorId: string) => {
   try {
     await connectDB();
     const docs = await (Result as any)
@@ -44,9 +44,9 @@ async function getDoctorResults(doctorId: string) {
       .lean();
     return JSON.parse(JSON.stringify(docs));
   } catch { return []; }
-}
+}, ['doctor-results'], { revalidate: 300, tags: ['doctors', 'results'] });
 
-const getDoctor = cache(async (id: string) => {
+const getDoctor = cache(unstable_cache(async (id: string) => {
   try {
     await connectDB();
     const doc = await (Doctor as any).findById(id).lean();
@@ -55,7 +55,17 @@ const getDoctor = cache(async (id: string) => {
   } catch {
     return null;
   }
-});
+}, ['doctor-by-id'], { revalidate: 300, tags: ['doctors'] }));
+
+// See getBlogStaticParams (blog/blogDetailShared.tsx): without this the page
+// is rendered fresh on every request instead of being ISR-cached.
+export async function generateStaticParams() {
+  try {
+    await connectDB();
+    const docs = (await Doctor.find({ active: true } as any).select('_id').lean()) as any[];
+    return docs.map((d) => ({ id: String(d._id) }));
+  } catch { return []; }
+}
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const doctor = await getDoctor(params.id);

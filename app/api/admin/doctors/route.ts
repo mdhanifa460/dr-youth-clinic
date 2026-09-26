@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
     const doctor = await Doctor.create(body);
+    revalidateTag('doctors');
     return NextResponse.json({ success: true, data: doctor }, { status: 201 });
   } catch (error: any) {
     if (error.name === 'ValidationError') {
