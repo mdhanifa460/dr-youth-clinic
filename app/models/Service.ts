@@ -191,6 +191,13 @@ const ServiceSchema = new Schema<IService>(
           metaDescription: { type: String, maxlength: 160 },
           urlSlug: { type: String, lowercase: true, match: /^[a-z0-9-]+$/ },
           isCustomized: { type: Boolean, default: false },
+          // City-specific copy, so this city's page isn't a near-copy of the
+          // others (Google skips near-duplicates). See app/lib/serviceSeo.ts.
+          localIntro: { type: String, maxlength: 1500 },
+          localFaq: {
+            type: [{ question: { type: String, maxlength: 200 }, answer: { type: String, maxlength: 1000 } }],
+            default: undefined,
+          },
         },
       ],
       default: undefined,

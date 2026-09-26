@@ -10,6 +10,8 @@ interface LocationSeoOverride {
   metaDescription: string;
   urlSlug: string;
   isCustomized: boolean;
+  localIntro?: string;
+  localFaq?: { question: string; answer: string }[];
 }
 
 const CITY_LABEL: Record<string, string> = {
@@ -156,6 +158,62 @@ export default function LocationSeoPanel({
                         placeholder={sharedSlug}
                         className="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3.5 space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Local intro for {CITY_LABEL[city] ?? city}{" "}
+                        <span className="text-gray-400 font-normal">{(override?.localIntro ?? "").length}/1500 (min 120 to count)</span>
+                      </label>
+                      <p className="text-[11px] text-gray-500 mb-1.5">
+                        Write 2–4 sentences that are genuinely specific to this branch (who treats it here, local patient concerns, how to reach the clinic). The city page is only indexed by Google once this is filled in — otherwise it is treated as a copy of the main city page.
+                      </p>
+                      <textarea
+                        value={override?.localIntro ?? ""}
+                        onChange={(e) => setOverride(city, { localIntro: e.target.value })}
+                        maxLength={1500}
+                        rows={4}
+                        className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-1.5">Local FAQs (optional)</p>
+                      {(override?.localFaq ?? []).map((f, i) => (
+                        <div key={i} className="space-y-1.5 mb-2.5">
+                          <input
+                            type="text"
+                            value={f.question}
+                            maxLength={200}
+                            placeholder="Question"
+                            onChange={(e) => setOverride(city, { localFaq: (override?.localFaq ?? []).map((x, j) => (j === i ? { ...x, question: e.target.value } : x)) })}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                          <textarea
+                            value={f.answer}
+                            maxLength={1000}
+                            rows={2}
+                            placeholder="Answer"
+                            onChange={(e) => setOverride(city, { localFaq: (override?.localFaq ?? []).map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)) })}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setOverride(city, { localFaq: (override?.localFaq ?? []).filter((_, j) => j !== i) })}
+                            className="text-[11px] font-bold text-gray-400 hover:text-red-500"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setOverride(city, { localFaq: [...(override?.localFaq ?? []), { question: "", answer: "" }] })}
+                        className="text-xs font-bold text-[#0B2560]"
+                      >
+                        + Add FAQ
+                      </button>
                     </div>
                   </div>
 

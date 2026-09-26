@@ -45,8 +45,10 @@ import { resolveInterestCategory } from '@/app/lib/personalization';
 import TreatmentStepsList from '@/app/components/TreatmentStepsList';
 import RecoveryTimeline from '@/app/components/RecoveryTimeline';
 import ServiceStickyDesktopCta from '@/app/components/ServiceStickyDesktopCta';
-import { getServiceCities, getEffectiveSeo, getEffectiveSlug } from '@/app/lib/serviceSeo';
+import { getServiceCities, getEffectiveSeo, getEffectiveSlug, getLocalContent, isCityPageIndexable } from '@/app/lib/serviceSeo';
 import { getCachedCategories } from '@/app/lib/getCachedCategories';
+import { LocationContent } from '@/app/models/LocationContent';
+import CityClinicSection from '@/app/components/CityClinicSection';
 
 export const revalidate = 300;
 
@@ -128,6 +130,23 @@ async function getLocationDoctors(location: string) {
       .sort({ order: 1 }).limit(3).lean() as Promise<any[]>;
   } catch { return []; }
 }
+
+const getCachedClinicInfo = unstable_cache(
+  async (location: string) => {
+    try {
+      await connectDB();
+      const doc = await (LocationContent as any)
+        .findOne({ location })
+        .select('clinicInfo.address clinicInfo.phone clinicInfo.hours googleMapsUrl')
+        .lean();
+      return doc
+        ? JSON.parse(JSON.stringify({ ...(doc.clinicInfo || {}), googleMapsUrl: doc.googleMapsUrl || '' }))
+        : null;
+    } catch { return null; }
+  },
+  ['service-page-clinic-info'],
+  { revalidate: 300, tags: ['location-content'] }
+);
 
 async function getServiceResults(serviceId: string) {
   try {
@@ -223,6 +242,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: seo.metaDescription || `Book ${svc.name} at DR Youth Clinic ${city}. Expert dermatologists, proven results.`,
     keywords: svc.keywords?.join(', '),
     alternates: { canonical: `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}` },
+    // Near-copy of the main city's page until this city has its own local
+    // content — see isCityPageIndexable in app/lib/serviceSeo.ts.
+    ...(isCityPageIndexable(svc, params.location.toLowerCase()) ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       title: seo.metaTitle || svc.name,
       description: seo.metaDescription || '',
@@ -318,7 +340,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
   if (svc.category.toLowerCase() !== catSlug) notFound();
 
-  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos, serviceBanners, documentedResults] = await Promise.all([
+  const [related, doctors, reviews, otherLocations, siteConfig, referencedDoctors, relatedLinks, referencedVideos, serviceBanners, documentedResults, clinicInfo] = await Promise.all([
     getRelatedServices(params.location, svc.category, params.slug),
     getLocationDoctors(params.location),
     getServiceReviews(params.location, svc.name),
@@ -334,6 +356,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     // silently broke banner matching for any service with a city override.
     resolveBanner({ page: 'service', location: params.location, service: params.slug }),
     getServiceResults(svc._id),
+    getCachedClinicInfo(params.location.toLowerCase()),
   ]);
 
   // svc.category is the DB value (e.g. "Skin"), catBySlug.dbKey is the same
@@ -985,6 +1008,16 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             </div>
           </section>
         )}
+
+        <CityClinicSection
+          serviceName={svc.name}
+          cityName={cityName}
+          clinic={clinicInfo}
+          doctorNames={doctors.map((d: any) => d.name).filter(Boolean)}
+          localIntro={getLocalContent(svc, params.location.toLowerCase()).intro}
+          localFaq={getLocalContent(svc, params.location.toLowerCase()).faq}
+          bookHref={`/book?location=${params.location}`}
+        />
 
         {/* ── RELATED TREATMENTS ── */}
         {related.length > 0 && (

@@ -20,6 +20,8 @@ interface LocationSeoOverride {
   metaDescription: string;
   urlSlug: string;
   isCustomized: boolean;
+  localIntro?: string;
+  localFaq?: { question: string; answer: string }[];
 }
 
 interface FormData {
@@ -117,6 +119,8 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             metaDescription: l.metaDescription ?? "",
             urlSlug: l.urlSlug ?? "",
             isCustomized: !!l.isCustomized,
+            localIntro: l.localIntro ?? "",
+            localFaq: (l.localFaq ?? []).map((f: any) => ({ question: f.question ?? "", answer: f.answer ?? "" })),
           })),
           idealFor: initialData.idealFor ?? [],
           whyChooseUs: initialData.whyChooseUs ?? [],

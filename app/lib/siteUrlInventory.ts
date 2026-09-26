@@ -7,7 +7,7 @@ import { Story } from '@/app/models/Story';
 import { Result } from '@/app/models/Result';
 import { Video } from '@/app/models/Video';
 import { Course } from '@/app/models/Course';
-import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
+import { getServiceCities, getEffectiveSlug, isCityPageIndexable } from '@/app/lib/serviceSeo';
 import { getBlogCities } from '@/app/lib/blogSeo';
 
 // The current site's complete real-page URL inventory — extracted out of
@@ -107,6 +107,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
       const cities = getServiceCities(s);
       return cities.map((city): SiteUrlEntry => ({
         path: `/${city}/services/${s.category.toLowerCase()}/${getEffectiveSlug(s, city)}`,
+        excludeFromSitemap: !isCityPageIndexable(s, city),
         lastModified: s.updatedAt ? new Date(s.updatedAt) : undefined,
         changeFrequency: 'weekly',
         priority: 0.8,

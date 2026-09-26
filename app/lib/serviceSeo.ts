@@ -10,6 +10,8 @@ export interface ServiceLocationSeoLike {
   metaDescription?: string;
   urlSlug?: string;
   isCustomized?: boolean;
+  localIntro?: string;
+  localFaq?: { question: string; answer: string }[];
 }
 
 // Minimal shape needed to resolve which cities a service targets — callers
@@ -62,4 +64,31 @@ export function getEffectiveSlug(svc: ServiceSeoShapeLike, city: string): string
 /** True if this service is shown at the given city at all. */
 export function isServiceAtCity(svc: ServiceLocationShapeLike, city: string): boolean {
   return getServiceCities(svc).includes(city);
+}
+
+/** Minimum length of a city intro to count as real, city-specific content. */
+export const MIN_LOCAL_INTRO_CHARS = 120;
+
+/** City-specific intro/FAQ for one city, if an admin wrote any. */
+export function getLocalContent(svc: { locationSeo?: ServiceLocationSeoLike[] }, city: string) {
+  const o = svc.locationSeo?.find((l) => l.location === city);
+  const intro = (o?.localIntro || '').trim();
+  const faq = (o?.localFaq || []).filter((f) => f.question?.trim() && f.answer?.trim());
+  return { intro, faq, hasLocalContent: intro.length >= MIN_LOCAL_INTRO_CHARS };
+}
+
+/**
+ * The four city versions of one treatment share ~90% of their text, which
+ * Google treats as near-duplicates ("Discovered – currently not indexed").
+ * A city page is indexable if it has its own written local content, or if it
+ * is the service's primary city (Chennai when offered there, otherwise the
+ * first city) — so a treatment is never left with no indexable page at all.
+ * CITY_PAGE_NOINDEX=off restores indexing for every city page.
+ */
+export function isCityPageIndexable(svc: ServiceLocationShapeLike & { locationSeo?: ServiceLocationSeoLike[] }, city: string): boolean {
+  if (process.env.CITY_PAGE_NOINDEX === 'off') return true;
+  const cities = getServiceCities(svc);
+  if (cities.length <= 1) return true;
+  const primary = cities.includes('chennai') ? 'chennai' : cities[0];
+  return city === primary || getLocalContent(svc, city).hasLocalContent;
 }
