@@ -21,7 +21,10 @@ export type BannerTemplateType =
   // layout every other template but "before-after" uses) — added
   // specifically so Offer banners have a full-image option, not just the
   // existing right-aligned circular image.
-  | "full-image";
+  | "full-image"
+  // Image-only poster: the designed artwork (text baked in) is the whole
+  // banner, in a rounded card — no text overlay, whole card is the link.
+  | "poster";
 
 export interface CTAData {
   label: string;
@@ -55,6 +58,19 @@ export interface BannerTemplateDef {
 }
 
 export const BANNER_TEMPLATES: BannerTemplateDef[] = [
+  {
+    type: "poster",
+    label: "Poster (Image Only)",
+    icon: "🎴",
+    description: "The designed ad creative is the banner — upload finished artwork (headline, price, offer baked in) and it shows edge to edge in a rounded card, clickable, with no text laid over it. Best for campaign banners made in Canva/Photoshop.",
+    defaultData: {
+      headline: "Campaign banner",
+      subtitle: "",
+      description: "",
+      primaryCTA: { label: "", href: "/book" },
+      secondaryCTA: { label: "", href: "" },
+    },
+  },
   {
     type: "full-image",
     label: "Full Image",

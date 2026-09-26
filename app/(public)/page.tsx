@@ -1,3 +1,4 @@
+import { getEffectiveSlug } from '@/app/lib/serviceSeo';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
@@ -332,6 +333,38 @@ const getCachedTrustStats = unstable_cache(
 
 // Real active-service counts per category, for the homepage's category
 // cards — never fabricated, always reflects what's actually bookable.
+// Per-category list of bookable services (name + effective city slug) for the
+// homepage cards' hover quick-menu. Chennai is the homepage's fixed default
+// city (see resolvedLocation), so the slugs resolve for that city.
+const getCachedQuickServices = unstable_cache(
+  async (city: string) => {
+    try {
+      await connectDB();
+      const [svcs, categories] = await Promise.all([
+        (Service as any).find({
+          status: 'active',
+          $or: [{ targetLocations: city }, { targetLocations: { $exists: false }, location: { $in: [city, 'all'] } }],
+        }).select('name category urlSlug locationSeo targetLocations location').sort({ createdAt: 1 }).limit(200).lean(),
+        getCachedCategories(),
+      ]);
+      const slugByDb: Record<string, string> = {};
+      for (const c of categories) slugByDb[c.dbKey] = c.slug;
+      const out: Record<string, { name: string; slug: string }[]> = {};
+      for (const sv of svcs as any[]) {
+        const catSlug = slugByDb[sv.category];
+        const slug = getEffectiveSlug(sv, city);
+        if (!catSlug || !slug || !sv.name) continue;
+        (out[catSlug] ||= []).push({ name: sv.name, slug });
+      }
+      return out;
+    } catch {
+      return {};
+    }
+  },
+  ['homepage-quick-services'],
+  { revalidate: 300, tags: ['services'] }
+);
+
 const getCachedServiceCategoryCounts = unstable_cache(
   async () => {
     try {
@@ -463,7 +496,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories, quickServices] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -480,6 +513,7 @@ export default async function Home() {
     getCachedTestimonialsRotateMs(),
     getSettings(),
     getCachedCategories(),
+    getCachedQuickServices(resolvedLocation),
   ]);
 
   // Content Layout Engine — additive zone, opt-in site-wide via
@@ -569,7 +603,7 @@ export default async function Home() {
           if (s.key === 'services') {
             return (
               <div key={s.key}>
-                <ServicesCards data={enriched[s.key]} location={resolvedLocation} categoryCounts={serviceCategoryCounts} categories={serviceCategories as any} />
+                <ServicesCards data={enriched[s.key]} location={resolvedLocation} categoryCounts={serviceCategoryCounts} categories={serviceCategories as any} quickServices={quickServices as any} contactPhone={settings.contact?.publicPhone || ''} contactWhatsApp={settings.contact?.publicWhatsApp || ''} />
               </div>
             );
           }

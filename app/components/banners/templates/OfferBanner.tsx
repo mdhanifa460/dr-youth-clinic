@@ -16,10 +16,43 @@ function formatValidity(endDate: string | null): string {
 // this codebase to justify the client/server-boundary complexity for v1.
 export default function OfferBanner({ banner }: { banner: BannerDoc }) {
   const validity = formatValidity(banner.endDate);
+  const hasImage = !!banner.desktopImage?.url;
 
   return (
     <div className="relative bg-[#0B2560] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 grid md:grid-cols-2 gap-8 items-center py-12 sm:py-16 md:py-20">
+      {/* Image is a real full-bleed banner photo, not a thumbnail: on mobile
+          it heads the banner edge to edge and fades into the navy below; on
+          md+ it fills the right ~55% of the banner and fades in from the
+          left so the copy sits on solid navy. */}
+      {hasImage && (
+        <>
+          <div className="relative md:hidden">
+            <BannerHeroImage
+              desktopImage={banner.desktopImage}
+              mobileImage={banner.mobileImage}
+              alt={banner.headline || "Offer"}
+              aspectRatio="4/3"
+              className="w-full"
+            />
+            <ImageOverlay overlay={banner.overlay} />
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0B2560] to-transparent" />
+          </div>
+          <div className="hidden md:block absolute inset-y-0 right-0 w-[58%]">
+            <BannerHeroImage
+              desktopImage={banner.desktopImage}
+              mobileImage={banner.desktopImage}
+              alt={banner.headline || "Offer"}
+              aspectRatio="16/9"
+              className="!aspect-auto w-full h-full"
+              priority
+            />
+            <ImageOverlay overlay={banner.overlay} />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0B2560] via-[#0B2560]/50 to-transparent" />
+          </div>
+        </>
+      )}
+
+      <div className={`relative max-w-7xl mx-auto px-4 md:px-6 lg:px-8 ${hasImage ? "pb-10 -mt-6 md:mt-0 md:py-20 lg:py-24" : "py-12 sm:py-16 md:py-20"}`}>
         <div className="max-w-xl space-y-4">
           {banner.subtitle && (
             <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-xs sm:text-sm font-bold uppercase tracking-widest">
@@ -46,21 +79,6 @@ export default function OfferBanner({ banner }: { banner: BannerDoc }) {
             )}
           </div>
         </div>
-
-        {banner.desktopImage?.url && (
-          <div className="relative mx-auto md:mx-0">
-            <div className="relative w-56 h-56 sm:w-72 sm:h-72 rounded-full ring-4 ring-[#F5A623]/60 shadow-2xl">
-              <BannerHeroImage
-                desktopImage={banner.desktopImage}
-                mobileImage={banner.mobileImage}
-                alt={banner.headline || "Offer"}
-                aspectRatio="1/1"
-                className="rounded-full w-full h-full"
-              />
-              <ImageOverlay overlay={banner.overlay} />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

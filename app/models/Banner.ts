@@ -219,7 +219,7 @@ const BannerSchema = new Schema<IBanner>(
     templateType: {
       type: String,
       required: true,
-      enum: ["premium-hero", "offer", "before-after", "service", "doctor", "clinic-experience", "glass-hero", "full-image"],
+      enum: ["premium-hero", "offer", "before-after", "service", "doctor", "clinic-experience", "glass-hero", "full-image", "poster"],
     },
     headline: { type: String, default: "" },
     subtitle: { type: String, default: "" },

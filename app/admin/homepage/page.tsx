@@ -292,6 +292,28 @@ function ImgField({
 }
 
 // ─── Generic helpers ──────────────────────────────────────
+// Small labelled on/off switch used by the Quick Menu editor.
+function SwitchField({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-start justify-between gap-4 cursor-pointer">
+      <span>
+        <span className="block text-xs font-semibold text-gray-700">{label}</span>
+        {hint && <span className="block text-[11px] text-gray-400">{hint}</span>}
+      </span>
+      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-4 w-4 accent-[#0B2560]" />
+    </label>
+  );
+}
+
+function NumberField({ label, value, onChange, min = 0, max = 10 }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-semibold text-gray-600 mb-1">{label}</span>
+      <input type="number" min={min} max={max} value={value} onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value) || 0)))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+    </label>
+  );
+}
+
 function TextField({ label, value, onChange, multiline = false }: {
   label: string; value: string; onChange: (v: string) => void; multiline?: boolean;
 }) {
@@ -917,6 +939,49 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                 />
               </div>
             ))}
+          </div>
+          <div className="border border-gray-200 rounded-xl p-4 space-y-4">
+            <div>
+              <p className="text-xs font-bold text-gray-500">Hover Quick Menu</p>
+              <p className="text-xs text-gray-400">
+                On desktop, hovering a category card slides up a menu with its top services and quick actions;
+                on touch devices the card shows a compact Details / Book row instead.
+              </p>
+            </div>
+            <SwitchField label="Enable quick menu" value={d.quickMenu?.enabled !== false} onChange={(v) => set('quickMenu.enabled', v)} />
+            <SwitchField label="List services in the hover menu" hint="Real, active services for the category (Chennai slugs)." value={d.quickMenu?.showServices !== false} onChange={(v) => set('quickMenu.showServices', v)} />
+            <div className="grid grid-cols-2 gap-3">
+              <NumberField label="Min services to show the list" value={d.quickMenu?.minServices ?? 2} onChange={(v) => set('quickMenu.minServices', v)} />
+              <NumberField label="Max services listed" value={d.quickMenu?.maxServices ?? 4} onChange={(v) => set('quickMenu.maxServices', v)} />
+            </div>
+            <div className="border-t border-gray-100 pt-3 space-y-3">
+              <SwitchField label="“View Details” button" hint="Goes to the category page." value={d.quickMenu?.details?.enabled !== false} onChange={(v) => set('quickMenu.details.enabled', v)} />
+              <TextField label="Details label" value={d.quickMenu?.details?.label} onChange={(v) => set('quickMenu.details.label', v)} />
+            </div>
+            <div className="border-t border-gray-100 pt-3 space-y-3">
+              <SwitchField label="“Book Appointment” button" value={d.quickMenu?.book?.enabled !== false} onChange={(v) => set('quickMenu.book.enabled', v)} />
+              <div className="grid sm:grid-cols-2 gap-3">
+                <TextField label="Book label" value={d.quickMenu?.book?.label} onChange={(v) => set('quickMenu.book.label', v)} />
+                <TextField label="Book link (default /book)" value={d.quickMenu?.book?.href} onChange={(v) => set('quickMenu.book.href', v)} />
+              </div>
+            </div>
+            <div className="border-t border-gray-100 pt-3 space-y-3">
+              <SwitchField label="“Contact” button" value={d.quickMenu?.contact?.enabled !== false} onChange={(v) => set('quickMenu.contact.enabled', v)} />
+              <div className="grid sm:grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-xs font-semibold text-gray-600 mb-1">Contact action</span>
+                  <select value={d.quickMenu?.contact?.type || 'call'} onChange={(e) => set('quickMenu.contact.type', e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                    <option value="call">Call (Settings → public phone)</option>
+                    <option value="whatsapp">WhatsApp (Settings → public WhatsApp)</option>
+                    <option value="link">Custom link</option>
+                  </select>
+                </label>
+                <TextField label="Contact label" value={d.quickMenu?.contact?.label} onChange={(v) => set('quickMenu.contact.label', v)} />
+              </div>
+              {d.quickMenu?.contact?.type === 'link' && (
+                <TextField label="Contact link" value={d.quickMenu?.contact?.href} onChange={(v) => set('quickMenu.contact.href', v)} />
+              )}
+            </div>
           </div>
           <div className="border border-gray-200 rounded-xl p-4">
             <p className="text-xs font-bold text-gray-500 mb-3">Diagnosis Panel</p>

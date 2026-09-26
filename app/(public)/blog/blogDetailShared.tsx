@@ -278,12 +278,15 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
         </section>
 
         {/* ── ARTICLE BODY ── */}
-        <section className="bg-white py-8 md:py-20">
+        <section className="bg-white py-8 md:py-20 overflow-x-clip">
           <div className="max-w-6xl mx-auto px-5 sm:px-6">
-            <div className="grid lg:grid-cols-[1fr_280px] gap-8 lg:gap-12 xl:gap-16 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-8 lg:gap-12 xl:gap-16 items-start">
 
               {/* Article content */}
-              <article>
+              {/* min-w-0: a grid item defaults to min-width:auto, so one wide
+                  child (table/embed/long URL) stretched the whole column past
+                  the mobile viewport and clipped the text on the right. */}
+              <article className="min-w-0">
                 <div className="lg:hidden">
                   <MobileArticleToc headings={headings} />
                 </div>
