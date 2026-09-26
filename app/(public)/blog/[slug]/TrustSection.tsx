@@ -30,7 +30,7 @@ export default function TrustSection({
         <div className="flex items-start gap-4">
           {doctor.photo?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={doctor.photo.url} alt={doctor.name} className="w-14 h-14 rounded-2xl object-cover shrink-0" />
+            <img src={doctor.photo.url} alt={doctor.name} loading="lazy" decoding="async" width={56} height={56} className="w-14 h-14 rounded-2xl object-cover shrink-0" />
           ) : (
             <div className="w-14 h-14 rounded-2xl bg-[#0B2560] flex items-center justify-center text-white font-extrabold text-lg shrink-0">
               {doctor.name.split(' ').map((w) => w[0]).slice(0, 2).join('')}

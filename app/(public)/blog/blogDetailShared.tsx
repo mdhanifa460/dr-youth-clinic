@@ -12,7 +12,7 @@ import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import FillImageWithFallback from '@/app/components/media/FillImageWithFallback';
+import Image from 'next/image';
 import { Calendar, Clock, ArrowLeft, Tag, ShieldCheck } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
@@ -218,9 +218,17 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
                   a 70vh photo. md+: same element becomes the absolute
                   full-bleed cinematic background it always was. */}
               <div className="relative order-2 aspect-video w-full md:order-none md:absolute md:inset-0 md:aspect-auto">
-                <FillImageWithFallback
+                {/* Server-rendered next/image (NOT a client wrapper): a
+                    client component loses the <link rel=preload> that
+                    `priority` emits, which pushed this LCP image behind
+                    other preloads (live mobile LCP hit 12s). The title is
+                    already the page's <h1>, so the image is decorative —
+                    empty alt also means a dead Cloudinary URL renders
+                    nothing instead of a broken-image icon. */}
+                <Image
                   src={post.coverImage.url}
-                  alt={post.title}
+                  alt=""
+                  aria-hidden="true"
                   fill
                   priority
                   sizes="100vw"
