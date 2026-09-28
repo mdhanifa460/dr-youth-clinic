@@ -3,7 +3,11 @@ import { test, expect } from '@playwright/test';
 const PAGES = [
   { path: '/', minTitle: 'DR Youth Clinic' },
   { path: '/about', minTitle: 'About' },
-  { path: '/blog', minTitle: 'Blog' },
+  // The blog listing's real title is "Medical Knowledge Center | DR Youth
+  // Clinic" — a deliberate brand choice (see app/(public)/blog/page.tsx),
+  // not an oversight. This test previously expected "Blog" and had been
+  // failing on every run since that title was set.
+  { path: '/blog', minTitle: 'Medical Knowledge Center' },
   { path: '/doctors', minTitle: 'Doctor' },
   { path: '/faqs', minTitle: 'FAQ' },
   { path: '/offers', minTitle: 'Offer' },

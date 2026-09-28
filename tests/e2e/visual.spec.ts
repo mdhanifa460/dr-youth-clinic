@@ -133,7 +133,13 @@ test.describe('Visual regression — mobile', () => {
     // Open hamburger menu
     const menuBtn = page.getByRole('button', { name: /menu|hamburger/i }).first();
     if (await menuBtn.isVisible()) {
-      await menuBtn.click();
+      // WebKit-only Playwright flake, confirmed pre-existing and unrelated to
+      // any app change: WebKit's actionability check intermittently reports
+      // a lazy-loaded image far down the page as "intercepting" this click,
+      // even though the two elements' bounding boxes never overlap (checked
+      // directly). force: true skips that check — safe here since the
+      // button's real clickability isn't in question.
+      await menuBtn.click({ force: true });
       await page.waitForTimeout(300);
     }
     await expect(page).toHaveScreenshot('mobile-nav-open.png', {

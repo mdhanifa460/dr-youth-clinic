@@ -50,7 +50,12 @@ test.describe('FAQ page', () => {
 
   test('CTA block has booking link', async ({ page }) => {
     await page.goto('/faqs');
-    await expect(page.getByRole('link', { name: /book free consultation/i })).toBeVisible();
+    // The CTA's exact wording ("Book Consultation" vs "Book Free
+    // Consultation") is admin-configurable (Settings.consultationCta,
+    // driven by consultationFree — see app/lib/siteConfig.ts) and was
+    // "Book Consultation" (no "Free") in this environment, so this had been
+    // failing regardless of whether the CTA was actually present.
+    await expect(page.getByRole('link', { name: /book.*consultation/i })).toBeVisible();
   });
 
   test('has FAQ structured data in page', async ({ page }) => {

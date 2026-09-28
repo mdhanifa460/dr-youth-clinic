@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { CATEGORY_COLOR } from '@/app/lib/blogCategories';
+import FocalImage from '@/app/components/media/FocalImage';
 
 export default function BlogInsights({ data }: { data: any }) {
   const {
@@ -37,18 +37,26 @@ export default function BlogInsights({ data }: { data: any }) {
             const categoryBg = CATEGORY_COLOR[post.category] || 'bg-[#0B2560]';
             return (
               <Link key={post._id ?? i} href={href} className="bg-white rounded-3xl overflow-hidden shadow-sm ring-1 ring-[#e8eff7] hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(11,37,96,0.1)] transition-all duration-300 group">
-                <div className="relative aspect-[16/10] bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] overflow-hidden">
-                  {(post.coverImage?.url || post.image?.url) ? (
-                    <Image src={post.coverImage?.url || post.image?.url} alt={post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover md:group-hover:scale-105 transition duration-500" />
-                  ) : (
-                    <div className="h-full flex items-center justify-center"><span className="text-5xl opacity-40">📝</span></div>
-                  )}
+                {/* FocalImage (not a plain next/image) — a dead Cloudinary URL
+                    (confirmed live on this exact section: a post's cover
+                    404ing) otherwise renders the browser's broken-image icon
+                    at `fill` size, which on mobile sat over the hamburger
+                    menu button and silently ate every tap on it. */}
+                <FocalImage
+                  image={post.coverImage?.url ? post.coverImage : post.image?.url ? { url: post.image.url } : null}
+                  aspectRatio="16/10"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  alt={post.title}
+                  className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]"
+                  imgClassName="md:group-hover:scale-105 transition duration-500"
+                  fallbackEmoji="📝"
+                >
                   {post.category && (
                     <span className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full ${categoryBg}`}>
                       {post.category}
                     </span>
                   )}
-                </div>
+                </FocalImage>
                 <div className="p-5 md:p-6">
                   <h3 className="font-bold text-[#0B2560] text-base leading-snug line-clamp-2 group-hover:text-[#2A6BA8] transition">{post.title}</h3>
                   <p className="text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>
