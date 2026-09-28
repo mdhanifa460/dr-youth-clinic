@@ -14,7 +14,7 @@
 // own videos — see the usage note at the bottom of this file.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sora, IBM_Plex_Mono } from 'next/font/google';
-import Image from 'next/image';
+import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import { Play, X } from 'lucide-react';
 import { FaYoutube, FaInstagram } from 'react-icons/fa';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
@@ -307,11 +307,14 @@ function VideoCard({ item, gradient, onOpen }: { item: WatchMediaItem; gradient:
       className="group text-left bg-white rounded-[18px] overflow-hidden border border-[#DCE1EC] cursor-pointer transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_18px_34px_rgba(15,27,76,0.12)]"
     >
       <div className={`relative aspect-video overflow-hidden ${item.thumbnail?.url ? '' : `bg-gradient-to-br ${gradient}`}`}>
-        {item.thumbnail?.url ? (
-          <Image src={item.thumbnail.url} alt={item.thumbnail.alt || item.title} fill sizes="(max-width: 860px) 50vw, 33vw" className="object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.10),transparent_55%)]" />
-        )}
+        <ImageWithFallback
+          src={item.thumbnail?.url}
+          alt={item.thumbnail?.alt || item.title}
+          fill
+          sizes="(max-width: 860px) 50vw, 33vw"
+          className="object-cover"
+          fallback={<div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.10),transparent_55%)]" />}
+        />
 
         <span className="absolute top-3 left-3 z-[2] flex items-center gap-[5px] bg-white/95 pl-[7px] pr-[10px] py-[5px] rounded-full text-[11px] font-bold text-[#111]">
           {item.platform === 'youtube' ? <FaYoutube size={14} className="text-red-600" /> : <FaInstagram size={13} className="text-[#0F1B4C]" />}
@@ -356,9 +359,14 @@ function ReelCard({ item, gradient, onOpen }: { item: WatchMediaItem; gradient: 
       onClick={onOpen}
       className={`text-left snap-start shrink-0 basis-[178px] w-[178px] aspect-[9/16] rounded-2xl relative overflow-hidden cursor-pointer transition-transform duration-300 border border-[#0F1B4C]/[0.08] hover:-translate-y-1.5 ${item.thumbnail?.url ? '' : `bg-gradient-to-b ${gradient}`}`}
     >
-      {item.thumbnail?.url && (
-        <Image src={item.thumbnail.url} alt={item.thumbnail.alt || item.title} fill sizes="178px" className="object-cover" />
-      )}
+      <ImageWithFallback
+        src={item.thumbnail?.url}
+        alt={item.thumbnail?.alt || item.title}
+        fill
+        sizes="178px"
+        className="object-cover"
+        fallback={null}
+      />
 
       <div className="absolute top-2 left-2 right-2 z-[3] flex gap-1">
         {Array.from({ length: segments }).map((_, i) => (

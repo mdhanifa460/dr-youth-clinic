@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import Link from 'next/link';
 
 interface FounderData {
@@ -44,13 +44,18 @@ export default function FounderSection({ data }: { data: FounderData }) {
         <div className="relative order-2 lg:order-1 mx-auto lg:mx-0 max-w-sm w-full">
           <div className="absolute -inset-3 bg-gradient-to-br from-[#0B2560]/10 to-[#F5A623]/15 rounded-[2.5rem] -z-10 rotate-2" />
           <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-black/5">
-            {photo?.url ? (
-              <Image src={photo.url} alt={name} fill sizes="(max-width: 1024px) 90vw, 420px" className="object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] flex items-center justify-center text-6xl">
-                👨‍⚕️
-              </div>
-            )}
+            <ImageWithFallback
+              src={photo?.url}
+              alt={name}
+              fill
+              sizes="(max-width: 1024px) 90vw, 420px"
+              className="object-cover"
+              fallback={
+                <div className="w-full h-full bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] flex items-center justify-center text-6xl">
+                  👨‍⚕️
+                </div>
+              }
+            />
           </div>
 
           {credentials.length > 0 && (
@@ -85,7 +90,7 @@ export default function FounderSection({ data }: { data: FounderData }) {
           <div className="flex items-center gap-4 mb-8">
             {signature?.url && (
               <div className="relative h-12 w-32 shrink-0">
-                <Image src={signature.url} alt={`${name} signature`} fill sizes="128px" className="object-contain object-left" />
+                <ImageWithFallback src={signature.url} alt={`${name} signature`} fill sizes="128px" className="object-contain object-left" fallback={null} />
               </div>
             )}
             <div>

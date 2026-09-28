@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import {
   MapPin, Clock, Phone, Star, ChevronRight,
   Users, Stethoscope, Navigation, CalendarCheck, LayoutGrid, LocateFixed,
@@ -207,19 +207,18 @@ export default function HomepageLocations({ data }: { data: any }) {
                   >
                     {/* Thumbnail */}
                     <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-gray-100">
-                      {cembed.heroImageUrl ? (
-                        <Image
-                          src={cembed.heroImageUrl}
-                          alt={city}
-                          width={56}
-                          height={56}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <div className={`w-full h-full bg-gradient-to-br ${CITY_GRADIENTS[key] || 'from-blue-500 to-indigo-600'} flex items-center justify-center`}>
-                          <span className="text-white font-bold text-lg">{city[0]}</span>
-                        </div>
-                      )}
+                      <ImageWithFallback
+                        src={cembed.heroImageUrl}
+                        alt={city}
+                        width={56}
+                        height={56}
+                        className="object-cover w-full h-full"
+                        fallback={
+                          <div className={`w-full h-full bg-gradient-to-br ${CITY_GRADIENTS[key] || 'from-blue-500 to-indigo-600'} flex items-center justify-center`}>
+                            <span className="text-white font-bold text-lg">{city[0]}</span>
+                          </div>
+                        }
+                      />
                     </div>
 
                     {/* Info */}
@@ -285,13 +284,17 @@ export default function HomepageLocations({ data }: { data: any }) {
             <div className="bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] overflow-hidden flex flex-col">
               {/* Hero image */}
               <div className="relative h-44 w-full shrink-0">
-                {heroImg ? (
-                  <Image src={heroImg} alt={`DR Youth Clinic ${loc?.name ?? activeKey}`} fill className="object-cover" />
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${CITY_GRADIENTS[activeKey] || 'from-blue-500 to-indigo-700'} flex items-center justify-center`}>
-                    <p className="text-white font-bold text-xl tracking-wide">DR Youth Clinic</p>
-                  </div>
-                )}
+                <ImageWithFallback
+                  src={heroImg}
+                  alt={`DR Youth Clinic ${loc?.name ?? activeKey}`}
+                  fill
+                  className="object-cover"
+                  fallback={
+                    <div className={`w-full h-full bg-gradient-to-br ${CITY_GRADIENTS[activeKey] || 'from-blue-500 to-indigo-700'} flex items-center justify-center`}>
+                      <p className="text-white font-bold text-xl tracking-wide">DR Youth Clinic</p>
+                    </div>
+                  }
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 <span className="absolute bottom-3 left-4 text-white text-xs font-bold bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
                   {loc?.name ?? activeKey}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -38,14 +38,15 @@ function ServiceCard({ r, location, showPriceOnCards, arrows }: {
   return (
     <Link href={`/${location}/services/${r.category.toLowerCase()}/${r.effectiveSlug || r.urlSlug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all hover:-translate-y-1 block">
       <div className="relative h-44 overflow-hidden">
-        {r.heroImage?.url ? (
-          <>
-            <Image src={r.heroImage.url} alt={r.name} fill sizes="33vw" className="object-cover group-hover:scale-105 transition duration-500" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] flex items-center justify-center text-4xl">{CATEGORY_ICON[r.category] ?? '🏥'}</div>
-        )}
+        <ImageWithFallback
+          src={r.heroImage?.url}
+          alt={r.name}
+          fill
+          sizes="33vw"
+          className="object-cover group-hover:scale-105 transition duration-500"
+          fallback={<div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] flex items-center justify-center text-4xl">{CATEGORY_ICON[r.category] ?? '🏥'}</div>}
+        />
+        {r.heroImage?.url && <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />}
         {arrows && (
           <>
             <button

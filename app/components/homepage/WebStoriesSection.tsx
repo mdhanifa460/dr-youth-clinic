@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import { ChevronRight, Play } from 'lucide-react';
 
 interface StoryItem {
@@ -44,11 +44,14 @@ export default function WebStoriesSection({ data }: { data: Data }) {
           {stories.map((s) => (
             <Link key={s._id} href={`/web-stories/${s.slug}`} className="group shrink-0 w-32 md:w-36">
               <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
-                {s.coverImage?.url ? (
-                  <Image src={s.coverImage.url} alt={s.title} fill sizes="150px" className="object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl opacity-70">{s.storyType?.icon || '📱'}</div>
-                )}
+                <ImageWithFallback
+                  src={s.coverImage?.url}
+                  alt={s.title}
+                  fill
+                  sizes="150px"
+                  className="object-cover"
+                  fallback={<div className="w-full h-full flex items-center justify-center text-3xl opacity-70">{s.storyType?.icon || '📱'}</div>}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                   <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center">

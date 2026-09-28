@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import Link from 'next/link';
 import { ArrowRight, Stethoscope, FileText, CalendarCheck, Phone, MessageCircle } from 'lucide-react';
 
@@ -111,11 +111,14 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
                 key={cat.slug}
                 className="group relative overflow-hidden rounded-3xl min-h-[260px] md:min-h-[320px] shadow-[0_12px_35px_rgba(11,37,96,0.1)] ring-1 ring-white/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(11,37,96,0.16)] focus-within:-translate-y-1"
               >
-                {image?.url ? (
-                  <Image src={image.url} alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                ) : (
-                  <div className={`absolute inset-0 bg-gradient-to-br ${cat.heroGrad}`} />
-                )}
+                <ImageWithFallback
+                  src={image?.url}
+                  alt=""
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  fallback={<div className={`absolute inset-0 bg-gradient-to-br ${cat.heroGrad}`} />}
+                />
                 <div className={`absolute inset-0 bg-gradient-to-t ${image?.url ? 'from-black/75 via-black/30' : 'from-black/55 via-black/10'} to-transparent`} />
                 <Link href={catHref} aria-label={`${cat.label} — explore treatments`} className="absolute inset-0 z-0" />
                 <span className="absolute top-4 left-4 text-3xl md:text-4xl opacity-90 pointer-events-none">{cat.icon}</span>
