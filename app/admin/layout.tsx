@@ -94,7 +94,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const requiredModule = moduleForPath(pathname);
-  const allowed = !requiredModule || canAccess(user.role, requiredModule);
+  const allowed = !requiredModule || canAccess(user.role, requiredModule, "view", user.permissionOverrides);
   // The dashboard itself already shows its own (richer) stat cards —
   // showing the strip there too would just duplicate them.
   const isDashboardRoot = pathname === "/admin";

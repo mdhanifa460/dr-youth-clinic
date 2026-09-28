@@ -17,11 +17,11 @@ export async function GET() {
   try {
     await connectDB();
     const [services, landingPages, videos, courses, animationAssets] = await Promise.all([
-      canAccess(user.role, 'services') ? (Service as any).countDocuments({ status: 'draft' }) : 0,
-      canAccess(user.role, 'landing-pages') ? (LandingPage as any).countDocuments({ status: 'draft' }) : 0,
-      canAccess(user.role, 'videos') ? (Video as any).countDocuments({ status: 'draft' }) : 0,
-      canAccess(user.role, 'courses') ? (Course as any).countDocuments({ status: 'draft' }) : 0,
-      canAccess(user.role, 'animation-library') ? (AnimationAsset as any).countDocuments({ status: 'draft' }) : 0,
+      canAccess(user.role, 'services', 'view', user.permissionOverrides) ? (Service as any).countDocuments({ status: 'draft' }) : 0,
+      canAccess(user.role, 'landing-pages', 'view', user.permissionOverrides) ? (LandingPage as any).countDocuments({ status: 'draft' }) : 0,
+      canAccess(user.role, 'videos', 'view', user.permissionOverrides) ? (Video as any).countDocuments({ status: 'draft' }) : 0,
+      canAccess(user.role, 'courses', 'view', user.permissionOverrides) ? (Course as any).countDocuments({ status: 'draft' }) : 0,
+      canAccess(user.role, 'animation-library', 'view', user.permissionOverrides) ? (AnimationAsset as any).countDocuments({ status: 'draft' }) : 0,
     ]);
     return NextResponse.json({ services, landingPages, videos, courses, animationAssets });
   } catch {

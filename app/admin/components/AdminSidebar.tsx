@@ -219,7 +219,7 @@ export default function AdminSidebar({ user }: { user: AdminUserPublic }) {
   };
 
   const visibleGroups = NAV_GROUPS
-    .map((g) => ({ ...g, items: g.items.filter((n) => canAccess(role, n.module)) }))
+    .map((g) => ({ ...g, items: g.items.filter((n) => canAccess(role, n.module, "view", user.permissionOverrides)) }))
     .filter((g) => g.items.length > 0);
 
   return (

@@ -130,12 +130,33 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   },
 };
 
-export function canAccess(role: AdminRole, module: AdminModule, minLevel: AccessLevel = 'view'): boolean {
-  const level = ROLE_PERMISSIONS[role]?.[module] ?? 'none';
+// Sparse — only modules an owner/super admin has explicitly overridden for
+// this ONE person appear here; every other module still falls through to
+// their role's default. Keyed by AdminModule but stored loosely (Partial)
+// since it round-trips through Mongo/JSON with no schema-level enum guard
+// of its own — validated server-side in the team PUT route instead.
+export type PermissionOverrides = Partial<Record<AdminModule, AccessLevel>>;
+
+export function canAccess(
+  role: AdminRole,
+  module: AdminModule,
+  minLevel: AccessLevel = 'view',
+  overrides?: PermissionOverrides
+): boolean {
+  const level = overrides?.[module] ?? ROLE_PERMISSIONS[role]?.[module] ?? 'none';
   if (minLevel === 'full') return level === 'full';
   if (minLevel === 'view') return level !== 'none';
   return level !== 'none';
 }
+
+/** The module list a permission-override editor iterates over. */
+export const ALL_MODULES: AdminModule[] = [
+  'dashboard', 'intelligence', 'bookings', 'leads', 'services', 'doctors',
+  'homepage', 'locations', 'offers', 'results', 'reviews', 'blog', 'seo',
+  'landing-pages', 'settings', 'team', 'videos', 'ai-assessment', 'journey',
+  'legal', 'ai', 'stories', 'faqs', 'banners', 'courses',
+  'animation-library', 'booking-success', 'integrations', 'analytics',
+];
 
 export const ROLE_LABELS: Record<AdminRole, string> = {
   super_admin: '👑 Super Admin',

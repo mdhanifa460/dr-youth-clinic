@@ -12,7 +12,7 @@ import { getAdminUser, hashPassword, checkPassword } from "@/app/lib/adminAuth";
 export async function GET() {
   const me = await getAdminUser();
   if (!me) return NextResponse.json({ success: false, message: "Unauthorised" }, { status: 401 });
-  return NextResponse.json({ success: true, data: { role: me.role, name: me.name, email: me.email } });
+  return NextResponse.json({ success: true, data: { _id: me._id, role: me.role, name: me.name, email: me.email } });
 }
 
 export async function PUT(req: NextRequest) {

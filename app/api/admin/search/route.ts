@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     const tasks: Promise<Result[]>[] = [];
 
-    if (canAccess(user.role, 'services')) {
+    if (canAccess(user.role, 'services', 'view', user.permissionOverrides)) {
       tasks.push(
         (Service as any).find({ name: rx }).select('name location category').limit(LIMIT).lean()
           .then((docs: any[]) => docs.map((d) => ({
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
           })))
       );
     }
-    if (canAccess(user.role, 'doctors')) {
+    if (canAccess(user.role, 'doctors', 'view', user.permissionOverrides)) {
       tasks.push(
         (Doctor as any).find({ name: rx }).select('name title').limit(LIMIT).lean()
           .then((docs: any[]) => docs.map((d) => ({
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
           })))
       );
     }
-    if (canAccess(user.role, 'blog')) {
+    if (canAccess(user.role, 'blog', 'view', user.permissionOverrides)) {
       tasks.push(
         (Blog as any).find({ title: rx }).select('title').limit(LIMIT).lean()
           .then((docs: any[]) => docs.map((d) => ({
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
           })))
       );
     }
-    if (canAccess(user.role, 'landing-pages')) {
+    if (canAccess(user.role, 'landing-pages', 'view', user.permissionOverrides)) {
       tasks.push(
         (LandingPage as any).find({ title: rx }).select('title slug').limit(LIMIT).lean()
           .then((docs: any[]) => docs.map((d) => ({
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
           })))
       );
     }
-    if (canAccess(user.role, 'offers')) {
+    if (canAccess(user.role, 'offers', 'view', user.permissionOverrides)) {
       tasks.push(
         (Offer as any).find({ title: rx }).select('title').limit(LIMIT).lean()
           .then((docs: any[]) => docs.map((d) => ({
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
           })))
       );
     }
-    if (canAccess(user.role, 'videos')) {
+    if (canAccess(user.role, 'videos', 'view', user.permissionOverrides)) {
       tasks.push(
         (Video as any).find({ title: rx }).select('title').limit(LIMIT).lean()
           .then((docs: any[]) => docs.map((d) => ({

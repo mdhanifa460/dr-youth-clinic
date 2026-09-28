@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
 import AdminSession from "../models/AdminSession";
 import AdminUser from "../models/AdminUser";
-import { type AdminRole, type AdminModule, type AccessLevel, canAccess } from "./permissions";
+import { type AdminRole, type AdminModule, type AccessLevel, type PermissionOverrides, canAccess } from "./permissions";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 8;
@@ -271,6 +271,7 @@ export type AdminUserPublic = {
   name: string;
   role: AdminRole;
   assignedClinics: string[];
+  permissionOverrides?: PermissionOverrides;
 };
 
 export const getAdminUser = cache(async (): Promise<AdminUserPublic | null> => {
@@ -279,7 +280,7 @@ export const getAdminUser = cache(async (): Promise<AdminUserPublic | null> => {
   try {
     await connectDB();
     const user = await (AdminUser as any).findById(session.adminUserId)
-      .select("email name role assignedClinics isActive")
+      .select("email name role assignedClinics isActive permissionOverrides")
       .lean();
     if (!user || !user.isActive) return null;
     return {
@@ -288,6 +289,7 @@ export const getAdminUser = cache(async (): Promise<AdminUserPublic | null> => {
       name: user.name || "Admin",
       role: user.role as AdminRole,
       assignedClinics: user.assignedClinics ?? ["all"],
+      permissionOverrides: user.permissionOverrides ?? undefined,
     };
   } catch {
     return null;
@@ -300,7 +302,7 @@ export async function requirePermission(
 ): Promise<NextResponse | null> {
   const user = await getAdminUser();
   if (!user) return unauthorized();
-  if (!canAccess(user.role, module, minLevel)) {
+  if (!canAccess(user.role, module, minLevel, user.permissionOverrides)) {
     return NextResponse.json(
       { success: false, message: "You don't have permission to do this. Contact your admin if you need access." },
       { status: 403 }

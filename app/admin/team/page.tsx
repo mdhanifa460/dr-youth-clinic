@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ALL_ROLES, ROLE_LABELS, ROLE_COLORS, type AdminRole } from "@/app/lib/permissions";
+import { ALL_ROLES, ALL_MODULES, ROLE_LABELS, ROLE_COLORS, ROLE_PERMISSIONS, type AdminRole, type AdminModule, type AccessLevel, type PermissionOverrides } from "@/app/lib/permissions";
 
 type TeamMember = {
   _id: string;
@@ -12,7 +12,21 @@ type TeamMember = {
   isActive: boolean;
   createdAt: string;
   lastLoginAt?: string;
+  permissionOverrides?: PermissionOverrides;
 };
+
+const MODULE_LABELS: Record<AdminModule, string> = {
+  dashboard: "Dashboard", intelligence: "Intelligence", bookings: "Bookings",
+  leads: "Leads", services: "Services", doctors: "Doctors", homepage: "Homepage",
+  locations: "Locations", offers: "Offers", results: "Results", reviews: "Reviews",
+  blog: "Blog", seo: "SEO", "landing-pages": "Landing Pages", settings: "Settings",
+  team: "Team", videos: "Videos", "ai-assessment": "AI Assessment", journey: "Journey",
+  legal: "Legal", ai: "AI", stories: "Stories", faqs: "FAQs", banners: "Banners",
+  courses: "Courses", "animation-library": "Animation Library",
+  "booking-success": "Booking Success", integrations: "Integrations", analytics: "Analytics",
+};
+
+const LEVEL_LABELS: Record<AccessLevel, string> = { full: "Full", view: "View only", none: "No access" };
 
 const EMPTY_FORM = {
   name: "",
@@ -20,6 +34,7 @@ const EMPTY_FORM = {
   role: "receptionist" as AdminRole,
   password: "",
   assignedClinics: ["all"] as string[],
+  permissionOverrides: {} as PermissionOverrides,
 };
 
 export default function TeamPage() {
@@ -30,6 +45,7 @@ export default function TeamPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [me, setMe] = useState<{ _id: string; role: AdminRole } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -42,7 +58,10 @@ export default function TeamPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetch("/api/admin/profile").then((r) => r.json()).then((d) => { if (d.success) setMe(d.data); }).catch(() => {});
+  }, []);
 
   function openCreate() {
     setEditing(null);
@@ -53,7 +72,7 @@ export default function TeamPage() {
 
   function openEdit(m: TeamMember) {
     setEditing(m);
-    setForm({ name: m.name, email: m.email, role: m.role, password: "", assignedClinics: m.assignedClinics ?? ["all"] });
+    setForm({ name: m.name, email: m.email, role: m.role, password: "", assignedClinics: m.assignedClinics ?? ["all"], permissionOverrides: { ...(m.permissionOverrides ?? {}) } });
     setError("");
     setShowModal(true);
   }
@@ -67,6 +86,13 @@ export default function TeamPage() {
       const body: Record<string, any> = { name: form.name, role: form.role, assignedClinics: form.assignedClinics };
       if (!editing) { body.email = form.email; body.password = form.password; }
       else if (form.password) { body.password = form.password; }
+      // Only sent when the override editor was actually shown for this edit
+      // (create has no overrides yet; self-editing as non-super_admin hides
+      // it entirely) — otherwise an unrelated save (e.g. just fixing your
+      // own name) would re-submit your own unchanged overrides and trip the
+      // server's self-edit guard for no reason.
+      const overridesEditable = !!editing && (me?.role === "super_admin" || editing._id !== me?._id);
+      if (overridesEditable) body.permissionOverrides = form.permissionOverrides;
 
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
@@ -131,6 +157,14 @@ export default function TeamPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[m.role]}`}>
                       {ROLE_LABELS[m.role]}
                     </span>
+                    {m.permissionOverrides && Object.keys(m.permissionOverrides).length > 0 && (
+                      <span
+                        className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700"
+                        title={`Custom access on: ${Object.keys(m.permissionOverrides).join(", ")}`}
+                      >
+                        Custom
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-500 capitalize">
                     {(m.assignedClinics ?? ["all"]).join(", ")}
@@ -239,6 +273,50 @@ export default function TeamPage() {
                 </div>
               </div>
             </div>
+
+            {editing && (me?.role === "super_admin" || editing._id !== me?._id) && (
+              <div className="border-t pt-4">
+                <p className="text-xs font-semibold text-gray-600 mb-1">Custom Permissions</p>
+                <p className="text-[11px] text-gray-400 mb-3">
+                  Overrides {ROLE_LABELS[form.role]}&apos;s default access for {editing.name} only. Leave
+                  everything on &quot;Role default&quot; unless this person genuinely needs an exception.
+                </p>
+                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                  {ALL_MODULES.map((mod) => {
+                    const roleDefault = ROLE_PERMISSIONS[form.role]?.[mod] ?? "none";
+                    const current = form.permissionOverrides[mod] ?? "";
+                    return (
+                      <div key={mod} className="flex items-center justify-between gap-3">
+                        <span className="text-xs text-gray-600">{MODULE_LABELS[mod]}</span>
+                        <select
+                          className="border rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={current}
+                          onChange={(e) => {
+                            const value = e.target.value as AccessLevel | "";
+                            setForm((f) => {
+                              const next = { ...f.permissionOverrides };
+                              if (value === "") delete next[mod];
+                              else next[mod] = value;
+                              return { ...f, permissionOverrides: next };
+                            });
+                          }}
+                        >
+                          <option value="">Role default ({LEVEL_LABELS[roleDefault]})</option>
+                          <option value="full">Full</option>
+                          <option value="view">View only</option>
+                          <option value="none">No access</option>
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {editing && me && editing._id === me._id && me.role !== "super_admin" && (
+              <p className="text-[11px] text-gray-400 border-t pt-4">
+                You can&apos;t change your own custom permissions — ask a super admin.
+              </p>
+            )}
 
             <div className="flex gap-3 pt-2">
               <button
