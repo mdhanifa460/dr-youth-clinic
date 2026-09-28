@@ -34,7 +34,7 @@ import { BreadcrumbSchema, BlogPostingSchema, FAQSchema } from '@/app/components
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
-import { isBlogAtCity, getBlogCities, getEffectiveBlogSeo, withCityInTitle } from '@/app/lib/blogSeo';
+import { isBlogAtCity, getBlogCities, getEffectiveBlogSeo, isBlogCityPageCanonicalSelf, withCityInTitle } from '@/app/lib/blogSeo';
 
 function InlineConsultCta({ text }: { text?: string }) {
   return (
@@ -122,16 +122,22 @@ export async function generateBlogDetailMetadata(slug: string, location?: string
     seo.metaTitle = withCityInTitle(seo.metaTitle, location.charAt(0).toUpperCase() + location.slice(1));
   }
   const ogImage = post.ogImage?.url || post.coverImage?.url;
-  const canonicalPath = location ? `/${location}/blog/${slug}` : `/blog/${slug}`;
+  // Unlike the equivalent /[location]/services/[category]/[slug] precedent
+  // (each city's copy is its own canonical page), a blog post's BODY is
+  // never city-specific — only title/description can be. A city URL with no
+  // real per-city customization is a byte-for-byte duplicate at a different
+  // path, so it canonicals back to the generic /blog/[slug] URL instead of
+  // itself; once an admin customizes it (isBlogCityPageCanonicalSelf), it
+  // earns its own canonical. post.canonicalUrl (an explicit admin override)
+  // only applies to the generic, location-less URL.
+  const selfCanonical = !location || isBlogCityPageCanonicalSelf(post, location);
+  const canonicalPath = selfCanonical
+    ? (location ? `/${location}/blog/${slug}` : `/blog/${slug}`)
+    : `/blog/${slug}`;
   return {
     title: seo.metaTitle,
     description: seo.metaDescription,
     keywords: post.keywords?.length ? post.keywords : undefined,
-    // Self-canonical for the location URL too, matching the exact
-    // precedent set by /[location]/services/[category]/[slug] — each
-    // city's copy of shared content is treated as its own canonical page,
-    // not folded into the generic one. post.canonicalUrl (an explicit
-    // admin override) only applies to the generic, location-less URL.
     alternates: { canonical: (!location && post.canonicalUrl) || `${SITE_URL}${canonicalPath}` },
     openGraph: {
       title: seo.metaTitle,

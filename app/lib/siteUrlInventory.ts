@@ -8,7 +8,7 @@ import { Result } from '@/app/models/Result';
 import { Video } from '@/app/models/Video';
 import { Course } from '@/app/models/Course';
 import { getServiceCities, getEffectiveSlug, isCityPageIndexable } from '@/app/lib/serviceSeo';
-import { getBlogCities } from '@/app/lib/blogSeo';
+import { getBlogCities, isBlogCityPageCanonicalSelf } from '@/app/lib/blogSeo';
 
 // The current site's complete real-page URL inventory — extracted out of
 // app/sitemap.ts (which still owns the SITE_URL prefix / MetadataRoute
@@ -82,7 +82,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
       .select('_id name updatedAt')
       .lean() as Promise<any[]>,
     Blog.find({ active: true } as any)
-      .select('slug title updatedAt targetLocations canonicalUrl')
+      .select('slug title updatedAt targetLocations canonicalUrl metaTitle metaDescription excerpt locationSeo')
       .lean() as Promise<any[]>,
     LandingPage.find({ status: 'published' } as any)
       .select('slug updatedAt')
@@ -143,6 +143,9 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .flatMap((p) =>
       getBlogCities(p).map((city): SiteUrlEntry => ({
         path: `/${city}/blog/${p.slug}`,
+        // A duplicate of the generic /blog/[slug] page until this city has
+        // its own customized title/description — see blogDetailShared.tsx.
+        excludeFromSitemap: !isBlogCityPageCanonicalSelf(p, city),
         lastModified: p.updatedAt ? new Date(p.updatedAt) : undefined,
         changeFrequency: 'monthly',
         priority: 0.7,
