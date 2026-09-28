@@ -79,15 +79,32 @@ export function withCityInTitle(title: string, cityName: string): string {
   return `${stripped} in ${cityName}`;
 }
 
+function normalizeTitle(t: string): string {
+  return t.replace(/\s*[|\u2013-]\s*DR Youth Clinic\s*$/i, '').trim().toLowerCase();
+}
+
 /**
  * A post's body is never city-specific (only title/description can be, via
  * `locationSeo`) — so a city blog URL with no per-city SEO override is a
  * byte-for-byte duplicate of the generic /blog/[slug] page at a different
  * path. Confirmed live: several posts had both /blog/x and /[city]/blog/x
- * indexable with an identical title, each competing with the other for the
- * same ranking. This city URL should stay self-canonical (worth indexing on
- * its own) only once an admin has actually customized it for that city.
+ * indexable, `isCustomized: true` on the city override, yet the SAME
+ * title on both — an admin had opened the per-city panel (which sets
+ * isCustomized as soon as any field is touched) without actually writing
+ * different copy, so the flag alone doesn't mean the page earned its own
+ * identity. This city URL stays self-canonical only when its EFFECTIVE
+ * title or description is actually different text from the generic page's,
+ * not just "customized" in name.
  */
 export function isBlogCityPageCanonicalSelf(post: BlogSeoShapeLike, city: string): boolean {
-  return getEffectiveBlogSeo(post, city).isCustomized;
+  const override = getEffectiveBlogSeo(post, city);
+  if (!override.isCustomized) return false;
+  const shared = {
+    metaTitle: post.metaTitle || post.title,
+    metaDescription: post.metaDescription || post.excerpt || post.title,
+  };
+  return (
+    normalizeTitle(override.metaTitle) !== normalizeTitle(shared.metaTitle) ||
+    override.metaDescription.trim().toLowerCase() !== shared.metaDescription.trim().toLowerCase()
+  );
 }
