@@ -320,8 +320,14 @@ export default function LandingPagesAdminPage() {
                       {page.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-sm font-semibold text-gray-600 hidden lg:table-cell">
-                    {(page.analytics?.visitors ?? 0).toLocaleString()}
+                  <td className="px-6 py-4 text-right hidden lg:table-cell">
+                    <Link
+                      href={`/admin/landing-pages/${page._id}/visits`}
+                      className="text-sm font-semibold text-gray-600 hover:text-[#0B2560] hover:underline underline-offset-2"
+                      title="See the individual visits behind this count"
+                    >
+                      {(page.analytics?.visitors ?? 0).toLocaleString()}
+                    </Link>
                   </td>
                   <td className="px-6 py-4 text-right hidden lg:table-cell">
                     <span className="text-sm font-semibold text-[#0B2560]">

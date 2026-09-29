@@ -1650,10 +1650,10 @@ export default function LandingPageBuilder() {
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Analytics</label>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-gray-50 rounded-xl p-2 text-center">
-                      <p className="text-base font-extrabold text-[#0B2560]">{lp.analytics?.visitors ?? 0}</p>
+                    <Link href={`/admin/landing-pages/${id}/visits`} className="bg-gray-50 rounded-xl p-2 text-center hover:bg-[#f6faff] transition" title="See the individual visits behind this count">
+                      <p className="text-base font-extrabold text-[#0B2560] hover:underline underline-offset-2">{lp.analytics?.visitors ?? 0}</p>
                       <p className="text-[9px] text-gray-400 uppercase tracking-wider">Visitors</p>
-                    </div>
+                    </Link>
                     <div className="bg-gray-50 rounded-xl p-2 text-center">
                       <p className="text-base font-extrabold text-[#0B2560]">{lp.leadsLive ?? lp.analytics?.leads ?? 0}</p>
                       <p className="text-[9px] text-gray-400 uppercase tracking-wider">Leads</p>
