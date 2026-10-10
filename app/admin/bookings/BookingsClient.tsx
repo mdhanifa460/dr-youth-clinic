@@ -129,6 +129,15 @@ const SOURCE_META: Record<string, { label: string; icon: string; color: string }
   "landing-page": { label: "Landing Page", icon: "🎯", color: "bg-violet-50 text-violet-600" },
   instagram: { label: "Instagram",  icon: "📸", color: "bg-pink-50 text-pink-600"    },
   facebook:  { label: "Facebook",   icon: "🔵", color: "bg-indigo-50 text-indigo-600"},
+  // A real, honest value — not a gap to fix. A Meta ad click's own fbclid
+  // genuinely can't tell Facebook from Instagram (see
+  // inferSourceMediumFromClickId's own comment); this is what every such
+  // lead is captured as now, instead of the old, actively wrong default
+  // of always guessing "Facebook". Meta Lead Form native submissions
+  // (app/lib/leadSource/metaWebhookProcessing.ts) already used this exact
+  // value independently — this gives it a real badge instead of falling
+  // through to the generic capitalized-source fallback.
+  meta:      { label: "Meta (FB/IG)", icon: "📘", color: "bg-indigo-50 text-indigo-600"},
   google:    { label: "Google",     icon: "🔍", color: "bg-yellow-50 text-yellow-700"},
   referral:  { label: "Referral",   icon: "👥", color: "bg-green-50 text-green-600"  },
   walk_in:   { label: "Walk-in",    icon: "🚶", color: "bg-orange-50 text-orange-600"},
@@ -187,15 +196,37 @@ const CHANNEL_META: Record<string, { label: string; icon: string }> = {
   website:           { label: "Website",           icon: "🌐" },
   whatsapp:           { label: "WhatsApp",           icon: "💬" },
   google_lead_form:  { label: "Google Lead Form",   icon: "📝" },
+  // Was missing entirely — found during this audit. A real,
+  // conversionChannel-confirmed Meta Lead Form submission
+  // (app/lib/leadSource/metaWebhookProcessing.ts sets this exact value)
+  // had nowhere to match in this map, so channelLabel() fell all the way
+  // through to the generic "Website (assumed — not recorded)" fallback —
+  // not just vague, actively wrong for a channel the system was already
+  // certain about.
+  meta_lead_form:    { label: "Meta Lead Form",     icon: "📘" },
   justdial:           { label: "JustDial",           icon: "📇" },
   indiamart:          { label: "IndiaMART",          icon: "🛒" },
   other:              { label: "Other",              icon: "📌" },
 };
 function channelLabel(channel?: string, source?: string): { label: string; icon: string; assumed: boolean } {
   if (channel && CHANNEL_META[channel]) return { ...CHANNEL_META[channel], assumed: false };
-  // No conversionChannel recorded (a booking that predates this field, or
-  // a creation path this phase didn't touch) — infer the most likely
-  // channel from `source` for DISPLAY only; never written back to the DB.
+  // A real, written conversionChannel value with no hand-picked label yet
+  // — e.g. a lead-source connector provider added after this map was last
+  // updated (Admin -> Lead Sources lets an admin create one for any new
+  // vendor; conversionChannel is written as that provider's raw key, see
+  // webhookProcessing.ts's own comment). Same "never silently relabel a
+  // real value as something else" fix getSourceMeta() already got —
+  // without this, a genuinely-recorded channel this map doesn't know
+  // about yet fell all the way through to "Website (assumed — not
+  // recorded)", which is worse than just showing the real value: it's
+  // confidently wrong about something the system actually knew.
+  if (channel) {
+    return { label: channel.charAt(0).toUpperCase() + channel.slice(1).replace(/_/g, ' '), icon: "📌", assumed: false };
+  }
+  // No conversionChannel recorded at all (a booking that predates this
+  // field, or a creation path this phase didn't touch) — infer the most
+  // likely channel from `source` for DISPLAY only; never written back to
+  // the DB.
   if (source && CHANNEL_META[source]) return { ...CHANNEL_META[source], assumed: true };
   return { ...CHANNEL_META.website, assumed: true };
 }
@@ -827,16 +858,31 @@ function BookingDrawer({
                       <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Medium</p>
                       <p className="text-amber-900 font-semibold capitalize">{booking.utmMedium || "—"}</p>
                     </div>
-                    {(booking.utmCampaign || booking.providerMeta?.campaignId) && (
-                      <div className="col-span-2">
-                        <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Campaign</p>
-                        {booking.utmCampaign ? (
-                          <p className="text-amber-900 font-semibold">{booking.utmCampaign}</p>
-                        ) : (
-                          <p className="text-amber-700 text-xs italic">Name not available yet — matched by ID in the Meta Ads reference below</p>
-                        )}
-                      </div>
-                    )}
+                    {(() => {
+                      // Same "explain the blank, don't just show nothing"
+                      // fix as Search Term below — a real paid click
+                      // (clickId present) with no campaign name captured
+                      // is a different, equally real situation from a
+                      // Meta Lead Form's name pending ID lookup, and both
+                      // are different again from "there's genuinely no
+                      // campaign at all" (organic/direct/referral —
+                      // correctly shows nothing).
+                      if (!booking.utmCampaign && !booking.providerMeta?.campaignId && !booking.clickId) return null;
+                      return (
+                        <div className="col-span-2">
+                          <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Campaign</p>
+                          {booking.utmCampaign ? (
+                            <p className="text-amber-900 font-semibold">{booking.utmCampaign}</p>
+                          ) : booking.providerMeta?.campaignId ? (
+                            <p className="text-amber-700 text-xs italic">Name not available yet — matched by ID in the Meta Ads reference below</p>
+                          ) : (
+                            <p className="text-amber-700 text-[11px] italic leading-snug">
+                              Not captured on this click — the ad account's URL doesn&apos;t pass a campaign name yet. Ask them to add utm_campaign to the Final URL suffix to capture this going forward.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {(() => {
                       const ch = channelLabel(booking.conversionChannel, booking.source);
                       return (
@@ -848,22 +894,61 @@ function BookingDrawer({
                         </div>
                       );
                     })()}
-                    {(booking.utmTerm || booking.utmContent) && (
-                      <>
-                        {booking.utmTerm && (
-                          <div>
-                            <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Search Term / Keyword</p>
-                            <p className="text-amber-900 font-mono truncate">{booking.utmTerm}</p>
-                          </div>
-                        )}
-                        {booking.utmContent && (
-                          <div>
-                            <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Ad / Content Variant</p>
-                            <p className="text-amber-900 font-mono truncate">{booking.utmContent}</p>
-                          </div>
-                        )}
-                      </>
-                    )}
+                    {(() => {
+                      // Reported live: "search term missing for some leads,
+                      // problem is some have not came" — a blank field with
+                      // no explanation reads as broken/inconsistent tracking.
+                      // It almost never is — these are two DIFFERENT real
+                      // reasons, and only one of them is actually fixable:
+                      //
+                      // 1. Organic (unpaid) search — Google/Bing have not
+                      //    shared real search terms with ANY website since
+                      //    ~2013 (search went HTTPS-only; shows up
+                      //    everywhere, including Google's own Search
+                      //    Console, as "(not provided)"). No code fix
+                      //    exists for this, on this site or any other.
+                      // 2. A paid Google Ads click whose own Final URL
+                      //    doesn't include the keyword — gclid/wbraid/
+                      //    gbraid is still present (the click IS being
+                      //    tracked), but utm_term was never appended, so
+                      //    there's genuinely nothing captured. This one IS
+                      //    fixable, on the ad account's side: add
+                      //    utm_term={'{'}keyword{'}'} to the campaign's Final
+                      //    URL suffix going forward.
+                      const source = (booking.utmSource || booking.source || "").toLowerCase();
+                      const medium = (booking.utmMedium || "").toLowerCase();
+                      const SEARCH_ENGINES = ["google", "bing", "yahoo", "duckduckgo", "baidu"];
+                      const isOrganicSearch = medium === "organic" && SEARCH_ENGINES.includes(source);
+                      const isPaidGoogleClick = ["gclid", "gbraid", "wbraid"].includes(booking.clickIdType || "");
+                      const showTermRow = !!booking.utmTerm || isOrganicSearch || isPaidGoogleClick;
+
+                      return (
+                        <>
+                          {showTermRow && (
+                            <div>
+                              <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Search Term / Keyword</p>
+                              {booking.utmTerm ? (
+                                <p className="text-amber-900 font-mono truncate">{booking.utmTerm}</p>
+                              ) : isOrganicSearch ? (
+                                <p className="text-amber-700 text-[11px] italic leading-snug">
+                                  Not shared by {source.charAt(0).toUpperCase() + source.slice(1)} for unpaid search results — a privacy restriction on every website since ~2013, not a tracking gap here.
+                                </p>
+                              ) : (
+                                <p className="text-amber-700 text-[11px] italic leading-snug">
+                                  Not captured on this click — the Google Ads account's URL doesn&apos;t pass the keyword yet. Ask them to add utm_term={'{'}keyword{'}'} to the campaign&apos;s Final URL suffix to capture this going forward.
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {booking.utmContent && (
+                            <div>
+                              <p className="text-amber-500 font-semibold uppercase tracking-wide text-[9px]">Ad / Content Variant</p>
+                              <p className="text-amber-900 font-mono truncate">{booking.utmContent}</p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     {booking.clickId && (() => {
                       const idMeta = CLICK_ID_META[booking.clickIdType || ""] || { platform: booking.clickIdType || "Unknown platform", explainer: "An ad platform's own reference number for this specific click." };
                       return (

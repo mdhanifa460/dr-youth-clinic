@@ -141,8 +141,8 @@ describe('inferSourceMediumFromClickId — Google Ads/Meta auto-tag without utm_
     expect(inferSourceMediumFromClickId('gbraid')).toEqual({ source: 'google', medium: 'cpc' });
     expect(inferSourceMediumFromClickId('wbraid')).toEqual({ source: 'google', medium: 'cpc' });
   });
-  it('fbclid infers facebook/cpc', () => {
-    expect(inferSourceMediumFromClickId('fbclid')).toEqual({ source: 'facebook', medium: 'cpc' });
+  it('fbclid infers meta/cpc, not a confident facebook — fbclid alone cannot tell Facebook from Instagram', () => {
+    expect(inferSourceMediumFromClickId('fbclid')).toEqual({ source: 'meta', medium: 'cpc' });
   });
   it('returns nothing when there is no click ID type to infer from', () => {
     expect(inferSourceMediumFromClickId(undefined)).toEqual({});

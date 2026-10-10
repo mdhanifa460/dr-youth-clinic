@@ -80,9 +80,22 @@ export function extractClickIds(searchParams: URLSearchParams): Pick<UtmTouch, '
 // a paid Google/Meta click. This infers source/medium ONLY when
 // utm_source was not explicitly provided — an explicit utm_source always
 // wins, this never overrides real campaign tagging.
+//
+// fbclid deliberately resolves to the ambiguous 'meta', not a confident
+// 'facebook' — reported live as "need [to] differentiate Instagram from
+// Facebook" (the admin UI was always showing "Facebook" for every Meta ad
+// click, Instagram ones included). fbclid itself genuinely cannot tell
+// which placement a click came from — that's not a gap in this function,
+// it's a real limitation of the identifier Meta hands back. The only way
+// to actually know is if the ad's own URL carries an explicit
+// utm_source (e.g. Meta's dynamic {{site_source_name}} token, which
+// resolves to the real "fb"/"ig" per click) — and that case already wins
+// over this fallback entirely (see the `utm.source ? {} : ...` caller in
+// middleware.ts). Previously defaulting to 'facebook' wasn't just
+// unhelpful, it was actively wrong on every Instagram-ad lead.
 export function inferSourceMediumFromClickId(clickIdType?: string): Partial<UtmTouch> {
   if (!clickIdType) return {};
-  if (clickIdType === 'fbclid') return { source: 'facebook', medium: 'cpc' };
+  if (clickIdType === 'fbclid') return { source: 'meta', medium: 'cpc' };
   return { source: 'google', medium: 'cpc' }; // gclid / gbraid / wbraid
 }
 
