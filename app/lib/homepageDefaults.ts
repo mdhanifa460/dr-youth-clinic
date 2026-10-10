@@ -95,6 +95,22 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       monthLabel: 'Happy Patients This Month',
     },
   },
+  // The actual badges (image + title) are managed from their own dedicated
+  // collection/admin page (Admin -> Achievements & Awards), same pattern as
+  // before_after's real pairs living in Result, not here — this entry only
+  // carries the section's own headline/subheadline wrapper text.
+  // AchievementsSection itself renders nothing when there are zero active
+  // achievements (same guard TrustTimeline uses), so this is safe to leave
+  // visible:true even before an admin has added any real badges yet.
+  achievements: {
+    label: 'Achievements & Awards',
+    order: 4.8,
+    visible: true,
+    data: {
+      headline: 'Recognised For Excellence',
+      subheadline: '',
+    },
+  },
   consultation_form: {
     label: 'Consultation Form Bar',
     order: 5,

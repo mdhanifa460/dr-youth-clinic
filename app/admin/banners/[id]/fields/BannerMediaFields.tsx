@@ -9,7 +9,7 @@ export default function BannerMediaFields({ banner, set, templateType }: { banne
     <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
       <p className="text-sm font-bold text-gray-700">Media</p>
       <ImageUpload
-        label={templateType === "glass-hero" ? "Background Image (optional — subtle, tinted behind the glass)" : templateType === "poster" ? "Poster artwork — desktop (wide, ~21:8, e.g. 2100×800)" : "Desktop Image"}
+        label={templateType === "glass-hero" ? "Background Image (optional — subtle, tinted behind the glass)" : templateType === "poster" ? "Poster artwork — desktop (wide, ~21:8, e.g. 2100×800)" : templateType === "credential" ? "Certificate / Accreditation Document Photo (portrait, ~4:5 — a real photo of the real document)" : "Desktop Image"}
         folder="dr-youth-clinic/banners"
         currentPublicId={banner.desktopImage?.publicId}
         onUpload={(img) => set({ desktopImage: img })}

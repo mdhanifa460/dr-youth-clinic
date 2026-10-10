@@ -18,7 +18,7 @@ type TeamMember = {
 const MODULE_LABELS: Record<AdminModule, string> = {
   dashboard: "Dashboard", intelligence: "Intelligence", bookings: "Bookings",
   leads: "Leads", services: "Services", doctors: "Doctors", homepage: "Homepage",
-  locations: "Locations", offers: "Offers", results: "Results", reviews: "Reviews",
+  locations: "Locations", offers: "Offers", results: "Results", achievements: "Achievements & Awards", reviews: "Reviews",
   blog: "Blog", seo: "SEO", "landing-pages": "Landing Pages", settings: "Settings",
   team: "Team", videos: "Videos", "ai-assessment": "AI Assessment", journey: "Journey",
   legal: "Legal", ai: "AI", stories: "Stories", faqs: "FAQs", banners: "Banners",

@@ -43,6 +43,7 @@ const SECTION_ICONS: Record<string, string> = {
   hero: '🖼️',
   stats: '📊',
   trust_timeline: '🔴',
+  achievements: '🏆',
   consultation_form: '📝',
   cta_strip: '📣',
   before_after: '↔️',
@@ -1037,6 +1038,27 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
                 className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline mt-1">
                 <Plus size={12} /> Add stat
               </button>
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'achievements':
+      return (
+        <div className="space-y-4">
+          <TextField label="Headline" value={d.headline} onChange={(v) => set('headline', v)} />
+          <TextField label="Sub-headline (optional)" value={d.subheadline} onChange={(v) => set('subheadline', v)} multiline />
+          <div className="rounded-xl border border-blue-100 bg-[#f6faff] p-4 flex items-start gap-3">
+            <span className="text-lg shrink-0">🏆</span>
+            <div>
+              <p className="text-xs font-bold text-[#0B2560] mb-1">Badges are managed separately</p>
+              <p className="text-xs text-gray-500 mb-2">
+                Add, edit, reorder, and delete the actual award/accreditation badge graphics from the dedicated
+                Achievements page — only the section's headline lives here.
+              </p>
+              <a href="/admin/achievements" className="text-xs font-semibold text-[#2A6BA8] hover:underline">
+                Go to Admin → Achievements & Awards →
+              </a>
             </div>
           </div>
         </div>

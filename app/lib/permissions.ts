@@ -19,6 +19,7 @@ export type AdminModule =
   | 'locations'
   | 'offers'
   | 'results'
+  | 'achievements'
   | 'reviews'
   | 'blog'
   | 'seo'
@@ -45,7 +46,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   super_admin: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
     services: 'full', doctors: 'full', homepage: 'full',
-    locations: 'full', offers: 'full', results: 'full', reviews: 'full',
+    locations: 'full', offers: 'full', results: 'full', achievements: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
@@ -55,7 +56,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
     services: 'full', doctors: 'full', homepage: 'full',
-    locations: 'full', offers: 'full', results: 'full', reviews: 'full',
+    locations: 'full', offers: 'full', results: 'full', achievements: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
@@ -65,7 +66,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
     services: 'full', doctors: 'view', homepage: 'full',
-    locations: 'view', offers: 'full', results: 'full', reviews: 'full',
+    locations: 'view', offers: 'full', results: 'full', achievements: 'full', reviews: 'full',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
@@ -75,7 +76,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'view', doctors: 'view', homepage: 'none',
-    locations: 'none', offers: 'none', results: 'none', reviews: 'view',
+    locations: 'none', offers: 'none', results: 'none', achievements: 'none', reviews: 'view',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', journey: 'full', legal: 'none', banners: 'none',
     ai: 'none',
@@ -85,7 +86,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
     services: 'view', doctors: 'view', homepage: 'none',
-    locations: 'view', offers: 'view', results: 'none', reviews: 'none',
+    locations: 'view', offers: 'view', results: 'none', achievements: 'none', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     // Was 'services: view' before this feature had its own module — the
     // quiz page was reachable at that level, so 'none' here would be a
@@ -98,7 +99,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
     services: 'full', doctors: 'view', homepage: 'full',
-    locations: 'full', offers: 'view', results: 'full', reviews: 'view',
+    locations: 'full', offers: 'view', results: 'full', achievements: 'full', reviews: 'view',
     blog: 'full', seo: 'full', 'landing-pages': 'full',
     // Was 'services: full' before this feature had its own module — content
     // editors could already edit quiz content at that level.
@@ -110,7 +111,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'none', doctors: 'none', homepage: 'none',
-    locations: 'none', offers: 'none', results: 'none', reviews: 'none',
+    locations: 'none', offers: 'none', results: 'none', achievements: 'none', reviews: 'none',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', journey: 'none', legal: 'none', banners: 'none',
     ai: 'none',
@@ -120,7 +121,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
     services: 'view', doctors: 'view', homepage: 'none',
-    locations: 'view', offers: 'view', results: 'none', reviews: 'full',
+    locations: 'view', offers: 'view', results: 'none', achievements: 'none', reviews: 'full',
     blog: 'none', seo: 'none', 'landing-pages': 'none',
     // Was 'services: view' before this feature had its own module.
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
@@ -152,7 +153,7 @@ export function canAccess(
 /** The module list a permission-override editor iterates over. */
 export const ALL_MODULES: AdminModule[] = [
   'dashboard', 'intelligence', 'bookings', 'leads', 'services', 'doctors',
-  'homepage', 'locations', 'offers', 'results', 'reviews', 'blog', 'seo',
+  'homepage', 'locations', 'offers', 'results', 'achievements', 'reviews', 'blog', 'seo',
   'landing-pages', 'settings', 'team', 'videos', 'ai-assessment', 'journey',
   'legal', 'ai', 'stories', 'faqs', 'banners', 'courses',
   'animation-library', 'booking-success', 'integrations', 'analytics',

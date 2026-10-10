@@ -53,6 +53,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/doctors", label: "👨‍⚕️ Doctors", module: "doctors" },
       { href: "/admin/offers", label: "🏷️ Offers", module: "offers" },
       { href: "/admin/results", label: "📸 Results", module: "results" },
+      { href: "/admin/achievements", label: "🏆 Achievements & Awards", module: "achievements" },
     ],
   },
   {

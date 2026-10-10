@@ -24,7 +24,15 @@ export type BannerTemplateType =
   | "full-image"
   // Image-only poster: the designed artwork (text baked in) is the whole
   // banner, in a rounded card — no text overlay, whole card is the link.
-  | "poster";
+  | "poster"
+  // Full-viewport "credential spotlight" — a real accreditation/award
+  // document or certificate image showcased on a dark navy background,
+  // for a genuine certification claim (e.g. NABH accreditation) rather
+  // than a promotional offer. Reuses the same generic headline/subtitle/
+  // description/desktopImage/primaryCTA fields every template already
+  // has — desktopImage IS the certificate/credential photo here — no new
+  // schema fields, so it's fully covered by the existing admin form.
+  | "credential";
 
 export interface CTAData {
   label: string;
@@ -83,6 +91,24 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       primaryCTA: { label: "Claim This Offer", href: "/offers" },
       secondaryCTA: { label: "", href: "" },
       overlay: { enabled: true, style: "gradient", opacity: 0.6 },
+    },
+  },
+  {
+    type: "credential",
+    label: "Credential Spotlight (Full Screen)",
+    icon: "🏅",
+    description: "Full-viewport dark banner spotlighting a real accreditation, certification, or award — your certificate/document photo on one side, the claim and a short highlight on the other. Only use this for a credential you can actually show — upload the real certificate image, not a stock photo.",
+    defaultData: {
+      // Deliberately an obvious placeholder, not a real claim — this is a
+      // healthcare business; a false/unverified certification claim here
+      // would be a real legal and trust problem, not just a copy nit. The
+      // admin must replace this with their own real, verifiable wording
+      // before publishing.
+      headline: "Replace with your real accreditation\n(e.g. certifying body + what it certifies)",
+      subtitle: "Since {year}",
+      description: "Replace with one sentence on what this certification means for patients — why it matters, not just that you have it.",
+      primaryCTA: { label: "Book Consultation", href: "/book" },
+      secondaryCTA: { label: "", href: "" },
     },
   },
   {

@@ -8,6 +8,7 @@ import ClinicExperienceBanner from "@/app/components/banners/templates/ClinicExp
 import GlassHeroBanner from "@/app/components/banners/templates/GlassHeroBanner";
 import FullImageBanner from "@/app/components/banners/templates/FullImageBanner";
 import PosterBanner from "@/app/components/banners/templates/PosterBanner";
+import CredentialBanner from "@/app/components/banners/templates/CredentialBanner";
 import AnimatedBannerWrapper from "@/app/components/banners/AnimatedBannerWrapper";
 
 // Dispatcher — switches on templateType, wraps whichever template in one
@@ -27,6 +28,7 @@ export default function BannerRenderer({ banner }: { banner: BannerDoc | null })
     "glass-hero": GlassHeroBanner,
     "full-image": FullImageBanner,
     poster: PosterBanner,
+    credential: CredentialBanner,
   }[banner.templateType];
 
   if (!Template) return null;

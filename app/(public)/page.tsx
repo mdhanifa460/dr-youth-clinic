@@ -9,6 +9,7 @@ import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
 import { Result } from '@/app/models/Result';
+import { Achievement } from '@/app/models/Achievement';
 import { Story } from '@/app/models/Story';
 // Registers StoryType with Mongoose for the .populate('storyType') call
 // below — each API route/page is bundled as its own isolated serverless
@@ -33,6 +34,7 @@ import StatsBar from '@/app/components/homepage/StatsBar';
 import ConsultationFormBar from '@/app/components/homepage/ConsultationFormBar';
 import ServicesCards from '@/app/components/homepage/ServicesCards';
 import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
+import AchievementsSection from '@/app/components/homepage/AchievementsSection';
 import DoctorsSection from '@/app/components/homepage/DoctorsSection';
 import FounderSection from '@/app/components/homepage/FounderSection';
 import TrustTimeline from '@/app/components/homepage/TrustTimeline';
@@ -263,6 +265,25 @@ const getCachedResultPairs = unstable_cache(
   { revalidate: 60, tags: ['results'] }
 );
 
+// Feeds the achievements section — same "live collection, not embedded
+// section data" pattern as getCachedResultPairs above.
+const getCachedAchievements = unstable_cache(
+  async () => {
+    try {
+      await connectDB();
+      const docs = await (Achievement as any)
+        .find({ active: true })
+        .sort({ order: 1, createdAt: -1 })
+        .lean();
+      return JSON.parse(JSON.stringify(docs));
+    } catch {
+      return [];
+    }
+  },
+  ['homepage-achievements'],
+  { revalidate: 60, tags: ['achievements'] }
+);
+
 const getCachedFeaturedVideos = unstable_cache(
   async () => {
     try {
@@ -453,6 +474,7 @@ const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {
   consultation_form: ConsultationFormBar,
   services: ServicesCards,
   before_after: BeforeAfterSection,
+  achievements: AchievementsSection,
   founder: FounderSection,
   trust_timeline: TrustTimeline,
   doctors: DoctorsSection,
@@ -496,7 +518,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories, quickServices] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveAchievements, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories, quickServices] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -508,6 +530,7 @@ export default async function Home() {
     resolveBanner({ page: 'homepage', location: resolvedLocation }),
     getCachedServiceCategoryCounts(),
     getCachedResultPairs(),
+    getCachedAchievements(),
     getCachedStories(),
     getCachedHomepageFaqs(),
     getCachedTestimonialsRotateMs(),
@@ -550,6 +573,10 @@ export default async function Home() {
     before_after: {
       ...(sectionData['before_after'] ?? {}),
       pairs: liveResultPairs.length > 0 ? liveResultPairs : (sectionData['before_after']?.pairs ?? []),
+    },
+    achievements: {
+      ...(sectionData['achievements'] ?? {}),
+      achievements: liveAchievements,
     },
     trust_timeline: {
       ...(sectionData['trust_timeline'] ?? {}),
