@@ -359,6 +359,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     getCachedClinicInfo(params.location.toLowerCase()),
   ]);
 
+  // The branch's real, admin-editable number (LocationContent.clinicInfo) —
+  // same fallback chain as the city page (app/(public)/[location]/page.tsx).
+  // loc.phone in app/data/locations.ts is a static placeholder
+  // (+919876543210) and was being shown to patients on every treatment page.
+  const branchPhone = clinicInfo?.phone || siteConfig.publicPhone || loc.phone;
+
   // svc.category is the DB value (e.g. "Skin"), catBySlug.dbKey is the same
   // thing looked up via the URL slug — kept as its own lookup (by dbKey,
   // not just reusing catBySlug) since a service's actual category can, in
@@ -490,8 +496,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     <Calendar size={14} /> {siteConfig.consultationCta}
                   </button>
                 </Link>
-                <a href={`tel:${loc.phone}`} className="inline-flex items-center gap-2 border border-white/30 text-white px-5 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition text-sm">
-                  <Phone size={14} /> {loc.phone}
+                <a href={`tel:${branchPhone}`} className="inline-flex items-center gap-2 border border-white/30 text-white px-5 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition text-sm">
+                  <Phone size={14} /> {branchPhone}
                 </a>
               </div>
 
@@ -607,7 +613,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     <Calendar size={14} /> {siteConfig.consultationCta}
                   </button>
                 </Link>
-                <a href={`tel:${loc.phone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] px-4 rounded-2xl font-semibold text-sm shrink-0">
+                <a href={`tel:${branchPhone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] px-4 rounded-2xl font-semibold text-sm shrink-0">
                   <Phone size={14} />
                 </a>
               </div>
@@ -894,7 +900,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                         <Calendar size={14} /> {siteConfig.consultationCta}
                       </button>
                     </Link>
-                    <a href={`tel:${loc.phone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition">
+                    <a href={`tel:${branchPhone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition">
                       <Phone size={13} /> Call to Book
                     </a>
                     <p className="text-center text-xs text-gray-500 pt-1">{siteConfig.consultationSub}</p>
@@ -1052,8 +1058,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   <Calendar size={15} /> {siteConfig.consultationCta}
                 </button>
               </Link>
-              <a href={`tel:${loc.phone}`} className="inline-flex items-center gap-2 border-2 border-white/20 text-white px-7 py-3.5 rounded-2xl font-semibold hover:bg-white/10 transition text-sm">
-                <Phone size={15} /> {loc.phone}
+              <a href={`tel:${branchPhone}`} className="inline-flex items-center gap-2 border-2 border-white/20 text-white px-7 py-3.5 rounded-2xl font-semibold hover:bg-white/10 transition text-sm">
+                <Phone size={15} /> {branchPhone}
               </a>
             </div>
             <p className="text-white/25 text-xs mt-5">{siteConfig.consultationSub} · Personalised plan</p>
@@ -1062,7 +1068,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
       </main>
 
-      <ServiceStickyDesktopCta ctaText={siteConfig.consultationCta} phone={loc.phone} />
+      <ServiceStickyDesktopCta ctaText={siteConfig.consultationCta} phone={branchPhone} />
     </>
   );
 }

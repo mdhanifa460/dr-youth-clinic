@@ -13,10 +13,27 @@ import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
+import { unstable_cache } from 'next/cache';
+import { LocationContent } from '@/app/models/LocationContent';
 
 export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
+
+// The branch's real, admin-editable number — same source as the treatment
+// page's getCachedClinicInfo. loc.phone (app/data/locations.ts) is a static
+// placeholder that was being shown as the "Call" number here.
+const getCachedBranchPhone = unstable_cache(
+  async (location: string): Promise<string> => {
+    try {
+      await connectDB();
+      const doc = await (LocationContent as any).findOne({ location }).select('clinicInfo.phone').lean();
+      return doc?.clinicInfo?.phone || '';
+    } catch { return ''; }
+  },
+  ['category-page-branch-phone'],
+  { revalidate: 300, tags: ['location-content'] }
+);
 
 interface PageProps {
   params: { location: string; category: string };
@@ -107,11 +124,13 @@ export default async function CategoryPage({ params }: PageProps) {
   }
 
   const accent = meta.accentColor || '#3b82f6';
-  const [services, siteConfig, categoryBanners] = await Promise.all([
+  const [services, siteConfig, categoryBanners, dbBranchPhone] = await Promise.all([
     getServicesForCategory(params.location, meta.dbKey),
     getSiteConfig(),
     resolveBanner({ page: 'category', location: params.location, category: catSlug }),
+    getCachedBranchPhone(params.location.toLowerCase()),
   ]);
+  const branchPhone = dbBranchPhone || siteConfig.publicPhone || loc.phone;
   const city = loc.name;
   // Flash Offer Popup — see app/(public)/page.tsx's splashBanner/
   // carouselBanners split.
@@ -334,10 +353,10 @@ export default async function CategoryPage({ params }: PageProps) {
               <ArrowRight size={16} />
             </Link>
             <a
-              href={`tel:${loc.phone}`}
+              href={`tel:${branchPhone}`}
               className="inline-flex items-center gap-2 border border-white/25 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition"
             >
-              Call {loc.phone}
+              Call {branchPhone}
             </a>
           </div>
         </div>
