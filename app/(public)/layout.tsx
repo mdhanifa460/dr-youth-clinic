@@ -7,6 +7,7 @@ import MobileStickyBar from "@/app/components/MobileStickyBar";
 import AiChatWidget from "@/app/components/ai/AiChatWidget";
 import MigrationSessionTracker from "@/app/components/MigrationSessionTracker";
 import CustomEventListener from "@/app/components/analytics/CustomEventListener";
+import GtmScript from "@/app/components/analytics/GtmScript";
 import { OrganizationSchema } from "@/app/components/SchemaMarkup";
 import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
@@ -119,18 +120,8 @@ export default async function PublicLayout({
         <meta name="google-site-verification" content={analytics.searchConsoleId} />
       )}
 
-      {/* Google Tag Manager — the primary tracking layer. gtm_auth/
-          gtm_preview only get appended when an admin has actually pointed
-          this at a non-Live GTM environment/workspace; a normal production
-          container ignores them if absent. */}
-      {analytics.gtmActive && (
-        <Script id="gtm" strategy="afterInteractive">{`
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-          var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-          j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl${analytics.gtmAuth ? `+'&gtm_auth=${analytics.gtmAuth}'` : ''}${analytics.gtmPreview ? `+'&gtm_preview=${analytics.gtmPreview}&gtm_cookies_win=x'` : ''};
-          f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${analytics.gtmId}');
-        `}</Script>
-      )}
+      {/* Google Tag Manager — the primary tracking layer. */}
+      <GtmScript analytics={analytics} />
 
       {/* Google Analytics 4 — advanced/fallback only, loaded directly ONLY
           when GTM isn't the active layer. When GTM is on, GA4 is expected

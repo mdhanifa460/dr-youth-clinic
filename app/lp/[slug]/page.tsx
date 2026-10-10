@@ -12,6 +12,7 @@ import StickyCta from '@/app/components/lp/StickyCta';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
+import GtmScript from '@/app/components/analytics/GtmScript';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
 
@@ -77,17 +78,15 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
   }
 
   const siteConfig = await getSiteConfig();
-  // The site's global GTM (app/layout.tsx) already loads on every page,
-  // including this one — an LP's own tracking.gtmId/metaPixelId/
-  // googleAdsId fields fired completely independent of that, with no
-  // awareness of whether GTM was already active. If global GTM is on
-  // (the case right now — GTM-N7J5FSVR, confirmed live) and an LP also
-  // had one of these set, it would double-fire: GTM's own tag for that
-  // pixel, plus this page's direct script. Same `!gtmActive` gate the
-  // main site's direct-load paths already use (see app/layout.tsx),
-  // applied here for the first time — closes the gap without touching
-  // the LP-level fields' behavior for a clinic that ever runs without
-  // global GTM (they still fire directly, exactly as before).
+  // The site's global GTM lives in app/(public)/layout.tsx, which does NOT
+  // wrap /lp/* (this route sits outside the (public) group) — so it's
+  // rendered explicitly below via the same shared <GtmScript>. Without that,
+  // LPs shipped with no Google tag at all (Tag Assistant: "No Google tags
+  // found") while every LP-specific trigger in the container sat dead.
+  // When global GTM is active, an LP's own tracking.gtmId/metaPixelId/
+  // googleAdsId fields are suppressed so nothing double-fires (GTM routes
+  // GA4/Ads/Pixel itself); a clinic running without global GTM still gets
+  // the LP-level fields firing directly, exactly as before.
   const analytics = await getAnalyticsConfig();
   const tracking = analytics.gtmActive ? {} : (lp.tracking ?? {});
   const heroSection = lp.sections?.find((s: any) => s.type === 'hero');
@@ -131,6 +130,9 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
       )}
 
       <HomepageOfferSplash banner={splashBanner} page="landing" />
+
+      {/* Site-wide GTM (skip in preview — admin previews aren't real visits) */}
+      {!isPreview && <GtmScript analytics={analytics} />}
 
       {/* LP-specific tracking scripts (skip in preview) */}
       {!isPreview && tracking.gtmId && (
