@@ -18,7 +18,7 @@ interface BenefitsData {
 const ICONS = [Stethoscope, Cpu, UserCheck, Leaf, HeartHandshake] as const;
 
 const DEFAULT_ITEMS: BenefitItem[] = [
-  { title: 'Experienced Doctors', desc: '20+ years of expertise in hair restoration.' },
+  { title: 'Experienced Doctors', desc: '9+ years of expertise in hair restoration.' },
   { title: 'Advanced Technology', desc: 'FDA-approved, state-of-the-art equipment.' },
   { title: 'Personalised Treatment', desc: 'Protocols tailored to your unique hair goals.' },
   { title: 'Safe & Natural', desc: 'Non-surgical, drug-free, using your own plasma.' },

@@ -8,6 +8,7 @@ import {
   Eye, EyeOff, Star, Home, Trash2, RefreshCw, Plus, X, Loader,
   Edit2, CheckCircle, AlertTriangle, Sparkles, MessageSquare, Flag, ChevronDown, ChevronUp, ExternalLink,
 } from 'lucide-react';
+import NMCComplianceHint from '@/app/admin/components/NMCComplianceHint';
 
 // ── Review Management (local-only — see the investigation report this
 // followed: Google's API has no delete/report/status-check endpoint for a
@@ -490,6 +491,11 @@ function ReviewModal({
                 <option value="video">Video Review</option>
               </select>
             )}
+            {!isGoogle && (
+              <p className="mt-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 leading-snug">
+                ⚠️ NMC's Oct 2026 Ethical Advertising Guidelines bar fake or paid testimonials. Only enter this if it's a genuine review from an actual patient.
+              </p>
+            )}
           </div>
 
           {/* Author Name */}
@@ -530,6 +536,7 @@ function ReviewModal({
             <textarea rows={3} disabled={isGoogle} value={form.reviewText} onChange={(e) => set('reviewText', e.target.value)}
               placeholder="What the patient said..."
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none disabled:bg-gray-50 disabled:text-gray-500" />
+            {!isGoogle && <NMCComplianceHint text={form.reviewText} />}
           </div>
 
           {/* Video URL (only for video source) */}

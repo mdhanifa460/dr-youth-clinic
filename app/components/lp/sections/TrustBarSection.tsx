@@ -29,7 +29,7 @@ const ICON_MAP: Record<string, typeof Users> = {
 
 const DEFAULT_STATS: StatItem[] = [
   { icon: 'users', value: '25,000+', label: 'Happy Patients' },
-  { icon: 'clock', value: '20+', label: 'Years Experience' },
+  { icon: 'clock', value: '9+', label: 'Years Experience' },
   { icon: 'activity', value: '50,000+', label: 'Treatments Done' },
   { icon: 'star', value: '4.9/5', label: 'Google Rating' },
   { icon: 'stethoscope', value: '10+', label: 'Expert Doctors' },
@@ -74,7 +74,7 @@ export default function TrustBarSection({ data }: { data: TrustBarData }) {
   if (!stats.length && (data.patients || data.years || data.rating || data.googleRating)) {
     stats = [
       { icon: 'users', value: data.patients || '25,000+', label: 'Happy Patients' },
-      { icon: 'clock', value: data.years || '20+', label: 'Years Experience' },
+      { icon: 'clock', value: data.years || '9+', label: 'Years Experience' },
       { icon: 'activity', value: '50,000+', label: 'Treatments Done' },
       { icon: 'star', value: `${data.googleRating || data.rating || '4.9'}/5`, label: 'Google Rating' },
       { icon: 'stethoscope', value: '10+', label: 'Expert Doctors' },

@@ -234,7 +234,7 @@ function SectionEditor({
             label="Stats"
             items={d.stats || []}
             onChange={(v) => set('stats', v)}
-            fields={[{ key: 'value', placeholder: 'Value (e.g. 15+)', width: 'sm' }, { key: 'label', placeholder: 'Label (e.g. Years Experience)' }]}
+            fields={[{ key: 'value', placeholder: 'Value (e.g. 9+)', width: 'sm' }, { key: 'label', placeholder: 'Label (e.g. Years Experience)' }]}
             defaultItem={{ value: '', label: '' }}
           />
         </div>

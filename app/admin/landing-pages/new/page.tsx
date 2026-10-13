@@ -25,7 +25,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
     phone: '1800 890 9669',
     whatsapp: '',
   },
-  'trust-bar': { rating: 4.9, patients: '25,000+', years: '20+', googleRating: '4.9' },
+  'trust-bar': { rating: 4.9, patients: '25,000+', years: '9+', googleRating: '4.9' },
   problem: {
     headline: 'Are You Experiencing...',
     problems: ['Hair Fall', 'Thinning Hair', 'Receding Hairline'],
@@ -40,7 +40,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
     headline: 'Why Choose DR Youth Clinic',
     items: [
       { icon: '✓', title: 'Natural Results', desc: 'Clinically proven treatments' },
-      { icon: '✓', title: 'Expert Doctors', desc: '20+ years experience' },
+      { icon: '✓', title: 'Expert Doctors', desc: '9+ years experience' },
       { icon: '✓', title: 'Minimal Downtime', desc: 'Back to routine same day' },
     ],
   },

@@ -228,7 +228,7 @@ export default async function LocationPage({ params }: { params: { location: str
                   <BadgeCheck size={14} className="text-secondary" /> 25K+ Happy Patients
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <BadgeCheck size={14} className="text-secondary" /> 22+ Years Experience
+                  <BadgeCheck size={14} className="text-secondary" /> 9+ Years Experience
                 </span>
                 <span className="flex items-center gap-1.5">
                   <BadgeCheck size={14} className="text-secondary" /> {rating.toFixed(1)}★ Rated on Google

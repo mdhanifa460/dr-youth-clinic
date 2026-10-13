@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 // Homepage "Achievements & Awards" badges (medallion-style graphics —
-// "Award Winning Clinic", "22+ Years of Excellence", "#1 Ranked" etc.) —
+// "Award Winning Clinic", "9+ Years of Excellence" etc.) —
 // deliberately its own collection, not embedded in HomepageSection.data,
 // so it gets real per-item add/edit/delete the same way Offer/Result do
 // (see those models' own admin pages) instead of one shared JSON blob.

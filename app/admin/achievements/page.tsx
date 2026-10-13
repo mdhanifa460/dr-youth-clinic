@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Trash2, ChevronRight } from 'lucide-react';
 import ImageUpload from '@/app/admin/components/ImageUpload';
+import NMCComplianceHint from '@/app/admin/components/NMCComplianceHint';
 
 const EMPTY: any = {
   title: '',
@@ -101,6 +102,7 @@ function AchievementForm({ achievement, onSaved, onDeleted, onCancel }: {
             placeholder="e.g. Award Winning Clinic in Trichology"
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560]" />
           <p className="text-[11px] text-gray-400 mt-1">Shown as alt text / a caption under the badge — the graphic itself carries the main design.</p>
+          <NMCComplianceHint text={form.title} />
         </div>
 
         {/* Image */}

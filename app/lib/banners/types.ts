@@ -129,7 +129,7 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       statBadges: [
         { value: "15,000+", label: "Happy Patients" },
         { value: "20+", label: "Doctors" },
-        { value: "12+", label: "Years" },
+        { value: "9+", label: "Years" },
         { value: "98%", label: "Satisfaction" },
       ],
       serviceChips: [
@@ -152,7 +152,7 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       primaryCTA: { label: "Book Consultation", href: "/book" },
       secondaryCTA: { label: "View Results", href: "/results" },
       statBadges: [
-        { value: "20+", label: "Years Experience" },
+        { value: "9+", label: "Years Experience" },
         { value: "15,000+", label: "Happy Patients" },
         { value: "4.8/5", label: "Google Rating" },
       ],
@@ -209,7 +209,7 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       description: "Founder & Chief Hair Transplant Surgeon",
       primaryCTA: { label: "Know More About Doctor", href: "/doctors" },
       secondaryCTA: { label: "", href: "" },
-      achievements: ["20+ Years of Experience", "10,000+ Successful Surgeries", "Board Certified Surgeon"],
+      achievements: ["9+ Years of Experience", "10,000+ Successful Surgeries", "Board Certified Surgeon"],
     },
   },
   {

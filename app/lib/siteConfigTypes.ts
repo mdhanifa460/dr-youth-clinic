@@ -77,7 +77,7 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   emiBankPartners: 'HDFC, ICICI, Axis Bank',
   ratingValue: '4.9',
   patientsCount: '25K+',
-  yearsExperience: '22+',
+  yearsExperience: '9+',
   showPriceOnCards: true,
   showDurationOnCards: true,
   relatedServicesCount: 3,

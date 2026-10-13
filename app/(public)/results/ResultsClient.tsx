@@ -20,7 +20,7 @@ const FALLBACK_CATEGORIES = ['Skin Care', 'Hair', 'Laser'];
 const FALLBACK_STATS = [
   { value: '98%', label: 'Patient satisfaction' },
   { value: '10K+', label: 'Treatments done' },
-  { value: '22+', label: 'Years of care' },
+  { value: '9+', label: 'Years of care' },
   { value: '4', label: 'Clinic locations' },
 ];
 

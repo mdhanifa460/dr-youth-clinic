@@ -73,7 +73,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
     overlayColor = '#0B2560',
     patientCount = '25,000+',
     rating = '4.9',
-    yearsExperience = '20+',
+    yearsExperience = '9+',
     showInlineForm = true,
     concern_options = DEFAULT_CONCERNS,
     formHeadline = consultationFree ? 'Book Your Free Consultation' : 'Book Your Consultation',

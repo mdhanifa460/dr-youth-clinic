@@ -159,7 +159,10 @@ export default function AssessmentResults({
           <>
             <hr className="border-white/10 mb-5" />
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">In Your Own Words</p>
-            <p className="text-xs text-white/80 leading-relaxed mb-5">{aiExplanation}</p>
+            <p className="text-xs text-white/80 leading-relaxed mb-1.5">{aiExplanation}</p>
+            {/* NMC source-mark requirement — see the same note in
+                UnifiedJourneyResults.tsx. */}
+            <p className="text-[10px] text-white/40 mb-5">🤖 AI-generated summary — not a medical diagnosis</p>
           </>
         )}
 

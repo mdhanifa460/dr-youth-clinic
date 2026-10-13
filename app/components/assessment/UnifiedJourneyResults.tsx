@@ -495,6 +495,14 @@ export default function UnifiedJourneyResults({
         <p className="text-sm text-gray-500 max-w-md mx-auto">
           {aiExplanation || patientReport?.summary || "Based on what you shared — your doctor will confirm what's right for you after a full evaluation."}
         </p>
+        {/* NMC Guidelines on Ethical Advertising & Public Communication
+            (06.10.2026) require AI-generated content shown to the public
+            to carry a clear source mark — only shown when aiExplanation
+            is actually the text displayed above, not for the two static
+            fallback strings. */}
+        {aiExplanation && (
+          <p className="text-[10px] text-gray-400 mt-2">🤖 AI-generated summary — not a medical diagnosis</p>
+        )}
       </div>
 
       {patientReport && (patientReport.contributingFactors.length > 0 || patientReport.lifestyleFindings.length > 0) && (

@@ -10,6 +10,7 @@ import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
 import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
 import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
+import NMCComplianceHint from '@/app/admin/components/NMCComplianceHint';
 
 // md5('home').slice(0, 24) — Home is a singleton with no Mongo document, so
 // Section docs for it use this fixed, deterministic pseudo-ObjectId rather
@@ -777,6 +778,7 @@ function SectionForm({ section, onChange }: { section: Section; onChange: (data:
             <TextField label="Email" value={d.email} onChange={(v) => set('email', v)} />
           </div>
           <TextField label="Badge Text" value={d.badge} onChange={(v) => set('badge', v)} />
+          <NMCComplianceHint text={d.badge} />
           <div>
             <p className="text-xs font-semibold text-gray-600 mb-2">Social Links</p>
             {(d.socialLinks || []).map((s: any, i: number) => (

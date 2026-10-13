@@ -319,7 +319,7 @@ function ServiceSchemas({ svc, cityName, params, schemaType }: { svc: any; cityN
 // Fallback trust points used when a service hasn't set its own
 // Service.whyChooseUs (Admin → Services → Benefits & Results Gallery).
 const DEFAULT_WHY_US = [
-  'Expert dermatologists with 10+ years of clinical experience',
+  'Expert dermatologists with 9+ years of clinical experience',
   'FDA-approved technology and evidence-based protocols',
   'Personalised treatment plans tailored to your skin biology',
   'Transparent pricing — no hidden costs, no upselling',

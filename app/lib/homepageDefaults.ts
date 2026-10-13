@@ -15,7 +15,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     data: {
       phone: '1800 890 9669',
       email: 'info@dryouthclinic.com',
-      badge: 'Ranked Top Hair care Clinics in India',
+      badge: '9+ Years of Hair & Skin Care Across South India',
       socialLinks: [
         { platform: 'facebook', url: '#' },
         { platform: 'instagram', url: '#' },
@@ -76,7 +76,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       stats: [
         { value: '25K+', label: 'Happy Patients' },
         { value: '10K+', label: 'Successful Treatments' },
-        { value: '22+', label: 'Years of Excellence' },
+        { value: '9+', label: 'Years of Excellence' },
         { value: '4.7/5', label: 'Google Rating', showStars: true },
       ],
     },
@@ -187,7 +187,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       stats: [
         { value: '98%', label: 'Patient satisfaction' },
         { value: '10K+', label: 'Treatments done' },
-        { value: '22+', label: 'Years of care' },
+        { value: '9+', label: 'Years of care' },
         { value: '4', label: 'Clinic locations' },
       ],
       pairs: [

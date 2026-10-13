@@ -9,6 +9,7 @@ import {
   ExternalLink, Rocket, Save, X, Check, LayoutTemplate,
 } from 'lucide-react';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
+import NMCComplianceHint from '@/app/admin/components/NMCComplianceHint';
 import SeoAiAssistant from '@/app/admin/components/SeoAiAssistant';
 import OfferBannerSection from '@/app/components/lp/sections/OfferBannerSection';
 import SectionList from '@/app/admin/components/builder/SectionList';
@@ -70,7 +71,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
     successMessage: "✓ We'll call you within 2 hours!",
     showTeamAvatars: false,
   },
-  'trust-bar': { rating: 4.9, patients: '25,000+', years: '20+', googleRating: '4.9' },
+  'trust-bar': { rating: 4.9, patients: '25,000+', years: '9+', googleRating: '4.9' },
   problem: { headline: 'Are You Experiencing...', problems: ['Hair Fall', 'Thinning Hair', 'Receding Hairline'] },
   solution: {
     headline: 'Why Our Treatment Works',
@@ -83,7 +84,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
     headline: 'Why Choose DR Youth Clinic',
     items: [
       { icon: '✓', title: 'Natural Results', desc: 'Clinically proven treatments' },
-      { icon: '✓', title: 'Expert Doctors', desc: '20+ years experience' },
+      { icon: '✓', title: 'Expert Doctors', desc: '9+ years experience' },
       { icon: '✓', title: 'Minimal Downtime', desc: 'Back to routine same day' },
     ],
   },
@@ -244,6 +245,7 @@ function FieldInput({
           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
         />
       )}
+      {(type === 'text' || type === 'textarea') && <NMCComplianceHint text={typeof value === 'string' ? value : ''} />}
     </div>
   );
 }
@@ -452,7 +454,7 @@ function SectionEditor({
           <div className="grid grid-cols-3 gap-3">
             <FieldInput label="Patient Count" value={d.patientCount} onChange={(v) => set('patientCount', v)} placeholder="25,000+" />
             <FieldInput label="Rating" value={d.rating} onChange={(v) => set('rating', v)} placeholder="4.9" />
-            <FieldInput label="Years Experience" value={d.yearsExperience} onChange={(v) => set('yearsExperience', v)} placeholder="20+" />
+            <FieldInput label="Years Experience" value={d.yearsExperience} onChange={(v) => set('yearsExperience', v)} placeholder="9+" />
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <div

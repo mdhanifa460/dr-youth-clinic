@@ -1011,6 +1011,19 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
 
           {view === 'chat' && (
             <>
+              {/* NMC Guidelines on Ethical Advertising & Public Communication
+                  (06.10.2026) require AI-generated content shown to the
+                  public to carry a clear source mark disclosing it's
+                  AI-generated — this is that disclosure, shown once,
+                  persistently, for the whole chat surface rather than
+                  repeated on every message bubble (which would be noisy
+                  without being any more informative). Deliberately plain
+                  text, not something a visitor could mistake for a human
+                  staff member's own statement. */}
+              <p className="text-[10px] text-gray-400 text-center px-4 pt-2 pb-1 shrink-0">
+                🤖 AI-generated responses — for general guidance only, not a medical diagnosis. Call or WhatsApp us to speak with our clinical team.
+              </p>
+
               {/* Messages */}
               <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                 {disabled && (

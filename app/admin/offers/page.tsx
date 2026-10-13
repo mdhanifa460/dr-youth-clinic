@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Plus, Trash2, Eye, EyeOff, Star, ChevronRight, Tag, Percent, Calendar } from 'lucide-react';
 import ImageUpload from '@/app/admin/components/ImageUpload';
 import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
+import NMCComplianceHint from '@/app/admin/components/NMCComplianceHint';
 
 // md5('offers-page').slice(0, 24) — the /offers listing page is a singleton
 // with no Mongo document with a real _id, mirroring Home's pseudoPageId
@@ -148,6 +149,7 @@ function OfferForm({ offer, onSaved, onDeleted, onCancel }: {
             <input value={form.title} onChange={e => set('title', e.target.value)}
               placeholder="e.g. PRP Hair Therapy 3-Session Pack"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560]" />
+            <NMCComplianceHint text={form.title} />
           </div>
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Category</label>
@@ -165,6 +167,7 @@ function OfferForm({ offer, onSaved, onDeleted, onCancel }: {
             placeholder="Short description of what's included..."
             rows={3}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 resize-none" />
+          <NMCComplianceHint text={form.description} />
         </div>
 
         {/* Pricing */}

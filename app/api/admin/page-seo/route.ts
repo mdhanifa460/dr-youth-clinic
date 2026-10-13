@@ -25,7 +25,7 @@ const PAGE_DEFAULTS = [
     pageKey: 'about',
     pageLabel: 'About Us',
     metaTitle: 'About Us — Expert Dermatologists',
-    metaDescription: "India's trusted skin and hair care specialists with 22+ years of clinical excellence.",
+    metaDescription: "Skin and hair care specialists with 9+ years of clinical excellence.",
     keywords: ['about dr youth', 'dermatology clinic india', 'aesthetic specialists'],
   },
   {
