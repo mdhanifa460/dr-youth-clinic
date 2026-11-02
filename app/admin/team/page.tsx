@@ -37,6 +37,12 @@ const EMPTY_FORM = {
   permissionOverrides: {} as PermissionOverrides,
 };
 
+function generatePassword() {
+  // No lookalike characters (0/O, 1/l/I) since this often gets read out or retyped.
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  return Array.from(crypto.getRandomValues(new Uint32Array(14)), (n) => chars[n % chars.length]).join("");
+}
+
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +52,12 @@ export default function TeamPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [me, setMe] = useState<{ _id: string; role: AdminRole } | null>(null);
+  const [resetting, setResetting] = useState<TeamMember | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetSaving, setResetSaving] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetDone, setResetDone] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -85,7 +97,6 @@ export default function TeamPage() {
       const method = editing ? "PUT" : "POST";
       const body: Record<string, any> = { name: form.name, role: form.role, assignedClinics: form.assignedClinics };
       if (!editing) { body.email = form.email; body.password = form.password; }
-      else if (form.password) { body.password = form.password; }
       // Only sent when the override editor was actually shown for this edit
       // (create has no overrides yet; self-editing as non-super_admin hides
       // it entirely) — otherwise an unrelated save (e.g. just fixing your
@@ -116,6 +127,60 @@ export default function TeamPage() {
     const data = await res.json();
     if (data.success) load();
     else alert(data.message || "Failed");
+  }
+
+  async function deleteMember(m: TeamMember) {
+    if (!confirm(`Permanently delete ${m.name} (${m.email})?\n\nThis can't be undone and logs them out immediately. To only block their access, use Deactivate instead.`)) return;
+    const res = await fetch(`/api/admin/team/${m._id}?permanent=true`, { method: "DELETE" });
+    const data = await res.json();
+    if (data.success) load();
+    else alert(data.message || "Failed");
+  }
+
+  // Mirrors the server's guards, which remain the real enforcement.
+  function canManage(m: TeamMember) {
+    return m.role !== "super_admin" || me?.role === "super_admin";
+  }
+
+  function canResetOrDelete(m: TeamMember) {
+    return !!me && m._id !== me._id && canManage(m);
+  }
+
+  function openReset(m: TeamMember) {
+    setResetting(m);
+    setNewPassword("");
+    setResetError("");
+    setResetDone(false);
+    setCopied(false);
+  }
+
+  async function submitReset() {
+    if (!resetting) return;
+    setResetError("");
+    setResetSaving(true);
+    try {
+      const res = await fetch(`/api/admin/team/${resetting._id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const data = await res.json();
+      if (!data.success) { setResetError(data.message || "Failed"); return; }
+      setResetDone(true);
+    } catch {
+      setResetError("Failed to reset password");
+    } finally {
+      setResetSaving(false);
+    }
+  }
+
+  async function copyPassword() {
+    try {
+      await navigator.clipboard.writeText(newPassword);
+      setCopied(true);
+    } catch {
+      setResetError("Couldn't copy — select the password and copy it manually");
+    }
   }
 
   return (
@@ -174,11 +239,21 @@ export default function TeamPage() {
                       {m.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 flex gap-2">
-                    <button onClick={() => openEdit(m)} className="text-xs text-blue-600 hover:underline">Edit</button>
-                    <button onClick={() => toggleActive(m)} className={`text-xs ${m.isActive ? "text-red-500" : "text-green-600"} hover:underline`}>
-                      {m.isActive ? "Deactivate" : "Reactivate"}
-                    </button>
+                  <td className="px-4 py-3 flex flex-wrap gap-x-2 gap-y-1">
+                    {canManage(m) && (
+                      <button onClick={() => openEdit(m)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                    )}
+                    {canResetOrDelete(m) && (
+                      <button onClick={() => openReset(m)} className="text-xs text-blue-600 hover:underline whitespace-nowrap">Reset Password</button>
+                    )}
+                    {canManage(m) && (
+                      <button onClick={() => toggleActive(m)} className={`text-xs ${m.isActive ? "text-red-500" : "text-green-600"} hover:underline`}>
+                        {m.isActive ? "Deactivate" : "Reactivate"}
+                      </button>
+                    )}
+                    {canResetOrDelete(m) && (
+                      <button onClick={() => deleteMember(m)} className="text-xs text-red-700 font-semibold hover:underline">Delete</button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -228,24 +303,24 @@ export default function TeamPage() {
                   value={form.role}
                   onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as AdminRole }))}
                 >
-                  {ALL_ROLES.map((r) => (
+                  {ALL_ROLES.filter((r) => r !== "super_admin" || me?.role === "super_admin").map((r) => (
                     <option key={r} value={r}>{ROLE_LABELS[r]}</option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  {editing ? "New Password (leave blank to keep)" : "Password"}
-                </label>
-                <input
-                  type="password"
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={form.password}
-                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                  placeholder={editing ? "Leave blank to keep current" : "Min 8 characters"}
-                />
-              </div>
+              {!editing && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Password</label>
+                  <input
+                    type="password"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.password}
+                    onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                    placeholder="Min 8 characters"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Assigned Clinics</label>
@@ -333,6 +408,78 @@ export default function TeamPage() {
                 {saving ? "Saving..." : editing ? "Save Changes" : "Add Member"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {resetting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Reset Password</h2>
+              <p className="text-sm text-gray-500 mt-1">{resetting.name} ({resetting.email})</p>
+            </div>
+
+            {resetError && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{resetError}</p>}
+
+            {resetDone ? (
+              <>
+                <p className="text-sm text-green-700 bg-green-50 rounded px-3 py-2">
+                  Password updated and {resetting.name} has been logged out everywhere. Share the new password
+                  securely — it won&apos;t be shown again.
+                </p>
+                <div className="flex gap-2">
+                  <input readOnly value={newPassword} className="flex-1 min-w-0 border rounded-lg px-3 py-2 text-sm font-mono bg-gray-50" />
+                  <button onClick={copyPassword} className="border rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <button
+                  onClick={() => setResetting(null)}
+                  className="w-full bg-[#0B2545] text-white rounded-lg py-2 text-sm font-semibold hover:bg-[#1a3a6e]"
+                >
+                  Done
+                </button>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">New Password</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      className="flex-1 min-w-0 border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Min 8 characters"
+                    />
+                    <button
+                      onClick={() => setNewPassword(generatePassword())}
+                      className="border rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1">This logs {resetting.name} out of all devices.</p>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setResetting(null)}
+                    className="flex-1 border rounded-lg py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitReset}
+                    disabled={resetSaving || newPassword.length < 8}
+                    className="flex-1 bg-[#0B2545] text-white rounded-lg py-2 text-sm font-semibold hover:bg-[#1a3a6e] disabled:opacity-50"
+                  >
+                    {resetSaving ? "Resetting..." : "Reset Password"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

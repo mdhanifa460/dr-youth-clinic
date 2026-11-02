@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import AdminUser from "@/app/models/AdminUser";
-import { requirePermission, hashPassword } from "@/app/lib/adminAuth";
+import { requirePermission, hashPassword, getAdminUser } from "@/app/lib/adminAuth";
 import { ALL_ROLES, type AdminRole } from "@/app/lib/permissions";
 
 export async function GET() {
@@ -35,6 +35,17 @@ export async function POST(req: NextRequest) {
 
     if (!ALL_ROLES.includes(role as AdminRole)) {
       return NextResponse.json({ success: false, message: "Invalid role" }, { status: 400 });
+    }
+
+    if (typeof password !== "string" || password.length < 8) {
+      return NextResponse.json({ success: false, message: "Password must be at least 8 characters" }, { status: 400 });
+    }
+
+    // clinic_owner also has team:'full' — without this they could mint a
+    // super_admin account and log in with it.
+    const me = await getAdminUser();
+    if (role === "super_admin" && me?.role !== "super_admin") {
+      return NextResponse.json({ success: false, message: "Only a super admin can grant the super admin role" }, { status: 403 });
     }
 
     const existing = await AdminUser.findOne({ email: email.toLowerCase().trim() } as any).lean();

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import AdminUser from "@/app/models/AdminUser";
-import { requirePermission, hashPassword, getAdminUser } from "@/app/lib/adminAuth";
+import AdminSession from "@/app/models/AdminSession";
+import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
 import { ALL_ROLES, ALL_MODULES, type AdminRole, type PermissionOverrides } from "@/app/lib/permissions";
 
 const VALID_LEVELS = new Set(["full", "view", "none"]);
@@ -32,7 +33,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     await connectDB();
     const body = await req.json();
-    const { role, isActive, name, assignedClinics, password, permissionOverrides } = body;
+    const { role, isActive, name, assignedClinics, permissionOverrides } = body;
 
     const me = await getAdminUser();
     const editingSelf = !!(me && me._id === params.id);
@@ -55,6 +56,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ success: false, message: "Invalid role" }, { status: 400 });
     }
 
+    // clinic_owner also has team:'full', so without this they could promote
+    // someone to super_admin, or demote or lock out an existing one.
+    if (me?.role !== "super_admin") {
+      if (role === "super_admin") {
+        return NextResponse.json({ success: false, message: "Only a super admin can grant the super admin role" }, { status: 403 });
+      }
+      const target = await (AdminUser as any).findById(params.id).select("role").lean();
+      if (target?.role === "super_admin") {
+        return NextResponse.json({ success: false, message: "Only a super admin can change a super admin" }, { status: 403 });
+      }
+    }
+
     let validatedOverrides: PermissionOverrides | null | undefined;
     if (permissionOverrides !== undefined) {
       try {
@@ -70,12 +83,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (name !== undefined) update.name = name;
     if (assignedClinics !== undefined) update.assignedClinics = assignedClinics;
     if (permissionOverrides !== undefined) update.permissionOverrides = validatedOverrides;
-    if (password) {
-      const { hash, salt, iterations } = hashPassword(password);
-      update.passwordHash = hash;
-      update.passwordSalt = salt;
-      update.passwordIterations = iterations;
-    }
 
     const user = await (AdminUser as any).findByIdAndUpdate(
       params.id,
@@ -98,13 +105,32 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const denied = await requirePermission("team", "full");
   if (denied) return denied;
 
+  // Plain DELETE only deactivates; ?permanent=true removes the account. Past
+  // appointments and audit logs keep the name they stored, so they stay readable.
+  const permanent = req.nextUrl.searchParams.get("permanent") === "true";
+
   const me = await getAdminUser();
   if (me && me._id === params.id) {
-    return NextResponse.json({ success: false, message: "Cannot deactivate your own account" }, { status: 403 });
+    return NextResponse.json({ success: false, message: `Cannot ${permanent ? "delete" : "deactivate"} your own account` }, { status: 403 });
   }
 
   try {
     await connectDB();
+    const target = await (AdminUser as any).findById(params.id).select("role").lean();
+    if (!target) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+
+    // Also what keeps at least one active super_admin around: the caller must
+    // be one, and can't be the one being removed (self check above).
+    if (target.role === "super_admin" && me?.role !== "super_admin") {
+      return NextResponse.json({ success: false, message: "Only a super admin can change a super admin" }, { status: 403 });
+    }
+
+    if (permanent) {
+      await (AdminUser as any).findByIdAndDelete(params.id);
+      await (AdminSession as any).deleteMany({ adminUserId: params.id });
+      return NextResponse.json({ success: true });
+    }
+
     const user = await (AdminUser as any).findByIdAndUpdate(
       params.id,
       { $set: { isActive: false } },
@@ -114,6 +140,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     if (!user) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
     return NextResponse.json({ success: true, data: user });
   } catch {
-    return NextResponse.json({ success: false, message: "Failed to deactivate user" }, { status: 500 });
+    return NextResponse.json({ success: false, message: `Failed to ${permanent ? "delete" : "deactivate"} user` }, { status: 500 });
   }
 }
