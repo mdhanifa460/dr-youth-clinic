@@ -71,7 +71,7 @@ describe('buildWaLink — the actual CTA href', () => {
 
   it('appends the encoded token as a trailing line when attribution is provided', () => {
     const href = buildWaLink('9876543210', 'Hi there', { a: 'v1', s: 'google' });
-    expect(href).toContain('wa.me/9876543210?text=');
+    expect(href).toContain('wa.me/919876543210?text=');
     expect(decodeURIComponent(href.split('?text=')[1])).toMatch(/^Hi there\n\n\(ref: .+\)$/);
   });
 

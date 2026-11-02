@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { toWhatsAppNumber } from '@/app/lib/phone';
 import { withPageContactNumbers } from '@/app/lib/lpContactNumbers';
-ntype Section = { type: string; data: any };
+
+type Section = { type: string; data: any };
 
 describe('toWhatsAppNumber', () => {
   it('adds the country code to a 10-digit number', () => {
