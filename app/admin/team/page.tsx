@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ALL_ROLES, ALL_MODULES, ROLE_LABELS, ROLE_COLORS, ROLE_PERMISSIONS, type AdminRole, type AdminModule, type AccessLevel, type PermissionOverrides } from "@/app/lib/permissions";
 
 type TeamMember = {
@@ -116,7 +117,7 @@ export default function TeamPage() {
   }
 
   async function toggleActive(m: TeamMember) {
-    if (!confirm(`${m.isActive ? "Deactivate" : "Reactivate"} ${m.name}?`)) return;
+    if (!confirm(m.isActive ? `Deactivate ${m.name}? They'll be logged out of all devices.` : `Reactivate ${m.name}?`)) return;
     const method = m.isActive ? "DELETE" : "PUT";
     const body = m.isActive ? undefined : JSON.stringify({ isActive: true });
     const res = await fetch(`/api/admin/team/${m._id}`, {
@@ -190,13 +191,28 @@ export default function TeamPage() {
           <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
           <p className="text-sm text-gray-500 mt-1">Manage admin users and their access roles</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="bg-[#0B2545] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#1a3a6e] transition"
-        >
-          + Add Member
-        </button>
+        <div className="flex items-center gap-4">
+          <Link href="/admin/team/activity" className="text-sm text-blue-600 hover:underline">Activity Log</Link>
+          <button
+            onClick={openCreate}
+            className="bg-[#0B2545] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#1a3a6e] transition"
+          >
+            + Add Member
+          </button>
+        </div>
       </div>
+
+      <details className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-sm text-gray-700">
+        <summary className="font-semibold cursor-pointer">When someone leaves (any role)</summary>
+        <ol className="list-decimal pl-5 mt-2 space-y-1">
+          <li>Click Deactivate here at the moment they exit. It logs them out everywhere. Keep the account instead of deleting it, so their history stays linked.</li>
+          <li>Change any password they knew, including shared logins.</li>
+          <li>Remove them from Google (Search Console, Analytics, Tag Manager, Ads, Business Profile), Meta Business, the domain/DNS provider, Vercel, GitHub, MongoDB Atlas, SEO tools and company email.</li>
+          <li>If they had Vercel, GitHub or Atlas access, change the database password, ADMIN_SESSION_SECRET and API keys.</li>
+          <li>Check the Activity Log and recent lead exports for anything unusual.</li>
+          <li>If they were a super admin, make sure at least two other named people still have super admin.</li>
+        </ol>
+      </details>
 
       {loading ? (
         <div className="text-center py-16 text-gray-400">Loading...</div>
@@ -210,6 +226,7 @@ export default function TeamPage() {
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Clinics</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Last Login</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
@@ -239,6 +256,9 @@ export default function TeamPage() {
                       {m.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                    {m.lastLoginAt ? new Date(m.lastLoginAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }) : "Never"}
+                  </td>
                   <td className="px-4 py-3 flex flex-wrap gap-x-2 gap-y-1">
                     {canManage(m) && (
                       <button onClick={() => openEdit(m)} className="text-xs text-blue-600 hover:underline">Edit</button>
@@ -258,7 +278,7 @@ export default function TeamPage() {
                 </tr>
               ))}
               {members.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-10 text-gray-400">No team members yet</td></tr>
+                <tr><td colSpan={7} className="text-center py-10 text-gray-400">No team members yet</td></tr>
               )}
             </tbody>
           </table>

@@ -138,6 +138,13 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     ).lean();
 
     if (!user) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+
+    // Otherwise reactivating them later would bring their old logins back to life.
+    await (AdminSession as any).updateMany(
+      { adminUserId: params.id, revokedAt: { $exists: false } },
+      { $set: { revokedAt: new Date() } }
+    );
+
     return NextResponse.json({ success: true, data: user });
   } catch {
     return NextResponse.json({ success: false, message: `Failed to ${permanent ? "delete" : "deactivate"} user` }, { status: 500 });

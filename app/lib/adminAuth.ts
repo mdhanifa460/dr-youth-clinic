@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "./mongodb";
 import AdminSession from "../models/AdminSession";
 import AdminUser from "../models/AdminUser";
+import { recordAdminActivity } from "./adminActivity";
 import { type AdminRole, type AdminModule, type AccessLevel, type PermissionOverrides, canAccess } from "./permissions";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
@@ -302,7 +303,10 @@ export async function requirePermission(
 ): Promise<NextResponse | null> {
   const user = await getAdminUser();
   if (!user) return unauthorized();
-  if (!canAccess(user.role, module, minLevel, user.permissionOverrides)) {
+  const allowed = canAccess(user.role, module, minLevel, user.permissionOverrides);
+  // Nearly every admin route passes through here, so this one call covers them.
+  await recordAdminActivity({ actor: user, module, outcome: allowed ? "allowed" : "denied" });
+  if (!allowed) {
     return NextResponse.json(
       { success: false, message: "You don't have permission to do this. Contact your admin if you need access." },
       { status: 403 }

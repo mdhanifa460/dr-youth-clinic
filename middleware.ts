@@ -186,6 +186,10 @@ function getLocationFromCountry(country?: string): string | null {
 function withPathname(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-pathname", req.nextUrl.pathname);
+  // For app/lib/adminActivity.ts. Always overwritten here so a client can't
+  // supply its own values and falsify the activity log.
+  requestHeaders.set("x-admin-method", req.method);
+  requestHeaders.set("x-admin-search", req.nextUrl.search);
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 

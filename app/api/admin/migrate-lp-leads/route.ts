@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import { getAdminUser } from "@/app/lib/adminAuth";
+import { recordAdminActivity } from "@/app/lib/adminActivity";
 import Booking from "@/app/models/Booking";
 import { LandingPageLead } from "@/app/models/LandingPageLead";
 import { LandingPage } from "@/app/models/LandingPage";
@@ -24,6 +25,8 @@ export async function POST() {
       { status: 403 }
     );
   }
+
+  await recordAdminActivity({ actor: user, module: "leads" });
 
   await connectDB();
 

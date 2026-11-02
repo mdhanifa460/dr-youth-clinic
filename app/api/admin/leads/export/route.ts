@@ -7,6 +7,7 @@ import Booking from "@/app/models/Booking";
 import ExportToken from "@/app/models/ExportToken";
 import LeadExportAuditLog from "@/app/models/LeadExportAuditLog";
 import { EXPORT_ALLOWED_ROLES } from "@/app/lib/permissions";
+import { recordAdminActivity } from "@/app/lib/adminActivity";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,8 @@ export async function POST(req: NextRequest) {
   // Gather request metadata
   const ip        = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
   const userAgent = req.headers.get("user-agent") || "unknown";
+
+  await recordAdminActivity({ actor: user, module: "leads" });
 
   // Write audit log
   await LeadExportAuditLog.create({

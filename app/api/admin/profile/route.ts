@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import AdminUser from "@/app/models/AdminUser";
 import { getAdminUser, hashPassword, checkPassword } from "@/app/lib/adminAuth";
+import { recordAdminActivity } from "@/app/lib/adminActivity";
 
 // Lets a client component find out its own user's role/permission level —
 // e.g. to hide or disable a "full"-only action instead of letting a
@@ -54,6 +55,7 @@ export async function PUT(req: NextRequest) {
     }
 
     await (AdminUser as any).findByIdAndUpdate(me._id, { $set: update }, { runValidators: false });
+    await recordAdminActivity({ actor: me });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message || "Update failed" }, { status: 500 });

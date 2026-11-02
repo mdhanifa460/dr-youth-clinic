@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { loginAdmin, setAdminSessionCookie } from "@/app/lib/adminAuth";
+import { recordAdminActivity } from "@/app/lib/adminActivity";
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from "@/app/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +84,12 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ success: false, message }, { status: 503 });
   }
+
+  await recordAdminActivity(
+    session
+      ? { actor: session.user }
+      : { actor: { email: email.toLowerCase().trim() }, outcome: "failed_login" }
+  );
 
   if (!session) {
     if (fromForm) {

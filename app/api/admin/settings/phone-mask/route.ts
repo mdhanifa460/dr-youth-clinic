@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Settings } from '@/app/models/Settings';
 import { getAdminUser } from '@/app/lib/adminAuth';
+import { recordAdminActivity } from '@/app/lib/adminActivity';
 import { PHONE_MASK_TOGGLE_ROLES } from '@/app/lib/permissions';
 
 export async function PUT(req: NextRequest) {
@@ -10,6 +11,8 @@ export async function PUT(req: NextRequest) {
   if (!PHONE_MASK_TOGGLE_ROLES.includes(user.role)) {
     return NextResponse.json({ success: false, message: 'Forbidden: insufficient permissions' }, { status: 403 });
   }
+
+  await recordAdminActivity({ actor: user, module: 'settings' });
 
   try {
     await connectDB();
