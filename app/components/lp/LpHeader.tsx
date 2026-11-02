@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Phone } from 'lucide-react';
 import { useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
+import { toWhatsAppNumber } from '@/app/lib/phone';
 
 interface LpHeaderProps {
   phone?: string;
@@ -27,7 +28,7 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', 
 
   const waMessage = useAttributedWaText("Hi, I'd like to book a free consultation");
   const waLink = whatsapp
-    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`
+    ? `https://wa.me/${toWhatsAppNumber(whatsapp)}?text=${encodeURIComponent(waMessage)}`
     : null;
 
   return (

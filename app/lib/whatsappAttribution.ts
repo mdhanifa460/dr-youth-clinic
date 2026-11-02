@@ -1,3 +1,4 @@
+import { toWhatsAppNumber } from './phone';
 // WhatsApp attribution — the one place a marketing touch has to survive
 // leaving this site entirely and landing inside Meta's own app. Shared by
 // every WhatsApp CTA (client-side: encodes + appends the token to the
@@ -91,7 +92,7 @@ export function extractAttributionTokenFromMessage(text: string): string | null 
 // clearly-separated line — never mixed into the human-readable greeting
 // itself, so the customer's own message still reads naturally.
 export function buildWaLink(number: string, message: string, attribution?: WaAttributionPayload): string {
-  const digits = (number || '').replace(/\D/g, '');
+  const digits = toWhatsAppNumber(number);
   if (!digits) return '';
   let text = message;
   const token = attribution ? encodeAttributionToken(attribution) : '';

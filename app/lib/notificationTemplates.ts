@@ -1,3 +1,4 @@
+import { toWhatsAppNumber } from './phone';
 // Notification template engine for patient communications.
 // Uses WhatsApp deep-links (wa.me) — zero cost, works without any API key.
 // When WhatsApp Cloud API / MSG91 credentials are added to Settings, flip
@@ -141,8 +142,7 @@ export function resolveTemplatesForTrigger(
 }
 
 export function buildWhatsAppUrl(phone: string, message: string): string {
-  // Normalize Indian phone: strip leading 0, add 91 country code
-  const normalized = phone.replace(/\D/g, "").replace(/^0/, "").replace(/^(?!91)/, "91");
+  const normalized = toWhatsAppNumber(phone);
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
 

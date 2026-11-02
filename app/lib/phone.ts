@@ -43,3 +43,13 @@ export function isValidIndianMobile(phone: string): boolean {
 // invalid number, so the validation rule reads as one consistent product
 // decision rather than a different message per page.
 export const INVALID_MOBILE_MESSAGE = "Please enter a valid 10-digit mobile number";
+
+// wa.me only accepts a full international number — wa.me/7200865777 is read as
+// a foreign number and WhatsApp reports it as invalid. Admins naturally type
+// the 10-digit form, so add India's code here. Decided by length, not by
+// checking for a leading "91": 9176543210 is a valid mobile that starts with
+// 91 and still needs the code.
+export function toWhatsAppNumber(phone: string): string {
+  const digits = (phone || "").replace(/\D/g, "").replace(/^0+/, "");
+  return digits.length === 10 ? `91${digits}` : digits;
+}

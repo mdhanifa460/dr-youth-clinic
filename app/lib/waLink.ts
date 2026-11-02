@@ -10,8 +10,10 @@
 // tiny, directive-free module so both Server and Client Components can
 // use it; useBranchWhatsApp.ts re-exports it unchanged so every existing
 // client-side import keeps working exactly as before.
+import { toWhatsAppNumber } from './phone';
+
 export function toWaLink(value: string): string {
   if (!value) return '';
   if (value.includes('wa.me') || value.includes('whatsapp.com')) return value;
-  return `https://wa.me/${value.replace(/\D/g, '')}`;
+  return `https://wa.me/${toWhatsAppNumber(value)}`;
 }

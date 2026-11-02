@@ -6,6 +6,7 @@ import { CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import { useBranchWhatsApp, toWaLink, useAttributedWaText } from "@/app/lib/useBranchWhatsApp";
 import { pushDataLayerEvent } from "@/app/lib/trackConversion";
+import { toWhatsAppNumber } from "@/app/lib/phone";
 
 interface Props {
   phone?: string;
@@ -18,7 +19,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
   // page, mobile's most-tapped WhatsApp entry point) should reach the
   // Chennai desk, same as TopBar/Footer/AiChatWidget. The sitewide link/
   // phone-derived link is only the fallback until a branch is detected.
-  const fallback = whatsappUrl || (phone ? `https://wa.me/${phone.replace(/[^0-9]/g, "")}` : "");
+  const fallback = whatsappUrl || (phone ? `https://wa.me/${toWhatsAppNumber(phone)}` : "");
   const branchWhatsApp = useBranchWhatsApp(fallback);
   const waBase = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
   // Same attribution-token append as every other WhatsApp CTA (see

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Phone, CalendarCheck } from 'lucide-react';
 import { pushDataLayerEvent } from '@/app/lib/trackConversion';
 import { useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
+import { toWhatsAppNumber } from '@/app/lib/phone';
 
 interface StickyCtaProps {
   phone?: string;
@@ -27,7 +28,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
   // it's a hook, not a plain function call, in a render body).
   const waMessage = useAttributedWaText("Hi, I'd like to book a free consultation");
   const waLink = whatsapp
-    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`
+    ? `https://wa.me/${toWhatsAppNumber(whatsapp)}?text=${encodeURIComponent(waMessage)}`
     : null;
 
   // Hide sticky when the form section is in view — don't distract while booking

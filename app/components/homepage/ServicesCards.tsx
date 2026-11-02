@@ -1,5 +1,6 @@
 import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import Link from 'next/link';
+import { toWhatsAppNumber } from '@/app/lib/phone';
 import { ArrowRight, Stethoscope, FileText, CalendarCheck, Phone, MessageCircle } from 'lucide-react';
 
 export interface ServicesCardsCategory {
@@ -66,7 +67,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
   const contactType = contactCfg.type || 'call';
   const contactHref =
     contactType === 'link' ? (contactCfg.href || '') :
-    contactType === 'whatsapp' ? (contactWhatsApp ? `https://wa.me/${contactWhatsApp.replace(/\D/g, '')}` : '') :
+    contactType === 'whatsapp' ? (contactWhatsApp ? `https://wa.me/${toWhatsAppNumber(contactWhatsApp)}` : '') :
     (contactPhone ? `tel:${contactPhone.replace(/\s/g, '')}` : '');
   const contactOn = contactCfg.enabled !== false && !!contactHref;
 

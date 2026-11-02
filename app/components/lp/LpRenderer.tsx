@@ -20,6 +20,7 @@ import HairTimelineSection from './sections/HairTimelineSection';
 import ClientJourneySection from './sections/ClientJourneySection';
 import LocationSection from './sections/LocationSection';
 import VideoSection from './sections/VideoSection';
+import { withPageContactNumbers } from '@/app/lib/lpContactNumbers';
 
 interface LpSection {
   id: string;
@@ -146,7 +147,7 @@ function groupSections(sections: LpSection[]): SectionGroup[] {
 }
 
 export default function LpRenderer({ sections, form, slug, variant = 'A', consultationFree, carouselIntervalMs }: LpRendererProps) {
-  const groups = groupSections(sections);
+  const groups = groupSections(withPageContactNumbers(sections));
 
   return (
     <div>

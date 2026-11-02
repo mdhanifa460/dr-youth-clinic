@@ -3,6 +3,7 @@ import { MdPhone, MdEmail } from 'react-icons/md';
 import { AiFillStar } from 'react-icons/ai';
 import type { SiteConfig } from '@/app/lib/siteConfig';
 import BranchWhatsAppLink from '@/app/components/BranchWhatsAppLink';
+import { toWhatsAppNumber } from '@/app/lib/phone';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   facebook: <FaFacebookF size={14} />,
@@ -29,7 +30,7 @@ const MOBILE_SOCIAL: Array<{
     platform: 'whatsapp',
     icon: <FaWhatsapp size={15} />,
     color: '#25D366',
-    fallback: process.env.CLINIC_PHONE ? `https://wa.me/${process.env.CLINIC_PHONE}` : undefined,
+    fallback: process.env.CLINIC_PHONE ? `https://wa.me/${toWhatsAppNumber(process.env.CLINIC_PHONE)}` : undefined,
   },
   // ^ still used as mobileSocials' last-resort fallback below; the actual
   // rendered link is now BranchWhatsAppLink (branch-aware), not a plain <a>.

@@ -908,8 +908,8 @@ function SectionEditor({
           <FieldInput label="Subtext" value={d.subtext} onChange={(v) => set('subtext', v)} type="textarea" />
           <FieldInput label="CTA Button Text" value={d.ctaPrimary} onChange={(v) => set('ctaPrimary', v)} />
           <div className="grid grid-cols-2 gap-3">
-            <FieldInput label="Phone" value={d.phone} onChange={(v) => set('phone', v)} />
-            <FieldInput label="WhatsApp" value={d.whatsapp} onChange={(v) => set('whatsapp', v)} placeholder="91XXXXXXXXXX" />
+            <FieldInput label="Phone (if hero has none)" value={d.phone} onChange={(v) => set('phone', v)} />
+            <FieldInput label="WhatsApp (if hero has none)" value={d.whatsapp} onChange={(v) => set('whatsapp', v)} placeholder="91XXXXXXXXXX" />
           </div>
           <StringArrayEditor label="Trust Badges" items={d.badges || []} onChange={(v) => set('badges', v)} />
         </div>
@@ -923,7 +923,7 @@ function SectionEditor({
           <StringArrayEditor label="Urgency Points (left panel)" items={d.urgencyPoints || []} onChange={(v) => set('urgencyPoints', v)} />
           <div className="grid grid-cols-2 gap-3">
             <FieldInput label="Slots Left (0 = hidden)" value={d.slotsLeft ?? ''} onChange={(v) => set('slotsLeft', v ? Number(v) : 0)} type="number" />
-            <FieldInput label="Phone (left panel)" value={d.phone} onChange={(v) => set('phone', v)} />
+            <FieldInput label="Phone, left panel (if hero has none)" value={d.phone} onChange={(v) => set('phone', v)} />
           </div>
           <p className="text-xs text-[#2A6BA8] bg-[#3B82C4]/10 rounded-xl px-3 py-2 font-semibold">
             Form fields are configured in the &quot;Form&quot; tab in the sidebar.

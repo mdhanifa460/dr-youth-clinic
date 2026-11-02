@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Phone, CalendarCheck, CheckCircle, MessageCircle } from 'lucide-react';
 import { useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
+import { toWhatsAppNumber } from '@/app/lib/phone';
 
 interface CtaData {
   headline?: string;
@@ -84,7 +85,7 @@ export default function CtaSection({
               </a>
             )}
             {whatsapp && (
-              <a href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(waMessage)}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/${toWhatsAppNumber(whatsapp)}?text=${encodeURIComponent(waMessage)}`} target="_blank" rel="noopener noreferrer">
                 <button className="w-full flex items-center justify-center gap-2 bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-white font-bold px-7 py-4 rounded-2xl text-base backdrop-blur-sm hover:-translate-y-0.5 transition-all duration-200">
                   <MessageCircle size={17} />
                   WhatsApp Us
