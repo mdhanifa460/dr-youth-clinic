@@ -11,7 +11,6 @@ import { Service } from '@/app/models/Service';
 // Registers Doctor with Mongoose for the .populate('doctor') call below —
 // see the note in app/api/admin/results/route.ts for why this is required.
 import '@/app/models/Doctor';
-import { getSiteConfig } from '@/app/lib/siteConfig';
 import { locations } from '@/app/data/locations';
 import { getServiceCities, getEffectiveSlug } from '@/app/lib/serviceSeo';
 import SliderCard from '@/app/components/SliderCard';
