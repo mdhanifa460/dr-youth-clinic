@@ -34,7 +34,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
     headline: 'Why Our Treatment Works',
     description: 'Our clinically proven protocols deliver real results.',
     image: '',
-    highlights: ['FDA Approved', 'Expert Doctors', 'No Surgery Required'],
+    highlights: ['Doctor-Led Consultations', 'Personalised Plans', 'Transparent Pricing'],
   },
   benefits: {
     headline: 'Why Choose DR Youth Clinic',

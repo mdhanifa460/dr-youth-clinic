@@ -78,7 +78,7 @@ const SECTION_DEFAULTS: Record<string, any> = {
     description: 'Our clinically proven protocols deliver real results.',
     image: '',
     imageBadge: 'Clinically Proven',
-    highlights: ['FDA Approved', 'Expert Doctors', 'No Surgery Required'],
+    highlights: ['Doctor-Led Consultations', 'Personalised Plans', 'Transparent Pricing'],
   },
   benefits: {
     headline: 'Why Choose DR Youth Clinic',
@@ -156,11 +156,11 @@ const SECTION_DEFAULTS: Record<string, any> = {
     ctaText: 'Book Free Consultation',
   },
   guarantee: {
-    headline: 'Our Promise to You',
-    subtext: 'We stand behind every treatment. Your satisfaction and safety are non-negotiable.',
+    headline: 'How We Care for You',
+    subtext: 'We are committed to your safety and care.',
     cards: [
-      { icon: '🏆', title: 'Results Guarantee', desc: 'Visible improvement in your first 3 sessions or we re-treat at no cost.' },
-      { icon: '🔬', title: '100% Safe & Sterile', desc: 'FDA-cleared equipment, sterile protocols, internationally trained doctors.' },
+      { icon: '🏆', title: 'Progress Reviews', desc: 'Your doctor reviews your progress during treatment and adjusts the plan where needed. Results vary from person to person.' },
+      { icon: '🔬', title: 'Sterile Protocols', desc: 'FDA-cleared equipment, sterile protocols, internationally trained doctors.' },
       { icon: '⭐', title: 'Expert Care Only', desc: 'Treated only by certified MD Dermatologists — never trainees.' },
     ],
     seals: ['NABH Certified', 'ISO 9001:2015', 'FDA Cleared', 'IADVL Member'],

@@ -12,8 +12,8 @@ interface GuaranteeData {
 }
 
 const DEFAULT_CARDS: GuaranteeCard[] = [
-  { icon: '🏆', title: 'Results Guarantee',  desc: 'Visible improvement in your first 3 sessions or we reassess and re-treat at no extra cost.' },
-  { icon: '🔬', title: '100% Safe & Sterile', desc: 'FDA-cleared equipment, sterile protocols, and internationally trained dermatologists every session.' },
+  { icon: '🏆', title: 'Progress Reviews',   desc: 'Your doctor reviews your progress during treatment and adjusts the plan where needed. Results vary from person to person.' },
+  { icon: '🔬', title: 'Sterile Protocols', desc: 'FDA-cleared equipment, sterile protocols, and internationally trained dermatologists every session.' },
   { icon: '⭐', title: 'Expert Care Only',    desc: 'Your skin is treated only by certified MD Dermatologists — never trainees or technicians.' },
 ];
 
@@ -21,8 +21,8 @@ const DEFAULT_SEALS = ['NABH Certified', 'ISO 9001:2015', 'FDA Cleared', 'IADVL 
 
 export default function GuaranteeSection({ data }: { data: GuaranteeData }) {
   const {
-    headline = 'Our Promise to You',
-    subtext  = "We stand behind every treatment. Your satisfaction and safety are non-negotiable.",
+    headline = 'How We Care for You',
+    subtext  = "We are committed to your safety and care.",
     cards    = [],
     seals    = [],
   } = data;

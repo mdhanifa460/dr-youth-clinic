@@ -37,11 +37,11 @@ export async function generateMetadata({ params }: { params: { location: string 
   if (!loc) return {};
   const { name } = loc;
   return {
-    title: `Best Dermatology & Skin Clinic in ${name}`,
+    title: `Dermatology & Skin Clinic in ${name}`,
     description: `Premium skin, hair & laser treatments in ${name}. Expert dermatologists at ${loc.address}. Book your consultation today. ${loc.specialties.join(', ')}.`,
     alternates: { canonical: `${SITE_URL}/${params.location}` },
     openGraph: {
-      title: `Best Skin Clinic in ${name} | DR Youth Clinic`,
+      title: `Skin Clinic in ${name} | DR Youth Clinic`,
       description: `Advanced dermatology — ${loc.specialties.slice(0, 3).join(', ')} — at our ${name} clinic.`,
       url: `${SITE_URL}/${params.location}`,
       siteName: 'DR Youth Clinic',

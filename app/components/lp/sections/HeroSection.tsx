@@ -47,7 +47,7 @@ interface HeroData {
   trustedByLabel?: string;
 }
 
-const DEFAULT_FEATURES = ['FDA Approved', '100% Natural', 'No Surgery No Scars', 'Minimal Downtime'];
+const DEFAULT_FEATURES = ['Doctor-Led Consultations', 'Personalised Treatment Plans', 'Skin, Hair & Laser Care', 'Transparent Pricing'];
 const DEFAULT_CONCERNS = ['Hair Fall', 'Thinning Hair', 'Receding Hairline', 'Post Hair Transplant', 'Other'];
 
 const fadeUp = {
