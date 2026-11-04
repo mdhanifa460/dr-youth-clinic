@@ -53,6 +53,8 @@ async function main() {
       passwordSalt: salt,
       passwordIterations: iterations,
       isActive: true,
+      // Last-resort recovery, so it also has to get past a lost two-step phone.
+      totpEnabled: false,
     },
     { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
   );

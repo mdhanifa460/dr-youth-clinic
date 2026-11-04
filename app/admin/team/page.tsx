@@ -14,6 +14,7 @@ type TeamMember = {
   createdAt: string;
   lastLoginAt?: string;
   permissionOverrides?: PermissionOverrides;
+  totpEnabled?: boolean;
 };
 
 const MODULE_LABELS: Record<AdminModule, string> = {
@@ -125,6 +126,14 @@ export default function TeamPage() {
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body,
     });
+    const data = await res.json();
+    if (data.success) load();
+    else alert(data.message || "Failed");
+  }
+
+  async function resetTwoFactor(m: TeamMember) {
+    if (!confirm(`Remove two-step login for ${m.name}?\n\nOnly do this if you've confirmed it's really them and they've lost their phone and backup codes. They'll be logged out and can set it up again.`)) return;
+    const res = await fetch(`/api/admin/team/${m._id}/reset-two-factor`, { method: "POST" });
     const data = await res.json();
     if (data.success) load();
     else alert(data.message || "Failed");
@@ -255,6 +264,11 @@ export default function TeamPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${m.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                       {m.isActive ? "Active" : "Inactive"}
                     </span>
+                    {m.totpEnabled && (
+                      <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700 whitespace-nowrap">
+                        2-Step On
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                     {m.lastLoginAt ? new Date(m.lastLoginAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }) : "Never"}
@@ -270,6 +284,9 @@ export default function TeamPage() {
                       <button onClick={() => toggleActive(m)} className={`text-xs ${m.isActive ? "text-red-500" : "text-green-600"} hover:underline`}>
                         {m.isActive ? "Deactivate" : "Reactivate"}
                       </button>
+                    )}
+                    {canResetOrDelete(m) && m.totpEnabled && (
+                      <button onClick={() => resetTwoFactor(m)} className="text-xs text-blue-600 hover:underline whitespace-nowrap">Reset 2-Step</button>
                     )}
                     {canResetOrDelete(m) && (
                       <button onClick={() => deleteMember(m)} className="text-xs text-red-700 font-semibold hover:underline">Delete</button>

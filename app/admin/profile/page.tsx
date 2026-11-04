@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ROLE_LABELS, ROLE_COLORS, type AdminRole } from "@/app/lib/permissions";
+import TwoFactorSection from "./TwoFactorSection";
 
 type ProfileForm = {
   name: string;
@@ -125,6 +126,8 @@ export default function ProfilePage() {
           {error   && <p className="text-sm text-red-600">{error}</p>}
         </div>
       </form>
+
+      <TwoFactorSection />
     </div>
   );
 }

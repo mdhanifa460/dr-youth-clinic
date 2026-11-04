@@ -62,6 +62,14 @@ const AdminUserSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: undefined,
     },
+    // Two-step login. select:false so these can't reach an API response by
+    // accident: every team list and profile read leaves them out unless a
+    // query explicitly asks. See app/lib/twoFactor.ts.
+    totpEnabled: { type: Boolean, default: false },
+    totpSecret: { type: String, select: false },
+    totpPendingSecret: { type: String, select: false },
+    totpBackupCodes: { type: [String], select: false },
+    totpLastStep: { type: Number, select: false },
     lastLoginAt: Date,
     lastLoginIp: String,
     lastLoginDevice: String,

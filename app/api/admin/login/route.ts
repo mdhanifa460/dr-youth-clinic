@@ -85,6 +85,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message }, { status: 503 });
   }
 
+  // Password was right, but no session exists yet. The login is recorded by the
+  // verify route once the code is entered.
+  if (session && "twoFactorRequired" in session) {
+    if (fromForm) {
+      return NextResponse.redirect(new URL("/admin/login?error=twofactor", req.url), 303);
+    }
+    return NextResponse.json({ success: true, twoFactorRequired: true, challenge: session.challenge });
+  }
+
   await recordAdminActivity(
     session
       ? { actor: session.user }

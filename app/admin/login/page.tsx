@@ -47,6 +47,8 @@ export default function AdminLogin() {
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
 
   const [idleNotice, setIdleNotice] = useState(false);
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     if (retryAfterSeconds === null || retryAfterSeconds <= 0) return;
@@ -69,7 +71,8 @@ export default function AdminLogin() {
     setRedirectTo(nextPath);
 
     if (params.get("reason") === "idle") setIdleNotice(true);
-    if (params.get("error")) setError("Invalid email or password");
+    if (params.get("error") === "twofactor") setError("Please log in again to enter your two-step code.");
+    else if (params.get("error")) setError("Invalid email or password");
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -94,12 +97,50 @@ export default function AdminLogin() {
 
       const data = await res.json();
 
-      if (data.success) {
+      if (data.twoFactorRequired) {
+        setChallenge(data.challenge);
+        setPassword("");
+        setLoading(false);
+      } else if (data.success) {
         window.location.href = redirectTo;
       } else {
         setError(data.message || "Invalid email or password");
         setLoading(false);
       }
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  async function handleCode(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/login/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challenge, code }),
+      });
+
+      if (res.status === 429) {
+        const retryAfter = Number(res.headers.get("Retry-After"));
+        setRetryAfterSeconds(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60);
+        setError("Too many attempts.");
+        setLoading(false);
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = redirectTo;
+        return;
+      }
+      setError(data.message || "That code isn't right");
+      setCode("");
+      setLoading(false);
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
@@ -149,6 +190,58 @@ export default function AdminLogin() {
         <div className="mt-9 w-full max-w-[390px] rounded-[22px] border border-white bg-white/95 p-8 shadow-[0_24px_70px_rgba(11,37,69,0.09)]">
           <div className="mx-auto -mt-8 mb-7 h-1 w-full max-w-[324px] rounded-full bg-[#1A365D]" />
 
+          {challenge ? (
+          <form onSubmit={handleCode} className="space-y-5 text-left">
+            <label className="block">
+              <span className="text-xs font-bold text-[#0B2545]">Two-Step Code</span>
+              <input
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  setError("");
+                }}
+                autoFocus
+                autoComplete="one-time-code"
+                placeholder="6-digit code"
+                className="mt-2 h-12 w-full rounded-xl bg-[#e9eff6] px-4 text-center font-mono text-base tracking-widest text-[#0B2545] outline-none placeholder:tracking-normal placeholder:text-[#8a96a5] focus:ring-2 focus:ring-[#0B2545]/20"
+              />
+              <span className="mt-2 block text-[11px] text-[#5b6675]">
+                Open your authenticator app. Lost your phone? Enter a backup code instead.
+              </span>
+            </label>
+
+            {error && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                {error}
+                {retryAfterSeconds !== null && retryAfterSeconds > 0 && (
+                  <span className="block font-semibold mt-0.5">
+                    Try again in {formatRetryAfter(retryAfterSeconds)}
+                  </span>
+                )}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !code.trim() || (retryAfterSeconds !== null && retryAfterSeconds > 0)}
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0B2545] text-sm font-bold text-white shadow-[0_14px_28px_rgba(11,37,69,0.24)] transition hover:bg-[#12345c] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {loading ? "Checking..." : "Verify"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setChallenge(null);
+                setCode("");
+                setError("");
+              }}
+              className="w-full text-xs font-semibold text-[#2d6fb0] hover:underline"
+            >
+              Back to login
+            </button>
+          </form>
+          ) : (
           <form
             onSubmit={handleSubmit}
             className="space-y-5 text-left"
@@ -249,6 +342,7 @@ export default function AdminLogin() {
                 : "Secure Login"}
             </button>
           </form>
+          )}
         </div>
 
         <p className="mt-5 text-center text-xs text-[#5b6675]">

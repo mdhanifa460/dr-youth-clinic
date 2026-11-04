@@ -234,7 +234,7 @@ export async function middleware(req: NextRequest) {
         : new NextResponse("Not found", { status: 404 });
     }
 
-    if (pathname === "/admin/login" || pathname === "/api/admin/login") {
+    if (pathname === "/admin/login" || pathname === "/api/admin/login" || pathname === "/api/admin/login/verify") {
       return withPathname(req);
     }
 

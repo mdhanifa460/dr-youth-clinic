@@ -27,6 +27,7 @@ const OUTCOME_STYLES: Record<ActivityEntry["outcome"], { label: string; classNam
 
 function describe(e: ActivityEntry) {
   if (e.path === "/api/admin/login") return "Log in";
+  if (e.path === "/api/admin/login/verify") return "Log in with two-step code";
   const target = e.path.replace(/^\/api\/admin\//, "");
   return `${VERBS[e.method] ?? e.method}: ${target}${e.query}`;
 }
