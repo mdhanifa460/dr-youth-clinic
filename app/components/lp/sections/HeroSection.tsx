@@ -71,7 +71,6 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
     phone,
     backgroundImage,
     overlayColor = '#0B2560',
-    patientCount = '25,000+',
     rating = '4.9',
     yearsExperience = '9+',
     showInlineForm = true,
@@ -390,8 +389,6 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                 </div>
               )}
               <p className="text-sm text-white/85 font-semibold">
-                {patientCount} Happy Patients
-                <span className="text-white/40 mx-1.5">·</span>
                 <span className="text-[#A25607]">{rating} ★</span> Google Rating
               </p>
             </motion.div>
@@ -509,10 +506,6 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                       </button>
                     </form>
 
-                    <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-500 mt-4">
-                      <ShieldCheck size={13} className="text-[#2A6BA8]" />
-                      Trusted by {patientCount} {trustedByLabel}
-                    </p>
                   </>
                 )}
               </div>

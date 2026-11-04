@@ -5,6 +5,8 @@ import { HomepageSection } from '@/app/models/HomepageSection';
 import { Result } from '@/app/models/Result';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import ResultsClient from './ResultsClient';
+import { notFound } from 'next/navigation';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 60;
 
@@ -46,6 +48,7 @@ const getPairs = unstable_cache(
 );
 
 export default async function ResultsPage() {
+  if (!(await getSiteConfig()).showBeforeAfterOnPublic) notFound();
   const [{ headline, subheadline, stats }, pairs] = await Promise.all([getPageCopy(), getPairs()]);
   return <ResultsClient pairs={pairs} headline={headline} subheadline={subheadline} stats={stats} />;
 }

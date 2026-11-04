@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 import { resolveFooterHref, resolveFooterLocation, LOCATION_COOKIE } from '@/app/lib/footerLinks';
 
 // Client-side location resolution for the Footer's Quick Links / Our
@@ -28,6 +29,7 @@ export default function FooterLinks({
   heading: string;
   links: { href: string; label: string }[];
 }) {
+  const { showBeforeAfterOnPublic } = useSiteConfig();
   const pathname = usePathname();
   const [location, setLocation] = useState(() => resolveFooterLocation(pathname, ''));
 
@@ -47,7 +49,7 @@ export default function FooterLinks({
           means it looks identical either way. */}
       <h3 className="text-sm font-bold mb-5 tracking-wide">{heading}</h3>
       <ul className="space-y-3">
-        {links.map((l, i) => (
+        {links.filter((l) => showBeforeAfterOnPublic || l.href !== '/results').map((l, i) => (
           <li key={i}>
             <Link
               href={resolveFooterHref(l.href, l.label, location)}

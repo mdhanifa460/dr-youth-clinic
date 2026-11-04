@@ -62,7 +62,7 @@ export default async function DoctorsPage() {
 
   const heroHeading   = pc.heroHeading   || 'Meet Our Expert Specialist Team';
   const heroSubheading = pc.heroSubheading || 'Board-certified dermatologists, trichologists and aesthetic physicians committed to delivering safe, natural and lasting results.';
-  const gridHeading   = pc.gridHeading   || 'Trusted by 25,000+ Patients';
+  const gridHeading   = pc.gridHeading   || 'Our Doctors';
   const gridSubheading = pc.gridSubheading || 'Filter by clinic location below';
   const ctaHeading    = pc.ctaHeading    || 'Consult a Specialist Today';
   const ctaBody       = pc.ctaBody       || `Book a ${siteConfig.consultationFree ? 'free ' : ''}initial consultation — zero commitment, just an honest assessment of your concerns.`;

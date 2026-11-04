@@ -349,16 +349,6 @@ export default function AdminLogin() {
           © 2024 DR Youth Clinic. All system access is monitored and logged for security compliance.
         </p>
 
-        <div className="mt-4 flex flex-wrap justify-center gap-x-10 gap-y-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9aa6b7]">
-          <span className="inline-flex items-center gap-2">
-            <Lock className="h-3.5 w-3.5" />
-            AES-256 Encrypted
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            HIPAA Compliant
-          </span>
-        </div>
       </section>
     </main>
   );

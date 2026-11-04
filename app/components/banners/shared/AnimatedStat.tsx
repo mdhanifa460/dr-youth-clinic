@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { withoutPatientCounts } from "@/app/lib/patientClaims";
 import { useInView } from "framer-motion";
 import type { StatBadgeData } from "@/app/lib/banners/types";
 
@@ -62,8 +63,9 @@ function AnimatedNumber({ value }: { value: string }) {
   return <span ref={ref}>{display}</span>;
 }
 
-export function AnimatedStatRow({ stats }: { stats: StatBadgeData[] }) {
-  if (!stats?.length) return null;
+export function AnimatedStatRow({ stats: rawStats }: { stats: StatBadgeData[] }) {
+  const stats = withoutPatientCounts(rawStats);
+  if (!stats.length) return null;
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4">
       {stats.map((s, i) => (

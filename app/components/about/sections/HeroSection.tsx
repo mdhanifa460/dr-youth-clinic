@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { withoutPatientCounts } from '@/app/lib/patientClaims';
 
 interface HeroData {
   badge?: string;
@@ -27,7 +28,8 @@ const MOBILE_COLS: Record<number, string> = {
 };
 
 export default function HeroSection({ data }: { data: HeroData }) {
-  const { badge, headline = '', headlineAccent, subheading, body, backgroundImage, stats = [] } = data;
+  const { badge, headline = '', headlineAccent, subheading, body, backgroundImage, stats: rawStats = [] } = data;
+  const stats = withoutPatientCounts(rawStats);
   const [before, after] = headlineAccent && headline.includes(headlineAccent)
     ? headline.split(headlineAccent)
     : [headline, ''];

@@ -74,8 +74,6 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     visible: true,
     data: {
       stats: [
-        { value: '25K+', label: 'Happy Patients' },
-        { value: '10K+', label: 'Successful Treatments' },
         { value: '9+', label: 'Years of Excellence' },
         { value: '4.7/5', label: 'Google Rating', showStars: true },
       ],

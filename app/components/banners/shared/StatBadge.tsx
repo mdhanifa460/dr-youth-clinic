@@ -1,10 +1,12 @@
 import type { StatBadgeData } from "@/app/lib/banners/types";
+import { withoutPatientCounts } from '@/app/lib/patientClaims';
 
 // Small inline stat tile — used in a row under the CTA row (Premium Hero),
 // distinct from HeroSection.tsx's single floating "10k+" corner card, which
 // stays specific to the homepage's default hero and isn't reused here.
-export function StatBadgeRow({ stats }: { stats: StatBadgeData[] }) {
-  if (!stats?.length) return null;
+export function StatBadgeRow({ stats: rawStats }: { stats: StatBadgeData[] }) {
+  const stats = withoutPatientCounts(rawStats);
+  if (!stats.length) return null;
   return (
     <div className="flex flex-wrap gap-6 sm:gap-8">
       {stats.map((s, i) => (

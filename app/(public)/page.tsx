@@ -18,6 +18,7 @@ import { Story } from '@/app/models/Story';
 import '@/app/models/StoryType';
 import { Faq } from '@/app/models/Faq';
 import { getSettings } from '@/app/models/Settings';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getCachedCategories } from '@/app/lib/getCachedCategories';
 import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
@@ -118,11 +119,11 @@ export async function generateMetadata(): Promise<Metadata> {
   }
   return {
     title: { absolute: 'DR Youth Clinic – Advanced Skin & Aesthetic Care' },
-    description: 'Trusted by 25,000+ patients across India. Expert dermatology, hair restoration & aesthetic treatments.',
+    description: 'Expert dermatology, hair restoration & aesthetic treatments.',
     alternates: { canonical: `${SITE_URL}/` },
     openGraph: {
       title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
-      description: 'Trusted by 25,000+ patients across India.',
+      description: 'Expert dermatology, hair restoration & aesthetic treatments.',
       url: SITE_URL,
       siteName: 'DR Youth Clinic',
       type: 'website',
@@ -506,6 +507,7 @@ export default async function Home() {
   // start` that wrapping the calls in try/catch is not sufficient — by
   // the time either is called, Next.js has already committed to static
   // output). Both already have a safe "no signal" fallback below.
+  const { showBeforeAfterOnPublic } = await getSiteConfig();
   const preferredLocation = '';
   const rawCity = '';
   const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
@@ -611,7 +613,8 @@ export default async function Home() {
       <FAQSchema faqs={faqItems} />
       <HomepageOfferSplash banner={splashBanner} />
       {publicSectionOrder
-        .filter((s) => s.visible)
+        // trust_timeline shows live monthly patient counts; before_after links to /results.
+        .filter((s) => s.visible && s.key !== 'trust_timeline' && (showBeforeAfterOnPublic || s.key !== 'before_after'))
         .map((s) => {
           // Matching Banner(s) (admin-configured, scheduled/targeted) take
           // over the hero slot when any exist — as a carousel when there's

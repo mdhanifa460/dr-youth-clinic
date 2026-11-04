@@ -86,7 +86,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
   const currentLocation = pathname.split("/")[1] || "";
 
   const navItems = (navItemsProp?.length ? navItemsProp : FALLBACK_NAV_ITEMS)
-    .filter((i) => i.visible)
+    .filter((i) => i.visible && (siteConfig.showBeforeAfterOnPublic || i.href !== "/results"))
     .sort((a, b) => a.order - b.order);
 
   // middleware.ts sets this from the visitor's IP region (Karnataka -> bangalore,
@@ -245,9 +245,9 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
 
         {/* Right: results / gallery icon */}
         <Link
-          href="/results"
+          href={siteConfig.showBeforeAfterOnPublic ? "/results" : "/book"}
           className="w-11 h-11 rounded-xl flex items-center justify-center text-[#0B2560] hover:bg-[#f6faff] transition"
-          aria-label="View results"
+          aria-label={siteConfig.showBeforeAfterOnPublic ? "View results" : "Book a consultation"}
         >
           <MdPhotoLibrary size={22} />
         </Link>

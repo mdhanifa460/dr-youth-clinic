@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft, Clock, Repeat, User, MapPin, Calendar } from 'lucide-react';
@@ -102,6 +103,7 @@ function serviceHref(svc: any) {
 }
 
 export default async function ResultDetailPage({ params }: { params: { slug: string } }) {
+  if (!(await getSiteConfig()).showBeforeAfterOnPublic) notFound();
   const result = await getResult(params.slug);
   if (!result) notFound();
 

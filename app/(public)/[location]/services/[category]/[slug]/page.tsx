@@ -387,7 +387,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const hasIdealFor = svc.idealFor?.length > 0;
   const hasTechnology = !!svc.technology?.trim();
   const hasMyths = svc.myths?.length > 0;
-  const hasReviews = reviews.length > 0;
+  // Same admin switch as before/after: patient endorsements are restricted alike.
+  const hasReviews = siteConfig.showBeforeAfterOnPublic && reviews.length > 0;
   const hasDoctors = doctors.length > 0;
   const hasRecovery = !!svc.recoveryTime?.trim();
   // A "reference" content block (Content Block Builder) lets an admin move
@@ -539,10 +540,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
         {/* ── TRUST BAR ── */}
         <section className="bg-[#0B2560] border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
               { icon: Star, label: '4.9★ Rating', sub: 'Across all locations' },
-              { icon: Users, label: '25,000+', sub: 'Patients treated' },
               { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
               { icon: BadgeCheck, label: '10+ Years', sub: 'Clinical experience' },
             ].map(({ icon: Icon, label, sub }) => (
@@ -705,7 +705,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* Documented Results — full Result entries (Admin → Results) tagged to this service */}
-            {documentedResults.length > 0 && (
+            {siteConfig.showBeforeAfterOnPublic && documentedResults.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Documented Patient Results</h2>

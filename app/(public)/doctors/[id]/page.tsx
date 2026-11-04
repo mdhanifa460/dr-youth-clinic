@@ -262,7 +262,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           )}
 
           {/* Patient Results by this doctor */}
-          {doctorResults.length > 0 && (
+          {siteConfig.showBeforeAfterOnPublic && doctorResults.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Patient Results by {doctor.name}</h2>

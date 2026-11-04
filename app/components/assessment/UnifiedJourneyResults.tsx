@@ -308,7 +308,7 @@ export default function UnifiedJourneyResults({
   leadName?: string;
   leadPhone?: string;
 }) {
-  const { publicWhatsApp, consultationCta } = useSiteConfig() as any;
+  const { publicWhatsApp, consultationCta, showBeforeAfterOnPublic } = useSiteConfig() as any;
   const hasResult = !!journeyResult && journeyResult.categoryScores.length > 0;
 
   // Plan My Journey with no matched Service at all (e.g. weight-loss before
@@ -402,7 +402,7 @@ export default function UnifiedJourneyResults({
     });
   }
 
-  if (sectionVisible("realResults") && journey) {
+  if (showBeforeAfterOnPublic && sectionVisible("realResults") && journey) {
     blocks.push({
       key: "realResults",
       order: orderOf("realResults"),

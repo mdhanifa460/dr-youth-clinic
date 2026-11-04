@@ -225,9 +225,6 @@ export default async function LocationPage({ params }: { params: { location: str
 
               <div className="flex flex-wrap gap-6 pt-2 text-sm text-gray-600">
                 <span className="flex items-center gap-1.5">
-                  <BadgeCheck size={14} className="text-secondary" /> 25K+ Happy Patients
-                </span>
-                <span className="flex items-center gap-1.5">
                   <BadgeCheck size={14} className="text-secondary" /> 9+ Years Experience
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -368,7 +365,7 @@ export default async function LocationPage({ params }: { params: { location: str
         )}
 
         {/* ── DOCUMENTED RESULTS from Admin → Results, filtered to this branch ── */}
-        {branchResults.length > 0 && (
+        {siteConfig.showBeforeAfterOnPublic && branchResults.length > 0 && (
           <section className="py-16 px-6 md:px-10 bg-[#f6faff]">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between mb-8 flex-wrap gap-3">

@@ -1,8 +1,11 @@
+import { mentionsPatientCount } from '@/app/lib/patientClaims';
+
 interface Milestone { year?: string; title?: string; desc?: string }
 interface TimelineData { headline?: string; milestones?: Milestone[] }
 
 export default function TimelineSection({ data }: { data: TimelineData }) {
-  const { headline, milestones = [] } = data;
+  const { headline } = data;
+  const milestones = (data.milestones ?? []).filter((m) => !mentionsPatientCount(`${m.title} ${m.desc}`));
   if (!milestones.length) return null;
 
   return (

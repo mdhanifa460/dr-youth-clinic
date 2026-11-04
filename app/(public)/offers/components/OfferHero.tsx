@@ -57,7 +57,7 @@ export default function OfferHero({
             <span className="text-[#A25607]">Packages</span>
           </h1>
           <p className="text-white/60 max-w-xl text-sm md:text-base leading-relaxed mb-8">
-            Premium skin, hair & laser treatments at unbeatable prices — trusted by {patientsCount} patients across {cityCount} cities. Book before they expire.
+            Premium skin, hair & laser treatments at clinics across {cityCount} cities.
           </p>
 
           <div className="mb-10">

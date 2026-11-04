@@ -127,7 +127,6 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       motionIntensity: "full",
       experiencePreset: "luxury-glass",
       statBadges: [
-        { value: "15,000+", label: "Happy Patients" },
         { value: "20+", label: "Doctors" },
         { value: "9+", label: "Years" },
         { value: "98%", label: "Satisfaction" },
@@ -153,7 +152,6 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       secondaryCTA: { label: "View Results", href: "/results" },
       statBadges: [
         { value: "9+", label: "Years Experience" },
-        { value: "15,000+", label: "Happy Patients" },
         { value: "4.8/5", label: "Google Rating" },
       ],
     },

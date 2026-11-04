@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 import {
   CheckCircle, Calendar, MapPin, Phone, User as UserIcon, Stethoscope,
   Video, Building2, CalendarPlus, Navigation, MessageCircle, PhoneCall,
@@ -139,6 +140,7 @@ export default function BookingSuccessClient({
     offers: any[];
   };
 }) {
+  const { showBeforeAfterOnPublic } = useSiteConfig();
   const branchKey = String(booking.location || '').toLowerCase();
   const branchWhatsApp = useBranchWhatsApp(siteConfig.publicWhatsApp || '', branchKey);
   const waHref = toWaLink(branchWhatsApp);
@@ -284,7 +286,7 @@ export default function BookingSuccessClient({
 
   const enabledCtaKeys = (config.ctaButtons || []).filter((c) => c.enabled).map((c) => c.key);
   const enabledChecklist = (config.checklistItems || []).filter((c) => c.enabled);
-  const enabledRelated = [...(config.relatedSections || [])].filter((s) => s.enabled).sort((a, b) => a.order - b.order);
+  const enabledRelated = [...(config.relatedSections || [])].filter((s) => s.enabled && (showBeforeAfterOnPublic || s.key !== 'beforeAfter')).sort((a, b) => a.order - b.order);
 
   const thankYouHeadline = (config.thankYouHeadline || 'Thank you, {name}!').replace('{name}', booking.name.split(' ')[0] || booking.name);
 
