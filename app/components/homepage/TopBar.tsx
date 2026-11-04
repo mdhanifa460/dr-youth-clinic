@@ -3,6 +3,7 @@ import { MdPhone, MdEmail } from 'react-icons/md';
 import { AiFillStar } from 'react-icons/ai';
 import type { SiteConfig } from '@/app/lib/siteConfig';
 import BranchWhatsAppLink from '@/app/components/BranchWhatsAppLink';
+import BranchPhoneLink from '@/app/components/BranchPhoneLink';
 import { toWhatsAppNumber } from '@/app/lib/phone';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -67,13 +68,12 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
         <div className="md:hidden flex items-stretch bg-[#0B2560] text-white text-[11px] font-semibold">
 
           {/* Left: tap-to-call (takes most of the width) */}
-          <a
-            href={`tel:${phone.replace(/\s/g, '')}`}
+          <BranchPhoneLink
+            fallback={phone}
             className="flex flex-1 items-center justify-center gap-1.5 py-2.5 hover:bg-white/10 active:bg-white/20 transition"
           >
             <MdPhone size={14} className="shrink-0" />
-            <span>{phone}</span>
-          </a>
+          </BranchPhoneLink>
 
           {/* Divider */}
           {mobileSocials.length > 0 && (
@@ -115,10 +115,9 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-4 flex-wrap">
             {phone && (
-              <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
+              <BranchPhoneLink fallback={phone} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
                 <MdPhone size={13} />
-                <span>{phone}</span>
-              </a>
+              </BranchPhoneLink>
             )}
             {email && (
               <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">

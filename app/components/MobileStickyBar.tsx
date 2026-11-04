@@ -4,7 +4,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { MdPhone } from "react-icons/md";
 import { CalendarCheck } from "lucide-react";
 import Link from "next/link";
-import { useBranchWhatsApp, toWaLink, useAttributedWaText } from "@/app/lib/useBranchWhatsApp";
+import { useBranchPhone, useBranchWhatsApp, toWaLink, useAttributedWaText } from "@/app/lib/useBranchWhatsApp";
 import { pushDataLayerEvent } from "@/app/lib/trackConversion";
 import { toWhatsAppNumber } from "@/app/lib/phone";
 
@@ -14,7 +14,8 @@ interface Props {
 }
 
 export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
-  const callHref = phone ? `tel:${phone.replace(/\s/g, "")}` : null;
+  const branchPhone = useBranchPhone(phone || "");
+  const callHref = branchPhone ? `tel:${branchPhone.replace(/\s/g, "")}` : null;
   // Branch-aware — a Chennai visitor tapping this (present on every public
   // page, mobile's most-tapped WhatsApp entry point) should reach the
   // Chennai desk, same as TopBar/Footer/AiChatWidget. The sitewide link/

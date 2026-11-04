@@ -91,22 +91,45 @@ export function useAttributedWaText(message: string): string {
 // both. Neither of those two flows apply on non-location-scoped routes
 // like /plan-my-journey or /skin-quiz, so without this override those
 // pages could never resolve a branch-specific number at all.
+function detectBranch(pathname: string, explicitLocation?: string): string {
+  const fromExplicit = (explicitLocation || '').toLowerCase();
+  if (CITY_SLUGS.includes(fromExplicit)) return fromExplicit;
+  const fromPath = (pathname.split('/')[1] || '').toLowerCase();
+  if (CITY_SLUGS.includes(fromPath)) return fromPath;
+  const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
+  const fromCookie = match ? decodeURIComponent(match[1]).toLowerCase() : '';
+  return CITY_SLUGS.includes(fromCookie) ? fromCookie : '';
+}
+
+// Phone counterpart of useBranchWhatsApp below: same detection, so a visitor's
+// call and WhatsApp buttons can't point at different branches.
+export function useBranchPhone(fallback: string): string {
+  const pathname = usePathname();
+  const [number, setNumber] = useState(fallback);
+
+  useEffect(() => {
+    const location = detectBranch(pathname);
+    if (!location) return;
+
+    let cancelled = false;
+    fetch(`/api/branch-contact?location=${location}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.success && data.data.phone) setNumber(data.data.phone);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [pathname]);
+
+  return number;
+}
+
 export function useBranchWhatsApp(fallback: string, explicitLocation?: string): string {
   const pathname = usePathname();
   const [number, setNumber] = useState(fallback);
 
   useEffect(() => {
-    const fromExplicit = (explicitLocation || '').toLowerCase();
-    let location = CITY_SLUGS.includes(fromExplicit) ? fromExplicit : '';
-    if (!location) {
-      const fromPath = (pathname.split('/')[1] || '').toLowerCase();
-      location = CITY_SLUGS.includes(fromPath) ? fromPath : '';
-    }
-    if (!location) {
-      const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
-      const fromCookie = match ? decodeURIComponent(match[1]).toLowerCase() : '';
-      if (CITY_SLUGS.includes(fromCookie)) location = fromCookie;
-    }
+    const location = detectBranch(pathname, explicitLocation);
     if (!location) return;
 
     let cancelled = false;

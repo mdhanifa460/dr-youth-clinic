@@ -113,6 +113,19 @@ export default function HomepageLocations({ data }: { data: any }) {
   const [activeKey, setActiveKey] = useState<string>(initialKey);
   const [autoDetected, setAutoDetected] = useState(availableKeys.includes(detectedKey));
 
+  // This page is cached and shared, so the server can't pick the visitor's city.
+  // Their chosen location is read here instead, and geolocation below can still
+  // override it if granted.
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
+    const chosen = match ? toCityKey(decodeURIComponent(match[1])) : '';
+    if (availableKeys.includes(chosen)) {
+      setActiveKey(chosen);
+      setAutoDetected(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Browser geolocation — overrides server-detected city if granted
   useEffect(() => {
     if (!navigator?.geolocation) return;

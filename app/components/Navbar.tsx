@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MdPhone, MdMenu, MdClose, MdPhotoLibrary, MdChevronRight } from "react-icons/md";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
+import { useBranchPhone } from "@/app/lib/useBranchWhatsApp";
 
 export interface NavChild {
   id: string;
@@ -69,7 +70,7 @@ const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_C
 export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?: NavItem[]; megaMenu?: MegaMenuConfig | null }) {
   const siteConfig = useSiteConfig();
   const logoUrl   = siteConfig.logoUrl || DEFAULT_LOGO_URL;
-  const phone     = siteConfig.publicPhone    || "1800 890 9669";
+  const phone     = useBranchPhone(siteConfig.publicPhone || "1800 890 9669");
   const phoneHref = `tel:${phone.replace(/\s+/g, "")}`;
   const [active, setActive] = useState("home");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
