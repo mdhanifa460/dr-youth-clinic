@@ -15,10 +15,12 @@ export async function recordAdminActivity({
   actor,
   module = "",
   outcome = "allowed",
+  details = "",
 }: {
   actor: Actor;
   module?: string;
   outcome?: "allowed" | "denied" | "failed_login";
+  details?: string;
 }) {
   try {
     const h = headers();
@@ -35,6 +37,7 @@ export async function recordAdminActivity({
       path: h.get("x-pathname") ?? "",
       query: (h.get("x-admin-search") ?? "").slice(0, 200),
       module,
+      details: details.slice(0, 1000),
       outcome,
       ipAddress: h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "",
       userAgent: (h.get("user-agent") ?? "").slice(0, 300),

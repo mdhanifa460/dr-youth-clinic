@@ -14,6 +14,7 @@ const AdminActivityLogSchema = new mongoose.Schema(
     path:       { type: String, required: true },
     query:      { type: String, default: "" },
     module:     { type: String, default: "" },
+    details:    { type: String, default: "" },
     outcome:    { type: String, enum: ["allowed", "denied", "failed_login"], required: true },
     ipAddress:  { type: String, default: "" },
     userAgent:  { type: String, default: "" },

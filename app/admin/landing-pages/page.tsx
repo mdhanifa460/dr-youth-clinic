@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit, Trash2, Eye, ExternalLink, Loader, Rocket, Copy } from 'lucide-react';
+import type { BulkStatusPlan, BulkTargetStatus, PlannedPage } from '@/app/lib/landingPages/bulkStatus';
 
 interface LandingPageRow {
   _id: string;
@@ -90,6 +91,16 @@ export default function LandingPagesAdminPage() {
   const [status, setStatus] = useState<'' | 'draft' | 'published'>('');
   const [template, setTemplate] = useState('');
   const [city, setCity] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [preview, setPreview] = useState<{ target: BulkTargetStatus; plan: BulkStatusPlan } | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkError, setBulkError] = useState('');
+  const [outcome, setOutcome] = useState<{ target: BulkTargetStatus; changed: PlannedPage[]; undone?: boolean } | null>(null);
+
+  // A selection hidden by a filter could get published without anyone seeing it.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [status, template, city]);
 
   // Fetch the full (small, campaign-scale) landing-page list once —
   // status/template used to each trigger their own fresh server round trip
@@ -119,6 +130,61 @@ export default function LandingPagesAdminPage() {
       return true;
     });
   }, [pages, status, template, city]);
+
+  const selectedPages = filteredPages.filter((p) => selected.has(p._id));
+  const selectedDrafts = selectedPages.filter((p) => p.status === 'draft').length;
+  const selectedLive = selectedPages.length - selectedDrafts;
+  const allSelected = filteredPages.length > 0 && selectedPages.length === filteredPages.length;
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const openPreview = async (target: BulkTargetStatus) => {
+    setBulkBusy(true);
+    setBulkError('');
+    try {
+      const ids = selectedPages.map((p) => p._id).join(',');
+      const res = await fetch(`/api/admin/landing-pages/bulk-status?status=${target}&ids=${ids}`);
+      const data = await res.json();
+      if (data.success) setPreview({ target, plan: data.data });
+      else setBulkError(data.message || 'Could not check these pages');
+    } catch {
+      setBulkError('Network error — nothing was changed');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const applyStatus = async (target: BulkTargetStatus, targetPages: PlannedPage[], undo = false) => {
+    setBulkBusy(true);
+    setBulkError('');
+    try {
+      const res = await fetch('/api/admin/landing-pages/bulk-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: targetPages.map((p) => p.id), status: target, undo }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setBulkError(data.message || 'Update failed — nothing was changed');
+        return;
+      }
+      setOutcome({ target, changed: data.data.ready, undone: undo });
+      setPreview(null);
+      setSelected(new Set());
+      await fetchPages();
+    } catch {
+      setBulkError('Network error — the result is unknown. Check the list before trying again.');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   // Clones the page's content into a new draft, then jumps straight into
   // editing it — the common case is "same campaign page, only a couple of
@@ -226,6 +292,60 @@ export default function LandingPagesAdminPage() {
         )}
       </div>
 
+      {outcome && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3 text-sm text-green-800">
+          <span>
+            {outcome.undone ? 'Undone: ' : ''}
+            {outcome.changed.length} {outcome.changed.length === 1 ? 'page' : 'pages'}{' '}
+            {outcome.target === 'published' ? 'now live' : 'moved to draft'}.
+          </span>
+          <span className="flex items-center gap-3">
+            {!outcome.undone && outcome.changed.length > 0 && (
+              <button
+                onClick={() => applyStatus(outcome.target === 'published' ? 'draft' : 'published', outcome.changed, true)}
+                disabled={bulkBusy}
+                className="font-bold underline disabled:opacity-50"
+              >
+                Undo
+              </button>
+            )}
+            <button onClick={() => setOutcome(null)} className="text-green-700 hover:underline">Dismiss</button>
+          </span>
+        </div>
+      )}
+
+      {bulkError && !preview && (
+        <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{bulkError}</p>
+      )}
+
+      {selectedPages.length > 0 && (
+        <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 bg-[#0B2560] text-white rounded-xl px-4 py-3 shadow-lg">
+          <span className="text-sm font-semibold">
+            {selectedPages.length} selected
+            <span className="font-normal text-white/70"> · {selectedDrafts} draft · {selectedLive} live</span>
+          </span>
+          <span className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => openPreview('published')}
+              disabled={bulkBusy || selectedDrafts === 0}
+              className="bg-[#F5A623] text-[#0B2560] text-sm font-bold px-4 py-1.5 rounded-lg hover:brightness-105 disabled:opacity-40"
+            >
+              Publish ({selectedDrafts})
+            </button>
+            <button
+              onClick={() => openPreview('draft')}
+              disabled={bulkBusy || selectedLive === 0}
+              className="bg-white/10 border border-white/30 text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-white/20 disabled:opacity-40"
+            >
+              Move to Draft ({selectedLive})
+            </button>
+            <button onClick={() => setSelected(new Set())} className="text-sm text-white/80 hover:underline px-2">
+              Clear
+            </button>
+          </span>
+        </div>
+      )}
+
       {/* TABLE */}
       {loading ? (
         <div className="flex justify-center py-16">
@@ -262,6 +382,17 @@ export default function LandingPagesAdminPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
+                <th className="pl-6 py-3.5 w-8">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select all ${filteredPages.length} pages shown`}
+                    title={`Select all ${filteredPages.length} pages shown`}
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = selectedPages.length > 0 && !allSelected; }}
+                    onChange={() => setSelected(allSelected ? new Set() : new Set(filteredPages.map((p) => p._id)))}
+                    className="w-4 h-4 cursor-pointer accent-[#0B2560]"
+                  />
+                </th>
                 <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Page
                 </th>
@@ -290,7 +421,16 @@ export default function LandingPagesAdminPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredPages.map((page) => (
-                <tr key={page._id} className="hover:bg-[#f6faff] transition-colors">
+                <tr key={page._id} className={`transition-colors ${selected.has(page._id) ? 'bg-[#3B82C4]/5' : 'hover:bg-[#f6faff]'}`}>
+                  <td className="pl-6 py-4 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${page.title}`}
+                      checked={selected.has(page._id)}
+                      onChange={() => toggleOne(page._id)}
+                      className="w-4 h-4 cursor-pointer accent-[#0B2560]"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-semibold text-[#0B2560] text-sm flex items-center gap-2">
@@ -400,6 +540,101 @@ export default function LandingPagesAdminPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="bulk-title" className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
+            <div className="p-6 pb-3">
+              <h2 id="bulk-title" className="text-lg font-bold text-gray-900">
+                {preview.target === 'published'
+                  ? `Publish ${preview.plan.ready.length} ${preview.plan.ready.length === 1 ? 'page' : 'pages'}?`
+                  : `Move ${preview.plan.ready.length} ${preview.plan.ready.length === 1 ? 'page' : 'pages'} to draft?`}
+              </h2>
+              {preview.target === 'draft' && preview.plan.ready.length > 0 && (
+                <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">
+                  These pages stop working as soon as you confirm. Any ad or link pointing to them will show
+                  &quot;page not found&quot;, so pause those ads first.
+                </p>
+              )}
+              {bulkError && <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mt-3">{bulkError}</p>}
+            </div>
+
+            <div className="px-6 overflow-y-auto space-y-4 text-sm">
+              {preview.plan.blocked.length > 0 && (
+                <div>
+                  <p className="font-semibold text-red-700 mb-1">Can&apos;t publish ({preview.plan.blocked.length}), these will be skipped</p>
+                  <ul className="space-y-1">
+                    {preview.plan.blocked.map((p) => (
+                      <li key={p.id} className="text-gray-700">
+                        <Link href={`/admin/landing-pages/${p.id}`} className="font-medium text-[#2A6BA8] hover:underline">{p.title}</Link>
+                        <span className="block text-xs text-gray-500">{p.note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {preview.plan.warnings.length > 0 && (
+                <div>
+                  <p className="font-semibold text-amber-700 mb-1">Check before publishing ({preview.plan.warnings.length})</p>
+                  <ul className="space-y-1">
+                    {preview.plan.warnings.map((p) => (
+                      <li key={p.id} className="text-gray-700">
+                        <Link href={`/admin/landing-pages/${p.id}`} className="font-medium text-[#2A6BA8] hover:underline">{p.title}</Link>
+                        <span className="block text-xs text-gray-500">{p.note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {preview.plan.ready.length > 0 && (
+                <div>
+                  <p className="font-semibold text-gray-700 mb-1">
+                    {preview.target === 'published' ? 'Going live' : 'Going offline'} ({preview.plan.ready.length})
+                  </p>
+                  <ul className="space-y-0.5 text-gray-600">
+                    {preview.plan.ready.map((p) => (
+                      <li key={p.id} className="flex justify-between gap-3">
+                        <span className="truncate">{p.title}</span>
+                        {preview.target === 'draft' && (
+                          <span className="text-xs text-gray-400 whitespace-nowrap">{p.visitors.toLocaleString()} visitors</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {preview.plan.alreadyThere.length > 0 && (
+                <p className="text-xs text-gray-400">
+                  {preview.plan.alreadyThere.length} selected {preview.plan.alreadyThere.length === 1 ? 'page is' : 'pages are'} already{' '}
+                  {preview.target === 'published' ? 'live' : 'in draft'} and won&apos;t change.
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 p-6 pt-4">
+              <button
+                onClick={() => { setPreview(null); setBulkError(''); }}
+                disabled={bulkBusy}
+                className="flex-1 border rounded-lg py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => applyStatus(preview.target, preview.plan.ready)}
+                disabled={bulkBusy || preview.plan.ready.length === 0}
+                className={`flex-1 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50 ${
+                  preview.target === 'draft' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#0B2560] hover:bg-[#1a3a7a]'
+                }`}
+              >
+                {bulkBusy ? 'Working...' : preview.target === 'published' ? 'Publish' : 'Move to Draft'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

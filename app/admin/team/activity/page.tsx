@@ -11,6 +11,7 @@ type ActivityEntry = {
   method: string;
   path: string;
   query: string;
+  details?: string;
   outcome: "allowed" | "denied" | "failed_login";
   ipAddress: string;
   createdAt: string;
@@ -104,7 +105,10 @@ export default function TeamActivityPage() {
                     <div className="font-medium text-gray-900">{e.actorName || e.actorEmail}</div>
                     {e.actorName && <div className="text-xs text-gray-500">{e.actorEmail}</div>}
                   </td>
-                  <td className="px-4 py-3 text-gray-700 break-all">{describe(e)}</td>
+                  <td className="px-4 py-3 text-gray-700 break-all">
+                    {describe(e)}
+                    {e.details && <div className="text-xs text-gray-500 mt-0.5">{e.details}</div>}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${OUTCOME_STYLES[e.outcome].className}`}>
                       {OUTCOME_STYLES[e.outcome].label}
