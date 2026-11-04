@@ -145,7 +145,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
             {[
               { label: 'Treatments', value: total > 0 ? `${total}+` : '20+' },
               { label: 'Categories', value: String(categories.length) },
-              { label: 'Years Expertise', value: '10+' },
+              { label: 'Years Expertise', value: '9+' },
             ].map((s) => (
               <div key={s.label}>
                 <div className="text-2xl font-extrabold text-[#0B2560] leading-none">{s.value}</div>

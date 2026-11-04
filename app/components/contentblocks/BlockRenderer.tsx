@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { withoutPatientCounts } from "@/app/lib/patientClaims";
+import { withoutPatientClaims } from "@/app/lib/patientClaims";
 import { parseYoutubeId, type ContentBlock, type BlockServiceContext } from "@/app/lib/contentBlocks/types";
 import type { RelatedLinkInfo } from "@/app/lib/contentBlocks/relatedContent";
 import FaqAccordion from "@/app/components/FaqAccordion";
@@ -470,7 +470,7 @@ function BlockItem({
     }
 
     case "statistics": {
-      const stats = Array.isArray(data.stats) ? withoutPatientCounts<any>(data.stats).filter((s: any) => s?.value?.trim()) : [];
+      const stats = Array.isArray(data.stats) ? withoutPatientClaims<any>(data.stats).filter((s: any) => s?.value?.trim()) : [];
       if (stats.length === 0) return null;
       return (
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 gap-4">

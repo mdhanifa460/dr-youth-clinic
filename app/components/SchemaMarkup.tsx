@@ -92,16 +92,6 @@ export function LocalBusinessSchema({ location, city, address, phone, rating, re
     ],
   };
 
-  // AggregateRating unlocks star display in Google search results
-  if (effectiveRating > 0 && effectiveReviews > 0) {
-    schema.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: effectiveRating.toFixed(1),
-      reviewCount: effectiveReviews,
-      bestRating: "5",
-      worstRating: "1",
-    };
-  }
 
   return (
     <script

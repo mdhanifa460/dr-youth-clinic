@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, animate } from 'framer-motion';
-import { withoutPatientCounts } from '@/app/lib/patientClaims';
+import { withoutPatientClaims } from '@/app/lib/patientClaims';
 
 interface StatItem {
   icon: string;
@@ -32,7 +32,7 @@ function AnimatedNumber({ raw, start }: { raw: string; start: boolean }) {
 }
 
 export default function OfferHeroStats({ stats: rawStats }: { stats: StatItem[] }) {
-  const stats = withoutPatientCounts(rawStats);
+  const stats = withoutPatientClaims(rawStats);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
 

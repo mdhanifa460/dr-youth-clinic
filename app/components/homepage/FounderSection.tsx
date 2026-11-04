@@ -1,6 +1,6 @@
 import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import Link from 'next/link';
-import { withoutPatientCounts } from '@/app/lib/patientClaims';
+import { withoutPatientClaims } from '@/app/lib/patientClaims';
 
 interface FounderData {
   eyebrow?: string;
@@ -100,9 +100,9 @@ export default function FounderSection({ data }: { data: FounderData }) {
             </div>
           </div>
 
-          {withoutPatientCounts(rawStats).length > 0 && (
+          {withoutPatientClaims(rawStats).length > 0 && (
             <div className="flex flex-wrap gap-6 mb-8 pb-8 border-b border-gray-100">
-              {withoutPatientCounts(rawStats).map((s, i) => (
+              {withoutPatientClaims(rawStats).map((s, i) => (
                 <div key={i}>
                   <p className="text-2xl font-extrabold text-[#0B2560]">{s.value}</p>
                   <p className="text-gray-500 text-xs mt-0.5">{s.label}</p>

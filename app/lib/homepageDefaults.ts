@@ -75,7 +75,6 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     data: {
       stats: [
         { value: '9+', label: 'Years of Excellence' },
-        { value: '4.7/5', label: 'Google Rating', showStars: true },
       ],
     },
   },

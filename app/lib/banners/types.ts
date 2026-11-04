@@ -152,7 +152,6 @@ export const BANNER_TEMPLATES: BannerTemplateDef[] = [
       secondaryCTA: { label: "View Results", href: "/results" },
       statBadges: [
         { value: "9+", label: "Years Experience" },
-        { value: "4.8/5", label: "Google Rating" },
       ],
     },
   },

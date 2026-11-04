@@ -825,9 +825,6 @@ function BranchSelectionCards({ value, onChange }: { value: string; onChange: (k
             <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
               <MapPin size={11} className="shrink-0" /> {loc.address}
             </p>
-            <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-              <Star size={11} className="fill-[#F5A623] text-[#A25607] shrink-0" /> {loc.rating} ({loc.reviewCount} reviews) · {loc.doctorCount} specialists
-            </p>
           </button>
         );
       })}

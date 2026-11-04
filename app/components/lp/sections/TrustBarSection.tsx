@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, animate } from 'framer-motion';
 import { Users, Clock, Activity, Star, Stethoscope } from 'lucide-react';
-import { withoutPatientCounts } from '@/app/lib/patientClaims';
+import { withClinicYears, withoutPatientClaims } from '@/app/lib/patientClaims';
+
+const MD_COLS: Record<number, string> = { 1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
 interface StatItem {
   icon?: string;
@@ -30,7 +32,6 @@ const ICON_MAP: Record<string, typeof Users> = {
 
 const DEFAULT_STATS: StatItem[] = [
   { icon: 'clock', value: '9+', label: 'Years Experience' },
-  { icon: 'star', value: '4.9/5', label: 'Google Rating' },
   { icon: 'stethoscope', value: '10+', label: 'Expert Doctors' },
 ];
 
@@ -80,12 +81,13 @@ export default function TrustBarSection({ data }: { data: TrustBarData }) {
     ];
   }
   if (!stats.length) stats = DEFAULT_STATS;
-  stats = withoutPatientCounts(stats);
+  stats = withClinicYears(withoutPatientClaims(stats));
+  if (stats.length === 0) return null;
 
   return (
     <section className="bg-[#0B2560] border-y border-[#F5A623]/15">
       <div ref={ref} className="max-w-6xl mx-auto px-5">
-        <div className="flex overflow-x-auto md:overflow-visible md:grid md:grid-cols-3 divide-x divide-[#F5A623]/20">
+        <div className={`flex overflow-x-auto md:overflow-visible md:grid ${MD_COLS[stats.length] ?? 'md:grid-cols-4'} divide-x divide-[#F5A623]/20`}>
           {stats.map((stat, i) => {
             const Icon = ICON_MAP[(stat.icon || '').toLowerCase()] || Users;
             return (

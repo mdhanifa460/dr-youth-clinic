@@ -227,9 +227,11 @@ export default async function LocationPage({ params }: { params: { location: str
                 <span className="flex items-center gap-1.5">
                   <BadgeCheck size={14} className="text-secondary" /> 9+ Years Experience
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <BadgeCheck size={14} className="text-secondary" /> {rating.toFixed(1)}★ Rated on Google
-                </span>
+                {content?.googleMapsUrl && (
+                  <a href={content.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:underline">
+                    <BadgeCheck size={14} className="text-secondary" /> Read our reviews on Google
+                  </a>
+                )}
               </div>
             </div>
 

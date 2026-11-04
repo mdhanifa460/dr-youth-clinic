@@ -613,8 +613,8 @@ export default async function Home() {
       <FAQSchema faqs={faqItems} />
       <HomepageOfferSplash banner={splashBanner} />
       {publicSectionOrder
-        // trust_timeline shows live monthly patient counts; before_after links to /results.
-        .filter((s) => s.visible && s.key !== 'trust_timeline' && (showBeforeAfterOnPublic || s.key !== 'before_after'))
+        // trust_timeline shows live monthly patient counts; before_after and testimonials are patient endorsements.
+        .filter((s) => s.visible && s.key !== 'trust_timeline' && (showBeforeAfterOnPublic || (s.key !== 'before_after' && s.key !== 'testimonials')))
         .map((s) => {
           // Matching Banner(s) (admin-configured, scheduled/targeted) take
           // over the hero slot when any exist — as a carousel when there's

@@ -30,7 +30,6 @@ export default function PremiumHeroBanner({ banner }: { banner: BannerDoc }) {
             </p>
           )}
 
-          {banner.rating?.enabled && <RatingStars value={banner.rating.value} reviewCount={banner.rating.reviewCount} />}
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1">
             <CTAButton label={banner.primaryCTA?.label} href={banner.primaryCTA?.href} variant="primary" />

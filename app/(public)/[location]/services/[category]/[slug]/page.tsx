@@ -540,11 +540,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
         {/* ── TRUST BAR ── */}
         <section className="bg-[#0B2560] border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 grid grid-cols-2 gap-3">
             {[
-              { icon: Star, label: '4.9★ Rating', sub: 'Across all locations' },
               { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
-              { icon: BadgeCheck, label: '10+ Years', sub: 'Clinical experience' },
+              { icon: BadgeCheck, label: '9+ Years', sub: 'Clinical experience' },
             ].map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex items-center gap-3 text-white">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">

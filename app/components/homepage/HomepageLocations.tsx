@@ -205,7 +205,6 @@ export default function HomepageLocations({ data }: { data: any }) {
                 const cci    = cembed.clinicInfo;
                 const chours = cci?.hours?.length ? cci.hours : (cloc?.hours ?? []);
                 const status = getOpenStatus(chours);
-                const crating = cci?.rating || cloc?.rating || 0;
                 const csvc    = cci?.serviceCount || cloc?.serviceCount || 0;
                 const cdoc    = cci?.doctorCount  || cloc?.doctorCount  || 0;
                 const active = activeKey === key;
@@ -241,8 +240,6 @@ export default function HomepageLocations({ data }: { data: any }) {
                         <span className={`font-bold text-sm truncate ${active ? 'text-[#0B2560]' : 'text-gray-800'}`}>{city}</span>
                       </div>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Star size={10} className="text-[#A25607] fill-[#F5A623]" />
-                        <span className="text-xs text-gray-600 font-semibold">{crating > 0 ? crating : '—'}</span>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                           status.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                         }`}>
@@ -320,12 +317,10 @@ export default function HomepageLocations({ data }: { data: any }) {
                   <h3 className="font-bold text-[#0B2560] text-base leading-tight mb-1">
                     DR Youth Clinic — {loc?.name ?? activeKey}
                   </h3>
-                  {rating > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <Star size={13} className="text-[#A25607] fill-[#F5A623]" />
-                      <span className="font-bold text-sm text-gray-800">{rating}</span>
-                      {reviewCount > 0 && <span className="text-xs text-gray-500">({reviewCount} Google reviews)</span>}
-                    </div>
+                  {embed.googleMapsUrl && (
+                    <a href={embed.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#2A6BA8] hover:underline">
+                      Read our reviews on Google
+                    </a>
                   )}
                 </div>
 

@@ -33,7 +33,6 @@ export const SECTION_DEFAULTS: Record<string, any> = {
     backgroundImage: '',
     stats: [
       { value: '9+', label: 'Years Experience' },
-      { value: '4.9★', label: 'Average Rating' },
       { value: '4', label: 'Cities' },
     ],
   },

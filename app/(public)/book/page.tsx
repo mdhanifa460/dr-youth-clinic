@@ -7,11 +7,10 @@ import ConsultationForm from './Form';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 export default function BookingPage() {
-  const { consultationCta, consultationBadge, consultationSub, consultationFree, ratingValue, yearsExperience } = useSiteConfig();
+  const { consultationCta, consultationBadge, consultationSub, consultationFree, yearsExperience } = useSiteConfig();
   const [step, setStep] = useState(1);
 
   const TRUST = [
-    { icon: Star, label: `${ratingValue}★ Rating`, sub: 'On Google' },
     { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
     { icon: Users, label: 'Expert Doctors', sub: `${yearsExperience} years experience` },
     { icon: BadgeCheck, label: consultationBadge, sub: 'No commitment needed' },
@@ -35,7 +34,7 @@ export default function BookingPage() {
             Speak with an expert dermatologist and get a personalised treatment plan{consultationFree ? ' — at no cost' : ''}.
           </p>
           {/* Trust bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-7">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-7">
             {TRUST.map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">

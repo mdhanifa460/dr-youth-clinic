@@ -144,10 +144,9 @@ export default function FAQPageClient({
 
           {/* Stats strip — question count is derived from real data; patient count
               and rating are reused from the admin-editable homepage Stats Bar. */}
-          <div className="mt-10 grid grid-cols-2 gap-4 max-w-md mx-auto">
+          <div className="mt-10 grid grid-cols-1 gap-4 max-w-[12rem] mx-auto">
             {[
               { value: heroStats?.questionsValue || '200+', label: 'Questions answered' },
-              { value: heroStats?.ratingValue || '4.9★', label: 'Patient satisfaction' },
             ].map((s) => (
               <div key={s.label} className="bg-white/10 rounded-2xl py-3 px-2">
                 <p className="text-xl font-extrabold text-[#A25607]">{s.value}</p>

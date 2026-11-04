@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import NextImage from 'next/image';
 import { Phone, CalendarCheck, CheckCircle, ShieldCheck, Loader } from 'lucide-react';
+import { CLINIC_YEARS } from '@/app/lib/patientClaims';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
@@ -71,8 +72,6 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
     phone,
     backgroundImage,
     overlayColor = '#0B2560',
-    rating = '4.9',
-    yearsExperience = '9+',
     showInlineForm = true,
     concern_options = DEFAULT_CONCERNS,
     formHeadline = consultationFree ? 'Book Your Free Consultation' : 'Book Your Consultation',
@@ -366,32 +365,6 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
               )}
             </motion.div>
 
-            {/* Social proof row */}
-            <motion.div
-              custom={5}
-              variants={fadeUp}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: '-80px' }}
-              className="flex items-center gap-3 mt-8"
-            >
-              {showTeamAvatars && (
-                <div className="flex -space-x-2.5">
-                  {['#3B82C4', '#F5A623', '#0B2560', '#1a3a7a'].map((c, i) => (
-                    <span
-                      key={i}
-                      className="w-8 h-8 rounded-full border-2 border-white/80 flex items-center justify-center text-[10px] font-bold text-white"
-                      style={{ background: c }}
-                    >
-                      {['A', 'R', 'S', 'K'][i]}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <p className="text-sm text-white/85 font-semibold">
-                <span className="text-[#A25607]">{rating} ★</span> Google Rating
-              </p>
-            </motion.div>
           </div>
 
           {/* ── Right column: form card ── */}
@@ -412,7 +385,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                   headline on every screen width the badge shows at, not
                   just narrow ones. */}
               <div className="absolute -top-6 -left-6 z-20 hidden sm:flex flex-col items-center justify-center w-20 h-20 rounded-full bg-[#0B2560] border-4 border-[#F5A623] shadow-xl text-center">
-                <span className="text-[#F5A623] font-extrabold text-base leading-none">{yearsExperience}</span>
+                <span className="text-[#F5A623] font-extrabold text-base leading-none">{CLINIC_YEARS}</span>
                 <span className="text-white text-[7px] font-bold uppercase tracking-wider mt-1 leading-tight px-1">
                   {yearsExperienceLabel}
                 </span>
