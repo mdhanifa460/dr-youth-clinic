@@ -88,7 +88,7 @@ export const locations: Record<string, LocationType> = {
     phone: "+919876543210",
     map: "https://www.google.com/maps?q=MG+Road,Kochi&output=embed",
     description:
-      "Our Kochi clinic on MG Road is a premier destination for dermatological care in Kerala, integrating international standards with local expertise.",
+      "Our Kochi clinic on MG Road provides dermatological care in Kerala.",
     specialties: [
       "Skin Rejuvenation",
       "Thread Lifting",

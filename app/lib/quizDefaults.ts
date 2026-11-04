@@ -244,7 +244,7 @@ export const DEFAULT_QUESTIONS: AssessmentQuestion[] = [
   },
   {
     id: "skin-type", title: "What's your skin type?",
-    subtitle: "This helps us choose the safest, most effective treatments for you",
+    subtitle: "This helps us choose suitable treatments for you",
     description: "", icon: "🧴", image: "",
     type: "single", order: 2, required: true,
     sliderMin: 0, sliderMax: 100, sliderStep: 1, sliderUnit: "",

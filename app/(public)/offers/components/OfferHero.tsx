@@ -6,9 +6,9 @@ import { discountPct } from '../OfferCard';
 
 const TRUST_ITEMS = [
   { icon: Gift, label: 'Exclusive Clinic Offers' },
-  { icon: Clock3, label: 'Limited Period Deals' },
+  { icon: Clock3, label: 'Current Offers' },
   { icon: CreditCard, label: 'Easy EMI Options' },
-  { icon: ShieldCheck, label: '100% Safe Treatments' },
+  { icon: ShieldCheck, label: 'Doctor-Supervised Treatments' },
 ];
 
 export default function OfferHero({

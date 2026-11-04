@@ -93,7 +93,7 @@ const WHY_US = [
   {
     icon: 'shield',
     title: 'FDA-Approved Technology',
-    desc: 'We invest only in the safest, most advanced medical aesthetic devices available globally.',
+    desc: 'Our doctors choose the medical aesthetic devices used for each treatment.',
   },
   {
     icon: 'user',
@@ -448,7 +448,7 @@ export default async function LocationPage({ params }: { params: { location: str
                 Why Choose DR Youth Clinic?
               </h2>
               <p className="text-gray-600 mt-4 max-w-xl mx-auto">
-                World-class dermatology backed by evidence, technology, and genuinely personalised care.
+                Dermatology backed by evidence, technology, and genuinely personalised care.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
