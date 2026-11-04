@@ -28,3 +28,10 @@ const YEARS_LABEL = /year|excellence|experience/i;
 export function withClinicYears<T extends { label?: string; value?: unknown }>(stats: T[]): T[] {
   return stats.map((s) => (YEARS_LABEL.test(s?.label ?? '') ? ({ ...s, value: CLINIC_YEARS } as T) : s));
 }
+
+const YEARS_IN_TEXT = /\b\d+(?:\.\d+)?\s*\+?(?=\s*(?:years?|yrs?)['’]?\s+(?:of\s+)?(?:experience|expertise))/i;
+
+// Same as withClinicYears, for clinic-wide copy like "20+ years experience".
+export function withClinicYearsText(text: string | undefined): string | undefined {
+  return text?.replace(YEARS_IN_TEXT, CLINIC_YEARS);
+}

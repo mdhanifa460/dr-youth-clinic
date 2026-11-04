@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Stethoscope, Cpu, UserCheck, Leaf, HeartHandshake } from 'lucide-react';
+import { withClinicYearsText } from '@/app/lib/patientClaims';
 
 interface BenefitItem {
   icon?: string;
@@ -74,7 +75,7 @@ export default function BenefitsSection({ data }: { data: BenefitsData }) {
                   )}
                 </div>
                 <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{item.title}</h3>
-                <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+                <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{withClinicYearsText(item.desc)}</p>
               </motion.div>
             );
           })}

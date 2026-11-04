@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mentionsPatientCount, withClinicYears, withoutPatientClaims } from '@/app/lib/patientClaims';
+import { mentionsPatientCount, withClinicYears, withClinicYearsText, withoutPatientClaims } from '@/app/lib/patientClaims';
 
 describe('withoutPatientClaims', () => {
   it('removes patient and treatment totals, in any wording', () => {
@@ -31,6 +31,19 @@ describe('withClinicYears', () => {
 
   it('leaves other stats alone', () => {
     expect(withClinicYears([{ label: 'Expert Doctors', value: '10+' }])[0].value).toBe('10+');
+  });
+});
+
+describe('withClinicYearsText', () => {
+  it('replaces the figure and keeps the wording', () => {
+    expect(withClinicYearsText("20+ years' experience")).toBe("9+ years' experience");
+    expect(withClinicYearsText('20 years of expertise in hair')).toBe('9+ years of expertise in hair');
+  });
+
+  it('leaves unrelated text alone', () => {
+    expect(withClinicYearsText('Back to routine same day')).toBe('Back to routine same day');
+    expect(withClinicYearsText('Lasts up to 5 years')).toBe('Lasts up to 5 years');
+    expect(withClinicYearsText(undefined)).toBeUndefined();
   });
 });
 

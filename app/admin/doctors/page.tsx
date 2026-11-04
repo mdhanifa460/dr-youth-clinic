@@ -23,7 +23,7 @@ const DETAIL_PAGE_FIELDS = [
 const PAGE_DEFAULTS: Record<string, string> = {
   heroHeading:    'Meet Our Expert Specialist Team',
   heroSubheading: 'Board-certified dermatologists, trichologists and aesthetic physicians committed to delivering safe, natural and lasting results.',
-  gridHeading:    'Trusted by 25,000+ Patients',
+  gridHeading:    'Our Doctors',
   gridSubheading: 'Filter by clinic location below',
   ctaHeading:     'Consult a Specialist Today',
   ctaBody:        'Book a free initial consultation — zero commitment, just an honest assessment of your concerns.',

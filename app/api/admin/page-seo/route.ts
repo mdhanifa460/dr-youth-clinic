@@ -8,7 +8,7 @@ const PAGE_DEFAULTS = [
     pageKey: 'home',
     pageLabel: 'Homepage',
     metaTitle: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
-    metaDescription: 'Trusted by 25,000+ patients across India. Expert dermatology, hair restoration & aesthetic treatments at DR Youth Clinic.',
+    metaDescription: 'Expert dermatology, hair restoration & aesthetic treatments at DR Youth Clinic.',
     keywords: ['dermatologist', 'skin clinic', 'hair treatment', 'dr youth clinic'],
   },
   {

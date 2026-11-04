@@ -7,6 +7,7 @@ import { Doctor } from '@/app/models/Doctor';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import DoctorsGrid from './DoctorsGrid';
 import { getSiteConfig } from '@/app/lib/siteConfig';
+import { mentionsPatientCount } from '@/app/lib/patientClaims';
 
 export const revalidate = 300;
 
@@ -62,7 +63,7 @@ export default async function DoctorsPage() {
 
   const heroHeading   = pc.heroHeading   || 'Meet Our Expert Specialist Team';
   const heroSubheading = pc.heroSubheading || 'Board-certified dermatologists, trichologists and aesthetic physicians committed to delivering safe, natural and lasting results.';
-  const gridHeading   = pc.gridHeading   || 'Our Doctors';
+  const gridHeading   = (!mentionsPatientCount(pc.gridHeading) && pc.gridHeading) || 'Our Doctors';
   const gridSubheading = pc.gridSubheading || 'Filter by clinic location below';
   const ctaHeading    = pc.ctaHeading    || 'Consult a Specialist Today';
   const ctaBody       = pc.ctaBody       || `Book a ${siteConfig.consultationFree ? 'free ' : ''}initial consultation — zero commitment, just an honest assessment of your concerns.`;
