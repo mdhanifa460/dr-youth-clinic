@@ -134,7 +134,15 @@ export default async function StoryDetailPage({ params }: { params: { slug: stri
       <StoryViewer
         story={story}
         related={related}
-        entities={siteConfig.showBeforeAfterOnPublic ? entities : { ...entities, results: [] }}
+        entities={
+          siteConfig.showBeforeAfterOnPublic
+            ? entities
+            : {
+                ...entities,
+                results: [],
+                recommendations: entities.recommendations.filter((r: any) => !String(r.href ?? '').startsWith('/results')),
+              }
+        }
         siteConfig={siteConfig}
       />
     </>
