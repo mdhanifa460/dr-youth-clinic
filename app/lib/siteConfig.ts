@@ -68,7 +68,7 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       showPriceOnCards: settings.display?.showPriceOnCards ?? true,
       showDurationOnCards: settings.display?.showDurationOnCards ?? true,
       relatedServicesCount: settings.display?.relatedServicesCount ?? 3,
-      showBeforeAfterOnPublic: settings.display?.showBeforeAfterOnPublic ?? true,
+      showBeforeAfterOnPublic: settings.display?.showBeforeAfterOnPublic ?? false,
       schemaType: settings.content?.schemaType || 'MedicalClinic',
       defaultAuthorName: settings.content?.defaultAuthorName || 'DR Youth Clinic',
       carouselIntervalMs: settings.display?.carouselIntervalMs ?? 5000,

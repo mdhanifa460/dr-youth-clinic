@@ -70,7 +70,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
                 footer column. */}
             <h3 className="text-sm font-bold mb-5 tracking-wide">{patientCareHeading}</h3>
             <ul className="space-y-3">
-              {patientCare.map((p: any, i: number) => (
+              {patientCare.filter((p: any) => siteConfig?.showBeforeAfterOnPublic || p.href !== "/results").map((p: any, i: number) => (
                 <li key={i}>
                   <Link
                     href={p.href}

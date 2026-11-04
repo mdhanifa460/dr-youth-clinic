@@ -131,7 +131,12 @@ export default async function StoryDetailPage({ params }: { params: { slug: stri
           { name: story.title, url: `${SITE_URL}/web-stories/${story.slug}` },
         ]}
       />
-      <StoryViewer story={story} related={related} entities={entities} siteConfig={siteConfig} />
+      <StoryViewer
+        story={story}
+        related={related}
+        entities={siteConfig.showBeforeAfterOnPublic ? entities : { ...entities, results: [] }}
+        siteConfig={siteConfig}
+      />
     </>
   );
 }

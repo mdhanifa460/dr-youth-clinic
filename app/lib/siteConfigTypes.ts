@@ -81,7 +81,7 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   showPriceOnCards: true,
   showDurationOnCards: true,
   relatedServicesCount: 3,
-  showBeforeAfterOnPublic: true,
+  showBeforeAfterOnPublic: false,
   schemaType: 'MedicalClinic',
   defaultAuthorName: 'DR Youth Clinic',
   carouselIntervalMs: 5000,
