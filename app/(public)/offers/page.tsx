@@ -125,7 +125,7 @@ export default async function OffersPage() {
       </section>
 
       {activeOffers.length > 0 && <OfferDoctorNote doctors={doctors} />}
-      <OfferTestimonials />
+      {siteConfig.showBeforeAfterOnPublic && <OfferTestimonials />}
       <OfferComingSoonSection whatsapp={siteConfig.publicWhatsApp} phone={siteConfig.publicPhone} />
       {activeOffers.length > 0 && <OfferFAQSection />}
 

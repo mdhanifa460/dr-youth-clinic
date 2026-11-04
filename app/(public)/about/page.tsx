@@ -114,7 +114,7 @@ async function getGeneralFaqs() {
 }
 
 export default async function AboutPage() {
-  const [sections, { consultationCta }, doctors, testimonialsData, faqs] = await Promise.all([
+  const [sections, { consultationCta, showBeforeAfterOnPublic }, doctors, testimonialsData, faqs] = await Promise.all([
     getCachedAboutSections(),
     getSiteConfig(),
     getFeaturedDoctors(),
@@ -124,7 +124,7 @@ export default async function AboutPage() {
 
   return (
     <main>
-      {sections.filter((s) => s.visible).map((section) => {
+      {sections.filter((s) => s.visible && (showBeforeAfterOnPublic || s.type !== 'reviews')).map((section) => {
         switch (section.type) {
           case 'hero':
             return <HeroSection key={section.id} data={section.data} />;

@@ -34,7 +34,7 @@ const TOGGLES: { key: keyof DisplaySettings; label: string; desc: string }[] = [
   {
     key: "showBeforeAfterOnPublic",
     label: "Before / After and Patient Reviews",
-    desc: "Show before-and-after photos, the Results pages, and reviews on the homepage and service pages. Off by default for NMC advertising guidelines: get legal advice before turning this on.",
+    desc: "Show before-and-after photos, the Results pages, and patient reviews on the homepage, About, Offers and service pages. Off by default for NMC advertising guidelines: get legal advice before turning this on.",
   },
 ];
 
