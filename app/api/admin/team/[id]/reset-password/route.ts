@@ -4,7 +4,8 @@ import AdminUser from "@/app/models/AdminUser";
 import AdminSession from "@/app/models/AdminSession";
 import { requirePermission, hashPassword, getAdminUser } from "@/app/lib/adminAuth";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("team", "full");
   if (denied) return denied;
 

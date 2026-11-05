@@ -26,7 +26,8 @@ function validateOverrides(input: unknown): PermissionOverrides | null {
   return Object.keys(out).length > 0 ? out : null;
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("team", "full");
   if (denied) return denied;
 
@@ -101,7 +102,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("team", "full");
   if (denied) return denied;
 

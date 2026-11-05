@@ -7,7 +7,8 @@ import { getSiteUrlInventory } from '@/app/lib/siteUrlInventory';
 import { isRealCurrentUrl } from '@/app/lib/domainMigration/matchUrl';
 import { setCachedRedirect, deleteCachedRedirect } from '@/app/lib/domainMigration/redirectCache';
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('intelligence', 'full');
   if (denied) return denied;
 

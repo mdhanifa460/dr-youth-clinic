@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import ServiceForm from '@/app/admin/components/ServiceForm';
 import { Loader } from 'lucide-react';
 
-export default function EditServicePage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function EditServicePage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
 

@@ -17,9 +17,9 @@ export default function IdleWatcher() {
   const [secs, setSecs]       = useState(COUNTDOWN_SECS);
 
   // Use refs so event-handler closures never go stale
-  const warnTimer    = useRef<ReturnType<typeof setTimeout>>();
-  const logoutTimer  = useRef<ReturnType<typeof setTimeout>>();
-  const tickInterval = useRef<ReturnType<typeof setInterval>>();
+  const warnTimer    = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const logoutTimer  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const tickInterval = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const warningLive  = useRef(false); // mirrors `warning` state for use inside handlers
   const routerRef    = useRef(router);
   useEffect(() => { routerRef.current = router; }, [router]);

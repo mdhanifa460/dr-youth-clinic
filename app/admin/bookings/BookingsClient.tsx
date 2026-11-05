@@ -1263,7 +1263,7 @@ export default function BookingsClient({ userRole, assignedClinics, doctors }: P
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo,   setDateTo]   = useState("");
 
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const canWrite = !["content_editor"].includes(userRole);
   const branchRestricted = !assignedClinics.includes("all");

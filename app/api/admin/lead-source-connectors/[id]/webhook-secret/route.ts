@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 // scoped to one connector by _id — this is the value the sender (JustDial/
 // IndiaMART/WhatsApp/etc.) HMAC-signs its requests with, verified by
 // verifyWebhookSignature() in the receiver route.
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "view");
   if (denied) return denied;
 
@@ -27,7 +28,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   });
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "full");
   if (denied) return denied;
 

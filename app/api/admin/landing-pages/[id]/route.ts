@@ -4,10 +4,8 @@ import { LandingPage } from '@/app/models/LandingPage';
 import Booking from '@/app/models/Booking';
 import { requirePermission } from '@/app/lib/adminAuth';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('landing-pages', 'view');
   if (denied) return denied;
 
@@ -41,10 +39,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('landing-pages', 'full');
   if (denied) return denied;
 
@@ -104,10 +100,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('landing-pages', 'full');
   if (denied) return denied;
 

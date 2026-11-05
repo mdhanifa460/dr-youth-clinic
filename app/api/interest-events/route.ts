@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'category is required' }, { status: 400 });
     }
 
-    const visitorId = cookies().get('visitor_id')?.value;
+    const visitorId = (await cookies()).get('visitor_id')?.value;
     if (!visitorId) {
       // middleware sets this on every public page — a request with none is
       // almost certainly not a real browser visit; skip rather than store

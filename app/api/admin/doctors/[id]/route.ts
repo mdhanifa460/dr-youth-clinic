@@ -6,7 +6,8 @@ import { deleteImage } from '@/app/lib/cloudinary';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { removeChunk } from '@/app/lib/rag/KnowledgeBase';
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('doctors', 'view');
   if (denied) return denied;
 
@@ -20,7 +21,8 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('doctors', 'full');
   if (denied) return denied;
 
@@ -40,7 +42,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('doctors', 'full');
   if (denied) return denied;
 

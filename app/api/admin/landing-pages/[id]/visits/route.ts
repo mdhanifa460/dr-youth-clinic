@@ -10,7 +10,8 @@ import { requirePermission } from '@/app/lib/adminAuth';
 // a capped 180-day log, not a hot path that needs cursor pagination).
 const PAGE_SIZE = 50;
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('landing-pages', 'view');
   if (denied) return denied;
 

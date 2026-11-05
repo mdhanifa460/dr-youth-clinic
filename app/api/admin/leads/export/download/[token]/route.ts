@@ -73,10 +73,8 @@ function buildQuery(
   return q;
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { token: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   await connectDB();
 
   const user = await getAdminUser();

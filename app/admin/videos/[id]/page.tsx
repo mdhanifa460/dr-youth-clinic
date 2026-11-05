@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { Loader } from 'lucide-react';
 import VideoForm from '@/app/admin/components/VideoForm';
 
-export default function EditVideoPage({ params }: { params: { id: string } }) {
+export default function EditVideoPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [video, setVideo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

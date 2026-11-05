@@ -55,7 +55,7 @@ export const revalidate = 300;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 interface PageProps {
-  params: { location: string; category: string; slug: string };
+  params: Promise<{ location: string; category: string; slug: string }>;
 }
 
 // A service's slug can now be overridden per city (locationSeo[]), which
@@ -228,7 +228,8 @@ export async function generateStaticParams() {
   } catch { return []; }
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const svc = await getService(params.location, params.slug);
   if (!svc) return {};
   const loc = locations[params.location];
@@ -256,7 +257,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-function ServiceSchemas({ svc, cityName, params, schemaType }: { svc: any; cityName: string; params: PageProps['params']; schemaType: string }) {
+function ServiceSchemas({ svc, cityName, params, schemaType }: { svc: any; cityName: string; params: Awaited<PageProps['params']>; schemaType: string }) {
   const catSlug = params.category.toLowerCase();
   const pageUrl = `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}`;
   const seo = getEffectiveSeo(svc, params.location.toLowerCase());
@@ -325,7 +326,8 @@ const DEFAULT_WHY_US = [
   'Post-treatment care with dedicated follow-up support',
 ];
 
-export default async function ServiceDetailPage({ params }: PageProps) {
+export default async function ServiceDetailPage(props: PageProps) {
+  const params = await props.params;
   const loc = locations[params.location];
   if (!loc) notFound();
 

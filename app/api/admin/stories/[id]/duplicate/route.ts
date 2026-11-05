@@ -3,7 +3,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Story } from '@/app/models/Story';
 import { requirePermission } from '@/app/lib/adminAuth';
 
-export async function POST(_: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('stories', 'full');
   if (denied) return denied;
 

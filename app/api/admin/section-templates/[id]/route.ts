@@ -3,7 +3,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { SectionTemplate } from '@/app/models/SectionTemplate';
 import { requirePermission } from '@/app/lib/adminAuth';
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     await connectDB();
     const existing = await (SectionTemplate as any).findById(params.id).lean();

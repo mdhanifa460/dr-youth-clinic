@@ -182,8 +182,11 @@ function GenericBranchThankYou({
 // certainty; only where it lives changed. The query param is kept as a
 // fallback (not the primary path) for the legacy dynamic route/any
 // already-shared link (see app/(public)/book/success/[bookingId]/page.tsx).
-export default async function BookingSuccessPage({ searchParams }: { searchParams: { bookingId?: string; location?: string } }) {
-  const bookingId = cookies().get(BOOKING_SUCCESS_ID_COOKIE)?.value || searchParams.bookingId;
+export default async function BookingSuccessPage(
+  props: { searchParams: Promise<{ bookingId?: string; location?: string }> }
+) {
+  const searchParams = await props.searchParams;
+  const bookingId = (await cookies()).get(BOOKING_SUCCESS_ID_COOKIE)?.value || searchParams.bookingId;
 
   // No identifiable booking at all — the cookie expired/was cleared, or
   // (as of the URL now permanently carrying `location` for ad-platform

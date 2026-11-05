@@ -3,7 +3,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Faq } from '@/app/models/Faq';
 import { requirePermission } from '@/app/lib/adminAuth';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('faqs', 'full');
   if (denied) return denied;
 
@@ -24,7 +25,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('faqs', 'full');
   if (denied) return denied;
 

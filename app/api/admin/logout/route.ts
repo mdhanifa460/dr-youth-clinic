@@ -17,7 +17,7 @@ const AdminSessionModel = AdminSession as {
 export async function POST() {
   const res = NextResponse.json({ success: true });
   const sessionId = parseSignedSessionCookie(
-    cookies().get("admin_session")?.value
+    (await cookies()).get("admin_session")?.value
   );
 
   if (sessionId) {

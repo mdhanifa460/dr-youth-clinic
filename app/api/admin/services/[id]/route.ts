@@ -7,10 +7,8 @@ import type { IService } from '@/app/models/Service';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { removeChunk } from '@/app/lib/rag/KnowledgeBase';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('services', 'view');
   if (denied) return denied;
 
@@ -36,10 +34,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('services', 'full');
   if (denied) return denied;
 
@@ -99,10 +95,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('services', 'full');
   if (denied) return denied;
 

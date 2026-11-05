@@ -3,7 +3,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Conversation } from '@/app/models/Conversation';
 import { requirePermission } from '@/app/lib/adminAuth';
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('ai', 'view');
   if (denied) return denied;
 

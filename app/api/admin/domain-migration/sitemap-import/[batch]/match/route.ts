@@ -12,7 +12,8 @@ import { matchUrlDeterministic } from '@/app/lib/domainMigration/matchUrl';
 // weak guess" rule; Phase 2's AI fallback is meant to pick these rows up.
 const CONFIDENCE_FLOOR = 40;
 
-export async function POST(req: NextRequest, { params }: { params: { batch: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ batch: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('intelligence', 'full');
   if (denied) return denied;
 

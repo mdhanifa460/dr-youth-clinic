@@ -8,7 +8,8 @@ import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("bookings", "view");
   if (denied) return denied;
 
@@ -37,7 +38,8 @@ const ALLOWED_STATUSES = new Set([
   "new","contacted","follow_up","confirmed","arrived","completed","no_show","cancelled",
 ]);
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("bookings", "full");
   if (denied) return denied;
 
@@ -117,7 +119,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json({ success: true, data: updated });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("bookings", "full");
   if (denied) return denied;
 

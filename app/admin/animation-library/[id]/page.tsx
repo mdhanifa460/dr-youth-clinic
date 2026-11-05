@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { Loader } from 'lucide-react';
 import AnimationAssetForm from '@/app/admin/components/AnimationAssetForm';
 
-export default function EditAnimationAssetPage({ params }: { params: { id: string } }) {
+export default function EditAnimationAssetPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [asset, setAsset] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

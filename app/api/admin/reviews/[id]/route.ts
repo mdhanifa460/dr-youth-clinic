@@ -25,7 +25,8 @@ const PATCH_ALLOWED = [
 // fields (disabled, unchanged) alongside a legitimate Location/Services/
 // toggle edit — a hard rejection would break that save for no reason.
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('reviews', 'full');
   if (denied) return denied;
 
@@ -54,7 +55,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('reviews', 'full');
   if (denied) return denied;
 
@@ -97,7 +99,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('reviews', 'full');
   if (denied) return denied;
 

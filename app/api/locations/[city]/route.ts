@@ -3,7 +3,8 @@ import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
 
 // Public GET — only returns visible content
-export async function GET(_: NextRequest, { params }: { params: { city: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ city: string }> }) {
+  const params = await props.params;
   try {
     await connectDB();
     const city = params.city.toLowerCase();

@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
 // Public, unauthenticated — fired once per story open from the viewer.
 // Rate-limited per IP rather than requiring a session, same tradeoff the
 // other public counters in this app (assessment events) already make.
-export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const ip = getClientIp(req);
   const rl = await checkRateLimit(`story-view:${ip}`, 120, 60 * 60 * 1000);
   if (!rl.allowed) return NextResponse.json({ success: false }, { status: 429 });

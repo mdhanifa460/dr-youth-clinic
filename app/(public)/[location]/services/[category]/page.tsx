@@ -36,7 +36,7 @@ const getCachedBranchPhone = unstable_cache(
 );
 
 interface PageProps {
-  params: { location: string; category: string };
+  params: Promise<{ location: string; category: string }>;
 }
 
 async function getServicesForCategory(location: string, category: string) {
@@ -86,7 +86,8 @@ export async function generateStaticParams() {
   return categories.map((cat: any) => ({ category: cat.slug }));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const loc = locations[params.location];
   if (!loc) return {};
   const catSlug = params.category.toLowerCase();
@@ -106,7 +107,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function CategoryPage({ params }: PageProps) {
+export default async function CategoryPage(props: PageProps) {
+  const params = await props.params;
   const loc = locations[params.location];
   if (!loc) notFound();
 

@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 // Sets who is WORKING this lead (receptionist/counselor) — distinct from
 // createdBy, which is immutable and set once at creation. Either field can
 // be reassigned any number of times; each change gets its own audit entry.
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("bookings", "full");
   if (denied) return denied;
 

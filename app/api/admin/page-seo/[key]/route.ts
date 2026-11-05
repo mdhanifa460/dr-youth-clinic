@@ -11,10 +11,8 @@ const PAGE_LABELS: Record<string, string> = {
   book: 'Book Appointment',
 };
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { key: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ key: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('seo', 'view');
   if (denied) return denied;
 
@@ -27,10 +25,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { key: string } }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ key: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('seo', 'full');
   if (denied) return denied;
 

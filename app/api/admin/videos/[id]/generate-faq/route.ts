@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
 // On-demand only — returns drafted FAQ pairs for the client to append to the
 // video form's existing FAQ editor; the admin reviews/edits/removes before
 // the normal Save.
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('videos', 'full');
   if (denied) return denied;
 

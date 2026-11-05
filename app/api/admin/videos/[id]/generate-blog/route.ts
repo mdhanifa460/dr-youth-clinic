@@ -35,7 +35,8 @@ async function uniqueSlug(base: string) {
 // Creates a real, unpublished Blog document (active: false) rather than a
 // separate draft-storage concept — the admin reviews/edits it in the exact
 // same Blog editor as any manually-written post, then publishes normally.
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('videos', 'full');
   if (denied) return denied;
 

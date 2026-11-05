@@ -24,10 +24,8 @@ import { buildAttributionFields } from '@/app/lib/utmAttribution';
 // staff alert on every abandoned blur would be noisy and would count a
 // non-conversion as a lead in LP analytics, which is exactly the number
 // this feature exists to eventually recover, not inflate.
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   // Slightly more generous than the real /lead route's 5/hour — this can
   // legitimately fire more than once per visitor (blur + beforeunload
   // both calling it, or an admin form retry), and each call is much

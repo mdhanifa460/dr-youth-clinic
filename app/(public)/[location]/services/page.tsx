@@ -22,10 +22,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 const GLYPH_CLS = 'opacity-[0.07] select-none pointer-events-none absolute -bottom-4 -right-4 text-[140px] leading-none';
 
 interface PageProps {
-  params: { location: string };
+  params: Promise<{ location: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const loc = locations[params.location];
   if (!loc) return {};
   const city = loc.name;
@@ -78,7 +79,8 @@ async function getCategoryData(location: string) {
   }
 }
 
-export default async function ServicesHubPage({ params }: PageProps) {
+export default async function ServicesHubPage(props: PageProps) {
+  const params = await props.params;
   const loc = locations[params.location];
   if (!loc) notFound();
 

@@ -15,7 +15,8 @@ export const dynamic = "force-dynamic";
 // instead of the CRM route's hardcoded `type: "crm"` lookup, since a
 // lead_source connector (Meta, and any future provider that also needs an
 // outbound-authenticated Graph/API call) can have more than one.
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "view");
   if (denied) return denied;
 
@@ -31,7 +32,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ success: true, data: cred || null });
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "full");
   if (denied) return denied;
 

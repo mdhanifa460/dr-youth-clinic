@@ -8,7 +8,8 @@ import ConnectorCredential from "@/app/models/ConnectorCredential";
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "full");
   if (denied) return denied;
 
@@ -32,7 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // Removing a lead-source connector doesn't touch any Booking it already
 // created — those stay exactly as they are, same as deleting any other
 // admin-configured source. Only its own config/mapping/logs go with it.
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "full");
   if (denied) return denied;
 

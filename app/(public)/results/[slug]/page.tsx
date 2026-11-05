@@ -68,7 +68,8 @@ export async function generateStaticParams() {
   } catch { return []; }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const result = await getResult(params.slug);
   if (!result) return { title: 'Result Not Found' };
   const title = result.seoTitle || `${result.title} — Before & After Results`;
@@ -101,7 +102,8 @@ function serviceHref(svc: any) {
   return `/${city}/services/${String(svc.category).toLowerCase()}/${getEffectiveSlug(svc, city)}`;
 }
 
-export default async function ResultDetailPage({ params }: { params: { slug: string } }) {
+export default async function ResultDetailPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   if (!(await getSiteConfig()).showBeforeAfterOnPublic) notFound();
   const result = await getResult(params.slug);
   if (!result) notFound();

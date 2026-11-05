@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 // scoped to one connector by _id instead of the CRM singleton — capability
 // is always "intake" here (there's only one kind of thing a lead-source
 // webhook receives), direction is always "pull" (their field names -> ours).
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "view");
   if (denied) return denied;
 
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ success: true, data: mapping?.fields || [] });
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("integrations", "full");
   if (denied) return denied;
 

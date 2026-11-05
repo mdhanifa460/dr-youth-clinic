@@ -19,7 +19,8 @@ export const dynamic = "force-dynamic";
 // Every request is logged as a ConnectorWebhookEvent regardless of
 // signature validity — a misconfigured secret needs to be debuggable from
 // the Sync Manager's Logs tab, not silently dropped.
-export async function POST(req: NextRequest, { params }: { params: { connectorId: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ connectorId: string }> }) {
+  const params = await props.params;
   // Rate-limited per connector, not per IP — a legitimate CRM can burst-send
   // many events from one address, and IP-based limiting would throttle the
   // CRM itself rather than an attacker.

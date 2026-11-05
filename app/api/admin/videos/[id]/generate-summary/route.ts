@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
 // On-demand only (Level 2) — never called automatically. Returns the result
 // to the client for review; nothing is persisted here, the admin still has
 // to click the video form's own Save button, same as every other field.
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('videos', 'full');
   if (denied) return denied;
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { Loader } from 'lucide-react';
 import CourseForm from '@/app/admin/components/CourseForm';
 
-export default function EditCoursePage({ params }: { params: { id: string } }) {
+export default function EditCoursePage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

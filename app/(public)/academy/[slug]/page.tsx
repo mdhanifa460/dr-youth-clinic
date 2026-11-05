@@ -17,7 +17,7 @@ export const revalidate = 300;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 // cache() dedupes this within one request — generateMetadata and the page
@@ -63,7 +63,8 @@ async function getCategoryVideos(category: string, excludeId: string) {
   }
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const video = await getVideo(params.slug);
   if (!video) return {};
 
@@ -92,7 +93,8 @@ function getInitials(name?: string): string {
   return name?.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 }
 
-export default async function VideoDetailPage({ params }: PageProps) {
+export default async function VideoDetailPage(props: PageProps) {
+  const params = await props.params;
   const video = await getVideo(params.slug);
   if (!video) notFound();
 

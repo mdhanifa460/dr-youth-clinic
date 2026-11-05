@@ -81,7 +81,7 @@ function AccessDenied({ module }: { module: string }) {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = headers().get("x-pathname") ?? "";
+  const pathname = (await headers()).get("x-pathname") ?? "";
   const isLoginPage = pathname === "/admin/login";
 
   if (isLoginPage) {

@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import BlogForm from '@/app/admin/components/BlogForm';
 import { Loader } from 'lucide-react';
 
-export default function EditBlogPostPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function EditBlogPostPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 

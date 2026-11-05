@@ -21,6 +21,7 @@ import { redirect } from 'next/navigation';
 // already works around for a different route) — this call stays only as
 // a harmless, inert fallback in case that middleware check is ever
 // removed or its matcher changes, not as the real mechanism.
-export default function LegacyBookingSuccessRedirect({ params }: { params: { bookingId: string } }) {
+export default async function LegacyBookingSuccessRedirect(props: { params: Promise<{ bookingId: string }> }) {
+  const params = await props.params;
   redirect(`/book/success?bookingId=${encodeURIComponent(params.bookingId)}`);
 }

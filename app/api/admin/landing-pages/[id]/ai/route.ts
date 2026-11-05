@@ -31,8 +31,9 @@ function buildPrompt(type: AiType, context: string): string {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const denied = await requirePermission('landing-pages', 'full');
   if (denied) return denied;
 

@@ -26,7 +26,8 @@ export function generateStaticParams() {
   return Object.keys(locations).map((location) => ({ location }));
 }
 
-export async function generateMetadata({ params }: { params: { location: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ location: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const loc = locations[params.location];
   if (!loc) return {};
   return {
@@ -107,7 +108,8 @@ async function getBlogPostsPerPage() {
   } catch { return 9; }
 }
 
-export default async function LocationBlogPage({ params }: { params: { location: string } }) {
+export default async function LocationBlogPage(props: { params: Promise<{ location: string }> }) {
+  const params = await props.params;
   if (!locations[params.location]) notFound();
 
   const [posts, trendingServices, videos, postsPerPage] = await Promise.all([

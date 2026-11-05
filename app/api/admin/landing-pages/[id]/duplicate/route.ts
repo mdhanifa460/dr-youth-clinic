@@ -16,7 +16,8 @@ import { generateUniqueLandingPageSlug } from '@/app/lib/landingPages/uniqueSlug
 // duplicate, keeping the same GTM/Meta Pixel/Google Ads IDs is usually
 // exactly what's wanted, and easy to change on the new page's own Tracking
 // tab if not.
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('landing-pages', 'full');
   if (denied) return denied;
 

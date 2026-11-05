@@ -7,7 +7,8 @@ import AppointmentAuditLog from "@/app/models/AppointmentAuditLog";
 export const dynamic = "force-dynamic";
 
 // GET — single appointment with audit log
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("bookings", "view");
   if (denied) return denied;
 
@@ -40,7 +41,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 // PUT — update non-status fields (notes, pre-treatment checklist, etc.)
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("bookings", "full");
   if (denied) return denied;
 

@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
 // were, since a suggestion is not a decision (see analyzeReview.ts's own
 // comment). Requires the SAME 'reviews':'full' permission every other
 // mutating review action already requires — no new permission module.
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('reviews', 'full');
   if (denied) return denied;
 

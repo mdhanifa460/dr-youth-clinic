@@ -4,7 +4,8 @@ import { AnimationAsset } from "@/app/models/AnimationAsset";
 import { requirePermission } from "@/app/lib/adminAuth";
 import { deleteImage } from "@/app/lib/cloudinary";
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("animation-library", "view");
   if (denied) return denied;
 
@@ -18,7 +19,8 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("animation-library", "full");
   if (denied) return denied;
 
@@ -49,7 +51,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("animation-library", "full");
   if (denied) return denied;
 

@@ -18,8 +18,8 @@ import GtmScript from '@/app/components/analytics/GtmScript';
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
 
 interface Props {
-  params: { slug: string };
-  searchParams: { preview?: string };
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }
 
 async function getLP(slug: string, previewMode = false) {
@@ -31,7 +31,9 @@ async function getLP(slug: string, previewMode = false) {
   return lp ? JSON.parse(JSON.stringify(lp)) : null;
 }
 
-export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const isPreview = searchParams?.preview === '1';
   try {
     const lp = await getLP(params.slug, isPreview);
@@ -59,7 +61,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export const dynamic = 'force-dynamic';
 
-export default async function LandingPagePublic({ params, searchParams }: Props) {
+export default async function LandingPagePublic(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const isPreview = searchParams?.preview === '1';
 
   let lp: any = null;

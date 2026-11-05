@@ -68,7 +68,8 @@ export async function generateStaticParams() {
   } catch { return []; }
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const doctor = await getDoctor(params.id);
   if (!doctor) return { title: 'Doctor Not Found' };
   return {
@@ -82,7 +83,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function DoctorDetailPage({ params }: { params: { id: string } }) {
+export default async function DoctorDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const [doctor, pc, siteConfig, doctorResults] = await Promise.all([
     getDoctor(params.id), getCachedPageContent(), getSiteConfig(), getDoctorResults(params.id),
   ]);

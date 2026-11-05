@@ -23,7 +23,7 @@ export async function recordAdminActivity({
   details?: string;
 }) {
   try {
-    const h = headers();
+    const h = await headers();
     const method = h.get("x-admin-method");
     if (!method || READ_ONLY_METHODS.has(method)) return;
 

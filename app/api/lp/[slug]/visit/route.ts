@@ -23,10 +23,8 @@ function detectDevice(ua: string): 'mobile' | 'tablet' | 'desktop' | 'unknown' {
 // into an actual list. Limit is generous (real visitors browsing several
 // landing pages shouldn't hit it) — just enough to stop a script from
 // inflating analytics for free.
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const ip = getClientIp(req);
   const rl = await checkRateLimit(`lp-visit:${ip}`, 30, 60 * 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);

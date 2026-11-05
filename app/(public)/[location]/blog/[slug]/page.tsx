@@ -9,7 +9,7 @@ import type { Metadata } from 'next';
 import { generateBlogDetailMetadata, renderBlogDetailPage, getBlogStaticParams } from '../../../blog/blogDetailShared';
 
 interface PageProps {
-  params: { location: string; slug: string };
+  params: Promise<{ location: string; slug: string }>;
 }
 
 export const revalidate = 300;
@@ -18,10 +18,12 @@ export async function generateStaticParams() {
   return (await getBlogStaticParams()).flatMap(({ slug, cities }) => cities.map((location) => ({ location, slug })));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   return generateBlogDetailMetadata(params.slug, params.location);
 }
 
-export default async function LocationBlogDetailPage({ params }: PageProps) {
+export default async function LocationBlogDetailPage(props: PageProps) {
+  const params = await props.params;
   return renderBlogDetailPage(params.slug, params.location);
 }

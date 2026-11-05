@@ -34,7 +34,8 @@ export function generateStaticParams() {
   return Object.keys(locations).map((location) => ({ location }));
 }
 
-export async function generateMetadata({ params }: { params: { location: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ location: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const loc = locations[params.location];
   if (!loc) return {};
   const { name } = loc;
@@ -114,7 +115,8 @@ const WHY_US_ICON_MAP: Record<string, typeof FlaskConical> = {
   badge: BadgeCheck,
 };
 
-export default async function LocationPage({ params }: { params: { location: string } }) {
+export default async function LocationPage(props: { params: Promise<{ location: string }> }) {
+  const params = await props.params;
   const cityKey = params.location;
   const loc = locations[cityKey];
   if (!loc) notFound();

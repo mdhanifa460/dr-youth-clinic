@@ -5,7 +5,8 @@ import { CustomAnalyticsEvent } from "@/app/models/CustomAnalyticsEvent";
 import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
 import { validateParamNames } from "@/app/lib/analytics/piiBlocklist";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("analytics", "view");
   if (denied) return denied;
 
@@ -19,7 +20,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("analytics", "full");
   if (denied) return denied;
 
@@ -58,7 +60,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("analytics", "full");
   if (denied) return denied;
 

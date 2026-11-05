@@ -12,10 +12,8 @@ import { qualifyAndPersist } from '@/app/lib/leadQualification/persist';
 import { checkIpRisk } from '@/app/lib/ipIntelligence';
 import { normalizeIdempotencyKey, extractIdentity, identitiesMatch, createBookingIdempotent } from '@/app/lib/bookingIdempotency';
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   // Same 5/hour/IP limit as the equivalent app/api/leads/route.ts — this was
   // the one public lead-capture endpoint with no throttling at all.
   const ip = getClientIp(req);

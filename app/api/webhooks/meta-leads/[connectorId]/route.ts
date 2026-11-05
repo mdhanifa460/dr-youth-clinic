@@ -29,7 +29,8 @@ export const dynamic = "force-dynamic";
 // except the verify_token is THIS connector's own stored credential
 // (getMetaCredential), not a global env var, since Meta Lead Ads is a real
 // Connector row and WhatsApp inbound isn't.
-export async function GET(req: NextRequest, { params }: { params: { connectorId: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ connectorId: string }> }) {
+  const params = await props.params;
   await connectDB();
   const connector = await (Connector as any).findOne({ _id: params.connectorId, type: "lead_source" }).lean();
   if (!connector) return NextResponse.json({ success: false }, { status: 404 });
@@ -54,7 +55,8 @@ export async function GET(req: NextRequest, { params }: { params: { connectorId:
 // which reads a different header name and a different secret concept) —
 // same isolation app/lib/whatsapp/inboundSecurity.ts already establishes
 // for exactly this reason.
-export async function POST(req: NextRequest, { params }: { params: { connectorId: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ connectorId: string }> }) {
+  const params = await props.params;
   const rl = await checkRateLimit(`meta-leads-webhook:${params.connectorId}`, 120, 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 

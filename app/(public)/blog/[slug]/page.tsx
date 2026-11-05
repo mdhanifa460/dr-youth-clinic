@@ -11,10 +11,12 @@ export async function generateStaticParams() {
   return (await getBlogStaticParams()).map(({ slug }) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   return generateBlogDetailMetadata(params.slug);
 }
 
-export default async function BlogDetailPage({ params }: { params: { slug: string } }) {
+export default async function BlogDetailPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   return renderBlogDetailPage(params.slug);
 }

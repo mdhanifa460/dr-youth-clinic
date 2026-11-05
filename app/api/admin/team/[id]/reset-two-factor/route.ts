@@ -7,7 +7,8 @@ import { recordAdminActivity } from "@/app/lib/adminActivity";
 
 // For a colleague who has lost their phone and backup codes. Same guards as
 // resetting a password, because this removes the same kind of protection.
-export async function POST(_: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("team", "full");
   if (denied) return denied;
 

@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 // LeadsClient.tsx). This route is only for the on-demand audit trail —
 // how the score/temperature moved over time, including manual overrides
 // and rule-change recalculations.
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("leads", "view");
   if (denied) return denied;
 

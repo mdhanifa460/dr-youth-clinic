@@ -22,7 +22,8 @@ export const dynamic = "force-dynamic";
 // signature validity, same reasoning as the CRM receiver: a misconfigured
 // secret or an unmapped field needs to be debuggable from the connector's
 // own Logs, not silently dropped.
-export async function POST(req: NextRequest, { params }: { params: { connectorId: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ connectorId: string }> }) {
+  const params = await props.params;
   const rl = await checkRateLimit(`lead-source-webhook:${params.connectorId}`, 120, 60 * 1000);
   if (!rl.allowed) return tooManyRequestsResponse(rl.resetAt);
 

@@ -14,7 +14,7 @@ export const revalidate = 300;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const getCourse = cache(async (slug: string) => {
@@ -29,7 +29,8 @@ const getCourse = cache(async (slug: string) => {
   }
 });
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const course = await getCourse(params.slug);
   if (!course) return {};
 
@@ -67,7 +68,8 @@ const BATCH_STATUS_STYLES: Record<string, string> = {
   completed: 'bg-gray-100 text-gray-500',
 };
 
-export default async function CourseDetailPage({ params }: PageProps) {
+export default async function CourseDetailPage(props: PageProps) {
+  const params = await props.params;
   const course = await getCourse(params.slug);
   if (!course) notFound();
 

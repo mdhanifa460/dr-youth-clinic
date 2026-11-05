@@ -4,7 +4,8 @@ import { Offer } from '@/app/models/Offer';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { revalidateTag } from 'next/cache';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('offers', 'full');
   if (denied) return denied;
 
@@ -24,7 +25,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('offers', 'full');
   if (denied) return denied;
 

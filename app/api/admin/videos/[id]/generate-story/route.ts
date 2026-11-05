@@ -18,7 +18,8 @@ function uid() {
 // Creates a real, draft Story document (status: 'draft') with a couple of
 // pre-filled slides — the admin opens it in the normal Story builder to add
 // images/more slides and publish, same review workflow as the Blog draft.
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission('videos', 'full');
   if (denied) return denied;
 

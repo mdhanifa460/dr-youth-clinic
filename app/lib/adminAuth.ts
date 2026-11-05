@@ -306,7 +306,7 @@ export async function completeTwoFactorLogin({
 
 export async function getAdminSession() {
   const sessionId = parseSignedSessionCookie(
-    cookies().get(ADMIN_SESSION_COOKIE)?.value
+    (await cookies()).get(ADMIN_SESSION_COOKIE)?.value
   );
 
   if (!sessionId) return null;

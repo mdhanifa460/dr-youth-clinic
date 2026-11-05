@@ -140,7 +140,7 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(slides[0]?.muted ?? true);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | undefined>(undefined);
   const startRef = useRef<number>(0);
   const touchStartX = useRef<number | null>(null);
   const viewFired = useRef(false);

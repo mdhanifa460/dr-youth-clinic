@@ -11,7 +11,8 @@ import PreviewFrame from "./PreviewFrame";
 // Popup forced open on top of it, inside a desktop/mobile device-frame
 // toggle (PreviewFrame.tsx). Read-only — only ever a .lean() find, no
 // write path exists on this page.
-export default async function BannerPreviewPage({ params }: { params: { id: string } }) {
+export default async function BannerPreviewPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requirePermission("banners", "view");
   if (denied) notFound();
 

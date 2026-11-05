@@ -3,10 +3,8 @@ const nextConfig = {
   // Prevent mongoose and cloudinary from being bundled into client/edge bundles.
   // They use Node.js APIs and native bindings — bundling them breaks things and
   // adds hundreds of KB to the server bundle unnecessarily.
+  serverExternalPackages: ['mongoose', 'cloudinary'],
   experimental: {
-    serverComponentsExternalPackages: ['mongoose', 'cloudinary'],
-    // Runs instrumentation.ts on server start — warms MongoDB before first request.
-    instrumentationHook: true,
     // Admin pages are always dynamic — never serve stale segments from the
     // client-side router cache. Public pages still get the 300s default.
     staleTimes: {
