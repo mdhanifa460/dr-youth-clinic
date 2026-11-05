@@ -8,7 +8,7 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   'Hair Care': 'from-emerald-400 to-teal-500',
   'Laser':     'from-violet-400 to-purple-600',
   'Body':      'from-orange-400 to-amber-500',
-  'Package':   'from-[#3B82C4] to-[#0B2560]',
+  'Package':   'from-secondary to-primary',
 };
 
 const CATEGORY_ICON: Record<string, string> = {
@@ -39,8 +39,8 @@ export default function OfferCategoryShowcase({ summaries }: { summaries: Catego
     <section className="bg-white py-14 md:py-16">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-2">Browse by Category</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">Find Your Perfect Treatment</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-2">Browse by Category</p>
+          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">Find Your Perfect Treatment</h2>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-5">
@@ -59,22 +59,22 @@ export default function OfferCategoryShowcase({ summaries }: { summaries: Catego
                 <div className={`relative h-24 bg-gradient-to-br ${gradient} flex items-center justify-center`}>
                   <span className="text-4xl opacity-90">{icon}</span>
                   {hasOffers && summary!.maxDiscount > 0 && (
-                    <span className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-green-600 text-[10px] font-extrabold px-2 py-1 rounded-full">
+                    <span className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-green-600 text-xs font-extrabold px-2 py-1 rounded-full">
                       Up to {summary!.maxDiscount}% off
                     </span>
                   )}
                 </div>
                 <div className="p-4 flex flex-col flex-1">
-                  <h3 className="font-extrabold text-[#0B2560] text-sm mb-1">{cat}</h3>
+                  <h3 className="font-extrabold text-primary text-sm mb-1">{cat}</h3>
                   {hasOffers ? (
                     <p className="text-xs text-gray-500 mb-3">
-                      {summary!.count} offer{summary!.count !== 1 ? 's' : ''} · From <span className="font-bold text-[#0B2560]">₹{summary!.startingFrom?.toLocaleString('en-IN')}</span>
+                      {summary!.count} offer{summary!.count !== 1 ? 's' : ''} · From <span className="font-bold text-primary">₹{summary!.startingFrom?.toLocaleString('en-IN')}</span>
                     </p>
                   ) : (
                     <p className="text-xs text-gray-500 mb-3">Ask about pricing at your consultation</p>
                   )}
                   <div className="flex-1" />
-                  <span className="inline-flex items-center gap-1 text-[#2A6BA8] text-xs font-bold group-hover:text-[#0B2560] transition-colors">
+                  <span className="inline-flex items-center gap-1 text-secondary text-xs font-bold group-hover:text-primary transition-colors">
                     {hasOffers ? 'View Offers' : 'Learn More'} <ArrowRight size={12} />
                   </span>
                 </div>

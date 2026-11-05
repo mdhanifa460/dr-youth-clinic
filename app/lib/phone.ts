@@ -39,6 +39,13 @@ export function isValidIndianMobile(phone: string): boolean {
   return INDIAN_MOBILE_RE.test(cleaned);
 }
 
+// Saved numbers often carry spaces ("99944 49535"), which make an unreliable
+// tel: link on some phones. Returns '' when there's no number to dial.
+export function toTelHref(phone: string | undefined | null): string {
+  const cleaned = (phone || "").replace(/^tel:/i, "").replace(/[^\d+]/g, "");
+  return cleaned ? `tel:${cleaned}` : "";
+}
+
 // Shared error copy — every form should show this exact message on an
 // invalid number, so the validation rule reads as one consistent product
 // decision rather than a different message per page.

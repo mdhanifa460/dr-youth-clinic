@@ -21,7 +21,7 @@ export default function LpFooter({ phone, whatsapp, city, branches, logoUrl }: L
   const locationLabel = branches?.length ? branches.join(' · ') : city;
 
   return (
-    <footer className="bg-[#0B2560] text-white">
+    <footer className="bg-primary text-white">
       <div className="max-w-5xl mx-auto px-5 py-10">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
 

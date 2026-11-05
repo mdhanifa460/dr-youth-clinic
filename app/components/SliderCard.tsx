@@ -37,7 +37,7 @@ export default function SliderCard({ pair }: { pair: any }) {
                 style={{ objectPosition }}
                 draggable={false}
               />
-              <span className="pointer-events-none absolute top-4 left-4 bg-white/80 backdrop-blur-md text-[#0B2560] text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full border border-[#EBE8E3] shadow-sm">Before</span>
+              <span className="pointer-events-none absolute top-4 left-4 bg-white/80 backdrop-blur-md text-primary text-xs font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full border border-[#EBE8E3] shadow-sm">Before</span>
             </div>
 
             {/* DIVIDER — static, purely visual separation between the two panes */}
@@ -53,17 +53,17 @@ export default function SliderCard({ pair }: { pair: any }) {
                 style={{ objectPosition }}
                 draggable={false}
               />
-              <span className="pointer-events-none absolute top-4 right-4 bg-[#F5A623]/90 backdrop-blur-md text-white text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full shadow-sm">After</span>
+              <span className="pointer-events-none absolute top-4 right-4 bg-champagne/90 backdrop-blur-md text-white text-xs font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-full shadow-sm">After</span>
             </div>
           </>
         ) : (
           <div className="h-full w-full flex">
             <div className="flex-1 bg-gradient-to-br from-[#F0EDE8] to-[#E8E4DE] flex items-center justify-center">
-              <span className="text-xs font-semibold text-[#0B2560]/30 tracking-widest uppercase">Before</span>
+              <span className="text-xs font-semibold text-primary/30 tracking-widest uppercase">Before</span>
             </div>
-            <div className="w-[1.5px] bg-[#0B2560]/10 self-stretch" />
+            <div className="w-[1.5px] bg-primary/10 self-stretch" />
             <div className="flex-1 bg-gradient-to-br from-[#EBF3FF] to-[#DDE9FF] flex items-center justify-center">
-              <span className="text-xs font-semibold text-[#2A6BA8]/50 tracking-widest uppercase">After</span>
+              <span className="text-xs font-semibold text-secondary/50 tracking-widest uppercase">After</span>
             </div>
           </div>
         )}
@@ -71,12 +71,12 @@ export default function SliderCard({ pair }: { pair: any }) {
 
       {/* TEXT */}
       <div className="px-5 sm:px-6 py-5">
-        <h3 className="font-bold text-[#0B2560] text-base leading-snug">{pair.title}</h3>
+        <h3 className="font-bold text-primary text-base leading-snug">{pair.title}</h3>
         {pair.description && (
           <p className="text-gray-500 text-sm mt-1.5 leading-relaxed">{pair.description}</p>
         )}
         {pair.category && (
-          <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-[#f6faff] text-[#2A6BA8] text-xs font-semibold">
+          <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-canvas text-secondary text-xs font-semibold">
             {pair.category}
           </span>
         )}

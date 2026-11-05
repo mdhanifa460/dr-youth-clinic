@@ -17,7 +17,7 @@ const PAGE_SIZE = 12;
 function StoryCard({ story }: { story: any }) {
   return (
     <Link href={`/web-stories/${story.slug}`} className="group block">
-      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
+      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-[#1a4a8a] shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
         {story.coverImage?.url ? (
           <Image src={story.coverImage.url} alt={story.title} fill sizes="240px" className="object-cover" />
         ) : (
@@ -25,13 +25,13 @@ function StoryCard({ story }: { story: any }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
         {story.storyType && (
-          <span className="absolute top-2.5 left-2.5 text-[9px] font-bold uppercase tracking-wide bg-white/90 text-[#0B2560] px-2 py-1 rounded-full">
+          <span className="absolute top-2.5 left-2.5 text-xs font-bold uppercase tracking-wide bg-white/90 text-primary px-2 py-1 rounded-full">
             {story.storyType.icon} {story.storyType.name}
           </span>
         )}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
           <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
-            <Play size={14} className="text-[#0B2560] fill-[#0B2560]" />
+            <Play size={14} className="text-primary fill-primary" />
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -67,16 +67,16 @@ export default function WebStoriesClient({ stories, types }: { stories: any[]; t
   const paged = filtered.slice(0, visible);
 
   return (
-    <main className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white py-14 md:py-20 relative overflow-hidden">
-        <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[#F5A623]/10 blur-[120px]" />
+      <section className="bg-gradient-to-br from-primary via-[#102d6e] to-[#1a4a8a] text-white py-14 md:py-20 relative overflow-hidden">
+        <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-champagne/10 blur-[120px]" />
         <div className="max-w-6xl mx-auto px-6 relative">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-6 h-[2px] bg-[#F5A623]" />
-            <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
+            <div className="w-6 h-[2px] bg-champagne" />
+            <span className="text-champagne text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4 max-w-2xl">
+          <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight mb-4 max-w-2xl">
             Real Journeys, Told in Seconds
           </h1>
           <p className="text-white/70 text-sm md:text-base max-w-xl leading-relaxed">
@@ -105,12 +105,12 @@ export default function WebStoriesClient({ stories, types }: { stories: any[]; t
           <div className="relative flex-1 min-w-[200px] max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
             <input value={search} onChange={e => { setSearch(e.target.value); setVisible(PAGE_SIZE); }} placeholder="Search stories..."
-              className="w-full border border-gray-200 rounded-full pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
+              className="w-full border border-gray-200 rounded-full pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
             {SORTS.map(s => (
               <button key={s.key} onClick={() => { setSort(s.key); setVisible(PAGE_SIZE); }}
-                className={`shrink-0 text-xs font-bold px-3.5 py-2 rounded-full transition ${sort === s.key ? 'bg-[#0B2560] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                className={`shrink-0 text-xs font-bold px-3.5 py-2 rounded-full transition ${sort === s.key ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                 {s.label}
               </button>
             ))}
@@ -120,12 +120,12 @@ export default function WebStoriesClient({ stories, types }: { stories: any[]; t
         {types.length > 0 && (
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide mb-8">
             <button onClick={() => { setTypeFilter(''); setVisible(PAGE_SIZE); }}
-              className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition ${!typeFilter ? 'bg-[#F5A623] text-[#0B2560]' : 'bg-white border border-gray-200 text-gray-500'}`}>
+              className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition ${!typeFilter ? 'bg-champagne text-primary' : 'bg-white border border-gray-200 text-gray-500'}`}>
               All Types
             </button>
             {types.map((t: any) => (
               <button key={t._id} onClick={() => { setTypeFilter(t._id); setVisible(PAGE_SIZE); }}
-                className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition ${typeFilter === t._id ? 'bg-[#F5A623] text-[#0B2560]' : 'bg-white border border-gray-200 text-gray-500'}`}>
+                className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition ${typeFilter === t._id ? 'bg-champagne text-primary' : 'bg-white border border-gray-200 text-gray-500'}`}>
                 {t.icon} {t.name}
               </button>
             ))}
@@ -145,7 +145,7 @@ export default function WebStoriesClient({ stories, types }: { stories: any[]; t
             {visible < filtered.length && (
               <div className="text-center mt-10">
                 <button onClick={() => setVisible(v => v + PAGE_SIZE)}
-                  className="bg-[#0B2560] text-white px-8 py-3 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition">
+                  className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition">
                   Load More
                 </button>
               </div>
@@ -153,6 +153,6 @@ export default function WebStoriesClient({ stories, types }: { stories: any[]; t
           </>
         )}
       </section>
-    </main>
+    </div>
   );
 }

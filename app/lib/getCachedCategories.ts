@@ -11,10 +11,15 @@ export type { ICategory } from '@/app/models/Category';
 // import this file from Server Components.
 export const getCachedCategories = unstable_cache(
   async () => {
-    await connectDB();
-    const count = await (Category as any).countDocuments({});
-    if (count === 0) await (Category as any).insertMany(DEFAULT_CATEGORIES);
-    return (Category as any).find({ active: true }).sort({ order: 1 }).lean();
+    // A database blip shouldn't fail a whole deploy: the slugs here match the defaults.
+    try {
+      await connectDB();
+      const count = await (Category as any).countDocuments({});
+      if (count === 0) await (Category as any).insertMany(DEFAULT_CATEGORIES);
+      return await (Category as any).find({ active: true }).sort({ order: 1 }).lean();
+    } catch {
+      return DEFAULT_CATEGORIES;
+    }
   },
   ['public-service-categories'],
   { revalidate: 300, tags: ['categories'] }

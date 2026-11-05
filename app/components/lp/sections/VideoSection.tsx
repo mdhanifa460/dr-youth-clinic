@@ -75,7 +75,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
   // ── Ambient autoplay loop mode ────────────────────────────────────────────
   if (autoplayMuted) {
     return (
-      <section className="bg-[#0B2560] py-12 md:py-20">
+      <section className="bg-primary py-12 md:py-20">
         <div className="max-w-5xl mx-auto px-5">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -84,7 +84,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
             transition={{ duration: 0.5 }}
             className="text-center mb-8 md:mb-10"
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">{badge}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">{badge}</p>
             <h2 className="text-2xl md:text-4xl font-extrabold text-white">{headline}</h2>
             {subtitle && (
               <p className="text-white/60 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
@@ -95,7 +95,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
-            className="rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl ring-1 ring-[#F5A623]/20"
+            className="rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl ring-1 ring-champagne/20"
           >
             <video
               src={videoUrl}
@@ -126,8 +126,8 @@ export default function VideoSection({ data }: { data: VideoData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-8 md:mb-10"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">{badge}</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-3">{badge}</p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
           {subtitle && (
             <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
           )}
@@ -144,7 +144,7 @@ export default function VideoSection({ data }: { data: VideoData }) {
           role="button"
           tabIndex={0}
           aria-label={`Play video: ${headline}`}
-          className="relative cursor-pointer rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl active:opacity-90 transition-opacity touch-manipulation focus:outline-none focus-visible:ring-4 focus-visible:ring-[#F5A623]"
+          className="relative cursor-pointer rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl active:opacity-90 transition-opacity touch-manipulation focus:outline-none focus-visible:ring-4 focus-visible:ring-champagne"
           style={{
             background: thumbnailUrl
               ? undefined
@@ -162,22 +162,22 @@ export default function VideoSection({ data }: { data: VideoData }) {
           )}
 
           {/* Overlay — always visible (hover doesn't work on touch) */}
-          <div className="absolute inset-0 bg-[#0B2560]/45" />
+          <div className="absolute inset-0 bg-primary/45" />
 
           {/* Play button + label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <motion.div
               whileTap={{ scale: 0.9 }}
-              className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#F5A623] shadow-2xl shadow-[#F5A623]/50 flex items-center justify-center"
+              className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-champagne shadow-2xl shadow-champagne/50 flex items-center justify-center"
             >
               <Play
                 size={28}
-                className="text-[#0B2560] ml-1.5 md:hidden"
+                className="text-primary ml-1.5 md:hidden"
                 fill="currentColor"
               />
               <Play
                 size={36}
-                className="text-[#0B2560] ml-1.5 hidden md:block"
+                className="text-primary ml-1.5 hidden md:block"
                 fill="currentColor"
               />
             </motion.div>

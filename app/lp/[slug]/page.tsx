@@ -6,6 +6,7 @@ import { LandingPage } from '@/app/models/LandingPage';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getAnalyticsConfig } from '@/app/lib/analyticsConfig';
 import LpRenderer from '@/app/components/lp/LpRenderer';
+import { scrubClaims } from '@/app/lib/patientClaims';
 import LpHeader from '@/app/components/lp/LpHeader';
 import LpFooter from '@/app/components/lp/LpFooter';
 import StickyCta from '@/app/components/lp/StickyCta';
@@ -187,7 +188,7 @@ export default async function LandingPagePublic({ params, searchParams }: Props)
         />
 
         <LpRenderer
-          sections={lp.sections ?? []}
+          sections={scrubClaims(lp.sections ?? [])}
           form={lp.form ?? {
             fields: [],
             submitText: siteConfig.consultationCta,

@@ -34,12 +34,12 @@ export default function OfferComingSoonSection({ whatsapp, phone }: { whatsapp?:
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="bg-[#f6faff] py-14"
+      className="bg-canvas py-14"
     >
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-2">🚧 Coming Soon</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">More Ways to Save</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-2">🚧 Coming Soon</p>
+          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">More Ways to Save</h2>
           <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">Not live yet — but on the way. Ask us for the latest.</p>
         </div>
 
@@ -47,7 +47,7 @@ export default function OfferComingSoonSection({ whatsapp, phone }: { whatsapp?:
           {TEASERS.map((t) => (
             <div key={t.title} className="offer-gradient-border-muted rounded-2xl p-4 text-center">
               <span className="text-2xl block mb-2">{t.icon}</span>
-              <p className="font-bold text-[#0B2560] text-xs mb-1">{t.title}</p>
+              <p className="font-bold text-primary text-xs mb-1">{t.title}</p>
               <p className="text-gray-500 text-[11px] leading-relaxed">{t.copy}</p>
             </div>
           ))}
@@ -58,7 +58,7 @@ export default function OfferComingSoonSection({ whatsapp, phone }: { whatsapp?:
             href={contactUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition-all duration-200"
+            className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition-all duration-200"
           >
             <MessageCircle size={15} /> Ask Us on WhatsApp
           </a>

@@ -58,27 +58,27 @@ function AnalyzingProgress() {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-bold text-[#0B2560]">Analyzing</span>
+          <span className="text-sm font-bold text-primary">Analyzing</span>
         </div>
       </div>
 
       <div className="w-full max-w-sm bg-white border border-gray-100 rounded-2xl shadow-sm px-5 py-5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#A25607] mb-1">◈ AI Analysis</p>
-        <h3 className="text-base font-extrabold text-[#0B2560] mb-4">Calculating your personalised plan</h3>
+        <p className="text-xs font-bold uppercase tracking-widest text-bronze mb-1">◈ AI Analysis</p>
+        <h3 className="text-base font-extrabold text-primary mb-4">Calculating your personalised plan</h3>
         <ul className="space-y-3">
           {ANALYSIS_STEPS.map((step, i) => {
             const done = i < revealed;
             const active = i === revealed;
             return (
               <li key={step} className={`flex items-center gap-2.5 text-sm transition-opacity duration-300 ${done || active ? "opacity-100" : "opacity-30"}`}>
-                <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${done ? "bg-[#22c55e]" : active ? "border-2 border-[#F5A623] border-t-transparent animate-spin" : "border-2 border-gray-200"}`}>
+                <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${done ? "bg-[#22c55e]" : active ? "border-2 border-champagne border-t-transparent animate-spin" : "border-2 border-gray-200"}`}>
                   {done && (
                     <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
                 </span>
-                <span className={done ? "text-gray-700" : active ? "text-[#0B2560] font-semibold" : "text-gray-400"}>{step}</span>
+                <span className={done ? "text-gray-700" : active ? "text-primary font-semibold" : "text-gray-400"}>{step}</span>
               </li>
             );
           })}
@@ -128,10 +128,10 @@ export default function AiObservationsScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="text-center mb-7">
-        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
+        <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
           {goalLabel} · AI Observations
         </span>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">Your AI observations</h2>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">Your AI observations</h2>
       </div>
 
       {/* Disclaimer gate — always shown first, every time, regardless of
@@ -148,7 +148,7 @@ export default function AiObservationsScreen({
               type="checkbox"
               checked={acknowledged}
               onChange={(e) => setAcknowledged(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-[#0B2560] shrink-0"
+              className="mt-0.5 w-4 h-4 accent-primary shrink-0"
             />
             <span>I understand this is a general observation, not a medical diagnosis.</span>
           </label>
@@ -156,11 +156,11 @@ export default function AiObservationsScreen({
             type="button"
             disabled={!acknowledged}
             onClick={requestObservations}
-            className="w-full py-3.5 bg-[#0B2560] text-white font-bold text-sm rounded-2xl shadow-md shadow-[#0B2560]/20 hover:bg-[#0d2d72] disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="w-full py-3.5 bg-primary text-white font-bold text-sm rounded-2xl shadow-md shadow-primary/20 hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             Show My Observations
           </button>
-          <button type="button" onClick={() => onDone(null)} className="w-full text-sm text-gray-500 hover:text-[#0B2560] font-medium">
+          <button type="button" onClick={() => onDone(null)} className="w-full text-sm text-gray-500 hover:text-primary font-medium">
             Skip this step
           </button>
         </div>
@@ -171,7 +171,7 @@ export default function AiObservationsScreen({
       {status === "error" && (
         <div className="max-w-sm mx-auto text-center space-y-4">
           <p className="text-sm text-red-500">{error}</p>
-          <button type="button" onClick={() => onDone(null)} className="text-sm font-semibold text-[#0B2560] hover:underline">
+          <button type="button" onClick={() => onDone(null)} className="text-sm font-semibold text-primary hover:underline">
             Continue without observations →
           </button>
         </div>
@@ -188,7 +188,7 @@ export default function AiObservationsScreen({
           <button
             type="button"
             onClick={() => onDone({ text, disclaimerAcknowledged: true })}
-            className="w-full py-3.5 bg-[#0B2560] text-white font-bold text-sm rounded-2xl shadow-md shadow-[#0B2560]/20 hover:bg-[#0d2d72] transition"
+            className="w-full py-3.5 bg-primary text-white font-bold text-sm rounded-2xl shadow-md shadow-primary/20 hover:bg-primary-hover transition"
           >
             Continue →
           </button>

@@ -131,20 +131,20 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
         ]}
       />
 
-      <main className="bg-white">
+      <div className="bg-white">
         {/* ── BREADCRUMB ── */}
-        <nav className="bg-[#f6faff] border-b border-gray-100 py-3">
+        <nav className="bg-canvas border-b border-gray-100 py-3">
           <div className="max-w-6xl mx-auto px-6 flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
-            <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
+            <Link href="/" className="hover:text-primary transition">Home</Link>
             <ChevronRight size={13} />
-            <Link href="/results" className="hover:text-[#0B2560] transition">Results</Link>
+            <Link href="/results" className="hover:text-primary transition">Results</Link>
             <ChevronRight size={13} />
-            <span className="text-[#0B2560] font-semibold truncate max-w-[220px]">{result.title}</span>
+            <span className="text-primary font-semibold truncate max-w-[220px]">{result.title}</span>
           </div>
         </nav>
 
         {/* ── HERO ── */}
-        <section className="relative bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
+        <section className="relative bg-gradient-to-br from-primary via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
           <div className="max-w-6xl mx-auto px-6 pt-6">
             <Link href="/results" className="inline-flex items-center gap-2 text-white/50 hover:text-white/90 transition text-sm">
               <ArrowLeft size={14} /> All Results
@@ -156,7 +156,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                 {result.category}
               </span>
             )}
-            <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight mb-3">
+            <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight tracking-tight mb-3">
               {result.title}
             </h1>
             {result.description && (
@@ -166,22 +166,22 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
             <div className="flex flex-wrap gap-2 text-sm">
               {result.doctor?.name && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <User size={12} className="text-[#A25607]" /> Dr. {result.doctor.name}
+                  <User size={12} className="text-bronze" /> Dr. {result.doctor.name}
                 </span>
               )}
               {branch && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <MapPin size={12} className="text-[#A25607]" /> {branch} Clinic
+                  <MapPin size={12} className="text-bronze" /> {branch} Clinic
                 </span>
               )}
               {result.duration && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <Clock size={12} className="text-[#A25607]" /> {result.duration}
+                  <Clock size={12} className="text-bronze" /> {result.duration}
                 </span>
               )}
               {result.sessions && (
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <Repeat size={12} className="text-[#A25607]" /> {result.sessions}
+                  <Repeat size={12} className="text-bronze" /> {result.sessions}
                 </span>
               )}
               {result.patientAge && (
@@ -200,7 +200,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
             {/* Before/After comparison slider — reuses the same SliderCard as the /results listing */}
             {hasComparison && (
               <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">Before &amp; After</h2>
+                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Before &amp; After</h2>
                 <div className="max-w-xl">
                   <SliderCard pair={result} />
                 </div>
@@ -210,7 +210,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
             {/* Gallery */}
             {galleryImages.length > 0 && (
               <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">Gallery</h2>
+                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Gallery</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {galleryImages.map((img: any, i: number) => (
                     <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-100">
@@ -224,7 +224,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
             {/* Video */}
             {result.video?.url && (
               <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">Video</h2>
+                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Video</h2>
                 <video src={result.video.url} controls className="w-full rounded-2xl border border-gray-100" />
               </div>
             )}
@@ -232,7 +232,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
             {/* Related Services */}
             {relatedServices.length > 0 && (
               <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">Related Services</h2>
+                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Related Services</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {relatedServices.map((s: any) => {
                     const href = serviceHref(s);
@@ -240,8 +240,8 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                     return (
                       <Link key={String(s._id)} href={href}
                         className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                        <h3 className="font-bold text-[#0B2560] text-sm">{s.name}</h3>
-                        <p className="text-[#2A6BA8] text-xs mt-1 flex items-center gap-1">
+                        <h3 className="font-bold text-primary text-sm">{s.name}</h3>
+                        <p className="text-secondary text-xs mt-1 flex items-center gap-1">
                           View treatment <ChevronRight size={11} />
                         </p>
                       </Link>
@@ -256,9 +256,9 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
           <aside className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
               <div className="rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
-                <div className="bg-[#0B2560] px-6 py-5 text-white">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Interested in this result?</p>
-                  <h3 className="text-base font-headline font-bold leading-snug">{result.title}</h3>
+                <div className="bg-primary px-6 py-5 text-white">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Interested in this result?</p>
+                  <h3 className="text-base font-headline font-medium leading-snug">{result.title}</h3>
                 </div>
                 <div className="p-5 space-y-3">
                   {result.doctor?.name && (
@@ -268,18 +268,18 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                           <Image src={result.doctor.photo.url} alt={result.doctor.name} fill sizes="44px" className="object-cover" />
                         </div>
                       ) : (
-                        <div className="w-11 h-11 rounded-xl bg-[#0B2560]/10 flex items-center justify-center text-sm font-bold text-[#0B2560] shrink-0">
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
                           {result.doctor.name[0]}
                         </div>
                       )}
                       <div>
-                        <p className="font-bold text-[#0B2560] text-sm">Dr. {result.doctor.name}</p>
+                        <p className="font-bold text-primary text-sm">Dr. {result.doctor.name}</p>
                         {result.doctor.title && <p className="text-gray-500 text-xs">{result.doctor.title}</p>}
                       </div>
                     </div>
                   )}
                   <Link href="/book" className="block">
-                    <button className="w-full bg-[#0B2560] text-white py-3.5 rounded-2xl font-bold text-sm shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 transition flex items-center justify-center gap-2">
+                    <button className="w-full bg-primary text-white py-3.5 rounded-2xl font-bold text-sm shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 transition flex items-center justify-center gap-2">
                       <Calendar size={14} /> {siteConfig.consultationCta}
                     </button>
                   </Link>
@@ -287,7 +287,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                     <BranchWhatsAppLink
                       fallback={siteConfig.publicWhatsApp}
                       explicitLocation={result.branch}
-                      className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition"
+                      className="flex items-center justify-center gap-2 border-2 border-gray-100 text-primary py-3 rounded-2xl font-semibold text-sm hover:bg-canvas transition"
                     >
                       Chat on WhatsApp
                     </BranchWhatsAppLink>
@@ -301,9 +301,9 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
 
         {/* ── RELATED RESULTS ── */}
         {related.length > 0 && (
-          <section className="bg-[#f6faff] py-14 border-t border-blue-50">
+          <section className="bg-canvas py-14 border-t border-blue-50">
             <div className="max-w-6xl mx-auto px-6">
-              <h2 className="text-2xl font-headline font-extrabold text-[#0B2560] mb-8">More Patient Results</h2>
+              <h2 className="text-2xl font-headline font-medium text-primary mb-8">More Patient Results</h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {related.map((r: any) => (
                   <Link key={String(r._id)} href={`/results/${r.slug}`}
@@ -319,11 +319,11 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
                           </div>
                         </>
                       ) : (
-                        <div className="w-full bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] flex items-center justify-center text-3xl">📸</div>
+                        <div className="w-full bg-gradient-to-br from-line to-[#c5d9ef] flex items-center justify-center text-3xl">📸</div>
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 group-hover:text-[#2A6BA8] transition">{r.title}</h3>
+                      <h3 className="font-bold text-primary text-sm leading-snug line-clamp-2 group-hover:text-secondary transition">{r.title}</h3>
                       {r.category && <p className="text-gray-500 text-xs mt-1.5">{r.category}</p>}
                     </div>
                   </Link>
@@ -338,7 +338,7 @@ export default async function ResultDetailPage({ params }: { params: { slug: str
           consultationCta={siteConfig.consultationCta}
           publicWhatsApp={siteConfig.publicWhatsApp}
         />
-      </main>
+      </div>
     </>
   );
 }

@@ -18,7 +18,7 @@ import BookingSuccessClient from '@/app/components/booking/BookingSuccessClient'
 import { toWaLink } from '@/app/lib/waLink';
 
 export const metadata: Metadata = {
-  title: 'Booking Confirmed | DR Youth Clinic',
+  title: 'Appointment Request Received | DR Youth Clinic',
   robots: { index: false, follow: false },
 };
 
@@ -43,9 +43,9 @@ async function getBookingData(bookingId: string) {
 // a bare 404 either way.
 function BookingNotFoundFallback() {
   return (
-    <main className="min-h-[60vh] flex items-center justify-center px-6 py-20">
+    <div className="min-h-[60vh] flex items-center justify-center px-6 py-20">
       <div className="max-w-md w-full text-center">
-        <h1 className="text-2xl font-headline font-extrabold text-[#0B2560] mb-2">
+        <h1 className="text-2xl font-headline font-medium text-primary mb-2">
           We couldn&apos;t find that booking
         </h1>
         <p className="text-gray-500 text-sm leading-relaxed mb-8">
@@ -54,12 +54,12 @@ function BookingNotFoundFallback() {
         </p>
         <Link
           href="/book"
-          className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-md"
+          className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-md"
         >
           <Calendar size={13} /> Book a Consultation
         </Link>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -104,12 +104,12 @@ function GenericBranchThankYou({
   const waHref = toWaLink(branchInfo?.phone || siteConfig.publicWhatsApp || '');
   const phone = branchInfo?.phone || siteConfig.publicPhone || '';
   return (
-    <main className="min-h-[60vh] flex items-center justify-center px-6 py-20">
+    <div className="min-h-[60vh] flex items-center justify-center px-6 py-20">
       <div className="max-w-md w-full text-center">
         <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5">
           <CheckCircle size={32} className="text-emerald-500" />
         </div>
-        <h1 className="text-2xl font-headline font-extrabold text-[#0B2560] mb-2">
+        <h1 className="text-2xl font-headline font-medium text-primary mb-2">
           Thank You!
         </h1>
         <p className="text-gray-500 text-sm leading-relaxed mb-8">
@@ -119,14 +119,14 @@ function GenericBranchThankYou({
         </p>
 
         {branchInfo && (
-          <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-5 text-left mb-8 space-y-3">
+          <div className="bg-canvas border border-blue-50 rounded-2xl p-5 text-left mb-8 space-y-3">
             <div className="flex items-start gap-2.5 text-sm text-gray-700">
-              <MapPin size={16} className="text-[#0B2560] shrink-0 mt-0.5" />
+              <MapPin size={16} className="text-primary shrink-0 mt-0.5" />
               <span>{branchInfo.address}</span>
             </div>
             {phone && (
               <div className="flex items-center gap-2.5 text-sm text-gray-700">
-                <Phone size={16} className="text-[#0B2560] shrink-0" />
+                <Phone size={16} className="text-primary shrink-0" />
                 <span>{phone}</span>
               </div>
             )}
@@ -137,7 +137,7 @@ function GenericBranchThankYou({
           {phone && (
             <a
               href={`tel:${phone.replace(/\s/g, '')}`}
-              className="inline-flex items-center justify-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-md"
+              className="inline-flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-md"
             >
               <Phone size={15} /> Call Clinic
             </a>
@@ -160,7 +160,7 @@ function GenericBranchThankYou({
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

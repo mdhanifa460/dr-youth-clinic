@@ -44,12 +44,12 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
     : allPairs.filter((p: any) => (p.category ?? '').toLowerCase() === activeCategory.toLowerCase());
 
   return (
-    <main className="bg-[#F5F1EC] min-h-screen">
+    <div className="bg-[#F5F1EC] min-h-screen">
 
       {/* HERO HEADER */}
-      <section className="bg-[#0B2560] text-white py-14 md:py-20 relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a]" />
-        <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[#F5A623]/10 blur-[120px]" />
+      <section className="bg-primary text-white py-14 md:py-20 relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary to-[#1a4a8a]" />
+        <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-champagne/10 blur-[120px]" />
 
         <div className="max-w-7xl mx-auto px-6 md:px-10 relative">
           {/* Breadcrumb */}
@@ -59,11 +59,11 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
           </Link>
 
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-6 h-[2px] bg-[#F5A623]" />
-            <span className="text-[#F5A623] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
+            <div className="w-6 h-[2px] bg-champagne" />
+            <span className="text-champagne text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
+          <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight mb-4">
             {headline}
           </h1>
           <p className="text-white/70 text-sm md:text-base max-w-xl leading-relaxed">{subheadline}</p>
@@ -72,7 +72,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-10 pt-10 border-t border-white/10">
             {STATS.map((s, i) => (
               <div key={i} className="text-center">
-                <p className="text-2xl md:text-3xl font-headline font-extrabold text-white">{s.value}</p>
+                <p className="text-2xl md:text-3xl font-headline font-medium text-white">{s.value}</p>
                 <p className="text-white/50 text-xs mt-1 font-medium">{s.label}</p>
               </div>
             ))}
@@ -92,8 +92,8 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
               onClick={() => setActiveCategory(cat)}
               className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition ${
                 activeCategory === cat
-                  ? 'bg-[#0B2560] text-white shadow-[0_4px_14px_rgba(11,37,96,0.2)]'
-                  : 'bg-white text-[#9CA3AF] border border-[#EBE8E3] hover:border-[#0B2560]/30 hover:text-[#0B2560]'
+                  ? 'bg-primary text-white shadow-[0_4px_14px_rgba(11,37,96,0.2)]'
+                  : 'bg-white text-[#9CA3AF] border border-[#EBE8E3] hover:border-primary/30 hover:text-primary'
               }`}
             >
               {cat}
@@ -109,7 +109,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
           <div className="text-center py-20">
             <p className="text-4xl mb-3">🔍</p>
             <p className="text-gray-500 font-medium">No results in this category yet.</p>
-            <button onClick={() => setActiveCategory('All')} className="mt-4 text-[#2A6BA8] text-sm underline">
+            <button onClick={() => setActiveCategory('All')} className="mt-4 text-secondary text-sm underline">
               View all
             </button>
           </div>
@@ -128,24 +128,20 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
         )}
 
         {/* Bottom CTA */}
-        <div className="mt-16 bg-[#0B2560] rounded-2xl p-8 text-center text-white">
-          <h2 className="text-2xl font-headline font-extrabold mb-2">Ready for Your Transformation?</h2>
+        <div className="mt-16 bg-primary rounded-2xl p-8 text-center text-white">
+          <h2 className="text-2xl font-headline font-medium mb-2">Ready for Your Transformation?</h2>
           <p className="text-white/60 text-sm mb-6">Book a consultation and get a personalised treatment plan.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/book">
-              <button className="bg-[#F5A623] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#e09610] transition">
+            <Link href="/book" className="inline-flex items-center justify-center bg-champagne text-primary px-8 py-3 rounded-xl font-semibold hover:bg-[#e09610] transition">
                 Book Consultation
-              </button>
-            </Link>
-            <Link href="/">
-              <button className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition">
+              </Link>
+            <Link href="/" className="inline-flex items-center justify-center border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition">
                 Back to Home
-              </button>
-            </Link>
+              </Link>
           </div>
         </div>
 
       </section>
-    </main>
+    </div>
   );
 }

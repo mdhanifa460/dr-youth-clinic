@@ -91,7 +91,7 @@ const BookingSuccessConfigSchema = new Schema<IBookingSuccessConfig>(
     thankYouHeadline: { type: String, default: 'Thank you, {name}!' },
     thankYouMessage: {
       type: String,
-      default: "Your consultation is booked. We're looking forward to seeing you — our team will confirm every detail via WhatsApp shortly.",
+      default: "We've received your request. Our team will confirm every detail via WhatsApp shortly.",
     },
     preVisitInstructions: {
       type: [String],

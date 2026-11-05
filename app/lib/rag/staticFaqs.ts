@@ -11,12 +11,7 @@ export const STATIC_FAQS: { category: string; icon: string; items: { question: s
       {
         question: 'What treatments does DR Youth Clinic offer?',
         answer:
-          'We offer a full range of advanced dermatology and aesthetic treatments including skin rejuvenation, acne and scar treatments, anti-ageing procedures, laser hair removal, hair loss treatments (PRP, GFC, hair transplant), chemical peels, HydraFacial, Botox, fillers, and more. All treatments are performed by certified dermatologists.',
-      },
-      {
-        question: 'Are your doctors certified dermatologists?',
-        answer:
-          'Yes. Every treatment at DR Youth Clinic is performed or directly supervised by a board-certified dermatologist or aesthetic physician. We do not allow technicians to perform procedures — your safety is our top priority.',
+          'We offer a full range of skin, hair and aesthetic treatments including skin rejuvenation, acne and scar treatments, anti-ageing procedures, laser hair removal, hair loss treatments (PRP, GFC, hair transplant), chemical peels, HydraFacial, Botox, fillers, and more. Your doctor will advise which options suit you.',
       },
       {
         question: 'Do you offer a free consultation?',
@@ -57,12 +52,12 @@ export const STATIC_FAQS: { category: string; icon: string; items: { question: s
       {
         question: 'Is chemical peel safe for Indian/dark skin?',
         answer:
-          'Yes — when performed by a trained dermatologist using the right formulation and concentration. At DR Youth Clinic, we tailor peel depth and type to your Fitzpatrick skin type to prevent post-inflammatory hyperpigmentation.',
+          'Yes — when performed by a trained doctor using the right formulation and concentration. At DR Youth Clinic, we tailor peel depth and type to your Fitzpatrick skin type to prevent post-inflammatory hyperpigmentation.',
       },
       {
         question: 'What is the best treatment for pigmentation and melasma?',
         answer:
-          'Melasma treatment typically combines topical agents (prescribed by our dermatologist), chemical peels, and Q-switch laser. Melasma requires ongoing management — our doctors will design a maintenance plan to prevent recurrence.',
+          'Melasma treatment typically combines topical agents (prescribed by our doctor), chemical peels, and Q-switch laser. Melasma requires ongoing management — our doctors will design a maintenance plan to prevent recurrence.',
       },
     ],
   },
@@ -73,7 +68,7 @@ export const STATIC_FAQS: { category: string; icon: string; items: { question: s
       {
         question: 'Is PRP treatment effective for hair loss?',
         answer:
-          'PRP (Platelet Rich Plasma) is clinically proven to stimulate hair follicles and slow hair loss. Most patients see visible improvement after 4-6 sessions. Results are best maintained with regular top-up sessions every 4-6 months.',
+          'PRP (Platelet Rich Plasma) is used to stimulate hair follicles and slow hair loss. Most patients see visible improvement after 4-6 sessions. Results are best maintained with regular top-up sessions every 4-6 months.',
       },
       {
         question: 'What is the difference between PRP and GFC therapy?',
@@ -161,7 +156,7 @@ export const STATIC_FAQS: { category: string; icon: string; items: { question: s
       {
         question: 'Are treatments safe for all skin types?',
         answer:
-          'We assess each patient\'s skin type, medical history, and current medications before recommending any treatment. Our dermatologists are trained to adapt protocols for all skin types — from very fair to very dark — ensuring safety is never compromised.',
+          'We assess each patient\'s skin type, medical history, and current medications before recommending any treatment. Our doctors are trained to adapt protocols for all skin types — from very fair to very dark — ensuring safety is never compromised.',
       },
       {
         question: 'Is the treatment painful?',

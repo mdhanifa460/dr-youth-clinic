@@ -22,7 +22,7 @@ export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUr
     name: "DR Youth Clinic",
     url: SITE_URL,
     logo: CLOUDINARY_LOGO_URL,
-    description: "Premium dermatology and aesthetic treatment clinic",
+    description: "Skin, hair and aesthetic treatment clinic",
     sameAs,
     ...(phone ? {
       contactPoint: {
@@ -45,25 +45,57 @@ export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUr
   );
 }
 
+const REGION_BY_LOCATION: Record<string, string> = {
+  chennai: "Tamil Nadu", coimbatore: "Tamil Nadu", bangalore: "Karnataka", kochi: "Kerala",
+};
+
+const WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+function to24h(h: string, m: string, ap: string) {
+  let hour = Number(h) % 12;
+  if (ap.toUpperCase() === "PM") hour += 12;
+  return `${String(hour).padStart(2, "0")}:${m}`;
+}
+
+// Built from the hours shown on the page, so search engines and patients see the
+// same thing. Rows it can't read ("Closed", "By appointment") are left out.
+export function toOpeningHoursSpec(hours: { day: string; hours: string }[]) {
+  return hours.flatMap((row) => {
+    const time = row.hours.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[-–]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!time) return [];
+    const range = row.day.match(/(\w+)\s*[-–]\s*(\w+)/);
+    const index = (d: string) => WEEK.findIndex((w) => w.toLowerCase().startsWith(d.slice(0, 3).toLowerCase()));
+    const dayOfWeek = range
+      ? WEEK.slice(index(range[1]), index(range[2]) + 1)
+      : WEEK.filter((w) => w.toLowerCase().startsWith(row.day.trim().slice(0, 3).toLowerCase()));
+    if (!dayOfWeek.length) return [];
+    return [{
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek,
+      opens: to24h(time[1], time[2], time[3]),
+      closes: to24h(time[4], time[5], time[6]),
+    }];
+  });
+}
+
 interface LocalBusinessProps {
   location: string;
   city: string;
   // DB-sourced overrides — fall back to locations.ts if omitted
   address?: string;
   phone?: string;
-  rating?: number;
-  reviewCount?: number;
+  hours?: { day: string; hours: string }[];
   schemaType?: string;
 }
 
-export function LocalBusinessSchema({ location, city, address, phone, rating, reviewCount, schemaType }: LocalBusinessProps) {
+export function LocalBusinessSchema({ location, city, address, phone, hours, schemaType }: LocalBusinessProps) {
   const locationData = locations[location];
   if (!locationData) return null;
 
   const effectiveAddress  = address      || locationData.address;
   const effectivePhone    = phone        || locationData.phone;
-  const effectiveRating   = rating       ?? locationData.rating;
-  const effectiveReviews  = reviewCount  ?? locationData.reviewCount;
+
+  const openingHours = toOpeningHoursSpec(hours?.length ? hours : locationData.hours);
 
   const schema: Record<string, any> = {
     "@context": "https://schema.org",
@@ -74,22 +106,13 @@ export function LocalBusinessSchema({ location, city, address, phone, rating, re
       "@type": "PostalAddress",
       streetAddress: effectiveAddress,
       addressLocality: city,
-      addressRegion: city,
+      addressRegion: REGION_BY_LOCATION[location] || city,
       addressCountry: "IN",
     },
-    telephone: effectivePhone,
+    ...(effectivePhone ? { telephone: effectivePhone } : {}),
     image: CLOUDINARY_LOGO_URL,
-    description: `Premium dermatology clinic in ${city} offering advanced skin, hair, and laser treatments`,
-    priceRange: "$$",
-    medicalSpecialty: ["Dermatology", "Cosmetology", "Laser Surgery"],
-    openingHoursSpecification: [
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        opens: "09:00",
-        closes: "19:00",
-      },
-    ],
+    description: `Skin, hair and laser treatments at DR Youth Clinic in ${city}`,
+    ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
   };
 
 
@@ -228,9 +251,7 @@ interface PhysicianProps {
 // users on the page, just omitted here rather than passed through as an
 // invalid enum value.
 const MEDICAL_SPECIALTY_MAP: Record<string, string> = {
-  dermatology: 'Dermatology', dermatologist: 'Dermatology', skin: 'Dermatology',
-  trichology: 'Dermatology', hair: 'Dermatology',
-  cosmetology: 'Dermatologic', aesthetic: 'Dermatologic', laser: 'Dermatologic',
+  dermatology: 'Dermatology', dermatologist: 'Dermatology',
   plastic: 'PlasticSurgery', 'cosmetic surgery': 'PlasticSurgery',
 };
 

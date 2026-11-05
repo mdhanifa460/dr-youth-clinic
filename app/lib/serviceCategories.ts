@@ -43,7 +43,7 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     label: 'Skin & Aesthetics',
     tagline: 'Radiance · Restored',
     description:
-      'Evidence-based dermatological treatments for every skin concern — from acne management and pigmentation correction to anti-ageing and deep hydration. Our specialists tailor every protocol to your unique skin biology.',
+      'Treatments for every skin concern — from acne management and pigmentation correction to anti-ageing and deep hydration. Our specialists tailor every protocol to your unique skin biology.',
     icon: '✨',
     heroGrad: 'from-[#7c1d0a] via-[#a63c1c] to-[#c96a4e]',
     accentText: 'text-[#f9c3ae]',
@@ -69,7 +69,7 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     label: 'Laser Precision',
     tagline: 'Science · Skin',
     description:
-      'FDA-approved laser technology for permanent hair reduction, pigmentation, acne scarring, and full skin rejuvenation. Precision targeting with minimal downtime and maximum results.',
+      'Laser treatments for hair reduction, pigmentation, acne scarring, and full skin rejuvenation. Precision targeting with minimal downtime and maximum results.',
     icon: '⚡',
     heroGrad: 'from-[#0B2560] via-[#1e3a8a] to-[#3b82f6]',
     accentText: 'text-[#93c5fd]',

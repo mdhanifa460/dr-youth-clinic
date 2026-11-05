@@ -7,6 +7,7 @@ import { Review } from '@/app/models/Review';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { getSettings } from '@/app/models/Settings';
 import { makeDefaultAboutSections, type AboutSection } from '@/app/lib/aboutPageDefaults';
+import { scrubClaims, scrubDoctorBios } from '@/app/lib/patientClaims';
 
 import HeroSection from '@/app/components/about/sections/HeroSection';
 import StorySection from '@/app/components/about/sections/StorySection';
@@ -40,7 +41,7 @@ const getCachedAboutSections = unstable_cache(
       await connectDB();
       const s = await HomepageSection.findOne({ sectionKey: 'about_page' } as any).lean() as any;
       const sections = s?.data?.sections;
-      return Array.isArray(sections) && sections.length ? sections : makeDefaultAboutSections();
+      return Array.isArray(sections) && sections.length ? scrubClaims(sections) : makeDefaultAboutSections();
     } catch {
       return makeDefaultAboutSections();
     }
@@ -56,7 +57,7 @@ async function getFeaturedDoctors() {
       .sort({ order: 1, createdAt: -1 })
       .limit(3)
       .lean();
-    return JSON.parse(JSON.stringify(docs));
+    return scrubDoctorBios(JSON.parse(JSON.stringify(docs)));
   } catch {
     return [];
   }
@@ -123,7 +124,7 @@ export default async function AboutPage() {
   ]);
 
   return (
-    <main>
+    <div>
       {sections.filter((s) => s.visible && (showBeforeAfterOnPublic || s.type !== 'reviews')).map((section) => {
         switch (section.type) {
           case 'hero':
@@ -160,6 +161,6 @@ export default async function AboutPage() {
             return null;
         }
       })}
-    </main>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Inter, Newsreader } from "next/font/google";
 import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
 
@@ -10,20 +10,21 @@ import CacheGuard from "@/app/components/CacheGuard";
 // exposes them under the exact same CSS variable names those files already
 // reference, so no other file needs to change.
 const bodyFont = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
-const headlineFont = Manrope({ subsets: ["latin"], variable: "--font-headline", display: "swap" });
+// One weight and no optical-size axis: the full variable file delayed the largest paint.
+const headlineFont = Newsreader({ subsets: ["latin"], weight: "500", style: ["normal", "italic"], variable: "--font-headline", display: "swap" });
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL || 'https://dr-youth-clinic.vercel.app'),
   title: {
-    default: "DR Youth Clinic - Dermatology & Skin Treatment",
+    default: "DR Youth Clinic - Skin, Hair & Aesthetic Care",
     template: "%s | DR Youth Clinic",
   },
   description:
-    "Premium dermatology clinic offering advanced skin, hair, and laser treatments. Expert care at multiple locations. Book your consultation today.",
+    "Skin, hair and laser treatments at DR Youth Clinic in Chennai, Bangalore, Coimbatore and Kochi. Book a consultation with our doctors.",
   applicationName: "DR Youth Clinic",
-  keywords: ["dermatology", "skin clinic", "hair treatment", "laser treatment", "aesthetic medicine"],
+  keywords: ["skin clinic", "hair treatment", "laser treatment", "aesthetic medicine"],
   authors: [{ name: "DR Youth Clinic" }],
   creator: "DR Youth Clinic",
   publisher: "DR Youth Clinic",
@@ -33,17 +34,16 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: SITE_URL,
     siteName: "DR Youth Clinic",
-    title: "DR Youth Clinic - Premium Dermatology Services",
-    description: "Advanced skin, hair, and laser treatments with expert dermatologists",
+    title: "DR Youth Clinic - Skin, Hair & Aesthetic Care",
+    description: "Skin, hair and laser treatments, planned with our doctors after a consultation.",
     images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630, alt: "DR Youth Clinic" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "DR Youth Clinic",
-    description: "Premium dermatology and aesthetic treatments",
+    description: "Skin, hair and aesthetic treatments in South India.",
     images: [`${SITE_URL}/twitter-image.jpg`],
   },
-  alternates: { canonical: SITE_URL },
 };
 
 export const viewport: Viewport = {
@@ -83,7 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Google Review avatars */}
         <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
       </head>
-      <body className="min-h-screen flex flex-col bg-[#f6faff]">
+      <body className="min-h-screen flex flex-col bg-canvas text-text">
         <CacheGuard />
         {/* Visually hidden until focused — lets a keyboard user jump past the
             navbar straight to the page content instead of tabbing through

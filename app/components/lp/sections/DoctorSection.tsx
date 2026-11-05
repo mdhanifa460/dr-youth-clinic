@@ -26,9 +26,9 @@ export default function DoctorSection({
   const {
     photo,
     name = 'Dr. Expert',
-    qualification = 'MBBS, MD Dermatology',
+    qualification = '',
     experience = '20 Years',
-    bio = 'Expert dermatologist specialising in advanced hair restoration.',
+    bio = '',
     location,
     specialties,
     achievements,
@@ -56,7 +56,7 @@ export default function DoctorSection({
   };
 
   return (
-    <section className="bg-[#0B2560] py-14 md:py-20 relative overflow-hidden">
+    <section className="bg-primary py-14 md:py-20 relative overflow-hidden">
       <div
         className="absolute inset-0 opacity-10 pointer-events-none"
         style={{
@@ -77,16 +77,16 @@ export default function DoctorSection({
           >
             <div className="relative">
               {photo ? (
-                <div className="w-56 h-64 md:w-72 md:h-80 rounded-3xl overflow-hidden border-4 border-[#F5A623]/60 shadow-2xl">
+                <div className="w-56 h-64 md:w-72 md:h-80 rounded-3xl overflow-hidden border-4 border-champagne/60 shadow-2xl">
                   <img src={photo} alt={name} className="w-full h-full object-cover" />
                 </div>
               ) : (
-                <div className="w-56 h-64 md:w-72 md:h-80 rounded-3xl bg-gradient-to-br from-[#3B82C4] to-[#0B2560] flex items-center justify-center border-4 border-[#F5A623]/60 shadow-2xl">
+                <div className="w-56 h-64 md:w-72 md:h-80 rounded-3xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center border-4 border-champagne/60 shadow-2xl">
                   <span className="text-8xl">👨‍⚕️</span>
                 </div>
               )}
               {/* credential ribbon */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#F5A623] text-[#0B2560] text-xs font-extrabold px-5 py-2 rounded-full shadow-lg whitespace-nowrap">
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-champagne text-primary text-xs font-extrabold px-5 py-2 rounded-full shadow-lg whitespace-nowrap">
                 {experience} Experience
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function DoctorSection({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3"
+              className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3"
             >
               Meet Our Expert
             </motion.p>
@@ -126,7 +126,7 @@ export default function DoctorSection({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="text-[#F5A623] font-semibold mt-1.5 text-sm md:text-base"
+              className="text-champagne font-semibold mt-1.5 text-sm md:text-base"
             >
               {qualification}
             </motion.p>
@@ -182,7 +182,7 @@ export default function DoctorSection({
             >
               {bullets.map((b, i) => (
                 <li key={i} className="flex items-center gap-2.5 text-sm text-white/90">
-                  <CheckCircle size={16} className="text-[#A25607] shrink-0" />
+                  <CheckCircle size={16} className="text-bronze shrink-0" />
                   {b}
                 </li>
               ))}
@@ -194,11 +194,11 @@ export default function DoctorSection({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="mt-6 bg-[#F5A623]/15 border border-[#F5A623]/30 rounded-2xl p-5"
+              className="mt-6 bg-champagne/15 border border-champagne/30 rounded-2xl p-5"
             >
-              <Quote size={20} className="text-[#A25607] mb-2" />
+              <Quote size={20} className="text-bronze mb-2" />
               <p className="text-white/90 italic text-sm md:text-base leading-relaxed">{testimonial}</p>
-              <p className="text-[#A25607] text-xs font-bold mt-2.5">— {name}</p>
+              <p className="text-bronze text-xs font-bold mt-2.5">— {name}</p>
             </motion.div>
 
             <motion.button
@@ -208,7 +208,7 @@ export default function DoctorSection({
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
               onClick={() => document.getElementById(formAnchorId)?.scrollIntoView({ behavior: 'smooth' })}
-              className="mt-6 flex items-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-7 py-3.5 rounded-2xl text-sm shadow-xl shadow-[#F5A623]/20 hover:-translate-y-0.5 transition-all duration-200"
+              className="mt-6 flex items-center gap-2 bg-champagne hover:bg-[#e09516] text-primary font-extrabold px-7 py-3.5 rounded-2xl text-sm shadow-xl shadow-champagne/20 hover:-translate-y-0.5 transition-all duration-200"
             >
               <CalendarCheck size={18} />
               {ctaText || `Book Appointment with ${shortName}`}

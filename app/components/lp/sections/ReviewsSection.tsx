@@ -48,9 +48,9 @@ function ReviewCard({ review }: { review: ReviewItem }) {
           {getInitials(name)}
         </div>
         <div className="min-w-0">
-          <p className="font-bold text-[#0B2560] text-sm truncate">{name}</p>
+          <p className="font-bold text-primary text-sm truncate">{name}</p>
           {review.treatment && (
-            <span className="inline-block mt-0.5 text-[10px] bg-[#3B82C4]/10 text-[#2A6BA8] font-semibold px-2 py-0.5 rounded-full">
+            <span className="inline-block mt-0.5 text-xs bg-secondary/10 text-secondary font-semibold px-2 py-0.5 rounded-full">
               {review.treatment}
             </span>
           )}
@@ -58,7 +58,7 @@ function ReviewCard({ review }: { review: ReviewItem }) {
       </div>
       <div className="flex items-center gap-0.5 mb-3">
         {Array.from({ length: 5 }, (_, i) => (
-          <Star key={i} size={15} className={i < stars ? 'text-[#A25607]' : 'text-gray-200'} fill={i < stars ? '#F5A623' : 'none'} />
+          <Star key={i} size={15} className={i < stars ? 'text-bronze' : 'text-gray-200'} fill={i < stars ? '#F5A623' : 'none'} />
         ))}
       </div>
       <p className="text-sm text-gray-600 leading-relaxed flex-1 line-clamp-4">&ldquo;{review.text}&rdquo;</p>
@@ -114,7 +114,7 @@ export default function ReviewsSection({ data }: { data: ReviewsData }) {
   const canNavigate = reviews.length > perView;
 
   return (
-    <section className="bg-[#f6faff] py-14 md:py-20">
+    <section className="bg-canvas py-14 md:py-20">
       <div className="max-w-6xl mx-auto px-5">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -123,8 +123,8 @@ export default function ReviewsSection({ data }: { data: ReviewsData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-10"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">Patient Stories</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-3">Patient Stories</p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
 
@@ -157,7 +157,7 @@ export default function ReviewsSection({ data }: { data: ReviewsData }) {
               <button
                 onClick={() => go(-1)}
                 aria-label="Previous reviews"
-                className="w-11 h-11 rounded-full border-2 border-[#0B2560]/20 text-[#0B2560] flex items-center justify-center hover:bg-[#0B2560] hover:text-white hover:border-[#0B2560] transition-colors"
+                className="w-11 h-11 rounded-full border-2 border-primary/20 text-primary flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-colors"
               >
                 <ChevronLeft size={20} />
               </button>
@@ -167,14 +167,14 @@ export default function ReviewsSection({ data }: { data: ReviewsData }) {
                     key={i}
                     onClick={() => { setDirection(i > index ? 1 : -1); setIndex(i); }}
                     aria-label={`Go to slide ${i + 1}`}
-                    className={`h-2 rounded-full transition-all ${i === index ? 'w-6 bg-[#F5A623]' : 'w-2 bg-[#0B2560]/20'}`}
+                    className={`h-2 rounded-full transition-all ${i === index ? 'w-6 bg-champagne' : 'w-2 bg-primary/20'}`}
                   />
                 ))}
               </div>
               <button
                 onClick={() => go(1)}
                 aria-label="Next reviews"
-                className="w-11 h-11 rounded-full border-2 border-[#0B2560]/20 text-[#0B2560] flex items-center justify-center hover:bg-[#0B2560] hover:text-white hover:border-[#0B2560] transition-colors"
+                className="w-11 h-11 rounded-full border-2 border-primary/20 text-primary flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-colors"
               >
                 <ChevronRight size={20} />
               </button>

@@ -57,7 +57,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       badge: 'ADVANCED AESTHETIC CLINIC',
       headline: 'Advanced Skin &\nAesthetic Care',
       highlightText: 'You Can Trust',
-      description: 'Personalised treatments, advanced technology & real results.',
+      description: 'Skin, hair and aesthetic treatment plans, made with our doctors after a consultation.',
       ctaPrimary: { text: 'Book Consultation', href: '/book' },
       ctaSecondary: { text: 'Our Services', href: '#services' },
       image: { url: '/images/hero-clinical.jpeg', publicId: '' },
@@ -135,13 +135,13 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     data: {
       headline: 'Clinical-Level Beauty Services',
       subheadline:
-        'Experience advanced care with proven results and personalised treatment for your unique skin.',
+        'Explore treatments for skin and hair, with a personalised plan after your consultation.',
       cards: [
         {
           icon: '🩺',
-          tag: 'Dermatology',
+          tag: 'Skin',
           title: 'Advanced Skin Care',
-          description: 'Targeted solutions for acne, anti-aging, and complex dermatological conditions.',
+          description: 'Targeted solutions for acne, anti-aging, and everyday skin concerns.',
           href: '/services',
           image: { url: '', publicId: '' },
         },
@@ -175,16 +175,15 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     order: 7,
     visible: true,
     data: {
-      headline: 'Real Results, Real Confidence',
+      headline: 'Treatment Photos',
       subheadline:
         'Visible improvements that our patients are thrilled about. See the difference.',
       // Not shown on the homepage section itself anymore (redundant with
       // StatsBar directly above it there) — still used as the stats row on
       // the standalone /results page, which doesn't have that redundancy.
       stats: [
-        { value: '98%', label: 'Patient satisfaction' },
-        { value: '10K+', label: 'Treatments done' },
-        { value: '9+', label: 'Years of care' },
+        
+                { value: '9+', label: 'Years of care' },
         { value: '4', label: 'Clinic locations' },
       ],
       pairs: [
@@ -236,7 +235,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       doctors: [
         {
           name: 'Dr. Anitha R',
-          role: 'Dermatologist',
+          role: 'Doctor',
           experience: '12+ Years Exp.',
           photo: { url: '', publicId: '' },
           linkedIn: '#',
@@ -294,9 +293,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
       // "Clinics Across India" is always live (cities.length) — these two
       // are the ones that were previously hardcoded directly in
       // HomepageLocations.tsx with no admin path at all.
-      doctorsStat: '20+',
-      treatmentsStat: '50+',
-      viewAllText: 'View all clinics',
+                  viewAllText: 'View all clinics',
       featuredCity: {
         name: 'Chennai',
         address: locations.chennai.address,
@@ -330,7 +327,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         title: 'Book Your Consultation',
         description: 'Consult our experts and get a personalised treatment plan.',
         ctaPrimary: { text: 'Book Online Appointment', href: '/book' },
-        ctaSecondary: { text: 'Call Now: 1800 890 9669', href: 'tel:18008909669' },
+        ctaSecondary: { text: 'View Our Clinics', href: '#contact' },
         image: { url: '', publicId: '' },
       },
       whyUs: {
@@ -338,9 +335,8 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         reasons: [
           'Personalised Care Plans',
           'Evidence-Based Protocols',
-          'FDA-Approved Technology',
-          'Safe, Effective & Painless Treatments',
-          'Trusted by Thousands of Patients',
+          'Doctor Consultation First',
+          'Costs Explained Before You Decide',
         ],
       },
     },
@@ -351,7 +347,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
     visible: true,
     data: {
       headline: 'What Our Patients Say',
-      subheadline: 'Real stories. Real results. Real confidence.',
+      subheadline: 'In their own words.',
       layout: 'slider',
       displayCount: 6,
       filterSource: '',
@@ -492,7 +488,7 @@ export const HOMEPAGE_DEFAULTS: Record<string, SectionDefault> = {
         phone: locations.chennai.phone,
         email: 'info@dryouthclinic.com',
       },
-      copyright: '© 2024 DR Youth Clinic. All Rights Reserved.',
+      copyright: `© ${new Date().getFullYear()} DR Youth Clinic. All Rights Reserved.`,
       // Bottom-bar links (About Us, Plan My Journey, Privacy Policy, …) —
       // previously hardcoded directly in Footer.tsx's JSX with no admin
       // path at all. `accent: true` on an item renders it in the site's

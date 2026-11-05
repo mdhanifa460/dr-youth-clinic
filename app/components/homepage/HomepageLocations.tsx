@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import {
-  MapPin, Clock, Phone, Star, ChevronRight,
+  MapPin, Clock, Phone, ChevronRight,
   Users, Stethoscope, Navigation, CalendarCheck, LayoutGrid, LocateFixed,
 } from 'lucide-react';
 import { locations } from '@/app/data/locations';
+import { toTelHref } from '@/app/lib/phone';
 
 const CITY_KEY: Record<string, string> = {
   Chennai: 'chennai',
@@ -86,20 +87,15 @@ function getOpenStatus(hours: { day: string; hours: string }[]): { isOpen: boole
 }
 
 // ── Location thumbnail ────────────────────────────────────────────────────────
-const CITY_GRADIENTS: Record<string, string> = {
-  chennai:    'from-blue-600 to-indigo-700',
-  bangalore:  'from-purple-600 to-violet-700',
-  coimbatore: 'from-emerald-500 to-teal-600',
-  kochi:      'from-orange-500 to-amber-600',
-};
 
 export default function HomepageLocations({ data }: { data: any }) {
   const {
     headline      = 'Our Locations',
     subheadline   = 'Advanced skin & hair care treatments. Expert doctors. Multiple locations to serve you better.',
     cities        = [],
-    doctorsStat   = '20+',
-    treatmentsStat = '50+',
+    _doctorCount = 0,
+    _doctorCountByCity = {},
+    _treatmentCount = 0,
     _embeds       = {},
     _detectedCity = '',
   } = data || {};
@@ -126,20 +122,27 @@ export default function HomepageLocations({ data }: { data: any }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Browser geolocation — overrides server-detected city if granted
-  useEffect(() => {
+  // Open/closed depends on the visitor's current time, and this page is cached,
+  // so it's only worked out in the browser.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Only on request. Asking on page load showed a permission prompt to every new
+  // visitor before they had done anything.
+  const [locating, setLocating] = useState(false);
+  const useMyLocation = () => {
     if (!navigator?.geolocation) return;
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const nearest = nearestCityKey(coords.latitude, coords.longitude, availableKeys);
-        setActiveKey(nearest);
+        setActiveKey(nearestCityKey(coords.latitude, coords.longitude, availableKeys));
         setAutoDetected(true);
+        setLocating(false);
       },
-      () => { /* denied or unavailable — keep server-detected default */ },
+      () => setLocating(false),
       { timeout: 6000, maximumAge: 300_000 },
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
   const loc          = locations[activeKey];
   const embed        = _embeds[activeKey] ?? {};
@@ -148,10 +151,7 @@ export default function HomepageLocations({ data }: { data: any }) {
   const address      = ci?.address      || loc?.address      || '';
   const phone        = ci?.phone        || loc?.phone        || '';
   const hours        = ci?.hours?.length ? ci.hours : (loc?.hours ?? []);
-  const rating       = ci?.rating       || loc?.rating       || 0;
-  const reviewCount  = ci?.reviewCount  || loc?.reviewCount  || 0;
-  const serviceCount = ci?.serviceCount || loc?.serviceCount || 0;
-  const doctorCount  = ci?.doctorCount  || loc?.doctorCount  || 0;
+  const doctorCount  = _doctorCountByCity[activeKey] ?? 0;
 
   const embedUrl     = embed.mapEmbedUrl || loc?.map || '';
   const directionsUrl = embed.googleMapsUrl ||
@@ -164,21 +164,21 @@ export default function HomepageLocations({ data }: { data: any }) {
   // this used to restate both with different numbers than StatsBar, which
   // read as inconsistent rather than reassuring.
   const STATS = [
-    { value: String(cities.length || 4), label: 'Clinics Across India', icon: MapPin },
-    { value: doctorsStat,                label: 'Expert Doctors',       icon: Users },
-    { value: treatmentsStat,             label: 'Advanced Treatments',  icon: Stethoscope },
+    { value: String(cities.length || 4), label: 'Clinics', icon: MapPin },
+    ...(_doctorCount > 0 ? [{ value: String(_doctorCount), label: 'Doctors', icon: Users }] : []),
+    ...(_treatmentCount > 0 ? [{ value: String(_treatmentCount), label: 'Treatments', icon: Stethoscope }] : []),
   ];
 
   return (
-    <section id="contact" className="py-14 md:py-20 bg-[#f6faff]">
+    <section id="contact" className="py-14 md:py-20 bg-canvas">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
 
         {/* ── Section header ── */}
         <div className="text-center mb-10">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-[#A25607] flex items-center justify-center gap-2 mb-3">
+          <p className="text-xs font-bold tracking-[0.2em] uppercase text-bronze flex items-center justify-center gap-2 mb-3">
             <MapPin size={13} /> OUR LOCATIONS
           </p>
-          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight mb-3">
+          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight mb-3">
             {headline}
           </h2>
           <p className="text-gray-500 text-sm max-w-xl mx-auto leading-relaxed">{subheadline}</p>
@@ -188,11 +188,16 @@ export default function HomepageLocations({ data }: { data: any }) {
         <div className="grid md:grid-cols-[280px_1fr_300px] gap-4 lg:gap-5 items-stretch min-h-[420px]">
 
           {/* ── LEFT: city list ── */}
-          <div className="bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-2xl border border-line overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between gap-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select a location</p>
+              {!autoDetected && (
+                <button type="button" onClick={useMyLocation} disabled={locating} className="min-h-11 flex items-center gap-1 text-xs font-semibold text-primary underline underline-offset-2 disabled:opacity-60">
+                  <LocateFixed size={12} /> {locating ? 'Locating…' : 'Near me'}
+                </button>
+              )}
               {autoDetected && (
-                <span className="flex items-center gap-1 text-[10px] font-bold text-[#0B2560] bg-[#e8f0fe] px-2 py-0.5 rounded-full shrink-0">
+                <span className="flex items-center gap-1 text-xs font-bold text-primary bg-[#e8f0fe] px-2 py-0.5 rounded-full shrink-0">
                   <LocateFixed size={9} /> Near you
                 </span>
               )}
@@ -205,8 +210,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                 const cci    = cembed.clinicInfo;
                 const chours = cci?.hours?.length ? cci.hours : (cloc?.hours ?? []);
                 const status = getOpenStatus(chours);
-                const csvc    = cci?.serviceCount || cloc?.serviceCount || 0;
-                const cdoc    = cci?.doctorCount  || cloc?.doctorCount  || 0;
+                const cdoc    = _doctorCountByCity[key] ?? 0;
                 const active = activeKey === key;
 
                 return (
@@ -214,7 +218,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                     key={i}
                     onClick={() => setActiveKey(key)}
                     className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all group ${
-                      active ? 'bg-[#f0f5ff] border-l-[3px] border-[#0B2560]' : 'hover:bg-gray-50 border-l-[3px] border-transparent'
+                      active ? 'bg-sand border-l-[3px] border-primary' : 'hover:bg-gray-50 border-l-[3px] border-transparent'
                     }`}
                   >
                     {/* Thumbnail */}
@@ -226,8 +230,8 @@ export default function HomepageLocations({ data }: { data: any }) {
                         height={56}
                         className="object-cover w-full h-full"
                         fallback={
-                          <div className={`w-full h-full bg-gradient-to-br ${CITY_GRADIENTS[key] || 'from-blue-500 to-indigo-600'} flex items-center justify-center`}>
-                            <span className="text-white font-bold text-lg">{city[0]}</span>
+                          <div className="w-full h-full bg-sand flex items-center justify-center">
+                            <MapPin size={18} className="text-bronze" aria-hidden="true" />
                           </div>
                         }
                       />
@@ -236,22 +240,24 @@ export default function HomepageLocations({ data }: { data: any }) {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <MapPin size={11} className="text-[#A25607] shrink-0" />
-                        <span className={`font-bold text-sm truncate ${active ? 'text-[#0B2560]' : 'text-gray-800'}`}>{city}</span>
+                        <MapPin size={11} className="text-bronze shrink-0" />
+                        <span className={`font-bold text-sm truncate ${active ? 'text-primary' : 'text-gray-800'}`}>{city}</span>
                       </div>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                          status.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          {status.text}
-                        </span>
+                        {mounted && (
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                            status.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {status.text}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-[10px] text-gray-500">
-                        {csvc > 0 ? `${csvc}+` : '—'} Services &nbsp;·&nbsp; {cdoc > 0 ? cdoc : '—'} Doctors
+                      <p className="text-xs text-text-secondary">
+                        {cdoc > 0 ? `${cdoc} ${cdoc === 1 ? 'doctor' : 'doctors'}` : 'View clinic'}
                       </p>
                     </div>
 
-                    <ChevronRight size={14} className={`shrink-0 transition-colors ${active ? 'text-[#0B2560]' : 'text-gray-300 group-hover:text-gray-500'}`} />
+                    <ChevronRight size={14} className={`shrink-0 transition-colors ${active ? 'text-primary' : 'text-gray-300 group-hover:text-gray-500'}`} />
                   </button>
                 );
               })}
@@ -259,7 +265,7 @@ export default function HomepageLocations({ data }: { data: any }) {
             <div className="p-4 border-t border-gray-50">
               <Link
                 href={`/${activeKey}`}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-[#0B2560]/20 text-[#0B2560] text-xs font-bold hover:bg-[#0B2560] hover:text-white transition-all"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-primary/20 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-all"
               >
                 <LayoutGrid size={13} /> View all clinics
               </Link>
@@ -267,7 +273,7 @@ export default function HomepageLocations({ data }: { data: any }) {
           </div>
 
           {/* ── MIDDLE: map iframe ── */}
-          <div className="hidden md:block bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] overflow-hidden">
+          <div className="hidden md:block bg-white rounded-2xl border border-line overflow-hidden">
             {embedUrl ? (
               <iframe
                 key={activeKey}
@@ -281,9 +287,9 @@ export default function HomepageLocations({ data }: { data: any }) {
                 title={`DR Youth Clinic ${loc?.name ?? activeKey} map`}
               />
             ) : (
-              <div className="h-full min-h-[420px] flex flex-col items-center justify-center bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] gap-3">
-                <MapPin size={32} className="text-[#0B2560]/30" />
-                <p className="text-[#0B2560]/50 text-sm font-semibold">Map not configured</p>
+              <div className="h-full min-h-[420px] flex flex-col items-center justify-center bg-gradient-to-br from-line to-[#c5d9ef] gap-3">
+                <MapPin size={32} className="text-primary/30" />
+                <p className="text-primary/50 text-sm font-semibold">Map not configured</p>
                 <p className="text-gray-500 text-xs">Add embed URL in Admin → Locations</p>
               </div>
             )}
@@ -291,7 +297,7 @@ export default function HomepageLocations({ data }: { data: any }) {
 
           {/* ── RIGHT: detail card ── */}
           {(loc || address) && (
-            <div className="bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] overflow-hidden flex flex-col">
+            <div className="bg-white rounded-2xl border border-line overflow-hidden flex flex-col">
               {/* Hero image */}
               <div className="relative h-44 w-full shrink-0">
                 <ImageWithFallback
@@ -300,7 +306,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                   fill
                   className="object-cover"
                   fallback={
-                    <div className={`w-full h-full bg-gradient-to-br ${CITY_GRADIENTS[activeKey] || 'from-blue-500 to-indigo-700'} flex items-center justify-center`}>
+                    <div className={`w-full h-full bg-primary flex items-center justify-center`}>
                       <p className="text-white font-bold text-xl tracking-wide">DR Youth Clinic</p>
                     </div>
                   }
@@ -314,11 +320,11 @@ export default function HomepageLocations({ data }: { data: any }) {
               <div className="flex-1 flex flex-col p-5 gap-4">
                 {/* Title + rating */}
                 <div>
-                  <h3 className="font-bold text-[#0B2560] text-base leading-tight mb-1">
+                  <h3 className="font-bold text-primary text-base leading-tight mb-1">
                     DR Youth Clinic — {loc?.name ?? activeKey}
                   </h3>
                   {embed.googleMapsUrl && (
-                    <a href={embed.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#2A6BA8] hover:underline">
+                    <a href={embed.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-secondary hover:underline">
                       Read our reviews on Google
                     </a>
                   )}
@@ -328,31 +334,27 @@ export default function HomepageLocations({ data }: { data: any }) {
                 <div className="space-y-2.5 text-sm">
                   {address && (
                     <div className="flex gap-2.5 text-gray-600">
-                      <MapPin size={14} className="text-[#A25607] shrink-0 mt-0.5" />
+                      <MapPin size={14} className="text-bronze shrink-0 mt-0.5" />
                       <span className="leading-snug">{address}</span>
                     </div>
                   )}
                   {hours[0] && (
                     <div className="flex gap-2.5 text-gray-600 items-center">
-                      <Clock size={14} className="text-[#A25607] shrink-0" />
+                      <Clock size={14} className="text-bronze shrink-0" />
                       <span>{hours[0].hours}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                        openStatus.isOpen ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'
-                      }`}>
-                        {openStatus.text}
-                      </span>
+                      {mounted && (
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                          openStatus.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {openStatus.text}
+                        </span>
+                      )}
                     </div>
                   )}
                   {doctorCount > 0 && (
                     <div className="flex gap-2.5 text-gray-600 items-center">
-                      <Users size={14} className="text-[#A25607] shrink-0" />
-                      <span>{doctorCount} Doctors</span>
-                    </div>
-                  )}
-                  {serviceCount > 0 && (
-                    <div className="flex gap-2.5 text-gray-600 items-center">
-                      <Stethoscope size={14} className="text-[#A25607] shrink-0" />
-                      <span>{serviceCount}+ Treatments Available</span>
+                      <Users size={14} className="text-bronze shrink-0" />
+                      <span>{doctorCount} {doctorCount === 1 ? 'doctor' : 'doctors'} at this clinic</span>
                     </div>
                   )}
                 </div>
@@ -364,20 +366,20 @@ export default function HomepageLocations({ data }: { data: any }) {
                       href={directionsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-1.5 bg-[#0B2560] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#0d2d73] transition"
+                      className="flex items-center justify-center gap-1.5 bg-primary text-white text-xs font-bold py-2.5 rounded-xl hover:bg-primary-hover transition"
                     >
                       <Navigation size={12} /> Get Directions
                     </a>
                     <a
-                      href={phone ? `tel:${phone.replace(/\s/g, '')}` : '#'}
-                      className="flex items-center justify-center gap-1.5 border border-[#0B2560] text-[#0B2560] text-xs font-bold py-2.5 rounded-xl hover:bg-[#f6faff] transition"
+                      href={toTelHref(phone) || '/book'}
+                      className="flex items-center justify-center gap-1.5 border border-primary text-primary text-xs font-bold py-2.5 rounded-xl hover:bg-canvas transition"
                     >
                       <Phone size={12} /> Call Now
                     </a>
                   </div>
                   <Link
                     href="/book"
-                    className="flex items-center justify-center gap-2 bg-[#F5A623] text-white text-sm font-bold py-3 rounded-xl hover:bg-[#e69910] transition"
+                    className="flex items-center justify-center gap-2 bg-champagne text-primary text-sm font-bold py-3 rounded-xl hover:bg-[#e69910] transition"
                   >
                     <CalendarCheck size={14} /> Book Consultation
                   </Link>
@@ -388,23 +390,20 @@ export default function HomepageLocations({ data }: { data: any }) {
         </div>
 
         {/* ── Stats bar ── */}
-        <div className="mt-5 bg-white rounded-3xl shadow-sm ring-1 ring-[#e8eff7] px-6 py-5">
+        <div className="mt-5 bg-white rounded-2xl border border-line px-6 py-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
             {STATS.map(({ value, label, icon: Icon }, i) => (
               <div key={i} className="flex items-center gap-3 py-2 sm:py-0 sm:px-4 first:pl-0 last:pr-0">
-                <div className="w-9 h-9 rounded-xl bg-[#f0f5ff] flex items-center justify-center shrink-0">
-                  <Icon size={16} className="text-[#0B2560]" />
+                <div className="w-9 h-9 rounded-xl bg-sand flex items-center justify-center shrink-0">
+                  <Icon size={16} className="text-primary" />
                 </div>
                 <div>
-                  <p className="font-extrabold text-[#0B2560] text-base leading-none">{value}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">{label}</p>
+                  <p className="font-extrabold text-primary text-base leading-none">{value}</p>
+                  <p className="text-xs text-text-secondary mt-0.5 leading-tight">{label}</p>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-center text-xs text-gray-500 mt-4 pt-4 border-t border-gray-50">
-            Trusted by thousands of patients for safe, effective &amp; personalized care.
-          </p>
         </div>
 
       </div>

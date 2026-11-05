@@ -65,7 +65,7 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
     <>
       {/* ── MOBILE: Call + social icon buttons ── */}
       {phone && (
-        <div className="md:hidden flex items-stretch bg-[#0B2560] text-white text-[11px] font-semibold">
+        <div className="md:hidden flex items-stretch bg-primary text-white text-[11px] font-semibold">
 
           {/* Left: tap-to-call (takes most of the width) */}
           <BranchPhoneLink
@@ -111,22 +111,22 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
       )}
 
       {/* ── DESKTOP: full info bar (unchanged) ── */}
-      <div className="hidden md:block bg-[#0B2560] text-white text-xs py-2 px-4 md:px-10">
+      <div className="hidden md:block bg-primary text-white text-xs py-2 px-4 md:px-10">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-4 flex-wrap">
             {phone && (
-              <BranchPhoneLink fallback={phone} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
+              <BranchPhoneLink fallback={phone} className="flex items-center gap-1.5 hover:text-champagne transition">
                 <MdPhone size={13} />
               </BranchPhoneLink>
             )}
             {email && (
-              <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-[#F5A623] transition">
+              <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-champagne transition">
                 <MdEmail size={13} />
                 <span>{email}</span>
               </a>
             )}
             {/* This whole bar renders on a dark navy background
-                (bg-[#0B2560] above) — deliberately kept at the original
+                (bg-primary above) — deliberately kept at the original
                 bright #F5A623, not the darkened #A25607 used everywhere
                 else that color appears as text on a LIGHT surface (see
                 that commit). Confirmed via a real Lighthouse audit: the
@@ -134,7 +134,7 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
                 the original bright value — darkening was correct for the
                 light-background majority case, wrong for this one. */}
             {badge && (
-              <span className="flex items-center gap-1 text-[#F5A623] font-semibold">
+              <span className="flex items-center gap-1 text-champagne font-semibold">
                 <AiFillStar size={12} />
                 {badge}
               </span>
@@ -169,7 +169,7 @@ export default function TopBar({ data, siteConfig }: { data: any; siteConfig?: S
                     // aria-label={item.platform}; this desktop one didn't.
                     aria-label={s.platform}
                     style={PLATFORM_COLOR[s.platform] ? { color: PLATFORM_COLOR[s.platform] } : undefined}
-                    className={PLATFORM_COLOR[s.platform] ? 'transition opacity-90 hover:opacity-100' : 'hover:text-[#F5A623] transition'}
+                    className={PLATFORM_COLOR[s.platform] ? 'transition opacity-90 hover:opacity-100' : 'hover:text-champagne transition'}
                   >
                     {ICON_MAP[s.platform] ?? s.platform}
                   </a>

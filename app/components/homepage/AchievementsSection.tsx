@@ -29,10 +29,10 @@ export default function AchievementsSection({ data }: { data: AchievementsData }
     <section className="py-12 md:py-16 bg-white border-y border-gray-50">
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#A25607] bg-[#A25607]/10 px-3 py-1 rounded-full uppercase tracking-wider mb-3">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-bronze bg-bronze/10 px-3 py-1 rounded-full uppercase tracking-wider mb-3">
             🏆 Achievements &amp; Awards
           </span>
-          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>
+          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">{headline}</h2>
           {subheadline && <p className="text-gray-500 text-sm md:text-base mt-2 max-w-xl mx-auto">{subheadline}</p>}
         </div>
 
@@ -49,12 +49,12 @@ export default function AchievementsSection({ data }: { data: AchievementsData }
                     className="object-contain drop-shadow-[0_6px_14px_rgba(11,37,96,0.12)]"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-full bg-[#f6faff] border border-blue-50 flex items-center justify-center text-3xl">
+                  <div className="w-full h-full rounded-full bg-canvas border border-blue-50 flex items-center justify-center text-3xl">
                     🏆
                   </div>
                 )}
               </div>
-              <p className="text-xs sm:text-[13px] font-semibold text-[#0B2560] leading-snug">{a.title}</p>
+              <p className="text-xs sm:text-[13px] font-semibold text-primary leading-snug">{a.title}</p>
             </div>
           ))}
         </div>

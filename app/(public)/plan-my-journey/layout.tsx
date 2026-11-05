@@ -9,13 +9,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Plan My Journey – AI-Personalised Treatment Timeline",
     description:
-      `Pick your goal — Hair, Skin, Laser, or Weight Loss — and get an AI-personalised month-by-month treatment journey, matched doctors, real patient results, and a cost plan, all in one place. ${consultationFree ? 'Free consultation included.' : ''}`,
+      `Pick your goal — Hair, Skin, Laser, or Weight Loss — and get an AI-personalised month-by-month treatment journey, matched doctors, and a cost plan, all in one place. ${consultationFree ? 'Free consultation included.' : ''}`,
     alternates: {
       canonical: `${SITE_URL}/plan-my-journey`,
     },
     openGraph: {
       title: "Plan My Journey | DR Youth Clinic",
-      description: "An AI-personalised treatment journey, matched doctors, and real results — built around your goal.",
+      description: "An AI-personalised treatment journey, matched doctors, and a consultation — built around your goal.",
       url: `${SITE_URL}/plan-my-journey`,
       siteName: "DR Youth Clinic",
       type: "website",

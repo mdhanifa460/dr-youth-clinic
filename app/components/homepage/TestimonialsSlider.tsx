@@ -19,7 +19,7 @@ function Stars({ rating }: { rating: number }) {
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((n) =>
         n <= rating
-          ? <AiFillStar key={n} className="text-[#A25607]" size={16} />
+          ? <AiFillStar key={n} className="text-bronze" size={16} />
           : <AiOutlineStar key={n} className="text-gray-300" size={16} />
       )}
     </div>
@@ -55,10 +55,10 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
             // then the sudden expansion shifts surrounding content (CLS).
             // 640x360 matches the parent's own aspect-video (16:9) ratio.
             ? <img src={review.videoThumbnail} alt="video" width={640} height={360} className="w-full h-full object-cover" loading="lazy" decoding="async" />
-            : <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a]" />}
+            : <div className="absolute inset-0 bg-gradient-to-br from-primary to-[#1a4a8a]" />}
           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition" />
           <div className="relative z-10 w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-105 transition">
-            <FaPlay className="text-[#0B2560] ml-1" size={16} />
+            <FaPlay className="text-primary ml-1" size={16} />
           </div>
         </a>
       )}
@@ -75,14 +75,14 @@ function ReviewCard({ review, showSourceBadges, showDate }: { review: any; showS
           // is a fixed Tailwind size, but that alone doesn't stop the
           // browser reserving 0x0 before load; explicit attributes do.
           ? <img src={review.authorAvatar} alt={review.authorName} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" loading="lazy" decoding="async" />
-          : <div className="w-9 h-9 rounded-full bg-[#0B2560] flex items-center justify-center shrink-0">
+          : <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0">
               <span className="text-white text-xs font-bold">{initials}</span>
             </div>}
         <div className="min-w-0">
-          <p className="text-[#0B2560] font-bold text-sm truncate">{review.authorName}</p>
+          <p className="text-primary font-bold text-sm truncate">{review.authorName}</p>
           <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
             {review.location && <span className="text-gray-500 text-xs capitalize">{review.location}</span>}
-            {review.services?.[0] && <span className="text-[#2A6BA8] text-xs">{review.services[0]}</span>}
+            {review.services?.[0] && <span className="text-secondary text-xs">{review.services[0]}</span>}
             {showDate && review.reviewDate && (
               <span className="text-gray-300 text-xs">
                 {new Date(review.reviewDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
@@ -121,7 +121,7 @@ function Skeleton() {
 export default function TestimonialsSlider({ data }: { data: any }) {
   const {
     headline = 'What Our Patients Say',
-    subheadline = 'Real stories. Real results. Real confidence.',
+    subheadline = 'In their own words.',
     layout = 'slider',
     displayCount = 6,
     filterSource = '',
@@ -172,12 +172,12 @@ export default function TestimonialsSlider({ data }: { data: any }) {
   if (!loading && reviews.length === 0) return null;
 
   return (
-    <section id="testimonials" className="py-12 md:py-16 lg:py-20 bg-[#f6faff]">
+    <section id="testimonials" className="py-12 md:py-16 lg:py-20 bg-canvas">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
 
         <div className="text-center mb-8 md:mb-12">
-          <p className="text-[#A25607] font-bold text-xs tracking-[0.2em] uppercase mb-3">Patient Reviews</p>
-          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight">{headline}</h2>
+          <p className="text-bronze font-bold text-xs tracking-[0.2em] uppercase mb-3">Patient Reviews</p>
+          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm leading-relaxed">{subheadline}</p>
         </div>
 
@@ -203,7 +203,7 @@ export default function TestimonialsSlider({ data }: { data: any }) {
               {/* Nav row: arrows + dots together */}
               <div className="flex items-center justify-center gap-4 mt-6">
                 <button onClick={prev}
-                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:-translate-y-0.5 transition-all duration-300 border border-gray-100 shrink-0"
+                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all duration-300 border border-gray-100 shrink-0"
                   aria-label="Previous review">
                   <ChevronLeft size={16} />
                 </button>
@@ -213,13 +213,13 @@ export default function TestimonialsSlider({ data }: { data: any }) {
                     <button key={i} onClick={() => setIdx(i)}
                       className="h-11 min-w-8 rounded-full flex items-center justify-center"
                       aria-label={`Show review ${i + 1}`}>
-                      <span className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-6 bg-[#0B2560]' : 'w-2 bg-gray-300'}`} />
+                      <span className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-6 bg-primary' : 'w-2 bg-gray-300'}`} />
                     </button>
                   ))}
                 </div>
 
                 <button onClick={next}
-                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:-translate-y-0.5 transition-all duration-300 border border-gray-100 shrink-0"
+                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all duration-300 border border-gray-100 shrink-0"
                   aria-label="Next review">
                   <ChevronRight size={16} />
                 </button>

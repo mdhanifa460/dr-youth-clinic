@@ -13,6 +13,7 @@ import { connectDB } from "@/app/lib/mongodb";
 import { HomepageSection } from "@/app/models/HomepageSection";
 import { getSettings } from "@/app/models/Settings";
 import { HOMEPAGE_DEFAULTS } from "@/app/lib/homepageDefaults";
+import { scrubClaims } from "@/app/lib/patientClaims";
 import { getSiteConfig } from "@/app/lib/siteConfig";
 import { SiteConfigProvider } from "@/app/components/SiteConfigContext";
 import { getAnalyticsConfig } from "@/app/lib/analyticsConfig";
@@ -68,10 +69,10 @@ const getLayoutSections = unstable_cache(
       const byKey = Object.fromEntries(sections.map((s) => [s.sectionKey, s]));
       return {
         topbar: {
-          data: byKey.topbar?.data ?? HOMEPAGE_DEFAULTS.topbar.data,
+          data: scrubClaims(byKey.topbar?.data ?? HOMEPAGE_DEFAULTS.topbar.data),
           visible: byKey.topbar?.visible ?? true,
         },
-        footer: byKey.footer?.data ?? HOMEPAGE_DEFAULTS.footer.data,
+        footer: scrubClaims(byKey.footer?.data ?? HOMEPAGE_DEFAULTS.footer.data),
       };
     } catch {
       return {

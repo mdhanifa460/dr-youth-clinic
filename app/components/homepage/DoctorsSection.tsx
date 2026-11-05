@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { MapPin, LocateFixed, Users } from 'lucide-react';
 import DoctorCard from '@/app/components/doctors/DoctorCard';
@@ -50,7 +50,7 @@ function nearestCityKey(lat: number, lng: number, available: string[]): string {
 export default function DoctorsSection({ data }: { data: any }) {
   const {
     headline      = 'Meet Our Expert Doctors',
-    subheadline   = 'Experienced professionals dedicated to delivering natural, safe & long-lasting results.',
+    subheadline   = 'Meet the doctors at each of our clinics, with their qualifications and areas of practice.',
     viewAllText   = 'View all',
     viewAllHref   = '#',
     doctors       = [],
@@ -88,8 +88,8 @@ export default function DoctorsSection({ data }: { data: any }) {
     validKeys.includes(detectedKey) ? detectedKey : ''
   );
 
-  // Browser geolocation — picks nearest city
-  useEffect(() => {
+  // Only on request, for the same reason as HomepageLocations.
+  const useMyLocation = () => {
     if (!navigator?.geolocation || validKeys.length === 0) return;
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
@@ -97,11 +97,10 @@ export default function DoctorsSection({ data }: { data: any }) {
         setActiveTab(nearest);
         setDetectedCityKey(nearest);
       },
-      () => { /* denied — keep server default */ },
+      () => { /* denied — keep the current tab */ },
       { timeout: 6000, maximumAge: 300_000 },
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
   // Filter doctors for active tab
   const filtered = activeTab === 'all'
@@ -133,7 +132,7 @@ export default function DoctorsSection({ data }: { data: any }) {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 md:mb-8">
           <div>
-            <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560] leading-tight">
+            <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight">
               {headline}
             </h2>
             <p className="text-gray-500 mt-2 text-sm leading-relaxed max-w-lg">{subheadline}</p>
@@ -141,7 +140,7 @@ export default function DoctorsSection({ data }: { data: any }) {
           {viewAllHref && viewAllHref !== '#' && (
             <Link
               href={viewAllHref}
-              className="hidden md:inline-flex items-center gap-1.5 border border-[#0B2560] text-[#0B2560] hover:bg-[#0B2560] hover:text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
+              className="hidden md:inline-flex items-center gap-1.5 border border-primary text-primary hover:bg-primary hover:text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap"
             >
               {viewAllText} →
             </Link>
@@ -161,8 +160,8 @@ export default function DoctorsSection({ data }: { data: any }) {
                   onClick={() => setActiveTab(tab)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
                     isActive
-                      ? 'bg-[#0B2560] text-white border-[#0B2560] shadow-sm'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#0B2560] hover:text-[#0B2560]'
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
                   }`}
                 >
                   {tab === 'all' ? (
@@ -176,32 +175,37 @@ export default function DoctorsSection({ data }: { data: any }) {
                     {count}
                   </span>
                   {isDetected && (
-                    <span className="flex items-center gap-0.5 text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full">
+                    <span className="flex items-center gap-0.5 text-xs font-bold bg-white/20 px-1.5 py-0.5 rounded-full">
                       <LocateFixed size={9} /> Near you
                     </span>
                   )}
                 </button>
               );
             })}
+            {!detectedCityKey && (
+              <button type="button" onClick={useMyLocation} className="min-h-11 flex items-center gap-1.5 px-3 text-sm font-semibold text-primary underline underline-offset-2">
+                <LocateFixed size={13} /> Near me
+              </button>
+            )}
           </div>
         )}
 
         {/* Doctor grid */}
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 lg:gap-6">
             {filtered.map((doc: any, i: number) => (
               <DoctorCard key={doc._id ?? i} doc={doc} />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#f0f5ff] flex items-center justify-center mb-4">
-              <Users size={24} className="text-[#0B2560]/30" />
+            <div className="w-16 h-16 rounded-2xl bg-sand flex items-center justify-center mb-4">
+              <Users size={24} className="text-primary/30" />
             </div>
             <p className="text-gray-500 font-semibold">No doctors listed for this location yet.</p>
             <button
               onClick={() => setActiveTab('all')}
-              className="mt-3 text-sm text-[#0B2560] font-bold underline underline-offset-2"
+              className="mt-3 text-sm text-primary font-bold underline underline-offset-2"
             >
               View all doctors →
             </button>
@@ -213,7 +217,7 @@ export default function DoctorsSection({ data }: { data: any }) {
           <div className="mt-8 flex justify-center md:hidden">
             <Link
               href={viewAllHref}
-              className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-[#0d2d73] transition-all shadow-lg shadow-[#0B2560]/20"
+              className="inline-flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
             >
               {viewAllText} →
             </Link>

@@ -85,9 +85,9 @@ export default function TrustBarSection({ data }: { data: TrustBarData }) {
   if (stats.length === 0) return null;
 
   return (
-    <section className="bg-[#0B2560] border-y border-[#F5A623]/15">
+    <section className="bg-primary border-y border-champagne/15">
       <div ref={ref} className="max-w-6xl mx-auto px-5">
-        <div className={`flex overflow-x-auto md:overflow-visible md:grid ${MD_COLS[stats.length] ?? 'md:grid-cols-4'} divide-x divide-[#F5A623]/20`}>
+        <div className={`flex overflow-x-auto md:overflow-visible md:grid ${MD_COLS[stats.length] ?? 'md:grid-cols-4'} divide-x divide-champagne/20`}>
           {stats.map((stat, i) => {
             const Icon = ICON_MAP[(stat.icon || '').toLowerCase()] || Users;
             return (
@@ -99,11 +99,11 @@ export default function TrustBarSection({ data }: { data: TrustBarData }) {
                 transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}
                 className="flex flex-col items-center text-center py-7 px-6 md:px-4 shrink-0 min-w-[40vw] md:min-w-0"
               >
-                <Icon size={22} className="text-[#F5A623] mb-2.5" />
+                <Icon size={22} className="text-champagne mb-2.5" />
                 <div className="text-2xl md:text-3xl font-extrabold text-white">
                   <AnimatedNumber raw={stat.value} start={inView} />
                 </div>
-                <div className="text-[10px] md:text-xs text-white/60 font-semibold uppercase tracking-widest mt-1.5">
+                <div className="text-xs md:text-xs text-white/60 font-semibold uppercase tracking-widest mt-1.5">
                   {stat.label}
                 </div>
               </motion.div>

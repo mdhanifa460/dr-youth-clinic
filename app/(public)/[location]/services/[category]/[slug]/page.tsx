@@ -270,7 +270,7 @@ function ServiceSchemas({ svc, cityName, params, schemaType }: { svc: any; cityN
       procedureType: 'https://schema.org/TherapeuticProcedure',
       bodyLocation: svc.category,
       howPerformed: blocksToPlainText(svc.narrativeBlocks, 5000) || svc.narrative || '',
-      preparation: 'Consult with our specialist before treatment',
+      preparation: 'Consult with our doctor before treatment',
       offers: {
         '@type': 'Offer',
         price: svc.price,
@@ -319,10 +319,9 @@ function ServiceSchemas({ svc, cityName, params, schemaType }: { svc: any; cityN
 // Fallback trust points used when a service hasn't set its own
 // Service.whyChooseUs (Admin → Services → Benefits & Results Gallery).
 const DEFAULT_WHY_US = [
-  'Expert dermatologists with 9+ years of clinical experience',
-  'FDA-approved technology and evidence-based protocols',
+  'Consultation with a doctor before treatment is planned',
   'Personalised treatment plans tailored to your skin biology',
-  'Transparent pricing — no hidden costs, no upselling',
+  'Costs explained before you decide',
   'Post-treatment care with dedicated follow-up support',
 ];
 
@@ -424,20 +423,20 @@ export default async function ServiceDetailPage({ params }: PageProps) {
       <InterestTracker eventType="page_view" category={resolveInterestCategory(svc.category)} />
 
       <HomepageOfferSplash banner={splashBanner} page="service" />
-      <main className="bg-white">
+      <div className="bg-white">
 
         {/* ── BREADCRUMB ── */}
-        <nav className="bg-[#f6faff] border-b border-gray-100 py-3">
+        <nav className="bg-canvas border-b border-gray-100 py-3">
           <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
-            <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
+            <Link href="/" className="hover:text-primary transition">Home</Link>
             <ChevronRight size={13} />
-            <Link href={`/${params.location}`} className="hover:text-[#0B2560] transition capitalize">{cityName}</Link>
+            <Link href={`/${params.location}`} className="hover:text-primary transition capitalize">{cityName}</Link>
             <ChevronRight size={13} />
-            <Link href={`/${params.location}/services`} className="hover:text-[#0B2560] transition">Services</Link>
+            <Link href={`/${params.location}/services`} className="hover:text-primary transition">Services</Link>
             <ChevronRight size={13} />
-            <Link href={`/${params.location}/services/${catSlug}`} className="hover:text-[#0B2560] transition">{catLabel}</Link>
+            <Link href={`/${params.location}/services/${catSlug}`} className="hover:text-primary transition">{catLabel}</Link>
             <ChevronRight size={13} />
-            <span className="text-[#0B2560] font-semibold truncate max-w-[180px]">{svc.name}</span>
+            <span className="text-primary font-semibold truncate max-w-[180px]">{svc.name}</span>
           </div>
         </nav>
 
@@ -448,11 +447,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         {carouselServiceBanners.length > 0 ? (
           <BannerCarousel slides={carouselServiceBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
         ) : (
-        <section className="relative bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
+        <section className="relative bg-primary text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute -top-24 -right-24 w-[480px] h-[480px] rounded-full bg-white/[0.03]" />
             <div className="absolute -bottom-16 -left-16 w-[320px] h-[320px] rounded-full bg-white/[0.04]" />
-            <div className="absolute top-1/2 right-1/3 w-[200px] h-[200px] rounded-full bg-[#F5A623]/[0.05]" />
+            <div className="absolute top-1/2 right-1/3 w-[200px] h-[200px] rounded-full bg-champagne/[0.05]" />
           </div>
 
           <div className="max-w-7xl mx-auto px-6 md:px-10 pt-6 relative">
@@ -464,11 +463,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           <div className="max-w-7xl mx-auto px-6 md:px-10 py-10 grid md:grid-cols-2 gap-10 items-center relative">
             <div className="space-y-5">
               <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur text-white text-xs font-bold px-4 py-1.5 rounded-full tracking-wider uppercase border border-white/10">
-                {catIcon} {svc.category} Treatment
+                {svc.category} Treatment
               </span>
-              <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight">
+              <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight tracking-tight">
                 {svc.name}{' '}
-                <span className="block text-[#A25607] text-xl md:text-3xl mt-1 font-bold">in {cityName}</span>
+                <span className="block text-champagne text-xl md:text-3xl mt-1 font-normal">in {cityName}</span>
               </h1>
               {svc.heroDescription && (
                 <p className="text-white/70 text-base md:text-[17px] leading-relaxed max-w-lg">{svc.heroDescription}</p>
@@ -477,26 +476,24 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               {/* Quick stat badges */}
               <div className="flex flex-wrap gap-2 text-sm">
                 <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                  <Clock size={12} className="text-[#A25607]" /> {svc.duration} min
+                  <Clock size={12} className="text-bronze" /> {svc.duration} min
                 </span>
                 {svc.sessionsRequired && (
                   <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                    <Zap size={12} className="text-[#A25607]" /> {svc.sessionsRequired}
+                    <Zap size={12} className="text-bronze" /> {svc.sessionsRequired}
                   </span>
                 )}
                 {svc.recoveryTime && (
                   <span className="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1.5 rounded-full text-xs">
-                    <BadgeCheck size={12} className="text-[#A25607]" /> {svc.recoveryTime}
+                    <BadgeCheck size={12} className="text-bronze" /> {svc.recoveryTime}
                   </span>
                 )}
               </div>
 
               <div className="flex flex-wrap gap-3 pt-1">
-                <Link href="/book">
-                  <button className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-6 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm">
+                <Link href="/book" className="inline-flex items-center justify-center inline-flex items-center gap-2 bg-champagne text-primary px-6 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm">
                     <Calendar size={14} /> {siteConfig.consultationCta}
-                  </button>
-                </Link>
+                  </Link>
                 <a href={`tel:${branchPhone}`} className="inline-flex items-center gap-2 border border-white/30 text-white px-5 py-3.5 rounded-xl font-semibold hover:bg-white/10 transition text-sm">
                   <Phone size={14} /> {branchPhone}
                 </a>
@@ -505,12 +502,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               <div className="flex flex-wrap gap-5 text-xs text-white/50 border-t border-white/10 pt-4">
                 {siteConfig.showPriceOnCards && (
                   <span className="flex items-center gap-1.5">
-                    <IndianRupee size={11} className="text-[#A25607]" />
+                    <IndianRupee size={11} className="text-bronze" />
                     From <strong className="text-white ml-0.5">₹{svc.price.toLocaleString('en-IN')}</strong>
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                  <MapPin size={11} className="text-[#A25607]" /> {cityName} Clinic
+                  <MapPin size={11} className="text-bronze" /> {cityName} Clinic
                 </span>
               </div>
             </div>
@@ -528,7 +525,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4">
-                <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur text-[#0B2560] text-xs font-bold px-4 py-2 rounded-full shadow-lg">
+                <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur text-primary text-xs font-bold px-4 py-2 rounded-full shadow-lg">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   {siteConfig.consultationFree ? 'Free consultation included' : 'Consultation included'}
                 </div>
@@ -539,19 +536,19 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         )}
 
         {/* ── TRUST BAR ── */}
-        <section className="bg-[#0B2560] border-t border-white/5">
+        <section className="bg-primary border-t border-white/5">
           <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 grid grid-cols-2 gap-3">
             {[
-              { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
+              { icon: Shield, label: 'Doctor-led', sub: 'Consultation first' },
               { icon: BadgeCheck, label: '9+ Years', sub: 'Clinical experience' },
             ].map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex items-center gap-3 text-white">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <Icon size={14} className="text-[#A25607]" />
+                  <Icon size={14} className="text-champagne" />
                 </div>
                 <div>
-                  <p className="font-bold text-xs">{label}</p>
-                  <p className="text-white/40 text-[10px]">{sub}</p>
+                  <p className="font-semibold text-sm text-white">{label}</p>
+                  <p className="text-white/70 text-xs">{sub}</p>
                 </div>
               </div>
             ))}
@@ -563,20 +560,19 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           <div className="max-w-7xl mx-auto px-6 md:px-10 py-5">
             {(() => {
               const quickFacts = [
-                { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, icon: '💰', priceOnly: true },
-                { label: 'Session Duration', value: `${svc.duration} min`, icon: '⏱️' },
-                { label: 'Sessions Needed', value: svc.sessionsRequired || 'Consult', icon: '🔄' },
-                { label: 'Recovery Time', value: svc.recoveryTime || 'Varies', icon: '🌿' },
-                { label: 'Anaesthesia', value: svc.anaesthesia || 'Topical / None', icon: '💉' },
-                { label: 'Category', value: svc.category, icon: catIcon },
+                { label: 'Starting Price', value: `₹${svc.price.toLocaleString('en-IN')}`, priceOnly: true },
+                { label: 'Session Duration', value: `${svc.duration} min` },
+                { label: 'Sessions Needed', value: svc.sessionsRequired || 'Consult' },
+                { label: 'Recovery Time', value: svc.recoveryTime || 'Varies' },
+                { label: 'Anaesthesia', value: svc.anaesthesia || 'Topical / None' },
+                { label: 'Category', value: svc.category },
               ].filter((f) => !f.priceOnly || siteConfig.showPriceOnCards);
               return (
                 <div className={`flex md:grid ${quickFacts.length === 6 ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0`}>
                   {quickFacts.map((fact) => (
-                    <div key={fact.label} className="flex-shrink-0 w-40 md:w-auto bg-[#f6faff] rounded-2xl px-4 py-3 text-center border border-blue-50">
-                      <div className="text-xl mb-1">{fact.icon}</div>
-                      <div className="font-bold text-[#0B2560] text-sm">{fact.value}</div>
-                      <div className="text-gray-500 text-[10px] mt-0.5">{fact.label}</div>
+                    <div key={fact.label} className="flex-shrink-0 w-40 md:w-auto bg-canvas rounded-2xl px-4 py-3 text-center border border-blue-50">
+                      <div className="font-bold text-primary text-sm">{fact.value}</div>
+                      <div className="text-text-secondary text-xs mt-0.5">{fact.label}</div>
                     </div>
                   ))}
                 </div>
@@ -590,15 +586,15 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         <section className="lg:hidden bg-white border-b border-gray-50">
           <div className="max-w-7xl mx-auto px-6 py-5">
             <div className="rounded-3xl border border-gray-100 shadow-lg overflow-hidden">
-              <div className="bg-[#0B2560] px-5 py-4 text-white flex items-center justify-between gap-3">
+              <div className="bg-primary px-5 py-4 text-white flex items-center justify-between gap-3">
                 {siteConfig.showPriceOnCards ? (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Starting Price</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Starting Price</p>
                     <p className="text-2xl font-extrabold">₹{svc.price.toLocaleString('en-IN')}</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">{svc.name}</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">{svc.name}</p>
                     <p className="text-lg font-extrabold">Book a consultation</p>
                   </div>
                 )}
@@ -608,11 +604,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
               <div className="p-4 flex gap-2.5">
                 <Link href="/book" className="flex-1">
-                  <button className="w-full bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+                  <button className="w-full bg-primary text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
                     <Calendar size={14} /> {siteConfig.consultationCta}
                   </button>
                 </Link>
-                <a href={`tel:${branchPhone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] px-4 rounded-2xl font-semibold text-sm shrink-0">
+                <a href={`tel:${branchPhone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-primary px-4 rounded-2xl font-semibold text-sm shrink-0">
                   <Phone size={14} />
                 </a>
               </div>
@@ -631,7 +627,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
             {/* Overview */}
             <div>
-              <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-4">About This Treatment</h2>
+              <h2 className="text-2xl font-headline font-medium text-primary mb-4">About This Treatment</h2>
               {svc.narrativeBlocks?.length > 0 ? (
                 <BlockRenderer
                   blocks={svc.narrativeBlocks}
@@ -660,12 +656,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line">{svc.narrative}</p>
               )}
               {hasIdealFor && (
-                <div className="mt-6 p-5 bg-[#f6faff] rounded-2xl border border-blue-50">
-                  <h3 className="text-xs font-bold text-[#0B2560] uppercase tracking-widest mb-3">Ideal for</h3>
+                <div className="mt-6 p-5 bg-canvas rounded-2xl border border-blue-50">
+                  <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Ideal for</h3>
                   <div className="flex flex-wrap gap-2">
                     {svc.idealFor.map((tag: string, i: number) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 bg-white border border-blue-100 text-[#0B2560] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm">
-                        <CheckCircle size={10} className="text-[#2A6BA8]" /> {tag}
+                      <span key={i} className="inline-flex items-center gap-1.5 bg-white border border-blue-100 text-primary px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm">
+                        <CheckCircle size={10} className="text-secondary" /> {tag}
                       </span>
                     ))}
                   </div>
@@ -675,12 +671,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
             {/* Technology */}
             {hasTechnology && (
-              <div className="bg-gradient-to-br from-[#0B2560] to-[#1e3a8a] rounded-3xl p-8 text-white">
+              <div className="bg-gradient-to-br from-primary to-[#1e3a8a] rounded-3xl p-8 text-white">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
-                    <Cpu size={18} className="text-[#A25607]" />
+                    <Cpu size={18} className="text-bronze" />
                   </div>
-                  <h2 className="text-xl font-headline font-bold">What Powers This Treatment</h2>
+                  <h2 className="text-xl font-headline font-medium">What Powers This Treatment</h2>
                 </div>
                 <p className="text-white/75 leading-relaxed text-sm">{svc.technology}</p>
               </div>
@@ -696,7 +692,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             {hasBeforeAfter && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Real Patient Results</h2>
+                  <h2 className="text-2xl font-headline font-medium text-primary">Treatment Photos</h2>
                   <span className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border hidden sm:block">Unretouched photos</span>
                 </div>
                 <BeforeAfterGallery pairs={beforeAfterPairs} serviceName={svc.name} />
@@ -707,8 +703,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             {siteConfig.showBeforeAfterOnPublic && documentedResults.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Documented Patient Results</h2>
-                  <Link href="/results" className="text-sm font-semibold text-[#0B2560] hover:text-[#3b82f6] transition flex items-center gap-1.5">
+                  <h2 className="text-2xl font-headline font-medium text-primary">Treatment Photos</h2>
+                  <Link href="/results" className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5">
                     View all <ChevronRight size={14} />
                   </Link>
                 </div>
@@ -735,7 +731,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             {/* Myths vs Facts */}
             {hasMyths && (
               <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-6">Myths vs. Facts</h2>
+                <h2 className="text-2xl font-headline font-medium text-primary mb-6">Myths vs. Facts</h2>
                 <div className="space-y-4">
                   {svc.myths.map((item: any, i: number) => (
                     <div key={i} className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
@@ -744,7 +740,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                           <X size={12} className="text-red-500" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-0.5">Myth</p>
+                          <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-0.5">Myth</p>
                           <p className="text-gray-700 text-sm font-medium">{item.myth}</p>
                         </div>
                       </div>
@@ -753,7 +749,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                           <ThumbsUp size={12} className="text-green-500" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-0.5">Fact</p>
+                          <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-0.5">Fact</p>
                           <p className="text-gray-700 text-sm">{item.fact}</p>
                         </div>
                       </div>
@@ -795,12 +791,12 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             {/* Patient Reviews */}
             {hasReviews && (
               <div>
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">What Patients Say</h2>
+                <h2 className="text-2xl font-headline font-medium text-primary mb-5">What Patients Say</h2>
                 <div className="space-y-4">
                   {reviews.map((r: any, i: number) => (
-                    <div key={i} className="bg-[#f6faff] rounded-2xl p-5 border border-blue-50">
+                    <div key={i} className="bg-canvas rounded-2xl p-5 border border-blue-50">
                       <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#0B2560]/10 flex items-center justify-center shrink-0 font-bold text-[#0B2560] text-sm">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-bold text-primary text-sm">
                           {r.authorAvatar
                             ? <img src={r.authorAvatar} alt="" className="w-9 h-9 rounded-full object-cover" />
                             : (r.authorName?.[0] ?? 'P')
@@ -808,18 +804,18 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="font-bold text-sm text-[#0B2560]">{r.authorName}</span>
+                            <span className="font-bold text-sm text-primary">{r.authorName}</span>
                             {r.rating && (
                               <span className="flex items-center gap-0.5">
                                 {[...Array(5)].map((_, s) => (
-                                  <Star key={s} size={10} className={s < (r.rating ?? 0) ? 'text-[#A25607] fill-[#F5A623]' : 'text-gray-200 fill-gray-200'} />
+                                  <Star key={s} size={10} className={s < (r.rating ?? 0) ? 'text-bronze fill-champagne' : 'text-gray-200 fill-gray-200'} />
                                 ))}
                               </span>
                             )}
                           </div>
                           {r.reviewText && (
                             <p className="text-gray-600 text-sm leading-relaxed">
-                              <Quote size={12} className="inline text-[#2A6BA8] mr-1 -mt-0.5" />
+                              <Quote size={12} className="inline text-secondary mr-1 -mt-0.5" />
                               {r.reviewText}
                             </p>
                           )}
@@ -832,15 +828,22 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             )}
 
             {/* FAQ */}
+            <section aria-labelledby="before-you-decide" className="rounded-2xl border border-line bg-canvas p-5 md:p-6">
+              <h2 id="before-you-decide" className="font-headline text-xl font-medium text-primary">Before you decide</h2>
+              <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+                Results vary from person to person, and this treatment may not suit everyone. At your consultation, the doctor will assess your concern and explain whether it is suitable, along with possible side effects, limitations, and alternatives.
+              </p>
+            </section>
+
             {hasFAQ && !inBlocks('faq-block') && <FaqAccordion faq={svc.faq} />}
 
             {/* Why DR Youth */}
-            <div className="bg-gradient-to-br from-[#f6faff] to-white rounded-3xl p-7 border border-blue-50">
-              <h2 className="text-xl font-headline font-bold text-[#0B2560] mb-5">Why Choose DR Youth Clinic?</h2>
+            <div className="bg-gradient-to-br from-canvas to-white rounded-3xl p-7 border border-blue-50">
+              <h2 className="text-xl font-headline font-medium text-primary mb-5">What to Expect</h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {(svc.whyChooseUs?.length ? svc.whyChooseUs : DEFAULT_WHY_US).map((point: string, i: number) => (
                   <div key={i} className="flex items-start gap-3 bg-white rounded-xl p-4 border border-gray-50 shadow-sm">
-                    <CheckCircle size={15} className="text-[#2A6BA8] mt-0.5 shrink-0" />
+                    <CheckCircle size={15} className="text-secondary mt-0.5 shrink-0" />
                     <p className="text-gray-700 text-sm leading-relaxed">{point}</p>
                   </div>
                 ))}
@@ -864,9 +867,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
               {/* Booking card */}
               <div className="rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
-                <div className="bg-[#0B2560] px-6 py-5 text-white">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Book This Treatment</p>
-                  <h3 className="text-base font-headline font-bold leading-snug">{svc.name}</h3>
+                <div className="bg-primary px-6 py-5 text-white">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Book This Treatment</p>
+                  <h3 className="text-base font-headline font-medium leading-snug">{svc.name}</h3>
                   <p className="text-white/40 text-xs mt-0.5">{cityName} Clinic</p>
                 </div>
                 <div className="p-5 space-y-1">
@@ -883,23 +886,23 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     },
                     { label: 'Duration', value: `${svc.duration} min` },
                     svc.sessionsRequired && { label: 'Sessions', value: svc.sessionsRequired },
-                    svc.recoveryTime && { label: 'Recovery', value: svc.recoveryTime, color: 'text-[#2A6BA8]' },
+                    svc.recoveryTime && { label: 'Recovery', value: svc.recoveryTime, color: 'text-secondary' },
                   ].filter(Boolean).map((row: any, i, arr) => (
                     <div key={i} className={`flex justify-between items-center py-2.5 ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>
                       <span className="text-xs text-gray-500">{row.label}</span>
                       <span className="text-right">
-                        <span className={`block font-semibold text-sm ${row.bold ? 'text-2xl font-extrabold text-[#0B2560]' : row.color ?? 'text-gray-700'}`}>{row.value}</span>
-                        {row.sub && <span className="block text-[11px] font-semibold text-[#A25607]">{row.sub}</span>}
+                        <span className={`block font-semibold text-sm ${row.bold ? 'text-2xl font-extrabold text-primary' : row.color ?? 'text-gray-700'}`}>{row.value}</span>
+                        {row.sub && <span className="block text-[11px] font-semibold text-bronze">{row.sub}</span>}
                       </span>
                     </div>
                   ))}
                   <div className="pt-4 space-y-2.5">
                     <Link href="/book" className="block">
-                      <button className="w-full bg-[#0B2560] text-white py-3.5 rounded-2xl font-bold text-sm shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 transition flex items-center justify-center gap-2">
+                      <button className="w-full bg-primary text-white py-3.5 rounded-2xl font-bold text-sm shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 transition flex items-center justify-center gap-2">
                         <Calendar size={14} /> {siteConfig.consultationCta}
                       </button>
                     </Link>
-                    <a href={`tel:${branchPhone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-[#0B2560] py-3 rounded-2xl font-semibold text-sm hover:bg-[#f6faff] transition">
+                    <a href={`tel:${branchPhone}`} className="flex items-center justify-center gap-2 border-2 border-gray-100 text-primary py-3 rounded-2xl font-semibold text-sm hover:bg-canvas transition">
                       <Phone size={13} /> Call to Book
                     </a>
                     <p className="text-center text-xs text-gray-500 pt-1">{siteConfig.consultationSub}</p>
@@ -908,19 +911,19 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </div>
 
               {/* Clinic info */}
-              <div className="rounded-3xl border border-gray-100 p-5 bg-[#f6faff] space-y-3">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.18em]">Our {cityName} Clinic</p>
+              <div className="rounded-3xl border border-gray-100 p-5 bg-canvas space-y-3">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.18em]">Our {cityName} Clinic</p>
                 <div className="flex items-start gap-2 text-sm text-gray-600">
-                  <MapPin size={13} className="text-[#2A6BA8] mt-0.5 shrink-0" />
+                  <MapPin size={13} className="text-secondary mt-0.5 shrink-0" />
                   <span className="text-xs">{loc.address}</span>
                 </div>
                 {loc.hours?.[0] && (
                   <div className="flex items-start gap-2 text-gray-500">
-                    <Clock size={13} className="text-[#2A6BA8] mt-0.5 shrink-0" />
+                    <Clock size={13} className="text-secondary mt-0.5 shrink-0" />
                     <span className="text-xs">{loc.hours[0].day}: {loc.hours[0].hours}</span>
                   </div>
                 )}
-                <Link href={`/${params.location}`} className="text-xs font-semibold text-[#2A6BA8] hover:text-[#0B2560] transition flex items-center gap-1 pt-1">
+                <Link href={`/${params.location}`} className="text-xs font-semibold text-secondary hover:text-primary transition flex items-center gap-1 pt-1">
                   View full clinic details <ChevronRight size={11} />
                 </Link>
               </div>
@@ -928,11 +931,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               {/* Available at other locations */}
               {otherLocations.length > 0 && (
                 <div className="rounded-3xl border border-gray-100 p-5 space-y-3">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.18em]">Also available at</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.18em]">Also available at</p>
                   {otherLocations.map((o: any) => (
-                    <Link key={o.location} href={`/${o.location}/services/${catSlug}/${o.urlSlug}`} className="flex items-center justify-between hover:bg-[#f6faff] rounded-xl p-2 -mx-2 transition group">
-                      <span className="text-sm font-semibold text-[#0B2560] capitalize">{locations[o.location]?.name ?? o.location}</span>
-                      <ChevronRight size={13} className="text-gray-300 group-hover:text-[#2A6BA8] transition" />
+                    <Link key={o.location} href={`/${o.location}/services/${catSlug}/${o.urlSlug}`} className="flex items-center justify-between hover:bg-canvas rounded-xl p-2 -mx-2 transition group">
+                      <span className="text-sm font-semibold text-primary capitalize">{locations[o.location]?.name ?? o.location}</span>
+                      <ChevronRight size={13} className="text-gray-300 group-hover:text-secondary transition" />
                     </Link>
                   ))}
                 </div>
@@ -975,11 +978,11 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
         {/* ── OUR SPECIALISTS ── */}
         {hasDoctors && (
-          <section className="bg-[#f6faff] py-14 border-t border-blue-50">
+          <section className="bg-canvas py-14 border-t border-blue-50">
             <div className="max-w-7xl mx-auto px-6 md:px-10">
               <div className="mb-8">
-                <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Meet Your Specialists</h2>
-                <p className="text-gray-500 text-sm mt-1">Expert dermatologists at our {cityName} clinic performing this treatment</p>
+                <h2 className="text-2xl font-headline font-medium text-primary">Meet Your Doctors</h2>
+                <p className="text-gray-500 text-sm mt-1">Doctors at our {cityName} clinic performing this treatment</p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {doctors.map((doc: any) => (
@@ -988,21 +991,21 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                       {doc.photo?.url ? (
                         <FocalImage image={doc.photo} aspectRatio="1/1" sizes="64px" alt={doc.name} className="rounded-2xl" />
                       ) : (
-                        <div className="w-16 h-16 rounded-2xl bg-[#0B2560]/10 flex items-center justify-center text-2xl font-bold text-[#0B2560]">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
                           {doc.name?.[0] ?? 'D'}
                         </div>
                       )}
                     </div>
                     <div>
-                      <h3 className="font-bold text-[#0B2560] text-sm">{doc.name}</h3>
-                      <p className="text-[#2A6BA8] text-xs mt-0.5">{doc.title}</p>
+                      <h3 className="font-bold text-primary text-sm">{doc.name}</h3>
+                      <p className="text-secondary text-xs mt-0.5">{doc.title}</p>
                       {doc.experience > 0 && (
                         <p className="text-gray-500 text-xs mt-1">{doc.experience}+ years experience</p>
                       )}
                       {doc.specializations?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {doc.specializations.slice(0, 2).map((s: string) => (
-                            <span key={s} className="text-[10px] bg-[#f6faff] border border-blue-50 text-[#0B2560] px-2 py-0.5 rounded-full">{s}</span>
+                            <span key={s} className="text-xs bg-canvas border border-blue-50 text-primary px-2 py-0.5 rounded-full">{s}</span>
                           ))}
                         </div>
                       )}
@@ -1038,25 +1041,23 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         )}
 
         {/* ── BOTTOM CTA ── */}
-        <section id="bottom-cta" className="bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] py-16 text-white text-center relative overflow-hidden">
+        <section id="bottom-cta" className="bg-gradient-to-br from-primary to-[#1a4a8a] py-16 text-white text-center relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/[0.03] translate-x-1/3 -translate-y-1/3" />
-            <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-[#F5A623]/[0.05] -translate-x-1/3 translate-y-1/3" />
+            <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-champagne/[0.05] -translate-x-1/3 translate-y-1/3" />
           </div>
           <div className="max-w-2xl mx-auto px-6 relative">
-            <p className="text-[#A25607] text-xs font-bold uppercase tracking-widest mb-3">Ready to begin?</p>
-            <h2 className="text-2xl md:text-4xl font-headline font-extrabold tracking-tight mb-3">
+            <p className="text-bronze text-xs font-bold uppercase tracking-widest mb-3">Ready to begin?</p>
+            <h2 className="text-2xl md:text-4xl font-headline font-medium tracking-tight mb-3">
               Start Your {svc.name} Journey
             </h2>
             <p className="text-white/60 text-sm leading-relaxed mb-7">
               Book a {siteConfig.consultationFree ? 'free ' : ''}consultation with our {cityName} specialists and receive a personalised treatment plan.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/book">
-                <button className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3.5 rounded-2xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm">
+              <Link href="/book" className="inline-flex items-center justify-center inline-flex items-center gap-2 bg-champagne text-primary px-7 py-3.5 rounded-2xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm">
                   <Calendar size={15} /> {siteConfig.consultationCta}
-                </button>
-              </Link>
+                </Link>
               <a href={`tel:${branchPhone}`} className="inline-flex items-center gap-2 border-2 border-white/20 text-white px-7 py-3.5 rounded-2xl font-semibold hover:bg-white/10 transition text-sm">
                 <Phone size={15} /> {branchPhone}
               </a>
@@ -1065,7 +1066,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           </div>
         </section>
 
-      </main>
+      </div>
 
       <ServiceStickyDesktopCta ctaText={siteConfig.consultationCta} phone={branchPhone} />
     </>

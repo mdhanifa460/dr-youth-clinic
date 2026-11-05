@@ -469,7 +469,7 @@ const SettingsSchema = new Schema<ISettings>(
     display: {
       showPriceOnCards:        { type: Boolean, default: true },
       showDurationOnCards:     { type: Boolean, default: true },
-      showBeforeAfterOnPublic: { type: Boolean, default: true },
+      showBeforeAfterOnPublic: { type: Boolean, default: false },
       relatedServicesCount:    { type: Number,  default: 3 },
       carouselIntervalMs:      { type: Number,  default: 5000 },
     },
@@ -563,7 +563,7 @@ const SettingsSchema = new Schema<ISettings>(
       schemaType:           { type: String, default: 'MedicalClinic' },
       servicesHubHeadline:       { type: String, default: 'Clinical' },
       servicesHubHeadlineAccent: { type: String, default: 'Excellence.' },
-      servicesHubDescription:    { type: String, default: '{count} across dermatology, hair restoration, and precision laser — all in {city}.' },
+      servicesHubDescription:    { type: String, default: '{count} across skin, hair restoration and laser, all in {city}.' },
     },
     homepageLayoutEngineEnabled: { type: Boolean, default: false },
     offersPageLayoutEngineEnabled: { type: Boolean, default: false },

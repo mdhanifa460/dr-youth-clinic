@@ -31,7 +31,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
   } = resolvedData;
 
   return (
-    <footer className="bg-[#0B2560] text-white">
+    <footer className="bg-primary text-white">
       {/* pb-10 on its own only clears the fixed MobileStickyBar because
           the layout's `mobile-sticky-offset` wrapper (app/(public)/layout.tsx)
           only wraps {children}, not Footer — Footer renders after it, so
@@ -102,7 +102,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
         {/* BOTTOM BAR */}
         <div className="mt-12 pt-6 border-t border-white/10 space-y-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-white/60 text-xs">{copyright}</p>
+            <p className="text-white/60 text-xs">{String(copyright).replace(/©\s*\d{4}/, `© ${new Date().getFullYear()}`)}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2">
             {bottomLinks.map((l: any, i: number) => (
@@ -119,7 +119,7 @@ export default async function Footer({ data, siteConfig }: { data?: any; siteCon
                 // marginal at best for 12px text — full opacity is the
                 // one that's actually safe.
                 className={l.accent
-                  ? "text-[#F5A623] text-xs hover:text-white transition font-medium"
+                  ? "text-champagne text-xs hover:text-white transition font-medium"
                   : "text-white/60 text-xs hover:text-white/90 transition"}
               >
                 {l.label}

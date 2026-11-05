@@ -11,8 +11,8 @@ const SPACING_CLASS: Record<string, string> = {
 const BACKGROUND_CLASS: Record<string, string> = {
   transparent: '',
   light: 'bg-gray-50',
-  dark: 'bg-[#0B2560] text-white',
-  brand: 'bg-[#f6faff]',
+  dark: 'bg-primary text-white',
+  brand: 'bg-canvas',
 };
 
 type WrapperFields = Pick<

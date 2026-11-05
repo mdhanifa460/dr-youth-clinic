@@ -186,7 +186,7 @@ export default function VideoReelsSection({
   subhead = 'Real procedures, real doctors, explained in plain language — pulled straight from our YouTube channel and Instagram, in one place.',
   media = SAMPLE_WATCH_MEDIA,
   ctaTitle = 'Follow along — new videos every week',
-  ctaSubtitle = '10K+ subscribers already learning before they book.',
+  ctaSubtitle = 'Short explainers from our doctors on our YouTube and Instagram channels.',
   id = 'watch-and-learn',
 }: VideoReelsSectionProps) {
   const { youtubeUrl, instagramUrl } = useSiteConfig();

@@ -46,7 +46,7 @@ export default function OfferCountdownBadge({ validUntil }: { validUntil?: strin
   if (!isValid || !mounted || countdown.d > 7) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full">
+    <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full">
       ⏰ {countdown.d}d {pad(countdown.h)}h {pad(countdown.m)}m left
     </span>
   );

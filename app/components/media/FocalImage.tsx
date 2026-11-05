@@ -84,7 +84,7 @@ export default function FocalImage({
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="h-full w-full flex items-center justify-center text-4xl bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]">
+        <div className="h-full w-full flex items-center justify-center text-4xl bg-gradient-to-br from-line to-[#c5d9ef]">
           {fallbackEmoji}
         </div>
       )}

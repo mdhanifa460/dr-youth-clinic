@@ -17,10 +17,6 @@ import { checkIpRisk } from "@/app/lib/ipIntelligence";
 import { checkBookingCapacity, isRealAppointment } from "@/app/lib/bookingCapacity";
 import { normalizeIdempotencyKey, extractIdentity, identitiesMatch, createBookingIdempotent } from "@/app/lib/bookingIdempotency";
 
-export async function GET() {
-  return NextResponse.json({ message: "API working ✅" });
-}
-
 export async function POST(req: NextRequest) {
   // 8 bookings per hour per IP — prevents spam while staying realistic for
   // genuine traffic: many Indian ISPs use carrier-grade NAT, so several
@@ -46,6 +42,11 @@ export async function POST(req: NextRequest) {
         { success: false, message: parsed.error.issues[0]?.message || "Invalid booking details" },
         { status: 400 }
       );
+    }
+    // Honeypot from the booking forms: people never see this field. A bot gets a
+    // normal-looking reply, and nothing is saved or sent to staff.
+    if (typeof rawBody?.website === "string" && rawBody.website.trim()) {
+      return NextResponse.json({ success: true, bookingId: "", alreadyProcessed: true });
     }
     const {
       name, phone, email, service, location, concern, promoCode, promoDiscount, source,

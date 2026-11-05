@@ -35,24 +35,24 @@ export default function TreatmentComparison({
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">How Does {current.name} Compare?</h2>
+      <h2 className="text-2xl font-headline font-medium text-primary mb-2">How Does {current.name} Compare?</h2>
       <p className="text-gray-500 text-sm mb-6">A side-by-side look at similar treatments, so you can make an informed choice.</p>
 
       <div className="overflow-x-auto rounded-3xl border border-blue-50">
         <table className="w-full text-sm min-w-[500px]">
           <thead>
-            <tr className="bg-[#0B2560] text-white">
+            <tr className="bg-primary text-white">
               <th className="text-left px-4 py-3.5 text-xs font-semibold uppercase tracking-wide">Compare</th>
               {services.map((s) => (
                 <th
                   key={s._id}
                   className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-center ${
-                    s._id === current._id ? 'text-[#F5A623]' : 'text-white/70'
+                    s._id === current._id ? 'text-champagne' : 'text-white/70'
                   }`}
                 >
                   {s.name}
                   {s._id === current._id && (
-                    <span className="block text-[9px] font-semibold normal-case text-[#F5A623]/80 mt-0.5">This treatment</span>
+                    <span className="block text-xs font-semibold normal-case text-champagne/80 mt-0.5">This treatment</span>
                   )}
                 </th>
               ))}
@@ -60,13 +60,13 @@ export default function TreatmentComparison({
           </thead>
           <tbody className="divide-y divide-gray-50">
             {rows.map((row, i) => (
-              <tr key={row.label} className={i % 2 === 0 ? 'bg-white' : 'bg-[#f6faff]/50'}>
+              <tr key={row.label} className={i % 2 === 0 ? 'bg-white' : 'bg-canvas/50'}>
                 <td className="px-4 py-3.5 text-xs font-semibold text-gray-500">{row.label}</td>
                 {services.map((s) => (
                   <td
                     key={s._id}
                     className={`px-4 py-3.5 text-center text-xs font-bold ${
-                      s._id === current._id ? 'text-[#0B2560] bg-[#F5A623]/5' : 'text-gray-600'
+                      s._id === current._id ? 'text-primary bg-champagne/5' : 'text-gray-600'
                     }`}
                   >
                     {row.render(s)}
@@ -79,7 +79,7 @@ export default function TreatmentComparison({
       </div>
 
       <div className="flex items-start gap-2 mt-3 text-xs text-gray-500">
-        <CheckCircle size={13} className="text-[#2A6BA8] mt-0.5 shrink-0" />
+        <CheckCircle size={13} className="text-secondary mt-0.5 shrink-0" />
         <span>Every treatment plan is finalised by your doctor based on your specific skin/hair assessment — figures above are typical ranges.</span>
       </div>
     </div>

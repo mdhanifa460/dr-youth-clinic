@@ -29,8 +29,8 @@ export default function CoursesComingSoon({ whatsapp }: { whatsapp?: string }) {
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <div className="text-center mb-10">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-2">🚧 Coming Soon</p>
-        <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">Certification Programs</h2>
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-2">🚧 Coming Soon</p>
+        <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">Certification Programs</h2>
         <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">Not live yet — batches and curriculum are on the way. Ask us for the latest.</p>
       </div>
 
@@ -38,7 +38,7 @@ export default function CoursesComingSoon({ whatsapp }: { whatsapp?: string }) {
         {TEASERS.map((t) => (
           <div key={t.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
             <span className="text-2xl block mb-2">{t.icon}</span>
-            <p className="font-bold text-[#0B2560] text-xs mb-1">{t.title}</p>
+            <p className="font-bold text-primary text-xs mb-1">{t.title}</p>
             <p className="text-gray-500 text-[11px] leading-relaxed">{t.copy}</p>
           </div>
         ))}
@@ -49,7 +49,7 @@ export default function CoursesComingSoon({ whatsapp }: { whatsapp?: string }) {
           href={contactUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition-all duration-200"
+          className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition-all duration-200"
         >
           <MessageCircle size={15} /> Ask Us on WhatsApp
         </a>

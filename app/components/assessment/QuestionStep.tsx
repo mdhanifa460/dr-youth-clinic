@@ -40,28 +40,28 @@ interface ThemeTokens {
 
 const THEME_TOKENS: Record<QuestionStepTheme, ThemeTokens> = {
   navy: {
-    selectedBorder: "border-[#0B2560]",
-    selectedBg: "bg-[#0B2560]/5",
-    selectedShadow: "shadow-md shadow-[#0B2560]/10",
-    selectedText: "text-[#0B2560]",
+    selectedBorder: "border-primary",
+    selectedBg: "bg-primary/5",
+    selectedShadow: "shadow-md shadow-primary/10",
+    selectedText: "text-primary",
     unselectedBorder: "border-gray-100",
-    hoverBorder: "hover:border-[#0B2560]/30",
-    accentRing: "accent-[#0B2560]",
+    hoverBorder: "hover:border-primary/30",
+    accentRing: "accent-primary",
     showSelectionCheck: true,
-    checkBg: "bg-[#0B2560]",
-    textFocusBorder: "focus-within:border-[#0B2560]/40",
+    checkBg: "bg-primary",
+    textFocusBorder: "focus-within:border-primary/40",
   },
   gold: {
-    selectedBorder: "border-[#F5A623]",
+    selectedBorder: "border-champagne",
     selectedBg: "bg-[#FFF7E8]",
-    selectedShadow: "shadow-md shadow-[#F5A623]/15",
-    selectedText: "text-[#0B2560]",
+    selectedShadow: "shadow-md shadow-champagne/15",
+    selectedText: "text-primary",
     unselectedBorder: "border-gray-100",
-    hoverBorder: "hover:border-[#F5A623]/40",
-    accentRing: "accent-[#F5A623]",
+    hoverBorder: "hover:border-champagne/40",
+    accentRing: "accent-champagne",
     showSelectionCheck: false,
-    checkBg: "bg-[#F5A623]",
-    textFocusBorder: "focus-within:border-[#F5A623]/50",
+    checkBg: "bg-champagne",
+    textFocusBorder: "focus-within:border-champagne/50",
   },
 };
 
@@ -127,7 +127,7 @@ export function PhotoUploadField({ value, onChange }: { value: string; onChange:
       ) : (
         <label className="cursor-pointer flex flex-col items-center gap-3">
           <span className="text-4xl">📷</span>
-          <span className="text-sm font-bold text-[#0B2560]">{uploading ? "Uploading…" : "Tap to add a photo"}</span>
+          <span className="text-sm font-bold text-primary">{uploading ? "Uploading…" : "Tap to add a photo"}</span>
           <span className="text-xs text-gray-500">Optional — you can skip this step</span>
           <input
             ref={inputRef}
@@ -183,7 +183,7 @@ export default function QuestionStep({
     return (
       <div className="bg-white rounded-2xl border-2 border-gray-100 px-6 py-8">
         <div className="flex items-baseline justify-between mb-4">
-          <span className="text-3xl font-extrabold text-[#0B2560]">{num}</span>
+          <span className="text-3xl font-extrabold text-primary">{num}</span>
           {question.sliderUnit && <span className="text-sm text-gray-500">{question.sliderUnit}</span>}
         </div>
         <input
@@ -213,7 +213,7 @@ export default function QuestionStep({
       <select
         value={typeof value === "string" ? value : ""}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 font-semibold focus:outline-none focus:border-[#0B2560]"
+        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 font-semibold focus:outline-none focus:border-primary"
       >
         <option value="">Select an option</option>
         {question.answers.map((a) => (
@@ -236,7 +236,7 @@ export default function QuestionStep({
                 selected
                   ? theme === "gold"
                     ? `${tokens.selectedBorder} ${tokens.selectedBg} ${tokens.selectedText} ${tokens.selectedShadow}`
-                    : "border-[#0B2560] bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/25"
+                    : "border-primary bg-primary text-white shadow-md shadow-primary/25"
                   : `${tokens.unselectedBorder} bg-white text-gray-700 ${tokens.hoverBorder}`
               }`}
             >

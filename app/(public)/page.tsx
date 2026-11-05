@@ -24,6 +24,7 @@ import { PageSeo } from '@/app/models/PageSeo';
 import { LocationContent } from '@/app/models/LocationContent';
 import Booking from '@/app/models/Booking';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
+import { scrubClaims } from '@/app/lib/patientClaims';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
@@ -119,11 +120,11 @@ export async function generateMetadata(): Promise<Metadata> {
   }
   return {
     title: { absolute: 'DR Youth Clinic – Advanced Skin & Aesthetic Care' },
-    description: 'Expert dermatology, hair restoration & aesthetic treatments.',
+    description: 'Skin, hair and aesthetic treatments in Chennai, Bangalore, Coimbatore and Kochi.',
     alternates: { canonical: `${SITE_URL}/` },
     openGraph: {
       title: 'DR Youth Clinic – Advanced Skin & Aesthetic Care',
-      description: 'Expert dermatology, hair restoration & aesthetic treatments.',
+      description: 'Skin, hair and aesthetic treatments in Chennai, Bangalore, Coimbatore and Kochi.',
       url: SITE_URL,
       siteName: 'DR Youth Clinic',
       type: 'website',
@@ -170,7 +171,7 @@ const getCachedSections = unstable_cache(
         sectionData: Object.fromEntries(
           raw.map((s) => [
             s.sectionKey,
-            normalizeLegacyImageUrls({ ...s.data, visible: s.visible }),
+            scrubClaims(normalizeLegacyImageUrls({ ...s.data, visible: s.visible })),
           ])
         ),
         sectionOrder: raw
@@ -217,6 +218,7 @@ const getCachedDoctors = unstable_cache(
         : { active: true };
       const docs = await Doctor.find(filter as any)
         .sort({ order: 1, createdAt: -1 })
+        .select('name title role photo qualifications experience locations linkedIn')
         .lean();
       return JSON.parse(JSON.stringify(docs));
     } catch {
@@ -293,6 +295,7 @@ const getCachedFeaturedVideos = unstable_cache(
         .find({ status: 'published' } as any)
         .sort({ featured: -1, displayOrder: 1, createdAt: -1 })
         .limit(9)
+        .select('title platform format youtubeId instagramUrl thumbnail duration doctor slug category categories featured')
         .populate('doctor', 'name')
         .lean();
       return JSON.parse(JSON.stringify(docs));
@@ -446,7 +449,7 @@ const getCachedHomepageFaqs = unstable_cache(
         .limit(8)
         .select('question answer category')
         .lean();
-      return JSON.parse(JSON.stringify(docs)).map((d: any) => ({ question: d.question, answer: d.answer }));
+      return scrubClaims(JSON.parse(JSON.stringify(docs)).map((d: any) => ({ question: d.question, answer: d.answer }))) as { question: string; answer: string }[];
     } catch {
       return [];
     }
@@ -552,9 +555,20 @@ export default async function Home() {
 
   const enriched = {
     ...sectionData,
-    hero: { ...(sectionData['hero'] ?? {}), _intervalMs: settings.display?.carouselIntervalMs ?? 5000 },
+    hero: {
+      ...(sectionData['hero'] ?? {}),
+      _doctorCount: liveDoctors.length,
+      _cityLine: 'Clinics in Chennai, Bangalore, Coimbatore and Kochi',
+    },
     testimonials: { ...td, _reviews: initialReviews, _rotateMs: testimonialsRotateMs },
-    locations: { ...(sectionData['locations'] ?? {}), _embeds: locationEmbeds, _detectedCity: detectedCity },
+    locations: {
+      ...(sectionData['locations'] ?? {}),
+      _embeds: locationEmbeds,
+      _detectedCity: detectedCity,
+      _doctorCount: liveDoctors.length,
+      _doctorCountByCity: Object.fromEntries(CITY_SLUGS.map((c) => [c, liveDoctors.filter((d: any) => (d.locations || []).some((l: string) => l === c || l === 'all')).length])),
+      _treatmentCount: Object.values(serviceCategoryCounts as Record<string, number>).reduce((sum, n) => sum + n, 0),
+    },
     doctors: {
       ...(sectionData['doctors'] ?? {}),
       doctors: liveDoctors,
@@ -566,7 +580,7 @@ export default async function Home() {
     },
     web_stories: {
       ...(sectionData['web_stories'] ?? {}),
-      stories: liveStories,
+      stories: liveStories.filter((st: any) => !/^untitled/i.test(st.title || '')),
     },
     blog: {
       ...(sectionData['blog'] ?? {}),
@@ -609,7 +623,7 @@ export default async function Home() {
     : heroBanners;
 
   return (
-    <main>
+    <div>
       <FAQSchema faqs={faqItems} />
       <HomepageOfferSplash banner={splashBanner} />
       {publicSectionOrder
@@ -664,7 +678,9 @@ export default async function Home() {
           SECTION_COMPONENTS + HomepageSection (sectionKey: "watch_and_learn")
           the same way every section above it works, so an admin can
           reorder/hide it too. */}
-      {liveVideos.length > 0 && <VideoReelsSection media={toWatchMedia(liveVideos)} />}
-    </main>
+      {liveVideos.length > 0 && !publicSectionOrder.some((s) => s.key === 'video_academy' && s.visible) && (
+        <VideoReelsSection media={toWatchMedia(liveVideos)} />
+      )}
+    </div>
   );
 }

@@ -210,14 +210,14 @@ export default function FormSection({
       ];
 
   return (
-    <section id={formAnchorId} className="bg-[#f6faff] py-14 md:py-20">
+    <section id={formAnchorId} className="bg-canvas py-14 md:py-20">
       <div className="max-w-2xl mx-auto px-5">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="bg-white rounded-3xl shadow-2xl shadow-[#0B2560]/10 p-6 md:p-10"
+          className="bg-white rounded-3xl shadow-2xl shadow-primary/10 p-6 md:p-10"
         >
           {success ? (
             <div className="text-center py-8">
@@ -229,24 +229,24 @@ export default function FormSection({
               >
                 <CheckCircle size={42} className="text-green-500" />
               </motion.div>
-              <h3 className="text-2xl font-extrabold text-[#0B2560] mb-2">You&apos;re All Set!</h3>
+              <h3 className="text-2xl font-extrabold text-primary mb-2">You&apos;re All Set!</h3>
               <p className="text-gray-500">{successMessage}</p>
-              <p className="text-sm text-[#2A6BA8] font-semibold mt-4 flex items-center justify-center gap-1.5">
-                <span className="w-2 h-2 bg-[#3B82C4] rounded-full animate-pulse" />
+              <p className="text-sm text-secondary font-semibold mt-4 flex items-center justify-center gap-1.5">
+                <span className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
                 Our team will contact you shortly.
               </p>
             </div>
           ) : (
             <>
               <div className="text-center mb-7">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#A25607] bg-[#F5A623]/15 px-3 py-1.5 rounded-full mb-4">
+                <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.2em] text-bronze bg-champagne/15 px-3 py-1.5 rounded-full mb-4">
                   <Star size={11} fill="#F5A623" /> {consultationFree ? 'Free Consultation' : 'Consultation'}
                 </span>
-                <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] leading-tight">{headline}</h2>
+                <h2 className="text-2xl md:text-3xl font-extrabold text-primary leading-tight">{headline}</h2>
                 <p className="text-gray-500 mt-3 text-sm md:text-base">{subtext}</p>
                 {slotsLeft !== undefined && slotsLeft > 0 && (
-                  <div className="inline-flex items-center gap-1.5 mt-4 text-sm font-bold text-[#c47f10] bg-[#F5A623]/15 px-3 py-1.5 rounded-full">
-                    <span className="w-2 h-2 bg-[#F5A623] rounded-full animate-pulse" />
+                  <div className="inline-flex items-center gap-1.5 mt-4 text-sm font-bold text-[#c47f10] bg-champagne/15 px-3 py-1.5 rounded-full">
+                    <span className="w-2 h-2 bg-champagne rounded-full animate-pulse" />
                     Only {slotsLeft} slots left this week
                   </div>
                 )}
@@ -275,14 +275,14 @@ export default function FormSection({
                           placeholder={field.placeholder}
                           required={field.required}
                           rows={3}
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] resize-none transition"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition"
                         />
                       ) : field.type === 'select' ? (
                         <select
                           value={form[field.id] || ''}
                           onChange={(e) => set(field.id, e.target.value)}
                           required={field.required}
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                         >
                           <option value="">{field.placeholder || `Select ${field.label}`}</option>
                           {(field.options || []).map((opt) => (
@@ -297,7 +297,7 @@ export default function FormSection({
                           onBlur={sendPartial}
                           placeholder={field.placeholder}
                           required={field.required}
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                         />
                       )}
                       {/* Transparent, not silent — same reasoning as
@@ -314,7 +314,7 @@ export default function FormSection({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="sm:col-span-2 w-full flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-6 py-4 rounded-2xl text-base shadow-xl shadow-[#F5A623]/25 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+                  className="sm:col-span-2 w-full flex items-center justify-center gap-2 bg-champagne hover:bg-[#e09516] text-primary font-extrabold px-6 py-4 rounded-2xl text-base shadow-xl shadow-champagne/25 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
                 >
                   {submitting ? (
                     <>
@@ -329,13 +329,13 @@ export default function FormSection({
 
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-5">
                 <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <ShieldCheck size={13} className="text-[#2A6BA8]" />
+                  <ShieldCheck size={13} className="text-secondary" />
                   100% secure &amp; never shared
                 </p>
                 {phone && (
                   <a
                     href={`tel:${phone.replace(/\s/g, '')}`}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-[#2A6BA8] hover:underline"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline"
                   >
                     <Phone size={13} /> {phone}
                   </a>

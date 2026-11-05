@@ -142,9 +142,9 @@ const CARD_ICON: Record<Card['type'], any> = {
 };
 
 const THEME_ACCENT: Record<AiConfig['theme'], string> = {
-  luxury: 'from-[#0B2560] to-[#1a4a8a]',
+  luxury: 'from-primary to-[#1a4a8a]',
   minimal: 'from-gray-800 to-gray-600',
-  vibrant: 'from-[#F5A623] to-[#e0891a]',
+  vibrant: 'from-champagne to-[#e0891a]',
 };
 
 const CONCERNS = ['Acne & Scars', 'Hair Fall', 'Pigmentation', 'Anti-Aging', 'Unwanted Hair', 'Something else'];
@@ -162,12 +162,12 @@ function CardChip({ card }: { card: Card }) {
   const Icon = CARD_ICON[card.type] || Sparkles;
   const content = (
     <div className="shrink-0 w-44 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-3">
-      <div className="w-7 h-7 rounded-lg bg-[#f6faff] flex items-center justify-center mb-2">
-        <Icon size={13} className="text-[#0B2560]" />
+      <div className="w-7 h-7 rounded-lg bg-canvas flex items-center justify-center mb-2">
+        <Icon size={13} className="text-primary" />
       </div>
-      <p className="text-xs font-bold text-[#0B2560] leading-snug line-clamp-2">{card.title}</p>
-      {card.subtitle && <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">{card.subtitle}</p>}
-      <span className="text-[10px] font-semibold text-[#2A6BA8] flex items-center gap-0.5 mt-1.5">View <ChevronRight size={10} /></span>
+      <p className="text-xs font-bold text-primary leading-snug line-clamp-2">{card.title}</p>
+      {card.subtitle && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{card.subtitle}</p>}
+      <span className="text-xs font-semibold text-secondary flex items-center gap-0.5 mt-1.5">View <ChevronRight size={10} /></span>
     </div>
   );
   return card.href ? <Link href={card.href} target="_blank">{content}</Link> : content;
@@ -177,7 +177,7 @@ function TypingDots() {
   return (
     <div className="flex items-center gap-1 px-4 py-3">
       {[0, 1, 2].map(i => (
-        <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#0B2560]/30 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+        <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary/30 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
       ))}
     </div>
   );
@@ -249,9 +249,9 @@ function LeadCapturePrompt({ sessionId, accent, onDone }: { sessionId: string; a
         {error && <p className="text-[11px] text-red-500 mb-2">{error}</p>}
         <div className="flex flex-col gap-2">
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560]" />
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary" />
           <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" type="tel"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B2560]" />
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary" />
           <div className="flex items-center gap-2 mt-0.5">
             <button onClick={submit} disabled={saving}
               className={`flex-1 flex items-center justify-center gap-1.5 bg-gradient-to-br ${accent} text-white text-xs font-bold py-2 rounded-xl disabled:opacity-50`}>
@@ -270,8 +270,8 @@ function LeadCapturePrompt({ sessionId, accent, onDone }: { sessionId: string; a
 function PanelHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 shrink-0">
-      <button onClick={onBack} className="text-gray-500 hover:text-[#0B2560]"><ArrowLeft size={16} /></button>
-      <p className="text-sm font-bold text-[#0B2560]">{title}</p>
+      <button onClick={onBack} className="text-gray-500 hover:text-primary"><ArrowLeft size={16} /></button>
+      <p className="text-sm font-bold text-primary">{title}</p>
     </div>
   );
 }
@@ -400,14 +400,14 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
       <div className="flex-1 overflow-y-auto flex flex-col items-center text-center px-6 py-6 gap-4">
         <CheckCircle size={40} className="text-green-500" />
         <div>
-          <p className="font-bold text-[#0B2560] text-base">Request received!</p>
+          <p className="font-bold text-primary text-base">Request received!</p>
           <p className="text-xs text-gray-500 mt-1">Our team will call you shortly to confirm your slot.</p>
         </div>
-        <div className="w-full bg-[#f6faff] border border-blue-50 rounded-2xl p-4 text-left space-y-2">
+        <div className="w-full bg-canvas border border-blue-50 rounded-2xl p-4 text-left space-y-2">
           {bookingId && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-400">Booking ID</span>
-              <span className="font-mono font-bold text-[#0B2560]">{bookingId}</span>
+              <span className="font-mono font-bold text-primary">{bookingId}</span>
             </div>
           )}
           <div className="flex items-center justify-between text-xs">
@@ -446,30 +446,30 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
         <PanelHeader title="Confirm Your Appointment" onBack={() => setReviewing(false)} />
         <div className="flex-1 overflow-y-auto p-4">
           {error && <p className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2 mb-3">{error}</p>}
-          <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-4 space-y-2.5">
+          <div className="bg-canvas border border-blue-50 rounded-2xl p-4 space-y-2.5">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-400">Clinic</span>
-              <span className="font-bold text-[#0B2560]">{locationName}</span>
+              <span className="font-bold text-primary">{locationName}</span>
             </div>
             {form.service.trim() && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Treatment</span>
-                <span className="font-bold text-[#0B2560]">{form.service}</span>
+                <span className="font-bold text-primary">{form.service}</span>
               </div>
             )}
             {selectedDoctor && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Doctor</span>
-                <span className="font-bold text-[#0B2560]">{selectedDoctor.name}</span>
+                <span className="font-bold text-primary">{selectedDoctor.name}</span>
               </div>
             )}
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-400">Date</span>
-              <span className="font-bold text-[#0B2560]">{form.date}</span>
+              <span className="font-bold text-primary">{form.date}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-400">Time</span>
-              <span className="font-bold text-[#0B2560]">{form.time}</span>
+              <span className="font-bold text-primary">{form.time}</span>
             </div>
           </div>
           <p className="text-[11px] text-gray-400 mt-3 text-center">This is a request — our team will call to confirm your exact slot.</p>
@@ -538,14 +538,14 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
                     }}
                     className={`w-full flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left transition ${
                       !d.available ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
-                      : form.doctorId === d.id ? 'border-[#0B2560] bg-[#f6faff]' : 'border-gray-200 hover:border-gray-300'
+                      : form.doctorId === d.id ? 'border-primary bg-canvas' : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-[#0B2560] truncate">{d.name}</p>
-                      <p className="text-[10px] text-gray-400 truncate">{d.title}</p>
+                      <p className="text-xs font-bold text-primary truncate">{d.name}</p>
+                      <p className="text-xs text-gray-400 truncate">{d.title}</p>
                     </div>
-                    <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${d.available ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+                    <span className={`shrink-0 text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${d.available ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
                       {d.available ? 'Available' : 'Busy'}
                     </span>
                   </button>
@@ -595,18 +595,18 @@ function OffersPanel({ onBack }: { onBack: () => void }) {
         ) : offers.map(o => (
           <div key={o._id} className="border border-gray-100 rounded-2xl p-3.5 shadow-sm">
             <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-bold text-[#0B2560] leading-snug">{o.title}</p>
-              {o.badge && <span className="shrink-0 text-[9px] font-bold bg-amber-50 text-[#A25607] px-2 py-0.5 rounded-full whitespace-nowrap">{o.badge}</span>}
+              <p className="text-sm font-bold text-primary leading-snug">{o.title}</p>
+              {o.badge && <span className="shrink-0 text-xs font-bold bg-amber-50 text-bronze px-2 py-0.5 rounded-full whitespace-nowrap">{o.badge}</span>}
             </div>
             {o.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{o.description}</p>}
             {o.discountedPrice && (
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-gray-300 line-through flex items-center"><IndianRupee size={10} />{o.originalPrice}</span>
-                <span className="text-sm font-extrabold text-[#0B2560] flex items-center"><IndianRupee size={12} />{o.discountedPrice}</span>
+                <span className="text-sm font-extrabold text-primary flex items-center"><IndianRupee size={12} />{o.discountedPrice}</span>
               </div>
             )}
             {o.validUntil && (
-              <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
+              <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
                 <Calendar size={10} /> Valid till {new Date(o.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             )}
@@ -615,7 +615,7 @@ function OffersPanel({ onBack }: { onBack: () => void }) {
       </div>
       {offers.length > 0 && (
         <div className="p-4 border-t border-gray-100 shrink-0">
-          <Link href="/offers" className="w-full block text-center border border-gray-200 text-[#0B2560] text-sm font-bold py-2.5 rounded-xl">
+          <Link href="/offers" className="w-full block text-center border border-gray-200 text-primary text-sm font-bold py-2.5 rounded-xl">
             View All Offers
           </Link>
         </div>
@@ -634,7 +634,7 @@ function AssessmentPanel({ onBack, onPickConcern, accent }: { onBack: () => void
         <div className="grid grid-cols-2 gap-2">
           {CONCERNS.map(c => (
             <button key={c} onClick={() => onPickConcern(c)}
-              className="text-xs font-semibold bg-[#f6faff] hover:bg-blue-50 border border-blue-50 text-[#0B2560] px-3 py-3 rounded-xl transition text-left">
+              className="text-xs font-semibold bg-canvas hover:bg-blue-50 border border-blue-50 text-primary px-3 py-3 rounded-xl transition text-left">
               {c}
             </button>
           ))}
@@ -712,7 +712,7 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
       return (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-3">
           <CheckCircle size={36} className="text-green-500" />
-          <p className="font-bold text-[#0B2560] text-sm">Request received!</p>
+          <p className="font-bold text-primary text-sm">Request received!</p>
           <p className="text-xs text-gray-500">Our team will call you back shortly.</p>
           <button onClick={onBack} className={`mt-2 bg-gradient-to-br ${accent} text-white text-xs font-bold px-5 py-2.5 rounded-xl`}>Back to Chat</button>
         </div>
@@ -771,10 +771,10 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
         {callHref && (
           <a href={callHref}
             onClick={() => pushDataLayerEvent('ai_human_handoff', { source: 'ai_chat', method: 'call' })}
-            className="w-full flex items-center gap-3 bg-[#f6faff] hover:bg-blue-50 border border-blue-100 rounded-xl px-4 py-3.5 transition">
-            <div className="w-9 h-9 rounded-full bg-[#0B2560] text-white flex items-center justify-center shrink-0"><Phone size={16} /></div>
+            className="w-full flex items-center gap-3 bg-canvas hover:bg-blue-50 border border-blue-100 rounded-xl px-4 py-3.5 transition">
+            <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center shrink-0"><Phone size={16} /></div>
             <div className="text-left min-w-0">
-              <p className="text-sm font-bold text-[#0B2560]">Call Us</p>
+              <p className="text-sm font-bold text-primary">Call Us</p>
               <p className="text-[11px] text-gray-500">{phone}</p>
             </div>
             <ChevronRight size={14} className="ml-auto text-gray-300 shrink-0" />
@@ -782,7 +782,7 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
         )}
         <button onClick={() => setShowCallbackForm(true)}
           className="w-full flex items-center gap-3 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-xl px-4 py-3.5 transition text-left">
-          <div className="w-9 h-9 rounded-full bg-[#F5A623] text-white flex items-center justify-center shrink-0"><Users size={16} /></div>
+          <div className="w-9 h-9 rounded-full bg-champagne text-primary flex items-center justify-center shrink-0"><Users size={16} /></div>
           <div className="text-left min-w-0">
             <p className="text-sm font-bold text-amber-800">Request a Callback</p>
             <p className="text-[11px] text-amber-600">We'll call you back</p>
@@ -1020,7 +1020,7 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
                   without being any more informative). Deliberately plain
                   text, not something a visitor could mistake for a human
                   staff member's own statement. */}
-              <p className="text-[10px] text-gray-400 text-center px-4 pt-2 pb-1 shrink-0">
+              <p className="text-xs text-gray-400 text-center px-4 pt-2 pb-1 shrink-0">
                 🤖 AI-generated responses — for general guidance only, not a medical diagnosis. Call or WhatsApp us to speak with our clinical team.
               </p>
 
@@ -1035,7 +1035,7 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
                     <p className="text-xs text-gray-500 px-1">Try asking:</p>
                     {visibleSuggestedQuestions(config).map((q, i) => (
                       <button key={i} onClick={() => send(q)}
-                        className="w-full text-left text-xs bg-[#f6faff] hover:bg-blue-50 border border-blue-50 text-[#0B2560] px-3.5 py-2.5 rounded-xl transition font-medium">
+                        className="w-full text-left text-xs bg-canvas hover:bg-blue-50 border border-blue-50 text-primary px-3.5 py-2.5 rounded-xl transition font-medium">
                         {q}
                       </button>
                     ))}
@@ -1052,7 +1052,7 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
                       ) : (
                         <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-2.5">
                           <div
-                            className="text-sm text-gray-700 leading-relaxed [&_p]:mb-1.5 [&_p:last-child]:mb-0 [&_strong]:text-[#0B2560] [&_ul]:pl-4 [&_ul]:list-disc [&_li]:mb-0.5"
+                            className="text-sm text-gray-700 leading-relaxed [&_p]:mb-1.5 [&_p:last-child]:mb-0 [&_strong]:text-primary [&_ul]:pl-4 [&_ul]:list-disc [&_li]:mb-0.5"
                             dangerouslySetInnerHTML={{ __html: markdownToHtml(m.content) }}
                           />
                         </div>
@@ -1091,12 +1091,12 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
                   {visibleQuickActions(config).map((a, i) => (
                     INLINE_VIEWS[a.action] || QUICK_ACTION_PROMPTS[a.action] ? (
                       <button key={i} onClick={() => handleQuickAction(a.action)}
-                        className="shrink-0 text-[11px] font-semibold bg-gray-50 hover:bg-gray-100 text-[#0B2560] px-3 py-1.5 rounded-full border border-gray-100 transition whitespace-nowrap">
+                        className="shrink-0 text-[11px] font-semibold bg-gray-50 hover:bg-gray-100 text-primary px-3 py-1.5 rounded-full border border-gray-100 transition whitespace-nowrap">
                         {a.label}
                       </button>
                     ) : (
                       <Link key={i} href={a.action}
-                        className="shrink-0 text-[11px] font-semibold bg-gray-50 hover:bg-gray-100 text-[#0B2560] px-3 py-1.5 rounded-full border border-gray-100 transition whitespace-nowrap">
+                        className="shrink-0 text-[11px] font-semibold bg-gray-50 hover:bg-gray-100 text-primary px-3 py-1.5 rounded-full border border-gray-100 transition whitespace-nowrap">
                         {a.label}
                       </Link>
                     )
@@ -1124,7 +1124,7 @@ export default function AiChatWidget({ config, whatsapp, phone }: { config: AiCo
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
                   placeholder={disabled ? 'AI assistant unavailable' : 'Ask a question…'}
                   disabled={disabled}
-                  className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 disabled:bg-gray-50"
+                  className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-gray-50"
                 />
                 <button
                   onClick={() => send(input)}

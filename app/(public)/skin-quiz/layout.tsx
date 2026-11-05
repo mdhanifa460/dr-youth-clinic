@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Clinical Intake – Prepare for Your Consultation",
     description:
-      `Answer a few quick questions so DR Youth's dermatology team can prepare for your consultation — ${skinQuizFree ? 'free, ' : ''}in about a minute. Your doctor reviews everything and confirms what's right for you at your visit.`,
+      `Answer a few quick questions so DR Youth's doctors can prepare for your consultation — ${skinQuizFree ? 'free, ' : ''}in about a minute. Your doctor reviews everything and confirms what's right for you at your visit.`,
     alternates: {
       canonical: `${SITE_URL}/skin-quiz`,
     },

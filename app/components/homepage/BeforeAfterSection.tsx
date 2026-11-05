@@ -27,7 +27,7 @@ const FALLBACK_PAIRS = [
 // gesture to conflict with the tray's own horizontal scroll either way.
 export default function BeforeAfterSection({ data }: { data: any }) {
   const {
-    headline = 'Real Results, Real Confidence',
+    headline = 'Treatment Photos',
     subheadline = 'Visible improvements that our patients are thrilled about. See the difference.',
     pairs = [],
   } = data || {};
@@ -67,8 +67,8 @@ export default function BeforeAfterSection({ data }: { data: any }) {
     <section id="results" className="py-12 md:py-16 lg:py-20 bg-[#F5F1EC] relative overflow-hidden">
 
       {/* Ambient blobs */}
-      <div className="pointer-events-none absolute top-0 left-0 w-[400px] h-[400px] rounded-full bg-[#F5A623]/5 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 right-0 w-[360px] h-[360px] rounded-full bg-[#0B2560]/4 blur-[100px]" />
+      <div className="pointer-events-none absolute top-0 left-0 w-[400px] h-[400px] rounded-full bg-champagne/5 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 w-[360px] h-[360px] rounded-full bg-primary/4 blur-[100px]" />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 relative">
 
@@ -76,10 +76,10 @@ export default function BeforeAfterSection({ data }: { data: any }) {
         <div className="mb-8 md:mb-10 flex items-end justify-between gap-6 flex-wrap">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-6 h-[2px] bg-[#F5A623]" />
-              <span className="text-[#A25607] text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
+              <div className="w-6 h-[2px] bg-champagne" />
+              <span className="text-bronze text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
             </div>
-            <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-[#0B2560] leading-[1.1]">
+            <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-medium text-primary leading-[1.1]">
               {headline}
             </h2>
             <p className="text-[#6B7280] mt-4 text-sm leading-relaxed max-w-sm">{subheadline}</p>
@@ -90,14 +90,14 @@ export default function BeforeAfterSection({ data }: { data: any }) {
             <div className="hidden md:flex gap-2 shrink-0">
               <button
                 onClick={() => scrollByCard(-1)}
-                className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100"
+                className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100"
                 aria-label="Scroll to previous results"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={() => scrollByCard(1)}
-                className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#0B2560] hover:bg-[#0B2560] hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100"
+                className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white hover:scale-105 transition-all duration-300 border border-gray-100"
                 aria-label="Scroll to next results"
               >
                 <ChevronRight size={18} />
@@ -123,7 +123,7 @@ export default function BeforeAfterSection({ data }: { data: any }) {
           onMouseLeave={() => setPaused(false)}
           onTouchStart={() => setPaused(true)}
           onTouchEnd={() => setPaused(false)}
-          className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-[#0B2560]/10 [&::-webkit-scrollbar-thumb]:rounded-full"
+          className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-primary/10 [&::-webkit-scrollbar-thumb]:rounded-full"
         >
           {displayPairs.map((pair: any, i: number) => (
             <div
@@ -146,10 +146,10 @@ export default function BeforeAfterSection({ data }: { data: any }) {
         <div className="flex justify-center mt-10 pt-8 border-t border-[#EBE8E3]">
           <Link
             href="/results"
-            className="min-h-12 flex items-center gap-3 bg-[#0B2560] text-white px-6 sm:px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#12345c] transition-all duration-300 shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(11,37,96,0.3)]"
+            className="min-h-12 flex items-center gap-3 bg-primary text-white px-6 sm:px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#12345c] transition-all duration-300 shadow-[0_8px_24px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(11,37,96,0.3)]"
           >
             View All Patient Results
-            <span className="w-6 h-6 rounded-full bg-[#F5A623] flex items-center justify-center shrink-0">
+            <span className="w-6 h-6 rounded-full bg-champagne flex items-center justify-center shrink-0">
               <ChevronRight size={14} />
             </span>
           </Link>

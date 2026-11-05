@@ -8,7 +8,7 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   'Hair Care': 'from-emerald-400 to-teal-500',
   'Laser':     'from-violet-400 to-purple-600',
   'Body':      'from-orange-400 to-amber-500',
-  'Package':   'from-[#3B82C4] to-[#0B2560]',
+  'Package':   'from-secondary to-primary',
 };
 
 const CATEGORY_ICON: Record<string, string> = {
@@ -41,9 +41,9 @@ export function OfferCard({ offer }: { offer: any }) {
           independent of the free-text `badge` pill (a card can have both). */}
       {offer.featured && (
         <>
-          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#F5A623] to-[#3B82C4] z-10" />
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-[#0B2560] text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
-            <Sparkles size={10} className="text-[#A25607]" /> Most Popular
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-champagne to-secondary z-10" />
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-primary text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
+            <Sparkles size={10} className="text-bronze" /> Most Popular
           </div>
         </>
       )}
@@ -65,11 +65,11 @@ export function OfferCard({ offer }: { offer: any }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-          <span className="bg-white/80 backdrop-blur-sm text-[10px] font-bold text-gray-700 px-2.5 py-1 rounded-full">
+          <span className="bg-white/80 backdrop-blur-sm text-xs font-bold text-gray-700 px-2.5 py-1 rounded-full">
             {icon} {offer.category}
           </span>
           {offer.badge && (
-            <span className="bg-[#F5A623] text-[#0B2560] text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wide">
+            <span className="bg-champagne text-primary text-xs font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wide">
               {offer.badge}
             </span>
           )}
@@ -89,7 +89,7 @@ export function OfferCard({ offer }: { offer: any }) {
 
       {/* Card body */}
       <div className="flex flex-col flex-1 p-5 bg-white">
-        <h3 className="text-base font-extrabold text-[#0B2560] leading-snug mb-2 group-hover:text-[#2A6BA8] transition-colors">
+        <h3 className="text-base font-extrabold text-primary leading-snug mb-2 group-hover:text-secondary transition-colors">
           {offer.title}
         </h3>
         {offer.description && (
@@ -114,7 +114,7 @@ export function OfferCard({ offer }: { offer: any }) {
         <div className="border-t border-gray-100 pt-4 mt-2">
           <div className="flex items-end gap-3 mb-1">
             <span className="text-gray-500 text-sm line-through">₹{offer.originalPrice?.toLocaleString('en-IN')}</span>
-            <span className="text-2xl font-extrabold text-[#0B2560] leading-none">₹{offer.discountedPrice?.toLocaleString('en-IN')}</span>
+            <span className="text-2xl font-extrabold text-primary leading-none">₹{offer.discountedPrice?.toLocaleString('en-IN')}</span>
           </div>
           {savings > 0 && (
             <p className="text-xs text-green-600 font-semibold mb-2">
@@ -123,7 +123,7 @@ export function OfferCard({ offer }: { offer: any }) {
           )}
           {offer.validUntil && !isExpired && (
             <div className="mb-3 flex items-center gap-2 flex-wrap">
-              <p className="flex items-center gap-1 text-[10px] text-amber-600 font-semibold">
+              <p className="flex items-center gap-1 text-xs text-amber-600 font-semibold">
                 <Clock size={10} /> Valid until {formatDate(offer.validUntil)}
               </p>
               <OfferCountdownBadge validUntil={offer.validUntil} />
@@ -131,12 +131,12 @@ export function OfferCard({ offer }: { offer: any }) {
           )}
           <Link
             href={`/book?offer=${encodeURIComponent(offer.title)}`}
-            className="w-full flex items-center justify-center gap-2 bg-[#F5A623] text-[#0B2560] py-3 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
+            className="w-full flex items-center justify-center gap-2 bg-champagne text-primary py-3 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
           >
             <Calendar size={14} /> Book This Offer
           </Link>
           {offer.terms && (
-            <p className="text-[10px] text-gray-500 leading-relaxed mt-3">*{offer.terms}</p>
+            <p className="text-xs text-gray-500 leading-relaxed mt-3">*{offer.terms}</p>
           )}
         </div>
       </div>

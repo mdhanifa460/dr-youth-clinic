@@ -45,18 +45,18 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
   const { skinQuizFree, consultationBadge } = useSiteConfig();
   return (
     <div className="flex flex-col items-center text-center py-6 md:py-10">
-      <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] inline-block" />
+      <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
+        <span className="w-1.5 h-1.5 rounded-full bg-champagne inline-block" />
         {skinQuizFree ? 'Free · No Commitment · 30-60 Seconds' : 'No Commitment · 30-60 Seconds'}
       </span>
 
       {clinicLabel && (
-        <p className="text-sm font-semibold text-[#A25607] mb-2">Welcome to our {clinicLabel} Clinic</p>
+        <p className="text-sm font-semibold text-bronze mb-2">Welcome to our {clinicLabel} Clinic</p>
       )}
 
-      <h1 className="text-3xl md:text-5xl font-extrabold text-[#0B2560] leading-tight mb-4 max-w-xl tracking-tight">
+      <h1 className="text-3xl md:text-5xl font-extrabold text-primary leading-tight mb-4 max-w-xl tracking-tight">
         Let's Prepare For<br />
-        <span className="text-[#A25607]">Your Consultation</span>
+        <span className="text-bronze">Your Consultation</span>
       </h1>
 
       <p className="text-gray-500 text-base md:text-lg max-w-md mb-10 leading-relaxed">
@@ -71,7 +71,7 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
         ].map((badge) => (
           <div key={badge.text} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4 flex flex-col items-center gap-1">
             <span className="text-2xl">{badge.icon}</span>
-            <span className="text-xs font-bold text-[#0B2560] text-center leading-snug">{badge.text}</span>
+            <span className="text-xs font-bold text-primary text-center leading-snug">{badge.text}</span>
             <span className="text-xs text-gray-500 text-center">{badge.sub}</span>
           </div>
         ))}
@@ -79,10 +79,10 @@ function IntroScreen({ onStart, clinicLabel }: { onStart: () => void; clinicLabe
 
       <button
         onClick={onStart}
-        className="group relative px-10 py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#0B2560]/30 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-3"
+        className="group relative px-10 py-4 bg-primary hover:bg-primary-hover text-white font-bold text-lg rounded-2xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-3"
       >
         Start Analysis
-        <span className="text-[#F5A623] group-hover:translate-x-1 transition-transform duration-200">→</span>
+        <span className="text-champagne group-hover:translate-x-1 transition-transform duration-200">→</span>
       </button>
 
       <p className="mt-4 text-xs text-gray-500">No sign-up required. Takes about 30-60 seconds.</p>
@@ -110,11 +110,11 @@ function LeadCaptureScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="text-center mb-8">
-        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] inline-block" />
+        <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
+          <span className="w-1.5 h-1.5 rounded-full bg-champagne inline-block" />
           Your Details
         </span>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">
           Let's get your consultation ready
         </h2>
         <p className="text-gray-500 text-sm md:text-base max-w-sm mx-auto">
@@ -129,7 +129,7 @@ function LeadCaptureScreen({
             type="text" required value={lead.name}
             onChange={(e) => setLead((l) => ({ ...l, name: e.target.value }))}
             placeholder="Your name"
-            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-[#0B2560]/40"
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-primary/40"
           />
         </div>
         <div>
@@ -138,7 +138,7 @@ function LeadCaptureScreen({
             type="tel" required value={lead.phone}
             onChange={(e) => setLead((l) => ({ ...l, phone: e.target.value }))}
             placeholder="10-digit mobile number"
-            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-[#0B2560]/40"
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-primary/40"
           />
         </div>
         <div>
@@ -146,7 +146,7 @@ function LeadCaptureScreen({
           <select
             value={lead.preferredClinic}
             onChange={(e) => setLead((l) => ({ ...l, preferredClinic: e.target.value }))}
-            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-semibold focus:outline-none focus:border-[#0B2560]/40"
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-semibold focus:outline-none focus:border-primary/40"
           >
             <option value="">Select a clinic (optional)</option>
             {Object.entries(locations).map(([key, loc]) => (
@@ -157,7 +157,7 @@ function LeadCaptureScreen({
 
         <button
           type="submit" disabled={status === "sending"}
-          className="w-full py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-base rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
+          className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-bold text-base rounded-2xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
         >
           {status === "sending" ? "Saving…" : "Continue →"}
         </button>
@@ -175,17 +175,17 @@ function AnalysingScreen() {
     <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
       <div className="relative w-20 h-20">
         <div className="absolute inset-0 rounded-full border-4 border-gray-100" />
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#0B2560] animate-spin" />
-        <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-[#F5A623] animate-spin [animation-direction:reverse] [animation-duration:0.8s]" />
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin" />
+        <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-champagne animate-spin [animation-direction:reverse] [animation-duration:0.8s]" />
       </div>
       <div>
-        <p className="text-lg font-bold text-[#0B2560] mb-1">Analysing your answers…</p>
+        <p className="text-lg font-bold text-primary mb-1">Analysing your answers…</p>
         <p className="text-sm text-gray-500">Preparing your assessment</p>
       </div>
       <div className="flex gap-3 mt-2 flex-wrap justify-center">
         {["Scoring your responses", "Checking your history", "Preparing your report"].map((label, i) => (
           <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-champagne animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
             {label}
           </div>
         ))}
@@ -486,21 +486,21 @@ export default function SkinQuizPage() {
 
   if (configReady && typeOptions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f6faff] text-center px-6">
+      <div className="min-h-screen flex items-center justify-center bg-canvas text-center px-6">
         <div>
           <p className="text-4xl mb-4">🩺</p>
-          <p className="text-lg font-bold text-[#0B2560] mb-2">This assessment is temporarily unavailable</p>
-          <Link href="/book" className="text-sm text-[#2A6BA8] underline">Book a consultation instead →</Link>
+          <p className="text-lg font-bold text-primary mb-2">This assessment is temporarily unavailable</p>
+          <Link href="/book" className="text-sm text-secondary underline">Book a consultation instead →</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f6faff] via-white to-[#edf4fc]">
+    <div className="min-h-screen bg-gradient-to-br from-canvas via-white to-sand">
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100/80 shadow-sm print:hidden">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-[#0B2560] hover:text-[#A25607] transition-colors text-sm font-semibold group">
+          <Link href="/" className="flex items-center gap-2 text-primary hover:text-bronze transition-colors text-sm font-semibold group">
             <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -510,7 +510,7 @@ export default function SkinQuizPage() {
         </div>
         <div className="max-w-2xl mx-auto px-4 pb-2.5">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full bg-[#0B2560] rounded-full transition-all duration-500 ease-in-out" style={{ width: `${progressPct}%` }} />
+            <div className="h-full bg-primary rounded-full transition-all duration-500 ease-in-out" style={{ width: `${progressPct}%` }} />
           </div>
         </div>
       </div>
@@ -523,7 +523,7 @@ export default function SkinQuizPage() {
       <div className={`max-w-2xl mx-auto px-4 py-8 pb-28 lg:pb-12 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
         {screen === "intro" && !configReady && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-10 h-10 rounded-full border-4 border-[#0B2560]/20 border-t-[#0B2560] animate-spin" />
+            <div className="w-10 h-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
             <p className="text-sm text-gray-500">Loading your personalised assessment…</p>
           </div>
         )}
@@ -532,7 +532,7 @@ export default function SkinQuizPage() {
         {screen === "type" && (
           typeConfigLoading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <div className="w-10 h-10 rounded-full border-4 border-[#0B2560]/20 border-t-[#0B2560] animate-spin" />
+              <div className="w-10 h-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
               <p className="text-sm text-gray-500">Loading…</p>
             </div>
           ) : (
@@ -556,11 +556,11 @@ export default function SkinQuizPage() {
               <div className="flex items-center gap-2 mb-3">
                 {Array.from({ length: estimatedTotal }).map((_, i) => (
                   <div key={i} className={`h-1 rounded-full flex-1 transition-all duration-300 ${
-                    i < path.length - 1 ? "bg-[#0B2560]" : i === path.length - 1 ? "bg-[#F5A623]" : "bg-gray-200"
+                    i < path.length - 1 ? "bg-primary" : i === path.length - 1 ? "bg-champagne" : "bg-gray-200"
                   }`} />
                 ))}
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">{currentQuestion.title}</h2>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">{currentQuestion.title}</h2>
               {currentQuestion.subtitle && <p className="text-gray-500 text-sm md:text-base">{currentQuestion.subtitle}</p>}
             </div>
 
@@ -586,7 +586,7 @@ export default function SkinQuizPage() {
             )}
 
             <div className="mt-8 flex items-center justify-between">
-              <button onClick={handleBack} className="flex items-center gap-2 text-gray-500 hover:text-[#0B2560] transition-colors text-sm font-medium group">
+              <button onClick={handleBack} className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors text-sm font-medium group">
                 <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -595,7 +595,7 @@ export default function SkinQuizPage() {
               <button
                 onClick={handleNext}
                 disabled={!canProceed}
-                className="group flex items-center gap-2 px-8 py-3 bg-[#0B2560] text-white font-bold rounded-xl shadow-md shadow-[#0B2560]/20 hover:bg-[#0d2d72] hover:shadow-lg hover:shadow-[#0B2560]/25 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md transition-all duration-200 active:translate-y-0"
+                className="group flex items-center gap-2 px-8 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md transition-all duration-200 active:translate-y-0"
               >
                 {currentIndex >= totalQuestions - 1 ? "See My Results" : "Next"}
                 <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform group-disabled:translate-x-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -17,8 +17,7 @@ interface ComparisonData {
 
 function defaultRows(consultationFree: boolean): ComparisonRow[] {
   return [
-    { label: 'Certified Dermatologist',        us: true,  others: false },
-    { label: 'FDA-Approved Equipment',          us: true,  others: false },
+    { label: 'Doctor consultation first',     us: true,  others: false },
     { label: 'Personalised Treatment Protocol', us: true,  others: false },
     { label: consultationFree ? 'Free Initial Consultation' : 'Detailed Initial Consultation', us: true, others: false },
     { label: 'Post-Treatment Support',          us: true,  others: false },
@@ -40,13 +39,13 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
   const rowsToShow = rows.length ? rows : defaultRows(consultationFree);
 
   return (
-    <section className="bg-[#f6faff] py-14 md:py-20">
+    <section className="bg-canvas py-14 md:py-20">
       <div className="max-w-3xl mx-auto px-5">
         <div className="text-center mb-10">
-          <span className="inline-block text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#A25607] bg-[#F5A623]/10 px-3 py-1.5 rounded-full mb-4">
+          <span className="inline-block text-xs font-extrabold uppercase tracking-[0.25em] text-bronze bg-champagne/10 px-3 py-1.5 rounded-full mb-4">
             {badge}
           </span>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
         </div>
 
         {/* Column widths were fixed at w-28/w-24 (112px/96px) regardless of
@@ -59,9 +58,9 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
             on tablet/desktop. */}
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Header row */}
-          <div className="grid grid-cols-[1fr_auto_auto] bg-[#0B2560] text-white text-[10px] sm:text-xs font-extrabold uppercase tracking-wider px-3 sm:px-5 py-3.5 gap-2 sm:gap-4">
+          <div className="grid grid-cols-[1fr_auto_auto] bg-primary text-white text-xs sm:text-xs font-extrabold uppercase tracking-wider px-3 sm:px-5 py-3.5 gap-2 sm:gap-4">
             <span>Feature</span>
-            <span className="w-14 sm:w-28 text-center text-[#A25607]">{usLabel}</span>
+            <span className="w-14 sm:w-28 text-center text-bronze">{usLabel}</span>
             <span className="w-14 sm:w-24 text-center text-white/50">{othersLabel}</span>
           </div>
 
@@ -77,7 +76,7 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
                 <span className="text-xs sm:text-sm font-semibold text-gray-700">{row.label}</span>
                 <div className="w-14 sm:w-28 flex justify-center">
                   {row.us !== false ? (
-                    <span className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-3 py-1 rounded-full border border-green-100">
+                    <span className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-3 py-1 rounded-full border border-green-100">
                       <CheckCircle size={12} className="sm:hidden" />
                       <CheckCircle size={13} className="hidden sm:block" />
                       <span className="hidden sm:inline">Yes</span>
@@ -88,7 +87,7 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
                 </div>
                 <div className="w-14 sm:w-24 flex justify-center">
                   {row.others ? (
-                    <span className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-3 py-1 rounded-full border border-green-100">
+                    <span className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-3 py-1 rounded-full border border-green-100">
                       <CheckCircle size={12} className="sm:hidden" />
                       <CheckCircle size={13} className="hidden sm:block" />
                       <span className="hidden sm:inline">Yes</span>
@@ -102,13 +101,13 @@ export default function ComparisonSection({ data, consultationFree }: { data: Co
           </div>
 
           {/* Footer CTA */}
-          <div className="px-5 py-6 bg-gradient-to-r from-[#0B2560]/5 to-[#3B82C4]/5 border-t border-gray-100 text-center">
+          <div className="px-5 py-6 bg-gradient-to-r from-primary/5 to-secondary/5 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-500 mb-4">
-              Experience the DR Youth difference — <span className="font-semibold text-[#0B2560]">first consultation is always free.</span>
+              Experience the DR Youth difference — <span className="font-semibold text-primary">first consultation is always free.</span>
             </p>
             <button
               onClick={() => document.getElementById('lp-form')?.scrollIntoView({ behavior: 'smooth' })}
-              className="inline-flex items-center gap-2 bg-[#0B2560] hover:bg-[#1a3a7a] text-white font-extrabold px-8 py-3.5 rounded-2xl text-sm shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-[#1a3a7a] text-white font-extrabold px-8 py-3.5 rounded-2xl text-sm shadow-lg hover:-translate-y-0.5 transition-all duration-200"
             >
               {ctaText} →
             </button>

@@ -5,12 +5,12 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
   title: "Book Appointment",
   description:
-    "Schedule your dermatology consultation at DR Youth Clinic. Easy online booking with expert dermatologists at multiple locations.",
+    "Request a consultation at DR Youth Clinic in Chennai, Bangalore, Coimbatore or Kochi. Our team will contact you to confirm the time.",
   alternates: {
     canonical: `${SITE_URL}/book`,
   },
   openGraph: {
-    title: "Book Your Dermatology Appointment | DR Youth Clinic",
+    title: "Book Your Consultation | DR Youth Clinic",
     description: "Quick and easy online booking for skin, hair, and laser treatments",
     url: `${SITE_URL}/book`,
     siteName: "DR Youth Clinic",

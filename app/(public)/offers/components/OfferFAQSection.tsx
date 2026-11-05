@@ -38,8 +38,8 @@ export default function OfferFAQSection() {
   return (
     <section className="bg-white py-12">
       <div className="max-w-3xl mx-auto px-6">
-        <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-1 flex items-center gap-2">
-          <CheckCircle size={18} className="text-[#2A6BA8]" /> Terms & Frequently Asked Questions
+        <h2 className="text-lg font-headline font-medium text-primary mb-1 flex items-center gap-2">
+          <CheckCircle size={18} className="text-secondary" /> Terms & Frequently Asked Questions
         </h2>
         <p className="text-sm text-gray-500 mb-6">Everything you should know before booking an offer.</p>
 
@@ -52,7 +52,7 @@ export default function OfferFAQSection() {
                   onClick={() => setOpenIndex(isOpen ? null : i)}
                   className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
                 >
-                  <span className="font-semibold text-[#0B2560] text-sm leading-snug">{item.q}</span>
+                  <span className="font-semibold text-primary text-sm leading-snug">{item.q}</span>
                   <ChevronDown size={16} className={`text-gray-500 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isOpen && (

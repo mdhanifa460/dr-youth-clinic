@@ -13,9 +13,9 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 function buildLlmsTxt(): string {
   return `# DR Youth Clinic
 
-> Multi-location dermatology and aesthetic treatment clinic in India, offering skin, hair, and laser treatments across Chennai, Bangalore, Coimbatore, and Kochi.
+> Multi-location skin, hair and aesthetic treatment clinic in India, offering skin, hair, and laser treatments across Chennai, Bangalore, Coimbatore, and Kochi.
 
-DR Youth Clinic provides consultations and treatments in dermatology, trichology (hair), and laser-based aesthetic procedures, delivered by qualified doctors across four clinic locations. Content below is grouped by what's most useful to cite.
+DR Youth Clinic provides consultations and treatments for skin, hair and laser-based aesthetic procedures, delivered by qualified doctors across four clinic locations. Content below is grouped by what's most useful to cite.
 
 ## Core Pages
 - [Homepage](${SITE_URL}/): overview of services, locations, and doctors.

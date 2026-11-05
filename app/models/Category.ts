@@ -44,7 +44,7 @@ export const Category = mongoose.models.Category || mongoose.model('Category', C
 export const DEFAULT_CATEGORIES = [
   {
     label: 'Skin & Aesthetics', slug: 'skin', dbKey: 'Skin', icon: '✨', tagline: 'Radiance · Restored',
-    description: 'Advanced dermatological solutions for luminous, healthy skin — from acne to anti-ageing.',
+    description: 'Treatments for skin concerns — from acne to anti-ageing.',
     heroGrad: 'from-[#7c1d0a] via-[#a63c1c] to-[#c96a4e]', accentColor: '#c96a4e', order: 1,
   },
   {

@@ -22,7 +22,7 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">Explore Your {serviceName} Journey</h2>
+      <h2 className="text-2xl font-headline font-medium text-primary mb-2">Explore Your {serviceName} Journey</h2>
       <p className="text-gray-500 text-sm mb-6">Click through each stage to see what to expect, day by day.</p>
 
       {/* Stage selector */}
@@ -33,8 +33,8 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
             onClick={() => { setActive(i); setOpenFaq(null); }}
             className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition border ${
               i === active
-                ? 'bg-[#0B2560] text-white border-[#0B2560]'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-[#0B2560] hover:text-[#0B2560]'
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white text-gray-500 border-gray-200 hover:border-primary hover:text-primary'
             }`}
           >
             {s.stage}
@@ -42,16 +42,16 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
         ))}
       </div>
 
-      <div className="rounded-3xl border border-blue-50 bg-[#f6faff] p-6 md:p-8 space-y-5">
+      <div className="rounded-3xl border border-blue-50 bg-canvas p-6 md:p-8 space-y-5">
         {/* Progress bar */}
         <div>
           <div className="flex justify-between text-xs font-semibold text-gray-500 mb-1.5">
             <span>Recovery / Results Progress</span>
-            <span className="text-[#0B2560] font-bold">{current.progressPercent}%</span>
+            <span className="text-primary font-bold">{current.progressPercent}%</span>
           </div>
           <div className="h-2 bg-white rounded-full overflow-hidden border border-blue-50">
             <div
-              className="h-full bg-gradient-to-r from-[#3B82C4] to-[#0B2560] rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-secondary to-primary rounded-full transition-all"
               style={{ width: `${current.progressPercent}%` }}
             />
           </div>
@@ -61,11 +61,11 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
 
         {current.doctorTip && (
           <div className="flex items-start gap-3 bg-white rounded-2xl p-4 border border-blue-50">
-            <div className="w-8 h-8 rounded-lg bg-[#0B2560]/10 flex items-center justify-center shrink-0">
-              <Stethoscope size={15} className="text-[#0B2560]" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Stethoscope size={15} className="text-primary" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-[#0B2560] uppercase tracking-wider mb-1">Doctor's Tip</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Doctor's Tip</p>
               <p className="text-gray-600 text-sm leading-relaxed">{current.doctorTip}</p>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
           <div className="grid sm:grid-cols-2 gap-3">
             {!!current.dos?.length && (
               <div className="bg-white rounded-2xl p-4 border border-green-100">
-                <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-2">Do's</p>
+                <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">Do's</p>
                 <ul className="space-y-1.5">
                   {current.dos.map((d, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
@@ -87,7 +87,7 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
             )}
             {!!current.donts?.length && (
               <div className="bg-white rounded-2xl p-4 border border-red-100">
-                <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider mb-2">Don'ts</p>
+                <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2">Don'ts</p>
                 <ul className="space-y-1.5">
                   {current.donts.map((d, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
@@ -102,12 +102,12 @@ export default function TreatmentJourneyExplorer({ stages, serviceName }: { stag
 
         {!!current.faqs?.length && (
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Common Questions at This Stage</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Common Questions at This Stage</p>
             {current.faqs.map((f, i) => (
               <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left text-xs font-semibold text-[#0B2560]"
+                  className="w-full flex items-center justify-between px-4 py-3 text-left text-xs font-semibold text-primary"
                 >
                   {f.question}
                   <ChevronDown size={14} className={`text-gray-500 transition-transform shrink-0 ${openFaq === i ? 'rotate-180' : ''}`} />

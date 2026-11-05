@@ -65,11 +65,11 @@ function ArticleCard({ post, basePath }: { post: Post; basePath: string }) {
         aspectRatio="16/9"
         sizes="(max-width: 640px) 128px, (max-width: 1024px) 50vw, 33vw"
         alt={post.title}
-        className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] w-32 shrink-0 self-start m-3 rounded-xl sm:m-0 sm:rounded-none sm:w-full sm:self-auto"
+        className="bg-gradient-to-br from-line to-[#c5d9ef] w-32 shrink-0 self-start m-3 rounded-xl sm:m-0 sm:rounded-none sm:w-full sm:self-auto"
         imgClassName="md:group-hover:scale-105 transition duration-500"
         fallbackEmoji="📝"
       >
-        <span className={`hidden sm:block absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full ${CATEGORY_COLOR[post.category] || 'bg-[#3B82C4]'}`}>
+        <span className={`hidden sm:block absolute top-3 left-3 text-xs font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full bg-primary`}>
           {post.category}
         </span>
       </FocalImage>
@@ -77,8 +77,8 @@ function ArticleCard({ post, basePath }: { post: Post; basePath: string }) {
           pinned to the bottom regardless of title/excerpt length, so cards
           in the same grid row line up instead of drifting per-card. */}
       <div className="flex flex-col flex-1 min-w-0 py-3 pr-3 sm:p-5 md:p-6">
-        <span className={`sm:hidden self-start text-[9px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full mb-1.5 ${CATEGORY_COLOR[post.category] || 'bg-[#3B82C4]'}`}>{post.category}</span>
-        <h3 className="font-bold text-[#0B2560] text-[15px] sm:text-base leading-snug line-clamp-3 sm:line-clamp-2 group-hover:text-[#2A6BA8] transition">{post.title}</h3>
+        <span className={`sm:hidden self-start text-xs font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full mb-1.5 ${CATEGORY_COLOR[post.category] || 'bg-secondary'}`}>{post.category}</span>
+        <h3 className="font-bold text-primary text-[15px] sm:text-base leading-snug line-clamp-3 sm:line-clamp-2 group-hover:text-secondary transition">{post.title}</h3>
         {post.excerpt && <p className="hidden sm:block text-gray-500 text-sm mt-2 leading-relaxed line-clamp-2">{post.excerpt}</p>}
         <div className="flex items-center justify-between mt-auto pt-2 sm:pt-4">
           <div className="flex items-center gap-3 text-gray-500 text-xs">
@@ -86,7 +86,7 @@ function ArticleCard({ post, basePath }: { post: Post; basePath: string }) {
             <span className="flex items-center gap-1"><Clock size={10} />{post.readTime}</span>
           </div>
           {post.reviewedByDoctorId?.name && (
-            <span className="hidden sm:inline text-[10px] font-semibold text-[#2A6BA8] bg-[#f6faff] px-2 py-1 rounded-full">✓ Doctor Reviewed</span>
+            <span className="hidden sm:inline text-xs font-semibold text-secondary bg-canvas px-2 py-1 rounded-full">✓ Doctor Reviewed</span>
           )}
         </div>
       </div>
@@ -194,13 +194,13 @@ export default function BlogPageClient({
           fixed mobile WhatsApp/Call/Book bar — without it, the pills row can
           land partially behind the bar right on first paint, before any
           scrolling. */}
-      <section className="bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0B2560] text-white pt-16 pb-32 lg:pb-20 px-4">
+      <section className="bg-gradient-to-br from-primary via-[#1a3a7a] to-primary text-white pt-16 pb-32 lg:pb-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-4">
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-champagne mb-4">
             Medical Knowledge Center
           </span>
-          <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
-            Trusted Skin & Hair <span className="text-[#F5A623]">Education</span>
+          <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight mb-4">
+            Trusted Skin & Hair <span className="text-champagne">Education</span>
           </h1>
           <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
             Evidence-based articles, expert insights and treatment guides to help you make the right decisions.
@@ -254,7 +254,7 @@ export default function BlogPageClient({
         {search && (
           <p className="text-sm text-gray-500 mb-8">
             {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;{search}&rdquo;
-            <button onClick={() => setSearch('')} className="ml-2 text-[#2A6BA8] font-semibold hover:underline">Clear</button>
+            <button onClick={() => setSearch('')} className="ml-2 text-secondary font-semibold hover:underline">Clear</button>
           </p>
         )}
 
@@ -269,8 +269,8 @@ export default function BlogPageClient({
             {/* ── Featured article ── */}
             {featured && (
               <Link href={`${basePath}/${featured.slug}`} className="group block mb-14">
-                <div className="grid lg:grid-cols-2 gap-0 bg-white rounded-3xl overflow-hidden shadow-sm ring-1 ring-[#e8eff7] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                  <div className="relative aspect-[16/9] lg:aspect-auto lg:min-h-[360px] bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef] overflow-hidden">
+                <div className="grid lg:grid-cols-2 gap-0 bg-white rounded-3xl overflow-hidden shadow-sm ring-1 ring-line hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="relative aspect-[16/9] lg:aspect-auto lg:min-h-[360px] bg-gradient-to-br from-line to-[#c5d9ef] overflow-hidden">
                     {featured.coverImage?.url ? (
                       <Image
                         src={featured.coverImage.url}
@@ -283,16 +283,16 @@ export default function BlogPageClient({
                     ) : (
                       <div className="h-full flex items-center justify-center text-8xl opacity-30">📝</div>
                     )}
-                    <span className={`absolute top-4 left-4 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white px-3 py-1.5 rounded-full ${CATEGORY_COLOR[featured.category] || 'bg-[#3B82C4]'}`}>
+                    <span className={`absolute top-4 left-4 text-xs font-extrabold uppercase tracking-[0.2em] text-white px-3 py-1.5 rounded-full ${CATEGORY_COLOR[featured.category] || 'bg-secondary'}`}>
                       {featured.category}
                     </span>
-                    <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider text-[#A25607] border border-[#F5A623]/50 px-2.5 py-1 rounded-full bg-black/20 backdrop-blur-sm">
+                    <span className="absolute top-4 right-4 text-xs font-bold uppercase tracking-wider text-bronze border border-champagne/50 px-2.5 py-1 rounded-full bg-black/20 backdrop-blur-sm">
                       Featured
                     </span>
                   </div>
                   <div className="p-8 md:p-10 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#2A6BA8] mb-3">Featured Article</p>
-                    <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] leading-tight group-hover:text-[#2A6BA8] transition">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-3">Featured Article</p>
+                    <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary leading-tight group-hover:text-secondary transition">
                       {featured.title}
                     </h2>
                     {featured.excerpt && <p className="text-gray-500 mt-3 text-sm leading-relaxed line-clamp-3">{featured.excerpt}</p>}
@@ -300,10 +300,10 @@ export default function BlogPageClient({
                       <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(featured.publishedAt)}</span>
                       <span className="flex items-center gap-1"><Clock size={11} />{featured.readTime}</span>
                       {featured.reviewedByDoctorId?.name && (
-                        <span className="flex items-center gap-1 text-[#2A6BA8] font-semibold">✓ Reviewed by {featured.reviewedByDoctorId.name}</span>
+                        <span className="flex items-center gap-1 text-secondary font-semibold">✓ Reviewed by {featured.reviewedByDoctorId.name}</span>
                       )}
                     </div>
-                    <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-[#0B2560] group-hover:text-[#2A6BA8] transition">
+                    <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-primary group-hover:text-secondary transition">
                       Read Article <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
@@ -314,7 +314,7 @@ export default function BlogPageClient({
             {/* ── Latest / filtered articles ── */}
             {gridPosts.length > 0 ? (
               <section id="latest-articles" className="mb-16">
-                <h2 className="text-lg font-bold text-[#0B2560] mb-6">{isFiltering ? 'Results' : 'Latest Articles'}</h2>
+                <h2 className="text-lg font-bold text-primary mb-6">{isFiltering ? 'Results' : 'Latest Articles'}</h2>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {pagedPosts.map((p) => <ArticleCard key={p._id} post={p} basePath={basePath} />)}
                 </div>
@@ -325,7 +325,7 @@ export default function BlogPageClient({
                       onClick={() => goToPage(Math.max(1, page - 1))}
                       disabled={page === 1}
                       aria-label="Previous page"
-                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#0B2560] disabled:opacity-30 hover:border-[#0B2560]/40 transition"
+                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-primary disabled:opacity-30 hover:border-primary/40 transition"
                     >
                       <ChevronLeft size={16} />
                     </button>
@@ -335,7 +335,7 @@ export default function BlogPageClient({
                           key={i}
                           onClick={() => goToPage(i + 1)}
                           className={`w-8 h-8 rounded-full text-xs font-bold transition ${
-                            page === i + 1 ? 'bg-[#0B2560] text-white' : 'text-gray-500 hover:bg-gray-100'
+                            page === i + 1 ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-100'
                           }`}
                         >
                           {i + 1}
@@ -346,7 +346,7 @@ export default function BlogPageClient({
                       onClick={() => goToPage(Math.min(totalPages, page + 1))}
                       disabled={page === totalPages}
                       aria-label="Next page"
-                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#0B2560] disabled:opacity-30 hover:border-[#0B2560]/40 transition"
+                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-primary disabled:opacity-30 hover:border-primary/40 transition"
                     >
                       <ChevronRight size={16} />
                     </button>
@@ -360,7 +360,7 @@ export default function BlogPageClient({
                 <p className="text-sm text-gray-500 mb-6">Try a different search term or browse by category.</p>
                 <button
                   onClick={() => { setSearch(''); setActiveCategory('All'); }}
-                  className="text-sm bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold"
+                  className="text-sm bg-primary text-white px-5 py-2.5 rounded-xl font-semibold"
                 >
                   Show all articles
                 </button>
@@ -372,8 +372,8 @@ export default function BlogPageClient({
         {/* ── Doctor-recommended reads ── */}
         {!isFiltering && doctorRecommended.length > 0 && (
           <section className="mb-16">
-            <p className="text-xs font-bold text-[#2A6BA8] uppercase tracking-widest mb-1">Doctor Recommended</p>
-            <h2 className="text-lg font-bold text-[#0B2560] mb-6">Reviewed & Recommended Reads</h2>
+            <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Doctor Recommended</p>
+            <h2 className="text-lg font-bold text-primary mb-6">Reviewed & Recommended Reads</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {doctorRecommended.map((p) => <ArticleCard key={p._id} post={p} basePath={basePath} />)}
             </div>
@@ -383,7 +383,7 @@ export default function BlogPageClient({
         {/* ── Trending treatments ── */}
         {!isFiltering && trendingServices.length > 0 && (
           <section className="mb-16">
-            <h2 className="text-lg font-bold text-[#0B2560] mb-6">Trending Treatments</h2>
+            <h2 className="text-lg font-bold text-primary mb-6">Trending Treatments</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {trendingServices.map((s) => (
                 <Link
@@ -391,7 +391,7 @@ export default function BlogPageClient({
                   href={s.href}
                   className="group flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 p-4"
                 >
-                  <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-line to-[#c5d9ef]">
                     {s.heroImage?.url ? (
                       <Image src={s.heroImage.url} alt={s.name} fill sizes="64px" className="object-cover" />
                     ) : (
@@ -399,7 +399,7 @@ export default function BlogPageClient({
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-1 group-hover:text-[#2A6BA8] transition">{s.name}</p>
+                    <p className="font-bold text-primary text-sm leading-snug line-clamp-1 group-hover:text-secondary transition">{s.name}</p>
                     {s.heroDescription && <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{s.heroDescription}</p>}
                   </div>
                 </Link>
@@ -411,7 +411,7 @@ export default function BlogPageClient({
         {/* ── Video learning ── */}
         {!isFiltering && videos.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-[#0B2560] mb-6">Video Learning</h2>
+            <h2 className="text-lg font-bold text-primary mb-6">Video Learning</h2>
             <div className="flex flex-wrap gap-2 mb-6">
               {videoCategories.map((c) => (
                 <CategoryPill key={c} label={c} active={videoCategory === c} onClick={() => setVideoCategory(c)} />
@@ -424,18 +424,18 @@ export default function BlogPageClient({
                   href={`/academy/${v.slug}`}
                   className="group bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="relative aspect-video overflow-hidden bg-[#0B2560]">
+                  <div className="relative aspect-video overflow-hidden bg-primary">
                     {v.thumbnail?.url ? (
                       <Image src={v.thumbnail.url} alt={v.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition duration-500" />
                     ) : null}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition">
                       <span className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-                        <Play size={18} className="text-[#0B2560] ml-0.5" fill="currentColor" />
+                        <Play size={18} className="text-primary ml-0.5" fill="currentColor" />
                       </span>
                     </div>
                   </div>
                   <div className="p-4">
-                    <p className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2">{v.title}</p>
+                    <p className="font-bold text-primary text-sm leading-snug line-clamp-2">{v.title}</p>
                     {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}
                   </div>
                 </Link>

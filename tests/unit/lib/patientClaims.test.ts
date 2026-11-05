@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mentionsPatientCount, withClinicYears, withClinicYearsText, withoutPatientClaims } from '@/app/lib/patientClaims';
+import { cleanCredentialWording, hasUnsupportedClaim, mentionsPatientCount, scrubClaims, withClinicYears, withClinicYearsText, withoutPatientClaims } from '@/app/lib/patientClaims';
 
 describe('withoutPatientClaims', () => {
   it('removes patient and treatment totals, in any wording', () => {
@@ -56,5 +56,63 @@ describe('mentionsPatientCount', () => {
   it('ignores text without a figure', () => {
     expect(mentionsPatientCount('Caring for patients since 2015')).toBe(false);
     expect(mentionsPatientCount(undefined)).toBe(false);
+  });
+});
+
+describe('hasUnsupportedClaim', () => {
+  it('catches regulatory, accreditation, superlative and outcome claims', () => {
+    for (const text of ['US FDA Endorsed Equipment', 'NABH Compliant', 'IADVL Member', 'ISO Certified', 'the best aesthetic clinic in India', 'Virtually painless', 'Clinically proven', 'natural, lasting results', 'Save up to 50%', 'Limited-time deals', '10k+ Successful Procedures', '10K+ subscribers']) {
+      expect(hasUnsupportedClaim(text), text).toBe(true);
+    }
+  });
+
+  it('leaves ordinary copy and honest disclaimers alone', () => {
+    for (const text of ['Your best self', 'Results vary and no outcome is guaranteed', 'Personalised treatment plans', 'Skin and hair care']) {
+      expect(hasUnsupportedClaim(text), text).toBe(false);
+    }
+  });
+});
+
+describe('cleanCredentialWording', () => {
+  it('rewrites dermatologist claims to doctors', () => {
+    expect(cleanCredentialWording('Our expert dermatologists are ready')).toBe('Our doctors are ready');
+    expect(cleanCredentialWording('performed by a board-certified dermatologist or aesthetic physician')).toBe('performed by a doctor');
+    expect(cleanCredentialWording('Board certified aesthetic physician, dedicated')).toBe('Aesthetic physician, dedicated');
+  });
+
+  it('removes the best-clinic clause and keeps the sentence', () => {
+    expect(cleanCredentialWording('A consultation matters first, something the best aesthetic clinics always start with. PRP helps.')).toBe('A consultation matters first. PRP helps.');
+  });
+});
+
+describe('scrubClaims', () => {
+  it('keeps a larger item such as a hero slide, without the claim field', () => {
+    const [slide] = scrubClaims([{ badge: 'The best aesthetic clinic', headline: 'Customized Treatments', highlightText: 'For You', description: 'Plans for you', image: { url: 'x' } }]);
+    expect(slide).toEqual({ headline: 'Customized Treatments', highlightText: 'For You', description: 'Plans for you', image: { url: 'x' } });
+  });
+
+  it('drops claim items from lists, removes claim fields, and keeps links', () => {
+    const out = scrubClaims({
+      badge: 'Looking for the best aesthetic clinic in India?',
+      headline: 'Customized Treatments',
+      description: 'Our dermatologists plan your care',
+      reasons: ['US FDA Endorsed Equipment', 'Clean & Secure Setting'],
+      seals: ['NABH Certified', 'Reviewed by doctors'],
+      faqs: [
+        { question: 'Are your doctors certified dermatologists?', answer: 'Yes.' },
+        { question: 'Is it painful?', answer: 'Numbing cream is applied.' },
+      ],
+      ctaHref: '/best-aesthetic-clinic',
+      image: { url: 'https://example.com/fda.jpg' },
+    });
+    expect(out).toEqual({
+      headline: 'Customized Treatments',
+      description: 'Our doctors plan your care',
+      reasons: ['Clean & Secure Setting'],
+      seals: ['Reviewed by doctors'],
+      faqs: [{ question: 'Is it painful?', answer: 'Numbing cream is applied.' }],
+      ctaHref: '/best-aesthetic-clinic',
+      image: { url: 'https://example.com/fda.jpg' },
+    });
   });
 });

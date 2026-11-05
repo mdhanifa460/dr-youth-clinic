@@ -181,10 +181,10 @@ export default function PhotoCaptureScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="text-center mb-6">
-        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+        <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
           {goalLabel} · Photo coach (optional)
         </span>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">
           {steps.length > 1 ? `Photo ${idx + 1} of ${steps.length}: ${step.label}` : "Add a photo for sharper AI observations"}
         </h2>
         <p className="text-gray-500 text-sm max-w-sm mx-auto">
@@ -193,7 +193,7 @@ export default function PhotoCaptureScreen({
         {steps.length > 1 && (
           <div className="flex justify-center gap-1.5 mt-4" aria-hidden>
             {steps.map((s, i) => (
-              <span key={s.angle} className={`h-1.5 w-8 rounded-full ${taken[s.angle] ? "bg-emerald-500" : i === idx ? "bg-[#0B2560]" : "bg-gray-200"}`} />
+              <span key={s.angle} className={`h-1.5 w-8 rounded-full ${taken[s.angle] ? "bg-emerald-500" : i === idx ? "bg-primary" : "bg-gray-200"}`} />
             ))}
           </div>
         )}
@@ -213,7 +213,7 @@ export default function PhotoCaptureScreen({
         </div>
       ) : uploading ? (
         <div className="flex flex-col items-center gap-3 py-16">
-          <span className="w-8 h-8 border-2 border-[#0B2560]/20 border-t-[#0B2560] rounded-full animate-spin" />
+          <span className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
           <p className="text-xs text-gray-500">Uploading…</p>
         </div>
       ) : cameraOpen ? (
@@ -230,7 +230,7 @@ export default function PhotoCaptureScreen({
           <button
             type="button"
             onClick={() => { setCameraMsg(""); setCameraOpen(true); }}
-            className="w-full py-3 rounded-2xl bg-[#0B2560] text-white text-sm font-bold"
+            className="w-full py-3 rounded-2xl bg-primary text-white text-sm font-bold"
           >
             Open camera
           </button>
@@ -245,7 +245,7 @@ export default function PhotoCaptureScreen({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full py-3 rounded-2xl border-2 border-gray-100 text-sm font-semibold text-[#0B2560] hover:border-[#0B2560]/30 transition"
+            className="w-full py-3 rounded-2xl border-2 border-gray-100 text-sm font-semibold text-primary hover:border-primary/30 transition"
           >
             Upload from gallery instead
           </button>
@@ -262,7 +262,7 @@ export default function PhotoCaptureScreen({
           <button
             type="button"
             onClick={() => (photos.length || !isLast ? next() : onDone([]))}
-            className="text-sm text-gray-500 hover:text-[#0B2560] font-medium"
+            className="text-sm text-gray-500 hover:text-primary font-medium"
           >
             {current ? "Skip" : isLast ? "Skip this step" : "Skip this angle"}
           </button>
@@ -270,7 +270,7 @@ export default function PhotoCaptureScreen({
             type="button"
             disabled={!current}
             onClick={next}
-            className="px-6 py-3 bg-[#0B2560] text-white font-bold text-sm rounded-xl shadow-md shadow-[#0B2560]/20 hover:bg-[#0d2d72] disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="px-6 py-3 bg-primary text-white font-bold text-sm rounded-xl shadow-md shadow-primary/20 hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             {isLast ? "Continue →" : "Next angle →"}
           </button>

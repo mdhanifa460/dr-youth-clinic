@@ -74,7 +74,7 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       carouselIntervalMs: settings.display?.carouselIntervalMs ?? 5000,
       servicesHubHeadline: settings.content?.servicesHubHeadline || 'Clinical',
       servicesHubHeadlineAccent: settings.content?.servicesHubHeadlineAccent || 'Excellence.',
-      servicesHubDescription: settings.content?.servicesHubDescription || '{count} across dermatology, hair restoration, and precision laser — all in {city}.',
+      servicesHubDescription: settings.content?.servicesHubDescription || '{count} across skin, hair restoration and laser, all in {city}.',
     };
   } catch {
     return SITE_CONFIG_DEFAULTS;

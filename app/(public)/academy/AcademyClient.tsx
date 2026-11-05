@@ -51,12 +51,12 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
               onClick={() => setActive(cat)}
               className={`shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200 ${
                 active === cat
-                  ? 'bg-[#0B2560] text-white shadow-lg shadow-[#0B2560]/20'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-[#0B2560]/30 hover:text-[#0B2560]'
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/30 hover:text-primary'
               }`}
             >
               {cat}
-              <span className={`ml-1.5 text-[10px] font-bold ${active === cat ? 'text-white/70' : 'text-gray-500'}`}>
+              <span className={`ml-1.5 text-xs font-bold ${active === cat ? 'text-white/70' : 'text-gray-500'}`}>
                 ({counts[cat] || 0})
               </span>
             </button>
@@ -86,27 +86,27 @@ export default function AcademyClient({ videos }: { videos: VideoItem[] }) {
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#3B82C4]" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary" />
                 )}
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                   <div className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <Play size={16} className="text-[#0B2560] ml-0.5" fill="currentColor" />
+                    <Play size={16} className="text-primary ml-0.5" fill="currentColor" />
                   </div>
                 </div>
                 {v.format && (
-                  <span className="absolute top-2 left-2 bg-white/90 text-[#0B2560] text-[10px] font-bold px-2 py-1 rounded-lg">
+                  <span className="absolute top-2 left-2 bg-white/90 text-primary text-xs font-bold px-2 py-1 rounded-lg">
                     {FORMAT_LABELS[v.format] || v.format}
                   </span>
                 )}
                 {v.duration && (
-                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-lg">
                     {v.duration}
                   </span>
                 )}
               </div>
               <div className="p-4">
-                <span className="text-[10px] font-bold text-[#2A6BA8] uppercase tracking-wider">{v.category}</span>
-                <h3 className="font-headline font-bold text-[#0B2560] text-sm mt-1 leading-snug line-clamp-2">
+                <span className="text-xs font-bold text-secondary uppercase tracking-wider">{v.category}</span>
+                <h3 className="font-headline font-medium text-primary text-sm mt-1 leading-snug line-clamp-2">
                   {v.title}
                 </h3>
                 {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}

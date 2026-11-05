@@ -26,7 +26,7 @@ export const revalidate = 60;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
   title: 'Exclusive Offers & Packages',
-  description: 'Limited-time deals on skin care, hair restoration and laser treatments at DR Youth Clinic. Save up to 50% on premium aesthetic packages across Chennai, Bangalore, Kochi and Coimbatore.',
+  description: 'Current offers on skin, hair and laser treatments at DR Youth Clinic in Chennai, Bangalore, Kochi and Coimbatore. Suitability is confirmed at consultation.',
   alternates: { canonical: `${SITE_URL}/offers` },
 };
 
@@ -92,7 +92,7 @@ export default async function OffersPage() {
     : null;
 
   return (
-    <main>
+    <div>
       <OfferHero
         activeOfferCount={activeOffers.length}
         maxSave={maxSave}
@@ -106,15 +106,15 @@ export default async function OffersPage() {
 
       <OfferCategoryShowcase summaries={categorySummaries} />
 
-      <section id="offers" className="bg-[#f6faff] py-14 md:py-20">
+      <section id="offers" className="bg-canvas py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-6">
           {activeOffers.length === 0 ? (
             <div className="text-center py-24">
               <p className="text-6xl mb-4">🏷️</p>
-              <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">New Offers Coming Soon</h2>
+              <h2 className="text-2xl font-headline font-medium text-primary mb-2">New Offers Coming Soon</h2>
               <p className="text-gray-500 mb-6">We're putting together exclusive packages for you. Check back shortly or book a {siteConfig.consultationFree ? 'free ' : ''}consultation.</p>
               <Link href="/book"
-                className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
+                className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
                 <Calendar size={15} /> {siteConfig.consultationCta}
               </Link>
             </div>
@@ -134,11 +134,11 @@ export default async function OffersPage() {
       )}
 
       {/* ── BOTTOM CTA ── */}
-      <section className="relative bg-[#0B2560] py-14 overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[#F5A623]/10 backdrop-blur-3xl pointer-events-none" />
+      <section className="relative bg-primary py-14 overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-champagne/10 backdrop-blur-3xl pointer-events-none" />
         <div className="relative max-w-3xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Tailored for You</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Tailored for You</p>
+          <h2 className="text-2xl md:text-3xl font-headline font-medium text-white mb-3">
             Can't Find the Right Package?
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
@@ -146,7 +146,7 @@ export default async function OffersPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/book"
-              className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(245,166,35,0.35)] transition-all duration-200">
+              className="inline-flex items-center gap-2 bg-champagne text-primary px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(245,166,35,0.35)] transition-all duration-200">
               <Calendar size={15} /> {siteConfig.consultationCta}
             </Link>
             <Link href="/doctors"
@@ -156,6 +156,6 @@ export default async function OffersPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

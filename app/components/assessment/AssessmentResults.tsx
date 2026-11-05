@@ -34,7 +34,7 @@ function Ring({ percent, label, gradientId, colors }: { percent: number; label: 
           <span className="text-2xl font-extrabold text-white">{percent}%</span>
         </div>
       </div>
-      <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-white/60">{label}</p>
+      <p className="mt-2 text-xs font-bold uppercase tracking-wider text-white/60">{label}</p>
     </div>
   );
 }
@@ -100,8 +100,8 @@ export default function AssessmentResults({
 
   return (
     <div className="py-6 md:py-10">
-      <div id="assessment-print-area" className="rounded-3xl bg-[#0B2560] text-white p-6 md:p-8 shadow-xl max-w-md mx-auto">
-        <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#F5A623] mb-1">
+      <div id="assessment-print-area" className="rounded-3xl bg-primary text-white p-6 md:p-8 shadow-xl max-w-md mx-auto">
+        <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-champagne mb-1">
           {resultHeadline}
         </p>
 
@@ -115,7 +115,7 @@ export default function AssessmentResults({
             <Ring percent={result.riskScore} label="Risk Level" gradientId="riskGrad" colors={['#3B82C4', '#60A5FA']} />
           )}
         </div>
-        <p className="text-center text-[#A25607] font-bold text-xs tracking-wide mb-6">
+        <p className="text-center text-bronze font-bold text-xs tracking-wide mb-6">
           {result.severity.toUpperCase()} CONCERN{result.riskLevel ? ` · ${result.riskLevel.toUpperCase()} RISK` : ''}
         </p>
 
@@ -126,7 +126,7 @@ export default function AssessmentResults({
                 <div key={c.key} className="flex items-center gap-2.5 text-xs">
                   <span className="w-28 shrink-0 text-white/75">{c.label}</span>
                   <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#3B82C4] to-[#F5A623]" style={{ width: `${c.percent}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-secondary to-champagne" style={{ width: `${c.percent}%` }} />
                   </div>
                   <span className="w-9 text-right font-bold">{c.percent}%</span>
                 </div>
@@ -138,8 +138,8 @@ export default function AssessmentResults({
 
         {whatWeFound.length > 0 && (
           <>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">What We Found</p>
-            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-[#A25607]">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-bronze mb-2">What We Found</p>
+            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-bronze">
               {whatWeFound.map((line) => <li key={line}>{line}</li>)}
             </ul>
           </>
@@ -147,9 +147,9 @@ export default function AssessmentResults({
 
         {result.contributingFactors.length > 0 && (
           <>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">Possible Contributing Factors</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-bronze mb-2">Possible Contributing Factors</p>
             <p className="text-[11px] text-white/50 mb-2">Based on your responses, possible contributing factors may include:</p>
-            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-[#A25607]">
+            <ul className="text-xs text-white/85 space-y-1.5 mb-5 pl-4 list-disc marker:text-bronze">
               {result.contributingFactors.map((f) => <li key={f.tag}>{f.label}</li>)}
             </ul>
           </>
@@ -158,18 +158,18 @@ export default function AssessmentResults({
         {aiExplanation && (
           <>
             <hr className="border-white/10 mb-5" />
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">In Your Own Words</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-bronze mb-2">In Your Own Words</p>
             <p className="text-xs text-white/80 leading-relaxed mb-1.5">{aiExplanation}</p>
             {/* NMC source-mark requirement — see the same note in
                 UnifiedJourneyResults.tsx. */}
-            <p className="text-[10px] text-white/40 mb-5">🤖 AI-generated summary — not a medical diagnosis</p>
+            <p className="text-xs text-white/40 mb-5">🤖 AI-generated summary — not a medical diagnosis</p>
           </>
         )}
 
         {cta && (
           <>
             <hr className="border-white/10 mb-5" />
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-2">What's Next?</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-bronze mb-2">What's Next?</p>
             <p className="text-xs text-white/80 mb-4 leading-relaxed">{cta.headline} {cta.body}</p>
             <div className="space-y-2">
               {cta.buttons.map((btn, i) => (
@@ -177,7 +177,7 @@ export default function AssessmentResults({
                   key={i}
                   onClick={() => handleCta(btn)}
                   className={i === 0
-                    ? 'w-full py-3.5 rounded-2xl bg-[#F5A623] text-[#0B2560] font-extrabold text-sm shadow-lg hover:-translate-y-0.5 transition-transform'
+                    ? 'w-full py-3.5 rounded-2xl bg-champagne text-primary font-extrabold text-sm shadow-lg hover:-translate-y-0.5 transition-transform'
                     : 'w-full py-3.5 rounded-2xl border border-white/25 text-white font-semibold text-sm hover:bg-white/10 transition-colors'}
                 >
                   {btn.label}
@@ -194,11 +194,11 @@ export default function AssessmentResults({
           🖨 Print / Save Assessment Summary
         </button>
 
-        <p className="mt-4 text-center text-[10px] text-white/40 leading-relaxed">{disclaimer}</p>
+        <p className="mt-4 text-center text-xs text-white/40 leading-relaxed">{disclaimer}</p>
       </div>
 
       <div className="text-center mt-6 print:hidden">
-        <button onClick={onRetake} className="text-xs text-gray-400 hover:text-[#0B2560] underline">
+        <button onClick={onRetake} className="text-xs text-gray-400 hover:text-primary underline">
           Retake assessment
         </button>
       </div>

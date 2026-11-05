@@ -47,17 +47,17 @@ export const SECTION_DEFAULTS: Record<string, any> = {
     milestones: [
       { year: '2018', title: 'Clinic Founded', desc: 'Opened our first flagship clinic in Chennai.' },
       { year: '2020', title: '1,000 Patients', desc: 'Crossed our first major patient milestone.' },
-      { year: '2022', title: 'New Technology', desc: 'Invested in advanced FDA-cleared equipment.' },
+      { year: '2022', title: 'New Technology', desc: 'Invested in new treatment equipment.' },
       { year: '2024', title: '25,000+ Patients', desc: 'Grew to serve tens of thousands of happy patients.' },
       { year: '2026', title: '4 Cities', desc: 'Expanded to four flagship clinics across South India.' },
     ],
   },
   values: {
-    missionQuote: 'Our commitment: evidence-based treatments, no unnecessary procedures, real results.',
+    missionQuote: 'Our commitment: evidence-based treatments, no unnecessary procedures.',
     missionBody: 'We measure success not by the number of treatments we sell, but by how confident and satisfied our patients feel — at every visit and long after.',
     values: [
       { icon: '🔍', title: 'Transparency', desc: 'Complete pricing and honest advice shared before any treatment begins — no hidden costs, no surprises.' },
-      { icon: '🛡️', title: 'Safety', desc: 'FDA-cleared equipment, sterile protocols, and board-certified doctors on every procedure.' },
+      { icon: '🛡️', title: 'Safety', desc: 'Sterile protocols and doctor oversight on every procedure.' },
       { icon: '💡', title: 'Innovation', desc: 'We continuously invest in the latest, most effective treatments and technology available.' },
     ],
   },
@@ -71,14 +71,14 @@ export const SECTION_DEFAULTS: Record<string, any> = {
   },
   experts: {
     headline: 'Meet the Doctors',
-    subheading: 'Every treatment at DR Youth Clinic is led by an experienced, board-certified specialist.',
+    subheading: 'Every treatment at DR Youth Clinic is led by one of our doctors.',
   },
   technology: {
     headline: 'Advanced Technology',
-    subheading: 'We invest in the latest FDA-cleared equipment for safer, more effective treatments.',
+    subheading: 'The equipment our doctors use across our clinics.',
     items: [
       { icon: '✨', title: 'HydraFacial', desc: 'Deep cleansing, exfoliation and hydration in a single, non-invasive session.' },
-      { icon: '⚡', title: 'Laser Systems', desc: 'FDA-cleared lasers for hair removal, pigmentation and skin resurfacing.' },
+      { icon: '⚡', title: 'Laser Systems', desc: 'Lasers for hair reduction, pigmentation and skin resurfacing.' },
       { icon: '💉', title: 'PRP / GFC', desc: 'Advanced regenerative treatments using your own blood for natural hair and skin restoration.' },
     ],
   },
@@ -102,17 +102,13 @@ export const SECTION_DEFAULTS: Record<string, any> = {
   awards: {
     headline: 'Awards & Recognition',
     awards: [
-      { year: '', icon: '🏅', title: 'ISO Certified', desc: 'Quality Management System' },
-      { year: '', icon: '🏥', title: 'NABH Compliant', desc: 'National Accreditation Board' },
-      { year: '', icon: '👨‍⚕️', title: 'IADVL Member', desc: 'Indian Assoc. of Dermatologists' },
     ],
   },
   comparison: {
     headline: 'Why Choose DR Youth Clinic',
     items: [
       'Personalised consultation for every patient',
-      'Advanced, FDA-cleared technology',
-      'Board-certified, experienced specialists',
+      'Doctor-led treatment planning',
       'Tailored treatment plans — never one-size-fits-all',
       'Dedicated follow-up and aftercare',
     ],

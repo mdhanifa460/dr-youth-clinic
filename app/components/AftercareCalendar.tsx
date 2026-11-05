@@ -11,22 +11,22 @@ export default function AftercareCalendar({ items, serviceName }: { items: After
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-2">Aftercare Guide</h2>
+      <h2 className="text-2xl font-headline font-medium text-primary mb-2">Aftercare Guide</h2>
       <p className="text-gray-500 text-sm mb-6">Everyday questions patients ask after {serviceName} — answered upfront.</p>
 
       <div className="relative">
-        <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-gradient-to-b from-[#0B2560]/15 to-transparent hidden sm:block" />
+        <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-gradient-to-b from-primary/15 to-transparent hidden sm:block" />
         <div className="space-y-4">
           {items.map((item, i) => (
             <div key={i} className="flex gap-4 relative">
-              <div className="shrink-0 w-10 h-10 rounded-full bg-white border-2 border-[#0B2560]/15 text-[#0B2560] flex items-center justify-center z-10">
+              <div className="shrink-0 w-10 h-10 rounded-full bg-white border-2 border-primary/15 text-primary flex items-center justify-center z-10">
                 <Clock size={15} />
               </div>
-              <div className="flex-1 bg-[#f6faff] rounded-2xl p-4 border border-blue-50">
+              <div className="flex-1 bg-canvas rounded-2xl p-4 border border-blue-50">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h3 className="font-bold text-[#0B2560] text-sm">{item.activity}</h3>
+                  <h3 className="font-bold text-primary text-sm">{item.activity}</h3>
                   {item.waitPeriod && (
-                    <span className="text-[10px] font-bold text-[#A25607] bg-[#F5A623]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                    <span className="text-xs font-bold text-bronze bg-champagne/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                       {item.waitPeriod}
                     </span>
                   )}

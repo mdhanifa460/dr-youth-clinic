@@ -77,7 +77,7 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', 
             <a
               href={`tel:${phone.replace(/\s/g, '')}`}
               className={`hidden sm:flex items-center gap-1.5 text-sm font-semibold transition-colors duration-300 ${
-                scrolled ? 'text-[#0B2560]' : 'text-white/90'
+                scrolled ? 'text-primary' : 'text-white/90'
               } hover:opacity-80`}
             >
               <Phone size={14} className="shrink-0" />
@@ -92,7 +92,7 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', 
               target="_blank"
               rel="noopener noreferrer"
               className={`p-1.5 sm:p-2 rounded-xl transition-colors touch-manipulation shrink-0 ${
-                scrolled ? 'text-[#0B2560]' : 'text-white'
+                scrolled ? 'text-primary' : 'text-white'
               }`}
               aria-label="Chat on WhatsApp"
             >
@@ -116,7 +116,7 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', 
           <button
             onClick={scrollToForm}
             aria-label={ctaText}
-            className="flex items-center gap-1 sm:gap-1.5 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold rounded-lg sm:rounded-xl shadow-lg hover:-translate-y-0.5 transition-all duration-200 touch-manipulation shrink-0 min-w-0"
+            className="flex items-center gap-1 sm:gap-1.5 bg-champagne hover:bg-[#e09516] text-primary font-extrabold rounded-lg sm:rounded-xl shadow-lg hover:-translate-y-0.5 transition-all duration-200 touch-manipulation shrink-0 min-w-0"
             style={{
               paddingInline: 'clamp(0.65rem, 3.2vw, 1.25rem)',
               paddingBlock: 'clamp(0.5rem, 1.6vw, 0.65rem)',

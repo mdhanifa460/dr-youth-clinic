@@ -18,12 +18,12 @@ export default async function PrivacyPolicyPage() {
   const contactEmail = legal.contactEmail;
 
   return (
-    <main>
+    <div>
       {/* ── HERO ── */}
-      <section className="bg-[#0B2560] py-16 md:py-20">
+      <section className="bg-primary py-16 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Legal</p>
-          <h1 className="text-3xl md:text-4xl font-headline font-extrabold text-white leading-tight">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Legal</p>
+          <h1 className="text-3xl md:text-4xl font-headline font-medium text-white leading-tight">
             Privacy Policy
           </h1>
           <p className="text-white/60 mt-3 text-sm">
@@ -34,22 +34,22 @@ export default async function PrivacyPolicyPage() {
       </section>
 
       {/* ── CONTENT ── */}
-      <section className="bg-[#f6faff] py-14 md:py-20">
+      <section className="bg-canvas py-14 md:py-20">
         <div className="max-w-4xl mx-auto px-6 space-y-6">
           {sections.map((section) => (
             <div
               key={section.id}
               id={section.id}
-              className="bg-white rounded-3xl p-7 md:p-9 ring-1 ring-[#e8eff7] shadow-sm scroll-mt-24"
+              className="bg-white rounded-3xl p-7 md:p-9 ring-1 ring-line shadow-sm scroll-mt-24"
             >
               <div className="flex items-start gap-4 mb-4">
                 <span className="text-3xl shrink-0">{section.icon}</span>
-                <h2 className="text-lg md:text-xl font-headline font-bold text-[#0B2560] leading-snug">
+                <h2 className="text-lg md:text-xl font-headline font-medium text-primary leading-snug">
                   {section.title}
                 </h2>
               </div>
               <div
-                className="prose prose-sm max-w-none text-gray-600 [&_ul]:space-y-2 [&_ul]:ml-4 [&_li]:list-disc [&_strong]:text-[#0B2560]"
+                className="prose prose-sm max-w-none text-gray-600 [&_ul]:space-y-2 [&_ul]:ml-4 [&_li]:list-disc [&_strong]:text-primary"
                 dangerouslySetInnerHTML={{ __html: section.bodyHtml }}
               />
             </div>
@@ -62,18 +62,18 @@ export default async function PrivacyPolicyPage() {
         <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
             Have a question about your data?{' '}
-            <a href={`mailto:${contactEmail}`} className="font-semibold text-[#0B2560] hover:text-[#2A6BA8] transition underline underline-offset-2">
+            <a href={`mailto:${contactEmail}`} className="font-semibold text-primary hover:text-secondary transition underline underline-offset-2">
               {contactEmail}
             </a>
           </p>
           <Link
             href="/book"
-            className="shrink-0 inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition"
+            className="shrink-0 inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition"
           >
             Book a Consultation →
           </Link>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

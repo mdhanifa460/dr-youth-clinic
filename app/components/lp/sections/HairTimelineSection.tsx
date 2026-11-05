@@ -39,8 +39,8 @@ export default function HairTimelineSection({ data }: { data: HairTimelineData }
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">Growth Timeline</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-3">Growth Timeline</p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
 
@@ -54,7 +54,7 @@ export default function HairTimelineSection({ data }: { data: HairTimelineData }
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 1.6, ease: 'easeInOut' }}
                 style={{ transformOrigin: 'left' }}
-                className="h-full w-full rounded-full bg-gradient-to-r from-gray-300 via-[#3B82C4] to-[#F5A623]"
+                className="h-full w-full rounded-full bg-gradient-to-r from-gray-300 via-secondary to-champagne"
               />
             </div>
 
@@ -71,11 +71,11 @@ export default function HairTimelineSection({ data }: { data: HairTimelineData }
                   transition={{ duration: 0.5, delay: 0.3 + i * 0.2, ease: 'easeOut' }}
                   className="flex flex-col items-center text-center"
                 >
-                  <div className="w-5 h-5 rounded-full bg-[#F5A623] border-4 border-white ring-2 ring-[#F5A623]/40 shadow relative z-10 mb-5" />
-                  <span className="inline-block bg-[#0B2560] text-white text-xs font-extrabold px-3 py-1 rounded-full mb-2">
+                  <div className="w-5 h-5 rounded-full bg-champagne border-4 border-white ring-2 ring-champagne/40 shadow relative z-10 mb-5" />
+                  <span className="inline-block bg-primary text-white text-xs font-extrabold px-3 py-1 rounded-full mb-2">
                     {m.period}
                   </span>
-                  <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{m.title}</h3>
+                  <h3 className="font-bold text-primary text-sm md:text-base mb-1.5">{m.title}</h3>
                   <p className="text-xs text-gray-500 leading-relaxed px-2">{m.desc}</p>
                 </motion.div>
               ))}
@@ -92,7 +92,7 @@ export default function HairTimelineSection({ data }: { data: HairTimelineData }
               viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 1.6, ease: 'easeInOut' }}
               style={{ transformOrigin: 'top' }}
-              className="w-full h-full rounded-full bg-gradient-to-b from-gray-300 via-[#3B82C4] to-[#F5A623]"
+              className="w-full h-full rounded-full bg-gradient-to-b from-gray-300 via-secondary to-champagne"
             />
           </div>
           <div className="space-y-6">
@@ -105,12 +105,12 @@ export default function HairTimelineSection({ data }: { data: HairTimelineData }
                 transition={{ duration: 0.5, delay: i * 0.15, ease: 'easeOut' }}
                 className="flex gap-4 items-start pl-0"
               >
-                <div className="w-5 h-5 mt-1 shrink-0 rounded-full bg-[#F5A623] border-4 border-white ring-2 ring-[#F5A623]/40 shadow relative z-10" />
+                <div className="w-5 h-5 mt-1 shrink-0 rounded-full bg-champagne border-4 border-white ring-2 ring-champagne/40 shadow relative z-10" />
                 <div>
-                  <span className="inline-block bg-[#0B2560] text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full mb-1.5">
+                  <span className="inline-block bg-primary text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full mb-1.5">
                     {m.period}
                   </span>
-                  <h3 className="font-bold text-[#0B2560] text-sm mb-1">{m.title}</h3>
+                  <h3 className="font-bold text-primary text-sm mb-1">{m.title}</h3>
                   <p className="text-xs text-gray-500 leading-relaxed">{m.desc}</p>
                 </div>
               </motion.div>

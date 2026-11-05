@@ -87,5 +87,5 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   carouselIntervalMs: 5000,
   servicesHubHeadline: 'Clinical',
   servicesHubHeadlineAccent: 'Excellence.',
-  servicesHubDescription: '{count} across dermatology, hair restoration, and precision laser — all in {city}.',
+  servicesHubDescription: '{count} across skin, hair restoration and laser, all in {city}.',
 };

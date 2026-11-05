@@ -40,9 +40,9 @@ export default function CtaSection({
   const waMessage = useAttributedWaText("Hi, I'd like to book a free consultation");
 
   return (
-    <section className="bg-gradient-to-br from-[#0B2560] to-[#1e407a] py-14 md:py-20 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-[#3B82C4]/10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-[#F5A623]/10 -translate-x-1/2 translate-y-1/2 pointer-events-none" />
+    <section className="bg-gradient-to-br from-primary to-[#1e407a] py-14 md:py-20 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-secondary/10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-champagne/10 -translate-x-1/2 translate-y-1/2 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -60,7 +60,7 @@ export default function CtaSection({
             <div className="flex flex-wrap gap-x-6 gap-y-3 mt-7">
               {badges.map((b) => (
                 <span key={b} className="flex items-center gap-2 text-sm font-semibold text-white/90">
-                  <CheckCircle size={16} className="text-[#F5A623] shrink-0" />
+                  <CheckCircle size={16} className="text-champagne shrink-0" />
                   {b}
                 </span>
               ))}
@@ -71,7 +71,7 @@ export default function CtaSection({
           <div className="flex flex-col gap-3">
             <button
               onClick={() => document.getElementById(formAnchorId)?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-[#F5A623]/30 hover:-translate-y-0.5 transition-all duration-200"
+              className="flex items-center justify-center gap-2 bg-champagne hover:bg-[#e09516] text-primary font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-champagne/30 hover:-translate-y-0.5 transition-all duration-200"
             >
               <CalendarCheck size={18} />
               {ctaPrimary}

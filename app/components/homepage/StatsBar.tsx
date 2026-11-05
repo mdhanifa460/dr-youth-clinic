@@ -8,21 +8,21 @@ export default function StatsBar({ data }: { data: any }) {
   if (stats.length === 0) return null;
 
   return (
-    <section className="bg-white border-y border-gray-100 shadow-sm">
+    <section className="bg-white border-y border-line">
       <div className={`max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-5 sm:py-6 md:py-8 grid grid-cols-2 ${MD_COLS[stats.length] ?? 'md:grid-cols-4'} gap-3 sm:gap-4 md:gap-6`}>
         {stats.map((s: any, i: number) => (
-          <div key={i} className="text-center rounded-2xl bg-[#f6faff]/70 px-3 py-4 md:bg-transparent md:px-0 md:py-0">
-            <p className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0B2560] font-headline leading-none">
+          <div key={i} className="text-center px-3">
+            <p className="text-3xl md:text-4xl font-medium text-primary font-headline leading-none">
               {s.value}
             </p>
             {s.showStars && (
               <div className="flex justify-center gap-0.5 my-1">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <AiFillStar key={n} className="text-[#A25607] text-sm" />
+                  <AiFillStar key={n} className="text-bronze text-sm" />
                 ))}
               </div>
             )}
-            <p className="text-gray-500 text-xs sm:text-sm font-medium mt-1 leading-snug">{s.label}</p>
+            <p className="text-text-secondary text-sm mt-1 leading-snug">{s.label}</p>
           </div>
         ))}
       </div>

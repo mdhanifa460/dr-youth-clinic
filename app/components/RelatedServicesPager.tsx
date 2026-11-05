@@ -44,7 +44,7 @@ function ServiceCard({ r, location, showPriceOnCards, arrows }: {
           fill
           sizes="33vw"
           className="object-cover group-hover:scale-105 transition duration-500"
-          fallback={<div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#1a4a8a] flex items-center justify-center text-4xl">{CATEGORY_ICON[r.category] ?? '🏥'}</div>}
+          fallback={<div className="absolute inset-0 bg-gradient-to-br from-primary to-[#1a4a8a] flex items-center justify-center text-4xl">{CATEGORY_ICON[r.category] ?? '🏥'}</div>}
         />
         {r.heroImage?.url && <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />}
         {arrows && (
@@ -53,7 +53,7 @@ function ServiceCard({ r, location, showPriceOnCards, arrows }: {
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); arrows.onPrev(); }}
               disabled={arrows.prevDisabled}
               aria-label="Previous treatment"
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-[#0B2560] shadow-md disabled:opacity-0 transition z-10"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-primary shadow-md disabled:opacity-0 transition z-10"
             >
               <ChevronLeft size={16} />
             </button>
@@ -61,7 +61,7 @@ function ServiceCard({ r, location, showPriceOnCards, arrows }: {
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); arrows.onNext(); }}
               disabled={arrows.nextDisabled}
               aria-label="Next treatment"
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-[#0B2560] shadow-md disabled:opacity-0 transition z-10"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-primary shadow-md disabled:opacity-0 transition z-10"
             >
               <ChevronRight size={16} />
             </button>
@@ -69,9 +69,9 @@ function ServiceCard({ r, location, showPriceOnCards, arrows }: {
         )}
       </div>
       <div className="p-5">
-        <h3 className="font-bold text-[#0B2560] mb-2 text-sm leading-snug group-hover:text-[#2A6BA8] transition">{r.name}</h3>
+        <h3 className="font-bold text-primary mb-2 text-sm leading-snug group-hover:text-secondary transition">{r.name}</h3>
         <div className="flex items-center justify-between text-sm">
-          {showPriceOnCards && <span className="font-bold text-[#0B2560]">₹{r.price.toLocaleString('en-IN')}</span>}
+          {showPriceOnCards && <span className="font-bold text-primary">₹{r.price.toLocaleString('en-IN')}</span>}
           <span className="text-gray-500 text-xs">{r.duration} min</span>
         </div>
       </div>
@@ -116,10 +116,10 @@ export default function RelatedServicesPager({
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         <div className="flex items-center justify-between mb-7 flex-wrap gap-3">
           <div>
-            <h2 className="text-2xl font-headline font-bold text-[#0B2560]">Related Treatments</h2>
+            <h2 className="text-2xl font-headline font-medium text-primary">Related Treatments</h2>
             <p className="text-gray-500 text-sm mt-1">More {catLabel.toLowerCase()} services at our {cityName} clinic</p>
           </div>
-          <Link href={`/${location}/services/${catSlug}`} className="text-sm font-semibold text-[#0B2560] hover:text-[#3b82f6] transition flex items-center gap-1.5">
+          <Link href={`/${location}/services/${catSlug}`} className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5">
             View all <ChevronRight size={14} />
           </Link>
         </div>
@@ -154,7 +154,7 @@ export default function RelatedServicesPager({
                   className="flex items-center justify-center p-2.5 -m-2.5"
                 >
                   <span className={`block rounded-full transition-all ${
-                    i === mobileIndex ? 'w-6 h-2 bg-[#0B2560]' : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
+                    i === mobileIndex ? 'w-6 h-2 bg-primary' : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
                   }`} />
                 </button>
               ))}
@@ -175,7 +175,7 @@ export default function RelatedServicesPager({
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
               aria-label="Previous page"
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#0B2560] disabled:opacity-30 hover:border-[#0B2560]/40 transition"
+              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-primary disabled:opacity-30 hover:border-primary/40 transition"
             >
               <ChevronLeft size={16} />
             </button>
@@ -190,7 +190,7 @@ export default function RelatedServicesPager({
                   className="flex items-center justify-center p-2.5 -m-2.5"
                 >
                   <span className={`block rounded-full transition-all ${
-                    i === page ? 'w-6 h-2 bg-[#0B2560]' : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
+                    i === page ? 'w-6 h-2 bg-primary' : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
                   }`} />
                 </button>
               ))}
@@ -200,7 +200,7 @@ export default function RelatedServicesPager({
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
               aria-label="Next page"
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#0B2560] disabled:opacity-30 hover:border-[#0B2560]/40 transition"
+              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-primary disabled:opacity-30 hover:border-primary/40 transition"
             >
               <ChevronRight size={16} />
             </button>

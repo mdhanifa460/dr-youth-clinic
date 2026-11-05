@@ -24,14 +24,14 @@ export default function RecoveryTimeline({
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-bold text-[#0B2560] mb-5">Recovery Timeline</h2>
+      <h2 className="text-2xl font-headline font-medium text-primary mb-5">Recovery Timeline</h2>
       <div className="rounded-3xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
             <CheckCircle size={18} className="text-green-600" />
           </div>
           <div>
-            <p className="font-bold text-green-800 text-sm">Total recovery: <span className="text-[#0B2560]">{recoveryTime}</span></p>
+            <p className="font-bold text-green-800 text-sm">Total recovery: <span className="text-primary">{recoveryTime}</span></p>
             <p className="text-green-600 text-xs">Most patients return to daily activities quickly</p>
           </div>
         </div>
@@ -39,8 +39,8 @@ export default function RecoveryTimeline({
           {(stages?.length ? stages : DEFAULT_RECOVERY_STAGES).map((phase, i) => (
             <div key={i} className="bg-white rounded-2xl p-4 border border-green-100 text-center">
               <div className="text-2xl mb-1.5">{phase.icon}</div>
-              <p className="font-bold text-[#0B2560] text-xs">{phase.phase}</p>
-              <p className="text-green-600 text-[10px] font-semibold mb-1.5">{phase.label}</p>
+              <p className="font-bold text-primary text-xs">{phase.phase}</p>
+              <p className="text-green-600 text-xs font-semibold mb-1.5">{phase.label}</p>
               <p className="text-gray-500 text-[11px] leading-relaxed">{phase.description}</p>
             </div>
           ))}

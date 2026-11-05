@@ -40,15 +40,15 @@ export default function VideoAcademySection({ data }: { data: Data }) {
     <section id="academy" className="bg-white py-16 md:py-24 px-6 md:px-10">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <p className="text-[#2A6BA8] font-bold text-xs tracking-[0.2em] uppercase mb-3">🎥 Video Academy</p>
-          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-secondary font-bold text-xs tracking-[0.2em] uppercase mb-3">🎥 Video Academy</p>
+          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>
           {subheadline && <p className="text-gray-600 mt-3 max-w-xl mx-auto">{subheadline}</p>}
         </div>
 
         {featured && (
           <Link
             href={`/academy/${featured.slug}`}
-            className="group block rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] mb-10 relative bg-[#0B2560]"
+            className="group block rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] mb-10 relative bg-primary"
           >
             <div className="relative aspect-video sm:aspect-[21/9]">
               {featured.thumbnail?.url ? (
@@ -58,19 +58,19 @@ export default function VideoAcademySection({ data }: { data: Data }) {
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#3B82C4]" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/90 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                  <Play size={28} className="text-[#0B2560] ml-1" fill="currentColor" />
+                  <Play size={28} className="text-primary ml-1" fill="currentColor" />
                 </div>
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                <span className="inline-block bg-[#F5A623] text-[#0B2560] text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+                <span className="inline-block bg-champagne text-primary text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
                   Featured
                 </span>
-                <h3 className="text-white text-xl md:text-3xl font-headline font-extrabold leading-tight">{featured.title}</h3>
+                <h3 className="text-white text-xl md:text-3xl font-headline font-medium leading-tight">{featured.title}</h3>
                 <p className="text-white/70 text-sm mt-2 flex items-center gap-3">
                   {featured.duration && <span>{featured.duration}</span>}
                   {featured.doctor?.name && <span>· {featured.doctor.name}</span>}
@@ -88,8 +88,8 @@ export default function VideoAcademySection({ data }: { data: Data }) {
                 onClick={() => setActiveCategory(c)}
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                   activeCategory === c
-                    ? 'bg-[#0B2560] text-white shadow-md'
-                    : 'bg-[#f6faff] text-gray-600 hover:bg-[#e8eff7]'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-canvas text-gray-600 hover:bg-line'
                 }`}
               >
                 {c}
@@ -109,22 +109,22 @@ export default function VideoAcademySection({ data }: { data: Data }) {
                 {v.thumbnail?.url ? (
                   <img src={v.thumbnail.url} alt={v.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] to-[#3B82C4]" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary" />
                 )}
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                   <div className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                    <Play size={16} className="text-[#0B2560] ml-0.5" fill="currentColor" />
+                    <Play size={16} className="text-primary ml-0.5" fill="currentColor" />
                   </div>
                 </div>
                 {v.duration && (
-                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-lg">
                     {v.duration}
                   </span>
                 )}
               </div>
               <div className="p-4">
-                <span className="text-[10px] font-bold text-[#2A6BA8] uppercase tracking-wider">{v.category}</span>
-                <h3 className="font-headline font-bold text-[#0B2560] text-sm mt-1 leading-snug line-clamp-2">{v.title}</h3>
+                <span className="text-xs font-bold text-secondary uppercase tracking-wider">{v.category}</span>
+                <h3 className="font-headline font-medium text-primary text-sm mt-1 leading-snug line-clamp-2">{v.title}</h3>
                 {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}
               </div>
             </Link>
@@ -134,7 +134,7 @@ export default function VideoAcademySection({ data }: { data: Data }) {
         <div className="text-center mt-10">
           <Link
             href="/academy"
-            className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition"
+            className="inline-flex items-center gap-2 bg-primary text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition"
           >
             Watch More Videos →
           </Link>

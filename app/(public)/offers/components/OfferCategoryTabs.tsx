@@ -21,12 +21,12 @@ export default function OfferCategoryTabs({
           onClick={() => onChange(cat)}
           className={`shrink-0 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200 ${
             active === cat
-              ? 'bg-[#0B2560] text-white shadow-lg shadow-[#0B2560]/20'
-              : 'bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-600 hover:border-[#0B2560]/30 hover:text-[#0B2560]'
+              ? 'bg-primary text-white shadow-lg shadow-primary/20'
+              : 'bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-600 hover:border-primary/30 hover:text-primary'
           }`}
         >
           {cat}
-          <span className={`ml-1.5 text-[10px] font-bold ${active === cat ? 'text-white/70' : 'text-gray-500'}`}>
+          <span className={`ml-1.5 text-xs font-bold ${active === cat ? 'text-white/70' : 'text-gray-500'}`}>
             ({counts[cat] || 0})
           </span>
         </button>

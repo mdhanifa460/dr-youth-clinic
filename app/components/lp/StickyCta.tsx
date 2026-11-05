@@ -70,7 +70,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
         <div className="flex">
           <button
             onClick={scrollToForm}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 bg-[#0B2560] text-white font-bold text-xs active:opacity-80 touch-manipulation"
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 bg-primary text-white font-bold text-xs active:opacity-80 touch-manipulation"
             aria-label="Book free consultation"
           >
             <CalendarCheck size={18} aria-hidden="true" />
@@ -81,7 +81,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
             <a
               href={`tel:${phone.replace(/\s/g, '')}`}
               onClick={() => pushDataLayerEvent('call_click', { source: 'lp_sticky_mobile' })}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 bg-[#3B82C4] text-white font-bold text-xs active:opacity-80 touch-manipulation"
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 bg-secondary text-white font-bold text-xs active:opacity-80 touch-manipulation"
               aria-label={`Call ${phone}`}
             >
               <Phone size={18} aria-hidden="true" />
@@ -115,7 +115,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
       >
         <button
           onClick={scrollToForm}
-          className="flex items-center gap-2 bg-[#0B2560] text-white font-bold text-sm px-4 py-3 rounded-l-2xl shadow-2xl hover:bg-[#1a3a7a] hover:-translate-x-1 transition-all duration-200"
+          className="flex items-center gap-2 bg-primary text-white font-bold text-sm px-4 py-3 rounded-l-2xl shadow-2xl hover:bg-[#1a3a7a] hover:-translate-x-1 transition-all duration-200"
           aria-label="Book free consultation"
         >
           <CalendarCheck size={17} aria-hidden="true" />
@@ -128,7 +128,7 @@ export default function StickyCta({ phone, whatsapp, ctaText = 'Book Free Consul
             aria-label={`Call ${phone}`}
             onClick={() => pushDataLayerEvent('call_click', { source: 'lp_sticky_desktop' })}
           >
-            <div className="flex items-center gap-2 bg-[#3B82C4] text-white font-bold text-sm px-4 py-3 rounded-l-2xl shadow-xl hover:bg-[#2a70b0] hover:-translate-x-1 transition-all duration-200">
+            <div className="flex items-center gap-2 bg-secondary text-white font-bold text-sm px-4 py-3 rounded-l-2xl shadow-xl hover:bg-[#2a70b0] hover:-translate-x-1 transition-all duration-200">
               <Phone size={17} aria-hidden="true" />
               <span className="whitespace-nowrap">{phone}</span>
             </div>

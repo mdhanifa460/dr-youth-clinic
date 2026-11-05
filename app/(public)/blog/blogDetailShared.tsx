@@ -38,12 +38,12 @@ import { isBlogAtCity, getBlogCities, getEffectiveBlogSeo, isBlogCityPageCanonic
 
 function InlineConsultCta({ text }: { text?: string }) {
   return (
-    <aside className="not-prose my-8 rounded-2xl bg-[#0B2560] p-5 text-white flex flex-col sm:flex-row sm:items-center gap-4">
+    <aside className="not-prose my-8 rounded-2xl bg-primary p-5 text-white flex flex-col sm:flex-row sm:items-center gap-4">
       <div className="flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5A623] mb-1">Have questions about your skin or hair?</p>
-        <p className="text-sm text-white/80 leading-snug">{text || 'Talk to our dermatologists — honest advice, no commitment.'}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-champagne mb-1">Have questions about your skin or hair?</p>
+        <p className="text-sm text-white/80 leading-snug">{text || 'Talk to our doctors — honest advice, no commitment.'}</p>
       </div>
-      <Link href="/book" className="inline-flex items-center justify-center rounded-xl bg-[#F5A623] px-5 py-3 text-sm font-extrabold text-[#0B2560] whitespace-nowrap">
+      <Link href="/book" className="inline-flex items-center justify-center rounded-xl bg-champagne px-5 py-3 text-sm font-extrabold text-primary whitespace-nowrap">
         Book a Consultation
       </Link>
     </aside>
@@ -226,9 +226,9 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
       />
       <ReadingProgress />
 
-      <main>
+      <div>
         {/* ── HERO ── */}
-        <section className="relative flex flex-col md:min-h-[80vh] md:flex-row md:items-end bg-[#0B2560] overflow-hidden">
+        <section className="relative flex flex-col md:min-h-[80vh] md:flex-row md:items-end bg-primary overflow-hidden">
           {post.coverImage?.url ? (
             <>
               {/* Deliberately full-bleed/cinematic, not a discrete cropped
@@ -260,7 +260,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
               <div className="absolute inset-0 hidden md:block bg-gradient-to-t from-[#020e24]/95 via-[#020e24]/50 to-[#020e24]/20" />
             </>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0f2040]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-[#1a3a7a] to-[#0f2040]" />
           )}
 
           <div className="relative z-10 order-1 max-w-4xl mx-auto px-5 sm:px-6 pt-6 pb-7 md:pt-0 md:pb-20 w-full">
@@ -269,15 +269,15 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
             </Link>
 
             <div className="flex items-center gap-2 mb-4">
-              <span className={`text-[10px] font-extrabold uppercase tracking-[0.2em] text-white px-3 py-1 rounded-full ${CATEGORY_COLOR[post.category] || 'bg-[#3B82C4]'}`}>
+              <span className={`text-xs font-extrabold uppercase tracking-[0.2em] text-white px-3 py-1 rounded-full ${CATEGORY_COLOR[post.category] || 'bg-secondary'}`}>
                 {post.category}
               </span>
               {post.featured && (
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#A25607] border border-[#F5A623]/40 px-2.5 py-1 rounded-full">Featured</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-bronze border border-champagne/40 px-2.5 py-1 rounded-full">Featured</span>
               )}
             </div>
 
-            <h1 className="text-[1.75rem] sm:text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight max-w-3xl">
+            <h1 className="text-[1.75rem] sm:text-3xl md:text-5xl lg:text-6xl font-headline font-medium text-white leading-tight max-w-3xl">
               {post.title}
             </h1>
 
@@ -297,7 +297,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
               <span className="text-white/30">·</span>
               {reviewingDoctor ? (
                 <span className="flex items-center gap-1.5 text-white/70 font-medium">
-                  <ShieldCheck size={13} className="text-[#A25607]" /> Reviewed by {reviewingDoctor.name}
+                  <ShieldCheck size={13} className="text-bronze" /> Reviewed by {reviewingDoctor.name}
                 </span>
               ) : (
                 <span className="text-white/70 font-medium">{post.author}</span>
@@ -346,13 +346,13 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
                   <div
                     className="
                       text-[17px] text-gray-700 leading-[1.75] md:leading-[1.85] break-words
-                      [&_h2]:text-2xl [&_h2]:md:text-3xl [&_h2]:font-headline [&_h2]:font-extrabold [&_h2]:text-[#0B2560] [&_h2]:mt-14 [&_h2]:mb-5 [&_h2]:pb-3 [&_h2]:border-b [&_h2]:border-gray-100
-                      [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#0B2560] [&_h3]:mt-10 [&_h3]:mb-3
+                      [&_h2]:text-2xl [&_h2]:md:text-3xl [&_h2]:font-headline [&_h2]:font-extrabold [&_h2]:text-primary [&_h2]:mt-14 [&_h2]:mb-5 [&_h2]:pb-3 [&_h2]:border-b [&_h2]:border-gray-100
+                      [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-primary [&_h3]:mt-10 [&_h3]:mb-3
                       [&_p]:mb-7 [&_p]:leading-[1.9]
-                      [&_ul]:pl-6 [&_ul]:mb-7 [&_ul]:space-y-2.5 [&_ul>li]:list-disc [&_ul>li]:marker:text-[#A25607]
-                      [&_ol]:pl-6 [&_ol]:mb-7 [&_ol]:space-y-2.5 [&_ol>li]:list-decimal [&_ol>li]:marker:text-[#2A6BA8] [&_ol>li]:marker:font-bold
-                      [&_blockquote]:border-l-4 [&_blockquote]:border-[#F5A623] [&_blockquote]:pl-6 [&_blockquote]:pr-4 [&_blockquote]:py-4 [&_blockquote]:my-10 [&_blockquote]:bg-[#fffbf0] [&_blockquote]:rounded-r-2xl [&_blockquote]:text-gray-600 [&_blockquote]:italic [&_blockquote]:text-lg
-                      [&_strong]:text-[#0B2560] [&_strong]:font-bold
+                      [&_ul]:pl-6 [&_ul]:mb-7 [&_ul]:space-y-2.5 [&_ul>li]:list-disc [&_ul>li]:marker:text-bronze
+                      [&_ol]:pl-6 [&_ol]:mb-7 [&_ol]:space-y-2.5 [&_ol>li]:list-decimal [&_ol>li]:marker:text-secondary [&_ol>li]:marker:font-bold
+                      [&_blockquote]:border-l-4 [&_blockquote]:border-champagne [&_blockquote]:pl-6 [&_blockquote]:pr-4 [&_blockquote]:py-4 [&_blockquote]:my-10 [&_blockquote]:bg-[#fffbf0] [&_blockquote]:rounded-r-2xl [&_blockquote]:text-gray-600 [&_blockquote]:italic [&_blockquote]:text-lg
+                      [&_strong]:text-primary [&_strong]:font-bold
                       [&_em]:italic [&_em]:text-gray-600
                       [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_img]:max-w-full [&_img]:h-auto [&_pre]:overflow-x-auto [&_pre]:max-w-full
                     "
@@ -365,7 +365,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
                   <div className="mt-12 pt-8 border-t border-gray-100 flex flex-wrap items-center gap-2">
                     <Tag size={14} className="text-gray-500 shrink-0" />
                     {post.tags.map((t: string) => (
-                      <span key={t} className="text-xs bg-[#f6faff] border border-blue-50 text-[#0B2560] px-3 py-1.5 rounded-full font-medium">{t}</span>
+                      <span key={t} className="text-xs bg-canvas border border-blue-50 text-primary px-3 py-1.5 rounded-full font-medium">{t}</span>
                     ))}
                   </div>
                 )}
@@ -395,9 +395,9 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
 
         {/* ── RELATED POSTS ── */}
         {related.length > 0 && (
-          <section className="bg-[#f6faff] py-14 border-t border-blue-50">
+          <section className="bg-canvas py-14 border-t border-blue-50">
             <div className="max-w-6xl mx-auto px-6">
-              <h2 className="text-2xl font-headline font-extrabold text-[#0B2560] mb-8">More Articles</h2>
+              <h2 className="text-2xl font-headline font-medium text-primary mb-8">More Articles</h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {related.map((r: any) => (
                   <Link key={String(r._id)} href={`${basePath}/${r.slug}`}
@@ -407,16 +407,16 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
                       aspectRatio="16/9"
                       sizes="400px"
                       alt={r.title}
-                      className="bg-gradient-to-br from-[#e8eff7] to-[#c5d9ef]"
+                      className="bg-gradient-to-br from-line to-[#c5d9ef]"
                       imgClassName="group-hover:scale-105 transition duration-500"
                       fallbackEmoji="📝"
                     >
-                      <span className={`absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full ${CATEGORY_COLOR[r.category] || 'bg-[#3B82C4]'}`}>
+                      <span className={`absolute top-3 left-3 text-xs font-bold uppercase tracking-wider text-white px-2.5 py-1 rounded-full bg-primary`}>
                         {r.category}
                       </span>
                     </FocalImage>
                     <div className="flex flex-col flex-1 p-5">
-                      <h3 className="font-bold text-[#0B2560] text-sm leading-snug line-clamp-2 group-hover:text-[#2A6BA8] transition">{r.title}</h3>
+                      <h3 className="font-bold text-primary text-sm leading-snug line-clamp-2 group-hover:text-secondary transition">{r.title}</h3>
                       <p className="text-gray-500 text-xs mt-2 line-clamp-2">{r.excerpt}</p>
                       <div className="flex items-center gap-2 mt-auto pt-3 text-[11px] text-gray-500">
                         <Clock size={10} /> {r.readTime}
@@ -434,7 +434,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
           consultationCta={siteConfig.consultationCta}
           publicWhatsApp={siteConfig.publicWhatsApp}
         />
-      </main>
+      </div>
     </>
   );
 }

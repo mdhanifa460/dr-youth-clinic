@@ -35,3 +35,72 @@ const YEARS_IN_TEXT = /\b\d+(?:\.\d+)?(?:\s*\+)?(?=\s*(?:years?|yrs?)['’]?\s+(
 export function withClinicYearsText(text: string | undefined): string | undefined {
   return text?.replace(YEARS_IN_TEXT, CLINIC_YEARS);
 }
+
+// Copy typed into Admin outlives any code clean-up, so these run at render time
+// too. Nothing here can be supported yet: no device evidence or accreditation is
+// on file, and the qualifications listed for the clinic's doctors don't include a
+// dermatology degree. If that changes, narrow the patterns rather than re-adding copy.
+const UNSUPPORTED_CLAIM =
+  /\b(?:US\s+)?FDA\b|\bNABH\b|\bIADVL\b|\bISO\s*(?:9001|certified|compliant)|\bbest\s+(?:aesthetic|skin|hair|derm|clinic|doctor|cosmetic)|(?:#|\bno\.?\s*)1\b|\bnumber one\b|\bcontentment\b|\bpainless\b|\bguarantee[ds]?\b|\bproven\b|\bthousands of\b|\btrusted by thousands\b|\b(?:lasting|long-lasting|permanent)\s+results\b|\breal\s+results\b|\bflawless\b|\bzero\s+downtime\b|\blimited[-\s]time\b|\bup to \d+\s*%|\b\d[\d,.]*\s*k\+?\s*(?:successful|procedures|subscribers)/i;
+
+export function hasUnsupportedClaim(text: string | undefined | null): boolean {
+  const withoutDisclaimers = (text ?? '').replace(/\b(?:no|not|never|cannot|can't)\b[^.]{0,40}\bguarantee[ds]?\b/gi, '');
+  return UNSUPPORTED_CLAIM.test(withoutDisclaimers);
+}
+
+// Rewrites credential wording that has a safe equivalent, so a sentence survives
+// instead of being dropped: "our expert dermatologists" -> "our doctors".
+export function cleanCredentialWording(text: string): string {
+  return text
+    .replace(/,?\s*[^,.]*\bbest\s+aesthetic\s+clinics?\b[^.]*/gi, '')
+    .replace(/\b(?:board[-\s]certified|certified|MD|expert|experienced|trained)\s+(?=dermatologists?\b)/gi, '')
+    .replace(/\bdermatologists?\s+or\s+aesthetic\s+physicians?\b/gi, 'doctor')
+    .replace(/\bDermatologists\b/g, 'Doctors')
+    .replace(/\bDermatologist\b/g, 'Doctor')
+    .replace(/\bdermatologists\b/g, 'doctors')
+    .replace(/\bdermatologist\b/g, 'doctor')
+    .replace(/\bBoard[-\s]certified\s+(\w)/g, (_, c: string) => c.toUpperCase())
+    .replace(/\bboard[-\s]certified\s+/g, '');
+}
+
+// Doctor profiles stay in place whatever they say, so only the wording changes.
+export function scrubDoctorBios<T extends { bio?: string }>(doctors: T[]): T[] {
+  return doctors.map((d) => (d.bio ? { ...d, bio: cleanCredentialWording(d.bio) } : d));
+}
+
+const CREDENTIAL_QUESTION = /certified\s+dermatolog|are your doctors.*dermatolog/i;
+const NON_COPY_KEY = /^(?:_?id|url|href|ctaHref|viewAllHref|publicId|slug|icon|image|photo|type|key|accentBg|bgColor|color|sectionKey)$/i;
+const looksLikeLink = (s: string) => /^(?:https?:|tel:|mailto:|\/|#)/.test(s);
+
+const copyFields = (item: Record<string, unknown>) =>
+  Object.entries(item).filter(([k, v]) => typeof v === 'string' && !NON_COPY_KEY.test(k) && !looksLikeLink(v)) as [string, string][];
+
+// Small items (a FAQ, an award, a reason) stand or fall on one claim. Larger ones,
+// like a hero slide, keep their other fields and just lose the offending one.
+const isDroppable = (item: Record<string, unknown>) => {
+  const fields = copyFields(item);
+  return fields.length <= 3 && fields.some(([, v]) => hasUnsupportedClaim(v) || CREDENTIAL_QUESTION.test(v));
+};
+
+// Walks saved content. A list item making a claim is dropped; a single field is
+// removed so the component's own default takes over; everything else has its
+// credential wording cleaned. Links, ids and image fields are never touched.
+export function scrubClaims<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .filter((v) => (typeof v === 'string' ? !hasUnsupportedClaim(v) : !(v && typeof v === 'object' && isDroppable(v as Record<string, unknown>))))
+      .map(scrubClaims) as unknown as T;
+  }
+  if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (typeof v === 'string' && !NON_COPY_KEY.test(k) && !looksLikeLink(v)) {
+        if (!hasUnsupportedClaim(v)) out[k] = cleanCredentialWording(v);
+      } else {
+        out[k] = NON_COPY_KEY.test(k) ? v : scrubClaims(v);
+      }
+    }
+    return out as T;
+  }
+  return value;
+}

@@ -3,7 +3,8 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MdPhone, MdMenu, MdClose, MdPhotoLibrary, MdChevronRight } from "react-icons/md";
+import { MdPhone, MdMenu, MdClose, MdPhotoLibrary, MdEventAvailable, MdChevronRight } from "react-icons/md";
+import { ChevronDown } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import { useBranchPhone } from "@/app/lib/useBranchWhatsApp";
 
@@ -66,6 +67,12 @@ const FALLBACK_NAV_ITEMS: NavItem[] = [
 ];
 
 const DEFAULT_LOGO_URL = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_webp,q_auto,w_300/logo_l7n0ai.png`;
+
+// The nav item for the current page, or "home" on the homepage and nothing elsewhere.
+function routeActiveId(items: NavItem[], pathname: string) {
+  if (pathname === "/") return "home";
+  return items.find((i) => i.linkType === "custom" && i.href && i.href !== "/" && pathname.startsWith(i.href))?.id ?? "";
+}
 
 export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?: NavItem[]; megaMenu?: MegaMenuConfig | null }) {
   const siteConfig = useSiteConfig();
@@ -147,7 +154,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
   }, []);
 
   // On route change, reset active to "home" so the scroll tracker takes over cleanly
-  useEffect(() => { setActive("home"); }, [pathname]);
+  useEffect(() => { setActive(routeActiveId(navItems, pathname)); }, [pathname, navItems]);
 
   useEffect(() => {
     const sectionIds = navItems.map((i) => i.id);
@@ -169,7 +176,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
         const height = section.offsetHeight;
         if (scrollY >= top && scrollY < top + height) { matched = id; break; }
       }
-      setActive(matched || "home");
+      setActive(matched || routeActiveId(navItems, pathname));
     };
 
     const handleClickOutside = () => {
@@ -221,7 +228,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
 
         {/* Left: hamburger */}
         <button
-          className="w-11 h-11 rounded-xl flex items-center justify-center text-[#0B2560] hover:bg-[#f6faff] transition"
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-primary hover:bg-canvas transition"
           onClick={(e) => { e.stopPropagation(); setMobileOpen(!mobileOpen); }}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
         >
@@ -238,7 +245,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
             alt="DR Youth Clinic"
             width={108}
             height={37}
-            className="object-contain"
+            className="h-11 w-auto object-contain"
             priority
           />
         </Link>
@@ -246,10 +253,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
         {/* Right: results / gallery icon */}
         <Link
           href={siteConfig.showBeforeAfterOnPublic ? "/results" : "/book"}
-          className="w-11 h-11 rounded-xl flex items-center justify-center text-[#0B2560] hover:bg-[#f6faff] transition"
-          aria-label={siteConfig.showBeforeAfterOnPublic ? "View results" : "Book a consultation"}
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-primary hover:bg-canvas transition"
+          aria-label={siteConfig.showBeforeAfterOnPublic ? "View results" : "Request an appointment"}
         >
-          <MdPhotoLibrary size={22} />
+          {siteConfig.showBeforeAfterOnPublic ? <MdPhotoLibrary size={22} /> : <MdEventAvailable size={22} />}
         </Link>
       </div>
 
@@ -267,7 +274,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
             alt="DR Youth Clinic"
             width={122}
             height={42}
-            className="object-contain"
+            className="h-12 w-auto object-contain"
             priority
           />
         </Link>
@@ -283,13 +290,13 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                   <button
                     onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === item.id ? null : item.id); }}
                     className={`relative text-[14px] font-semibold flex items-center gap-1 transition ${
-                      isLocationActive ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
+                      isLocationActive ? "text-primary" : "text-gray-600 hover:text-primary"
                     }`}
                   >
                     {item.label}
-                    <span className={`text-xs transition-transform duration-200 ${openDropdown === item.id ? "rotate-180" : ""}`}>▼</span>
+                    <span className={`text-xs transition-transform duration-200 ${openDropdown === item.id ? "rotate-180" : ""}`}><ChevronDown size={14} aria-hidden="true" /></span>
                     {isLocationActive && (
-                      <span className="absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full w-full" />
+                      <span className="absolute -bottom-1 left-0 h-[2px] bg-primary rounded-full w-full" />
                     )}
                   </button>
                   {openDropdown === item.id && (
@@ -304,8 +311,8 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                           onClick={() => setOpenDropdown(null)}
                           className={`block px-4 py-2 text-sm font-medium transition ${
                             currentLocation === city.toLowerCase()
-                              ? "bg-[#f6faff] text-[#0B2560] font-bold"
-                              : "text-gray-700 hover:bg-[#f6faff] hover:text-[#0B2560]"
+                              ? "bg-canvas text-primary font-bold"
+                              : "text-gray-700 hover:bg-canvas hover:text-primary"
                           }`}
                         >
                           {city}
@@ -335,20 +342,20 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                     <Link
                       href={resolveHref(item)}
                       className={`relative text-[13px] xl:text-[14px] font-semibold transition-all duration-200 whitespace-nowrap ${
-                        isActiveSvc || megaOpen ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
+                        isActiveSvc || megaOpen ? "text-primary" : "text-gray-600 hover:text-primary"
                       }`}
                     >
                       {item.label}
-                      <span className={`absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full transition-all duration-300 ${isActiveSvc || megaOpen ? "w-full" : "w-0"}`} />
+                      <span className={`absolute -bottom-1 left-0 h-[2px] bg-primary rounded-full transition-all duration-300 ${isActiveSvc || megaOpen ? "w-full" : "w-0"}`} />
                     </Link>
                     <button
                       type="button"
                       aria-label={`${item.label} menu`}
                       aria-expanded={megaOpen}
-                      onClick={(e) => { e.stopPropagation(); megaOpen ? setMegaOpen(false) : openMega(); }}
-                      className="text-[10px] text-gray-500 hover:text-[#0B2560] p-1"
+                      onClick={(e) => { e.stopPropagation(); if (megaOpen) setMegaOpen(false); else openMega(); }}
+                      className="text-xs text-gray-500 hover:text-primary p-1"
                     >
-                      <span className={`inline-block transition-transform duration-200 ${megaOpen ? "rotate-180" : ""}`}>▼</span>
+                      <span className={`inline-block transition-transform duration-200 ${megaOpen ? "rotate-180" : ""}`}><ChevronDown size={14} aria-hidden="true" /></span>
                     </button>
                   </div>
 
@@ -368,11 +375,11 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                                 onMouseEnter={() => setMegaCat(i)}
                                 onFocus={() => setMegaCat(i)}
                                 className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${
-                                  i === megaCat ? "bg-[#0B2560]/[0.06] text-[#0B2560]" : "text-gray-600 hover:bg-[#f6faff] hover:text-[#0B2560]"
+                                  i === megaCat ? "bg-primary/[0.06] text-primary" : "text-gray-600 hover:bg-canvas hover:text-primary"
                                 }`}
                               >
-                                <span className="flex items-center gap-2"><span aria-hidden>{c.icon}</span>{c.label}</span>
-                                <MdChevronRight size={18} className={i === megaCat ? "text-[#F5A623]" : "text-gray-300"} />
+                                <span className="flex items-center gap-2">{c.label}</span>
+                                <MdChevronRight size={18} className={i === megaCat ? "text-bronze" : "text-gray-300"} />
                               </Link>
                             </li>
                           ))}
@@ -384,11 +391,11 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                                 onFocus={() => setMegaCat(cats.length)}
                                 onClick={() => setMegaCat(cats.length)}
                                 className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${
-                                  concernSel ? "bg-[#0B2560]/[0.06] text-[#0B2560]" : "text-gray-600 hover:bg-[#f6faff] hover:text-[#0B2560]"
+                                  concernSel ? "bg-primary/[0.06] text-primary" : "text-gray-600 hover:bg-canvas hover:text-primary"
                                 }`}
                               >
-                                <span className="flex items-center gap-2"><span aria-hidden>🎯</span>By Concern</span>
-                                <MdChevronRight size={18} className={concernSel ? "text-[#F5A623]" : "text-gray-300"} />
+                                <span className="flex items-center gap-2">By Concern</span>
+                                <MdChevronRight size={18} className={concernSel ? "text-bronze" : "text-gray-300"} />
                               </button>
                             </li>
                           )}
@@ -398,16 +405,16 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                         <div className="py-5 pl-8 flex flex-col">
                           {concernSel ? (
                             <>
-                              <p className="text-base font-extrabold text-[#0B2560]">Treatments by concern</p>
+                              <p className="text-base font-extrabold text-primary">Treatments by concern</p>
                               <p className="text-xs text-gray-500 mb-3">Find what helps with what you’re dealing with.</p>
                               <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-4">
                                 {megaConcerns.slice(0, 6).map((cn) => (
                                   <div key={cn.name}>
-                                    <p className="text-sm font-bold text-[#0B2560] mb-1">{cn.name}</p>
+                                    <p className="text-sm font-bold text-primary mb-1">{cn.name}</p>
                                     <ul>
                                       {cn.services.slice(0, Math.min(megaMax, 4)).map((sv) => (
                                         <li key={cn.name + sv.slug}>
-                                          <Link href={`/${megaCity}/services/${sv.category}/${sv.slug}`} className="block py-1 text-sm text-gray-600 hover:text-[#0B2560] hover:translate-x-0.5 transition">
+                                          <Link href={`/${megaCity}/services/${sv.category}/${sv.slug}`} className="block py-1 text-sm text-gray-600 hover:text-primary hover:translate-x-0.5 transition">
                                             {sv.name}
                                           </Link>
                                         </li>
@@ -421,10 +428,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                             <>
                               <div className="flex items-baseline justify-between gap-4 mb-3">
                                 <div>
-                                  <p className="text-base font-extrabold text-[#0B2560]">{cur.label}</p>
+                                  <p className="text-base font-extrabold text-primary">{cur.label}</p>
                                   {cur.tagline && <p className="text-xs text-gray-500">{cur.tagline}</p>}
                                 </div>
-                                <Link href={`/${megaCity}/services/${cur.slug}`} className="text-xs font-bold text-[#0B2560] hover:text-[#F5A623] whitespace-nowrap">
+                                <Link href={`/${megaCity}/services/${cur.slug}`} className="text-xs font-bold text-primary hover:text-bronze whitespace-nowrap">
                                   View all {cur.services.length} →
                                 </Link>
                               </div>
@@ -433,7 +440,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                                   <li key={sv.slug}>
                                     <Link
                                       href={`/${megaCity}/services/${cur.slug}/${sv.slug}`}
-                                      className="block py-2 text-sm text-gray-700 hover:text-[#0B2560] hover:translate-x-0.5 transition"
+                                      className="block py-2 text-sm text-gray-700 hover:text-primary hover:translate-x-0.5 transition"
                                     >
                                       {sv.name}
                                     </Link>
@@ -441,7 +448,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                                 ))}
                               </ul>
                               {cur.services.length > megaMax && (
-                                <Link href={`/${megaCity}/services/${cur.slug}`} className="mt-2 text-sm font-semibold text-[#F5A623] hover:underline">
+                                <Link href={`/${megaCity}/services/${cur.slug}`} className="mt-2 text-sm font-semibold text-bronze hover:underline">
                                   +{cur.services.length - megaMax} more in {cur.label}
                                 </Link>
                               )}
@@ -453,12 +460,12 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                             {megaMenu?.showBookCta !== false && (
                               <Link
                                 href={megaMenu?.bookHref || "/book"}
-                                className="bg-[#0B2560] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:-translate-y-0.5 transition"
+                                className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:-translate-y-0.5 transition"
                               >
                                 {megaMenu?.bookLabel || "Book Appointment"}
                               </Link>
                             )}
-                            <Link href={resolveHref(item)} className="text-sm font-semibold text-[#0B2560] hover:text-[#F5A623]">
+                            <Link href={resolveHref(item)} className="text-sm font-semibold text-primary hover:text-bronze">
                               All services →
                             </Link>
                           </div>
@@ -472,11 +479,11 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
 
             const isActive = active === item.id;
             const linkClassName = `relative text-[13px] xl:text-[14px] font-semibold transition-all duration-200 whitespace-nowrap ${
-              isActive ? "text-[#0B2560]" : "text-gray-600 hover:text-[#0B2560]"
+              isActive ? "text-primary" : "text-gray-600 hover:text-primary"
             }`;
             const underline = (
               <span
-                className={`absolute -bottom-1 left-0 h-[2px] bg-[#0B2560] rounded-full transition-all duration-300 ${
+                className={`absolute -bottom-1 left-0 h-[2px] bg-primary rounded-full transition-all duration-300 ${
                   isActive ? "w-full" : "w-0"
                 }`}
               />
@@ -490,7 +497,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                     className={`${linkClassName} flex items-center gap-1`}
                   >
                     {item.label}
-                    <span className={`text-xs transition-transform duration-200 ${openDropdown === item.id ? "rotate-180" : ""}`}>▼</span>
+                    <span className={`text-xs transition-transform duration-200 ${openDropdown === item.id ? "rotate-180" : ""}`}><ChevronDown size={14} aria-hidden="true" /></span>
                     {underline}
                   </button>
                   {openDropdown === item.id && (
@@ -503,7 +510,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                           key={child.id}
                           href={child.href}
                           onClick={() => setOpenDropdown(null)}
-                          className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-[#f6faff] hover:text-[#0B2560] transition"
+                          className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-canvas hover:text-primary transition"
                         >
                           {child.label}
                         </Link>
@@ -532,13 +539,13 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
               (see app/lib/assessmentFlow.ts), so this is the only CTA. */}
           <Link
             href="/plan-my-journey"
-            className="hidden xl:flex min-h-10 items-center gap-1.5 border border-[#F5A623] text-[#0B2560] px-3 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/10 transition whitespace-nowrap"
+            className="hidden xl:flex min-h-10 items-center gap-1.5 border border-line-strong text-primary px-3 py-2 rounded-xl text-sm font-semibold hover:bg-transparent transition whitespace-nowrap"
           >
-            ✨ Plan My Journey
+            Plan My Journey
           </Link>
           <Link
             href="/book"
-            className="min-h-10 bg-[#0B2560] text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-[0_6px_20px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-lg transition flex items-center justify-center whitespace-nowrap"
+            className="min-h-10 bg-primary text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-[0_6px_20px_rgba(11,37,96,0.25)] hover:-translate-y-0.5 hover:shadow-lg transition flex items-center justify-center whitespace-nowrap"
           >
             {siteConfig.consultationBadge}
           </Link>
@@ -555,7 +562,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
             if (item.linkType === "locations") {
               return (
                 <div key={item.id} className="pt-2 pb-1">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-3 mb-1">{item.label}</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest px-3 mb-1">{item.label}</p>
                   {CITIES.map((city) => (
                     <Link
                       key={city}
@@ -563,8 +570,8 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                       onClick={() => setMobileOpen(false)}
                       className={`min-h-11 flex items-center gap-2 text-sm font-medium py-2 px-3 rounded-xl transition ${
                         currentLocation === city.toLowerCase()
-                          ? "bg-[#f6faff] text-[#0B2560] font-bold"
-                          : "text-gray-600 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                          ? "bg-canvas text-primary font-bold"
+                          : "text-gray-600 hover:text-primary hover:bg-canvas"
                       }`}
                     >
                       {city}
@@ -582,10 +589,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                   <button
                     onClick={() => setMobileDropdown(isOpen ? null : item.id)}
                     aria-expanded={isOpen}
-                    className="min-h-11 flex items-center justify-between gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition w-full text-gray-700 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                    className="min-h-11 flex items-center justify-between gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition w-full text-gray-700 hover:text-primary hover:bg-canvas"
                   >
                     <span>{item.label}</span>
-                    <span className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>▼</span>
+                    <span className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}><ChevronDown size={14} aria-hidden="true" /></span>
                   </button>
                   {isOpen && (
                     <div className="pl-3 pb-1">
@@ -595,10 +602,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                           <button
                             onClick={() => setMobileCat(mobileCat === "__concerns" ? null : "__concerns")}
                             aria-expanded={mobileCat === "__concerns"}
-                            className="min-h-11 w-full flex items-center justify-between gap-2 text-sm font-semibold py-2 px-3 rounded-xl text-[#0B2560] hover:bg-[#f6faff]"
+                            className="min-h-11 w-full flex items-center justify-between gap-2 text-sm font-semibold py-2 px-3 rounded-xl text-primary hover:bg-canvas"
                           >
-                            <span className="flex items-center gap-2"><span aria-hidden>🎯</span>By Concern</span>
-                            <span className={`text-[10px] text-gray-400 transition-transform ${mobileCat === "__concerns" ? "rotate-180" : ""}`}>▼</span>
+                            <span className="flex items-center gap-2">By Concern</span>
+                            <span className={`text-xs text-gray-400 transition-transform ${mobileCat === "__concerns" ? "rotate-180" : ""}`}><ChevronDown size={14} aria-hidden="true" /></span>
                           </button>
                           {mobileCat === "__concerns" && (
                             <div className="pl-6 border-l border-gray-100 ml-4 mb-1">
@@ -610,7 +617,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                                       key={cn.name + sv.slug}
                                       href={`/${megaCity}/services/${sv.category}/${sv.slug}`}
                                       onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
-                                      className="min-h-10 flex items-center text-sm py-2 px-3 rounded-lg text-gray-600 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                                      className="min-h-10 flex items-center text-sm py-2 px-3 rounded-lg text-gray-600 hover:text-primary hover:bg-canvas"
                                     >
                                       {sv.name}
                                     </Link>
@@ -628,10 +635,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                             <button
                               onClick={() => setMobileCat(catOpen ? null : c.slug)}
                               aria-expanded={catOpen}
-                              className="min-h-11 w-full flex items-center justify-between gap-2 text-sm font-semibold py-2 px-3 rounded-xl text-[#0B2560] hover:bg-[#f6faff]"
+                              className="min-h-11 w-full flex items-center justify-between gap-2 text-sm font-semibold py-2 px-3 rounded-xl text-primary hover:bg-canvas"
                             >
-                              <span className="flex items-center gap-2"><span aria-hidden>{c.icon}</span>{c.label}</span>
-                              <span className={`text-[10px] text-gray-400 transition-transform ${catOpen ? "rotate-180" : ""}`}>▼</span>
+                              <span className="flex items-center gap-2">{c.label}</span>
+                              <span className={`text-xs text-gray-400 transition-transform ${catOpen ? "rotate-180" : ""}`}><ChevronDown size={14} aria-hidden="true" /></span>
                             </button>
                             {catOpen && (
                               <div className="pl-6 border-l border-gray-100 ml-4 mb-1">
@@ -640,7 +647,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                                     key={sv.slug}
                                     href={`/${megaCity}/services/${c.slug}/${sv.slug}`}
                                     onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
-                                    className="min-h-10 flex items-center text-sm py-2 px-3 rounded-lg text-gray-600 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                                    className="min-h-10 flex items-center text-sm py-2 px-3 rounded-lg text-gray-600 hover:text-primary hover:bg-canvas"
                                   >
                                     {sv.name}
                                   </Link>
@@ -648,7 +655,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                                 <Link
                                   href={`/${megaCity}/services/${c.slug}`}
                                   onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
-                                  className="min-h-10 flex items-center text-sm font-semibold py-2 px-3 text-[#F5A623]"
+                                  className="min-h-10 flex items-center text-sm font-semibold py-2 px-3 text-bronze"
                                 >
                                   View all {c.label} →
                                 </Link>
@@ -660,7 +667,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                       <Link
                         href={resolveHref(item)}
                         onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
-                        className="min-h-11 flex items-center text-sm font-semibold py-2 px-3 text-[#0B2560]"
+                        className="min-h-11 flex items-center text-sm font-semibold py-2 px-3 text-primary"
                       >
                         All services →
                       </Link>
@@ -673,12 +680,12 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
             const isActive = active === item.id;
             const linkClassName = `min-h-11 flex items-center gap-2 text-sm font-semibold py-2.5 px-3 rounded-xl transition w-full ${
               isActive
-                ? "bg-[#f6faff] text-[#0B2560]"
-                : "text-gray-700 hover:text-[#0B2560] hover:bg-[#f6faff]"
+                ? "bg-canvas text-primary"
+                : "text-gray-700 hover:text-primary hover:bg-canvas"
             }`;
             const label = (
               <>
-                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#0B2560] shrink-0" />}
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
                 {item.label}
               </>
             );
@@ -692,7 +699,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                     className={`${linkClassName} justify-between`}
                   >
                     <span className="flex items-center gap-2">{label}</span>
-                    <span className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>▼</span>
+                    <span className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}><ChevronDown size={14} aria-hidden="true" /></span>
                   </button>
                   {isOpen && (
                     <div className="pl-4">
@@ -701,7 +708,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
                           key={child.id}
                           href={child.href}
                           onClick={() => { setMobileOpen(false); setMobileDropdown(null); }}
-                          className="min-h-10 flex items-center text-sm font-medium py-2 px-3 rounded-xl text-gray-600 hover:text-[#0B2560] hover:bg-[#f6faff] transition"
+                          className="min-h-10 flex items-center text-sm font-medium py-2 px-3 rounded-xl text-gray-600 hover:text-primary hover:bg-canvas transition"
                         >
                           {child.label}
                         </Link>
@@ -729,19 +736,19 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
             <Link
               href="/plan-my-journey"
               onClick={() => setMobileOpen(false)}
-              className="min-h-12 w-full bg-[#F5A623]/10 border border-[#F5A623] text-[#0B2560] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
+              className="min-h-12 w-full bg-transparent border border-line-strong text-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
             >
-              ✨ Plan My Journey
+              Plan My Journey
             </Link>
             {phone && (
-              <a href={phoneHref} className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-[#0B2560] py-3 rounded-xl text-sm font-semibold">
+              <a href={phoneHref} className="min-h-12 flex items-center justify-center gap-2 border border-gray-200 text-primary py-3 rounded-xl text-sm font-semibold">
                 <MdPhone size={15} /> {phone}
               </a>
             )}
             <Link
               href="/book"
               onClick={() => setMobileOpen(false)}
-              className="min-h-12 w-full bg-[#0B2560] text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center"
+              className="min-h-12 w-full bg-primary text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center"
             >
               {siteConfig.consultationBadge}
             </Link>

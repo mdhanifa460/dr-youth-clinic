@@ -50,9 +50,9 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
 
   return (
     <div className="rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-r from-[#0B2560] to-[#1e3a8a] px-6 py-4 text-white">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">Quick Check</p>
-        <h3 className="font-headline font-bold text-base">Am I a Candidate for {serviceName}?</h3>
+      <div className="bg-gradient-to-r from-primary to-[#1e3a8a] px-6 py-4 text-white">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-0.5">Quick Check</p>
+        <h3 className="font-headline font-medium text-base">Am I a Candidate for {serviceName}?</h3>
       </div>
 
       <div className="p-6">
@@ -63,20 +63,20 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
               {questions.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 flex-1 rounded-full transition-all ${i <= step ? 'bg-[#0B2560]' : 'bg-gray-100'}`}
+                  className={`h-1 flex-1 rounded-full transition-all ${i <= step ? 'bg-primary' : 'bg-gray-100'}`}
                 />
               ))}
             </div>
 
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
               Question {step + 1} of {questions.length}
             </p>
-            <p className="font-semibold text-[#0B2560] text-[15px] leading-snug mb-5">{current.text}</p>
+            <p className="font-semibold text-primary text-[15px] leading-snug mb-5">{current.text}</p>
 
             <div className="flex gap-3">
               <button
                 onClick={() => answer('yes')}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm hover:bg-[#0a1f50] transition"
+                className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-2xl font-bold text-sm hover:bg-[#0a1f50] transition"
               >
                 <CheckCircle size={14} /> Yes
               </button>
@@ -93,22 +93,22 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
             <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto">
               <CheckCircle size={28} className="text-green-500" />
             </div>
-            <h4 className="font-bold text-[#0B2560] text-lg">You Look Like a Great Candidate!</h4>
+            <h4 className="font-bold text-primary text-lg">You Look Like a Great Candidate!</h4>
             <p className="text-gray-500 text-sm leading-relaxed">
               Based on your answers, {serviceName} may be suitable for you. {consultationCta} for a professional assessment.
             </p>
             {idealFor.length > 0 && (
-              <div className="text-left bg-[#f6faff] rounded-2xl p-4 mt-2">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">This treatment is ideal for</p>
+              <div className="text-left bg-canvas rounded-2xl p-4 mt-2">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">This treatment is ideal for</p>
                 <div className="flex flex-wrap gap-1.5">
                   {idealFor.map((tag, i) => (
-                    <span key={i} className="text-xs bg-white border border-blue-50 text-[#0B2560] px-2.5 py-1 rounded-full">{tag}</span>
+                    <span key={i} className="text-xs bg-white border border-blue-50 text-primary px-2.5 py-1 rounded-full">{tag}</span>
                   ))}
                 </div>
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <a href="/book" className="flex-1 flex items-center justify-center gap-1.5 bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
+              <a href="/book" className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-white py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
                 Book Now <ChevronRight size={13} />
               </a>
               <button onClick={reset} className="flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-100 text-gray-500 hover:bg-gray-50 transition">
@@ -121,12 +121,12 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
             <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto">
               <XCircle size={28} className="text-amber-500" />
             </div>
-            <h4 className="font-bold text-[#0B2560] text-lg">Consult First</h4>
+            <h4 className="font-bold text-primary text-lg">Consult First</h4>
             <p className="text-gray-500 text-sm leading-relaxed">
               Some of your answers suggest you should speak with a specialist before booking {serviceName}. We'll guide you to the best option.
             </p>
             <div className="flex gap-2 pt-2">
-              <a href="/book" className="flex-1 flex items-center justify-center gap-1.5 bg-[#F5A623] text-[#0B2560] py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
+              <a href="/book" className="flex-1 flex items-center justify-center gap-1.5 bg-champagne text-primary py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
                 {consultationBadge} <ChevronRight size={13} />
               </a>
               <button onClick={reset} className="flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-100 text-gray-500 hover:bg-gray-50 transition">

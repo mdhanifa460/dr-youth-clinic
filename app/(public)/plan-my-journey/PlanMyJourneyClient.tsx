@@ -442,7 +442,7 @@ function PlanMyJourneyFlow({
   }, [screen, leadId]);
 
   return (
-    <main className="relative bg-[#f6faff] min-h-screen">
+    <div className="relative bg-canvas min-h-screen">
       {/* Ambient background — see globals.css .pmj-ambient-* for why this is
           safe to leave always-on (fixed layer, compositor-only animation,
           zero network cost). Sits behind everything (z-0); the content
@@ -557,21 +557,21 @@ function PlanMyJourneyFlow({
           </div>
         );
       })()}
-    </main>
+    </div>
   );
 }
 
 function IntroScreen({ goals, onStart }: { goals: IJourneyGoal[]; onStart: () => void }) {
   return (
     <div className="flex flex-col items-center text-center py-6 md:py-10">
-      <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
-        <Sparkles size={12} className="text-[#A25607]" />
-        AI-Personalised · Real Doctors · Real Results
+      <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
+        <Sparkles size={12} className="text-bronze" />
+        AI-Personalised · Reviewed by Our Doctors
       </span>
 
-      <h1 className="text-3xl md:text-5xl font-extrabold text-[#0B2560] leading-tight mb-4 max-w-xl tracking-tight">
+      <h1 className="text-3xl md:text-5xl font-extrabold text-primary leading-tight mb-4 max-w-xl tracking-tight">
         Plan Your<br />
-        <span className="text-[#A25607]">Treatment Journey</span>
+        <span className="text-bronze">Treatment Journey</span>
       </h1>
 
       <p className="text-gray-500 text-base md:text-lg max-w-md mb-10 leading-relaxed">
@@ -583,17 +583,17 @@ function IntroScreen({ goals, onStart }: { goals: IJourneyGoal[]; onStart: () =>
         {goals.map((g) => (
           <div key={g.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-4 flex flex-col items-center gap-1">
             <span className="text-2xl">{g.icon}</span>
-            <span className="text-[11px] font-bold text-[#0B2560] text-center leading-snug">{g.label}</span>
+            <span className="text-[11px] font-bold text-primary text-center leading-snug">{g.label}</span>
           </div>
         ))}
       </div>
 
       <button
         onClick={onStart}
-        className="group relative px-10 py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-3"
+        className="group relative px-10 py-4 bg-primary hover:bg-primary-hover text-white font-bold text-lg rounded-2xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-3"
       >
         Get Started
-        <ArrowRight size={18} className="text-[#A25607] group-hover:translate-x-1 transition-transform duration-200" />
+        <ArrowRight size={18} className="text-bronze group-hover:translate-x-1 transition-transform duration-200" />
       </button>
 
       <p className="mt-4 text-xs text-gray-500">Takes about a minute. No sign-up required to start.</p>
@@ -630,12 +630,12 @@ function AnalyzingScreen({ goalLabel }: { goalLabel: string }) {
   return (
     <div className="flex flex-col items-center text-center py-16 md:py-24">
       <div className="relative w-16 h-16 mb-8">
-        <div className="absolute inset-0 rounded-full border-4 border-[#0B2560]/10" />
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#F5A623] animate-spin" />
-        <Sparkles size={22} className="absolute inset-0 m-auto text-[#0B2560]" />
+        <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-champagne animate-spin" />
+        <Sparkles size={22} className="absolute inset-0 m-auto text-primary" />
       </div>
 
-      <h2 className="text-xl md:text-2xl font-extrabold text-[#0B2560] mb-2">
+      <h2 className="text-xl md:text-2xl font-extrabold text-primary mb-2">
         {goalLabel ? `Building your ${goalLabel} plan…` : "Building your plan…"}
       </h2>
       <p className="text-gray-500 text-sm mb-8">This only takes a moment.</p>
@@ -648,7 +648,7 @@ function AnalyzingScreen({ goalLabel }: { goalLabel: string }) {
             <div key={stage} className="flex items-center gap-3">
               <span
                 className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
-                  done ? "bg-emerald-500" : active ? "bg-[#0B2560]" : "bg-gray-200"
+                  done ? "bg-emerald-500" : active ? "bg-primary" : "bg-gray-200"
                 }`}
               >
                 {done ? (
@@ -657,7 +657,7 @@ function AnalyzingScreen({ goalLabel }: { goalLabel: string }) {
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                 ) : null}
               </span>
-              <span className={`text-sm font-medium ${done || active ? "text-[#0B2560]" : "text-gray-400"}`}>
+              <span className={`text-sm font-medium ${done || active ? "text-primary" : "text-gray-400"}`}>
                 {stage}
               </span>
             </div>
@@ -678,7 +678,7 @@ function GoalPickScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">What's your goal?</h2>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">What's your goal?</h2>
         <p className="text-gray-500 text-sm md:text-base">We'll build your journey around it.</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
@@ -689,7 +689,7 @@ function GoalPickScreen({
             className={`relative overflow-hidden rounded-3xl p-6 text-left text-white shadow-lg transition-transform hover:-translate-y-1 bg-gradient-to-br ${meta.heroGrad}`}
           >
             <span className="text-3xl">{meta.icon}</span>
-            <p className="font-headline font-extrabold text-lg mt-3">{meta.label}</p>
+            <p className="font-headline font-medium text-lg mt-3">{meta.label}</p>
             <span className="inline-flex items-center gap-1 text-xs font-bold mt-4">
               {meta.ctaLabel || "Choose"} <ArrowRight size={12} />
             </span>
@@ -735,13 +735,13 @@ function QuestionScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="mb-7">
-        <span className="inline-flex items-center gap-1.5 bg-[#F5A623]/15 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+        <span className="inline-flex items-center gap-1.5 bg-champagne/15 text-primary text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
           {goalLabel} · Question {stepNumber}{totalSteps > 0 ? ` of ${totalSteps}` : ""}
         </span>
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-5">
-          <div className="h-full bg-[#F5A623] rounded-full transition-all duration-300 ease-out" style={{ width: `${progressPct}%` }} />
+          <div className="h-full bg-champagne rounded-full transition-all duration-300 ease-out" style={{ width: `${progressPct}%` }} />
         </div>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">
           <HighlightedTitle title={question.title} />
           {question.icon && <span className="ml-2 align-middle">{question.icon}</span>}
         </h2>
@@ -753,14 +753,14 @@ function QuestionScreen({
       <div className="mt-8 flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-gray-100 text-[#0B2560] font-bold rounded-xl hover:border-gray-200 transition-all duration-200"
+          className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-gray-100 text-primary font-bold rounded-xl hover:border-gray-200 transition-all duration-200"
         >
           ← Back
         </button>
         <button
           onClick={onNext}
           disabled={!canProceed}
-          className="group relative flex items-center gap-2 px-8 py-3 text-[#0B2560] font-bold rounded-xl transition-all duration-200 disabled:cursor-not-allowed enabled:shadow-md enabled:shadow-[#F5A623]/25 enabled:hover:shadow-lg enabled:hover:shadow-[#F5A623]/35 enabled:hover:-translate-y-0.5 active:translate-y-0"
+          className="group relative flex items-center gap-2 px-8 py-3 text-primary font-bold rounded-xl transition-all duration-200 disabled:cursor-not-allowed enabled:shadow-md enabled:shadow-champagne/25 enabled:hover:shadow-lg enabled:hover:shadow-champagne/35 enabled:hover:-translate-y-0.5 active:translate-y-0"
           style={
             canProceed
               ? { background: "linear-gradient(90deg, #F9D889 0%, #F5A623 55%, #E08E12 100%)" }
@@ -787,7 +787,7 @@ function HighlightedTitle({ title }: { title: string }) {
     <>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
-          <span key={i} className="text-[#A25607]">{part}</span>
+          <span key={i} className="text-bronze">{part}</span>
         ) : (
           <span key={i}>{part}</span>
         )
@@ -813,15 +813,15 @@ function BranchSelectionCards({ value, onChange }: { value: string; onChange: (k
             key={key}
             onClick={() => onChange(key)}
             className={`relative text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
-              selected ? "border-[#0B2560] bg-[#0B2560]/5 shadow-md shadow-[#0B2560]/10" : "border-gray-100 bg-white hover:border-[#0B2560]/30"
+              selected ? "border-primary bg-primary/5 shadow-md shadow-primary/10" : "border-gray-100 bg-white hover:border-primary/30"
             }`}
           >
             {selected && (
-              <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#0B2560] flex items-center justify-center">
+              <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                 <Check size={12} className="text-white" />
               </span>
             )}
-            <p className={`font-bold text-sm ${selected ? "text-[#0B2560]" : "text-gray-800"}`}>{loc.name}</p>
+            <p className={`font-bold text-sm ${selected ? "text-primary" : "text-gray-800"}`}>{loc.name}</p>
             <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
               <MapPin size={11} className="shrink-0" /> {loc.address}
             </p>
@@ -850,10 +850,10 @@ function LeadCaptureScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="text-center mb-8">
-        <span className="inline-flex items-center gap-1.5 bg-[#0B2560]/10 text-[#0B2560] text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
+        <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
           {goalLabel} · Almost there
         </span>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">Where should we send your plan?</h2>
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">Where should we send your plan?</h2>
         <p className="text-gray-500 text-sm md:text-base max-w-sm mx-auto">Just your name, number, and preferred clinic.</p>
       </div>
 
@@ -864,7 +864,7 @@ function LeadCaptureScreen({
             type="text" required value={lead.name}
             onChange={(e) => setLead((l) => ({ ...l, name: e.target.value }))}
             placeholder="Your name"
-            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-[#0B2560]/40"
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-primary/40"
           />
         </div>
         <div>
@@ -873,7 +873,7 @@ function LeadCaptureScreen({
             type="tel" required value={lead.phone}
             onChange={(e) => setLead((l) => ({ ...l, phone: e.target.value }))}
             placeholder="10-digit mobile number"
-            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-[#0B2560]/40"
+            className="w-full px-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm focus:outline-none focus:border-primary/40"
           />
         </div>
         <div>
@@ -882,7 +882,7 @@ function LeadCaptureScreen({
         </div>
         <button
           type="submit" disabled={status === "sending"}
-          className="w-full py-4 bg-[#0B2560] hover:bg-[#0d2d72] text-white font-bold text-base rounded-2xl shadow-lg shadow-[#0B2560]/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-60"
+          className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-bold text-base rounded-2xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-60"
         >
           {status === "sending" ? "Saving…" : "See My Journey →"}
         </button>

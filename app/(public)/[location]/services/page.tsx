@@ -31,11 +31,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const city = loc.name;
   return {
     title: `All Treatments in ${city}`,
-    description: `Explore skin, hair, and laser treatments at DR Youth Clinic ${city}. Expert dermatologists, proven results, transparent pricing.`,
+    description: `Explore skin, hair, and laser treatments at DR Youth Clinic ${city}. Compare treatments and book a consultation with our doctors.`,
     alternates: { canonical: `${SITE_URL}/${params.location}/services` },
     openGraph: {
       title: `Clinical Treatments in ${city} | DR Youth Clinic`,
-      description: `Browse our full range of dermatology, hair restoration, and laser procedures in ${city}.`,
+      description: `Browse our skin, hair restoration and laser procedures in ${city}.`,
       url: `${SITE_URL}/${params.location}/services`,
     },
   };
@@ -89,20 +89,21 @@ export default async function ServicesHubPage({ params }: PageProps) {
     getCachedCategories(),
   ]);
 
-  const countPhrase = total > 0 ? `${total} specialised procedures` : 'Premium procedures';
+  const countPhrase = total > 0 ? `${total} procedures` : 'Procedures';
   const heroDescription = siteConfig.servicesHubDescription
+    .replace(/dermatology/gi, 'skin')
     .replace('{count}', countPhrase)
     .replace('{city}', loc.name);
 
   return (
-    <main className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen">
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#0B2560] via-[#0d3175] to-[#163a8a] text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-[#0d3175] to-[#163a8a] text-white">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white/[0.03] translate-x-1/3 -translate-y-1/3" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-white/[0.04] -translate-x-1/3 translate-y-1/3" />
-          <div className="absolute top-1/2 right-[15%] w-2 h-2 rounded-full bg-[#F5A623]/40" />
+          <div className="absolute top-1/2 right-[15%] w-2 h-2 rounded-full bg-champagne/40" />
           <div className="absolute top-1/3 right-[30%] w-1 h-1 rounded-full bg-white/30" />
         </div>
 
@@ -112,9 +113,9 @@ export default async function ServicesHubPage({ params }: PageProps) {
               <span className="w-7 h-px bg-white/30" />
               {loc.name} · All Treatments
             </span>
-            <h1 className="text-5xl md:text-[64px] font-headline font-extrabold leading-[1.05] mb-6 tracking-tight">
+            <h1 className="text-5xl md:text-[64px] font-headline font-medium leading-[1.05] mb-6 tracking-tight">
               {siteConfig.servicesHubHeadline}<br />
-              <span className="text-[#A25607]">{siteConfig.servicesHubHeadlineAccent}</span>
+              <span className="text-bronze">{siteConfig.servicesHubHeadlineAccent}</span>
             </h1>
             <p className="text-[17px] text-white/65 max-w-lg leading-relaxed mb-10">
               {heroDescription}
@@ -122,7 +123,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/book"
-                className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition-all text-sm"
+                className="inline-flex items-center gap-2 bg-champagne text-primary px-7 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition-all text-sm"
               >
                 {siteConfig.consultationCta}
                 <ArrowRight size={15} />
@@ -139,7 +140,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
       </section>
 
       {/* ── STATS BAR ── */}
-      <div className="bg-[#f6faff] border-b border-gray-100">
+      <div className="bg-canvas border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex flex-wrap gap-8 items-center justify-between">
           <div className="flex flex-wrap gap-8 md:gap-12">
             {[
@@ -148,14 +149,14 @@ export default async function ServicesHubPage({ params }: PageProps) {
               { label: 'Years Expertise', value: '9+' },
             ].map((s) => (
               <div key={s.label}>
-                <div className="text-2xl font-extrabold text-[#0B2560] leading-none">{s.value}</div>
+                <div className="text-2xl font-extrabold text-primary leading-none">{s.value}</div>
                 <div className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
           <Link
             href="/book"
-            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-[#0B2560] hover:text-[#2A6BA8] transition"
+            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-secondary transition"
           >
             Free first consultation <ArrowRight size={14} />
           </Link>
@@ -165,7 +166,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
       {/* ── CATEGORY CARDS ── */}
       <section id="treatments" className="max-w-7xl mx-auto px-6 md:px-10 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-4xl md:text-5xl font-headline font-extrabold text-[#0B2560] mb-4 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-headline font-medium text-primary mb-4 tracking-tight">
             Choose Your Treatment
           </h2>
           <p className="text-gray-500 text-lg max-w-lg mx-auto">
@@ -216,7 +217,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
                       {cat.tagline}
                     </p>
                     <h3
-                      className="text-2xl md:text-3xl font-headline font-extrabold leading-tight"
+                      className="text-2xl md:text-3xl font-headline font-medium leading-tight"
                       style={{ color: `color-mix(in srgb, ${accent} 80%, black)` }}
                     >
                       {cat.label}
@@ -255,10 +256,10 @@ export default async function ServicesHubPage({ params }: PageProps) {
       </section>
 
       {/* ── BOTTOM CTA ── */}
-      <section className="bg-[#0B2560] py-20 text-white">
+      <section className="bg-primary py-20 text-white">
         <div className="max-w-3xl mx-auto text-center px-6 space-y-5">
           <Sparkles className="mx-auto mb-2 opacity-40" size={30} />
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">
+          <h2 className="text-4xl font-headline font-medium tracking-tight">
             Not sure where to start?
           </h2>
           <p className="text-white/60 text-lg max-w-lg mx-auto leading-relaxed">
@@ -268,7 +269,7 @@ export default async function ServicesHubPage({ params }: PageProps) {
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <Link
               href="/book"
-              className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-4 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition"
+              className="inline-flex items-center gap-2 bg-champagne text-primary px-8 py-4 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition"
             >
               {siteConfig.consultationCta}
               <ArrowRight size={16} />
@@ -283,6 +284,6 @@ export default async function ServicesHubPage({ params }: PageProps) {
         </div>
       </section>
 
-    </main>
+    </div>
   );
 }

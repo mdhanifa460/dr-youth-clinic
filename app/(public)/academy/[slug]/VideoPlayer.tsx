@@ -112,7 +112,7 @@ export default function VideoPlayer({ platform = 'youtube', youtubeId, instagram
       );
     }
     return (
-      <div className="relative aspect-[9/16] max-w-sm mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] bg-[#0B2560]">
+      <div className="relative aspect-[9/16] max-w-sm mx-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] bg-primary">
         <iframe
           className="absolute inset-0 w-full h-full"
           src={embedUrl}
@@ -135,7 +135,7 @@ export default function VideoPlayer({ platform = 'youtube', youtubeId, instagram
 
   return (
     <div>
-      <div className="relative aspect-video rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] bg-[#0B2560]">
+      <div className="relative aspect-video rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,32,69,0.12)] bg-primary">
         <iframe
           id={iframeId}
           className="absolute inset-0 w-full h-full"
@@ -157,13 +157,13 @@ export default function VideoPlayer({ platform = 'youtube', youtubeId, instagram
               type="button"
               onClick={() => handleChapterClick(chapter, i)}
               className={`w-full flex items-center gap-3 px-4 sm:px-5 py-3 text-left transition ${
-                activeChapter === i ? 'bg-[#f6faff]' : 'hover:bg-[#f6faff]'
+                activeChapter === i ? 'bg-canvas' : 'hover:bg-canvas'
               }`}
             >
-              <span className="text-xs font-bold text-[#2A6BA8] tabular-nums shrink-0 w-14">
+              <span className="text-xs font-bold text-secondary tabular-nums shrink-0 w-14">
                 {chapter.time}
               </span>
-              <span className="text-sm text-[#0B2560] font-medium">{chapter.label}</span>
+              <span className="text-sm text-primary font-medium">{chapter.label}</span>
             </button>
           ))}
         </div>

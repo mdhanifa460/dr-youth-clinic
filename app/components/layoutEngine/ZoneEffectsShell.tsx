@@ -36,7 +36,7 @@ export default function ZoneEffectsShell({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left text-sm font-bold text-[#0B2560]"
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left text-sm font-bold text-primary"
       >
         {label ?? 'Show section'}
         <ChevronDown size={16} className={`transition-transform ${open ? 'rotate-180' : ''}`} />

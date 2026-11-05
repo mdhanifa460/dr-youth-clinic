@@ -291,20 +291,20 @@ export default function BookingSuccessClient({
   const thankYouHeadline = (config.thankYouHeadline || 'Thank you, {name}!').replace('{name}', booking.name.split(' ')[0] || booking.name);
 
   return (
-    <main className="min-h-screen bg-[#f6faff] py-10 md:py-14">
+    <div className="min-h-screen bg-canvas py-10 md:py-14">
       <div className="max-w-3xl mx-auto px-4 md:px-6 space-y-8">
         {/* ── Hero ── */}
         <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10 text-center">
           <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
             <CheckCircle size={44} className="text-green-500" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560] mb-2">{thankYouHeadline}</h1>
+          <h1 className="text-2xl md:text-3xl font-headline font-medium text-primary mb-2">{thankYouHeadline}</h1>
           <p className="text-gray-500 max-w-md mx-auto leading-relaxed">{config.thankYouMessage}</p>
         </div>
 
         {/* ── Booking details ── */}
         <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
-          <h2 className="text-sm font-bold text-[#0B2560] uppercase tracking-widest mb-4">Your Appointment</h2>
+          <h2 className="text-sm font-bold text-primary uppercase tracking-widest mb-4">Your Appointment</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <DetailRow icon={Tag} label="Booking ID" value={booking.bookingId} mono />
             <DetailRow icon={Calendar} label="Date & Time" value={`${booking.date} · ${booking.time}`} />
@@ -325,10 +325,10 @@ export default function BookingSuccessClient({
         {/* ── Prepare for Your Consultation checklist ── */}
         {config.checklistEnabled && enabledChecklist.length > 0 && (
           <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
-            <p className="text-xs font-bold text-[#A25607] uppercase tracking-widest mb-1">📝 Next Steps</p>
-            <h2 className="text-lg font-headline font-bold text-[#0B2560] mb-4">Prepare for Your Consultation</h2>
+            <p className="text-xs font-bold text-bronze uppercase tracking-widest mb-1">📝 Next Steps</p>
+            <h2 className="text-lg font-headline font-medium text-primary mb-4">Prepare for Your Consultation</h2>
             <ul className="space-y-2.5">
-              <ChecklistRow done label="Appointment Booked" />
+              <ChecklistRow done label="Request Received" />
               {enabledChecklist.map((item) => {
                 if (item.key === 'aiAssessment') {
                   return (
@@ -336,7 +336,7 @@ export default function BookingSuccessClient({
                       <Link
                         href={`/plan-my-journey${branchKey ? `?clinic=${branchKey}` : ''}`}
                         onClick={startAiAssessment}
-                        className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-[#0B2560] transition group"
+                        className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-primary transition group"
                       >
                         <ChecklistBox done={!!checklistDone.aiAssessment} />
                         <span className={checklistDone.aiAssessment ? 'line-through text-gray-400' : 'group-hover:underline'}>{item.label}</span>
@@ -351,7 +351,7 @@ export default function BookingSuccessClient({
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-[#0B2560] transition group disabled:opacity-60"
+                        className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-primary transition group disabled:opacity-60"
                       >
                         {uploading ? <Loader size={16} className="animate-spin text-gray-400" /> : <ChecklistBox done={!!checklistDone.uploadReports} />}
                         <span className={checklistDone.uploadReports ? 'line-through text-gray-400' : 'group-hover:underline'}>
@@ -372,7 +372,7 @@ export default function BookingSuccessClient({
                 if (item.key === 'calendar') {
                   return (
                     <li key={item.key}>
-                      <button onClick={addToCalendar} className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-[#0B2560] transition group">
+                      <button onClick={addToCalendar} className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-primary transition group">
                         <ChecklistBox done={!!checklistDone.calendar} />
                         <span className={checklistDone.calendar ? 'line-through text-gray-400' : 'group-hover:underline'}>{item.label}</span>
                       </button>
@@ -382,7 +382,7 @@ export default function BookingSuccessClient({
                 if (item.key === 'directions') {
                   return (
                     <li key={item.key}>
-                      <button onClick={getDirections} className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-[#0B2560] transition group">
+                      <button onClick={getDirections} className="flex items-center gap-2.5 text-sm text-gray-700 hover:text-primary transition group">
                         <ChecklistBox done={!!checklistDone.directions} />
                         <span className={checklistDone.directions ? 'line-through text-gray-400' : 'group-hover:underline'}>{item.label}</span>
                       </button>
@@ -397,12 +397,12 @@ export default function BookingSuccessClient({
 
         {/* ── Pre-visit instructions ── */}
         {config.preVisitInstructions?.length > 0 && (
-          <div className="bg-[#f6faff] border border-[#0B2560]/10 rounded-3xl p-6 md:p-8">
-            <h2 className="text-sm font-bold text-[#0B2560] uppercase tracking-widest mb-3">Before You Arrive</h2>
+          <div className="bg-canvas border border-primary/10 rounded-3xl p-6 md:p-8">
+            <h2 className="text-sm font-bold text-primary uppercase tracking-widest mb-3">Before You Arrive</h2>
             <ul className="space-y-2">
               {config.preVisitInstructions.map((instr, i) => (
                 <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
-                  <span className="text-[#A25607] mt-1 shrink-0">•</span> {instr}
+                  <span className="text-bronze mt-1 shrink-0">•</span> {instr}
                 </li>
               ))}
             </ul>
@@ -420,7 +420,7 @@ export default function BookingSuccessClient({
                       <div className="relative aspect-square bg-gray-100">
                         {r.after?.url && <Image src={r.after.url} alt={r.title} fill className="object-cover" sizes="150px" />}
                       </div>
-                      <p className="text-[11px] font-semibold text-[#0B2560] px-2 py-1.5 truncate">{r.title}</p>
+                      <p className="text-[11px] font-semibold text-primary px-2 py-1.5 truncate">{r.title}</p>
                     </Link>
                   ))}
                 </div>
@@ -433,13 +433,13 @@ export default function BookingSuccessClient({
                 <Link
                   href={`/plan-my-journey${branchKey ? `?clinic=${branchKey}` : ''}`}
                   onClick={startAiAssessment}
-                  className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#0B2560] to-[#1a3a7a] text-white rounded-2xl p-5 hover:-translate-y-0.5 transition"
+                  className="flex items-center justify-between gap-3 bg-gradient-to-r from-primary to-[#1a3a7a] text-white rounded-2xl p-5 hover:-translate-y-0.5 transition"
                 >
                   <div>
                     <p className="font-bold text-sm">Not sure what to expect? Take our 2-minute AI Assessment</p>
                     <p className="text-white/60 text-xs mt-1">Helps your doctor prepare a personalised plan before you arrive</p>
                   </div>
-                  <Sparkles size={22} className="text-[#F5A623] shrink-0" />
+                  <Sparkles size={22} className="text-champagne shrink-0" />
                 </Link>
               </RelatedSection>
             );
@@ -451,10 +451,10 @@ export default function BookingSuccessClient({
                   {related.successStories.slice(0, 3).map((r: any) => (
                     <div key={r._id} className="border border-gray-100 rounded-xl p-4">
                       <div className="flex items-center gap-1 mb-1.5">
-                        {Array.from({ length: r.rating || 5 }).map((_, i) => <Star key={i} size={12} fill="#F5A623" className="text-[#A25607]" />)}
+                        {Array.from({ length: r.rating || 5 }).map((_, i) => <Star key={i} size={12} fill="#F5A623" className="text-bronze" />)}
                       </div>
                       <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">{r.reviewText}</p>
-                      <p className="text-xs font-semibold text-[#0B2560] mt-1.5">{r.authorName}</p>
+                      <p className="text-xs font-semibold text-primary mt-1.5">{r.authorName}</p>
                     </div>
                   ))}
                 </div>
@@ -474,7 +474,7 @@ export default function BookingSuccessClient({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {related.offers.slice(0, 3).map((o: any) => (
                     <Link key={o._id} href="/offers" className="block border border-gray-100 rounded-xl p-4 hover:shadow-md transition">
-                      <p className="font-bold text-sm text-[#0B2560] mb-1">{o.title}</p>
+                      <p className="font-bold text-sm text-primary mb-1">{o.title}</p>
                       <p className="text-xs text-gray-500">₹{o.discountedPrice} <span className="line-through text-gray-300">₹{o.originalPrice}</span></p>
                     </Link>
                   ))}
@@ -485,22 +485,22 @@ export default function BookingSuccessClient({
           return null;
         })}
       </div>
-    </main>
+    </div>
   );
 }
 
 function ctaClass(variant: 'primary' | 'secondary' | 'whatsapp'): string {
   const base = 'flex-1 min-w-[160px] flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200';
-  if (variant === 'primary') return `${base} bg-[#0B2560] text-white hover:bg-[#0d2d72] hover:-translate-y-0.5 shadow-sm`;
+  if (variant === 'primary') return `${base} bg-primary text-white hover:bg-primary-hover hover:-translate-y-0.5 shadow-sm`;
   if (variant === 'whatsapp') return `${base} bg-[#25D366]/10 text-[#128C4A] border border-[#25D366]/30 hover:bg-[#25D366]/20`;
-  return `${base} bg-white text-[#0B2560] border border-gray-200 hover:bg-gray-50`;
+  return `${base} bg-white text-primary border border-gray-200 hover:bg-gray-50`;
 }
 
 function DetailRow({ icon: Icon, label, value, mono }: { icon: typeof Calendar; label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-9 h-9 rounded-lg bg-[#f6faff] flex items-center justify-center shrink-0">
-        <Icon size={16} className="text-[#0B2560]" />
+      <div className="w-9 h-9 rounded-lg bg-canvas flex items-center justify-center shrink-0">
+        <Icon size={16} className="text-primary" />
       </div>
       <div className="min-w-0">
         <p className="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">{label}</p>
@@ -534,8 +534,8 @@ function ChecklistRow({ done, label }: { done: boolean; label: string }) {
 function RelatedSection({ title, icon: Icon, children }: { title: string; icon: typeof Sparkles; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
-      <h2 className="text-sm font-bold text-[#0B2560] uppercase tracking-widest mb-4 flex items-center gap-2">
-        <Icon size={14} className="text-[#A25607]" /> {title}
+      <h2 className="text-sm font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+        <Icon size={14} className="text-bronze" /> {title}
       </h2>
       {children}
     </div>
@@ -551,7 +551,7 @@ function FaqList({ items }: { items: { question: string; answer: string }[] }) {
           <button
             type="button"
             onClick={() => setOpen(open === i ? null : i)}
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-[#0B2560]"
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-primary"
           >
             {f.question}
             <ChevronDown size={15} className={`shrink-0 transition-transform ${open === i ? 'rotate-180' : ''}`} />

@@ -20,7 +20,7 @@ const ICONS = [Stethoscope, Cpu, UserCheck, Leaf, HeartHandshake] as const;
 
 const DEFAULT_ITEMS: BenefitItem[] = [
   { title: 'Experienced Doctors', desc: '9+ years of expertise in hair restoration.' },
-  { title: 'Advanced Technology', desc: 'FDA-approved, state-of-the-art equipment.' },
+  { title: 'Advanced Technology', desc: 'Equipment chosen by our doctors for each treatment.' },
   { title: 'Personalised Treatment', desc: 'Protocols tailored to your unique hair goals.' },
   { title: 'Safe & Natural', desc: 'Non-surgical, drug-free, using your own plasma.' },
   { title: 'Complete Care', desc: 'End-to-end support from consult to results.' },
@@ -29,7 +29,7 @@ const DEFAULT_ITEMS: BenefitItem[] = [
 export default function BenefitsSection({ data }: { data: BenefitsData }) {
   const {
     headline = 'Why Choose DR Youth Clinic?',
-    subtitle = 'Trusted by thousands for safe, effective and lasting results.',
+    subtitle = 'What to expect when you consult with us.',
     items = [],
   } = data;
   const cards = items.length ? items : DEFAULT_ITEMS;
@@ -44,8 +44,8 @@ export default function BenefitsSection({ data }: { data: BenefitsData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">Our Advantages</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-3">Our Advantages</p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
 
@@ -67,14 +67,14 @@ export default function BenefitsSection({ data }: { data: BenefitsData }) {
                 // where the 3-col/5-col grids don't have this problem.
                 className="group bg-white border border-gray-100 rounded-2xl p-5 md:p-6 text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 [&:last-child:nth-child(odd)]:col-span-2 [&:last-child:nth-child(odd)]:max-w-[calc(50%-0.5rem)] [&:last-child:nth-child(odd)]:mx-auto sm:[&:last-child:nth-child(odd)]:col-span-1 sm:[&:last-child:nth-child(odd)]:max-w-none sm:[&:last-child:nth-child(odd)]:mx-0"
               >
-                <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center mb-4 bg-[#3B82C4]/10 group-hover:bg-[#F5A623] transition-colors duration-300">
+                <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center mb-4 bg-secondary/10 group-hover:bg-champagne transition-colors duration-300">
                   {hasEmoji ? (
                     <span className="text-2xl">{item.icon}</span>
                   ) : (
-                    <Icon size={24} className="text-[#2A6BA8] group-hover:text-white transition-colors duration-300" />
+                    <Icon size={24} className="text-secondary group-hover:text-white transition-colors duration-300" />
                   )}
                 </div>
-                <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{item.title}</h3>
+                <h3 className="font-bold text-primary text-sm md:text-base mb-1.5">{item.title}</h3>
                 <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{withClinicYearsText(item.desc)}</p>
               </motion.div>
             );

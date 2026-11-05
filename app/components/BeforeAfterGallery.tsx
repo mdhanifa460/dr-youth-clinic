@@ -52,7 +52,7 @@ function CompareSlider({ pair, serviceName }: { pair: Pair; serviceName: string 
           style={{ objectPosition }}
           draggable={false}
         />
-        <span className="pointer-events-none absolute top-3 left-3 bg-white/85 backdrop-blur text-[#0B2560] text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border border-gray-100 shadow-sm">Before</span>
+        <span className="pointer-events-none absolute top-3 left-3 bg-white/85 backdrop-blur text-primary text-xs font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border border-gray-100 shadow-sm">Before</span>
       </div>
 
       {/* Divider — static, purely visual separation between the two panes */}
@@ -68,13 +68,13 @@ function CompareSlider({ pair, serviceName }: { pair: Pair; serviceName: string 
           style={{ objectPosition }}
           draggable={false}
         />
-        <span className="pointer-events-none absolute top-3 right-3 bg-[#F5A623]/90 text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">After</span>
+        <span className="pointer-events-none absolute top-3 right-3 bg-champagne/90 text-white text-xs font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">After</span>
       </div>
 
       {/* Concern badge */}
       {pair.concern && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-          <span className="bg-white/90 backdrop-blur text-[#0B2560] text-[10px] font-bold px-3 py-1 rounded-full shadow">
+          <span className="bg-white/90 backdrop-blur text-primary text-xs font-bold px-3 py-1 rounded-full shadow">
             {pair.concern}
           </span>
         </div>
@@ -117,8 +117,8 @@ export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
               onClick={() => changeFilter(c)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                 activeFilter === c
-                  ? 'bg-[#0B2560] text-white border-[#0B2560]'
-                  : 'border-gray-100 text-gray-500 hover:border-[#0B2560] hover:text-[#0B2560]'
+                  ? 'bg-primary text-white border-primary'
+                  : 'border-gray-100 text-gray-500 hover:border-primary hover:text-primary'
               }`}
             >
               {c}
@@ -138,13 +138,13 @@ export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
               onClick={prev}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition z-20"
             >
-              <ChevronLeft size={15} className="text-[#0B2560]" />
+              <ChevronLeft size={15} className="text-primary" />
             </button>
             <button
               onClick={next}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition z-20"
             >
-              <ChevronRight size={15} className="text-[#0B2560]" />
+              <ChevronRight size={15} className="text-primary" />
             </button>
           </>
         )}
@@ -157,7 +157,7 @@ export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
             <button
               key={i}
               onClick={() => setCurrentIndex(i)}
-              className={`h-2 rounded-full transition-all ${i === currentIndex ? 'w-5 bg-[#0B2560]' : 'w-2 bg-gray-200'}`}
+              className={`h-2 rounded-full transition-all ${i === currentIndex ? 'w-5 bg-primary' : 'w-2 bg-gray-200'}`}
             />
           ))}
         </div>

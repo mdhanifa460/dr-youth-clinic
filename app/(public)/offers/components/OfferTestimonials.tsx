@@ -4,7 +4,7 @@ import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
 // rather than rebuilding one. Self-fetches real reviews client-side.
 export default function OfferTestimonials() {
   return (
-    <section className="bg-[#f6faff] py-14">
+    <section className="bg-canvas py-14">
       <TestimonialsSlider
         data={{
           headline: 'Loved by Our Patients',

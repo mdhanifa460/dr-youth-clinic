@@ -93,7 +93,7 @@ function Ring({ percent }: { percent: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xl font-extrabold text-[#0B2560]">{percent}%</span>
+        <span className="text-xl font-extrabold text-primary">{percent}%</span>
       </div>
     </div>
   );
@@ -117,7 +117,7 @@ function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
       <div className="flex items-center gap-6 mb-6">
         <Ring percent={result.overallConcern} />
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#A25607] mb-1">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-bronze mb-1">
             {result.severity} Concern
           </p>
           <p className="text-sm text-gray-500 leading-relaxed">
@@ -132,9 +132,9 @@ function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
             <div key={c.key} className="flex items-center gap-2.5 text-xs">
               <span className="w-32 shrink-0 text-gray-500">{c.label}</span>
               <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-[#3B82C4] to-[#F5A623]" style={{ width: `${c.percent}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-secondary to-champagne" style={{ width: `${c.percent}%` }} />
               </div>
-              <span className="w-9 text-right font-bold text-[#0B2560]">{c.percent}%</span>
+              <span className="w-9 text-right font-bold text-primary">{c.percent}%</span>
             </div>
           ))}
         </div>
@@ -143,8 +143,8 @@ function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
       {whatWeFound.length > 0 && (
         <>
           <hr className="border-gray-100 my-5" />
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B2560] mb-2">What We Found</p>
-          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#A25607]">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-2">What We Found</p>
+          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-bronze">
             {whatWeFound.map((line) => <li key={line}>{line}</li>)}
           </ul>
         </>
@@ -153,8 +153,8 @@ function JourneyConcernSummary({ result }: { result: AssessmentResult }) {
       {result.contributingFactors.length > 0 && (
         <>
           <hr className="border-gray-100 my-5" />
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B2560] mb-2">Possible Contributing Factors</p>
-          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-[#A25607]">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-2">Possible Contributing Factors</p>
+          <ul className="text-sm text-gray-600 space-y-1.5 pl-4 list-disc marker:text-bronze">
             {result.contributingFactors.map((f, i) => <li key={i}>{f.label}</li>)}
           </ul>
         </>
@@ -167,13 +167,13 @@ function ReportList({ title, icon, items }: { title: string; icon: string; items
   if (items.length === 0) return null;
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5">
-      <p className="text-xs font-bold text-[#0B2560] mb-2.5 flex items-center gap-1.5">
+      <p className="text-xs font-bold text-primary mb-2.5 flex items-center gap-1.5">
         <span>{icon}</span> {title}
       </p>
       <ul className="space-y-1.5">
         {items.map((item, i) => (
           <li key={i} className="text-sm text-gray-600 leading-relaxed flex items-start gap-2">
-            <span className="text-[#A25607] mt-1 shrink-0">•</span> {item}
+            <span className="text-bronze mt-1 shrink-0">•</span> {item}
           </li>
         ))}
       </ul>
@@ -245,8 +245,8 @@ function AiSummaryReportCard({
   if (status === "idle" || status === "error") return null;
 
   return (
-    <div className="bg-gradient-to-br from-[#0B2560] to-[#1a3a7a] rounded-2xl p-6 text-white">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-3 flex items-center gap-1.5">
+    <div className="bg-gradient-to-br from-primary to-[#1a3a7a] rounded-2xl p-6 text-white">
+      <p className="text-xs font-bold uppercase tracking-widest text-champagne mb-3 flex items-center gap-1.5">
         <Sparkles size={13} /> Your AI Summary
       </p>
       {status === "loading" ? (
@@ -316,13 +316,18 @@ export default function UnifiedJourneyResults({
   // questions were asked for this goal. Keep this as its own simple screen
   // rather than forcing it through the full clinical-intake-flavored layout
   // below, which assumes there's at least a scored result or a service.
+  // Branch-aware — /plan-my-journey and /skin-quiz aren't location-scoped
+  // URLs, so the visitor's already-selected branch (Module 8) is passed
+  // explicitly rather than relying on useBranchWhatsApp's own pathname/
+  // cookie inference, which has nothing to detect here.
+  const branchWhatsApp = useBranchWhatsApp(publicWhatsApp || "", preferredClinic);
   if (journey && !journey.service && !hasResult) {
     return (
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16 text-center">
         <span className="text-5xl">{journey.goalIcon}</span>
-        <h2 className="text-2xl font-headline font-bold text-[#0B2560] mt-4">{journey.goalLabel} — let's talk it through</h2>
+        <h2 className="text-2xl font-headline font-medium text-primary mt-4">{journey.goalLabel} — let's talk it through</h2>
         <p className="text-gray-500 max-w-md mx-auto mt-2">We're preparing options for this goal. Book a consultation and our specialists will guide you directly.</p>
-        <Link href="/book" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-6">
+        <Link href="/book" className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-6">
           {consultationCta || "Book a Consultation"} <ArrowRight size={15} />
         </Link>
       </div>
@@ -344,11 +349,6 @@ export default function UnifiedJourneyResults({
     phone: leadPhone,
     sessionId,
   });
-  // Branch-aware — /plan-my-journey and /skin-quiz aren't location-scoped
-  // URLs, so the visitor's already-selected branch (Module 8) is passed
-  // explicitly rather than relying on useBranchWhatsApp's own pathname/
-  // cookie inference, which has nothing to detect here.
-  const branchWhatsApp = useBranchWhatsApp(publicWhatsApp || "", preferredClinic);
   const waBaseHref = branchWhatsApp ? toWaLink(branchWhatsApp) : "";
   const waHref = waBaseHref
     ? `${waBaseHref}${primaryCategoryLabel ? `?text=${encodeURIComponent(`Hi, I just completed my Plan My Journey intake for ${primaryCategoryLabel} and would like to know more before my consultation.`)}` : ""}`
@@ -383,17 +383,17 @@ export default function UnifiedJourneyResults({
       order: orderOf("doctors"),
       node: (
         <div key="doctors">
-          <h3 className="text-xl font-headline font-bold text-[#0B2560] mb-4">Doctors For This Goal</h3>
+          <h3 className="text-xl font-headline font-medium text-primary mb-4">Doctors For This Goal</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {journey.doctors.slice(0, 3).map((d: any) => (
               <Link key={String(d._id)} href={`/doctors/${d._id}`} className="bg-white rounded-2xl border border-gray-100 p-3 text-center hover:shadow-md transition">
                 {d.photo?.url ? (
                   <Image src={d.photo.url} alt={d.name} width={64} height={64} className="rounded-full w-16 h-16 object-cover mx-auto mb-2" />
                 ) : (
-                  <span className="w-16 h-16 rounded-full bg-[#0B2560]/10 flex items-center justify-center mx-auto mb-2 font-bold text-[#0B2560]">{d.name?.[0]}</span>
+                  <span className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2 font-bold text-primary">{d.name?.[0]}</span>
                 )}
-                <p className="text-xs font-bold text-[#0B2560] leading-snug">{d.name}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5">{d.title}</p>
+                <p className="text-xs font-bold text-primary leading-snug">{d.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{d.title}</p>
               </Link>
             ))}
           </div>
@@ -408,7 +408,7 @@ export default function UnifiedJourneyResults({
       order: orderOf("realResults"),
       node: (
         <div key="results">
-          <h3 className="text-xl font-headline font-bold text-[#0B2560] mb-4">Real Patient Results</h3>
+          <h3 className="text-xl font-headline font-medium text-primary mb-4">Real Patient Results</h3>
           {journey.results.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {journey.results.slice(0, 4).map((r: any) => (
@@ -418,7 +418,7 @@ export default function UnifiedJourneyResults({
           ) : (
             <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
               <p className="text-sm text-gray-500">Photos for this goal are being curated.</p>
-              <Link href="/results" className="text-xs font-semibold text-[#2A6BA8] hover:underline mt-1 inline-block">See all patient results →</Link>
+              <Link href="/results" className="text-xs font-semibold text-secondary hover:underline mt-1 inline-block">See all patient results →</Link>
             </div>
           )}
         </div>
@@ -431,7 +431,7 @@ export default function UnifiedJourneyResults({
       key: "doctorMessage",
       order: orderOf("doctorMessage"),
       node: (
-        <div key="doctor-message" className="bg-[#f6faff] border border-[#0B2560]/10 rounded-2xl p-5 flex items-start gap-3">
+        <div key="doctor-message" className="bg-canvas border border-primary/10 rounded-2xl p-5 flex items-start gap-3">
           <span className="text-2xl shrink-0">👨‍⚕️</span>
           <p className="text-sm text-gray-600 leading-relaxed">{doctorMessage}</p>
         </div>
@@ -466,7 +466,7 @@ export default function UnifiedJourneyResults({
           <Link
             href={bookUrl}
             onClick={() => postAssessmentEvent({ event: "consultation_booked", goal: goal || "", sessionId: sessionId || "", primaryConcern })}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#0B2560] text-white px-6 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition"
+            className="flex-1 flex items-center justify-center gap-2 bg-primary text-white px-6 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition"
           >
             {consultationCta || "Book Consultation"} <ArrowRight size={15} />
           </Link>
@@ -489,7 +489,7 @@ export default function UnifiedJourneyResults({
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
           {hasResult ? "Your Clinical Intake Is Complete" : `Your ${journey?.goalLabel || "Journey"}`}
         </span>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-3 tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-3 tracking-tight">
           {hasResult ? "Your Pre-Consultation Summary" : `Your ${journey?.goalLabel || "Personalised"} Plan`}
         </h2>
         <p className="text-sm text-gray-500 max-w-md mx-auto">
@@ -501,7 +501,7 @@ export default function UnifiedJourneyResults({
             is actually the text displayed above, not for the two static
             fallback strings. */}
         {aiExplanation && (
-          <p className="text-[10px] text-gray-400 mt-2">🤖 AI-generated summary — not a medical diagnosis</p>
+          <p className="text-xs text-gray-400 mt-2">🤖 AI-generated summary — not a medical diagnosis</p>
         )}
       </div>
 
@@ -520,7 +520,7 @@ export default function UnifiedJourneyResults({
 
       {onRetake && (
         <div className="text-center">
-          <button onClick={onRetake} className="text-sm text-gray-500 hover:text-[#0B2560] underline underline-offset-4 transition-colors">
+          <button onClick={onRetake} className="text-sm text-gray-500 hover:text-primary underline underline-offset-4 transition-colors">
             Retake the assessment
           </button>
         </div>

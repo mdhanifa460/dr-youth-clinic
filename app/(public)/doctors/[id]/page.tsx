@@ -12,6 +12,7 @@ import { Result } from '@/app/models/Result';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import SliderCard from '@/app/components/SliderCard';
 import { PhysicianSchema } from '@/app/components/SchemaMarkup';
+import { cleanCredentialWording } from '@/app/lib/patientClaims';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
@@ -76,7 +77,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     // homepage), so Google treats every doctor page as a duplicate of "/".
     alternates: { canonical: `${(process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')}/doctors/${params.id}` },
     description: doctor.bio
-      ? doctor.bio.slice(0, 155) + (doctor.bio.length > 155 ? '…' : '')
+      ? cleanCredentialWording(doctor.bio).slice(0, 155) + (doctor.bio.length > 155 ? '…' : '')
       : `Meet ${doctor.name}, ${doctor.title} at DR Youth Clinic.`,
   };
 }
@@ -115,7 +116,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
     : [null, null];
 
   return (
-    <main className="bg-white">
+    <div className="bg-white">
       <PhysicianSchema
         name={doctor.name}
         jobTitle={doctor.title}
@@ -123,7 +124,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
         image={doctor.photo?.url}
         qualifications={doctor.qualifications}
         specializations={doctor.specializations}
-        bio={doctor.bio}
+        bio={cleanCredentialWording(doctor.bio || '')}
         locations={doctor.locations}
       />
       <InterestTracker
@@ -132,7 +133,7 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
       />
 
       {/* ── HERO ── */}
-      <section className="bg-[#0B2560] relative overflow-hidden">
+      <section className="bg-primary relative overflow-hidden">
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/[0.03] pointer-events-none" />
         <div className="max-w-5xl mx-auto px-6 py-10 md:py-16">
           <Link href="/doctors" className="inline-flex items-center gap-1.5 text-white/50 hover:text-white text-xs font-semibold mb-8 transition">
@@ -148,35 +149,34 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
                 sizes="(min-width: 1024px) 192px, (min-width: 768px) 176px, (min-width: 640px) 128px, 112px"
                 alt={doctor.name}
                 className="rounded-3xl bg-white/10 ring-2 ring-white/10"
-                fallbackEmoji="👨‍⚕️"
               />
             </div>
 
             {/* Name block */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-4xl font-headline font-extrabold text-white leading-tight">{doctor.name}</h1>
-              <p className="text-[#A25607] font-bold text-sm md:text-base mt-1">{doctor.title}</p>
+              <h1 className="text-2xl md:text-4xl font-headline font-medium text-white leading-tight">{doctor.name}</h1>
+              <p className="text-bronze font-bold text-sm md:text-base mt-1">{doctor.title}</p>
 
               {/* Qualifications under designation */}
               {doctor.qualifications && (
-                <p className="text-white/50 text-xs md:text-sm mt-1 font-medium">{doctor.qualifications}</p>
+                <p className="text-white/85 text-sm mt-1">{doctor.qualifications}</p>
               )}
 
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2 mt-4">
                 {doctor.experience > 0 && (
                   <span className="flex items-center gap-1.5 text-xs bg-white/10 text-white px-3 py-1.5 rounded-full font-medium">
-                    <Award size={11} className="text-[#A25607]" /> {doctor.experience}+ yrs experience
+                    <Award size={11} className="text-bronze" /> {doctor.experience}+ yrs experience
                   </span>
                 )}
                 {locationLabel && (
                   <span className="flex items-center gap-1.5 text-xs bg-white/10 text-white px-3 py-1.5 rounded-full font-medium capitalize">
-                    <MapPin size={11} className="text-[#A25607]" /> {locationLabel}
+                    <MapPin size={11} className="text-bronze" /> {locationLabel}
                   </span>
                 )}
                 {doctor.languages?.length > 0 && (
                   <span className="flex items-center gap-1.5 text-xs bg-white/10 text-white px-3 py-1.5 rounded-full font-medium">
-                    <Languages size={11} className="text-[#A25607]" /> {doctor.languages.join(', ')}
+                    <Languages size={11} className="text-bronze" /> {doctor.languages.join(', ')}
                   </span>
                 )}
               </div>
@@ -195,12 +195,12 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           {doctor.bio && (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
-                  <Stethoscope size={11} className="text-[#0B2560]" />
+                <span className="w-5 h-5 rounded-full bg-sand flex items-center justify-center shrink-0">
+                  <Stethoscope size={11} className="text-primary" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">About</h2>
+                <h2 className="eyebrow">About</h2>
               </div>
-              <p className="text-gray-600 text-sm md:text-base leading-relaxed whitespace-pre-line">{doctor.bio}</p>
+              <p className="text-gray-600 text-sm md:text-base leading-relaxed whitespace-pre-line">{cleanCredentialWording(doctor.bio)}</p>
             </div>
           )}
 
@@ -208,14 +208,14 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           {doctor.qualifications && (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
-                  <GraduationCap size={11} className="text-[#0B2560]" />
+                <span className="w-5 h-5 rounded-full bg-sand flex items-center justify-center shrink-0">
+                  <GraduationCap size={11} className="text-primary" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Qualifications</h2>
+                <h2 className="eyebrow">Qualifications</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {doctor.qualifications.split(',').map((q: string, i: number) => (
-                  <span key={i} className="text-sm bg-[#f6faff] border border-blue-50 text-[#0B2560] px-3 py-1.5 rounded-full font-medium">
+                  <span key={i} className="text-sm bg-canvas border border-blue-50 text-primary px-3 py-1.5 rounded-full font-medium">
                     {q.trim()}
                   </span>
                 ))}
@@ -227,14 +227,14 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           {doctor.specializations?.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
-                  <Award size={11} className="text-[#0B2560]" />
+                <span className="w-5 h-5 rounded-full bg-sand flex items-center justify-center shrink-0">
+                  <Award size={11} className="text-primary" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Specializations</h2>
+                <h2 className="eyebrow">Specializations</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {doctor.specializations.map((s: string, i: number) => (
-                  <span key={i} className="text-sm bg-[#0B2560] text-white px-3 py-1.5 rounded-full font-medium">
+                  <span key={i} className="text-sm bg-primary text-white px-3 py-1.5 rounded-full font-medium">
                     {s}
                   </span>
                 ))}
@@ -246,10 +246,10 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           {doctor.languages?.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="w-5 h-5 rounded-full bg-[#f0f5ff] flex items-center justify-center shrink-0">
-                  <Languages size={11} className="text-[#0B2560]" />
+                <span className="w-5 h-5 rounded-full bg-sand flex items-center justify-center shrink-0">
+                  <Languages size={11} className="text-primary" />
                 </span>
-                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Languages</h2>
+                <h2 className="eyebrow">Languages</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {doctor.languages.map((l: string, i: number) => (
@@ -265,8 +265,8 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
           {siteConfig.showBeforeAfterOnPublic && doctorResults.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Patient Results by {doctor.name}</h2>
-                <Link href="/results" className="text-xs font-semibold text-[#2A6BA8] hover:underline">View all</Link>
+                <h2 className="eyebrow">Patient Results by {doctor.name}</h2>
+                <Link href="/results" className="text-xs font-semibold text-secondary hover:underline">View all</Link>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 {doctorResults.map((r: any) => (
@@ -287,16 +287,16 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
 
         {/* RIGHT — sticky CTA */}
         <div className="space-y-4">
-          <div className="bg-[#f6faff] border border-blue-50 rounded-3xl p-6 space-y-4 md:sticky md:top-6">
-            <p className="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest">{sidebarHeading}</p>
+          <div className="bg-canvas border border-blue-50 rounded-3xl p-6 space-y-4 md:sticky md:top-6">
+            <p className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">{sidebarHeading}</p>
             <p className="text-sm text-gray-500 leading-relaxed">
               {sidebarBody}
             </p>
             <Link href="/book"
-              className="flex items-center justify-center gap-2 bg-[#0B2560] text-white py-3 rounded-2xl font-bold text-sm hover:bg-[#0d2d73] hover:-translate-y-0.5 transition-all shadow-md shadow-[#0B2560]/20">
+              className="flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-2xl font-bold text-sm hover:bg-primary-hover hover:-translate-y-0.5 transition-all shadow-md shadow-primary/20">
               <Calendar size={14} /> {siteConfig.consultationCta}
             </Link>
-            <p className="text-[10px] text-gray-500 text-center">No fees · No obligation</p>
+            <p className="text-xs text-gray-500 text-center">No fees · No obligation</p>
           </div>
 
           {/* Quick stats card */}
@@ -304,28 +304,28 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
             <div className="rounded-3xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
               {doctor.experience > 0 && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <Award size={14} className="text-[#A25607] shrink-0" />
+                  <Award size={14} className="text-bronze shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Experience</p>
-                    <p className="text-sm font-bold text-[#0B2560]">{doctor.experience}+ Years</p>
+                    <p className="text-sm font-bold text-primary">{doctor.experience}+ Years</p>
                   </div>
                 </div>
               )}
               {locationLabel && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <MapPin size={14} className="text-[#A25607] shrink-0" />
+                  <MapPin size={14} className="text-bronze shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Available At</p>
-                    <p className="text-sm font-bold text-[#0B2560] capitalize">{locationLabel}</p>
+                    <p className="text-sm font-bold text-primary capitalize">{locationLabel}</p>
                   </div>
                 </div>
               )}
               {doctor.languages?.length > 0 && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <Languages size={14} className="text-[#A25607] shrink-0" />
+                  <Languages size={14} className="text-bronze shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">Languages</p>
-                    <p className="text-sm font-bold text-[#0B2560]">{doctor.languages.join(' · ')}</p>
+                    <p className="text-sm font-bold text-primary">{doctor.languages.join(' · ')}</p>
                   </div>
                 </div>
               )}
@@ -339,22 +339,22 @@ export default async function DoctorDetailPage({ params }: { params: { id: strin
       </section>
 
       {/* ── BOTTOM CTA ── */}
-      <section className="bg-[#0B2560] py-14">
+      <section className="bg-primary py-14">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#F5A623] mb-3">Ready to Begin?</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
+          <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-champagne mb-3">Ready to Begin?</p>
+          <h2 className="text-2xl md:text-3xl font-headline font-medium text-white mb-3">
             {ctaHeading}
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
             {ctaBody}
           </p>
           <Link href="/book"
-            className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
+            className="inline-flex items-center gap-2 bg-champagne text-primary px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:-translate-y-0.5 transition shadow-lg">
             <Calendar size={15} /> {siteConfig.consultationCta}
           </Link>
         </div>
       </section>
 
-    </main>
+    </div>
   );
 }

@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { FAQSchema } from '@/app/components/SchemaMarkup';
+import { scrubClaims } from '@/app/lib/patientClaims';
 import FAQPageClient from './FAQPageClient';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { STATIC_FAQS } from '@/app/lib/rag/staticFaqs';
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Frequently Asked Questions | DR Youth Clinic',
     description:
-      'Answers to your questions about dermatology, laser, hair and skin treatments in Chennai, Bangalore, Kochi and Coimbatore.',
+      'Answers to your questions about laser, hair and skin treatments in Chennai, Bangalore, Kochi and Coimbatore.',
     url: `${SITE_URL}/faqs`,
     siteName: 'DR Youth Clinic',
     type: 'website',
@@ -69,9 +70,10 @@ export default async function FAQPage() {
   // Merge CMS FAQs (filtered by category, defaulting to 'General') into each
   // hardcoded default category. CMS items are de-duped against the defaults by
   // question text and take priority (listed first).
-  const allFaqs = STATIC_FAQS.map((cat) => {
+  const allFaqs = STATIC_FAQS.map((staticCat) => {
+    const cat = { ...staticCat, items: scrubClaims(staticCat.items) };
     const existingQuestions = new Set(cat.items.map((i) => i.question));
-    const newItems = cmsFaqs.filter(
+    const newItems = scrubClaims(cmsFaqs).filter(
       (f) => (f.category || 'General') === cat.category && !existingQuestions.has(f.question)
     );
     const items = [...newItems, ...cat.items].map((item) =>

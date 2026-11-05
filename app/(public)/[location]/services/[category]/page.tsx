@@ -140,7 +140,7 @@ export default async function CategoryPage({ params }: PageProps) {
     : categoryBanners;
 
   return (
-    <main className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen">
       <HomepageOfferSplash banner={splashBanner} page="category" />
 
       {/* ── HERO — active, targeted Banner(s) take over this slot when any
@@ -183,7 +183,7 @@ export default async function CategoryPage({ params }: PageProps) {
             <div className="flex items-center gap-5 mb-5">
               <span className="text-5xl md:text-6xl">{meta.icon}</span>
               <div>
-                <h1 className="text-4xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-headline font-medium leading-tight tracking-tight">
                   {meta.label}
                 </h1>
                 {services.length > 0 && (
@@ -206,7 +206,7 @@ export default async function CategoryPage({ params }: PageProps) {
 
             <Link
               href="/book"
-              className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm"
+              className="inline-flex items-center gap-2 bg-champagne text-primary px-7 py-3.5 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition text-sm"
             >
               {siteConfig.consultationCta}
               <ArrowRight size={15} />
@@ -217,15 +217,15 @@ export default async function CategoryPage({ params }: PageProps) {
       )}
 
       {/* ── BREADCRUMB ── */}
-      <nav className="bg-[#f6faff] border-b border-gray-100 py-3">
+      <nav className="bg-canvas border-b border-gray-100 py-3">
         <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center gap-1.5 text-sm text-gray-500">
-          <Link href="/" className="hover:text-[#0B2560] transition">Home</Link>
+          <Link href="/" className="hover:text-primary transition">Home</Link>
           <span>/</span>
-          <Link href={`/${params.location}`} className="hover:text-[#0B2560] transition capitalize">{city}</Link>
+          <Link href={`/${params.location}`} className="hover:text-primary transition capitalize">{city}</Link>
           <span>/</span>
-          <Link href={`/${params.location}/services`} className="hover:text-[#0B2560] transition">Services</Link>
+          <Link href={`/${params.location}/services`} className="hover:text-primary transition">Services</Link>
           <span>/</span>
-          <span className="text-[#0B2560] font-semibold">{meta.label}</span>
+          <span className="text-primary font-semibold">{meta.label}</span>
         </div>
       </nav>
 
@@ -235,7 +235,7 @@ export default async function CategoryPage({ params }: PageProps) {
         {services.length === 0 ? (
           <div className="text-center py-24 space-y-5">
             <span className="text-6xl">{meta.icon}</span>
-            <h2 className="text-2xl font-headline font-bold text-[#0B2560]">
+            <h2 className="text-2xl font-headline font-medium text-primary">
               {meta.label} treatments coming soon
             </h2>
             <p className="text-gray-500 max-w-md mx-auto">
@@ -244,7 +244,7 @@ export default async function CategoryPage({ params }: PageProps) {
             </p>
             <Link
               href="/book"
-              className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-4"
+              className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-4"
             >
               Book a Consultation
               <ArrowRight size={15} />
@@ -253,7 +253,7 @@ export default async function CategoryPage({ params }: PageProps) {
         ) : (
           <>
             <div className="flex items-center justify-between mb-10">
-              <h2 className="text-2xl md:text-3xl font-headline font-bold text-[#0B2560]">
+              <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">
                 {services.length} {meta.label} Treatment{services.length !== 1 ? 's' : ''} in {city}
               </h2>
             </div>
@@ -275,8 +275,8 @@ export default async function CategoryPage({ params }: PageProps) {
             {services.length >= 2 && (
               <div className="mt-16">
                 <div className="text-center mb-6">
-                  <p className="text-[#2A6BA8] text-xs font-bold uppercase tracking-widest mb-1">Treatment Comparison Center</p>
-                  <h3 className="text-2xl font-headline font-bold text-[#0B2560]">Compare {meta.label} Treatments</h3>
+                  <p className="text-secondary text-xs font-bold uppercase tracking-widest mb-1">Treatment Comparison Center</p>
+                  <h3 className="text-2xl font-headline font-medium text-primary">Compare {meta.label} Treatments</h3>
                   <p className="text-gray-500 text-sm mt-1">Side-by-side overview to help you find the right fit</p>
                 </div>
 
@@ -284,7 +284,7 @@ export default async function CategoryPage({ params }: PageProps) {
                 <div className="overflow-x-auto -mx-2 px-2">
                   <table className="w-full min-w-[540px] border-collapse rounded-2xl overflow-hidden shadow-sm border border-gray-100">
                     <thead>
-                      <tr className="bg-[#0B2560] text-white text-xs">
+                      <tr className="bg-primary text-white text-xs">
                         <th className="py-3 px-4 text-left font-semibold text-white/50 uppercase tracking-wider w-28">Attribute</th>
                         {services.slice(0, 4).map((s: any) => (
                           <th key={String(s._id)} className="py-3 px-4 text-left font-bold">{s.name}</th>
@@ -299,20 +299,20 @@ export default async function CategoryPage({ params }: PageProps) {
                         { label: 'Recovery', getValue: (s: any) => s.recoveryTime || 'Minimal' },
                         { label: 'Ideal for', getValue: (s: any) => s.idealFor?.slice(0, 2).join(', ') || '—' },
                       ].filter(Boolean).map((row: any, ri) => (
-                        <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-[#f6faff]'}>
-                          <td className="py-3 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{row.label}</td>
+                        <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-canvas'}>
+                          <td className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{row.label}</td>
                           {services.slice(0, 4).map((s: any) => (
                             <td key={String(s._id)} className="py-3 px-4 text-gray-700 font-medium">{row.getValue(s)}</td>
                           ))}
                         </tr>
                       ))}
-                      <tr className="bg-[#f6faff]">
-                        <td className="py-3 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Book</td>
+                      <tr className="bg-canvas">
+                        <td className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Book</td>
                         {services.slice(0, 4).map((s: any) => (
                           <td key={String(s._id)} className="py-3 px-4">
                             <Link
                               href={`/${params.location}/services/${catSlug}/${s.urlSlug}`}
-                              className="inline-flex items-center gap-1 text-xs font-bold text-[#0B2560] hover:text-[#2A6BA8] transition"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-secondary transition"
                             >
                               View <ArrowRight size={11} />
                             </Link>
@@ -324,7 +324,7 @@ export default async function CategoryPage({ params }: PageProps) {
                 </div>
 
                 <div className="text-center mt-6">
-                  <Link href="/book" className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg">
+                  <Link href="/book" className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg">
                     Get a Personalised Recommendation <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -338,7 +338,7 @@ export default async function CategoryPage({ params }: PageProps) {
       <section className={`bg-gradient-to-br ${meta.heroGrad} py-16 text-white`}>
         <div className="max-w-3xl mx-auto text-center px-6 space-y-4">
           <span className="text-4xl">{meta.icon}</span>
-          <h2 className="text-3xl font-headline font-extrabold tracking-tight">
+          <h2 className="text-3xl font-headline font-medium tracking-tight">
             Ready to begin?
           </h2>
           <p className="text-white/60 max-w-md mx-auto">
@@ -347,7 +347,7 @@ export default async function CategoryPage({ params }: PageProps) {
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <Link
               href="/book"
-              className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-8 py-4 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition"
+              className="inline-flex items-center gap-2 bg-champagne text-primary px-8 py-4 rounded-xl font-bold shadow-lg hover:-translate-y-0.5 transition"
             >
               {siteConfig.consultationCta}
               <ArrowRight size={16} />
@@ -362,7 +362,7 @@ export default async function CategoryPage({ params }: PageProps) {
         </div>
       </section>
 
-    </main>
+    </div>
   );
 }
 
@@ -392,7 +392,7 @@ function ServiceCard({
         aspectRatio="4/5"
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         alt={svc.name}
-        className="bg-[#f6faff]"
+        className="bg-canvas"
         imgClassName="group-hover:scale-105 transition-transform duration-500"
         fallbackEmoji="✨"
       >
@@ -400,7 +400,7 @@ function ServiceCard({
 
         {/* price pill */}
         {showPrice && (
-          <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm text-[#0B2560] px-3 py-1.5 rounded-full shadow-sm">
+          <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm text-primary px-3 py-1.5 rounded-full shadow-sm">
             <IndianRupee size={12} className="shrink-0" />
             <span className="text-xs font-extrabold">{(svc.price ?? 0).toLocaleString('en-IN')}</span>
           </div>
@@ -416,7 +416,7 @@ function ServiceCard({
 
       {/* CONTENT */}
       <div className="flex flex-col flex-1 p-5">
-        <h3 className="font-headline font-bold text-[#0B2560] text-lg leading-snug mb-1.5 group-hover:text-[#3b82f6] transition-colors">
+        <h3 className="font-headline font-medium text-primary text-lg leading-snug mb-1.5 group-hover:text-[#3b82f6] transition-colors">
           {svc.name}
         </h3>
 
@@ -424,12 +424,12 @@ function ServiceCard({
         {(svc.sessionsRequired || svc.recoveryTime) && (
           <div className="flex flex-wrap gap-2 mb-3">
             {svc.sessionsRequired && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-blue-50 text-[#0B2560] px-2 py-1 rounded-full">
-                <Zap size={9} className="text-[#2A6BA8]" /> {svc.sessionsRequired}
+              <span className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-50 text-primary px-2 py-1 rounded-full">
+                <Zap size={9} className="text-secondary" /> {svc.sessionsRequired}
               </span>
             )}
             {svc.recoveryTime && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-green-50 text-green-700 px-2 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold bg-green-50 text-green-700 px-2 py-1 rounded-full">
                 <CheckCircle size={9} /> {svc.recoveryTime}
               </span>
             )}
@@ -446,7 +446,7 @@ function ServiceCard({
         {hasIdealFor && (
           <div className="flex flex-wrap gap-1.5 mb-3">
             {svc.idealFor.slice(0, 3).map((tag: string, i: number) => (
-              <span key={i} className="text-[10px] bg-[#f6faff] border border-blue-50 text-gray-500 px-2 py-0.5 rounded-full">
+              <span key={i} className="text-xs bg-canvas border border-blue-50 text-gray-500 px-2 py-0.5 rounded-full">
                 {tag}
               </span>
             ))}
@@ -467,10 +467,10 @@ function ServiceCard({
 
         {/* CTA row */}
         <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
-          <span className="text-xs text-[#0B2560] font-semibold group-hover:text-[#3b82f6] transition-colors">View Treatment</span>
+          <span className="text-xs text-primary font-semibold group-hover:text-[#3b82f6] transition-colors">View Treatment</span>
           <ArrowRight
             size={15}
-            className="text-[#0B2560] group-hover:translate-x-1 group-hover:text-[#3b82f6] transition-all"
+            className="text-primary group-hover:translate-x-1 group-hover:text-[#3b82f6] transition-all"
           />
         </div>
       </div>

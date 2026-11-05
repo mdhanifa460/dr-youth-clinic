@@ -50,14 +50,14 @@ export default function ServiceStickyDesktopCta({ ctaText, phone, hideNearId = "
         <a
           href={callHref}
           title={phone}
-          className="w-12 h-12 rounded-full bg-white text-[#0B2560] shadow-[0_10px_28px_rgba(11,37,96,0.22)] border border-gray-100 flex items-center justify-center hover:-translate-y-0.5 transition-transform"
+          className="w-12 h-12 rounded-full bg-white text-primary shadow-[0_10px_28px_rgba(11,37,96,0.22)] border border-gray-100 flex items-center justify-center hover:-translate-y-0.5 transition-transform"
         >
           <Phone size={17} />
         </a>
       )}
       <Link
         href="/book"
-        className="flex items-center gap-2 bg-[#F5A623] text-[#0B2560] font-bold text-sm pl-5 pr-6 py-3.5 rounded-full shadow-[0_10px_28px_rgba(245,166,35,0.35)] hover:-translate-y-0.5 transition-transform"
+        className="flex items-center gap-2 bg-champagne text-primary font-bold text-sm pl-5 pr-6 py-3.5 rounded-full shadow-[0_10px_28px_rgba(245,166,35,0.35)] hover:-translate-y-0.5 transition-transform"
       >
         <Calendar size={16} /> {ctaText}
       </Link>

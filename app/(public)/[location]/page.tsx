@@ -8,6 +8,8 @@ import { locations } from '@/app/data/locations';
 import { LocalBusinessSchema } from '@/app/components/SchemaMarkup';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cleanCredentialWording, scrubClaims } from '@/app/lib/patientClaims';
+import { toTelHref } from '@/app/lib/phone';
 import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
 import { Result } from '@/app/models/Result';
@@ -37,12 +39,12 @@ export async function generateMetadata({ params }: { params: { location: string 
   if (!loc) return {};
   const { name } = loc;
   return {
-    title: `Dermatology & Skin Clinic in ${name}`,
-    description: `Premium skin, hair & laser treatments in ${name}. Expert dermatologists at ${loc.address}. Book your consultation today. ${loc.specialties.join(', ')}.`,
+    title: `Skin, Hair & Aesthetic Clinic in ${name}`,
+    description: `Skin, hair and laser treatments at DR Youth Clinic in ${name}. Book your consultation today. ${loc.specialties.join(', ')}.`,
     alternates: { canonical: `${SITE_URL}/${params.location}` },
     openGraph: {
       title: `Skin Clinic in ${name} | DR Youth Clinic`,
-      description: `Advanced dermatology — ${loc.specialties.slice(0, 3).join(', ')} — at our ${name} clinic.`,
+      description: `Skin and hair care — ${loc.specialties.slice(0, 3).join(', ')} — at our ${name} clinic.`,
       url: `${SITE_URL}/${params.location}`,
       siteName: 'DR Youth Clinic',
       type: 'website',
@@ -88,11 +90,11 @@ const WHY_US = [
   {
     icon: 'flask',
     title: 'Evidence-Based Protocols',
-    desc: 'Every treatment backed by clinical research and proven medical outcomes.',
+    desc: 'Treatment options are discussed with reference to current clinical practice.',
   },
   {
     icon: 'shield',
-    title: 'FDA-Approved Technology',
+    title: 'Doctor-Selected Technology',
     desc: 'Our doctors choose the medical aesthetic devices used for each treatment.',
   },
   {
@@ -141,12 +143,11 @@ export default async function LocationPage({ params }: { params: { location: str
   const ci          = content?.clinicInfo;
   const address     = ci?.address     || loc.address;
   const phone       = ci?.phone       || loc.phone;
+  const telHref     = toTelHref(phone);
   const hours       = ci?.hours?.length ? ci.hours : loc.hours;
-  const rating      = ci?.rating      || loc.rating      || 0;
-  const reviewCount = ci?.reviewCount || loc.reviewCount || 0;
-  const description = ci?.description || loc.description;
+  const description = cleanCredentialWording(ci?.description || loc.description);
   const specialties = ci?.specialties?.length ? ci.specialties : loc.specialties;
-  const whyUs       = ci?.whyUs?.length ? ci.whyUs : WHY_US;
+  const whyUs       = ci?.whyUs?.length ? scrubClaims(JSON.parse(JSON.stringify(ci.whyUs))) as typeof WHY_US : WHY_US;
   const mapEmbedUrl = content?.mapEmbedUrl   || loc.map;
   const directionsUrl = content?.googleMapsUrl ||
     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
@@ -171,12 +172,11 @@ export default async function LocationPage({ params }: { params: { location: str
         city={loc.name}
         address={address}
         phone={phone}
-        rating={rating}
-        reviewCount={reviewCount}
+        hours={hours}
         schemaType={siteConfig.schemaType}
       />
       <HomepageOfferSplash banner={splashBanner} page="location" />
-      <main>
+      <div>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
         {/* Matching Banner(s) (admin-configured) take over this slot when
@@ -193,34 +193,30 @@ export default async function LocationPage({ params }: { params: { location: str
 
             {/* LEFT — headline + CTAs */}
             <div className="space-y-4 md:space-y-7 pt-4">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-tertiary text-primary text-sm font-semibold">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sand text-primary text-sm font-medium">
                 <BadgeCheck size={15} />
                 DR Youth Clinic — {loc.name}
               </span>
 
-              <h1 className="text-4xl md:text-5xl font-headline font-extrabold text-primary leading-tight">
-                Advanced Skin &amp; Aesthetic Care
+              <h1 className="heading-display">
+                Advanced Skin &amp; Aesthetic Care{' '}
                 <br />
-                <span className="text-secondary">in {loc.name}</span>
+                <span className="italic text-bronze">in {loc.name}</span>
               </h1>
 
-              <p className="text-gray-700 text-base md:text-lg leading-relaxed font-semibold max-w-lg">
+              <p className="text-text-secondary text-base md:text-lg leading-relaxed max-w-lg">
                 {description}
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <Link href="/book">
-                  <button className="bg-primary text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition">
+                <Link href="/book" className="inline-flex items-center justify-center bg-primary text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition">
                     Book Consultation
-                  </button>
-                </Link>
-                <a href={`tel:${phone}`}>
-                  <button className="border border-primary text-primary px-8 py-3.5 rounded-xl font-semibold hover:bg-primary/5 transition">
-                    <span className="flex items-center gap-2">
-                      <Phone size={15} /> Call Clinic
-                    </span>
-                  </button>
-                </a>
+                  </Link>
+                {telHref && (
+                  <a href={telHref} className="inline-flex items-center gap-2 border border-primary text-primary px-8 py-3.5 rounded-xl font-semibold hover:bg-primary/5 transition">
+                    <Phone size={15} /> Call Clinic
+                  </a>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-6 pt-2 text-sm text-gray-600">
@@ -236,7 +232,7 @@ export default async function LocationPage({ params }: { params: { location: str
             </div>
 
             {/* RIGHT — clinic info card with optional hero photo */}
-            <div id="contact" className="bg-white rounded-3xl shadow-[0_12px_48px_rgba(0,32,69,0.1)] overflow-hidden">
+            <div id="contact" className="bg-white rounded-2xl border border-line overflow-hidden">
               {/* City hero image if available */}
               {hasHero && (
                 <div className="relative h-44 w-full">
@@ -255,7 +251,7 @@ export default async function LocationPage({ params }: { params: { location: str
               )}
 
               <div className="p-8 space-y-5">
-                <h2 className="text-xl font-headline font-bold text-primary">
+                <h2 className="text-xl font-headline font-medium text-primary">
                   DR Youth Clinic — {loc.name}
                 </h2>
 
@@ -264,10 +260,12 @@ export default async function LocationPage({ params }: { params: { location: str
                   <span>{address}</span>
                 </div>
 
-                <a href={`tel:${phone}`} className="flex gap-3 text-gray-700 text-sm hover:text-primary transition">
-                  <Phone className="text-secondary shrink-0 mt-0.5" size={17} />
-                  {phone}
-                </a>
+                {telHref && (
+                  <a href={telHref} className="flex gap-3 text-gray-700 text-sm hover:text-primary transition">
+                    <Phone className="text-secondary shrink-0 mt-0.5" size={17} />
+                    {phone}
+                  </a>
+                )}
 
                 <div className="border-t border-gray-100 pt-4 space-y-2.5">
                   {hours.map((h, i) => (
@@ -315,11 +313,11 @@ export default async function LocationPage({ params }: { params: { location: str
               <p className="text-secondary font-bold text-xs tracking-[0.2em] uppercase mb-3">
                 Specialised Treatments
               </p>
-              <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary">
+              <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary">
                 Our Services in {loc.name}
               </h2>
               <p className="text-gray-600 mt-3 max-w-xl">
-                Explore the treatments our {loc.name} clinic specialises in, delivered by board-certified dermatologists.
+                Explore the treatments our {loc.name} clinic specialises in, planned with our doctors.
               </p>
             </div>
 
@@ -354,7 +352,7 @@ export default async function LocationPage({ params }: { params: { location: str
         {hasPairs && (
           <BeforeAfterSection
             data={{
-              headline: `Real Results from Our ${loc.name} Clinic`,
+              headline: `Treatment Photos from Our ${loc.name} Clinic`,
               subheadline: `Patient transformations achieved at DR Youth Clinic ${loc.name}.`,
               pairs: content!.beforeAfterPairs.map((p) => ({
                 title: p.title,
@@ -368,13 +366,13 @@ export default async function LocationPage({ params }: { params: { location: str
 
         {/* ── DOCUMENTED RESULTS from Admin → Results, filtered to this branch ── */}
         {siteConfig.showBeforeAfterOnPublic && branchResults.length > 0 && (
-          <section className="py-16 px-6 md:px-10 bg-[#f6faff]">
+          <section className="py-16 px-6 md:px-10 bg-canvas">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
-                <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">
+                <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">
                   Patient Results at {loc.name}
                 </h2>
-                <Link href="/results" className="text-sm font-semibold text-[#0B2560] hover:text-[#3b82f6] transition flex items-center gap-1.5">
+                <Link href="/results" className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5">
                   View all <ChevronRight size={14} />
                 </Link>
               </div>
@@ -400,7 +398,7 @@ export default async function LocationPage({ params }: { params: { location: str
                   <p className="text-secondary font-bold text-xs tracking-[0.2em] uppercase mb-3">
                     Inside Our Clinic
                   </p>
-                  <h2 className="text-3xl font-headline font-extrabold text-primary">
+                  <h2 className="text-3xl font-headline font-medium text-primary">
                     {loc.name} Clinic Gallery
                   </h2>
                   <p className="text-gray-600 mt-2 text-sm">
@@ -443,11 +441,11 @@ export default async function LocationPage({ params }: { params: { location: str
         <section className="py-20 px-6 md:px-10 bg-background">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary">
+              <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary">
                 Why Choose DR Youth Clinic?
               </h2>
               <p className="text-gray-600 mt-4 max-w-xl mx-auto">
-                Dermatology backed by evidence, technology, and genuinely personalised care.
+                Consultation-led care, planned around you.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
@@ -473,7 +471,7 @@ export default async function LocationPage({ params }: { params: { location: str
         {/* ── OTHER LOCATIONS ───────────────────────────────────────────────── */}
         <section className="py-20 px-6 md:px-10 bg-white">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-2xl font-headline font-bold text-primary mb-2">
+            <h2 className="text-2xl font-headline font-medium text-primary mb-2">
               Visit Our Other Clinics
             </h2>
             <p className="text-gray-500 text-sm mb-8">
@@ -513,18 +511,16 @@ export default async function LocationPage({ params }: { params: { location: str
           <div className="max-w-7xl mx-auto bg-primary rounded-[32px] p-12 md:p-16 text-center relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_120%,#fff,transparent_60%)]" />
             <div className="relative z-10 space-y-6">
-              <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-white max-w-3xl mx-auto leading-tight">
+              <h2 className="text-3xl md:text-4xl font-headline font-medium text-white max-w-3xl mx-auto leading-tight">
                 Ready to Transform Your Skin in {loc.name}?
               </h2>
               <p className="text-white/80 text-lg max-w-xl mx-auto">
-                Book a consultation with our expert dermatologists today.
+                Book a consultation with our doctors.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-                <Link href="/book">
-                  <button className="bg-white text-primary px-10 py-4 rounded-xl font-bold text-lg shadow-xl hover:-translate-y-0.5 hover:shadow-2xl transition">
+                <Link href="/book" className="inline-flex items-center justify-center bg-white text-primary px-10 py-4 rounded-xl font-bold text-lg shadow-xl hover:-translate-y-0.5 hover:shadow-2xl transition">
                     Book Consultation
-                  </button>
-                </Link>
+                  </Link>
                 <a
                   href={`tel:${phone}`}
                   className="flex items-center gap-2 justify-center text-white font-semibold text-lg hover:opacity-80 transition"
@@ -537,7 +533,7 @@ export default async function LocationPage({ params }: { params: { location: str
           </div>
         </section>
 
-      </main>
+      </div>
     </>
   );
 }

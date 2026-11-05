@@ -66,7 +66,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
     headline = 'Regrow Stronger, Healthier Hair with',
     headlineAccent = 'PRP Treatment',
     description = data.subheadline ||
-      'Clinically proven, non-surgical hair restoration performed by expert doctors. Natural results with zero downtime.',
+      'Non-surgical hair restoration options, planned with our doctors after a consultation.',
     features = DEFAULT_FEATURES,
     ctaPrimary,
     phone,
@@ -274,7 +274,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
         }}
       />
       <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white/5 -translate-y-1/3 translate-x-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-[#F5A623]/[0.08] translate-y-1/3 pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-champagne/[0.08] translate-y-1/3 pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-6xl mx-auto px-5 pt-24 pb-16 md:pt-28 md:pb-20">
         <div className="grid lg:grid-cols-[3fr_2fr] gap-10 lg:gap-12 items-center">
@@ -286,9 +286,9 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="inline-flex items-center gap-2 bg-[#F5A623]/20 border border-[#F5A623]/40 text-[#A25607] text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-5 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 bg-champagne/20 border border-champagne/40 text-bronze text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-5 backdrop-blur-sm"
             >
-              <span className="w-2 h-2 rounded-full bg-[#F5A623] inline-block" />
+              <span className="w-2 h-2 rounded-full bg-champagne inline-block" />
               {badge}
             </motion.div>
 
@@ -301,7 +301,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
               className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-white leading-[1.1]"
             >
               {headline}{' '}
-              <span className="text-[#A25607]">{headlineAccent}</span>
+              <span className="text-bronze">{headlineAccent}</span>
             </motion.h1>
 
             <motion.p
@@ -325,7 +325,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
             >
               {features.map((f) => (
                 <span key={f} className="flex items-center gap-1.5 text-sm font-semibold text-white/90">
-                  <CheckCircle size={15} className="text-[#A25607] shrink-0" />
+                  <CheckCircle size={15} className="text-bronze shrink-0" />
                   {f}
                 </span>
               ))}
@@ -340,16 +340,14 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
               className="flex flex-col sm:flex-row gap-3 mt-8"
             >
               {ctaPrimary?.href ? (
-                <Link href={ctaPrimary.href}>
-                  <button className="flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-[#F5A623]/30 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto">
+                <Link href={ctaPrimary.href} className="inline-flex items-center justify-center flex items-center justify-center gap-2 bg-champagne hover:bg-[#e09516] text-primary font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-champagne/30 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto">
                     <CalendarCheck size={18} />
                     {ctaPrimary.text || submitButtonText}
-                  </button>
-                </Link>
+                  </Link>
               ) : (
                 <button
                   onClick={() => document.getElementById('lp-hero-form')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-[#F5A623]/30 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto"
+                  className="flex items-center justify-center gap-2 bg-champagne hover:bg-[#e09516] text-primary font-extrabold px-8 py-4 rounded-2xl text-base shadow-2xl shadow-champagne/30 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto"
                 >
                   <CalendarCheck size={18} />
                   {ctaPrimary?.text || submitButtonText}
@@ -384,8 +382,8 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                   eyeballing: a smaller offset here was overlapping the
                   headline on every screen width the badge shows at, not
                   just narrow ones. */}
-              <div className="absolute -top-6 -left-6 z-20 hidden sm:flex flex-col items-center justify-center w-20 h-20 rounded-full bg-[#0B2560] border-4 border-[#F5A623] shadow-xl text-center">
-                <span className="text-[#F5A623] font-extrabold text-base leading-none">{CLINIC_YEARS}</span>
+              <div className="absolute -top-6 -left-6 z-20 hidden sm:flex flex-col items-center justify-center w-20 h-20 rounded-full bg-primary border-4 border-champagne shadow-xl text-center">
+                <span className="text-champagne font-extrabold text-base leading-none">{CLINIC_YEARS}</span>
                 <span className="text-white text-[7px] font-bold uppercase tracking-wider mt-1 leading-tight px-1">
                   {yearsExperienceLabel}
                 </span>
@@ -397,17 +395,17 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                     <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
                       <CheckCircle size={34} className="text-green-500" />
                     </div>
-                    <p className="text-lg font-extrabold text-[#0B2560]">{successMessage}</p>
+                    <p className="text-lg font-extrabold text-primary">{successMessage}</p>
                     <p className="text-sm text-gray-500 mt-2">{successSubtext}</p>
                   </div>
                 ) : (
                   <>
-                    <h3 className="text-xl md:text-2xl font-extrabold text-[#0B2560] leading-tight">
+                    <h3 className="text-xl md:text-2xl font-extrabold text-primary leading-tight">
                       {formHeadline}
                     </h3>
                     {formUrgencyText && (
-                      <div className="inline-flex items-center gap-1.5 mt-2.5 bg-[#F5A623]/15 text-[#c47f10] text-xs font-bold px-3 py-1.5 rounded-full">
-                        <span className="w-2 h-2 bg-[#F5A623] rounded-full animate-pulse" />
+                      <div className="inline-flex items-center gap-1.5 mt-2.5 bg-champagne/15 text-[#c47f10] text-xs font-bold px-3 py-1.5 rounded-full">
+                        <span className="w-2 h-2 bg-champagne rounded-full animate-pulse" />
                         {formUrgencyText}
                       </div>
                     )}
@@ -424,7 +422,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                         onChange={(e) => set('name', e.target.value)}
                         placeholder={namePlaceholder}
                         required
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                       />
                       <input
                         type="tel"
@@ -433,7 +431,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                         onBlur={sendPartial}
                         placeholder={phonePlaceholder}
                         required
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                       />
                       {/* Transparent, not silent — tells the visitor
                           exactly what's happening rather than quietly
@@ -449,12 +447,12 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                         onChange={(e) => set('email', e.target.value)}
                         onBlur={sendPartial}
                         placeholder={emailPlaceholder}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                       />
                       <select
                         value={form.concern}
                         onChange={(e) => set('concern', e.target.value)}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                       >
                         <option value="">{concernPlaceholder}</option>
                         {concern_options.map((c) => (
@@ -465,7 +463,7 @@ export default function HeroSection({ data, slug, consultationFree }: { data: He
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full flex items-center justify-center gap-2 bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560] font-extrabold px-6 py-3.5 rounded-2xl text-base shadow-xl shadow-[#F5A623]/25 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 bg-champagne hover:bg-[#e09516] text-primary font-extrabold px-6 py-3.5 rounded-2xl text-base shadow-xl shadow-champagne/25 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {submitting ? (
                           <>

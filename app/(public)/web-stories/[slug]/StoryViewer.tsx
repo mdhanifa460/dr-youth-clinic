@@ -40,22 +40,22 @@ function ElementView({ el, entities, siteConfig }: any) {
 
   switch (el.type) {
     case 'title':
-      return <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-white leading-tight drop-shadow-lg">{d.text}</h1>;
+      return <h1 className="text-2xl md:text-3xl font-headline font-medium text-white leading-tight drop-shadow-lg">{d.text}</h1>;
     case 'subtitle':
-      return <p className="text-base md:text-lg font-bold text-[#A25607] drop-shadow">{d.text}</p>;
+      return <p className="text-base md:text-lg font-bold text-bronze drop-shadow">{d.text}</p>;
     case 'description':
       return <p className="text-sm text-white/90 leading-relaxed drop-shadow">{d.text}</p>;
     case 'quote':
-      return <p className="text-base italic text-white/95 border-l-2 border-[#F5A623] pl-3 drop-shadow">"{d.text}"</p>;
+      return <p className="text-base italic text-white/95 border-l-2 border-champagne pl-3 drop-shadow">"{d.text}"</p>;
     case 'doctor_card': {
       const doc = entities.doctors?.find((x: any) => x._id === d.doctorId);
       if (!doc) return null;
       return (
         <Link href={`/doctors/${doc._id}`} className="flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg">
-          <div className="w-11 h-11 rounded-xl bg-[#0B2560]/10 flex items-center justify-center shrink-0 overflow-hidden">
-            {doc.photo?.url ? <img src={doc.photo.url} alt={doc.name} className="w-full h-full object-cover" /> : <Stethoscope size={16} className="text-[#0B2560]" />}
+          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+            {doc.photo?.url ? <img src={doc.photo.url} alt={doc.name} className="w-full h-full object-cover" /> : <Stethoscope size={16} className="text-primary" />}
           </div>
-          <div className="min-w-0"><p className="text-xs font-bold text-[#0B2560] truncate">{doc.name}</p><p className="text-[10px] text-gray-500 truncate">{doc.title}</p></div>
+          <div className="min-w-0"><p className="text-xs font-bold text-primary truncate">{doc.name}</p><p className="text-xs text-gray-500 truncate">{doc.title}</p></div>
         </Link>
       );
     }
@@ -64,8 +64,8 @@ function ElementView({ el, entities, siteConfig }: any) {
       if (!svc) return null;
       return (
         <div className="flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg">
-          <div className="w-9 h-9 rounded-xl bg-[#f6faff] flex items-center justify-center shrink-0"><Sparkles size={14} className="text-[#0B2560]" /></div>
-          <p className="text-xs font-bold text-[#0B2560] truncate">{svc.name}</p>
+          <div className="w-9 h-9 rounded-xl bg-canvas flex items-center justify-center shrink-0"><Sparkles size={14} className="text-primary" /></div>
+          <p className="text-xs font-bold text-primary truncate">{svc.name}</p>
         </div>
       );
     }
@@ -74,8 +74,8 @@ function ElementView({ el, entities, siteConfig }: any) {
       if (!offer) return null;
       return (
         <Link href="/offers" className="flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg">
-          <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0"><Tag size={14} className="text-[#A25607]" /></div>
-          <p className="text-xs font-bold text-[#0B2560] truncate">{offer.title}</p>
+          <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0"><Tag size={14} className="text-bronze" /></div>
+          <p className="text-xs font-bold text-primary truncate">{offer.title}</p>
         </Link>
       );
     }
@@ -84,24 +84,24 @@ function ElementView({ el, entities, siteConfig }: any) {
       if (!result) return null;
       return (
         <Link href={result.slug ? `/results/${result.slug}` : '/results'} className="flex items-center gap-3 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg">
-          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0"><Camera size={14} className="text-[#2A6BA8]" /></div>
-          <p className="text-xs font-bold text-[#0B2560] truncate">{result.title}</p>
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0"><Camera size={14} className="text-secondary" /></div>
+          <p className="text-xs font-bold text-primary truncate">{result.title}</p>
         </Link>
       );
     }
     case 'cta_button':
-      return <Link href={d.href || '/book'} className="block text-center bg-[#F5A623] text-[#0B2560] font-bold text-sm py-3 rounded-2xl shadow-lg">{d.label || 'Book Now'}</Link>;
+      return <Link href={d.href || '/book'} className="block text-center bg-champagne text-primary font-bold text-sm py-3 rounded-2xl shadow-lg">{d.label || 'Book Now'}</Link>;
     case 'website_link':
-      return <a href={d.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 text-center bg-white/90 text-[#0B2560] font-bold text-sm py-3 rounded-2xl shadow-lg">{d.label || 'Learn More'} <ExternalLink size={13} /></a>;
+      return <a href={d.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 text-center bg-white/90 text-primary font-bold text-sm py-3 rounded-2xl shadow-lg">{d.label || 'Learn More'} <ExternalLink size={13} /></a>;
     case 'whatsapp_button': {
       const wa = branchWhatsApp ? toWaLink(branchWhatsApp) : null;
       if (!wa) return null;
       return <a href={wa} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-green-500 text-white font-bold text-sm py-3 rounded-2xl shadow-lg"><MessageCircle size={15} /> {d.label || 'Chat on WhatsApp'}</a>;
     }
     case 'call_button':
-      return d.phone ? <a href={`tel:${d.phone}`} className="flex items-center justify-center gap-2 bg-white/90 text-[#0B2560] font-bold text-sm py-3 rounded-2xl shadow-lg"><Phone size={14} /> Call Us</a> : null;
+      return d.phone ? <a href={`tel:${d.phone}`} className="flex items-center justify-center gap-2 bg-white/90 text-primary font-bold text-sm py-3 rounded-2xl shadow-lg"><Phone size={14} /> Call Us</a> : null;
     case 'location_card':
-      return d.branch ? <div className="flex items-center gap-2 bg-white/90 rounded-2xl p-3 shadow-lg"><MapPin size={14} className="text-[#A25607]" /><span className="text-xs font-bold text-[#0B2560] capitalize">{d.branch} Clinic</span></div> : null;
+      return d.branch ? <div className="flex items-center gap-2 bg-white/90 rounded-2xl p-3 shadow-lg"><MapPin size={14} className="text-bronze" /><span className="text-xs font-bold text-primary capitalize">{d.branch} Clinic</span></div> : null;
     case 'countdown':
       return <CountdownEl target={d.targetDate} label={d.label} />;
     default:
@@ -114,8 +114,8 @@ function CountdownEl({ target, label }: { target?: string; label?: string }) {
   if (!target) return null;
   return (
     <div className="bg-white/90 rounded-2xl px-4 py-2.5 text-center shadow-lg">
-      {label && <p className="text-[10px] text-gray-500 font-semibold uppercase">{label}</p>}
-      <p className="text-sm font-extrabold text-[#0B2560]">{left}</p>
+      {label && <p className="text-xs text-gray-500 font-semibold uppercase">{label}</p>}
+      <p className="text-sm font-extrabold text-primary">{left}</p>
     </div>
   );
 }
@@ -199,7 +199,7 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
   if (!slide) return <div className="p-10 text-center text-gray-500">This story has no slides yet.</div>;
 
   return (
-    <main className="bg-[#0a0a0a] min-h-screen">
+    <div className="bg-[#0a0a0a] min-h-screen">
       <div className="flex items-center justify-center py-6 md:py-10 px-4">
         <div className="relative w-full max-w-[420px] aspect-[9/16] rounded-3xl overflow-hidden shadow-2xl bg-black select-none"
           onMouseDown={() => setPaused(true)} onMouseUp={() => setPaused(false)}
@@ -267,7 +267,7 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
           <div className="flex gap-3 overflow-x-auto scrollbar-hide">
             {entities.recommendations.map((r: any, i: number) => (
               <a key={i} href={r.href} className="shrink-0 w-40 bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition">
-                <span className="text-[10px] font-bold text-[#A25607] uppercase">{r.type}</span>
+                <span className="text-xs font-bold text-bronze uppercase">{r.type}</span>
                 <p className="text-xs text-white mt-1 line-clamp-2">{r.title}</p>
               </a>
             ))}
@@ -287,7 +287,7 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
                     <div className="w-full h-full flex items-center justify-center text-xl">{r.storyType?.icon || '📱'}</div>
                   )}
                 </div>
-                <p className="text-white/70 text-[10px] mt-1.5 line-clamp-2 group-hover:text-white transition">{r.title}</p>
+                <p className="text-white/70 text-xs mt-1.5 line-clamp-2 group-hover:text-white transition">{r.title}</p>
               </Link>
             ))}
           </div>
@@ -296,10 +296,10 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
 
       {/* CTA */}
       <section className="max-w-2xl mx-auto px-6 py-10 text-center">
-        <Link href="/book" className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3.5 rounded-2xl font-extrabold text-sm">
+        <Link href="/book" className="inline-flex items-center gap-2 bg-champagne text-primary px-7 py-3.5 rounded-2xl font-extrabold text-sm">
           <Calendar size={15} /> {siteConfig?.consultationCta || 'Book Consultation'}
         </Link>
       </section>
-    </main>
+    </div>
   );
 }

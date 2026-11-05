@@ -27,7 +27,7 @@ export default function TypeSelectScreen({
   return (
     <div className="py-6 md:py-10">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B2560] mb-2 tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-primary mb-2 tracking-tight">
           What would you like assessed?
         </h2>
         <p className="text-gray-500 text-sm md:text-base">

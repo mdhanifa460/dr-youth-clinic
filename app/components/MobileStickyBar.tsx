@@ -26,7 +26,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
   // Same attribution-token append as every other WhatsApp CTA (see
   // useBranchWhatsApp.ts's useAttributedWaText) — this bar is present on
   // every public page, so it's a high-traffic WhatsApp entry point.
-  const waMessage = useAttributedWaText("Hi, I'd like to book a free consultation");
+  const waMessage = useAttributedWaText("Hi, I'd like to book a consultation");
   const waHref = waBase
     ? `${waBase}${waBase.includes('?') ? '&' : '?'}text=${encodeURIComponent(waMessage)}`
     : null;
@@ -78,7 +78,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
           rel="noopener noreferrer"
           style={{ touchAction: "manipulation" }}
           onClick={() => pushDataLayerEvent("whatsapp_click", { source: "mobile_sticky_bar" })}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#25D366] text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#0F7A6E] text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
         >
           <FaWhatsapp size={20} />
           <span>WhatsApp</span>
@@ -94,7 +94,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
           href={callHref}
           style={{ touchAction: "manipulation" }}
           onClick={() => pushDataLayerEvent("call_click", { source: "mobile_sticky_bar" })}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#0B2545] text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-primary text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
         >
           <MdPhone size={20} />
           <span>Call Us</span>
@@ -108,7 +108,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
       <Link
         href="/book"
         style={{ touchAction: "manipulation" }}
-        className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#F5A623] text-white font-bold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
+        className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-champagne text-primary font-bold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
       >
         <CalendarCheck size={20} />
         <span>Book Now</span>

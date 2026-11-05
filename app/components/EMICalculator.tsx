@@ -31,20 +31,20 @@ export default function EMICalculator({ price }: Props) {
       {/* Toggle header */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#0B2560] to-[#1a3a7a] text-white"
+        className="w-full flex items-center justify-between px-6 py-4 bg-gradient-to-r from-primary to-[#1a3a7a] text-white"
         aria-expanded={open}
       >
         <div className="text-left">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">
+          <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-0.5">
             Flexible Payments
           </p>
-          <h3 className="font-headline font-bold text-base leading-snug">
+          <h3 className="font-headline font-medium text-base leading-snug">
             Make It Affordable — EMI Options
           </h3>
         </div>
         <ChevronDown
           size={18}
-          className={`text-[#A25607] transition-transform duration-300 shrink-0 ml-3 ${
+          className={`text-bronze transition-transform duration-300 shrink-0 ml-3 ${
             open ? 'rotate-180' : ''
           }`}
         />
@@ -57,10 +57,10 @@ export default function EMICalculator({ price }: Props) {
           {showSlider && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold text-[#0B2560] uppercase tracking-wider">
+                <label className="text-xs font-bold text-primary uppercase tracking-wider">
                   Adjust Price
                 </label>
-                <span className="flex items-center gap-0.5 text-xl font-extrabold text-[#0B2560]">
+                <span className="flex items-center gap-0.5 text-xl font-extrabold text-primary">
                   <IndianRupee size={14} />
                   {fmt(selected)}
                 </span>
@@ -72,9 +72,9 @@ export default function EMICalculator({ price }: Props) {
                 step={500}
                 value={selected}
                 onChange={(e) => setSelected(Number(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#0B2560] bg-gray-100"
+                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary bg-gray-100"
               />
-              <div className="flex justify-between text-[10px] text-gray-300 mt-1">
+              <div className="flex justify-between text-xs text-gray-300 mt-1">
                 <span>₹{fmt(safeMin)}</span>
                 <span>₹{fmt(price)}</span>
               </div>
@@ -86,30 +86,30 @@ export default function EMICalculator({ price }: Props) {
             {EMI_OPTIONS.map(({ months, label }) => (
               <div
                 key={months}
-                className="bg-[#f6faff] rounded-2xl p-4 border border-blue-50 text-center hover:border-[#3B82C4]/30 hover:shadow-sm transition-all"
+                className="bg-canvas rounded-2xl p-4 border border-blue-50 text-center hover:border-secondary/30 hover:shadow-sm transition-all"
               >
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                   {label}
                 </p>
-                <p className="flex items-center justify-center gap-0.5 font-extrabold text-[#0B2560] text-lg leading-none">
+                <p className="flex items-center justify-center gap-0.5 font-extrabold text-primary text-lg leading-none">
                   <IndianRupee size={13} />
                   {fmt(selected / months)}
                 </p>
-                <p className="text-[10px] text-gray-500 mt-1">/month</p>
+                <p className="text-xs text-gray-500 mt-1">/month</p>
               </div>
             ))}
           </div>
 
           {/* 0% interest highlight */}
-          <div className="bg-[#F5A623]/10 rounded-2xl px-5 py-3.5 border border-[#F5A623]/20 flex items-start gap-2.5">
+          <div className="bg-champagne/10 rounded-2xl px-5 py-3.5 border border-champagne/20 flex items-start gap-2.5">
             <span className="text-base shrink-0">🏦</span>
-            <p className="text-xs font-semibold text-[#0B2560] leading-relaxed">
+            <p className="text-xs font-semibold text-primary leading-relaxed">
               0% interest available with{' '}
               <span className="font-bold">{siteConfig.emiBankPartners}</span> credit cards
             </p>
           </div>
 
-          <p className="text-center text-[10px] text-gray-500 leading-relaxed">
+          <p className="text-center text-xs text-gray-500 leading-relaxed">
             EMI availability subject to bank approval. Speak to our team for details.
           </p>
         </div>

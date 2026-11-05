@@ -18,8 +18,8 @@ export default function OffersClient({ offers }: { offers: any[] }) {
       {/* Section heading */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#2A6BA8] mb-2">Current Deals</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-[#0B2560]">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-2">Current Deals</p>
+          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">
             {active === 'All' ? 'All Offers & Packages' : active + ' Offers'}
           </h2>
           <p className="text-gray-500 text-sm mt-1">{filtered.length} offer{filtered.length !== 1 ? 's' : ''} available</p>

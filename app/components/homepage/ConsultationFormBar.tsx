@@ -24,6 +24,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [website, setWebsite] = useState('');
   const getIdempotencyKey = useIdempotencyKey();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +39,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
           'Content-Type': 'application/json',
           'Idempotency-Key': getIdempotencyKey({ name, phone, service, location: city.toLowerCase() }),
         },
-        body: JSON.stringify({ name, phone, service, location: city.toLowerCase() }),
+        body: JSON.stringify({ name, phone, service, location: city.toLowerCase(), website }),
       });
       const data = await res.json();
       if (data.success) {
@@ -64,7 +65,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
         // trigger needs one exact-match URL, which a query param broke).
         goToBookingSuccess(router, data.bookingId, city);
       } else {
-        setError(data.message || 'Booking failed. Please try again.');
+        setError(data.message || 'We could not send your request. Please try again, or call the clinic.');
       }
     } catch {
       setError('Network error. Please try again.');
@@ -74,44 +75,53 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   };
 
   return (
-    <section className="bg-[#f6faff] border-y border-[#e8eff7] py-10 md:py-12 lg:py-14" id="booking">
+    <section className="bg-canvas border-y border-line py-10 md:py-12 lg:py-14" id="booking">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-        <div className="bg-white rounded-3xl shadow-[0_12px_35px_rgba(11,37,96,0.08)] ring-1 ring-[#e8eff7] p-4 sm:p-5 md:p-6 lg:p-8">
+        <div className="bg-white rounded-2xl border border-line p-4 sm:p-5 md:p-6 lg:p-8">
           <div className="grid lg:grid-cols-[0.85fr_2fr] gap-5 md:gap-6 items-center">
             {/* TEXT */}
             <div>
-              <p className="text-[#0B2560] font-bold text-lg md:text-xl leading-snug">{headline}</p>
+              <p className="font-headline text-primary font-medium text-xl md:text-2xl leading-snug">{headline}</p>
               <p className="text-gray-500 text-sm mt-2 leading-relaxed">{subtext}</p>
             </div>
 
             {/* FORM */}
             {sent ? (
               <div className="text-center py-4">
-                <p className="text-green-600 font-bold text-lg">Booking request sent!</p>
-                <p className="text-gray-500 text-sm mt-1">Our team will contact you shortly.</p>
-                <button onClick={() => setSent(false)} className="mt-3 min-h-11 px-4 text-[#0B2560] text-sm font-semibold underline">
-                  Book another
+                <p className="text-green-600 font-bold text-lg">Request received</p>
+                <p className="text-gray-500 text-sm mt-1">Our team will contact you to confirm a time.</p>
+                <button onClick={() => setSent(false)} className="mt-3 min-h-11 px-4 text-primary text-sm font-semibold underline">
+                  Send another request
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 items-end">
+              <form onSubmit={handleSubmit} className="relative grid sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 items-end">
+                <div className="absolute -left-[9999px]" aria-hidden="true">
+                  <label htmlFor="quick-website">Leave this field empty</label>
+                  <input id="quick-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+                </div>
                 {error && (
-                  <p className="sm:col-span-2 lg:col-span-5 text-red-600 text-sm font-medium">{error}</p>
+                  <p role="alert" className="sm:col-span-2 lg:col-span-5 text-red-700 text-sm font-medium">{error}</p>
                 )}
                 <input
                   type="text"
                   placeholder="Full Name"
+                  aria-label="Full name"
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#0B2560] placeholder:text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-line-strong rounded-xl px-4 py-3 text-sm text-primary placeholder:text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition"
                   required
                 />
                 <input
                   type="tel"
                   placeholder="Mobile Number"
+                  aria-label="Mobile number"
+                  autoComplete="tel-national"
+                  inputMode="numeric"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#0B2560] placeholder:text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-line-strong rounded-xl px-4 py-3 text-sm text-primary placeholder:text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition"
                   required
                 />
                 {/* aria-label on both — real Lighthouse/axe finding
@@ -126,7 +136,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                   aria-label="Select Service"
                   value={service}
                   onChange={(e) => setService(e.target.value)}
-                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-line-strong rounded-xl px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition"
                   required
                 >
                   <option value="">Select Service</option>
@@ -138,7 +148,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                   aria-label="Select City"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="min-h-12 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 focus:outline-none focus:border-[#0B2560] focus:ring-2 focus:ring-[#0B2560]/15 transition"
+                  className="min-h-12 min-w-0 border border-line-strong rounded-xl px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition"
                   required
                 >
                   <option value="">Select City</option>
@@ -149,7 +159,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="min-h-12 bg-[#0B2560] text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-[#0d2d73] hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(11,37,96,0.22)] transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0 whitespace-nowrap flex items-center justify-center gap-2 sm:col-span-2 lg:col-span-1"
+                  className="min-h-12 bg-primary text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:hover:translate-y-0 whitespace-nowrap flex items-center justify-center gap-2 sm:col-span-2 lg:col-span-1"
                 >
                   {loading ? 'Sending...' : ctaText}
                   {!loading && <span>→</span>}

@@ -1,7 +1,7 @@
 import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import Link from 'next/link';
 import { toWhatsAppNumber } from '@/app/lib/phone';
-import { ArrowRight, Stethoscope, FileText, CalendarCheck, Phone, MessageCircle } from 'lucide-react';
+import { ArrowRight, FileText, CalendarCheck, Phone, MessageCircle } from 'lucide-react';
 
 export interface ServicesCardsCategory {
   slug: string;
@@ -78,10 +78,10 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between md:items-end mb-8 md:mb-12 gap-5 md:gap-6">
           <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-headline font-extrabold text-primary mb-4 md:mb-5 leading-tight">
+            <h2 className="heading-section mb-3">
               {headline}
             </h2>
-            <p className="text-gray-700 text-base md:text-lg leading-relaxed font-semibold">
+            <p className="text-text-secondary text-base md:text-lg leading-relaxed">
               {subheadline}
             </p>
           </div>
@@ -110,7 +110,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
             return (
               <div
                 key={cat.slug}
-                className="group relative overflow-hidden rounded-3xl min-h-[260px] md:min-h-[320px] shadow-[0_12px_35px_rgba(11,37,96,0.1)] ring-1 ring-white/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(11,37,96,0.16)] focus-within:-translate-y-1"
+                className="group relative overflow-hidden rounded-2xl min-h-[220px] md:min-h-[320px]"
               >
                 <ImageWithFallback
                   src={image?.url}
@@ -122,19 +122,12 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
                 />
                 <div className={`absolute inset-0 bg-gradient-to-t ${image?.url ? 'from-black/75 via-black/30' : 'from-black/55 via-black/10'} to-transparent`} />
                 <Link href={catHref} aria-label={`${cat.label} — explore treatments`} className="absolute inset-0 z-0" />
-                <span className="absolute top-4 left-4 text-3xl md:text-4xl opacity-90 pointer-events-none">{cat.icon}</span>
 
                 {/* Label block (always visible) */}
                 <div className={`absolute inset-x-0 bottom-0 p-4 md:p-6 ${anyAction ? '[@media(hover:none)]:pb-14' : ''} pointer-events-none transition-opacity duration-300 [@media(hover:hover)]:group-hover:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-0`}>
-                  <span
-                    className="inline-block backdrop-blur text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-2"
-                    style={{ background: `color-mix(in srgb, ${accent} 25%, transparent)`, color: `color-mix(in srgb, ${accent} 45%, white)` }}
-                  >
-                    {cat.tagline}
-                  </span>
-                  <h3 className="text-lg md:text-xl font-headline font-extrabold text-white mb-1 leading-tight">{cat.label}</h3>
+                                    <h3 className="text-lg md:text-xl font-headline font-medium text-white mb-1 leading-tight">{cat.label}</h3>
                   <p className="text-white/70 text-xs md:text-sm mb-2">
-                    {count > 0 ? `${count} treatment${count !== 1 ? 's' : ''}` : 'Ask about pricing'}
+                    {count > 0 ? `${count} treatment${count !== 1 ? 's' : ''}` : 'Ask our team'}
                   </p>
                   <span className="inline-flex items-center gap-1.5 text-white text-xs md:text-sm font-bold">
                     Explore <ArrowRight size={13} />
@@ -151,15 +144,15 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
 
                 {/* Hover-capable devices: slide-up quick menu */}
                 {anyAction && (
-                  <div className="absolute inset-0 z-10 hidden flex-col justify-end bg-gradient-to-t from-[#0B2560] via-[#0B2560]/90 to-[#0B2560]/40 p-4 md:p-5 opacity-0 translate-y-3 transition-all duration-300 pointer-events-none [@media(hover:hover)]:flex group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto">
-                    <h3 className="text-lg font-headline font-extrabold text-white leading-tight mb-2">{cat.label}</h3>
+                  <div className="absolute inset-0 z-10 hidden flex-col justify-end bg-gradient-to-t from-primary via-primary/90 to-primary/40 p-4 md:p-5 opacity-0 translate-y-3 transition-all duration-300 pointer-events-none [@media(hover:hover)]:flex group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto">
+                    <h3 className="text-lg font-headline font-medium text-white leading-tight mb-2">{cat.label}</h3>
                     {showList && (
                       <ul className="mb-3 space-y-1.5">
                         {list.map((sv) => (
                           <li key={sv.slug}>
                             <Link
                               href={`/${location}/services/${cat.slug}/${sv.slug}`}
-                              className="flex items-center justify-between gap-2 text-[13px] text-white/85 hover:text-[#F5A623] transition-colors"
+                              className="flex items-center justify-between gap-2 text-[13px] text-white/85 hover:text-champagne transition-colors"
                             >
                               <span className="truncate">{sv.name}</span>
                               <ArrowRight size={12} className="shrink-0" />
@@ -168,7 +161,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
                         ))}
                         {count > list.length && (
                           <li>
-                            <Link href={catHref} className="text-[12px] font-semibold text-[#F5A623] hover:underline">
+                            <Link href={catHref} className="text-[12px] font-semibold text-champagne hover:underline">
                               View all {count} →
                             </Link>
                           </li>
@@ -196,21 +189,17 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
         </div>
 
         {/* CONSULT CARD */}
-        <div className="bg-white rounded-3xl p-6 md:p-10 lg:p-12 text-center shadow-[0_12px_35px_rgba(11,37,96,0.08)] ring-1 ring-[#e8eff7] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(11,37,96,0.12)]">
-          <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-5 md:mb-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
-            <Stethoscope className="text-white" size={28} />
+        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-5 md:flex-row md:items-center md:justify-between md:p-8">
+          <div>
+            <h3 className="font-headline text-xl font-medium text-primary md:text-2xl">
+              {diagnosisPanel?.title || 'Not sure which treatment you need?'}
+            </h3>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-text-secondary md:text-base">
+              {diagnosisPanel?.description || 'Our doctors will assess your concern and talk you through suitable options.'}
+            </p>
           </div>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold text-primary mb-3 md:mb-4 leading-tight">
-            {diagnosisPanel?.title || 'Need a personalized diagnosis?'}
-          </h3>
-          <p className="text-gray-600 max-w-md mx-auto mb-5 md:mb-6 text-sm md:text-base leading-relaxed">
-            {diagnosisPanel?.description || 'Our expert dermatologists are ready to analyze your unique needs and create a custom treatment path.'}
-          </p>
-          <Link
-            href={diagnosisPanel?.ctaHref || '/book'}
-            className="min-h-12 inline-flex items-center justify-center bg-primary text-white px-7 md:px-8 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(11,37,96,0.22)] transition-all duration-300"
-          >
-            {diagnosisPanel?.ctaText || 'Schedule Consultation'}
+          <Link href={diagnosisPanel?.ctaHref || '/book'} className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-white hover:bg-primary-hover">
+            {diagnosisPanel?.ctaText || 'Book a Consultation'}
           </Link>
         </div>
 
@@ -223,7 +212,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
 // label — the hover panel's 3-up grid) vs inline (the touch row).
 function MenuBtn({ href, icon, label, primary, stacked, external }: { href: string; icon: React.ReactNode; label: string; primary?: boolean; stacked?: boolean; external?: boolean }) {
   const cls = `${stacked ? 'flex-col py-2.5 text-[11px]' : 'flex-1 py-2 text-xs'} min-h-11 inline-flex items-center justify-center gap-1 rounded-xl font-bold leading-tight text-center transition-all ${
-    primary ? 'bg-[#F5A623] text-[#0B2560] hover:brightness-105' : 'bg-white/15 text-white hover:bg-white/25 backdrop-blur'
+    primary ? 'bg-champagne text-primary hover:brightness-105' : 'bg-white/15 text-white hover:bg-white/25 backdrop-blur'
   }`;
   return external || href.startsWith('http') || href.startsWith('tel:') ? (
     <a href={href} className={cls} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{icon}<span>{label}</span></a>

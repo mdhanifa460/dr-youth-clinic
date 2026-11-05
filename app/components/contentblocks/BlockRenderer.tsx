@@ -12,7 +12,7 @@ import TreatmentComparison from "@/app/components/TreatmentComparison";
 import BeforeAfterGallery from "@/app/components/BeforeAfterGallery";
 
 const CALLOUT_STYLES: Record<string, string> = {
-  info: "bg-[#f6faff] border-[#0B2560]/10 text-gray-700",
+  info: "bg-canvas border-primary/10 text-gray-700",
   warning: "bg-amber-50 border-amber-200 text-amber-800",
   success: "bg-emerald-50 border-emerald-200 text-emerald-800",
   medical: "bg-red-50 border-red-200 text-red-800",
@@ -44,22 +44,22 @@ function BlockItem({
       const text = data.text as string | undefined;
       if (!text) return null;
       const id = slugify(text);
-      if (data.level === 3) return <h3 id={id} className="text-xl font-bold text-[#0B2560] mt-8 mb-3">{text}</h3>;
-      if (data.level === 4) return <h4 id={id} className="text-lg font-bold text-[#0B2560] mt-6 mb-2">{text}</h4>;
-      return <h2 id={id} className="text-2xl font-headline font-bold text-[#0B2560] mt-10 mb-4">{text}</h2>;
+      if (data.level === 3) return <h3 id={id} className="text-xl font-bold text-primary mt-8 mb-3">{text}</h3>;
+      if (data.level === 4) return <h4 id={id} className="text-lg font-bold text-primary mt-6 mb-2">{text}</h4>;
+      return <h2 id={id} className="text-2xl font-headline font-medium text-primary mt-10 mb-4">{text}</h2>;
     }
 
     case "paragraph":
       return data.html ? (
         <div
-          className="mb-6 text-gray-600 leading-[1.9] text-[15px] [&_strong]:text-[#0B2560] [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_a]:text-[#2A6BA8] [&_a]:underline [&_mark]:bg-[#F5A623]/30 [&_mark]:rounded [&_mark]:px-0.5"
+          className="mb-6 text-gray-600 leading-[1.9] text-[15px] [&_strong]:text-primary [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_a]:text-secondary [&_a]:underline [&_mark]:bg-champagne/30 [&_mark]:rounded [&_mark]:px-0.5"
           dangerouslySetInnerHTML={{ __html: data.html }}
         />
       ) : null;
 
     case "bullet-list":
       return Array.isArray(data.items) && data.items.filter(Boolean).length > 0 ? (
-        <ul className="mb-6 pl-6 space-y-2 list-disc marker:text-[#A25607]">
+        <ul className="mb-6 pl-6 space-y-2 list-disc marker:text-bronze">
           {data.items.filter(Boolean).map((item: string, i: number) => (
             <li key={i} className="text-gray-600 leading-relaxed text-[15px]">{item}</li>
           ))}
@@ -68,7 +68,7 @@ function BlockItem({
 
     case "numbered-list":
       return Array.isArray(data.items) && data.items.filter(Boolean).length > 0 ? (
-        <ol className="mb-6 pl-6 space-y-2 list-decimal marker:text-[#2A6BA8] marker:font-bold">
+        <ol className="mb-6 pl-6 space-y-2 list-decimal marker:text-secondary marker:font-bold">
           {data.items.filter(Boolean).map((item: string, i: number) => (
             <li key={i} className="text-gray-600 leading-relaxed text-[15px]">{item}</li>
           ))}
@@ -86,7 +86,7 @@ function BlockItem({
 
     case "quote":
       return data.text ? (
-        <blockquote className="border-l-4 border-[#F5A623] pl-6 pr-4 py-4 my-8 bg-[#fffbf0] rounded-r-2xl text-gray-600 italic text-lg">
+        <blockquote className="border-l-4 border-champagne pl-6 pr-4 py-4 my-8 bg-[#fffbf0] rounded-r-2xl text-gray-600 italic text-lg">
           <p>{data.text}</p>
           {data.attribution && <footer className="text-sm text-gray-500 mt-2 not-italic">— {data.attribution}</footer>}
         </blockquote>
@@ -103,7 +103,7 @@ function BlockItem({
     case "cta":
       return data.label && data.href ? (
         <div className="mb-8">
-          <Link href={data.href} className="inline-block px-8 py-3.5 bg-[#0B2560] hover:bg-[#0d2d73] text-white font-bold rounded-xl transition">
+          <Link href={data.href} className="inline-block px-8 py-3.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition">
             {data.label}
           </Link>
         </div>
@@ -156,18 +156,18 @@ function BlockItem({
       const doctor = data.doctorId ? serviceContext?.doctors?.[data.doctorId] : undefined;
       if (!doctor || !data.quote) return null;
       return (
-        <div className="mb-8 flex gap-4 p-5 rounded-2xl bg-[#f6faff] border border-blue-50 items-start">
+        <div className="mb-8 flex gap-4 p-5 rounded-2xl bg-canvas border border-blue-50 items-start">
           {doctor.photo?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={doctor.photo.url} alt={doctor.name} className="w-14 h-14 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-14 h-14 rounded-full bg-[#0B2560]/10 flex items-center justify-center text-lg font-bold text-[#0B2560] shrink-0">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary shrink-0">
               {doctor.name?.[0]}
             </div>
           )}
           <div>
             <p className="text-gray-600 text-sm italic leading-relaxed mb-2">&ldquo;{data.quote}&rdquo;</p>
-            <p className="font-bold text-[#0B2560] text-sm">{doctor.name}</p>
+            <p className="font-bold text-primary text-sm">{doctor.name}</p>
             {doctor.title && <p className="text-gray-500 text-xs">{doctor.title}</p>}
           </div>
         </div>
@@ -209,12 +209,12 @@ function BlockItem({
       if (items.length === 0) return null;
       return (
         <div className="mb-8">
-          <h3 className="text-lg font-bold text-[#0B2560] mb-3">What to Expect</h3>
+          <h3 className="text-lg font-bold text-primary mb-3">What to Expect</h3>
           <div className="space-y-3">
             {items.map((item: any, i: number) => (
-              <div key={i} className="flex gap-3 p-4 rounded-xl bg-[#f6faff] border border-blue-50">
+              <div key={i} className="flex gap-3 p-4 rounded-xl bg-canvas border border-blue-50">
                 {item.timeframe && (
-                  <span className="shrink-0 text-xs font-bold text-[#2A6BA8] bg-white px-2.5 py-1 rounded-full border border-blue-100 h-fit">{item.timeframe}</span>
+                  <span className="shrink-0 text-xs font-bold text-secondary bg-white px-2.5 py-1 rounded-full border border-blue-100 h-fit">{item.timeframe}</span>
                 )}
                 <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
               </div>
@@ -229,7 +229,7 @@ function BlockItem({
       if (items.length === 0) return null;
       return (
         <div className="mb-8">
-          <h3 className="text-lg font-bold text-[#0B2560] mb-3">Possible Side Effects</h3>
+          <h3 className="text-lg font-bold text-primary mb-3">Possible Side Effects</h3>
           <ul className="space-y-2">
             {items.map((item: any, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-600 leading-relaxed">
@@ -249,13 +249,13 @@ function BlockItem({
       return (
         <Link
           href={info.href}
-          className="mb-6 flex items-center justify-between gap-4 p-4 rounded-2xl border border-blue-50 bg-[#f6faff] hover:border-[#3B82C4]/30 hover:shadow-md transition-all group"
+          className="mb-6 flex items-center justify-between gap-4 p-4 rounded-2xl border border-blue-50 bg-canvas hover:border-secondary/30 hover:shadow-md transition-all group"
         >
           <div>
-            <p className="font-bold text-[#0B2560] text-sm">{data.label || info.title}</p>
+            <p className="font-bold text-primary text-sm">{data.label || info.title}</p>
             {info.subtitle && <p className="text-gray-500 text-xs mt-0.5">{info.subtitle}</p>}
           </div>
-          <span className="text-[#2A6BA8] group-hover:translate-x-1 transition-transform shrink-0">→</span>
+          <span className="text-secondary group-hover:translate-x-1 transition-transform shrink-0">→</span>
         </Link>
       );
     }
@@ -290,7 +290,7 @@ function BlockItem({
       if (!videoId) return null;
       return (
         <div className="mb-8">
-          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-sm bg-[#0B2560]">
+          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-sm bg-primary">
             <iframe
               className="absolute inset-0 w-full h-full"
               src={`https://www.youtube.com/embed/${videoId}?rel=0`}
@@ -309,7 +309,7 @@ function BlockItem({
       if (!video?.youtubeId) return null;
       return (
         <div className="mb-8">
-          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-sm bg-[#0B2560]">
+          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-sm bg-primary">
             <iframe
               className="absolute inset-0 w-full h-full"
               src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0`}
@@ -329,11 +329,11 @@ function BlockItem({
           href={data.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-6 flex items-center gap-3 p-4 rounded-2xl border border-blue-50 bg-[#f6faff] hover:border-[#3B82C4]/30 hover:shadow-md transition-all"
+          className="mb-6 flex items-center gap-3 p-4 rounded-2xl border border-blue-50 bg-canvas hover:border-secondary/30 hover:shadow-md transition-all"
         >
           <span className="text-2xl shrink-0">📄</span>
           <div>
-            <p className="font-bold text-[#0B2560] text-sm">{data.label || "Download PDF"}</p>
+            <p className="font-bold text-primary text-sm">{data.label || "Download PDF"}</p>
             <p className="text-gray-500 text-xs">Opens in a new tab</p>
           </div>
         </a>
@@ -344,12 +344,12 @@ function BlockItem({
       const items = Array.isArray(data.items) ? data.items.filter(Boolean) : [];
       if (items.length === 0) return null;
       return (
-        <div className="mb-8 p-6 rounded-2xl border border-[#F5A623]/20 bg-[#fffbf0]">
-          <p className="text-xs font-bold text-[#A25607] uppercase tracking-widest mb-3">Key Takeaways</p>
+        <div className="mb-8 p-6 rounded-2xl border border-champagne/20 bg-[#fffbf0]">
+          <p className="text-xs font-bold text-bronze uppercase tracking-widest mb-3">Key Takeaways</p>
           <ul className="space-y-2.5">
             {items.map((item: string, i: number) => (
               <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700 leading-relaxed">
-                <span className="text-[#A25607] font-bold mt-0.5 shrink-0">✓</span> {item}
+                <span className="text-bronze font-bold mt-0.5 shrink-0">✓</span> {item}
               </li>
             ))}
           </ul>
@@ -362,12 +362,12 @@ function BlockItem({
       if (items.length === 0) return null;
       return (
         <div className="mb-8 p-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
-          {data.title && <p className="font-bold text-[#0B2560] text-sm mb-3">{data.title}</p>}
+          {data.title && <p className="font-bold text-primary text-sm mb-3">{data.title}</p>}
           <ul className="space-y-2.5">
             {items.map((item: any, i: number) => (
               <li key={i} className="flex items-start gap-3 text-sm text-gray-600 leading-relaxed">
-                <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] mt-0.5 ${
-                  item.checked ? "bg-[#0B2560] text-white" : "border-2 border-gray-200"
+                <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs mt-0.5 ${
+                  item.checked ? "bg-primary text-white" : "border-2 border-gray-200"
                 }`}>
                   {item.checked && "✓"}
                 </span>
@@ -387,13 +387,13 @@ function BlockItem({
           {steps.map((step: any, i: number) => (
             <div key={i} className="flex gap-4">
               <div className="flex flex-col items-center">
-                <span className="shrink-0 w-8 h-8 rounded-full bg-[#0B2560] text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                <span className="shrink-0 w-8 h-8 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
                 {i < steps.length - 1 && <span className="w-px flex-1 bg-gray-200 my-1" />}
               </div>
               <div className={i < steps.length - 1 ? "pb-6" : ""}>
                 <div className="flex items-center gap-2">
-                  <p className="font-headline font-bold text-[#0B2560] text-sm">{step.label}</p>
-                  {step.duration && <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{step.duration}</span>}
+                  <p className="font-headline font-medium text-primary text-sm">{step.label}</p>
+                  {step.duration && <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{step.duration}</span>}
                 </div>
                 {step.description && <p className="text-sm text-gray-500 leading-relaxed mt-1">{step.description}</p>}
               </div>
@@ -409,12 +409,12 @@ function BlockItem({
       return (
         <div className="mb-8 grid sm:grid-cols-2 gap-3">
           {steps.map((step: any, i: number) => (
-            <div key={i} className="p-4 rounded-2xl bg-[#f6faff] border border-blue-50 flex items-start gap-3">
-              <span className="shrink-0 w-8 h-8 rounded-full bg-[#F5A623] text-[#0B2560] text-sm font-bold flex items-center justify-center">
+            <div key={i} className="p-4 rounded-2xl bg-canvas border border-blue-50 flex items-start gap-3">
+              <span className="shrink-0 w-8 h-8 rounded-full bg-champagne text-primary text-sm font-bold flex items-center justify-center">
                 {step.icon || i + 1}
               </span>
               <div>
-                <p className="font-bold text-[#0B2560] text-sm">{step.title}</p>
+                <p className="font-bold text-primary text-sm">{step.title}</p>
                 {step.description && <p className="text-gray-500 text-xs leading-relaxed mt-1">{step.description}</p>}
               </div>
             </div>
@@ -431,7 +431,7 @@ function BlockItem({
           {stages.map((stage: any, i: number) => (
             <div key={i} className="p-4 rounded-2xl border border-amber-100 bg-amber-50/40 text-center">
               <span className="text-2xl">{stage.icon || "🌱"}</span>
-              <p className="font-bold text-[#0B2560] text-sm mt-2">{stage.phase}</p>
+              <p className="font-bold text-primary text-sm mt-2">{stage.phase}</p>
               {stage.description && <p className="text-gray-500 text-xs leading-relaxed mt-1">{stage.description}</p>}
             </div>
           ))}
@@ -447,8 +447,8 @@ function BlockItem({
         <div className="mb-8 overflow-x-auto rounded-2xl border border-gray-100">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#0B2560] text-white">
-                <th className="text-left px-4 py-3 font-bold sticky left-0 bg-[#0B2560]"> </th>
+              <tr className="bg-primary text-white">
+                <th className="text-left px-4 py-3 font-bold sticky left-0 bg-primary"> </th>
                 {headers.map((h: string, i: number) => (
                   <th key={i} className="text-left px-4 py-3 font-bold whitespace-nowrap">{h}</th>
                 ))}
@@ -456,8 +456,8 @@ function BlockItem({
             </thead>
             <tbody>
               {rows.map((row: any, i: number) => (
-                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#f6faff]"}>
-                  <td className="px-4 py-3 font-bold text-[#0B2560] sticky left-0 bg-inherit">{row.label}</td>
+                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-canvas"}>
+                  <td className="px-4 py-3 font-bold text-primary sticky left-0 bg-inherit">{row.label}</td>
                   {(row.values || []).map((v: string, j: number) => (
                     <td key={j} className="px-4 py-3 text-gray-600">{v}</td>
                   ))}
@@ -475,9 +475,9 @@ function BlockItem({
       return (
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map((s: any, i: number) => (
-            <div key={i} className="text-center p-4 rounded-2xl bg-[#f6faff] border border-blue-50">
-              <p className="text-2xl md:text-3xl font-headline font-extrabold text-[#A25607]">{s.value}</p>
-              <p className="text-xs text-[#0B2560] font-semibold mt-1">{s.label}</p>
+            <div key={i} className="text-center p-4 rounded-2xl bg-canvas border border-blue-50">
+              <p className="text-2xl md:text-3xl font-headline font-medium text-bronze">{s.value}</p>
+              <p className="text-xs text-primary font-semibold mt-1">{s.label}</p>
             </div>
           ))}
         </div>
@@ -495,7 +495,7 @@ function BlockItem({
               <li key={i} className="text-xs text-gray-500 leading-relaxed">
                 [{i + 1}] {c.source && <span className="font-semibold text-gray-600">{c.source} — </span>}
                 {c.url ? (
-                  <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-[#2A6BA8] hover:underline">{c.text}</a>
+                  <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{c.text}</a>
                 ) : c.text}
               </li>
             ))}
@@ -518,7 +518,7 @@ function BlockItem({
       if (!data.text?.trim()) return null;
       const doctor = data.doctorId ? serviceContext?.doctors?.[data.doctorId] : undefined;
       return (
-        <div className="mb-6 flex items-start gap-3 p-4 rounded-2xl border-l-4 border-[#3B82C4] bg-blue-50/40">
+        <div className="mb-6 flex items-start gap-3 p-4 rounded-2xl border-l-4 border-secondary bg-blue-50/40">
           {doctor?.photo?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={doctor.photo.url} alt={doctor.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
@@ -527,7 +527,7 @@ function BlockItem({
           )}
           <div>
             <p className="text-sm text-gray-700 leading-relaxed">{data.text}</p>
-            {doctor && <p className="text-xs font-bold text-[#0B2560] mt-1.5">— {doctor.name}</p>}
+            {doctor && <p className="text-xs font-bold text-primary mt-1.5">— {doctor.name}</p>}
           </div>
         </div>
       );

@@ -38,7 +38,7 @@ function SliderPair({ pair }: { pair: BeforeAfterPair }) {
           style={{ objectPosition }}
           draggable={false}
         />
-        <span className="absolute top-3 left-3 bg-black/60 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
+        <span className="absolute top-3 left-3 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
           BEFORE
         </span>
       </div>
@@ -56,14 +56,14 @@ function SliderPair({ pair }: { pair: BeforeAfterPair }) {
           style={{ objectPosition }}
           draggable={false}
         />
-        <span className="absolute top-3 right-3 bg-[#0B2560]/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
+        <span className="absolute top-3 right-3 bg-primary/80 text-white text-xs font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none">
           AFTER
         </span>
       </div>
 
       {/* Treatment badge */}
       {pair.label && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-[#0B2560] text-xs font-bold px-3 py-1.5 rounded-full shadow whitespace-nowrap pointer-events-none z-10">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-primary text-xs font-bold px-3 py-1.5 rounded-full shadow whitespace-nowrap pointer-events-none z-10">
           {pair.label}
         </div>
       )}
@@ -147,7 +147,7 @@ function MobileCarousel({ pairs }: { pairs: BeforeAfterPair[] }) {
             <span
               key={i}
               className={`rounded-full transition-all duration-300 ${
-                i === activeIdx ? 'w-6 h-1.5 bg-[#0B2560]' : 'w-1.5 h-1.5 bg-gray-300'
+                i === activeIdx ? 'w-6 h-1.5 bg-primary' : 'w-1.5 h-1.5 bg-gray-300'
               }`}
             />
           ))}
@@ -160,7 +160,7 @@ function MobileCarousel({ pairs }: { pairs: BeforeAfterPair[] }) {
 
 export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) {
   const {
-    headline = 'Real Results',
+    headline = 'Treatment Photos',
     disclaimer = 'Individual results may vary. Photos are from actual DR Youth Clinic patients.',
     pairs = [],
   } = data;
@@ -172,13 +172,13 @@ export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) 
   const activePair = activePairs[activePairIdx] ?? activePairs[0];
 
   return (
-    <section className="bg-[#f6faff] py-14 md:py-20">
+    <section className="bg-canvas py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-5">
         <div className="text-center mb-12">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-3">
             Transformations
           </p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
         </div>
 
         {/* Mobile: horizontal swipe carousel of every case (the fix for the
@@ -203,8 +203,8 @@ export default function BeforeAfterSection({ data }: { data: BeforeAfterData }) 
                   onClick={() => setActivePairIdx(i)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     i === activePairIdx
-                      ? 'bg-[#0B2560] text-white shadow-md'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:border-[#0B2560]/40'
+                      ? 'bg-primary text-white shadow-md'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/40'
                   }`}
                 >
                   {pair.label || `Case ${i + 1}`}

@@ -2,34 +2,41 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, ChevronRight, ChevronLeft, Calendar, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, ChevronRight, ChevronLeft, MapPin, Sparkles, Leaf, Zap, Stethoscope } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { postInterestEvent, resolveInterestCategory } from '@/app/lib/personalization';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
+import { slotsForDate } from '@/app/lib/bookingSlots';
 
 const SERVICES = [
-  { id: 'Skin', icon: '✨', label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
-  { id: 'Hair', icon: '🌿', label: 'Hair Restoration', desc: 'PRP, GFC, hair transplant' },
-  { id: 'Laser', icon: '⚡', label: 'Laser Precision', desc: 'Laser hair removal, rejuvenation' },
-  { id: 'Other', icon: '🏥', label: 'Specialist Care', desc: 'Other aesthetic concerns' },
+  { id: 'Skin', icon: Sparkles, label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
+  { id: 'Hair', icon: Leaf, label: 'Hair Restoration', desc: 'PRP, GFC, hair transplant' },
+  { id: 'Laser', icon: Zap, label: 'Laser Treatments', desc: 'Laser hair reduction, rejuvenation' },
+  { id: 'Other', icon: Stethoscope, label: 'Something Else', desc: 'Not sure? A doctor can advise' },
 ];
 
 const LOCATIONS = [
-  { id: 'Chennai',    label: 'Chennai',    address: locations.chennai.address    },
-  { id: 'Bangalore',  label: 'Bangalore',  address: locations.bangalore.address  },
-  { id: 'Kochi',      label: 'Kochi',      address: locations.kochi.address      },
-  { id: 'Coimbatore', label: 'Coimbatore', address: locations.coimbatore.address },
+  { id: 'Chennai', key: 'chennai', label: 'Chennai' },
+  { id: 'Bangalore', key: 'bangalore', label: 'Bangalore' },
+  { id: 'Kochi', key: 'kochi', label: 'Kochi' },
+  { id: 'Coimbatore', key: 'coimbatore', label: 'Coimbatore' },
 ];
 
-const TIME_SLOTS = [
-  '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-  '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
-];
+const STEP_TITLES: Record<number, string> = {
+  1: 'What can we help with?',
+  2: 'When would you like to come in?',
+  3: 'Your contact details',
+};
+const BOOKING_STEPS = 3;
 
-const inputCls = 'w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560] transition placeholder:text-gray-500 bg-[#f6faff]';
+const inputCls = 'w-full min-h-12 px-4 py-3 border border-line-strong rounded-xl text-base text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition placeholder:text-gray-500 bg-white';
+const labelCls = 'mb-1.5 block text-sm font-medium text-primary';
+const optionCls = (selected: boolean) =>
+  `flex min-h-16 w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${selected ? 'border-primary bg-sand' : 'border-line bg-white hover:border-line-strong'}`;
 
 export default function ConsultationForm({ step, setStep }: { step: number; setStep: (n: number) => void }) {
   const router = useRouter();
@@ -40,10 +47,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   const getIdempotencyKey = useIdempotencyKey();
 
   // Scroll to the top of the form card (not window top — that would jump
-  // past the page's own hero banner above it) whenever the step changes,
-  // so a taller previous step's scroll position doesn't leave the new,
-  // often-shorter step rendering mid-content or off-screen. Skips the
-  // very first render so landing on /book doesn't itself trigger a scroll.
+  // past the page's own hero banner above it) whenever the step changes.
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
     formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -53,6 +57,8 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
     name: '', email: '', phone: '', concern: '',
     service: '', location: '', date: '', time: '',
   });
+  // Hidden from people; only form-filling bots complete it. See /api/booking.
+  const [website, setWebsite] = useState('');
 
   const [promoCode, setPromoCode] = useState('');
   const [promoOpen, setPromoOpen] = useState(false);
@@ -60,25 +66,13 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoMessage, setPromoMessage] = useState('');
 
-  // AI Beauty Journey Module 9 — a visitor arriving here from a "Book
-  // Consultation" link on their journey results already told the journey
-  // their name/phone (Lead Capture), preferred branch (Branch Selection),
-  // and matched treatment. Prefill instead of asking again. Reads
-  // window.location.search directly in an effect rather than
-  // next/navigation's useSearchParams(), matching this codebase's existing
-  // convention (see skin-quiz/page.tsx) to avoid that hook's Suspense
-  // boundary requirement for a value only ever needed post-mount anyway.
-  // sessionId isn't a form field — kept in a ref so it survives to the
-  // submit handler without becoming part of the submitted booking shape.
+  // A visitor arriving from a journey or assessment result has already given
+  // these details, so they're prefilled. sessionId stays out of the booking shape.
   const journeySessionId = useRef('');
   const bookingEventFired = useRef(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const service = params.get('service') || '';
-    // Pre-Consultation Assessment handoff (Hair/Skin/Body redesign) — a
-    // concern *label* (e.g. "Hair Fall Impact"), never a treatment name,
-    // since none exists at this point in the journey. See
-    // AssessmentResults.tsx's handleCta and the architecture review §11.
     const concernLabel = params.get('concern') || '';
     const assessmentTypeParam = params.get('assessmentType') || '';
     const overallConcern = params.get('overallConcern') || '';
@@ -92,29 +86,24 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       ? locationKey.charAt(0).toUpperCase() + locationKey.slice(1)
       : '';
 
-    // Human-readable, editable prefill — lets reception/the doctor see at a
-    // glance that this booking followed a completed assessment, without
-    // ever implying a treatment was recommended.
+    // Lets reception see the booking followed an assessment, without ever
+    // implying a treatment was recommended.
     const assessmentConcernText = concernLabel
       ? `${concernLabel}${assessmentTypeParam ? ` (${assessmentTypeParam.charAt(0).toUpperCase()}${assessmentTypeParam.slice(1)} Assessment` : ''}${overallConcern ? ` · ${overallConcern}% ${severity}` : ''}${assessmentTypeParam ? ')' : ''}`
       : '';
+    const matchedService = SERVICES.find((s) => s.id.toLowerCase() === service.toLowerCase())?.id || '';
 
     if (service || assessmentConcernText || matchedLocation || name || phone) {
       setForm((f) => ({
         ...f,
         concern: assessmentConcernText || (service ? service : f.concern),
+        service: matchedService || f.service,
         location: matchedLocation || f.location,
         name: name ? name : f.name,
         phone: phone ? phone : f.phone,
       }));
     }
 
-    // Homepage Personalization Engine — "booking_started" (highest weight
-    // of all tracked events: reaching /book at all is strong intent).
-    // Attributed from whatever category context the visitor arrived with —
-    // an assessment handoff or a service page's "Book Now" link — since
-    // form.service itself isn't chosen until step 2. A direct, contextless
-    // /book visit fires nothing rather than guess a category.
     const bookingCategory =
       resolveInterestCategory(assessmentTypeParam) ||
       resolveInterestCategory(service) ||
@@ -149,17 +138,22 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
     }
   };
 
+  const branchKey = LOCATIONS.find((l) => l.id === form.location)?.key || '';
+  const branchHours = branchKey ? locations[branchKey]?.hours ?? [] : [];
+  const slots = form.date ? slotsForDate(form.date, branchHours) : [];
+
   const validate = (s: number) => {
     if (s === 1) {
-      if (!form.name.trim()) return setError('Please enter your name'), false;
-      if (!isValidIndianMobile(form.phone)) return setError(INVALID_MOBILE_MESSAGE), false;
-      if (!form.concern.trim()) return setError('Please describe your concern'), false;
+      if (!form.service) return setError('Please choose what you need help with'), false;
+      if (!form.location) return setError('Please choose a clinic'), false;
     }
-    if (s === 2 && !form.service) return setError('Please select a service'), false;
-    if (s === 3 && !form.location) return setError('Please select a location'), false;
-    if (s === 4) {
-      if (!form.date) return setError('Please select a date'), false;
-      if (!form.time) return setError('Please select a time slot'), false;
+    if (s === 2) {
+      if (!form.date) return setError('Please choose a preferred date'), false;
+      if (!form.time) return setError('Please choose a preferred time'), false;
+    }
+    if (s === 3) {
+      if (form.name.trim().length < 2) return setError('Please enter your name'), false;
+      if (!isValidIndianMobile(form.phone)) return setError(INVALID_MOBILE_MESSAGE), false;
     }
     return true;
   };
@@ -168,18 +162,15 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   const prev = () => { setError(''); setStep(step - 1); };
 
   const submit = async () => {
-    if (!validate(4)) return;
+    if (loading || !validate(1) || !validate(2) || !validate(3)) return;
     setLoading(true); setError('');
     try {
       const res = await fetch('/api/booking', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Duplicate-submission protection — a network timeout followed
-          // by the user tapping "Confirm Booking" again reuses the SAME
-          // key (nothing in `form` changed), so the backend recognizes
-          // the retry instead of creating a second booking. See
-          // app/lib/useIdempotencyKey.ts / app/lib/bookingIdempotency.ts.
+          // Duplicate-submission protection — a retry after a timeout reuses
+          // the SAME key, so the backend won't create a second booking.
           'Idempotency-Key': getIdempotencyKey({
             name: form.name, phone: form.phone, service: form.service,
             location: form.location, date: form.date, time: form.time,
@@ -187,7 +178,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
         },
         body: JSON.stringify({
           ...form,
-          phone: form.phone,
+          website,
           ...(promoStatus === 'valid' ? { promoCode: promoCode.trim().toUpperCase(), promoDiscount } : {}),
         }),
       });
@@ -203,11 +194,8 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
           sourceAccount: data.sourceAccount,
           alreadyProcessed: data.alreadyProcessed,
         });
-        // AI Beauty Journey Module 9 — close the loop: this booking
-        // originated from a journey session (arrived via the prefilled
-        // link above), so mark that session converted. Fire-and-forget,
-        // same as every other non-blocking analytics call in this flow —
-        // never let this delay or fail the booking confirmation itself.
+        // Close the loop on a booking that came from a journey session.
+        // Fire-and-forget: must never delay or fail the booking itself.
         if (journeySessionId.current) {
           fetch('/api/patient-journey', {
             method: 'POST',
@@ -219,241 +207,183 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
             }),
           }).catch(() => {});
         }
-        // Configurable Booking Success page (app/admin/booking-success) —
-        // a dedicated route carrying real appointment details, CTAs, and
-        // the pre-visit checklist. The PATH is fixed AND, as of
-        // app/lib/bookingSuccessRedirect.ts, genuinely static — no query
-        // string at all — specifically so an external ad tool's
-        // "Thank You Page" trigger has ONE unchanging, exact-match-safe
-        // URL to configure against. A query-param bookingId (this file's
-        // earlier approach) still broke that for at least one platform
-        // whose trigger only supports an exact match, not "contains": a
-        // value that's different on every booking can never match twice.
-        // bookingId is still required — the success page looks up the
-        // real Booking record by it server-side — it now travels via a
-        // short-lived cookie instead of the URL. See that file's own
-        // comment for the full story.
+        // Fixed, static success URL for ad-platform triggers. The booking id
+        // travels by cookie: see app/lib/bookingSuccessRedirect.ts.
         goToBookingSuccess(router, data.bookingId, form.location);
         return;
       }
-      else setError(data.message || 'Booking failed. Please try again.');
-    } catch { setError('An error occurred. Please try again.'); }
-    finally { setLoading(false); }
+      setError(data.message || 'We could not send your request. Please try again, or call the clinic.');
+    } catch {
+      setError('We could not send your request. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Min date = tomorrow
-  const minDate = new Date();
-  minDate.setDate(minDate.getDate() + 1);
-  const minDateStr = minDate.toISOString().split('T')[0];
+  // Tomorrow in the clinic's time zone. toISOString() alone is UTC, which gave
+  // the wrong day between midnight and 05:30 IST.
+  const minDateStr = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
   return (
     <div ref={formTopRef}>
-      {/* Progress bar */}
-      <div className="h-1.5 bg-gray-100">
-        <div
-          className="h-1.5 bg-[#0B2560] rounded-full transition-all duration-500"
-          style={{ width: `${(step / 4) * 100}%` }}
-        />
+      <div className="h-1 bg-line">
+        <div className="h-1 bg-primary transition-all duration-300" style={{ width: `${(step / BOOKING_STEPS) * 100}%` }} />
       </div>
 
-      <div className="p-6 md:p-10 space-y-6">
-        {/* Step label */}
+      <form
+        noValidate
+        onSubmit={(e) => { e.preventDefault(); if (step < BOOKING_STEPS) next(); else submit(); }}
+        className="p-5 md:p-10 space-y-6"
+      >
         <div>
-          <p className="text-[10px] font-bold text-[#2A6BA8] uppercase tracking-widest">Step {step} of 4</p>
-          <h2 className="text-xl font-headline font-bold text-[#0B2560] mt-0.5">
-            {step === 1 && 'Tell us about yourself'}
-            {step === 2 && 'What are you looking for?'}
-            {step === 3 && 'Choose your clinic'}
-            {step === 4 && 'Pick a date & time'}
-          </h2>
+          <p className="eyebrow">Step {step} of {BOOKING_STEPS}</p>
+          <h2 className="mt-1 font-headline text-2xl font-medium text-primary">{STEP_TITLES[step]}</h2>
         </div>
 
-        {/* Error */}
         {error && (
-          <div role="alert" className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-            <p className="text-red-600 text-sm">{error}</p>
+          <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+            <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-700" aria-hidden="true" />
+            <p className="text-sm text-red-800">{error}</p>
           </div>
         )}
 
-        {/* ── STEP 1: Personal Info ── */}
         {step === 1 && (
-          <div className="space-y-4">
-            <label htmlFor="book-name" className="sr-only">Full Name</label>
-            <input id="book-name" name="name" value={form.name} onChange={e => set('name', e.target.value)}
-              placeholder="Full Name *" className={inputCls} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="relative">
-                <label htmlFor="book-phone" className="sr-only">Phone Number</label>
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-semibold">+91</span>
-                <input id="book-phone" name="phone" value={form.phone} onChange={e => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="Phone Number *" className={`${inputCls} pl-12`} maxLength={10} />
-              </div>
-              <label htmlFor="book-email" className="sr-only">Email (optional)</label>
-              <input id="book-email" name="email" type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                placeholder="Email (optional)" className={inputCls} />
-            </div>
-            <label htmlFor="book-concern" className="sr-only">Describe your skin / hair concern</label>
-            <textarea id="book-concern" name="concern" value={form.concern} onChange={e => set('concern', e.target.value)}
-              placeholder="Describe your skin / hair concern *"
-              className={`${inputCls} h-28 resize-none`} />
-          </div>
-        )}
-
-        {/* ── STEP 2: Service ── */}
-        {step === 2 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {SERVICES.map((s) => (
-              <button key={s.id} onClick={() => set('service', s.id)}
-                className={`flex items-start gap-4 p-4 rounded-2xl border-2 text-left transition-all ${
-                  form.service === s.id
-                    ? 'border-[#0B2560] bg-[#0B2560]/5 shadow-sm'
-                    : 'border-gray-100 hover:border-[#3B82C4]/30 bg-white'
-                }`}>
-                <span className="text-3xl shrink-0">{s.icon}</span>
-                <div>
-                  <p className={`font-bold text-sm ${form.service === s.id ? 'text-[#0B2560]' : 'text-gray-800'}`}>{s.label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* ── STEP 3: Location ── */}
-        {step === 3 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {LOCATIONS.map((l) => (
-              <button key={l.id} onClick={() => set('location', l.id)}
-                className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all ${
-                  form.location === l.id
-                    ? 'border-[#0B2560] bg-[#0B2560]/5 shadow-sm'
-                    : 'border-gray-100 hover:border-[#3B82C4]/30 bg-white'
-                }`}>
-                <span className="text-2xl shrink-0">📍</span>
-                <div>
-                  <p className={`font-bold text-sm ${form.location === l.id ? 'text-[#0B2560]' : 'text-gray-800'}`}>{l.label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{l.address}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* ── STEP 4: Date & Time ── */}
-        {step === 4 && (
-          <div className="space-y-5">
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                <Calendar size={12} /> Select Date
-              </label>
-              <input type="date" min={minDateStr} value={form.date} onChange={e => set('date', e.target.value)} className={inputCls} />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-3">
-                <Clock size={12} /> Select Time Slot
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {TIME_SLOTS.map((t) => (
-                  <button key={t} onClick={() => set('time', t)}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition ${
-                      form.time === t
-                        ? 'bg-[#0B2560] text-white border-[#0B2560]'
-                        : 'bg-white border-gray-100 text-gray-600 hover:border-[#0B2560] hover:text-[#0B2560]'
-                    }`}>
-                    {t}
+          <div className="space-y-6">
+            <fieldset>
+              <legend className={labelCls}>Treatment area</legend>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {SERVICES.map(({ id, icon: Icon, label, desc }) => (
+                  <button key={id} type="button" aria-pressed={form.service === id} onClick={() => set('service', id)} className={optionCls(form.service === id)}>
+                    <Icon size={20} className="mt-0.5 shrink-0 text-bronze" aria-hidden="true" />
+                    <span>
+                      <span className="block text-sm font-semibold text-primary">{label}</span>
+                      <span className="mt-0.5 block text-sm text-text-secondary">{desc}</span>
+                    </span>
                   </button>
                 ))}
               </div>
+            </fieldset>
+            <fieldset>
+              <legend className={labelCls}>Clinic</legend>
+              <div className="grid grid-cols-2 gap-3">
+                {LOCATIONS.map((l) => (
+                  <button key={l.id} type="button" aria-pressed={form.location === l.id} onClick={() => { setError(''); setForm((f) => ({ ...f, location: l.id, time: '' })); }} className={optionCls(form.location === l.id)}>
+                    <MapPin size={18} className="mt-0.5 shrink-0 text-bronze" aria-hidden="true" />
+                    <span className="text-sm font-semibold text-primary">{l.label}</span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-5">
+            <div>
+              <label htmlFor="book-date" className={labelCls}>Preferred date</label>
+              <input id="book-date" type="date" min={minDateStr} value={form.date}
+                onChange={(e) => { setError(''); setForm((f) => ({ ...f, date: e.target.value, time: '' })); }}
+                className={inputCls} />
+            </div>
+            {form.date && (
+              slots.length > 0 ? (
+                <fieldset>
+                  <legend className={labelCls}>Preferred time</legend>
+                  <div className="grid grid-cols-3 gap-2">
+                    {slots.map((t) => (
+                      <button key={t} type="button" aria-pressed={form.time === t} onClick={() => set('time', t)}
+                        className={`min-h-11 rounded-xl border px-2 text-sm font-medium transition-colors ${form.time === t ? 'border-primary bg-primary text-white' : 'border-line bg-white text-primary hover:border-line-strong'}`}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              ) : (
+                <p role="status" className="rounded-xl bg-sand p-4 text-sm text-text-secondary">This clinic is closed on that day. Please choose another date.</p>
+              )
+            )}
+            <p className="text-sm text-text-secondary">This is a preferred time. Our team will contact you to confirm your appointment.</p>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="book-name" className={labelCls}>Full name</label>
+              <input id="book-name" name="name" autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label htmlFor="book-phone" className={labelCls}>Mobile number</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-text-secondary" aria-hidden="true">+91</span>
+                <input id="book-phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" value={form.phone}
+                  onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  className={`${inputCls} pl-14`} maxLength={10} />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="book-email" className={labelCls}>Email <span className="font-normal text-text-secondary">(optional)</span></label>
+              <input id="book-email" name="email" type="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label htmlFor="book-concern" className={labelCls}>Anything the doctor should know? <span className="font-normal text-text-secondary">(optional)</span></label>
+              <textarea id="book-concern" name="concern" value={form.concern} onChange={(e) => set('concern', e.target.value)} className={`${inputCls} h-24 resize-none`} />
             </div>
 
-            {/* Promo code */}
+            <div className="absolute -left-[9999px]" aria-hidden="true">
+              <label htmlFor="book-website">Leave this field empty</label>
+              <input id="book-website" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            </div>
+
             <div>
-              <button
-                type="button"
-                onClick={() => setPromoOpen(o => !o)}
-                className="text-xs text-[#2A6BA8] font-semibold hover:text-[#0B2560] transition flex items-center gap-1"
-              >
-                {promoOpen ? '▲' : '▼'} Have a promo code?
+              <button type="button" onClick={() => setPromoOpen((o) => !o)} aria-expanded={promoOpen} className="min-h-11 text-sm font-medium text-secondary underline underline-offset-2">
+                Have a promo code?
               </button>
               {promoOpen && (
                 <div className="mt-2 space-y-2">
                   <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={promoCode}
-                      onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoStatus('idle'); }}
-                      placeholder="Enter code"
-                      className={`${inputCls} flex-1 font-mono`}
-                    />
-                    <button
-                      type="button"
-                      onClick={applyPromo}
-                      disabled={promoStatus === 'checking' || !promoCode.trim()}
-                      className="px-4 py-3 bg-[#0B2560] text-white rounded-2xl text-sm font-semibold disabled:opacity-50 transition hover:bg-[#0d2d72] whitespace-nowrap"
-                    >
-                      {promoStatus === 'checking' ? '…' : 'Apply'}
+                    <label htmlFor="book-promo" className="sr-only">Promo code</label>
+                    <input id="book-promo" type="text" value={promoCode}
+                      onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoStatus('idle'); }}
+                      className={`${inputCls} flex-1 font-mono`} />
+                    <button type="button" onClick={applyPromo} disabled={promoStatus === 'checking' || !promoCode.trim()}
+                      className="min-h-12 rounded-xl bg-primary px-4 text-sm font-semibold text-white disabled:opacity-50">
+                      {promoStatus === 'checking' ? 'Checking…' : 'Apply'}
                     </button>
                   </div>
-                  {promoStatus === 'valid' && (
-                    <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2 rounded-xl">
-                      ✓ {promoMessage}
-                    </div>
-                  )}
-                  {promoStatus === 'invalid' && (
-                    <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 text-xs px-3 py-2 rounded-xl">
-                      ✗ {promoMessage}
-                    </div>
-                  )}
+                  {promoStatus === 'valid' && <p role="status" className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">{promoMessage}</p>}
+                  {promoStatus === 'invalid' && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{promoMessage}</p>}
                 </div>
               )}
             </div>
 
-            {/* Summary */}
-            {form.date && form.time && (
-              <div className="bg-[#f6faff] border border-blue-50 rounded-2xl p-5">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Booking Summary</p>
-                <div className="grid grid-cols-2 gap-y-2 text-sm">
-                  {[
-                    ['Name', form.name],
-                    ['Phone', `+91 ${form.phone}`],
-                    ['Service', form.service],
-                    ['Location', form.location],
-                    ['Date', form.date],
-                    ['Time', form.time],
-                    ...(promoStatus === 'valid' ? [['Promo', `${promoCode} (${promoDiscount}% off)`]] : []),
-                  ].map(([label, val]) => (
-                    <div key={label}>
-                      <span className="text-gray-500 text-xs">{label}</span>
-                      <p className="font-semibold text-[#0B2560] text-xs">{val}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="rounded-xl bg-sand p-4 text-sm">
+              <p className="mb-2 font-semibold text-primary">Your request</p>
+              <p className="text-text-secondary">
+                {SERVICES.find((s) => s.id === form.service)?.label} at {form.location}, {form.date} at {form.time}
+                {promoStatus === 'valid' ? ` (${promoCode}, ${promoDiscount}% off)` : ''}
+              </p>
+            </div>
+
+            <p className="text-sm leading-relaxed text-text-secondary">
+              By sending this request you agree that DR Youth Clinic may contact you by phone or WhatsApp about your appointment, as described in our{' '}
+              <Link href="/privacy-policy" className="font-medium text-primary underline underline-offset-2">Privacy Policy</Link>.
+            </p>
           </div>
         )}
 
-        {/* Nav buttons */}
-        <div className={`flex ${step > 1 ? 'justify-between' : 'justify-end'} pt-2`}>
+        <div className={`flex gap-3 pt-2 ${step > 1 ? 'justify-between' : 'justify-end'}`}>
           {step > 1 && (
-            <button onClick={prev} className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 px-5 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">
-              <ChevronLeft size={15} /> Back
+            <button type="button" onClick={prev} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-line-strong px-5 text-sm font-semibold text-primary">
+              <ChevronLeft size={16} aria-hidden="true" /> Back
             </button>
           )}
-          {step < 4 ? (
-            <button onClick={next} className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg shadow-[#0B2560]/20">
-              Continue <ChevronRight size={15} />
-            </button>
-          ) : (
-            <button onClick={submit} disabled={loading}
-              className="inline-flex items-center gap-2 bg-[#F5A623] text-[#0B2560] px-7 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition shadow-lg disabled:opacity-60 disabled:cursor-not-allowed">
-              {loading ? 'Booking...' : 'Confirm Booking'}
-              {!loading && <ChevronRight size={15} />}
-            </button>
-          )}
+          <button type="submit" disabled={loading} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
+            {step < BOOKING_STEPS ? 'Continue' : loading ? 'Sending…' : 'Request Appointment'}
+            {!loading && <ChevronRight size={16} aria-hidden="true" />}
+          </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

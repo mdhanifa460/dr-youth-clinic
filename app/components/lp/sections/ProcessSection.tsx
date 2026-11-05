@@ -33,7 +33,7 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
   const stepsToShow = steps.length ? steps : DEFAULT_STEPS;
 
   return (
-    <section className="bg-[#f6faff] py-14 md:py-20">
+    <section className="bg-canvas py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-5">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -42,8 +42,8 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">The Process</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-3">The Process</p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
 
@@ -58,7 +58,7 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 1.4, ease: 'easeInOut' }}
                 style={{ transformOrigin: 'left' }}
-                className="h-full w-full bg-gradient-to-r from-[#F5A623] to-[#3B82C4]"
+                className="h-full w-full bg-gradient-to-r from-champagne to-secondary"
               />
             </div>
 
@@ -83,10 +83,10 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
                     >
                       <Icon className="text-white" size={26} />
                     </div>
-                    <span className="text-xs font-extrabold text-[#A25607] uppercase tracking-wider mb-1">
+                    <span className="text-xs font-extrabold text-bronze uppercase tracking-wider mb-1">
                       Step {step.number ?? i + 1}
                     </span>
-                    <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{step.title}</h3>
+                    <h3 className="font-bold text-primary text-sm md:text-base mb-1.5">{step.title}</h3>
                     <p className="text-xs text-gray-500 leading-relaxed px-2">{step.description}</p>
                   </motion.div>
                 );
@@ -116,14 +116,14 @@ export default function ProcessSection({ data }: { data: ProcessData }) {
                     <Icon className="text-white" size={18} />
                   </div>
                   {i < stepsToShow.length - 1 && (
-                    <div className="w-0.5 flex-1 bg-gradient-to-b from-[#F5A623] to-[#3B82C4] mt-2 mb-2 min-h-10" />
+                    <div className="w-0.5 flex-1 bg-gradient-to-b from-champagne to-secondary mt-2 mb-2 min-h-10" />
                   )}
                 </div>
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-4 shadow-sm flex-1">
-                  <span className="text-xs font-extrabold text-[#A25607] uppercase tracking-wider">
+                  <span className="text-xs font-extrabold text-bronze uppercase tracking-wider">
                     Step {step.number ?? i + 1}
                   </span>
-                  <h3 className="font-bold text-[#0B2560] text-sm mt-0.5 mb-1">{step.title}</h3>
+                  <h3 className="font-bold text-primary text-sm mt-0.5 mb-1">{step.title}</h3>
                   <p className="text-xs text-gray-500 leading-relaxed">{step.description}</p>
                 </div>
               </motion.div>

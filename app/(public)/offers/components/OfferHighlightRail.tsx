@@ -22,7 +22,7 @@ export default function OfferHighlightRail({ offers }: { offers: any[] }) {
 
   return (
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A25607] mb-3">Limited Period Offers</p>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-bronze mb-3">Limited Period Offers</p>
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 lg:flex-col lg:overflow-visible">
         {offers.map((offer) => {
           const pct = discountPct(offer.originalPrice, offer.discountedPrice);
@@ -33,7 +33,7 @@ export default function OfferHighlightRail({ offers }: { offers: any[] }) {
               href={`/book?offer=${encodeURIComponent(offer.title)}`}
               className="snap-start shrink-0 w-60 lg:w-full rounded-2xl overflow-hidden flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/15 transition-colors duration-200"
             >
-              <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#3B82C4] to-[#F5A623]">
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-secondary to-champagne">
                 {offer.image?.url ? (
                   <Image src={offer.image.url} alt={offer.title} fill sizes="48px" className="object-cover" />
                 ) : (
@@ -43,7 +43,7 @@ export default function OfferHighlightRail({ offers }: { offers: any[] }) {
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-white leading-snug truncate">{offer.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {pct > 0 && <span className="text-[10px] font-extrabold text-[#A25607]">Save {pct}%</span>}
+                  {pct > 0 && <span className="text-xs font-extrabold text-bronze">Save {pct}%</span>}
                   <span className="text-xs font-bold text-white/70">₹{offer.discountedPrice?.toLocaleString('en-IN')}</span>
                 </div>
               </div>

@@ -115,13 +115,13 @@ export default function FAQPageClient({
   return (
     <div className="min-h-screen bg-white">
       {/* ── Hero ── */}
-      <section className="bg-gradient-to-br from-[#0B2560] via-[#1a3a7a] to-[#0B2560] text-white pt-16 pb-20 px-4">
+      <section className="bg-gradient-to-br from-primary via-[#1a3a7a] to-primary text-white pt-16 pb-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#A25607] mb-4">
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-bronze mb-4">
             Support Centre
           </span>
-          <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
-            Frequently Asked <span className="text-[#A25607]">Questions</span>
+          <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight mb-4">
+            Frequently Asked <span className="text-bronze">Questions</span>
           </h1>
           <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
             Everything you need to know about our treatments, pricing, safety, and booking — answered by our doctors.
@@ -138,7 +138,7 @@ export default function FAQPageClient({
               placeholder="Search questions — e.g. laser, PRP, cost, recovery..."
               value={search}
               onChange={(e) => updateSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-4 rounded-2xl text-gray-800 text-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F5A623]"
+              className="w-full pl-11 pr-4 py-4 rounded-2xl text-gray-800 text-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-champagne"
             />
           </div>
 
@@ -149,8 +149,8 @@ export default function FAQPageClient({
               { value: heroStats?.questionsValue || '200+', label: 'Questions answered' },
             ].map((s) => (
               <div key={s.label} className="bg-white/10 rounded-2xl py-3 px-2">
-                <p className="text-xl font-extrabold text-[#A25607]">{s.value}</p>
-                <p className="text-[10px] text-white/60 mt-0.5">{s.label}</p>
+                <p className="text-xl font-extrabold text-bronze">{s.value}</p>
+                <p className="text-xs text-white/60 mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
@@ -169,13 +169,13 @@ export default function FAQPageClient({
                   onClick={() => jumpToCategory(tab)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     activeCategory === tab
-                      ? 'bg-[#0B2560] text-white shadow-md shadow-[#0B2560]/20'
+                      ? 'bg-primary text-white shadow-md shadow-primary/20'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {cat && <span>{cat.icon}</span>}
                   {tab}
-                  <span className={`text-[10px] font-bold ml-0.5 ${activeCategory === tab ? 'text-white/60' : 'text-gray-500'}`}>
+                  <span className={`text-xs font-bold ml-0.5 ${activeCategory === tab ? 'text-white/60' : 'text-gray-500'}`}>
                     {tab === 'All' ? allItems.length : categories.find((c) => c.category === tab)?.items.length ?? 0}
                   </span>
                 </button>
@@ -190,7 +190,7 @@ export default function FAQPageClient({
             {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;{search}&rdquo;
             <button
               onClick={() => updateSearch('')}
-              className="ml-2 text-[#2A6BA8] font-semibold hover:underline"
+              className="ml-2 text-secondary font-semibold hover:underline"
             >
               Clear
             </button>
@@ -207,7 +207,7 @@ export default function FAQPageClient({
             <div className="flex flex-wrap justify-center gap-3 mb-2">
               <button
                 onClick={() => updateSearch('')}
-                className="text-sm bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold"
+                className="text-sm bg-primary text-white px-5 py-2.5 rounded-xl font-semibold"
               >
                 Show all questions
               </button>
@@ -215,9 +215,9 @@ export default function FAQPageClient({
                 <button
                   onClick={askAssistant}
                   disabled={assistantLoading}
-                  className="flex items-center gap-1.5 text-sm bg-white border border-[#F5A623] text-[#0B2560] px-5 py-2.5 rounded-xl font-semibold disabled:opacity-60"
+                  className="flex items-center gap-1.5 text-sm bg-white border border-champagne text-primary px-5 py-2.5 rounded-xl font-semibold disabled:opacity-60"
                 >
-                  <Sparkles size={15} className="text-[#A25607]" />
+                  <Sparkles size={15} className="text-bronze" />
                   {assistantLoading ? 'Thinking…' : 'Ask our AI Assistant instead'}
                 </button>
               )}
@@ -234,7 +234,7 @@ export default function FAQPageClient({
                     <p className="text-sm text-gray-600 leading-relaxed">
                       We don&apos;t have a specific answer for that yet. Book a free consultation and our doctors will help directly.
                     </p>
-                    <Link href="/book" className="mt-3 inline-flex items-center gap-1.5 text-[#2A6BA8] text-xs font-semibold hover:text-[#0B2560] transition">
+                    <Link href="/book" className="mt-3 inline-flex items-center gap-1.5 text-secondary text-xs font-semibold hover:text-primary transition">
                       Book a consultation →
                     </Link>
                   </div>
@@ -242,17 +242,17 @@ export default function FAQPageClient({
 
                 {assistantResult.type === 'predefined' && (
                   <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
                       📋 Matched FAQ — did you mean:
                     </p>
-                    <p className="font-semibold text-[#0B2560] text-sm mb-2">{assistantResult.matchedQuestion}</p>
+                    <p className="font-semibold text-primary text-sm mb-2">{assistantResult.matchedQuestion}</p>
                     <p className="text-gray-600 text-sm leading-relaxed">{assistantResult.answer}</p>
                   </div>
                 )}
 
                 {assistantResult.type === 'ai-grounded' && (
-                  <div className="border border-[#F5A623]/40 rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-white shadow-sm">
-                    <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#A25607] mb-2">
+                  <div className="border border-champagne/40 rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-white shadow-sm">
+                    <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-bronze mb-2">
                       <Sparkles size={12} /> AI-generated answer
                     </p>
                     <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{assistantResult.answer}</p>
@@ -260,7 +260,7 @@ export default function FAQPageClient({
                       <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
                         {assistantResult.sources.map((s, i) => (
                           s.url ? (
-                            <Link key={i} href={s.url} className="text-[11px] text-[#2A6BA8] hover:underline">
+                            <Link key={i} href={s.url} className="text-[11px] text-secondary hover:underline">
                               {s.title}
                             </Link>
                           ) : (
@@ -281,14 +281,14 @@ export default function FAQPageClient({
               const id = `search-${i}`;
               const isOpen = openIndex === id;
               return (
-                <div key={id} className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:border-[#0B2560]/20 hover:shadow-md transition-all">
+                <div key={id} className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:border-primary/20 hover:shadow-md transition-all">
                   <button
                     className="w-full flex items-start justify-between gap-4 px-5 py-4 text-left"
                     onClick={() => toggle(id)}
                   >
                     <div className="flex items-start gap-2 flex-1 min-w-0">
                       <span className="shrink-0 mt-0.5">{item.icon}</span>
-                      <span className="font-semibold text-[#0B2560] text-sm leading-snug">{item.question}</span>
+                      <span className="font-semibold text-primary text-sm leading-snug">{item.question}</span>
                     </div>
                     {isOpen ? <ChevronUp size={16} className="text-gray-500 shrink-0 mt-0.5" /> : <ChevronDown size={16} className="text-gray-500 shrink-0 mt-0.5" />}
                   </button>
@@ -311,7 +311,7 @@ export default function FAQPageClient({
                 <section key={cat.category}>
                   <div className="flex items-center gap-2.5 mb-4">
                     <span className="text-2xl">{cat.icon}</span>
-                    <h2 className="text-lg font-bold text-[#0B2560]">{cat.category}</h2>
+                    <h2 className="text-lg font-bold text-primary">{cat.category}</h2>
                     <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                       {cat.items.length}
                     </span>
@@ -323,18 +323,18 @@ export default function FAQPageClient({
                       return (
                         <div
                           key={id}
-                          className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:border-[#0B2560]/25 hover:shadow-[0_8px_24px_rgba(11,37,96,0.07)] transition-all duration-200"
+                          className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:border-primary/25 hover:shadow-[0_8px_24px_rgba(11,37,96,0.07)] transition-all duration-200"
                         >
                           <button
                             className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
                             onClick={() => toggle(id)}
                           >
-                            <span className="font-semibold text-[#0B2560] text-sm leading-snug flex-1 pr-2">
+                            <span className="font-semibold text-primary text-sm leading-snug flex-1 pr-2">
                               {item.question}
                             </span>
                             <span
                               className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                                isOpen ? 'bg-[#0B2560] text-white' : 'bg-gray-100 text-gray-500'
+                                isOpen ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'
                               }`}
                             >
                               {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -346,7 +346,7 @@ export default function FAQPageClient({
                                 <p className="text-gray-600 text-sm leading-relaxed">{item.answer}</p>
                                 <Link
                                   href="/book"
-                                  className="mt-4 inline-flex items-center gap-1.5 text-[#2A6BA8] text-xs font-semibold hover:text-[#0B2560] transition"
+                                  className="mt-4 inline-flex items-center gap-1.5 text-secondary text-xs font-semibold hover:text-primary transition"
                                 >
                                   Still have questions? Book a {consultationFree ? 'free ' : ''}consultation →
                                 </Link>
@@ -364,8 +364,8 @@ export default function FAQPageClient({
         )}
 
         {/* ── Still have questions CTA ── */}
-        <div className="mt-16 rounded-3xl bg-gradient-to-br from-[#0B2560] to-[#1a3a7a] p-8 md:p-10 text-white text-center">
-          <h2 className="text-2xl md:text-3xl font-headline font-extrabold mb-3">
+        <div className="mt-16 rounded-3xl bg-gradient-to-br from-primary to-[#1a3a7a] p-8 md:p-10 text-white text-center">
+          <h2 className="text-2xl md:text-3xl font-headline font-medium mb-3">
             Still have a question?
           </h2>
           <p className="text-white/70 text-sm md:text-base mb-8 max-w-md mx-auto leading-relaxed">
@@ -374,7 +374,7 @@ export default function FAQPageClient({
           <div className="flex flex-wrap justify-center gap-3">
             <Link
               href="/book"
-              className="flex items-center gap-2 bg-[#F5A623] text-[#0B2560] font-bold px-6 py-3.5 rounded-xl hover:brightness-105 transition shadow-lg"
+              className="flex items-center gap-2 bg-champagne text-primary font-bold px-6 py-3.5 rounded-xl hover:brightness-105 transition shadow-lg"
             >
               <Calendar size={16} />
               {consultationCta}
@@ -413,12 +413,12 @@ export default function FAQPageClient({
                 onClick={() => jumpToCategory(cat.category)}
                 className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
                   activeCategory === cat.category
-                    ? 'bg-[#0B2560] text-white border-[#0B2560]'
-                    : 'text-[#0B2560] bg-white border-gray-200 hover:border-[#0B2560] hover:shadow-sm'
+                    ? 'bg-primary text-white border-primary'
+                    : 'text-primary bg-white border-gray-200 hover:border-primary hover:shadow-sm'
                 }`}
               >
                 <span>{cat.icon}</span> {cat.category}
-                <span className={`text-[9px] font-bold ${activeCategory === cat.category ? 'text-white/60' : 'text-gray-500'}`}>
+                <span className={`text-xs font-bold ${activeCategory === cat.category ? 'text-white/60' : 'text-gray-500'}`}>
                   {cat.items.length}
                 </span>
               </button>

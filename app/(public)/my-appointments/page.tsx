@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   follow_up:  { label: 'Follow-up',  color: 'bg-amber-50 text-amber-600' },
   confirmed:  { label: 'Confirmed',  color: 'bg-emerald-50 text-emerald-600' },
   arrived:    { label: 'Arrived',    color: 'bg-emerald-50 text-emerald-600' },
-  completed:  { label: 'Completed',  color: 'bg-[#0B2560]/10 text-[#0B2560]' },
+  completed:  { label: 'Completed',  color: 'bg-primary/10 text-primary' },
   no_show:    { label: 'No-show',    color: 'bg-red-50 text-red-500' },
   cancelled:  { label: 'Cancelled',  color: 'bg-red-50 text-red-500' },
 };
@@ -76,13 +76,13 @@ export default function MyAppointmentsPage() {
   };
 
   return (
-    <main className="bg-[#F5F1EC] min-h-screen">
-      <section className="bg-[#0B2560] text-white py-12 md:py-16">
+    <div className="bg-[#F5F1EC] min-h-screen">
+      <section className="bg-primary text-white py-12 md:py-16">
         <div className="max-w-3xl mx-auto px-6 md:px-10">
           <Link href="/" className="inline-flex items-center gap-1.5 text-white/60 text-sm hover:text-white transition mb-6">
             <ChevronLeft size={15} /> Back to Home
           </Link>
-          <h1 className="text-3xl md:text-4xl font-headline font-extrabold leading-tight mb-3">My Appointments</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-medium leading-tight mb-3">My Appointments</h1>
           <p className="text-white/70 text-sm md:text-base max-w-xl">
             Enter the phone number you booked with and your Booking ID (from your WhatsApp confirmation) to view or reschedule your appointment.
           </p>
@@ -97,23 +97,23 @@ export default function MyAppointmentsPage() {
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Mobile Number</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required
                 placeholder="e.g. 98765 43210"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560]" />
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Booking ID</label>
               <input type="text" value={bookingId} onChange={(e) => setBookingId(e.target.value)} required
                 placeholder="e.g. DR-1234567890"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 focus:border-[#0B2560]" />
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
               <p className="text-[11px] text-gray-500 mt-1.5">Sent to you on WhatsApp right after you booked.</p>
             </div>
             <button type="submit" disabled={loading}
-              className="w-full min-h-12 bg-[#0B2560] text-white rounded-xl font-bold text-sm hover:bg-[#12345c] transition disabled:opacity-60">
+              className="w-full min-h-12 bg-primary text-white rounded-xl font-bold text-sm hover:bg-[#12345c] transition disabled:opacity-60">
               {loading ? 'Looking up…' : 'Find My Booking'}
             </button>
           </form>
         ) : (
           <div className="space-y-6">
-            <button onClick={() => { setData(null); setReqMessage(''); }} className="text-sm text-[#0B2560] font-semibold hover:underline flex items-center gap-1.5">
+            <button onClick={() => { setData(null); setReqMessage(''); }} className="text-sm text-primary font-semibold hover:underline flex items-center gap-1.5">
               <ChevronLeft size={14} /> Look up a different booking
             </button>
 
@@ -128,25 +128,25 @@ export default function MyAppointmentsPage() {
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <div>
                   <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Booking ID</p>
-                  <p className="text-sm font-bold text-[#0B2560]">{data.current.bookingId}</p>
+                  <p className="text-sm font-bold text-primary">{data.current.bookingId}</p>
                 </div>
                 <StatusPill status={data.current.status} />
               </div>
               <div className="grid sm:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2.5">
-                  <Stethoscope size={15} className="text-[#2A6BA8] shrink-0" />
+                  <Stethoscope size={15} className="text-secondary shrink-0" />
                   <span className="text-gray-700">{data.current.service || 'Not specified'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <MapPin size={15} className="text-[#2A6BA8] shrink-0" />
+                  <MapPin size={15} className="text-secondary shrink-0" />
                   <span className="text-gray-700">{LOCATION_LABELS[data.current.location] || data.current.location}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Calendar size={15} className="text-[#2A6BA8] shrink-0" />
+                  <Calendar size={15} className="text-secondary shrink-0" />
                   <span className="text-gray-700">{data.current.date || 'To be scheduled'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Clock size={15} className="text-[#2A6BA8] shrink-0" />
+                  <Clock size={15} className="text-secondary shrink-0" />
                   <span className="text-gray-700">{data.current.time || 'To be scheduled'}</span>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function MyAppointmentsPage() {
                 <div className="mt-5 pt-5 border-t border-gray-100">
                   {!showReschedule ? (
                     <button onClick={() => setShowReschedule(true)}
-                      className="text-sm font-semibold text-[#0B2560] hover:underline flex items-center gap-1.5">
+                      className="text-sm font-semibold text-primary hover:underline flex items-center gap-1.5">
                       <RotateCcw size={14} /> Request a different date/time
                     </button>
                   ) : (
@@ -170,15 +170,15 @@ export default function MyAppointmentsPage() {
                       {reqError && <p className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2">{reqError}</p>}
                       <div className="grid sm:grid-cols-2 gap-3">
                         <input type="date" value={reqDate} onChange={(e) => setReqDate(e.target.value)} required
-                          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
+                          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                         <input type="time" value={reqTime} onChange={(e) => setReqTime(e.target.value)} required
-                          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20" />
+                          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                       </div>
                       <textarea value={reqNote} onChange={(e) => setReqNote(e.target.value)} rows={2} placeholder="Anything else we should know? (optional)"
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20 resize-none" />
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
                       <div className="flex gap-2">
                         <button type="submit" disabled={reqSaving}
-                          className="min-h-10 px-4 bg-[#0B2560] text-white rounded-xl font-bold text-xs hover:bg-[#12345c] transition disabled:opacity-60">
+                          className="min-h-10 px-4 bg-primary text-white rounded-xl font-bold text-xs hover:bg-[#12345c] transition disabled:opacity-60">
                           {reqSaving ? 'Sending…' : 'Send Request'}
                         </button>
                         <button type="button" onClick={() => setShowReschedule(false)}
@@ -196,7 +196,7 @@ export default function MyAppointmentsPage() {
             {/* Past visits */}
             {data.history.length > 0 && (
               <div>
-                <h2 className="text-sm font-bold text-[#0B2560] mb-3">Past Bookings</h2>
+                <h2 className="text-sm font-bold text-primary mb-3">Past Bookings</h2>
                 <div className="space-y-2">
                   {data.history.map((h: any) => (
                     <div key={h.bookingId} className="bg-white rounded-xl border border-[#EBE8E3] px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
@@ -215,6 +215,6 @@ export default function MyAppointmentsPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

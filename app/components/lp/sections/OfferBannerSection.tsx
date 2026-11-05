@@ -50,24 +50,24 @@ const STYLE_CONFIG: Record<AnimStyle, {
   ctaCls: string;
 }> = {
   urgent: {
-    bg: 'bg-gradient-to-r from-red-950 via-[#0B2560] to-red-950',
+    bg: 'bg-gradient-to-r from-red-950 via-primary to-red-950',
     badgeCls: 'bg-red-500 text-white',
     ctaCls:   'bg-red-500 hover:bg-red-600 text-white',
   },
   festive: {
-    bg: 'bg-gradient-to-r from-purple-900 via-[#0B2560] to-[#1a3a7a]',
+    bg: 'bg-gradient-to-r from-purple-900 via-primary to-[#1a3a7a]',
     badgeCls: 'bg-gradient-to-r from-yellow-400 to-pink-500 text-white',
     ctaCls:   'bg-gradient-to-r from-yellow-400 to-pink-500 hover:from-yellow-500 hover:to-pink-600 text-white',
   },
   glow: {
-    bg: 'bg-[#0B2560]',
-    badgeCls: 'bg-[#F5A623] text-[#0B2560]',
-    ctaCls:   'bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560]',
+    bg: 'bg-primary',
+    badgeCls: 'bg-champagne text-primary',
+    ctaCls:   'bg-champagne hover:bg-[#e09516] text-primary',
   },
   minimal: {
-    bg: 'bg-gradient-to-r from-[#0B2560] via-[#1a3a7a] to-[#0B2560]',
-    badgeCls: 'bg-[#F5A623] text-[#0B2560]',
-    ctaCls:   'bg-[#F5A623] hover:bg-[#e09516] text-[#0B2560]',
+    bg: 'bg-gradient-to-r from-primary via-[#1a3a7a] to-primary',
+    badgeCls: 'bg-champagne text-primary',
+    ctaCls:   'bg-champagne hover:bg-[#e09516] text-primary',
   },
 };
 
@@ -81,7 +81,7 @@ export default function OfferBannerSection({
   consultationFree: boolean;
 }) {
   const {
-    badge    = '🔥 Limited Time',
+    badge    = 'Current Offer',
     headline = consultationFree ? 'Book Your Free Consultation Today' : 'Book Your Consultation Today',
     subtext  = 'Only 10 slots remaining this week',
     expiry,
@@ -221,7 +221,7 @@ export default function OfferBannerSection({
                     className="bg-black/25 border border-white/20 text-white font-extrabold text-xl md:text-3xl px-3 py-2 md:px-5 md:py-3 rounded-xl text-center min-w-[54px] md:min-w-[72px] font-mono"
                   >
                     {pad(v)}
-                    <div className="text-[9px] text-white/50 font-normal uppercase tracking-widest">{l}</div>
+                    <div className="text-xs text-white/50 font-normal uppercase tracking-widest">{l}</div>
                   </div>
                 ))}
               </div>
@@ -234,7 +234,7 @@ export default function OfferBannerSection({
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="w-2.5 h-2.5 rounded-full bg-[#F5A623] dot-pulse"
+                  className="w-2.5 h-2.5 rounded-full bg-champagne dot-pulse"
                   style={{ animationDelay: `${i * 0.22}s` }}
                 />
               ))}
@@ -246,15 +246,15 @@ export default function OfferBannerSection({
             <div className="mt-5 max-w-xs mx-auto">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold text-white/80">Slots Remaining</span>
-                <span className="text-xs font-extrabold text-[#F5A623]">{slotsLeft} left</span>
+                <span className="text-xs font-extrabold text-champagne">{slotsLeft} left</span>
               </div>
               <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#F5A623] to-red-400 rounded-full slots-bar"
+                  className="h-full bg-gradient-to-r from-champagne to-red-400 rounded-full slots-bar"
                   style={{ '--bar-target': `${slotsPct}%` } as React.CSSProperties}
                 />
               </div>
-              <p className="text-[10px] text-white/45 mt-1">
+              <p className="text-xs text-white/45 mt-1">
                 Only {slotsLeft} of {maxSlots} slots remaining this week
               </p>
             </div>
@@ -262,7 +262,7 @@ export default function OfferBannerSection({
 
           {/* EMI badge */}
           {emiAvailable && emiText && (
-            <p className="mt-4 text-[#A25607] text-sm font-semibold">
+            <p className="mt-4 text-bronze text-sm font-semibold">
               ✦ {emiText}
             </p>
           )}

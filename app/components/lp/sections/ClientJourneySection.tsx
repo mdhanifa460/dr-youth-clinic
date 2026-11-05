@@ -102,13 +102,13 @@ export default function ClientJourneySection({ data }: { data: ClientJourneyData
   if (!stages.length) return null;
 
   return (
-    <section className="bg-[#0B2560] py-16 md:py-24 relative overflow-hidden">
-      <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[#F5A623]/10 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[#3B82C4]/10 blur-[120px]" />
+    <section className="bg-primary py-16 md:py-24 relative overflow-hidden">
+      <div className="pointer-events-none absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-champagne/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-secondary/10 blur-[120px]" />
 
       <div className="max-w-5xl mx-auto px-5 relative">
         <div className="text-center mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F5A623] mb-3">{eyebrow}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">{eyebrow}</p>
           <h2 className="text-2xl md:text-4xl font-extrabold text-white">{headline}</h2>
           <p className="text-white/60 mt-3 text-sm md:text-base max-w-xl mx-auto">{subheadline}</p>
           {(patientName || patientTag) && (
@@ -131,13 +131,13 @@ export default function ClientJourneySection({ data }: { data: ClientJourneyData
             >
               <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#3B82C4] to-[#F5A623] transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-secondary to-champagne transition-all duration-500"
                   style={{ width: i <= active ? '100%' : '0%' }}
                 />
               </div>
               <p
-                className={`mt-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
-                  i === active ? 'text-[#A25607]' : 'text-white/40'
+                className={`mt-2 text-xs font-bold uppercase tracking-wide transition-colors ${
+                  i === active ? 'text-bronze' : 'text-white/40'
                 }`}
               >
                 {s.label || `Stage ${i + 1}`}
@@ -178,7 +178,7 @@ export default function ClientJourneySection({ data }: { data: ClientJourneyData
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/20 text-4xl">📷</div>
                   )}
-                  <span className="absolute top-3 left-3 bg-[#F5A623] text-[#0B2560] text-[10px] font-extrabold px-3 py-1 rounded-full shadow">
+                  <span className="absolute top-3 left-3 bg-champagne text-primary text-xs font-extrabold px-3 py-1 rounded-full shadow">
                     {s.label || `Stage ${i + 1}`}
                   </span>
                 </div>
@@ -195,7 +195,7 @@ export default function ClientJourneySection({ data }: { data: ClientJourneyData
                 onClick={() => scrollToIndex(Math.max(0, active - 1))}
                 disabled={active === 0}
                 aria-label="Previous stage"
-                className="hidden md:flex absolute -left-5 top-[calc(50%-1.5rem)] -translate-y-1/2 w-10 h-10 rounded-full bg-white text-[#0B2560] items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 transition"
+                className="hidden md:flex absolute -left-5 top-[calc(50%-1.5rem)] -translate-y-1/2 w-10 h-10 rounded-full bg-white text-primary items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 transition"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -203,7 +203,7 @@ export default function ClientJourneySection({ data }: { data: ClientJourneyData
                 onClick={() => scrollToIndex(Math.min(stages.length - 1, active + 1))}
                 disabled={active === stages.length - 1}
                 aria-label="Next stage"
-                className="hidden md:flex absolute -right-5 top-[calc(50%-1.5rem)] -translate-y-1/2 w-10 h-10 rounded-full bg-white text-[#0B2560] items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 transition"
+                className="hidden md:flex absolute -right-5 top-[calc(50%-1.5rem)] -translate-y-1/2 w-10 h-10 rounded-full bg-white text-primary items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 transition"
               >
                 <ChevronRight size={18} />
               </button>

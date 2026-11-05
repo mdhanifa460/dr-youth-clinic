@@ -11,38 +11,34 @@ export default function BookingPage() {
   const [step, setStep] = useState(1);
 
   const TRUST = [
-    { icon: Shield, label: 'FDA Approved', sub: 'Technology & protocols' },
-    { icon: Users, label: 'Expert Doctors', sub: `${yearsExperience} years experience` },
+    { icon: Shield, label: 'Doctor-led', sub: 'Consultation first' },
+    { icon: Users, label: 'Our Clinics', sub: `${yearsExperience} years of skin and hair care` },
     { icon: BadgeCheck, label: consultationBadge, sub: 'No commitment needed' },
   ];
 
   return (
-    <main className="min-h-screen bg-[#f6faff]">
+    <div className="min-h-screen bg-canvas">
 
       {/* ── HERO ── */}
-      <section className="bg-gradient-to-br from-[#0B2560] via-[#102d6e] to-[#1a4a8a] text-white py-10 px-6 md:px-10 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-white/[0.03]" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-[#F5A623]/[0.05] -translate-x-1/3" />
-        </div>
+      <section className="bg-primary text-white py-6 md:py-10 px-4 md:px-10 relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative">
-          <p className="text-[#A25607] text-xs font-bold uppercase tracking-widest mb-2">{consultationSub}</p>
-          <h1 className="text-3xl md:text-4xl font-headline font-extrabold mb-2 leading-tight">
+          <p className="eyebrow !text-champagne mb-2">{consultationSub}</p>
+          <h1 className="text-3xl md:text-4xl font-headline font-medium mb-2 leading-tight">
             {consultationCta}
           </h1>
-          <p className="text-white/60 text-sm max-w-md">
-            Speak with an expert dermatologist and get a personalised treatment plan{consultationFree ? ' — at no cost' : ''}.
+          <p className="text-white/80 text-sm max-w-md">
+            Speak with one of our doctors about a personalised treatment plan{consultationFree ? ' — at no cost' : ''}.
           </p>
           {/* Trust bar */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-7">
+          <div className="hidden md:grid md:grid-cols-3 gap-3 mt-7">
             {TRUST.map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <Icon size={14} className="text-[#A25607]" />
+                  <Icon size={14} className="text-champagne" />
                 </div>
                 <div>
-                  <p className="font-bold text-xs">{label}</p>
-                  <p className="text-white/40 text-[10px]">{sub}</p>
+                  <p className="font-semibold text-sm text-white">{label}</p>
+                  <p className="text-white/70 text-xs">{sub}</p>
                 </div>
               </div>
             ))}
@@ -51,7 +47,7 @@ export default function BookingPage() {
       </section>
 
       {/* ── FORM AREA ── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 py-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-10 py-5 md:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           {/* Sidebar */}
@@ -60,13 +56,13 @@ export default function BookingPage() {
           </aside>
 
           {/* Form */}
-          <section className="lg:col-span-8 order-1 lg:order-2 bg-white rounded-3xl shadow-xl overflow-hidden">
+          <section className="lg:col-span-8 order-1 lg:order-2 bg-white rounded-2xl border border-line overflow-hidden">
             <ConsultationForm step={step} setStep={setStep} />
           </section>
 
         </div>
       </div>
 
-    </main>
+    </div>
   );
 }

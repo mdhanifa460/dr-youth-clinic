@@ -155,7 +155,7 @@ export const RESULT_SECTION_LABELS: Record<ResultSectionKey, string> = {
   journeyExplorer: "Treatment Journey & Timeline",
   costEstimator: "Cost & EMI Estimator",
   doctors: "Matched Doctors",
-  realResults: "Real Patient Results",
+  realResults: ",",
   doctorMessage: "Doctor's Message",
   aiSummaryReport: "AI Summary Report",
   bookCta: "Book Consultation Button",

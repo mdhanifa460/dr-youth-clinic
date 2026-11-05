@@ -52,8 +52,8 @@ export default function ProblemSection({ data }: { data: ProblemData }) {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#2A6BA8] mb-3">Is This You?</p>
-          <h2 className="text-2xl md:text-4xl font-extrabold text-[#0B2560]">{headline}</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-3">Is This You?</p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-primary">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm md:text-base max-w-xl mx-auto">{subtitle}</p>
         </motion.div>
 
@@ -67,7 +67,7 @@ export default function ProblemSection({ data }: { data: ProblemData }) {
             swipeable. lg: reverts to the original grid, unchanged — that
             layout wasn't part of the reported issue and reads fine as a
             real grid once there's enough width for it. */}
-        <div className="flex lg:grid lg:grid-cols-4 gap-4 md:gap-5 overflow-x-auto lg:overflow-visible snap-x snap-mandatory pb-2 lg:pb-0 -mx-5 px-5 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-[#0B2560]/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="flex lg:grid lg:grid-cols-4 gap-4 md:gap-5 overflow-x-auto lg:overflow-visible snap-x snap-mandatory pb-2 lg:pb-0 -mx-5 px-5 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-primary/10 [&::-webkit-scrollbar-thumb]:rounded-full">
           {cards.map((card, i) => {
             const Icon = ICONS[i % ICONS.length];
             return (
@@ -77,16 +77,16 @@ export default function ProblemSection({ data }: { data: ProblemData }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.5, delay: i * 0.1, ease: 'easeOut' }}
-                className="group shrink-0 w-[72vw] max-w-[280px] lg:w-auto lg:max-w-none snap-center bg-[#f6faff] border border-gray-100 rounded-2xl p-5 md:p-6 hover:border-[#F5A623] hover:shadow-lg transition-all duration-300"
+                className="group shrink-0 w-[72vw] max-w-[280px] lg:w-auto lg:max-w-none snap-center bg-canvas border border-gray-100 rounded-2xl p-5 md:p-6 hover:border-champagne hover:shadow-lg transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 group-hover:bg-[#F5A623] group-hover:border-[#F5A623] flex items-center justify-center mb-4 transition-colors duration-300">
+                <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 group-hover:bg-champagne group-hover:border-champagne flex items-center justify-center mb-4 transition-colors duration-300">
                   {card.icon ? (
                     <span className="text-xl">{card.icon}</span>
                   ) : (
-                    <Icon size={22} className="text-[#2A6BA8] group-hover:text-white transition-colors duration-300" />
+                    <Icon size={22} className="text-secondary group-hover:text-white transition-colors duration-300" />
                   )}
                 </div>
-                <h3 className="font-bold text-[#0B2560] text-sm md:text-base mb-1.5">{card.title}</h3>
+                <h3 className="font-bold text-primary text-sm md:text-base mb-1.5">{card.title}</h3>
                 <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{card.desc}</p>
               </motion.div>
             );
