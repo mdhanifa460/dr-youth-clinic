@@ -2,14 +2,16 @@
 
 **Date:** 5 November 2026. **Base commit:** `515d178`.
 
-**Status: not live.** All changes are uncommitted in the working copy on `main`. dryouthclinics.com is unchanged. A push to `main` deploys to production, so that needs the owner's go-ahead.
+**Status: not live.** Work is committed locally on three stacked branches and has not been pushed: `redesign/trust-and-design-system`, `chore/next-15-security-upgrade` and `feat/privacy-policy-page`. dryouthclinics.com and `main` are unchanged. A push to `main` deploys to production, so that needs the owner's go-ahead.
 
-**Overall: about 7/10 against a 9/10 target.** The site is much more trustworthy and polished, but the target was **not reached**. The biggest gaps are a critical framework security upgrade, unverified clinic data, and LCP.
+**Overall: about 7/10 against a 9/10 target.** The site is much more trustworthy and polished, but the target was **not reached**. The biggest gaps are releasing the security upgrade, unverified clinic data, legal review, and LCP.
+
+**Test figures below describe the redesign before the later branches.** On the final branch: type check passes, 638 unit tests pass, the production build passes and 152 browser tests pass, using the same test data. ESLint was not re-run across the whole repo after the upgrade.
 
 ## Must be resolved before or soon after launch
 
-### 1. Security: critical and still open (P0-06)
-`npm audit` reports critical remote code execution advisories against Next.js 14.2.35, with no 14.x fix. The upgrade was **not attempted**. It moves to a new major version and React 19, with about 84 route files and 12 `cookies()`/`headers()` callers to review, so it should be tested separately from the redesign. Vercel hosting may reduce the exposure, but that is not confirmed.
+### 1. Security: upgrade done on a branch, not live (P0-06)
+Next.js 14.2.35 had critical remote code execution advisories. Branch `chore/next-15-security-upgrade` moves to Next.js 15.5.29 and React 19. `npm audit --omit=dev` went from 1 critical, 8 high and 4 moderate to **0 critical, 8 high and 5 moderate**. **Production stays exposed until this is released.** The remaining items were not addressed. Admin screens, including the rich text and drag-and-drop editors, are untested on React 19 and must be checked on a preview.
 
 ### 2. Clinic data to confirm
 
@@ -92,7 +94,8 @@ Real database, real WhatsApp and CRM delivery, Admin screens, Lighthouse on a re
 
 | ID | Issue |
 |---|---|
-| P0-06 | Next.js security upgrade |
+| P0-06 | Next.js security upgrade: done on a branch, needs release and Admin checks |
+| Privacy | See [PRIVACY_POLICY_AUDIT.md](PRIVACY_POLICY_AUDIT.md). The page is redesigned, but the 3 new sections await legal review |
 | P0-07 | Verified addresses and hours |
 | P1-12 | Vercel region |
 | P1-16 | Rewards programme decision |
@@ -131,7 +134,7 @@ Scores are engineering judgement, informed by the evidence shown.
 | 9 | Local SEO | 4 | 5 | Hours and region fixed. Addresses still conflict |
 | 10 | Performance | 7 | **NOT VERIFIED** | No comparable measurement |
 | 11 | Accessibility | 8 | 9 | Lighthouse 100 on 4 pages. No screen-reader or full manual audit |
-| 12 | Security | 4 | 4 | Honeypot added, critical advisories still open |
+| 12 | Security | 4 | 6 once released | Honeypot added, critical advisories cleared on the branch. 8 high remain |
 | 13 | Code quality | 7 | 8 | Lint errors fixed, tests added. 399 warnings remain |
 | 14 | Brand trust | 3 | 7 | Unsupported claims removed from checked pages. Credentials need confirming |
 

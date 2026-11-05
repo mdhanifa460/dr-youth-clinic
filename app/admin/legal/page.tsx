@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { DRAFT_MARKER, PRIVACY_DRAFT_SECTIONS } from '@/app/lib/legalDraftSections';
 import { Plus, Trash2, ArrowUp, ArrowDown, Save, Loader2, ScrollText } from 'lucide-react';
 import LegalRichTextEditor from '@/app/admin/components/LegalRichTextEditor';
 
@@ -43,9 +44,11 @@ function Card({ title, sub, children }: { title: string; sub?: string; children:
 function LegalPageEditor({
   page,
   onChange,
+  drafts = [],
 }: {
   page: LegalPageData;
   onChange: (page: LegalPageData) => void;
+  drafts?: LegalSection[];
 }) {
   const setSection = (i: number, patch: Partial<LegalSection>) => {
     const sections = [...page.sections];
@@ -119,6 +122,27 @@ function LegalPageEditor({
           </div>
         ))}
       </div>
+      {drafts.length > 0 && (
+        <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-2">
+          <p className="text-xs font-semibold text-amber-900">Drafts for legal review</p>
+          <p className="text-xs text-amber-900">
+            Not legal advice. These stay off the public page until every {DRAFT_MARKER}…] marker is resolved and the section is saved. Get a lawyer's approval first.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {drafts.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                disabled={page.sections.some((s) => s.id === d.id)}
+                onClick={() => onChange({ ...page, sections: [...page.sections, { ...d }] })}
+                className="text-xs font-semibold border border-amber-300 rounded-lg px-3 py-1.5 bg-white text-amber-900 disabled:opacity-50"
+              >
+                Insert: {d.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <button onClick={addSection} className="text-xs text-[#0B2560] font-semibold flex items-center gap-1 hover:underline">
         <Plus size={12} /> Add Section
       </button>
@@ -201,7 +225,7 @@ export default function LegalAdminPage() {
       </div>
 
       <Card title={tab === 'privacyPolicy' ? 'Privacy Policy' : 'Terms of Service'}>
-        <LegalPageEditor page={data[tab]} onChange={(page) => setData({ ...data, [tab]: page })} />
+        <LegalPageEditor page={data[tab]} drafts={tab === 'privacyPolicy' ? PRIVACY_DRAFT_SECTIONS : []} onChange={(page) => setData({ ...data, [tab]: page })} />
       </Card>
     </div>
   );
