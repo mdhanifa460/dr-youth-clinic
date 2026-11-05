@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { MdPhone, MdMenu, MdClose, MdPhotoLibrary, MdEventAvailable, MdChevronRight } from "react-icons/md";
 import { ChevronDown } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
+import { toHeaderLogo } from "@/app/lib/headerLogo";
 import { useBranchPhone } from "@/app/lib/useBranchWhatsApp";
 
 export interface NavChild {
@@ -76,7 +77,7 @@ function routeActiveId(items: NavItem[], pathname: string) {
 
 export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?: NavItem[]; megaMenu?: MegaMenuConfig | null }) {
   const siteConfig = useSiteConfig();
-  const logoUrl   = siteConfig.logoUrl || DEFAULT_LOGO_URL;
+  const logoUrl   = toHeaderLogo(siteConfig.logoUrl || DEFAULT_LOGO_URL);
   const phone     = useBranchPhone(siteConfig.publicPhone || "1800 890 9669");
   const phoneHref = `tel:${phone.replace(/\s+/g, "")}`;
   const [active, setActive] = useState("home");
@@ -224,7 +225,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/98 border-b border-gray-100 shadow-sm">
 
       {/* ── MOBILE ROW: [hamburger] [logo center] [photo icon] ── */}
-      <div className="xl:hidden flex items-center justify-between px-4 py-1">
+      <div className="xl:hidden flex items-center justify-between px-4 py-2">
 
         {/* Left: hamburger */}
         <button
@@ -243,9 +244,9 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
           <Image
             src={logoUrl}
             alt="DR Youth Clinic"
-            width={64}
-            height={64}
-            className="h-16 w-auto object-contain"
+            width={50}
+            height={48}
+            className="h-12 w-auto object-contain"
             priority
           />
         </Link>
@@ -261,7 +262,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
       </div>
 
       {/* ── DESKTOP ROW: [logo] [nav] [phone + CTA] ── */}
-      <div className="hidden xl:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-1 gap-3 xl:gap-5">
+      <div className="hidden xl:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-2 gap-3 xl:gap-5">
 
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
@@ -272,9 +273,9 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
           <Image
             src={logoUrl}
             alt="DR Youth Clinic"
-            width={80}
-            height={80}
-            className="h-20 w-auto object-contain"
+            width={54}
+            height={52}
+            className="h-[52px] w-auto object-contain"
             priority
           />
         </Link>
