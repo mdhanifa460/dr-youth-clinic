@@ -33,7 +33,7 @@ export default function WebStoriesSection({ data }: { data: Data }) {
               <span className="text-bronze text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">{headline}</h2>
-            <p className="text-gray-500 text-sm mt-1.5 max-w-md">{subheadline}</p>
+            <p className="text-text-secondary text-sm mt-1.5 max-w-md">{subheadline}</p>
           </div>
           <Link href="/web-stories" className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5 shrink-0">
             View all <ChevronRight size={14} />
@@ -46,7 +46,7 @@ export default function WebStoriesSection({ data }: { data: Data }) {
               <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-[#1a4a8a] shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
                 <ImageWithFallback
                   src={s.coverImage?.url}
-                  alt={s.title}
+                  alt=""
                   fill
                   sizes="150px"
                   className="object-cover"

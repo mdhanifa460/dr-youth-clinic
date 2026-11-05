@@ -108,7 +108,7 @@ async function getGeneralFaqs() {
     await connectDB();
     const s = await HomepageSection.findOne({ sectionKey: 'faq' } as any).lean() as any;
     const items = (s?.data?.faqs ?? []) as { question: string; answer: string; category?: string }[];
-    return items.filter((f) => !f.category || f.category === 'General');
+    return scrubClaims(items.filter((f) => !f.category || f.category === 'General'));
   } catch {
     return [];
   }

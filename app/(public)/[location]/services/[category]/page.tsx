@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cleanCredentialWording } from '@/app/lib/patientClaims';
 import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -440,7 +441,7 @@ function ServiceCard({
 
         {(svc.heroDescription || svc.narrative) && (
           <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-3">
-            {svc.heroDescription || svc.narrative?.slice(0, 200)}
+            {cleanCredentialWording(svc.heroDescription || svc.narrative?.slice(0, 200) || '')}
           </p>
         )}
 

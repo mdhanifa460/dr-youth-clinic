@@ -20,7 +20,7 @@ export default function DoctorCard({ doc }: { doc: any }) {
       <FocalImage
         image={doc.photo}
         aspectRatio="4/5"
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+        sizes="(max-width: 768px) 50vw, 25vw"
         alt={doc.name}
         className="bg-gradient-to-br from-line to-[#c5d9ef]"
         imgClassName="transition duration-500 md:hover:scale-105"

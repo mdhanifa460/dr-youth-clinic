@@ -472,7 +472,7 @@ export default async function ServiceDetailPage(props: PageProps) {
                 <span className="block text-champagne text-xl md:text-3xl mt-1 font-normal">in {cityName}</span>
               </h1>
               {svc.heroDescription && (
-                <p className="text-white/70 text-base md:text-[17px] leading-relaxed max-w-lg">{svc.heroDescription}</p>
+                <p className="text-white/70 text-base md:text-[17px] leading-relaxed max-w-lg">{cleanCredentialWording(svc.heroDescription)}</p>
               )}
 
               {/* Quick stat badges */}
