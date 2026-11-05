@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
 
 // CMS-driven replacement for the goal metadata that used to live as source
@@ -121,6 +122,9 @@ export const JourneyConfig =
 
 const getCachedJourneyConfigDoc = unstable_cache(
   async () => {
+    // Pages call this alongside other loaders, so it can be the first query in a
+    // process, and with bufferCommands off that fails unless it connects itself.
+    await connectDB();
     const doc = await JourneyConfig.findOne({} as any).lean();
     return doc as IJourneyConfig | null;
   },
@@ -134,5 +138,6 @@ const getCachedJourneyConfigDoc = unstable_cache(
 export async function getJourneyConfig(): Promise<IJourneyConfig> {
   const doc = await getCachedJourneyConfigDoc();
   if (doc) return doc;
+  await connectDB();
   return (await JourneyConfig.create({})) as IJourneyConfig;
 }
