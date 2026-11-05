@@ -77,7 +77,7 @@ export default function FounderSection({ data }: { data: FounderData }) {
           <span className="inline-flex items-center gap-2 bg-primary/5 text-primary text-xs font-bold px-4 py-1.5 rounded-full tracking-wider uppercase mb-5">
             {eyebrow}
           </span>
-          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight mb-6">
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary leading-tight mb-6">
             {headline}
           </h2>
 

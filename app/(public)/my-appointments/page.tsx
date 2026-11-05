@@ -82,7 +82,7 @@ export default function MyAppointmentsPage() {
           <Link href="/" className="inline-flex items-center gap-1.5 text-white/60 text-sm hover:text-white transition mb-6">
             <ChevronLeft size={15} /> Back to Home
           </Link>
-          <h1 className="text-3xl md:text-4xl font-headline font-medium leading-tight mb-3">My Appointments</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-extrabold leading-tight mb-3">My Appointments</h1>
           <p className="text-white/70 text-sm md:text-base max-w-xl">
             Enter the phone number you booked with and your Booking ID (from your WhatsApp confirmation) to view or reschedule your appointment.
           </p>

@@ -325,7 +325,7 @@ export default function UnifiedJourneyResults({
     return (
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16 text-center">
         <span className="text-5xl">{journey.goalIcon}</span>
-        <h2 className="text-2xl font-headline font-medium text-primary mt-4">{journey.goalLabel} — let's talk it through</h2>
+        <h2 className="text-2xl font-headline font-extrabold text-primary mt-4">{journey.goalLabel} — let's talk it through</h2>
         <p className="text-gray-500 max-w-md mx-auto mt-2">We're preparing options for this goal. Book a consultation and our specialists will guide you directly.</p>
         <Link href="/book" className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:-translate-y-0.5 transition mt-6">
           {consultationCta || "Book a Consultation"} <ArrowRight size={15} />
@@ -383,7 +383,7 @@ export default function UnifiedJourneyResults({
       order: orderOf("doctors"),
       node: (
         <div key="doctors">
-          <h3 className="text-xl font-headline font-medium text-primary mb-4">Doctors For This Goal</h3>
+          <h3 className="text-xl font-headline font-extrabold text-primary mb-4">Doctors For This Goal</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {journey.doctors.slice(0, 3).map((d: any) => (
               <Link key={String(d._id)} href={`/doctors/${d._id}`} className="bg-white rounded-2xl border border-gray-100 p-3 text-center hover:shadow-md transition">
@@ -408,7 +408,7 @@ export default function UnifiedJourneyResults({
       order: orderOf("realResults"),
       node: (
         <div key="results">
-          <h3 className="text-xl font-headline font-medium text-primary mb-4">Real Patient Results</h3>
+          <h3 className="text-xl font-headline font-extrabold text-primary mb-4">Real Patient Results</h3>
           {journey.results.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {journey.results.slice(0, 4).map((r: any) => (

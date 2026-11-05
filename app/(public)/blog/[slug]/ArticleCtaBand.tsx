@@ -22,7 +22,7 @@ export default function ArticleCtaBand({
     <section className="bg-primary py-14">
       <div className="max-w-2xl mx-auto px-6 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Take the Next Step</p>
-        <h2 className="text-2xl md:text-3xl font-headline font-medium text-white mb-3">Still Not Sure?</h2>
+        <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">Still Not Sure?</h2>
         <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
           Get a personalised recommendation, book a {consultationFree ? 'free ' : ''}consultation, or talk to a doctor directly — whichever helps you decide.
         </p>

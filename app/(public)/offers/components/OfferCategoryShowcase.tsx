@@ -40,7 +40,7 @@ export default function OfferCategoryShowcase({ summaries }: { summaries: Catego
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-2">Browse by Category</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">Find Your Perfect Treatment</h2>
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">Find Your Perfect Treatment</h2>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-5">

@@ -31,7 +31,7 @@ export default function NewsletterSignup({ source = 'blog' }: { source?: string 
   return (
     <section className="bg-primary rounded-3xl px-6 py-10 md:py-12 md:px-12 text-center">
       <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Stay Informed</p>
-      <h2 className="text-2xl md:text-3xl font-headline font-medium text-white mb-3">Get Expert Tips in Your Inbox</h2>
+      <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">Get Expert Tips in Your Inbox</h2>
       <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">
         Skin & hair care tips, new treatment guides, and offers — no spam, unsubscribe anytime.
       </p>

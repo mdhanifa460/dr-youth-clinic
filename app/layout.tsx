@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Newsreader } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import CacheGuard from "@/app/components/CacheGuard";
 
@@ -10,8 +10,7 @@ import CacheGuard from "@/app/components/CacheGuard";
 // exposes them under the exact same CSS variable names those files already
 // reference, so no other file needs to change.
 const bodyFont = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
-// One weight and no optical-size axis: the full variable file delayed the largest paint.
-const headlineFont = Newsreader({ subsets: ["latin"], weight: "500", style: ["normal", "italic"], variable: "--font-headline", display: "swap" });
+const headlineFont = Manrope({ subsets: ["latin"], variable: "--font-headline", display: "swap" });
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 

@@ -33,7 +33,7 @@ export default function CostEstimator({ basePrice, sessionsRequired, serviceName
     <div className="rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
       <div className="bg-gradient-to-r from-[#7c3aed] to-[#5b21b6] px-6 py-4 text-white">
         <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-0.5">Estimate</p>
-        <h3 className="font-headline font-medium text-base">Personalised Cost Calculator</h3>
+        <h3 className="font-headline font-extrabold text-base">Personalised Cost Calculator</h3>
       </div>
 
       <div className="p-6 space-y-5">

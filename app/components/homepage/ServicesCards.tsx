@@ -110,7 +110,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
             return (
               <div
                 key={cat.slug}
-                className="group relative overflow-hidden rounded-2xl min-h-[220px] md:min-h-[320px]"
+                className="group relative overflow-hidden rounded-3xl min-h-[220px] md:min-h-[320px] shadow-[0_12px_35px_rgba(11,37,96,0.1)] ring-1 ring-white/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(11,37,96,0.16)] focus-within:-translate-y-1"
               >
                 <ImageWithFallback
                   src={image?.url}
@@ -125,7 +125,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
 
                 {/* Label block (always visible) */}
                 <div className={`absolute inset-x-0 bottom-0 p-4 md:p-6 ${anyAction ? '[@media(hover:none)]:pb-14' : ''} pointer-events-none transition-opacity duration-300 [@media(hover:hover)]:group-hover:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-0`}>
-                                    <h3 className="text-lg md:text-xl font-headline font-medium text-white mb-1 leading-tight">{cat.label}</h3>
+                                    <h3 className="text-lg md:text-xl font-headline font-extrabold text-white mb-1 leading-tight">{cat.label}</h3>
                   <p className="text-white/70 text-xs md:text-sm mb-2">
                     {count > 0 ? `${count} treatment${count !== 1 ? 's' : ''}` : 'Ask our team'}
                   </p>
@@ -145,7 +145,7 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
                 {/* Hover-capable devices: slide-up quick menu */}
                 {anyAction && (
                   <div className="absolute inset-0 z-10 hidden flex-col justify-end bg-gradient-to-t from-primary via-primary/90 to-primary/40 p-4 md:p-5 opacity-0 translate-y-3 transition-all duration-300 pointer-events-none [@media(hover:hover)]:flex group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto">
-                    <h3 className="text-lg font-headline font-medium text-white leading-tight mb-2">{cat.label}</h3>
+                    <h3 className="text-lg font-headline font-extrabold text-white leading-tight mb-2">{cat.label}</h3>
                     {showList && (
                       <ul className="mb-3 space-y-1.5">
                         {list.map((sv) => (
@@ -189,16 +189,16 @@ export default function ServicesCards({ data, location = 'chennai', categoryCoun
         </div>
 
         {/* CONSULT CARD */}
-        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-5 md:flex-row md:items-center md:justify-between md:p-8">
+        <div className="flex flex-col gap-4 rounded-3xl bg-white p-5 shadow-[0_12px_35px_rgba(11,37,96,0.08)] ring-1 ring-line md:flex-row md:items-center md:justify-between md:p-8">
           <div>
-            <h3 className="font-headline text-xl font-medium text-primary md:text-2xl">
+            <h3 className="font-headline text-xl font-extrabold text-primary md:text-2xl">
               {diagnosisPanel?.title || 'Not sure which treatment you need?'}
             </h3>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-text-secondary md:text-base">
               {diagnosisPanel?.description || 'Our doctors will assess your concern and talk you through suitable options.'}
             </p>
           </div>
-          <Link href={diagnosisPanel?.ctaHref || '/book'} className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-white hover:bg-primary-hover">
+          <Link href={diagnosisPanel?.ctaHref || '/book'} className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-primary px-7 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(11,37,96,0.22)]">
             {diagnosisPanel?.ctaText || 'Book a Consultation'}
           </Link>
         </div>

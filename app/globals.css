@@ -10,17 +10,17 @@
   --primary: #0B2560;
   --secondary: #2A6BA8;
   --tertiary: #60A5D8;
-  --natural: #F3EFE7;
+  --natural: #F0F7FF;
 
-  --background: #FBF9F5;
-  --surface: #FBF9F5;
-  --surface-soft: #F3EFE7;
-  --surface-container: #F3EFE7;
+  --background: #F6FAFF;
+  --surface: #f6faff;
+  --surface-soft: #edf4fc;
+  --surface-container: #e8eff7;
 
   --text-primary: #0B2560;
-  --text-secondary: #4A5160;
+  --text-secondary: #43474e;
 
-  --border-soft: #E7E1D6;
+  --border-soft: #e5e7eb;
 }
 
 /* Shared type styles. Sizes step down on small screens so headings don't wrap badly. */
@@ -29,13 +29,13 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #8A5A1F;
+  color: #A25607;
 }
 
 .heading-display,
 .heading-section {
   font-family: var(--font-headline);
-  font-weight: 500;
+  font-weight: 800;
   color: #0B2560;
   letter-spacing: -0.01em;
   line-height: 1.12;

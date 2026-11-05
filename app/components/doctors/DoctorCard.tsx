@@ -33,12 +33,12 @@ export default function DoctorCard({ doc }: { doc: any }) {
   );
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-line transition-colors duration-200 hover:border-line-strong">
+    <div className="bg-canvas rounded-3xl overflow-hidden shadow-sm ring-1 ring-line transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(11,37,96,0.1)]">
       {doc._id ? (
         <Link href={`/doctors/${doc._id}`} className="block">{inner}</Link>
       ) : inner}
       <div className="px-4 pb-4 md:px-5 md:pb-5 flex items-center justify-between -mt-1">
-        <span className="text-xs text-text-secondary">{experience}</span>
+        <span className="text-xs text-secondary font-semibold">{experience}</span>
         {doc.linkedIn && doc.linkedIn !== '#' && (
           <a
             href={doc.linkedIn}

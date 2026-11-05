@@ -23,7 +23,7 @@ export default async function TermsPage() {
       <section className="bg-primary py-16 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Legal</p>
-          <h1 className="text-3xl md:text-4xl font-headline font-medium text-white leading-tight">
+          <h1 className="text-3xl md:text-4xl font-headline font-extrabold text-white leading-tight">
             Terms of Service
           </h1>
           <p className="text-white/60 mt-3 text-sm">
@@ -60,7 +60,7 @@ export default async function TermsPage() {
             >
               <div className="flex items-start gap-4 mb-4">
                 <span className="text-3xl shrink-0">{section.icon}</span>
-                <h2 className="text-lg md:text-xl font-headline font-medium text-primary leading-snug">
+                <h2 className="text-lg md:text-xl font-headline font-extrabold text-primary leading-snug">
                   {section.title}
                 </h2>
               </div>

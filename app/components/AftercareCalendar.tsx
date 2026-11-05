@@ -11,7 +11,7 @@ export default function AftercareCalendar({ items, serviceName }: { items: After
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-medium text-primary mb-2">Aftercare Guide</h2>
+      <h2 className="text-2xl font-headline font-extrabold text-primary mb-2">Aftercare Guide</h2>
       <p className="text-gray-500 text-sm mb-6">Everyday questions patients ask after {serviceName} — answered upfront.</p>
 
       <div className="relative">

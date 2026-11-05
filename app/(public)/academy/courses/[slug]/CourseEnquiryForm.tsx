@@ -39,7 +39,7 @@ export default function CourseEnquiryForm({ courseId, courseTitle }: { courseId:
     return (
       <div className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm p-6 text-center">
         <CheckCircle2 size={32} className="text-green-500 mx-auto mb-3" />
-        <p className="font-headline font-medium text-primary text-base">Enquiry Sent</p>
+        <p className="font-headline font-extrabold text-primary text-base">Enquiry Sent</p>
         <p className="text-gray-500 text-sm mt-1.5">Our team will get back to you about {courseTitle} shortly.</p>
       </div>
     );
@@ -47,7 +47,7 @@ export default function CourseEnquiryForm({ courseId, courseTitle }: { courseId:
 
   return (
     <form onSubmit={submit} className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm p-5 space-y-3.5">
-      <p className="font-headline font-medium text-primary text-base">Enquire About This Program</p>
+      <p className="font-headline font-extrabold text-primary text-base">Enquire About This Program</p>
       <div>
         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Full Name</label>
         <input

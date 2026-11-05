@@ -177,7 +177,7 @@ export default function TestimonialsSlider({ data }: { data: any }) {
 
         <div className="text-center mb-8 md:mb-12">
           <p className="text-bronze font-bold text-xs tracking-[0.2em] uppercase mb-3">Patient Reviews</p>
-          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight">{headline}</h2>
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary leading-tight">{headline}</h2>
           <p className="text-gray-500 mt-3 text-sm leading-relaxed">{subheadline}</p>
         </div>
 

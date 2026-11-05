@@ -92,7 +92,7 @@ export default function AiJourneySimulator({
         <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
           <Sparkles size={18} className="text-champagne" />
         </div>
-        <h2 className="text-xl font-headline font-medium text-primary">
+        <h2 className="text-xl font-headline font-extrabold text-primary">
           {autoStart ? `Your Personalised ${serviceName} Journey` : `Simulate Your ${serviceName} Journey`}
         </h2>
       </div>

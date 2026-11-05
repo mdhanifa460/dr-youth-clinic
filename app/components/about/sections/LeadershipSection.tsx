@@ -37,14 +37,14 @@ export default function LeadershipSection({ data }: { data: LeadershipData }) {
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-4">{eyebrow}</p>
             )}
             {quote && (
-              <blockquote className="text-white text-xl md:text-3xl font-headline font-medium leading-snug mb-6">
+              <blockquote className="text-white text-xl md:text-3xl font-headline font-extrabold leading-snug mb-6">
                 &ldquo;{quote}&rdquo;
               </blockquote>
             )}
             {bio && <p className="text-white/60 text-sm md:text-base leading-relaxed mb-6">{bio}</p>}
             {name && (
               <div>
-                <p className="text-white font-headline font-medium text-lg">{name}</p>
+                <p className="text-white font-headline font-extrabold text-lg">{name}</p>
                 {title && <p className="text-champagne text-sm font-semibold mt-0.5">{title}</p>}
               </div>
             )}

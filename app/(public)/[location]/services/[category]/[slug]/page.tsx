@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { cleanCredentialWording } from '@/app/lib/patientClaims';
 import { unstable_cache } from 'next/cache';
 import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
@@ -449,7 +450,7 @@ export default async function ServiceDetailPage(props: PageProps) {
         {carouselServiceBanners.length > 0 ? (
           <BannerCarousel slides={carouselServiceBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={siteConfig.carouselIntervalMs} />
         ) : (
-        <section className="relative bg-primary text-white overflow-hidden">
+        <section className="relative bg-gradient-to-br from-primary via-[#102d6e] to-[#1a4a8a] text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute -top-24 -right-24 w-[480px] h-[480px] rounded-full bg-white/[0.03]" />
             <div className="absolute -bottom-16 -left-16 w-[320px] h-[320px] rounded-full bg-white/[0.04]" />
@@ -467,7 +468,7 @@ export default async function ServiceDetailPage(props: PageProps) {
               <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur text-white text-xs font-bold px-4 py-1.5 rounded-full tracking-wider uppercase border border-white/10">
                 {svc.category} Treatment
               </span>
-              <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight tracking-tight">
+              <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight">
                 {svc.name}{' '}
                 <span className="block text-champagne text-xl md:text-3xl mt-1 font-normal">in {cityName}</span>
               </h1>
@@ -629,7 +630,7 @@ export default async function ServiceDetailPage(props: PageProps) {
 
             {/* Overview */}
             <div>
-              <h2 className="text-2xl font-headline font-medium text-primary mb-4">About This Treatment</h2>
+              <h2 className="text-2xl font-headline font-extrabold text-primary mb-4">About This Treatment</h2>
               {svc.narrativeBlocks?.length > 0 ? (
                 <BlockRenderer
                   blocks={svc.narrativeBlocks}
@@ -678,7 +679,7 @@ export default async function ServiceDetailPage(props: PageProps) {
                   <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
                     <Cpu size={18} className="text-bronze" />
                   </div>
-                  <h2 className="text-xl font-headline font-medium">What Powers This Treatment</h2>
+                  <h2 className="text-xl font-headline font-extrabold">What Powers This Treatment</h2>
                 </div>
                 <p className="text-white/75 leading-relaxed text-sm">{svc.technology}</p>
               </div>
@@ -694,7 +695,7 @@ export default async function ServiceDetailPage(props: PageProps) {
             {hasBeforeAfter && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-2xl font-headline font-medium text-primary">Treatment Photos</h2>
+                  <h2 className="text-2xl font-headline font-extrabold text-primary">Treatment Photos</h2>
                   <span className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border hidden sm:block">Unretouched photos</span>
                 </div>
                 <BeforeAfterGallery pairs={beforeAfterPairs} serviceName={svc.name} />
@@ -705,7 +706,7 @@ export default async function ServiceDetailPage(props: PageProps) {
             {siteConfig.showBeforeAfterOnPublic && documentedResults.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-2xl font-headline font-medium text-primary">Treatment Photos</h2>
+                  <h2 className="text-2xl font-headline font-extrabold text-primary">Treatment Photos</h2>
                   <Link href="/results" className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5">
                     View all <ChevronRight size={14} />
                   </Link>
@@ -733,7 +734,7 @@ export default async function ServiceDetailPage(props: PageProps) {
             {/* Myths vs Facts */}
             {hasMyths && (
               <div>
-                <h2 className="text-2xl font-headline font-medium text-primary mb-6">Myths vs. Facts</h2>
+                <h2 className="text-2xl font-headline font-extrabold text-primary mb-6">Myths vs. Facts</h2>
                 <div className="space-y-4">
                   {svc.myths.map((item: any, i: number) => (
                     <div key={i} className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
@@ -793,7 +794,7 @@ export default async function ServiceDetailPage(props: PageProps) {
             {/* Patient Reviews */}
             {hasReviews && (
               <div>
-                <h2 className="text-2xl font-headline font-medium text-primary mb-5">What Patients Say</h2>
+                <h2 className="text-2xl font-headline font-extrabold text-primary mb-5">What Patients Say</h2>
                 <div className="space-y-4">
                   {reviews.map((r: any, i: number) => (
                     <div key={i} className="bg-canvas rounded-2xl p-5 border border-blue-50">
@@ -831,7 +832,7 @@ export default async function ServiceDetailPage(props: PageProps) {
 
             {/* FAQ */}
             <section aria-labelledby="before-you-decide" className="rounded-2xl border border-line bg-canvas p-5 md:p-6">
-              <h2 id="before-you-decide" className="font-headline text-xl font-medium text-primary">Before you decide</h2>
+              <h2 id="before-you-decide" className="font-headline text-xl font-extrabold text-primary">Before you decide</h2>
               <p className="mt-2 text-sm leading-relaxed text-text-secondary">
                 Results vary from person to person, and this treatment may not suit everyone. At your consultation, the doctor will assess your concern and explain whether it is suitable, along with possible side effects, limitations, and alternatives.
               </p>
@@ -841,7 +842,7 @@ export default async function ServiceDetailPage(props: PageProps) {
 
             {/* Why DR Youth */}
             <div className="bg-gradient-to-br from-canvas to-white rounded-3xl p-7 border border-blue-50">
-              <h2 className="text-xl font-headline font-medium text-primary mb-5">What to Expect</h2>
+              <h2 className="text-xl font-headline font-extrabold text-primary mb-5">What to Expect</h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {(svc.whyChooseUs?.length ? svc.whyChooseUs : DEFAULT_WHY_US).map((point: string, i: number) => (
                   <div key={i} className="flex items-start gap-3 bg-white rounded-xl p-4 border border-gray-50 shadow-sm">
@@ -871,7 +872,7 @@ export default async function ServiceDetailPage(props: PageProps) {
               <div className="rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
                 <div className="bg-primary px-6 py-5 text-white">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Book This Treatment</p>
-                  <h3 className="text-base font-headline font-medium leading-snug">{svc.name}</h3>
+                  <h3 className="text-base font-headline font-extrabold leading-snug">{svc.name}</h3>
                   <p className="text-white/40 text-xs mt-0.5">{cityName} Clinic</p>
                 </div>
                 <div className="p-5 space-y-1">
@@ -983,7 +984,7 @@ export default async function ServiceDetailPage(props: PageProps) {
           <section className="bg-canvas py-14 border-t border-blue-50">
             <div className="max-w-7xl mx-auto px-6 md:px-10">
               <div className="mb-8">
-                <h2 className="text-2xl font-headline font-medium text-primary">Meet Your Doctors</h2>
+                <h2 className="text-2xl font-headline font-extrabold text-primary">Meet Your Doctors</h2>
                 <p className="text-gray-500 text-sm mt-1">Doctors at our {cityName} clinic performing this treatment</p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -1050,7 +1051,7 @@ export default async function ServiceDetailPage(props: PageProps) {
           </div>
           <div className="max-w-2xl mx-auto px-6 relative">
             <p className="text-bronze text-xs font-bold uppercase tracking-widest mb-3">Ready to begin?</p>
-            <h2 className="text-2xl md:text-4xl font-headline font-medium tracking-tight mb-3">
+            <h2 className="text-2xl md:text-4xl font-headline font-extrabold tracking-tight mb-3">
               Start Your {svc.name} Journey
             </h2>
             <p className="text-white/60 text-sm leading-relaxed mb-7">

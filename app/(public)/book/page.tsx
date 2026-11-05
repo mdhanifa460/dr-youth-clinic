@@ -20,10 +20,10 @@ export default function BookingPage() {
     <div className="min-h-screen bg-canvas">
 
       {/* ── HERO ── */}
-      <section className="bg-primary text-white py-6 md:py-10 px-4 md:px-10 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-primary via-[#102d6e] to-[#1a4a8a] text-white py-6 md:py-10 px-4 md:px-10 relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative">
           <p className="eyebrow !text-champagne mb-2">{consultationSub}</p>
-          <h1 className="text-3xl md:text-4xl font-headline font-medium mb-2 leading-tight">
+          <h1 className="text-3xl md:text-4xl font-headline font-extrabold mb-2 leading-tight">
             {consultationCta}
           </h1>
           <p className="text-white/80 text-sm max-w-md">
@@ -56,7 +56,7 @@ export default function BookingPage() {
           </aside>
 
           {/* Form */}
-          <section className="lg:col-span-8 order-1 lg:order-2 bg-white rounded-2xl border border-line overflow-hidden">
+          <section className="lg:col-span-8 order-1 lg:order-2 bg-white rounded-3xl shadow-xl overflow-hidden">
             <ConsultationForm step={step} setStep={setStep} />
           </section>
 

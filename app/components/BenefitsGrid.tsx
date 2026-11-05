@@ -7,7 +7,7 @@ export default function BenefitsGrid({ benefits }: { benefits?: Array<{ icon: st
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-medium text-primary mb-5">Key Benefits</h2>
+      <h2 className="text-2xl font-headline font-extrabold text-primary mb-5">Key Benefits</h2>
       <div className="grid sm:grid-cols-2 gap-4">
         {benefits.map((b, i) => (
           <div key={i} className="group flex gap-4 p-5 rounded-2xl bg-canvas border border-blue-50 hover:border-secondary/30 hover:shadow-md transition-all">

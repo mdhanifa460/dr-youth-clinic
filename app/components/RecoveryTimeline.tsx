@@ -24,7 +24,7 @@ export default function RecoveryTimeline({
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-medium text-primary mb-5">Recovery Timeline</h2>
+      <h2 className="text-2xl font-headline font-extrabold text-primary mb-5">Recovery Timeline</h2>
       <div className="rounded-3xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">

@@ -78,7 +78,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
           rel="noopener noreferrer"
           style={{ touchAction: "manipulation" }}
           onClick={() => pushDataLayerEvent("whatsapp_click", { source: "mobile_sticky_bar" })}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#0F7A6E] text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#25D366] text-[#0B2545] font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
         >
           <FaWhatsapp size={20} />
           <span>WhatsApp</span>
@@ -94,7 +94,7 @@ export default function MobileStickyBar({ phone, whatsappUrl }: Props) {
           href={callHref}
           style={{ touchAction: "manipulation" }}
           onClick={() => pushDataLayerEvent("call_click", { source: "mobile_sticky_bar" })}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-primary text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#0B2545] text-white font-semibold text-xs min-h-[56px] py-3 active:brightness-90 transition-[filter]"
         >
           <MdPhone size={20} />
           <span>Call Us</span>

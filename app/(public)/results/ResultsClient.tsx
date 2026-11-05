@@ -63,7 +63,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
             <span className="text-champagne text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight mb-4">
+          <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
             {headline}
           </h1>
           <p className="text-white/70 text-sm md:text-base max-w-xl leading-relaxed">{subheadline}</p>
@@ -72,7 +72,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-10 pt-10 border-t border-white/10">
             {STATS.map((s, i) => (
               <div key={i} className="text-center">
-                <p className="text-2xl md:text-3xl font-headline font-medium text-white">{s.value}</p>
+                <p className="text-2xl md:text-3xl font-headline font-extrabold text-white">{s.value}</p>
                 <p className="text-white/50 text-xs mt-1 font-medium">{s.label}</p>
               </div>
             ))}
@@ -129,7 +129,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
 
         {/* Bottom CTA */}
         <div className="mt-16 bg-primary rounded-2xl p-8 text-center text-white">
-          <h2 className="text-2xl font-headline font-medium mb-2">Ready for Your Transformation?</h2>
+          <h2 className="text-2xl font-headline font-extrabold mb-2">Ready for Your Transformation?</h2>
           <p className="text-white/60 text-sm mb-6">Book a consultation and get a personalised treatment plan.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/book" className="inline-flex items-center justify-center bg-champagne text-primary px-8 py-3 rounded-xl font-semibold hover:bg-[#e09610] transition">

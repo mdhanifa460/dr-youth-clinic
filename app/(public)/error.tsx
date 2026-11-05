@@ -17,7 +17,7 @@ export default function PublicError({ error, reset }: { error: Error & { digest?
           <AlertCircle size={28} className="text-red-400" />
         </div>
 
-        <h1 className="text-2xl font-headline font-medium text-primary mb-2">
+        <h1 className="text-2xl font-headline font-extrabold text-primary mb-2">
           Something went wrong
         </h1>
         <p className="text-gray-500 text-sm leading-relaxed mb-8">

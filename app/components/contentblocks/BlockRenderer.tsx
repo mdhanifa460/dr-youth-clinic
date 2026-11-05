@@ -46,7 +46,7 @@ function BlockItem({
       const id = slugify(text);
       if (data.level === 3) return <h3 id={id} className="text-xl font-bold text-primary mt-8 mb-3">{text}</h3>;
       if (data.level === 4) return <h4 id={id} className="text-lg font-bold text-primary mt-6 mb-2">{text}</h4>;
-      return <h2 id={id} className="text-2xl font-headline font-medium text-primary mt-10 mb-4">{text}</h2>;
+      return <h2 id={id} className="text-2xl font-headline font-extrabold text-primary mt-10 mb-4">{text}</h2>;
     }
 
     case "paragraph":
@@ -392,7 +392,7 @@ function BlockItem({
               </div>
               <div className={i < steps.length - 1 ? "pb-6" : ""}>
                 <div className="flex items-center gap-2">
-                  <p className="font-headline font-medium text-primary text-sm">{step.label}</p>
+                  <p className="font-headline font-extrabold text-primary text-sm">{step.label}</p>
                   {step.duration && <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{step.duration}</span>}
                 </div>
                 {step.description && <p className="text-sm text-gray-500 leading-relaxed mt-1">{step.description}</p>}
@@ -476,7 +476,7 @@ function BlockItem({
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
           {stats.map((s: any, i: number) => (
             <div key={i} className="text-center p-4 rounded-2xl bg-canvas border border-blue-50">
-              <p className="text-2xl md:text-3xl font-headline font-medium text-bronze">{s.value}</p>
+              <p className="text-2xl md:text-3xl font-headline font-extrabold text-bronze">{s.value}</p>
               <p className="text-xs text-primary font-semibold mt-1">{s.label}</p>
             </div>
           ))}

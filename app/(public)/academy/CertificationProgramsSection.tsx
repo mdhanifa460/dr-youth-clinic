@@ -14,7 +14,7 @@ export default function CertificationProgramsSection({ courses, siteConfig }: { 
               <span className="inline-flex items-center gap-1.5 bg-primary text-white text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full mb-3">
                 For Practitioners &amp; Doctors
               </span>
-              <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">Certification Programs</h2>
+              <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">Certification Programs</h2>
               <p className="text-gray-500 text-sm mt-2 max-w-lg mx-auto">
                 Hands-on aesthetic certification courses for practicing doctors and clinicians — taught by our own specialists.
               </p>
@@ -39,7 +39,7 @@ export default function CertificationProgramsSection({ courses, siteConfig }: { 
                     </span>
                   </div>
                   <div className="p-4">
-                    <h3 className="font-headline font-medium text-primary text-sm leading-snug line-clamp-2 mb-2">{c.title}</h3>
+                    <h3 className="font-headline font-extrabold text-primary text-sm leading-snug line-clamp-2 mb-2">{c.title}</h3>
                     <p className="text-gray-500 text-xs flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="flex items-center gap-1"><Clock size={11} /> {c.durationLabel}</span>
                       <span className="flex items-center gap-1"><MapPin size={11} /> {c.format}</span>

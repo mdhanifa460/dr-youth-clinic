@@ -199,7 +199,7 @@ export default function BlogPageClient({
           <span className="inline-block text-xs font-bold uppercase tracking-widest text-champagne mb-4">
             Medical Knowledge Center
           </span>
-          <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight mb-4">
+          <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
             Trusted Skin & Hair <span className="text-champagne">Education</span>
           </h1>
           <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
@@ -292,7 +292,7 @@ export default function BlogPageClient({
                   </div>
                   <div className="p-8 md:p-10 flex flex-col justify-center">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-3">Featured Article</p>
-                    <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary leading-tight group-hover:text-secondary transition">
+                    <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary leading-tight group-hover:text-secondary transition">
                       {featured.title}
                     </h2>
                     {featured.excerpt && <p className="text-gray-500 mt-3 text-sm leading-relaxed line-clamp-3">{featured.excerpt}</p>}

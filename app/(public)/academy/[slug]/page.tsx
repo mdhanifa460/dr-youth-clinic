@@ -136,7 +136,7 @@ export default async function VideoDetailPage(props: PageProps) {
             <span className="inline-block bg-champagne/15 text-[#B9790B] text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full">
               {video.category}
             </span>
-            <h1 className="text-2xl md:text-3xl font-headline font-medium text-primary mt-3 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-primary mt-3 leading-tight">
               {video.title}
             </h1>
             <p className="text-gray-500 text-sm mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -177,7 +177,7 @@ export default async function VideoDetailPage(props: PageProps) {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={doctor.photo.url} alt={doctor.name} className="absolute inset-0 w-full h-full object-cover object-top" />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-white font-headline font-medium text-lg tracking-wider">
+                    <div className="absolute inset-0 flex items-center justify-center text-white font-headline font-extrabold text-lg tracking-wider">
                       {getInitials(doctor.name)}
                     </div>
                   )}
@@ -204,7 +204,7 @@ export default async function VideoDetailPage(props: PageProps) {
 
           {/* Sticky consultation CTA (desktop: sits in sidebar and scrolls with it via lg:sticky above) */}
           <div className="bg-gradient-to-br from-primary to-[#122d6e] rounded-2xl md:rounded-3xl p-5 text-white shadow-[0_12px_32px_rgba(11,37,96,0.25)]">
-            <p className="font-headline font-medium text-lg leading-snug">Still have questions?</p>
+            <p className="font-headline font-extrabold text-lg leading-snug">Still have questions?</p>
             <p className="text-white/70 text-sm mt-1.5">
               Talk to our specialists for a personalized treatment plan.
             </p>
@@ -221,7 +221,7 @@ export default async function VideoDetailPage(props: PageProps) {
       {/* Related videos / Treatment Journey */}
       {related.length > 0 && (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-14">
-          <h2 className="text-xl md:text-2xl font-headline font-medium text-primary mb-5">
+          <h2 className="text-xl md:text-2xl font-headline font-extrabold text-primary mb-5">
             {isJourney ? 'Treatment Journey' : 'Related Videos'}
           </h2>
 
@@ -287,7 +287,7 @@ export default async function VideoDetailPage(props: PageProps) {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-headline font-medium text-primary text-sm leading-snug line-clamp-2">{v.title}</h3>
+                    <h3 className="font-headline font-extrabold text-primary text-sm leading-snug line-clamp-2">{v.title}</h3>
                   </div>
                 </Link>
               ))}
@@ -299,7 +299,7 @@ export default async function VideoDetailPage(props: PageProps) {
       {/* FAQ */}
       {video.faq?.length > 0 && (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-14">
-          <h2 className="text-xl md:text-2xl font-headline font-medium text-primary mb-5">
+          <h2 className="text-xl md:text-2xl font-headline font-extrabold text-primary mb-5">
             Frequently Asked Questions
           </h2>
           <div className="space-y-3 max-w-3xl">

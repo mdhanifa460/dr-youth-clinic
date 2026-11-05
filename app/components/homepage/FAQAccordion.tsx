@@ -20,7 +20,7 @@ export default function FAQAccordion({ data }: { data: any }) {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 grid md:grid-cols-[1fr_2fr] gap-8 md:gap-12 items-start">
         {/* LEFT */}
         <div>
-          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight">
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary leading-tight">
             {headline}
           </h2>
           <a href={viewAllHref} className="mt-4 min-h-11 inline-flex items-center gap-1 text-secondary font-semibold text-sm hover:text-primary transition">

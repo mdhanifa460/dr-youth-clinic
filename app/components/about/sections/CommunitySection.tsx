@@ -10,14 +10,14 @@ export default function CommunitySection({ data }: { data: CommunityData }) {
       <div className="max-w-5xl mx-auto px-6">
         <div className="text-center mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze mb-2">Giving Back</p>
-          {headline && <h2 className="text-2xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>}
+          {headline && <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-primary">{headline}</h2>}
         </div>
         <div className="grid sm:grid-cols-2 gap-6">
           {items.map((item, i) => (
             <div key={i} className="flex items-start gap-4 bg-canvas rounded-2xl p-6 ring-1 ring-line">
               <span className="text-3xl shrink-0">{item.icon}</span>
               <div>
-                <h3 className="font-headline font-medium text-primary text-base mb-1.5">{item.title}</h3>
+                <h3 className="font-headline font-extrabold text-primary text-base mb-1.5">{item.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
               </div>
             </div>

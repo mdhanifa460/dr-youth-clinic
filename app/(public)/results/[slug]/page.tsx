@@ -158,7 +158,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
                 {result.category}
               </span>
             )}
-            <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight tracking-tight mb-3">
+            <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight mb-3">
               {result.title}
             </h1>
             {result.description && (
@@ -202,7 +202,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
             {/* Before/After comparison slider — reuses the same SliderCard as the /results listing */}
             {hasComparison && (
               <div>
-                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Before &amp; After</h2>
+                <h2 className="text-2xl font-headline font-extrabold text-primary mb-5">Before &amp; After</h2>
                 <div className="max-w-xl">
                   <SliderCard pair={result} />
                 </div>
@@ -212,7 +212,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
             {/* Gallery */}
             {galleryImages.length > 0 && (
               <div>
-                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Gallery</h2>
+                <h2 className="text-2xl font-headline font-extrabold text-primary mb-5">Gallery</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {galleryImages.map((img: any, i: number) => (
                     <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-100">
@@ -226,7 +226,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
             {/* Video */}
             {result.video?.url && (
               <div>
-                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Video</h2>
+                <h2 className="text-2xl font-headline font-extrabold text-primary mb-5">Video</h2>
                 <video src={result.video.url} controls className="w-full rounded-2xl border border-gray-100" />
               </div>
             )}
@@ -234,7 +234,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
             {/* Related Services */}
             {relatedServices.length > 0 && (
               <div>
-                <h2 className="text-2xl font-headline font-medium text-primary mb-5">Related Services</h2>
+                <h2 className="text-2xl font-headline font-extrabold text-primary mb-5">Related Services</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {relatedServices.map((s: any) => {
                     const href = serviceHref(s);
@@ -260,7 +260,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
               <div className="rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
                 <div className="bg-primary px-6 py-5 text-white">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Interested in this result?</p>
-                  <h3 className="text-base font-headline font-medium leading-snug">{result.title}</h3>
+                  <h3 className="text-base font-headline font-extrabold leading-snug">{result.title}</h3>
                 </div>
                 <div className="p-5 space-y-3">
                   {result.doctor?.name && (
@@ -305,7 +305,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
         {related.length > 0 && (
           <section className="bg-canvas py-14 border-t border-blue-50">
             <div className="max-w-6xl mx-auto px-6">
-              <h2 className="text-2xl font-headline font-medium text-primary mb-8">More Patient Results</h2>
+              <h2 className="text-2xl font-headline font-extrabold text-primary mb-8">More Patient Results</h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {related.map((r: any) => (
                   <Link key={String(r._id)} href={`/results/${r.slug}`}

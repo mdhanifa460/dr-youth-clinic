@@ -186,7 +186,7 @@ export default async function CategoryPage(props: PageProps) {
             <div className="flex items-center gap-5 mb-5">
               <span className="text-5xl md:text-6xl">{meta.icon}</span>
               <div>
-                <h1 className="text-4xl md:text-5xl font-headline font-medium leading-tight tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-headline font-extrabold leading-tight tracking-tight">
                   {meta.label}
                 </h1>
                 {services.length > 0 && (
@@ -238,7 +238,7 @@ export default async function CategoryPage(props: PageProps) {
         {services.length === 0 ? (
           <div className="text-center py-24 space-y-5">
             <span className="text-6xl">{meta.icon}</span>
-            <h2 className="text-2xl font-headline font-medium text-primary">
+            <h2 className="text-2xl font-headline font-extrabold text-primary">
               {meta.label} treatments coming soon
             </h2>
             <p className="text-gray-500 max-w-md mx-auto">
@@ -256,7 +256,7 @@ export default async function CategoryPage(props: PageProps) {
         ) : (
           <>
             <div className="flex items-center justify-between mb-10">
-              <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">
+              <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">
                 {services.length} {meta.label} Treatment{services.length !== 1 ? 's' : ''} in {city}
               </h2>
             </div>
@@ -279,7 +279,7 @@ export default async function CategoryPage(props: PageProps) {
               <div className="mt-16">
                 <div className="text-center mb-6">
                   <p className="text-secondary text-xs font-bold uppercase tracking-widest mb-1">Treatment Comparison Center</p>
-                  <h3 className="text-2xl font-headline font-medium text-primary">Compare {meta.label} Treatments</h3>
+                  <h3 className="text-2xl font-headline font-extrabold text-primary">Compare {meta.label} Treatments</h3>
                   <p className="text-gray-500 text-sm mt-1">Side-by-side overview to help you find the right fit</p>
                 </div>
 
@@ -341,7 +341,7 @@ export default async function CategoryPage(props: PageProps) {
       <section className={`bg-gradient-to-br ${meta.heroGrad} py-16 text-white`}>
         <div className="max-w-3xl mx-auto text-center px-6 space-y-4">
           <span className="text-4xl">{meta.icon}</span>
-          <h2 className="text-3xl font-headline font-medium tracking-tight">
+          <h2 className="text-3xl font-headline font-extrabold tracking-tight">
             Ready to begin?
           </h2>
           <p className="text-white/60 max-w-md mx-auto">
@@ -419,7 +419,7 @@ function ServiceCard({
 
       {/* CONTENT */}
       <div className="flex flex-col flex-1 p-5">
-        <h3 className="font-headline font-medium text-primary text-lg leading-snug mb-1.5 group-hover:text-[#3b82f6] transition-colors">
+        <h3 className="font-headline font-extrabold text-primary text-lg leading-snug mb-1.5 group-hover:text-[#3b82f6] transition-colors">
           {svc.name}
         </h3>
 

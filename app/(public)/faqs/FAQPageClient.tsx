@@ -120,7 +120,7 @@ export default function FAQPageClient({
           <span className="inline-block text-xs font-bold uppercase tracking-widest text-bronze mb-4">
             Support Centre
           </span>
-          <h1 className="text-3xl md:text-5xl font-headline font-medium leading-tight mb-4">
+          <h1 className="text-3xl md:text-5xl font-headline font-extrabold leading-tight mb-4">
             Frequently Asked <span className="text-bronze">Questions</span>
           </h1>
           <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
@@ -365,7 +365,7 @@ export default function FAQPageClient({
 
         {/* ── Still have questions CTA ── */}
         <div className="mt-16 rounded-3xl bg-gradient-to-br from-primary to-[#1a3a7a] p-8 md:p-10 text-white text-center">
-          <h2 className="text-2xl md:text-3xl font-headline font-medium mb-3">
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold mb-3">
             Still have a question?
           </h2>
           <p className="text-white/70 text-sm md:text-base mb-8 max-w-md mx-auto leading-relaxed">

@@ -18,7 +18,7 @@ export default function StorySection({ data }: { data: StoryData }) {
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze mb-3">{eyebrow}</p>
             )}
             {headline && (
-              <h2 className="text-2xl md:text-4xl font-headline font-medium text-primary leading-tight mb-4">
+              <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-primary leading-tight mb-4">
                 {headline}
               </h2>
             )}

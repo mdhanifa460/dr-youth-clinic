@@ -41,7 +41,7 @@ export default function VideoAcademySection({ data }: { data: Data }) {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <p className="text-secondary font-bold text-xs tracking-[0.2em] uppercase mb-3">🎥 Video Academy</p>
-          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary">{headline}</h2>
           {subheadline && <p className="text-gray-600 mt-3 max-w-xl mx-auto">{subheadline}</p>}
         </div>
 
@@ -70,7 +70,7 @@ export default function VideoAcademySection({ data }: { data: Data }) {
                 <span className="inline-block bg-champagne text-primary text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
                   Featured
                 </span>
-                <h3 className="text-white text-xl md:text-3xl font-headline font-medium leading-tight">{featured.title}</h3>
+                <h3 className="text-white text-xl md:text-3xl font-headline font-extrabold leading-tight">{featured.title}</h3>
                 <p className="text-white/70 text-sm mt-2 flex items-center gap-3">
                   {featured.duration && <span>{featured.duration}</span>}
                   {featured.doctor?.name && <span>· {featured.doctor.name}</span>}
@@ -124,7 +124,7 @@ export default function VideoAcademySection({ data }: { data: Data }) {
               </div>
               <div className="p-4">
                 <span className="text-xs font-bold text-secondary uppercase tracking-wider">{v.category}</span>
-                <h3 className="font-headline font-medium text-primary text-sm mt-1 leading-snug line-clamp-2">{v.title}</h3>
+                <h3 className="font-headline font-extrabold text-primary text-sm mt-1 leading-snug line-clamp-2">{v.title}</h3>
                 {v.doctor?.name && <p className="text-gray-500 text-xs mt-1.5">{v.doctor.name}</p>}
               </div>
             </Link>

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { MapPin, Stethoscope, CalendarCheck } from 'lucide-react';
+import { BadgeCheck, MapPin, Stethoscope, CalendarCheck } from 'lucide-react';
 import FocalImage from '@/app/components/media/FocalImage';
 import { ButtonLink } from '@/app/components/ui/Button';
 
@@ -44,13 +44,13 @@ export default function HeroSection({ data }: { data: any }) {
   ].filter((f) => f.text);
 
   return (
-    <section id="home" className="bg-canvas">
+    <section id="home" className="bg-gradient-to-br from-[#f6faff] to-[#e8eff7]">
       <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-8 md:grid-cols-2 md:gap-12 md:px-6 md:py-14 lg:gap-16 lg:px-8 lg:py-20">
         <div className="max-w-xl">
-          <p className="eyebrow mb-4">{s.badge}</p>
+          <p className="mb-5 inline-flex min-h-9 items-center gap-2 rounded-full bg-tertiary/20 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-primary sm:text-sm"><BadgeCheck size={15} className="shrink-0" aria-hidden="true" />{s.badge}</p>
           <h1 className="heading-display whitespace-pre-line">
             {s.headline.trim()}
-            {s.highlightText && <><br /><span className="italic text-bronze">{s.highlightText}</span></>}
+            {s.highlightText && <><br /><span className="text-bronze">{s.highlightText}</span></>}
           </h1>
           <p className="mt-5 text-base leading-relaxed text-text-secondary md:text-lg">{s.description}</p>
 
@@ -60,7 +60,7 @@ export default function HeroSection({ data }: { data: any }) {
           </div>
 
           {facts.length > 0 && (
-            <ul className="mt-7 space-y-2.5 border-t border-line pt-6">
+            <ul className="mt-7 space-y-2.5">
               {facts.map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-start gap-2.5 text-sm text-text-secondary">
                   <Icon size={16} className="mt-0.5 shrink-0 text-bronze" aria-hidden="true" />
@@ -72,6 +72,9 @@ export default function HeroSection({ data }: { data: any }) {
         </div>
 
         <div>
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
+            <div className="relative rounded-3xl bg-white p-3 shadow-[0_18px_50px_rgba(11,37,96,0.12)] ring-1 ring-white/80 sm:p-4">
           <FocalImage
             image={s.image}
             aspectRatio="4/3"
@@ -80,6 +83,8 @@ export default function HeroSection({ data }: { data: any }) {
             className="rounded-2xl"
             priority
           />
+          </div>
+          </div>
           {slides.length > 1 && (
             <div className="mt-2 flex justify-center gap-1" role="group" aria-label="Choose a slide">
               {slides.map((_, i) => (

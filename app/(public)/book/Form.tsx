@@ -237,7 +237,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       >
         <div>
           <p className="eyebrow">Step {step} of {BOOKING_STEPS}</p>
-          <h2 className="mt-1 font-headline text-2xl font-medium text-primary">{STEP_TITLES[step]}</h2>
+          <h2 className="mt-1 font-headline text-2xl font-extrabold text-primary">{STEP_TITLES[step]}</h2>
         </div>
 
         {error && (

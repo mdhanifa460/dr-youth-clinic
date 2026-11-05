@@ -14,9 +14,9 @@ export default function CTAStrip({ data }: { data: any }) {
     <section className="py-12 md:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 grid md:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
         {/* COL 1 — REWARDS */}
-        <div className="bg-primary text-white rounded-2xl p-5 md:p-7 flex flex-col gap-5">
+        <div className="bg-primary text-white rounded-3xl p-5 md:p-7 flex flex-col gap-5 shadow-[0_14px_34px_rgba(11,37,96,0.16)] transition-all duration-300 hover:-translate-y-1">
           <div>
-            <h2 className="font-headline font-medium text-2xl">{rewards.title}</h2>
+            <h2 className="font-headline font-extrabold text-2xl">{rewards.title}</h2>
             <p className="text-white/80 text-sm mt-1">{rewards.subtitle}</p>
           </div>
           <ul className="space-y-2.5">
@@ -37,9 +37,9 @@ export default function CTAStrip({ data }: { data: any }) {
         </div>
 
         {/* COL 2 — BOOK CONSULTATION */}
-        <div className="bg-canvas rounded-2xl p-5 md:p-7 flex flex-col justify-between border border-line">
+        <div className="bg-canvas rounded-3xl p-5 md:p-7 flex flex-col justify-between border border-line shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(11,37,96,0.1)]">
           <div>
-            <h2 className="font-headline font-medium text-2xl text-primary">{booking.title}</h2>
+            <h2 className="font-headline font-extrabold text-2xl text-primary">{booking.title}</h2>
             <p className="text-gray-500 text-sm mt-2 leading-relaxed">{booking.description}</p>
           </div>
           <div className="flex flex-col gap-3 mt-6">
@@ -63,8 +63,8 @@ export default function CTAStrip({ data }: { data: any }) {
         </div>
 
         {/* COL 3 — WHY US */}
-        <div className="bg-canvas rounded-2xl p-5 md:p-7 flex flex-col gap-5 border border-line">
-          <h2 className="font-headline font-medium text-2xl text-primary">{whyUs.title}</h2>
+        <div className="bg-canvas rounded-3xl p-5 md:p-7 flex flex-col gap-5 border border-line shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(11,37,96,0.1)]">
+          <h2 className="font-headline font-extrabold text-2xl text-primary">{whyUs.title}</h2>
           <ul className="space-y-3">
             {(whyUs.reasons || []).map((r: string, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">

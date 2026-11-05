@@ -111,7 +111,7 @@ export default async function OffersPage() {
           {activeOffers.length === 0 ? (
             <div className="text-center py-24">
               <p className="text-6xl mb-4">🏷️</p>
-              <h2 className="text-2xl font-headline font-medium text-primary mb-2">New Offers Coming Soon</h2>
+              <h2 className="text-2xl font-headline font-extrabold text-primary mb-2">New Offers Coming Soon</h2>
               <p className="text-gray-500 mb-6">We're putting together exclusive packages for you. Check back shortly or book a {siteConfig.consultationFree ? 'free ' : ''}consultation.</p>
               <Link href="/book"
                 className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold text-sm hover:-translate-y-0.5 transition">
@@ -138,7 +138,7 @@ export default async function OffersPage() {
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-champagne/10 backdrop-blur-3xl pointer-events-none" />
         <div className="relative max-w-3xl mx-auto px-6 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Tailored for You</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-medium text-white mb-3">
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             Can't Find the Right Package?
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">

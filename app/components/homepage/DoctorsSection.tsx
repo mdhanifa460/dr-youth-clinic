@@ -132,7 +132,7 @@ export default function DoctorsSection({ data }: { data: any }) {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 md:mb-8">
           <div>
-            <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight">
+            <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary leading-tight">
               {headline}
             </h2>
             <p className="text-gray-500 mt-2 text-sm leading-relaxed max-w-lg">{subheadline}</p>

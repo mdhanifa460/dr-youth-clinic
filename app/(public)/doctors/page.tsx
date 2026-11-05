@@ -90,7 +90,7 @@ export default async function DoctorsPage() {
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">
             DR Youth Clinic
           </p>
-          <h1 className="text-3xl md:text-5xl font-headline font-medium text-white leading-tight max-w-2xl">
+          <h1 className="text-3xl md:text-5xl font-headline font-extrabold text-white leading-tight max-w-2xl">
             {headingMain}{' '}<br />
             <span className="text-champagne">{headingGold}</span>
           </h1>
@@ -131,7 +131,7 @@ export default async function DoctorsPage() {
           <div className="flex items-end justify-between gap-4 mb-10">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-2">Our Team</p>
-              <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">
+              <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">
                 {gridHeading}
               </h2>
               <p className="text-gray-500 text-sm mt-1">{gridSubheading}</p>
@@ -153,7 +153,7 @@ export default async function DoctorsPage() {
       <section className="bg-primary py-14">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Ready to Begin?</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-medium text-white mb-3">
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             {ctaHeading}
           </h2>
           <p className="text-white/80 text-sm mb-8 max-w-md mx-auto">

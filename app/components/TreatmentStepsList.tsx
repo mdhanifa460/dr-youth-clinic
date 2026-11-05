@@ -7,7 +7,7 @@ export default function TreatmentStepsList({ steps }: { steps?: Array<{ title: s
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-medium text-primary mb-7">Your Treatment Journey</h2>
+      <h2 className="text-2xl font-headline font-extrabold text-primary mb-7">Your Treatment Journey</h2>
       <div className="relative">
         <div className="absolute left-5 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary/20 to-transparent hidden sm:block" />
         <div className="space-y-5">

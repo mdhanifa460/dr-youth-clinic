@@ -14,7 +14,7 @@ export default function TimelineSection({ data }: { data: TimelineData }) {
         {headline && (
           <div className="text-center mb-12">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze mb-2">Milestones</p>
-            <h2 className="text-2xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>
+            <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-primary">{headline}</h2>
           </div>
         )}
         <div className="relative">
@@ -26,7 +26,7 @@ export default function TimelineSection({ data }: { data: TimelineData }) {
                   <div className="w-8 h-8 rounded-full bg-primary border-4 border-canvas shadow flex items-center justify-center" />
                 </div>
                 <div className={`flex-1 bg-white rounded-2xl p-5 md:p-6 shadow-sm ring-1 ring-line ${i % 2 === 1 ? 'md:text-right' : ''}`}>
-                  <p className="text-bronze font-headline font-medium text-lg">{m.year}</p>
+                  <p className="text-bronze font-headline font-extrabold text-lg">{m.year}</p>
                   <h3 className="font-bold text-primary text-base mt-0.5">{m.title}</h3>
                   {m.desc && <p className="text-gray-500 text-sm mt-1.5 leading-relaxed">{m.desc}</p>}
                 </div>

@@ -9,7 +9,7 @@ export default function ComparisonSection({ data }: { data: ComparisonData }) {
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze mb-2">The Difference</p>
-          {headline && <h2 className="text-2xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>}
+          {headline && <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-primary">{headline}</h2>}
         </div>
         <div className="bg-white rounded-3xl ring-1 ring-line shadow-sm divide-y divide-gray-100">
           {items.map((item, i) => (

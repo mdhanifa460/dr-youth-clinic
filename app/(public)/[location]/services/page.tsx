@@ -115,7 +115,7 @@ export default async function ServicesHubPage(props: PageProps) {
               <span className="w-7 h-px bg-white/30" />
               {loc.name} · All Treatments
             </span>
-            <h1 className="text-5xl md:text-[64px] font-headline font-medium leading-[1.05] mb-6 tracking-tight">
+            <h1 className="text-5xl md:text-[64px] font-headline font-extrabold leading-[1.05] mb-6 tracking-tight">
               {siteConfig.servicesHubHeadline}<br />
               <span className="text-bronze">{siteConfig.servicesHubHeadlineAccent}</span>
             </h1>
@@ -168,7 +168,7 @@ export default async function ServicesHubPage(props: PageProps) {
       {/* ── CATEGORY CARDS ── */}
       <section id="treatments" className="max-w-7xl mx-auto px-6 md:px-10 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-4xl md:text-5xl font-headline font-medium text-primary mb-4 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-headline font-extrabold text-primary mb-4 tracking-tight">
             Choose Your Treatment
           </h2>
           <p className="text-gray-500 text-lg max-w-lg mx-auto">
@@ -219,7 +219,7 @@ export default async function ServicesHubPage(props: PageProps) {
                       {cat.tagline}
                     </p>
                     <h3
-                      className="text-2xl md:text-3xl font-headline font-medium leading-tight"
+                      className="text-2xl md:text-3xl font-headline font-extrabold leading-tight"
                       style={{ color: `color-mix(in srgb, ${accent} 80%, black)` }}
                     >
                       {cat.label}
@@ -261,7 +261,7 @@ export default async function ServicesHubPage(props: PageProps) {
       <section className="bg-primary py-20 text-white">
         <div className="max-w-3xl mx-auto text-center px-6 space-y-5">
           <Sparkles className="mx-auto mb-2 opacity-40" size={30} />
-          <h2 className="text-4xl font-headline font-medium tracking-tight">
+          <h2 className="text-4xl font-headline font-extrabold tracking-tight">
             Not sure where to start?
           </h2>
           <p className="text-white/60 text-lg max-w-lg mx-auto leading-relaxed">

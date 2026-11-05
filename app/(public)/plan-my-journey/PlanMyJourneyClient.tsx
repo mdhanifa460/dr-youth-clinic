@@ -689,7 +689,7 @@ function GoalPickScreen({
             className={`relative overflow-hidden rounded-3xl p-6 text-left text-white shadow-lg transition-transform hover:-translate-y-1 bg-gradient-to-br ${meta.heroGrad}`}
           >
             <span className="text-3xl">{meta.icon}</span>
-            <p className="font-headline font-medium text-lg mt-3">{meta.label}</p>
+            <p className="font-headline font-extrabold text-lg mt-3">{meta.label}</p>
             <span className="inline-flex items-center gap-1 text-xs font-bold mt-4">
               {meta.ctaLabel || "Choose"} <ArrowRight size={12} />
             </span>

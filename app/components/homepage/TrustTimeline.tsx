@@ -36,7 +36,7 @@ export default function TrustTimeline({ data }: { data: TrustTimelineData }) {
           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full uppercase tracking-wider mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Live Activity
           </span>
-          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">{headline}</h2>
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">{headline}</h2>
         </div>
         {/* Always a 3-across grid, even on mobile — a single-column stack
             here reads as a long list rather than "real-time activity at a

@@ -10,7 +10,7 @@ export default function JourneySection({ data }: { data: JourneyData }) {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze mb-2">What to Expect</p>
-          {headline && <h2 className="text-2xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>}
+          {headline && <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-primary">{headline}</h2>}
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {steps.map((s, i) => (
@@ -19,7 +19,7 @@ export default function JourneySection({ data }: { data: JourneyData }) {
                 {s.icon}
               </div>
               <p className="text-xs font-bold text-gray-300 mb-1">STEP {i + 1}</p>
-              <h3 className="font-headline font-medium text-primary text-sm mb-1.5">{s.title}</h3>
+              <h3 className="font-headline font-extrabold text-primary text-sm mb-1.5">{s.title}</h3>
               <p className="text-gray-500 text-xs leading-relaxed">{s.desc}</p>
               {i < steps.length - 1 && (
                 <span className="hidden lg:block absolute top-1/2 -right-3 -translate-y-1/2 text-gray-300">→</span>

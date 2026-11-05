@@ -38,7 +38,7 @@ export default function EMICalculator({ price }: Props) {
           <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-0.5">
             Flexible Payments
           </p>
-          <h3 className="font-headline font-medium text-base leading-snug">
+          <h3 className="font-headline font-extrabold text-base leading-snug">
             Make It Affordable — EMI Options
           </h3>
         </div>

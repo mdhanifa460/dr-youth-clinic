@@ -79,7 +79,7 @@ export default function BeforeAfterSection({ data }: { data: any }) {
               <div className="w-6 h-[2px] bg-champagne" />
               <span className="text-bronze text-xs font-bold tracking-[0.22em] uppercase">Patient Results</span>
             </div>
-            <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-medium text-primary leading-[1.1]">
+            <h2 className="text-3xl md:text-[2.5rem] lg:text-[2.75rem] font-headline font-extrabold text-primary leading-[1.1]">
               {headline}
             </h2>
             <p className="text-[#6B7280] mt-4 text-sm leading-relaxed max-w-sm">{subheadline}</p>

@@ -45,7 +45,7 @@ function BookingNotFoundFallback() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-6 py-20">
       <div className="max-w-md w-full text-center">
-        <h1 className="text-2xl font-headline font-medium text-primary mb-2">
+        <h1 className="text-2xl font-headline font-extrabold text-primary mb-2">
           We couldn&apos;t find that booking
         </h1>
         <p className="text-gray-500 text-sm leading-relaxed mb-8">
@@ -109,7 +109,7 @@ function GenericBranchThankYou({
         <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5">
           <CheckCircle size={32} className="text-emerald-500" />
         </div>
-        <h1 className="text-2xl font-headline font-medium text-primary mb-2">
+        <h1 className="text-2xl font-headline font-extrabold text-primary mb-2">
           Thank You!
         </h1>
         <p className="text-gray-500 text-sm leading-relaxed mb-8">

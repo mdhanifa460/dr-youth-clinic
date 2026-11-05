@@ -60,7 +60,7 @@ export default async function PrivacyPolicyPage() {
       <section className="bg-primary py-12 md:py-16">
         <div className="mx-auto max-w-6xl px-4 md:px-6">
           <p className="eyebrow !text-champagne mb-3">Legal</p>
-          <h1 className="font-headline text-4xl font-medium leading-tight text-white md:text-5xl">Privacy Policy</h1>
+          <h1 className="font-headline text-4xl font-extrabold leading-tight text-white md:text-5xl">Privacy Policy</h1>
           <p className="mt-3 text-sm text-white/80">
             Last updated: <span className="font-medium text-white">{lastUpdated}</span>
           </p>
@@ -74,9 +74,9 @@ export default async function PrivacyPolicyPage() {
             <h2 id="privacy-overview" className="eyebrow mb-4">At a glance</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
               {cards.map(({ icon: Icon, title, text, href }) => (
-                <a key={title} href={href} className="group rounded-2xl border border-line bg-canvas p-5 transition-colors hover:border-primary">
+                <a key={title} href={href} className="group rounded-3xl bg-canvas p-5 shadow-sm ring-1 ring-line transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(11,37,96,0.1)]">
                   <Icon size={22} className="text-bronze" aria-hidden="true" />
-                  <span className="mt-3 block font-headline text-xl font-medium text-primary group-hover:underline">{title}</span>
+                  <span className="mt-3 block font-headline text-xl font-extrabold text-primary group-hover:underline">{title}</span>
                   <span className="mt-1 block text-sm leading-relaxed text-text-secondary">{text}</span>
                 </a>
               ))}
@@ -106,18 +106,18 @@ export default async function PrivacyPolicyPage() {
             {sections.map((section) => {
               const Icon = iconFor(section.title);
               return (
-                <article key={section.id} id={section.id} className="scroll-mt-24 rounded-2xl border border-line bg-white p-5 md:p-8">
+                <article key={section.id} id={section.id} className="scroll-mt-24 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-line md:p-8">
                   <div className="mb-4 flex items-start gap-3">
                     <Icon size={22} className="mt-1 shrink-0 text-bronze" aria-hidden="true" />
-                    <h2 className="font-headline text-2xl font-medium leading-snug text-primary">{section.title}</h2>
+                    <h2 className="font-headline text-2xl font-extrabold leading-snug text-primary">{section.title}</h2>
                   </div>
                   <div className={BODY_STYLES} dangerouslySetInnerHTML={{ __html: section.bodyHtml }} />
                 </article>
               );
             })}
 
-            <section aria-labelledby="privacy-request" className="scroll-mt-24 rounded-2xl bg-primary p-5 text-white md:p-8" id="make-a-request">
-              <h2 id="privacy-request" className="font-headline text-2xl font-medium">How to make a privacy request</h2>
+            <section aria-labelledby="privacy-request" className="scroll-mt-24 rounded-3xl bg-primary p-5 text-white md:p-8" id="make-a-request">
+              <h2 id="privacy-request" className="font-headline text-2xl font-extrabold">How to make a privacy request</h2>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-[15px] leading-relaxed text-white/90">
                 <li>
                   Email us at{' '}

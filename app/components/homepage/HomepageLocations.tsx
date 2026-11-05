@@ -178,7 +178,7 @@ export default function HomepageLocations({ data }: { data: any }) {
           <p className="text-xs font-bold tracking-[0.2em] uppercase text-bronze flex items-center justify-center gap-2 mb-3">
             <MapPin size={13} /> OUR LOCATIONS
           </p>
-          <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary leading-tight mb-3">
+          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary leading-tight mb-3">
             {headline}
           </h2>
           <p className="text-gray-500 text-sm max-w-xl mx-auto leading-relaxed">{subheadline}</p>
@@ -188,7 +188,7 @@ export default function HomepageLocations({ data }: { data: any }) {
         <div className="grid md:grid-cols-[280px_1fr_300px] gap-4 lg:gap-5 items-stretch min-h-[420px]">
 
           {/* ── LEFT: city list ── */}
-          <div className="bg-white rounded-2xl border border-line overflow-hidden flex flex-col">
+          <div className="bg-white rounded-3xl shadow-sm ring-1 ring-line overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between gap-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select a location</p>
               {!autoDetected && (
@@ -273,7 +273,7 @@ export default function HomepageLocations({ data }: { data: any }) {
           </div>
 
           {/* ── MIDDLE: map iframe ── */}
-          <div className="hidden md:block bg-white rounded-2xl border border-line overflow-hidden">
+          <div className="hidden md:block bg-white rounded-3xl shadow-sm ring-1 ring-line overflow-hidden">
             {embedUrl ? (
               <iframe
                 key={activeKey}
@@ -297,7 +297,7 @@ export default function HomepageLocations({ data }: { data: any }) {
 
           {/* ── RIGHT: detail card ── */}
           {(loc || address) && (
-            <div className="bg-white rounded-2xl border border-line overflow-hidden flex flex-col">
+            <div className="bg-white rounded-3xl shadow-sm ring-1 ring-line overflow-hidden flex flex-col">
               {/* Hero image */}
               <div className="relative h-44 w-full shrink-0">
                 <ImageWithFallback
@@ -390,7 +390,7 @@ export default function HomepageLocations({ data }: { data: any }) {
         </div>
 
         {/* ── Stats bar ── */}
-        <div className="mt-5 bg-white rounded-2xl border border-line px-6 py-5">
+        <div className="mt-5 bg-white rounded-3xl shadow-sm ring-1 ring-line px-6 py-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
             {STATS.map(({ value, label, icon: Icon }, i) => (
               <div key={i} className="flex items-center gap-3 py-2 sm:py-0 sm:px-4 first:pl-0 last:pr-0">

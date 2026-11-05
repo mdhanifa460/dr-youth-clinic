@@ -53,7 +53,7 @@ export default function OfferHero({
             <span className="w-8 h-0.5 bg-champagne" />
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze">Current Offers</p>
           </div>
-          <h1 className="text-3xl md:text-5xl font-headline font-medium text-white leading-tight mb-4">
+          <h1 className="text-3xl md:text-5xl font-headline font-extrabold text-white leading-tight mb-4">
             Exclusive Offers &<br />
             <span className="text-bronze">Packages</span>
           </h1>

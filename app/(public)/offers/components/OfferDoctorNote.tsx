@@ -11,7 +11,7 @@ export default function OfferDoctorNote({ doctors }: { doctors: any[] }) {
     <section className="bg-white py-14">
       <div className="max-w-5xl mx-auto px-6 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-2">Doctor Reviewed</p>
-        <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary mb-3">
+        <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary mb-3">
           Every Offer, Reviewed by Our Specialists
         </h2>
         <p className="text-gray-500 text-sm max-w-lg mx-auto mb-10">

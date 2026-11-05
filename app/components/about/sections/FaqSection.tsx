@@ -12,7 +12,7 @@ export default function FaqSection({ data, faqs }: { data: FaqData; faqs: FaqIte
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze mb-2">Questions?</p>
-          <h2 className="text-2xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>
+          <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-primary">{headline}</h2>
           {subheading && <p className="text-gray-500 mt-3 text-sm">{subheading}</p>}
         </div>
         <div className="space-y-3">

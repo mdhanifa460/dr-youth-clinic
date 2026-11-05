@@ -36,7 +36,7 @@ export default function TreatmentJourney({ sessions, treatmentName, phases: cust
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-medium text-primary mb-2">
+      <h2 className="text-2xl font-headline font-extrabold text-primary mb-2">
         Your Multi-Session Plan
       </h2>
       <p className="text-gray-500 text-sm mb-8">

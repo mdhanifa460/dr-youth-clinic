@@ -195,7 +195,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
 
             {/* LEFT — headline + CTAs */}
             <div className="space-y-4 md:space-y-7 pt-4">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sand text-primary text-sm font-medium">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-tertiary text-primary text-sm font-semibold">
                 <BadgeCheck size={15} />
                 DR Youth Clinic — {loc.name}
               </span>
@@ -203,7 +203,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
               <h1 className="heading-display">
                 Advanced Skin &amp; Aesthetic Care{' '}
                 <br />
-                <span className="italic text-bronze">in {loc.name}</span>
+                <span className="text-bronze">in {loc.name}</span>
               </h1>
 
               <p className="text-text-secondary text-base md:text-lg leading-relaxed max-w-lg">
@@ -234,7 +234,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
             </div>
 
             {/* RIGHT — clinic info card with optional hero photo */}
-            <div id="contact" className="bg-white rounded-2xl border border-line overflow-hidden">
+            <div id="contact" className="bg-white rounded-3xl shadow-[0_12px_48px_rgba(0,32,69,0.1)] overflow-hidden">
               {/* City hero image if available */}
               {hasHero && (
                 <div className="relative h-44 w-full">
@@ -253,7 +253,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
               )}
 
               <div className="p-8 space-y-5">
-                <h2 className="text-xl font-headline font-medium text-primary">
+                <h2 className="text-xl font-headline font-extrabold text-primary">
                   DR Youth Clinic — {loc.name}
                 </h2>
 
@@ -315,7 +315,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
               <p className="text-secondary font-bold text-xs tracking-[0.2em] uppercase mb-3">
                 Specialised Treatments
               </p>
-              <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary">
+              <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary">
                 Our Services in {loc.name}
               </h2>
               <p className="text-gray-600 mt-3 max-w-xl">
@@ -371,7 +371,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
           <section className="py-16 px-6 md:px-10 bg-canvas">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
-                <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">
+                <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">
                   Patient Results at {loc.name}
                 </h2>
                 <Link href="/results" className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5">
@@ -400,7 +400,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
                   <p className="text-secondary font-bold text-xs tracking-[0.2em] uppercase mb-3">
                     Inside Our Clinic
                   </p>
-                  <h2 className="text-3xl font-headline font-medium text-primary">
+                  <h2 className="text-3xl font-headline font-extrabold text-primary">
                     {loc.name} Clinic Gallery
                   </h2>
                   <p className="text-gray-600 mt-2 text-sm">
@@ -443,7 +443,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
         <section className="py-20 px-6 md:px-10 bg-background">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-headline font-medium text-primary">
+              <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary">
                 Why Choose DR Youth Clinic?
               </h2>
               <p className="text-gray-600 mt-4 max-w-xl mx-auto">
@@ -473,7 +473,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
         {/* ── OTHER LOCATIONS ───────────────────────────────────────────────── */}
         <section className="py-20 px-6 md:px-10 bg-white">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-2xl font-headline font-medium text-primary mb-2">
+            <h2 className="text-2xl font-headline font-extrabold text-primary mb-2">
               Visit Our Other Clinics
             </h2>
             <p className="text-gray-500 text-sm mb-8">
@@ -513,7 +513,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
           <div className="max-w-7xl mx-auto bg-primary rounded-[32px] p-12 md:p-16 text-center relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_120%,#fff,transparent_60%)]" />
             <div className="relative z-10 space-y-6">
-              <h2 className="text-3xl md:text-4xl font-headline font-medium text-white max-w-3xl mx-auto leading-tight">
+              <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-white max-w-3xl mx-auto leading-tight">
                 Ready to Transform Your Skin in {loc.name}?
               </h2>
               <p className="text-white/80 text-lg max-w-xl mx-auto">

@@ -38,7 +38,7 @@ export default function ExpertsSection({ data, doctors }: { data: ExpertsData; d
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze mb-2">Our Team</p>
-          <h2 className="text-2xl md:text-4xl font-headline font-medium text-primary">{headline}</h2>
+          <h2 className="text-2xl md:text-4xl font-headline font-extrabold text-primary">{headline}</h2>
           {subheading && <p className="text-gray-500 mt-3 text-sm max-w-lg mx-auto">{subheading}</p>}
         </div>
 
@@ -68,10 +68,10 @@ export default function ExpertsSection({ data, doctors }: { data: ExpertsData; d
                     <img src={doc.photo.url} alt={doc.name} className="w-20 h-20 rounded-full object-cover mb-4 shadow-lg" />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4 shadow-lg">
-                      <span className="text-white font-headline font-medium text-xl tracking-wider">{initials}</span>
+                      <span className="text-white font-headline font-extrabold text-xl tracking-wider">{initials}</span>
                     </div>
                   )}
-                  <h3 className="font-headline font-medium text-primary text-base">{doc.name}</h3>
+                  <h3 className="font-headline font-extrabold text-primary text-base">{doc.name}</h3>
                   <p className="text-bronze text-xs font-bold uppercase tracking-wider mt-1">{doc.title}</p>
                   {doc.experience > 0 && (
                     <p className="text-gray-500 text-xs mt-1">{doc.experience} Years Experience</p>

@@ -77,11 +77,11 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   return (
     <section className="bg-canvas border-y border-line py-10 md:py-12 lg:py-14" id="booking">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl border border-line p-4 sm:p-5 md:p-6 lg:p-8">
+        <div className="bg-white rounded-3xl shadow-[0_12px_35px_rgba(11,37,96,0.08)] ring-1 ring-line p-4 sm:p-5 md:p-6 lg:p-8">
           <div className="grid lg:grid-cols-[0.85fr_2fr] gap-5 md:gap-6 items-center">
             {/* TEXT */}
             <div>
-              <p className="font-headline text-primary font-medium text-xl md:text-2xl leading-snug">{headline}</p>
+              <p className="font-headline text-primary font-extrabold text-xl md:text-2xl leading-snug">{headline}</p>
               <p className="text-gray-500 text-sm mt-2 leading-relaxed">{subtext}</p>
             </div>
 

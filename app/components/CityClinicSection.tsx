@@ -44,7 +44,7 @@ export default function CityClinicSection({
     <section className="bg-white py-14 border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-6 md:px-10 grid lg:grid-cols-[1.2fr_1fr] gap-10 items-start">
         <div>
-          <h2 className="text-2xl font-headline font-medium text-primary">
+          <h2 className="text-2xl font-headline font-extrabold text-primary">
             {serviceName} at our {cityName} clinic
           </h2>
           {localIntro && <p className="text-gray-700 mt-3 leading-relaxed whitespace-pre-line">{localIntro}</p>}

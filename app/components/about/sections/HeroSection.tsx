@@ -56,7 +56,7 @@ export default function HeroSection({ data }: { data: HeroData }) {
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne">{badge}</p>
             </div>
           )}
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-medium text-white leading-tight mb-4">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight mb-4">
             {before}{headlineAccent && <span className="text-champagne">{headlineAccent}</span>}{after}
           </h1>
           {subheading && (
@@ -82,7 +82,7 @@ export default function HeroSection({ data }: { data: HeroData }) {
           >
             {stats.map((s, i) => (
               <div key={i} className="text-center">
-                <p className="text-xl sm:text-2xl md:text-3xl font-headline font-medium text-primary">{s.value}</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-headline font-extrabold text-primary">{s.value}</p>
                 <p className="text-xs md:text-xs text-gray-500 mt-1 font-medium uppercase tracking-wider leading-tight">{s.label}</p>
               </div>
             ))}

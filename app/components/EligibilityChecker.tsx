@@ -52,7 +52,7 @@ export default function EligibilityChecker({ serviceName, idealFor }: Props) {
     <div className="rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
       <div className="bg-gradient-to-r from-primary to-[#1e3a8a] px-6 py-4 text-white">
         <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-0.5">Quick Check</p>
-        <h3 className="font-headline font-medium text-base">Am I a Candidate for {serviceName}?</h3>
+        <h3 className="font-headline font-extrabold text-base">Am I a Candidate for {serviceName}?</h3>
       </div>
 
       <div className="p-6">

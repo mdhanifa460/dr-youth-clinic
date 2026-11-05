@@ -74,7 +74,7 @@ export default async function AcademyPage() {
             <span className="w-8 h-0.5 bg-champagne" />
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-bronze">Video Academy</p>
           </div>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-medium text-white leading-tight mb-4">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight mb-4">
             🎥 Skin &amp; Hair<br />
             <span className="text-bronze">Academy</span>
           </h1>
@@ -99,7 +99,7 @@ export default async function AcademyPage() {
           {videos.length === 0 ? (
             <div className="text-center py-24">
               <p className="text-6xl mb-4">🎬</p>
-              <h2 className="text-2xl font-headline font-medium text-primary mb-2">New Videos Coming Soon</h2>
+              <h2 className="text-2xl font-headline font-extrabold text-primary mb-2">New Videos Coming Soon</h2>
               <p className="text-gray-500 mb-6">
                 We're filming expert answers to your skin &amp; hair questions. Check back shortly or book a {siteConfig.consultationFree ? 'free ' : ''}consultation.
               </p>
@@ -114,7 +114,7 @@ export default async function AcademyPage() {
             <>
               <div className="mb-8">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-2">Watch &amp; Learn</p>
-                <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">All Videos</h2>
+                <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">All Videos</h2>
                 <p className="text-gray-500 text-sm mt-1">
                   {videos.length} video{videos.length !== 1 ? 's' : ''} available
                 </p>
@@ -132,7 +132,7 @@ export default async function AcademyPage() {
       <section className="bg-primary py-14">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-champagne mb-3">Ready to Begin?</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-medium text-white mb-3">
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white mb-3">
             Have Questions After Watching?
           </h2>
           <p className="text-white/60 text-sm mb-8 max-w-md mx-auto">

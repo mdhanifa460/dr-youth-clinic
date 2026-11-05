@@ -95,7 +95,7 @@ export default async function CourseDetailPage(props: PageProps) {
             <span className="inline-block bg-champagne/15 text-[#B9790B] text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full">
               {course.category}
             </span>
-            <h1 className="text-2xl md:text-3xl font-headline font-medium text-primary mt-3 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-primary mt-3 leading-tight">
               {course.title}
             </h1>
             <p className="text-gray-500 text-sm mt-2 leading-relaxed">{course.shortDescription}</p>
@@ -113,14 +113,14 @@ export default async function CourseDetailPage(props: PageProps) {
 
           {course.description && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-headline font-medium text-primary text-lg mb-3">About This Program</h2>
+              <h2 className="font-headline font-extrabold text-primary text-lg mb-3">About This Program</h2>
               <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{course.description}</p>
             </div>
           )}
 
           {course.curriculum?.length > 0 && (
             <div className="space-y-3">
-              <h2 className="font-headline font-medium text-primary text-lg">Curriculum</h2>
+              <h2 className="font-headline font-extrabold text-primary text-lg">Curriculum</h2>
               {course.curriculum.map((mod: any, i: number) => (
                 <details key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 group" {...(i === 0 ? { open: true } : {})}>
                   <summary className="cursor-pointer font-semibold text-primary text-sm list-none flex items-center justify-between">
@@ -143,7 +143,7 @@ export default async function CourseDetailPage(props: PageProps) {
 
           {instructors.length > 0 && (
             <div className="space-y-3">
-              <h2 className="font-headline font-medium text-primary text-lg">Instructors</h2>
+              <h2 className="font-headline font-extrabold text-primary text-lg">Instructors</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {instructors.map((doc) => (
                   <div key={String(doc._id)} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
@@ -152,7 +152,7 @@ export default async function CourseDetailPage(props: PageProps) {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={doc.photo.url} alt={doc.name} className="absolute inset-0 w-full h-full object-cover object-top" />
                       ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-white font-headline font-medium text-sm tracking-wider">
+                        <div className="absolute inset-0 flex items-center justify-center text-white font-headline font-extrabold text-sm tracking-wider">
                           {getInitials(doc.name)}
                         </div>
                       )}
@@ -175,7 +175,7 @@ export default async function CourseDetailPage(props: PageProps) {
 
           {course.eligibility?.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-headline font-medium text-primary text-lg mb-3">Eligibility</h2>
+              <h2 className="font-headline font-extrabold text-primary text-lg mb-3">Eligibility</h2>
               <ul className="space-y-1.5">
                 {course.eligibility.map((e: string, i: number) => (
                   <li key={i} className="text-gray-600 text-sm flex items-start gap-2">
@@ -188,7 +188,7 @@ export default async function CourseDetailPage(props: PageProps) {
 
           {course.batches?.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <h2 className="font-headline font-medium text-primary text-lg p-5 pb-3">Upcoming Batches</h2>
+              <h2 className="font-headline font-extrabold text-primary text-lg p-5 pb-3">Upcoming Batches</h2>
               <div className="divide-y divide-gray-50">
                 {course.batches.map((b: any, i: number) => (
                   <div key={i} className="flex items-center justify-between px-5 py-3 text-sm">
@@ -213,7 +213,7 @@ export default async function CourseDetailPage(props: PageProps) {
           <div className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm p-5 space-y-3">
             <div className="flex items-center gap-2 text-primary">
               <GraduationCap size={18} />
-              <p className="font-headline font-medium text-base">{course.certificationName}</p>
+              <p className="font-headline font-extrabold text-base">{course.certificationName}</p>
             </div>
             {course.fee?.amount > 0 && (
               <div className="flex items-center gap-2 text-gray-700">

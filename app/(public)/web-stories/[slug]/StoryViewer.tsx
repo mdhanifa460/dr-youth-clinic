@@ -40,7 +40,7 @@ function ElementView({ el, entities, siteConfig }: any) {
 
   switch (el.type) {
     case 'title':
-      return <h1 className="text-2xl md:text-3xl font-headline font-medium text-white leading-tight drop-shadow-lg">{d.text}</h1>;
+      return <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-white leading-tight drop-shadow-lg">{d.text}</h1>;
     case 'subtitle':
       return <p className="text-base md:text-lg font-bold text-bronze drop-shadow">{d.text}</p>;
     case 'description':

@@ -277,7 +277,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
               )}
             </div>
 
-            <h1 className="text-[1.75rem] sm:text-3xl md:text-5xl lg:text-6xl font-headline font-medium text-white leading-tight max-w-3xl">
+            <h1 className="text-[1.75rem] sm:text-3xl md:text-5xl lg:text-6xl font-headline font-extrabold text-white leading-tight max-w-3xl">
               {post.title}
             </h1>
 
@@ -397,7 +397,7 @@ export async function renderBlogDetailPage(slug: string, location?: string) {
         {related.length > 0 && (
           <section className="bg-canvas py-14 border-t border-blue-50">
             <div className="max-w-6xl mx-auto px-6">
-              <h2 className="text-2xl font-headline font-medium text-primary mb-8">More Articles</h2>
+              <h2 className="text-2xl font-headline font-extrabold text-primary mb-8">More Articles</h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {related.map((r: any) => (
                   <Link key={String(r._id)} href={`${basePath}/${r.slug}`}

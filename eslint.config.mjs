@@ -42,6 +42,10 @@ const eslintConfig = [
     // for Mongoose model calls. Flagging it as something to fix would be
     // dishonest; it isn't wrong here.
     rules: {
+      // Newly enforced by the Next 15 plugin. It flags plain <a> links, mostly on Admin
+      // screens. Same treatment as the debt above: visible, not blocking, until converted
+      // and tested, because switching to <Link> changes how those pages navigate.
+      "@next/next/no-html-link-for-pages": "warn",
       "@typescript-eslint/no-explicit-any": "off",
       "@next/next/no-img-element": "warn",
       "react/no-unescaped-entities": "warn",

@@ -298,7 +298,7 @@ export default function BookingSuccessClient({
           <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
             <CheckCircle size={44} className="text-green-500" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-headline font-medium text-primary mb-2">{thankYouHeadline}</h1>
+          <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-primary mb-2">{thankYouHeadline}</h1>
           <p className="text-gray-500 max-w-md mx-auto leading-relaxed">{config.thankYouMessage}</p>
         </div>
 
@@ -326,7 +326,7 @@ export default function BookingSuccessClient({
         {config.checklistEnabled && enabledChecklist.length > 0 && (
           <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
             <p className="text-xs font-bold text-bronze uppercase tracking-widest mb-1">📝 Next Steps</p>
-            <h2 className="text-lg font-headline font-medium text-primary mb-4">Prepare for Your Consultation</h2>
+            <h2 className="text-lg font-headline font-extrabold text-primary mb-4">Prepare for Your Consultation</h2>
             <ul className="space-y-2.5">
               <ChecklistRow done label="Request Received" />
               {enabledChecklist.map((item) => {

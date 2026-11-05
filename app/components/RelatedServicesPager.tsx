@@ -116,7 +116,7 @@ export default function RelatedServicesPager({
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         <div className="flex items-center justify-between mb-7 flex-wrap gap-3">
           <div>
-            <h2 className="text-2xl font-headline font-medium text-primary">Related Treatments</h2>
+            <h2 className="text-2xl font-headline font-extrabold text-primary">Related Treatments</h2>
             <p className="text-gray-500 text-sm mt-1">More {catLabel.toLowerCase()} services at our {cityName} clinic</p>
           </div>
           <Link href={`/${location}/services/${catSlug}`} className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5">

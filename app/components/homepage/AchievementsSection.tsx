@@ -32,7 +32,7 @@ export default function AchievementsSection({ data }: { data: AchievementsData }
           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-bronze bg-bronze/10 px-3 py-1 rounded-full uppercase tracking-wider mb-3">
             🏆 Achievements &amp; Awards
           </span>
-          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">{headline}</h2>
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">{headline}</h2>
           {subheadline && <p className="text-gray-500 text-sm md:text-base mt-2 max-w-xl mx-auto">{subheadline}</p>}
         </div>
 

@@ -39,7 +39,7 @@ export default function OfferComingSoonSection({ whatsapp, phone }: { whatsapp?:
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-secondary mb-2">🚧 Coming Soon</p>
-          <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">More Ways to Save</h2>
+          <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">More Ways to Save</h2>
           <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">Not live yet — but on the way. Ask us for the latest.</p>
         </div>
 

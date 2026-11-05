@@ -32,7 +32,7 @@ export default function WebStoriesSection({ data }: { data: Data }) {
               <div className="w-6 h-[2px] bg-champagne" />
               <span className="text-bronze text-xs font-bold tracking-[0.22em] uppercase">Web Stories</span>
             </div>
-            <h2 className="text-2xl md:text-3xl font-headline font-medium text-primary">{headline}</h2>
+            <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-primary">{headline}</h2>
             <p className="text-text-secondary text-sm mt-1.5 max-w-md">{subheadline}</p>
           </div>
           <Link href="/web-stories" className="text-sm font-semibold text-primary hover:text-[#3b82f6] transition flex items-center gap-1.5 shrink-0">

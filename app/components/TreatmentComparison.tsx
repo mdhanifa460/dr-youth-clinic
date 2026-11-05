@@ -35,7 +35,7 @@ export default function TreatmentComparison({
 
   return (
     <div>
-      <h2 className="text-2xl font-headline font-medium text-primary mb-2">How Does {current.name} Compare?</h2>
+      <h2 className="text-2xl font-headline font-extrabold text-primary mb-2">How Does {current.name} Compare?</h2>
       <p className="text-gray-500 text-sm mb-6">A side-by-side look at similar treatments, so you can make an informed choice.</p>
 
       <div className="overflow-x-auto rounded-3xl border border-blue-50">
