@@ -224,7 +224,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/98 border-b border-gray-100 shadow-sm">
 
       {/* ── MOBILE ROW: [hamburger] [logo center] [photo icon] ── */}
-      <div className="xl:hidden flex items-center justify-between px-4 py-3">
+      <div className="xl:hidden flex items-center justify-between px-4 py-1">
 
         {/* Left: hamburger */}
         <button
@@ -243,9 +243,9 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
           <Image
             src={logoUrl}
             alt="DR Youth Clinic"
-            width={108}
-            height={37}
-            className="h-11 w-auto object-contain"
+            width={64}
+            height={64}
+            className="h-16 w-auto object-contain"
             priority
           />
         </Link>
@@ -261,7 +261,7 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
       </div>
 
       {/* ── DESKTOP ROW: [logo] [nav] [phone + CTA] ── */}
-      <div className="hidden xl:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-2.5 gap-3 xl:gap-5">
+      <div className="hidden xl:flex items-center justify-between max-w-7xl mx-auto px-6 xl:px-8 py-1 gap-3 xl:gap-5">
 
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">
@@ -272,9 +272,9 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
           <Image
             src={logoUrl}
             alt="DR Youth Clinic"
-            width={122}
-            height={42}
-            className="h-12 w-auto object-contain"
+            width={80}
+            height={80}
+            className="h-20 w-auto object-contain"
             priority
           />
         </Link>
