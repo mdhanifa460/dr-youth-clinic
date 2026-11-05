@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { cleanCredentialWording } from '@/app/lib/patientClaims';
+import { cleanCredentialWording, scrubTreatmentClaims } from '@/app/lib/patientClaims';
 import { unstable_cache } from 'next/cache';
 import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
@@ -95,7 +95,7 @@ const getCachedServiceCandidates = unstable_cache(
 );
 
 const getServiceCandidates = cache(async (location: string) => {
-  return getCachedServiceCandidates(location.toLowerCase()) as Promise<any[]>;
+  return scrubTreatmentClaims((await getCachedServiceCandidates(location.toLowerCase())) as any[]);
 });
 
 async function getService(location: string, slug: string) {

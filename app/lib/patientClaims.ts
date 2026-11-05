@@ -93,6 +93,47 @@ const isDroppable = (item: Record<string, unknown>) => {
   return fields.length <= 3 && fields.some(([, v]) => hasUnsupportedClaim(v) || CREDENTIAL_QUESTION.test(v));
 };
 
+// Treatment pages are long articles, so one claim shouldn't cost a whole field. This
+// list is narrower than UNSUPPORTED_CLAIM on purpose: honest lines like "real results
+// from QR678 take a few months" or "cannot guarantee" read fine and stay.
+const TREATMENT_CLAIM = /\b(?:US\s+)?FDA\b|\bNABH\b|\bIADVL\b|\bpainless\b|\breal\s+results?\s+(?:shown|from\s+(?:real|actual|past))/i;
+const TREATMENT_KEEP_KEY = /^(?:name|category|location|targetLocations|status|urlSlug|currency)$/;
+
+// Works on text between tags only, so saved HTML stays balanced.
+const dropClaimSentences = (text: string) =>
+  text
+    .split(/(<[^>]+>)/)
+    .map((part, i) => (i % 2 || !TREATMENT_CLAIM.test(part) ? part : part.split(/(?<=[.!?])\s+/).filter((s) => !TREATMENT_CLAIM.test(s)).join(' ')))
+    .join('');
+
+const lostAField = (before: Record<string, unknown>, after: Record<string, unknown>) => {
+  const fields = copyFields(before);
+  return fields.length <= 3 && fields.some(([k, v]) => v.trim() && !String(after[k] ?? '').replace(/<[^>]+>/g, '').trim());
+};
+
+// Removes only the sentence making the claim. A short item left without one of its
+// fields (a benefit with no title, a FAQ with no answer) is dropped entirely, and so is
+// a list string with nothing left. Links, ids and image fields are never touched.
+export function scrubTreatmentClaims<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.flatMap((v) => {
+      const clean = scrubTreatmentClaims(v);
+      if (typeof v === 'string') return v.trim() && !(clean as string).trim() ? [] : [clean];
+      const isPlain = v && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype;
+      return isPlain && lostAField(v as Record<string, unknown>, clean as Record<string, unknown>) ? [] : [clean];
+    }) as unknown as T;
+  }
+  if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => {
+        if (NON_COPY_KEY.test(k) || TREATMENT_KEEP_KEY.test(k)) return [k, v];
+        return [k, typeof v === 'string' ? (looksLikeLink(v) ? v : dropClaimSentences(v)) : scrubTreatmentClaims(v)];
+      })
+    ) as T;
+  }
+  return typeof value === 'string' ? (dropClaimSentences(value) as unknown as T) : value;
+}
+
 // Walks saved content. A list item making a claim is dropped; a single field is
 // removed so the component's own default takes over; everything else has its
 // credential wording cleaned. Links, ids and image fields are never touched.
