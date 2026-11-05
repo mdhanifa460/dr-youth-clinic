@@ -6,7 +6,20 @@
 
 **Overall: about 7/10 against a 9/10 target.** The site is much more trustworthy and polished, but the target was **not reached**. The biggest gaps are releasing the security upgrade, unverified clinic data, legal review, and LCP.
 
-**Test figures below describe the redesign before the later branches.** On the final branch: type check passes, 638 unit tests pass, the production build passes and 152 browser tests pass, using the same test data. ESLint was not re-run across the whole repo after the upgrade.
+**Test figures further down describe the first redesign.** On the final commit (`1528eca`): type check passes, 638 unit tests pass, ESLint has 0 errors and 472 warnings, the production build passes and 152 browser tests pass on test data. The Vercel preview also built, and a scan of 10 pages with real content found none of the banned claims, in visible text, metadata or schema.
+
+**Design change after owner review:** the owner preferred the live look, so the ivory palette and serif headings were dropped. The live blue-tint background, amber accents, Manrope headings and shadowed cards are back. Sections of this report that mention ivory, bronze, champagne or serif describe the earlier version.
+
+### Latest speed comparison: preview against production (real content)
+Lighthouse mobile, 2 runs each, alternating between the two sites on this machine's connection.
+
+| Page | Production perf | Preview perf | Production LCP | Preview LCP | Production TBT | Preview TBT | Accessibility |
+|---|---|---|---|---|---|---|---|
+| Home | 59, 60 | 55, 58 | 5.9, 6.7 s | 4.8, 5.8 s | 540, 500 ms | 990, 780 ms | 92 → 100 |
+| Chennai | 64, 62 | 61, 59 | 4.7, 4.9 s | 4.9, 5.1 s | 720, 790 ms | 830, 860 ms | 92 → 100 |
+| Book | 52, 64 | 59, 62 | 6.6, 4.6 s | 4.8, 4.8 s | 980, 780 ms | 1,090, 830 ms | 96 → 100 |
+
+**Speed is about the same as production, not better, and blocking time is somewhat higher. Neither version meets the 2.5 s LCP target.** An earlier set of runs scored both sites higher, so conditions vary a lot between sessions. About 600 KB of script is third-party (Tag Manager, Google, Meta). Field data would settle this after launch.
 
 ## Must be resolved before or soon after launch
 
@@ -95,6 +108,7 @@ Real database, real WhatsApp and CRM delivery, Admin screens, Lighthouse on a re
 | ID | Issue |
 |---|---|
 | P0-06 | Next.js security upgrade: done on a branch, needs release and Admin checks |
+| Next preview branch | `chore/next-15-security-upgrade` last failed in Next's Google font loader. The final branch contains the same fix and built successfully. Watch for this font error on a future build |
 | Privacy | See [PRIVACY_POLICY_AUDIT.md](PRIVACY_POLICY_AUDIT.md). The page is redesigned, but the 3 new sections await legal review |
 | P0-07 | Verified addresses and hours |
 | P1-12 | Vercel region |
@@ -123,7 +137,7 @@ Scores are engineering judgement, informed by the evidence shown.
 
 | # | Category | Original | Final | Evidence |
 |---|---|---|---|---|
-| 1 | Visual design | 6 | 8 | Screenshots. Some inner pages only partly redesigned |
+| 1 | Visual design | 6 | Owner to judge | Live look restored at the owner's request, with cleaner hero, header and mobile layout |
 | 2 | Homepage UX | 6 | 8 | Clearer hero, shorter page. Height comparison uses different data |
 | 3 | Treatment UX | 6 | 7 | Neutral copy, safety note. Tested on test content only |
 | 4 | Doctor profiles | 5 | 7 | Qualifications visible. Credentials unverified, no registration number |
@@ -132,7 +146,7 @@ Scores are engineering judgement, informed by the evidence shown.
 | 7 | Mobile responsiveness | 7 | 8 | No overflow at 6 widths in Chrome. Safari and real devices untested |
 | 8 | Technical SEO | 8 | 9 | Metadata and schema tests. "Dermatology" terms removed |
 | 9 | Local SEO | 4 | 5 | Hours and region fixed. Addresses still conflict |
-| 10 | Performance | 7 | **NOT VERIFIED** | No comparable measurement |
+| 10 | Performance | 6 | 6 | About equal to production in side-by-side lab runs. LCP target missed on both. No field data |
 | 11 | Accessibility | 8 | 9 | Lighthouse 100 on 4 pages. No screen-reader or full manual audit |
 | 12 | Security | 4 | 6 once released | Honeypot added, critical advisories cleared on the branch. 8 high remain |
 | 13 | Code quality | 7 | 8 | Lint errors fixed, tests added. 399 warnings remain |
