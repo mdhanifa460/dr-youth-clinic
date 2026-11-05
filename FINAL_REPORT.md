@@ -2,7 +2,7 @@
 
 **Date:** 5 November 2026. **Base commit:** `515d178`.
 
-**Status: not live.** Work is committed locally on three stacked branches and has not been pushed: `redesign/trust-and-design-system`, `chore/next-15-security-upgrade` and `feat/privacy-policy-page`. dryouthclinics.com and `main` are unchanged. A push to `main` deploys to production, so that needs the owner's go-ahead.
+**Status: live.** Released to production on 5 November 2026 as commit `90bf215`. Rollback point: deployment `dpl_DD5Dzkzb5ktudD74ziRbcqJj7en3`. Real bookings, WhatsApp, CRM and Admin screens have not yet been tested on the new version.
 
 **Overall: about 7/10 against a 9/10 target.** The site is much more trustworthy and polished, but the target was **not reached**. The biggest gaps are releasing the security upgrade, unverified clinic data, legal review, and LCP.
 
