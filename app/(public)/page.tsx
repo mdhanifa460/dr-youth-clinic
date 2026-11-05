@@ -555,6 +555,14 @@ export default async function Home() {
 
   const enriched = {
     ...sectionData,
+    stats: {
+      ...(sectionData['stats'] ?? {}),
+      _liveStats: [
+        { label: 'Clinics', value: CITY_SLUGS.length },
+        { label: 'Doctors', value: liveDoctors.length },
+        { label: 'Treatments', value: Object.values(serviceCategoryCounts as Record<string, number>).reduce((sum, n) => sum + n, 0) },
+      ],
+    },
     hero: {
       ...(sectionData['hero'] ?? {}),
       _doctorCount: liveDoctors.length,

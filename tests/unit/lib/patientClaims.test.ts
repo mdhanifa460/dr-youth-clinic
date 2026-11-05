@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cleanCredentialWording, hasUnsupportedClaim, mentionsPatientCount, scrubClaims, withClinicYears, withClinicYearsText, withoutPatientClaims } from '@/app/lib/patientClaims';
+import { cleanCredentialWording, hasUnsupportedClaim, mentionsPatientCount, scrubClaims, withClinicYears, withClinicYearsText, withLiveStats, withoutPatientClaims } from '@/app/lib/patientClaims';
 
 describe('withoutPatientClaims', () => {
   it('removes patient and treatment totals, in any wording', () => {
@@ -56,6 +56,20 @@ describe('mentionsPatientCount', () => {
   it('ignores text without a figure', () => {
     expect(mentionsPatientCount('Caring for patients since 2015')).toBe(false);
     expect(mentionsPatientCount(undefined)).toBe(false);
+  });
+});
+
+describe('withLiveStats', () => {
+  it('replaces typed-in counts with live ones and keeps the years figure', () => {
+    const saved = [{ value: '9+', label: 'Years of Excellence' }, { value: '20+', label: 'Expert Doctors' }, { value: '50+', label: 'Advanced Treatments' }];
+    const live = [{ label: 'Clinics', value: 4 }, { label: 'Doctors', value: 8 }, { label: 'Treatments', value: 84 }];
+    expect(withLiveStats(saved, live).map((s) => [s.value, s.label])).toEqual([
+      ['9+', 'Years of Excellence'], ['4', 'Clinics'], ['8', 'Doctors'], ['84', 'Treatments'],
+    ]);
+  });
+
+  it('leaves out a count of zero', () => {
+    expect(withLiveStats([], [{ label: 'Doctors', value: 0 }])).toEqual([]);
   });
 });
 

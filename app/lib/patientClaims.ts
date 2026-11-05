@@ -29,6 +29,17 @@ export function withClinicYears<T extends { label?: string; value?: unknown }>(s
   return stats.map((s) => (YEARS_LABEL.test(s?.label ?? '') ? ({ ...s, value: CLINIC_YEARS } as T) : s));
 }
 
+const LIVE_STAT_LABEL = /clinic|location|branch|cit(?:y|ies)|doctor|specialist|surgeon|treatment|service|procedure/i;
+
+// Clinic, doctor and treatment figures are always counted from live data, so a typed-in
+// "20+ doctors" can't contradict the page. A count of zero is left out rather than shown.
+export function withLiveStats<T extends { label?: string; value?: unknown }>(saved: T[], live: { label: string; value: number }[]) {
+  return [
+    ...saved.filter((s) => !LIVE_STAT_LABEL.test(s?.label ?? '')),
+    ...live.filter((s) => s.value > 0).map((s) => ({ label: s.label, value: String(s.value) })),
+  ];
+}
+
 const YEARS_IN_TEXT = /\b\d+(?:\.\d+)?(?:\s*\+)?(?=\s*(?:years?|yrs?)['’]?\s+(?:of\s+)?(?:experience|expertise))/i;
 
 // Same as withClinicYears, for clinic-wide copy like "20+ years experience".

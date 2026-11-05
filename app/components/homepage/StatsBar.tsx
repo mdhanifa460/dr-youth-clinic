@@ -1,10 +1,10 @@
 import { AiFillStar } from 'react-icons/ai';
-import { withClinicYears, withoutPatientClaims } from '@/app/lib/patientClaims';
+import { withClinicYears, withLiveStats, withoutPatientClaims } from '@/app/lib/patientClaims';
 
 const MD_COLS: Record<number, string> = { 1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
 export default function StatsBar({ data }: { data: any }) {
-  const stats = withClinicYears(withoutPatientClaims<any>(data?.stats));
+  const stats: any[] = withLiveStats(withClinicYears(withoutPatientClaims<any>(data?.stats)), data?._liveStats ?? []);
   if (stats.length === 0) return null;
 
   return (
