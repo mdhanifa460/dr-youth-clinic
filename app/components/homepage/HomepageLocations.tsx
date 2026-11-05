@@ -5,7 +5,7 @@ import Link from 'next/link';
 import ImageWithFallback from '@/app/components/media/ImageWithFallback';
 import {
   MapPin, Clock, Phone, ChevronRight,
-  Users, Stethoscope, Navigation, CalendarCheck, LayoutGrid, LocateFixed,
+  Users, Navigation, CalendarCheck, LayoutGrid, LocateFixed,
 } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { toTelHref } from '@/app/lib/phone';
@@ -93,9 +93,7 @@ export default function HomepageLocations({ data }: { data: any }) {
     headline      = 'Our Locations',
     subheadline   = 'Advanced skin & hair care treatments. Expert doctors. Multiple locations to serve you better.',
     cities        = [],
-    _doctorCount = 0,
     _doctorCountByCity = {},
-    _treatmentCount = 0,
     _embeds       = {},
     _detectedCity = '',
   } = data || {};
@@ -165,8 +163,6 @@ export default function HomepageLocations({ data }: { data: any }) {
   // read as inconsistent rather than reassuring.
   const STATS = [
     { value: String(cities.length || 4), label: 'Clinics', icon: MapPin },
-    ...(_doctorCount > 0 ? [{ value: String(_doctorCount), label: 'Doctors', icon: Users }] : []),
-    ...(_treatmentCount > 0 ? [{ value: String(_treatmentCount), label: 'Treatments', icon: Stethoscope }] : []),
   ];
 
   return (
@@ -391,9 +387,9 @@ export default function HomepageLocations({ data }: { data: any }) {
 
         {/* ── Stats bar ── */}
         <div className="mt-5 bg-white rounded-3xl shadow-sm ring-1 ring-line px-6 py-5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+          <div className="flex justify-center">
             {STATS.map(({ value, label, icon: Icon }, i) => (
-              <div key={i} className="flex items-center gap-3 py-2 sm:py-0 sm:px-4 first:pl-0 last:pr-0">
+              <div key={i} className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-sand flex items-center justify-center shrink-0">
                   <Icon size={16} className="text-primary" />
                 </div>

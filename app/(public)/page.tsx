@@ -573,9 +573,7 @@ export default async function Home() {
       ...(sectionData['locations'] ?? {}),
       _embeds: locationEmbeds,
       _detectedCity: detectedCity,
-      _doctorCount: liveDoctors.length,
       _doctorCountByCity: Object.fromEntries(CITY_SLUGS.map((c) => [c, liveDoctors.filter((d: any) => (d.locations || []).some((l: string) => l === c || l === 'all')).length])),
-      _treatmentCount: Object.values(serviceCategoryCounts as Record<string, number>).reduce((sum, n) => sum + n, 0),
     },
     doctors: {
       ...(sectionData['doctors'] ?? {}),
