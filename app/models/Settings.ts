@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
 
 export interface ISettings extends Document {
@@ -800,6 +801,9 @@ export const Settings =
 // immediately rather than waiting out the window.
 const getCachedSettingsDoc = unstable_cache(
   async () => {
+    // Pages call this alongside other loaders, so it can be the first query in a
+    // process, and with bufferCommands off that fails unless it connects itself.
+    await connectDB();
     const doc = await Settings.findOne({} as any).lean();
     return doc as ISettings | null;
   },
@@ -814,5 +818,6 @@ export async function getSettings(): Promise<ISettings> {
   // First-ever call with no document yet — a real write, deliberately kept
   // outside the cached read above (unstable_cache is for reads, not writes
   // with side effects) and only reachable once, ever, per deployment.
+  await connectDB();
   return (await Settings.create({})) as ISettings;
 }

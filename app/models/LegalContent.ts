@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
 
 // Privacy Policy and Terms of Service — previously hardcoded JSX in
@@ -202,6 +203,9 @@ export const LegalContent =
 
 const getCachedLegalContentDoc = unstable_cache(
   async () => {
+    // Pages call this alongside other loaders, so it can be the first query in a
+    // process, and with bufferCommands off that fails unless it connects itself.
+    await connectDB();
     const doc = await LegalContent.findOne({} as any).lean();
     return doc as ILegalContent | null;
   },
@@ -212,5 +216,6 @@ const getCachedLegalContentDoc = unstable_cache(
 export async function getLegalContent(): Promise<ILegalContent> {
   const doc = await getCachedLegalContentDoc();
   if (doc) return doc;
+  await connectDB();
   return (await LegalContent.create({})) as ILegalContent;
 }

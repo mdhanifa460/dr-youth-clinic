@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
 
 // Booking Success page — admin-configurable content for
@@ -116,6 +117,9 @@ export const BookingSuccessConfig =
 
 const getCachedBookingSuccessConfigDoc = unstable_cache(
   async () => {
+    // Pages call this alongside other loaders, so it can be the first query in a
+    // process, and with bufferCommands off that fails unless it connects itself.
+    await connectDB();
     const doc = await BookingSuccessConfig.findOne({} as any).lean();
     return doc as IBookingSuccessConfig | null;
   },
@@ -129,5 +133,6 @@ const getCachedBookingSuccessConfigDoc = unstable_cache(
 export async function getBookingSuccessConfig(): Promise<IBookingSuccessConfig> {
   const doc = await getCachedBookingSuccessConfigDoc();
   if (doc) return doc;
+  await connectDB();
   return (await BookingSuccessConfig.create({})) as IBookingSuccessConfig;
 }
