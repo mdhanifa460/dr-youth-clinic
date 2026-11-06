@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Phone } from 'lucide-react';
 import { useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
 import { toWhatsAppNumber } from '@/app/lib/phone';
+import { toHeaderLogo } from '@/app/lib/headerLogo';
 
 interface LpHeaderProps {
   phone?: string;
@@ -41,32 +42,17 @@ export default function LpHeader({ phone, whatsapp, ctaText = 'Book Free Slot', 
     >
       <div className="max-w-6xl mx-auto px-3 sm:px-5 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
 
-        {/* Logo — the source image is a wide lockup (logo + "DR Youth
-            Clinic" wordmark baked in, ~3.8:1), matching the box size used
-            in the main Navbar/Footer. A tight square box here used to
-            shrink it to an illegible sliver, which is why a separate
-            "DR Youth Clinic" text label existed next to it — redundant
-            now that the logo itself renders at a readable size.
-            The wordmark is dark navy — same fix as the main Footer
-            (brightness-0 invert) to stay legible on the transparent/
-            unscrolled state's dark hero, reverting to normal color once
-            the header itself goes white on scroll.
-            Fluid width (clamp, not a breakpoint jump) — at the ~320-390px
-            widths where the logo + WhatsApp icon + CTA button used to not
-            all fit (measured: this row needs ~400px, clipping the CTA
-            text past the viewport edge below that), the logo now shrinks
-            continuously instead of holding a fixed 150px regardless of
-            available space. width/height stay at the intrinsic size for
-            next/image's aspect-ratio math; the rendered box is capped by
-            CSS via style. */}
+        {/* Logo sized by height, since the saved logo is nearly square: sizing by width
+            made it taller than the header and spill over the page. toHeaderLogo trims the
+            image's built-in margins. On the transparent state over the dark hero it is
+            shown in white, back to colour once the header turns white on scroll. */}
         <div className="flex items-center shrink-0 min-w-0">
           <Image
-            src={logoUrl || "/logo.png"}
+            src={toHeaderLogo(logoUrl || "/logo.png")}
             alt="DR Youth Clinic"
-            width={150}
+            width={37}
             height={48}
-            className={`object-contain h-auto transition-all duration-300 ${scrolled ? '' : 'brightness-0 invert'}`}
-            style={{ width: 'clamp(84px, 26vw, 150px)' }}
+            className={`h-11 sm:h-12 w-auto object-contain transition-all duration-300 ${scrolled ? '' : 'brightness-0 invert'}`}
           />
         </div>
 
