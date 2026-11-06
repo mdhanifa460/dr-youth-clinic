@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MdPhone, MdMenu, MdClose, MdPhotoLibrary, MdEventAvailable, MdChevronRight } from "react-icons/md";
+import { MdPhone, MdMenu, MdClose, MdPhotoLibrary, MdEventAvailable, MdChevronRight, MdOutlineExplore } from "react-icons/md";
 import { ChevronDown } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import { useBranchPhone } from "@/app/lib/useBranchWhatsApp";
@@ -539,8 +539,9 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
               (see app/lib/assessmentFlow.ts), so this is the only CTA. */}
           <Link
             href="/plan-my-journey"
-            className="hidden xl:flex min-h-10 items-center gap-1.5 border border-line-strong text-primary px-3 py-2 rounded-xl text-sm font-semibold hover:bg-transparent transition whitespace-nowrap"
+            className="pmj-cta hidden xl:flex min-h-10 items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm whitespace-nowrap"
           >
+            <MdOutlineExplore size={17} className="pmj-cta-icon" aria-hidden />
             Plan My Journey
           </Link>
           <Link
@@ -736,8 +737,9 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
             <Link
               href="/plan-my-journey"
               onClick={() => setMobileOpen(false)}
-              className="min-h-12 w-full bg-transparent border border-line-strong text-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1.5"
+              className="pmj-cta min-h-12 w-full py-3 rounded-xl text-sm flex items-center justify-center gap-1.5"
             >
+              <MdOutlineExplore size={18} className="pmj-cta-icon" aria-hidden />
               Plan My Journey
             </Link>
             {phone && (

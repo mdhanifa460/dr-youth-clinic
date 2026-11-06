@@ -82,6 +82,55 @@ body {
   overflow-x: clip;
 }
 
+/* Header "Plan My Journey" button. Gold-edged so it stands apart from the navy
+   Book button without competing with it. A soft light sweep crosses it now and
+   then, and the icon turns on hover. Only transform and opacity animate, and
+   the reduced-motion rule above stops both. */
+.pmj-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  font-weight: 700;
+  color: #0B2560;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(180deg, #FFFBF3, #FFF3DD) padding-box,
+    linear-gradient(120deg, #F5A623, #F7D48B 45%, #A25607) border-box;
+  box-shadow: 0 4px 14px rgba(245, 166, 35, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pmj-cta::after {
+  content: "";
+  position: absolute;
+  inset: -2px auto -2px 0;
+  width: 45%;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  animation: pmj-cta-sheen 7s ease-in-out 1.5s infinite;
+}
+
+.pmj-cta:hover,
+.pmj-cta:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(245, 166, 35, 0.34);
+}
+
+.pmj-cta-icon {
+  color: #A25607;
+  transition: transform 0.4s ease;
+}
+
+.pmj-cta:hover .pmj-cta-icon {
+  transform: rotate(45deg);
+}
+
+@keyframes pmj-cta-sheen {
+  0%, 70% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(320%) skewX(-18deg); }
+}
+
 /* ── Plan My Journey — ambient background (redesign) ──────────────────────
    Very subtle, purely decorative gold-tinted blobs drifting behind the
    flow's content. Deliberately cheap: only `transform` + `opacity` are
