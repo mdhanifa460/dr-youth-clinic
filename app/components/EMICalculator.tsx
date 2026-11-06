@@ -74,7 +74,7 @@ export default function EMICalculator({ price }: Props) {
                 onChange={(e) => setSelected(Number(e.target.value))}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary bg-gray-100"
               />
-              <div className="flex justify-between text-xs text-gray-300 mt-1">
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>₹{fmt(safeMin)}</span>
                 <span>₹{fmt(price)}</span>
               </div>

@@ -259,7 +259,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
             <div className="sticky top-24 space-y-4">
               <div className="rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
                 <div className="bg-primary px-6 py-5 text-white">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Interested in this result?</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-1">Interested in this result?</p>
                   <h3 className="text-base font-headline font-extrabold leading-snug">{result.title}</h3>
                 </div>
                 <div className="p-5 space-y-3">

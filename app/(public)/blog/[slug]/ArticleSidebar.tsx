@@ -67,7 +67,7 @@ export default function ArticleSidebar({ headings }: { headings: Heading[] }) {
 
       {/* Book CTA */}
       <div className="bg-primary rounded-2xl p-5 text-white">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-2">Ready to Begin?</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-2">Ready to Begin?</p>
         <p className="text-sm font-bold leading-snug mb-1">{siteConfig.consultationBadge}</p>
         <p className="text-xs text-white/60 mb-4">Talk to our specialists — no commitment, honest advice.</p>
         <Link href="/book" className="flex items-center justify-center gap-2 bg-champagne text-primary py-2.5 rounded-xl font-extrabold text-xs hover:-translate-y-0.5 transition">

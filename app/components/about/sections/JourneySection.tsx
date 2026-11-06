@@ -18,7 +18,7 @@ export default function JourneySection({ data }: { data: JourneyData }) {
               <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center text-lg mb-4">
                 {s.icon}
               </div>
-              <p className="text-xs font-bold text-gray-300 mb-1">STEP {i + 1}</p>
+              <p className="text-xs font-bold text-gray-500 mb-1">STEP {i + 1}</p>
               <h3 className="font-headline font-extrabold text-primary text-sm mb-1.5">{s.title}</h3>
               <p className="text-gray-500 text-xs leading-relaxed">{s.desc}</p>
               {i < steps.length - 1 && (

@@ -40,7 +40,7 @@ export default function RecoveryTimeline({
             <div key={i} className="bg-white rounded-2xl p-4 border border-green-100 text-center">
               <div className="text-2xl mb-1.5">{phase.icon}</div>
               <p className="font-bold text-primary text-xs">{phase.phase}</p>
-              <p className="text-green-600 text-xs font-semibold mb-1.5">{phase.label}</p>
+              <p className="text-green-700 text-xs font-semibold mb-1.5">{phase.label}</p>
               <p className="text-gray-500 text-[11px] leading-relaxed">{phase.description}</p>
             </div>
           ))}

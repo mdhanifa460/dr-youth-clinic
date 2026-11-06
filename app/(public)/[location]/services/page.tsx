@@ -203,7 +203,7 @@ export default async function ServicesHubPage(props: PageProps) {
                       className="shrink-0 mt-1 text-[11px] font-bold px-3 py-1 rounded-full"
                       style={{
                         background: `color-mix(in srgb, ${accent} 20%, white)`,
-                        color: `color-mix(in srgb, ${accent} 75%, black)`,
+                        color: `color-mix(in srgb, ${accent} 55%, black)`,
                       }}
                     >
                       {count > 0 ? `${count} treatment${count !== 1 ? 's' : ''}` : 'Coming soon'}
@@ -224,20 +224,20 @@ export default async function ServicesHubPage(props: PageProps) {
                     >
                       {cat.label}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-2 leading-relaxed">{cat.description}</p>
+                    <p className="text-sm text-gray-600 mt-2 leading-relaxed">{cat.description}</p>
                   </div>
 
                   {/* service name previews */}
                   {names.length > 0 && (
                     <ul className="space-y-1.5">
                       {names.map((name: string) => (
-                        <li key={name} className="flex items-center gap-2.5 text-sm text-gray-500">
+                        <li key={name} className="flex items-center gap-2.5 text-sm text-gray-600">
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: accent }} />
                           {name}
                         </li>
                       ))}
                       {count > 3 && (
-                        <li className="text-xs text-gray-500 pl-4">+{count - 3} more treatments</li>
+                        <li className="text-xs text-gray-600 pl-4">+{count - 3} more treatments</li>
                       )}
                     </ul>
                   )}

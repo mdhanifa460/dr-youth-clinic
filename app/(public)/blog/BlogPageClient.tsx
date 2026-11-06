@@ -243,7 +243,7 @@ export default function BlogPageClient({
         {/* ── Branch pills — only when at least one post is branch-targeted ── */}
         {!search && hasBranchTargeting && (
           <div className="flex flex-wrap items-center gap-2 mb-10">
-            <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mr-1">Branch:</span>
+            <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide mr-1">Branch:</span>
             <CategoryPill label="All Branches" active={activeBranch === 'All'} onClick={() => setActiveBranch('All')} />
             {ALL_BLOG_CITIES.map((city) => (
               <CategoryPill key={city} label={CITY_LABEL[city]} active={activeBranch === city} onClick={() => setActiveBranch(city)} />

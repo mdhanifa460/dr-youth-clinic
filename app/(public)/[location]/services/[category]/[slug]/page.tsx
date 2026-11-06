@@ -592,13 +592,13 @@ export default async function ServiceDetailPage(props: PageProps) {
               <div className="bg-primary px-5 py-4 text-white flex items-center justify-between gap-3">
                 {siteConfig.showPriceOnCards ? (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Starting Price</p>
-                    <p className="text-2xl font-extrabold">₹{svc.price.toLocaleString('en-IN')}</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">Starting Price</p>
+                    <p className="text-2xl font-extrabold text-white">₹{svc.price.toLocaleString('en-IN')}</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">{svc.name}</p>
-                    <p className="text-lg font-extrabold">Book a consultation</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">{svc.name}</p>
+                    <p className="text-lg font-extrabold text-white">Book a consultation</p>
                   </div>
                 )}
                 {svc.recoveryTime && (
@@ -743,7 +743,7 @@ export default async function ServiceDetailPage(props: PageProps) {
                           <X size={12} className="text-red-500" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-0.5">Myth</p>
+                          <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-0.5">Myth</p>
                           <p className="text-gray-700 text-sm font-medium">{item.myth}</p>
                         </div>
                       </div>
@@ -752,7 +752,7 @@ export default async function ServiceDetailPage(props: PageProps) {
                           <ThumbsUp size={12} className="text-green-500" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-0.5">Fact</p>
+                          <p className="text-xs font-bold text-green-700 uppercase tracking-widest mb-0.5">Fact</p>
                           <p className="text-gray-700 text-sm">{item.fact}</p>
                         </div>
                       </div>
@@ -871,9 +871,9 @@ export default async function ServiceDetailPage(props: PageProps) {
               {/* Booking card */}
               <div className="rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
                 <div className="bg-primary px-6 py-5 text-white">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 mb-1">Book This Treatment</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-1">Book This Treatment</p>
                   <h3 className="text-base font-headline font-extrabold leading-snug">{svc.name}</h3>
-                  <p className="text-white/40 text-xs mt-0.5">{cityName} Clinic</p>
+                  <p className="text-white/70 text-xs mt-0.5">{cityName} Clinic</p>
                 </div>
                 <div className="p-5 space-y-1">
                   {[

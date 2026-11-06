@@ -8,7 +8,7 @@ export default function FaqAccordion({ faq }: { faq?: Array<{ question: string; 
     <div>
       <div className="flex items-center gap-3 mb-5">
         <h2 className="text-2xl font-headline font-extrabold text-primary">Frequently Asked Questions</h2>
-        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100 uppercase tracking-wide hidden sm:block">Rich Result</span>
+        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100 uppercase tracking-wide hidden sm:block">Rich Result</span>
       </div>
       <div className="space-y-3">
         {faq.map((item, i) => (

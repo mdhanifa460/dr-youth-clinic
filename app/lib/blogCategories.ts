@@ -4,9 +4,9 @@ export const BLOG_CATEGORIES = ['Hair Care', 'Skin Care', 'Laser', 'Aesthetics',
 export type BlogCategory = (typeof BLOG_CATEGORIES)[number];
 
 export const CATEGORY_COLOR: Record<string, string> = {
-  'Hair Care': 'bg-emerald-500',
-  'Skin Care': 'bg-rose-500',
-  'Laser': 'bg-violet-500',
-  'Aesthetics': 'bg-amber-500',
-  'General': 'bg-[#3B82C4]',
+  'Hair Care': 'bg-emerald-700',
+  'Skin Care': 'bg-rose-700',
+  'Laser': 'bg-violet-700',
+  'Aesthetics': 'bg-amber-700',
+  'General': 'bg-[#2A6BA8]',
 };

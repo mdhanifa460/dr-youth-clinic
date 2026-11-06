@@ -51,7 +51,7 @@ export default function CostEstimator({ basePrice, sessionsRequired, serviceName
             onChange={(e) => setSessions(Number(e.target.value))}
             className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary bg-gray-100"
           />
-          <div className="flex justify-between text-xs text-gray-300 mt-1">
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>1</span><span>5</span><span>10</span>
           </div>
           {sessionsRequired && (
