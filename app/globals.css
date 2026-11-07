@@ -80,6 +80,11 @@ html {
 
 body {
   overflow-x: clip;
+  /* A long word or pasted URL in admin-written content (blog, services, landing
+     pages) breaks onto the next line instead of running off a phone screen.
+     break-word only splits a word when nothing else fits, so normal text is
+     unchanged. */
+  overflow-wrap: break-word;
 }
 
 /* Header "Plan My Journey" button. Gold-edged so it stands apart from the navy

@@ -196,8 +196,8 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
         </section>
 
         {/* ── MAIN CONTENT ── */}
-        <section className="max-w-6xl mx-auto px-6 py-14 grid lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2 space-y-12">
+        <section className="max-w-6xl mx-auto px-6 py-14 grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="lg:col-span-2 space-y-12 min-w-0">
 
             {/* Before/After comparison slider — reuses the same SliderCard as the /results listing */}
             {hasComparison && (
@@ -255,7 +255,7 @@ export default async function ResultDetailPage(props: { params: Promise<{ slug: 
           </div>
 
           {/* ── STICKY SIDEBAR ── */}
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-1 min-w-0">
             <div className="sticky top-24 space-y-4">
               <div className="rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
                 <div className="bg-primary px-6 py-5 text-white">

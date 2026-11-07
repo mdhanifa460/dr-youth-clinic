@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import SliderCard from '@/app/components/SliderCard';
+import SwipeTray from '@/app/components/SwipeTray';
 import { useScrollOnChange } from '@/app/lib/useScrollOnChange';
 
 const FALLBACK_PAIRS = [
@@ -17,9 +18,8 @@ const FALLBACK_PAIRS = [
 
 const FALLBACK_CATEGORIES = ['Skin Care', 'Hair', 'Laser'];
 
+// Only figures the clinic already publishes; no invented satisfaction or volume numbers.
 const FALLBACK_STATS = [
-  { value: '98%', label: 'Patient satisfaction' },
-  { value: '10K+', label: 'Treatments done' },
   { value: '9+', label: 'Years of care' },
   { value: '4', label: 'Clinic locations' },
 ];
@@ -85,12 +85,13 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
 
 
         {/* Category filter */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        {/* One swipeable row on phones, wrapping on larger screens */}
+        <div className="flex items-center gap-2 mb-6 sm:mb-8 overflow-x-auto sm:flex-wrap -mx-6 px-6 sm:mx-0 sm:px-0 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition ${
+              className={`shrink-0 capitalize px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition ${
                 activeCategory === cat
                   ? 'bg-primary text-white shadow-[0_4px_14px_rgba(11,37,96,0.2)]'
                   : 'bg-white text-[#9CA3AF] border border-[#EBE8E3] hover:border-primary/30 hover:text-primary'
@@ -99,7 +100,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
               {cat}
             </button>
           ))}
-          <span className="ml-auto text-xs text-gray-500 self-center">
+          <span className="shrink-0 ml-auto pl-2 text-xs text-gray-500 self-center">
             {filtered.length} result{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -114,7 +115,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <SwipeTray key={activeCategory} gridClass="sm:grid-cols-2 lg:grid-cols-3" label="Treatment photos">
             {filtered.map((pair: any, i: number) =>
               pair.slug ? (
                 <Link key={i} href={`/results/${pair.slug}`} className="block">
@@ -124,7 +125,7 @@ export default function ResultsClient({ pairs, headline, subheadline, stats }: P
                 <SliderCard key={i} pair={pair} />
               )
             )}
-          </div>
+          </SwipeTray>
         )}
 
         {/* Bottom CTA */}

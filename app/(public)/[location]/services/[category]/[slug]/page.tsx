@@ -16,6 +16,7 @@ import { Doctor } from '@/app/models/Doctor';
 import { Review } from '@/app/models/Review';
 import { Result } from '@/app/models/Result';
 import SliderCard from '@/app/components/SliderCard';
+import SwipeTray from '@/app/components/SwipeTray';
 import { withCityInTitle } from '@/app/lib/blogSeo';
 import { locations } from '@/app/data/locations';
 import { getSiteConfig } from '@/app/lib/siteConfig';
@@ -571,7 +572,7 @@ export default async function ServiceDetailPage(props: PageProps) {
                 { label: 'Category', value: svc.category },
               ].filter((f) => !f.priceOnly || siteConfig.showPriceOnCards);
               return (
-                <div className={`flex md:grid ${quickFacts.length === 6 ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0`}>
+                <div className={`flex md:grid ${quickFacts.length === 6 ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-2 px-2 md:mx-0 md:px-0`}>
                   {quickFacts.map((fact) => (
                     <div key={fact.label} className="flex-shrink-0 w-40 md:w-auto bg-canvas rounded-2xl px-4 py-3 text-center border border-blue-50">
                       <div className="font-bold text-primary text-sm">{fact.value}</div>
@@ -589,14 +590,14 @@ export default async function ServiceDetailPage(props: PageProps) {
         <section className="lg:hidden bg-white border-b border-gray-50">
           <div className="max-w-7xl mx-auto px-6 py-5">
             <div className="rounded-3xl border border-gray-100 shadow-lg overflow-hidden">
-              <div className="bg-primary px-5 py-4 text-white flex items-center justify-between gap-3">
+              <div className="bg-primary px-5 py-4 text-white flex flex-wrap items-center justify-between gap-3">
                 {siteConfig.showPriceOnCards ? (
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">Starting Price</p>
                     <p className="text-2xl font-extrabold text-white">₹{svc.price.toLocaleString('en-IN')}</p>
                   </div>
                 ) : (
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">{svc.name}</p>
                     <p className="text-lg font-extrabold text-white">Book a consultation</p>
                   </div>
@@ -623,10 +624,10 @@ export default async function ServiceDetailPage(props: PageProps) {
         <SocialProofBar serviceName={svc.name} location={cityName} />
 
         {/* ── MAIN CONTENT GRID ── */}
-        <section className="max-w-7xl mx-auto px-6 md:px-10 py-14 grid lg:grid-cols-3 gap-12">
+        <section className="max-w-7xl mx-auto px-6 md:px-10 py-14 grid grid-cols-1 lg:grid-cols-3 gap-12">
 
           {/* ── LEFT COLUMN ── */}
-          <div className="lg:col-span-2 space-y-14">
+          <div className="lg:col-span-2 space-y-14 min-w-0">
 
             {/* Overview */}
             <div>
@@ -711,7 +712,7 @@ export default async function ServiceDetailPage(props: PageProps) {
                     View all <ChevronRight size={14} />
                   </Link>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-5">
+                <SwipeTray gridClass="sm:grid-cols-2" label={`${svc.name} treatment photos`}>
                   {documentedResults.map((r: any) => (
                     r.slug ? (
                       <Link key={String(r._id)} href={`/results/${r.slug}`} className="block">
@@ -719,7 +720,7 @@ export default async function ServiceDetailPage(props: PageProps) {
                       </Link>
                     ) : <SliderCard key={String(r._id)} pair={r} />
                   ))}
-                </div>
+                </SwipeTray>
               </div>
             )}
 
@@ -861,11 +862,11 @@ export default async function ServiceDetailPage(props: PageProps) {
 
           {/* ── STICKY SIDEBAR ── */}
           {layoutEngineSidebar ? (
-            <aside className="lg:col-span-1">
+            <aside className="lg:col-span-1 min-w-0">
               <div className="space-y-4">{layoutEngineSidebar}</div>
             </aside>
           ) : (
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-1 min-w-0">
             <div className="sticky top-24 space-y-4">
 
               {/* Booking card */}

@@ -138,7 +138,7 @@ export default function RelatedServicesPager({
             }}
           />
           {related.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 mt-4">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-4 px-3">
               {related.map((_, i) => (
                 // Real Lighthouse/axe finding (target-size): the visible
                 // dot is only 8x8px, well under the 24x24px minimum touch

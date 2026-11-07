@@ -251,8 +251,8 @@ function BlockItem({
           href={info.href}
           className="mb-6 flex items-center justify-between gap-4 p-4 rounded-2xl border border-blue-50 bg-canvas hover:border-secondary/30 hover:shadow-md transition-all group"
         >
-          <div>
-            <p className="font-bold text-primary text-sm">{data.label || info.title}</p>
+          <div className="min-w-0">
+            <p className="font-bold text-primary text-sm [overflow-wrap:anywhere]">{data.label || info.title}</p>
             {info.subtitle && <p className="text-gray-500 text-xs mt-0.5">{info.subtitle}</p>}
           </div>
           <span className="text-secondary group-hover:translate-x-1 transition-transform shrink-0">→</span>

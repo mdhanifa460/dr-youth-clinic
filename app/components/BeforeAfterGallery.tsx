@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import SwipeTray from '@/app/components/SwipeTray';
 import { cloudImgFocal } from '@/app/lib/cloudinary-url';
 import { focalPointToObjectPosition, type FocalPoint } from '@/app/lib/media/focalPoint';
 
@@ -83,38 +83,25 @@ function CompareSlider({ pair, serviceName }: { pair: Pair; serviceName: string 
   );
 }
 
+// Phone: swipe through the pairs (SwipeTray carousel with counter + arrows).
+// Tablet/desktop: the pairs sit in a two-column grid, so every pair is visible.
 export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
   const concerns = [ALL_LABEL, ...Array.from(new Set(pairs.map((p) => p.concern).filter(Boolean) as string[]))];
   const [activeFilter, setActiveFilter] = useState(ALL_LABEL);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   const filtered = activeFilter === ALL_LABEL ? pairs : pairs.filter((p) => p.concern === activeFilter);
-  const pair = filtered[currentIndex] ?? filtered[0];
-
-  function prev() {
-    setCurrentIndex((i) => (i === 0 ? filtered.length - 1 : i - 1));
-  }
-
-  function next() {
-    setCurrentIndex((i) => (i === filtered.length - 1 ? 0 : i + 1));
-  }
-
-  function changeFilter(f: string) {
-    setActiveFilter(f);
-    setCurrentIndex(0);
-  }
-
-  if (!pair) return null;
+  if (filtered.length === 0) return null;
 
   return (
-    <div className="space-y-4">
-      {/* Filter pills */}
+    <div className="space-y-4 min-w-0">
+      {/* Filter pills — one swipeable row */}
       {concerns.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-6 px-6 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {concerns.map((c) => (
             <button
               key={c}
-              onClick={() => changeFilter(c)}
+              type="button"
+              onClick={() => setActiveFilter(c)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                 activeFilter === c
                   ? 'bg-primary text-white border-primary'
@@ -127,41 +114,11 @@ export default function BeforeAfterGallery({ pairs, serviceName }: Props) {
         </div>
       )}
 
-      {/* Comparison */}
-      <div className="relative">
-        <CompareSlider pair={pair} serviceName={serviceName} />
-
-        {/* Navigation arrows */}
-        {filtered.length > 1 && (
-          <>
-            <button
-              onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition z-20"
-            >
-              <ChevronLeft size={15} className="text-primary" />
-            </button>
-            <button
-              onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center hover:bg-white transition z-20"
-            >
-              <ChevronRight size={15} className="text-primary" />
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Dot indicators */}
-      {filtered.length > 1 && (
-        <div className="flex justify-center gap-1.5">
-          {filtered.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentIndex(i)}
-              className={`h-2 rounded-full transition-all ${i === currentIndex ? 'w-5 bg-primary' : 'w-2 bg-gray-200'}`}
-            />
-          ))}
-        </div>
-      )}
+      <SwipeTray key={activeFilter} gridClass="sm:grid-cols-2" label={`${serviceName} before and after photos`}>
+        {filtered.map((pair, i) => (
+          <CompareSlider key={i} pair={pair} serviceName={serviceName} />
+        ))}
+      </SwipeTray>
 
       <p className="text-xs text-gray-500 text-center">Real patient results · Unretouched · Individual results may vary</p>
     </div>
