@@ -208,7 +208,13 @@ export default function TestimonialsSlider({ data }: { data: any }) {
                   <ChevronLeft size={16} />
                 </button>
 
-                <div className="flex gap-1">
+                {/* Many reviews make a dot row wider than a small phone, so phones get a counter instead */}
+                {reviews.length > 5 && (
+                  <span className="sm:hidden min-w-16 text-center text-xs font-semibold text-primary tabular-nums" aria-live="polite">
+                    {idx + 1} / {reviews.length}
+                  </span>
+                )}
+                <div className={`gap-1 ${reviews.length > 5 ? 'hidden sm:flex' : 'flex'}`}>
                   {reviews.map((_, i) => (
                     <button key={i} onClick={() => setIdx(i)}
                       className="h-11 min-w-8 rounded-full flex items-center justify-center"
