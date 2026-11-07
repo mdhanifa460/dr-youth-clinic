@@ -2,31 +2,55 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import Link from 'next/link';
-import { Volume2 } from 'lucide-react';
+import { Flower2, GlassWater, Moon, ShieldPlus, Sun, Volume2, type LucideIcon } from 'lucide-react';
 
 // Five diyas, five tips. Once the section scrolls into view the heading comes into
 // focus letter by letter and the cards light one after another. The hidden starting
 // state only applies after the script has run (the `is-armed` class), so without
 // JavaScript, or with reduced motion, everything is simply shown. General care only:
 // no treatment claims, offers or results.
-const TIPS = [
+// Each card has its own gold tone: [light gold, deep gold, corner tint].
+type Tip = {
+  label: string;
+  icon: LucideIcon;
+  tone: readonly [string, string, string];
+  title: string;
+  body: string;
+};
+
+const TIPS: Tip[] = [
   {
+    label: 'Test first',
+    icon: Flower2,
+    tone: ['#FFE3A3', '#C9962B', 'rgba(255, 200, 90, 0.30)'],
     title: 'Patch-test new makeup and mehendi',
     body: 'Try anything new on a small patch of skin a day or two before the festivities. Stop if it itches, reddens or burns.',
   },
   {
+    label: 'Night care',
+    icon: Moon,
+    tone: ['#F3D9B8', '#B07A4A', 'rgba(236, 140, 150, 0.30)'],
     title: 'Wash off the smoke at night',
     body: 'Smoke, dust and festive makeup sit on your skin all evening. Cleanse gently before bed, then moisturise.',
   },
   {
+    label: 'Hydrate',
+    icon: GlassWater,
+    tone: ['#FFF1C9', '#D4A53A', 'rgba(255, 240, 200, 0.24)'],
     title: 'Keep sipping water',
     body: 'Late nights, travel and sweets add up. Keep a water bottle close and rest between celebrations.',
   },
   {
+    label: 'Sun care',
+    icon: Sun,
+    tone: ['#FFD08A', '#D9822B', 'rgba(255, 150, 50, 0.32)'],
     title: 'Sunscreen for daytime errands',
     body: 'Shopping, visits and decorating mean hours outdoors. Use a broad-spectrum sunscreen and reapply if you stay out long.',
   },
   {
+    label: 'Quick first aid',
+    icon: ShieldPlus,
+    tone: ['#F7C9A8', '#B8603A', 'rgba(220, 100, 70, 0.32)'],
     title: 'If a spark burns your skin',
     body: 'Hold it under cool running water for 20 minutes. Skip ice, toothpaste and butter. See a doctor for large burns or any on the face, hands or eyes.',
   },
@@ -317,15 +341,23 @@ export default function DiwaliSpotlight() {
               key={tip.title}
               onPointerMove={tilt}
               onPointerLeave={untilt}
-              className="diwali-card relative rounded-3xl p-5 pt-4 flex flex-col shrink-0 w-[80%] sm:w-auto snap-center"
-              style={{ '--d': `${1.3 + i * 0.22}s` } as CSSProperties}
+              className="diwali-card relative rounded-3xl p-5 pt-6 flex flex-col shrink-0 w-[80%] sm:w-auto snap-center"
+              style={{ '--d': `${1.3 + i * 0.22}s`, '--g1': tip.tone[0], '--g2': tip.tone[1], '--tint': tip.tone[2] } as CSSProperties}
             >
-              <div className="flex items-start justify-between">
-                <span className="diwali-num font-headline font-extrabold text-5xl leading-none" aria-hidden>{i + 1}</span>
-                <Diya className="w-12 h-11 -mt-1" />
-              </div>
-              <h3 className="text-white font-bold text-base leading-snug mt-4">{tip.title}</h3>
-              <p className="text-white/80 text-sm leading-relaxed mt-2">{tip.body}</p>
+              <span className="diwali-card-foil" aria-hidden />
+              <span className="diwali-card-num font-headline font-extrabold" aria-hidden>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span className="diwali-card-icon" aria-hidden>
+                <tip.icon size={20} strokeWidth={1.6} />
+              </span>
+              <p className="diwali-card-label mt-4 text-[11px] font-bold uppercase tracking-[0.18em]">
+                <span className="sr-only">Tip {i + 1}: </span>
+                {tip.label}
+              </p>
+              <h3 className="text-white font-bold text-base leading-snug mt-1.5">{tip.title}</h3>
+              <span className="diwali-card-rule" aria-hidden />
+              <p className="text-white/80 text-sm leading-relaxed">{tip.body}</p>
             </li>
           ))}
         </ol>
