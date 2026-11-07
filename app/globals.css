@@ -628,3 +628,294 @@ p {
     transform: none;
   }
 }
+
+/* ── Diwali spotlight (homepage, date-limited) ─────────────────────────────
+   Dark luxe backdrop, a warm bloom when the lamp lights, letters that come
+   into focus, glass cards that rise and light in turn, sparkles and embers.
+   The hidden starting states apply only under .is-armed (set by script), so
+   without JavaScript or with reduced motion everything is simply shown. */
+.diwali-section {
+  isolation: isolate;
+  background: radial-gradient(120% 80% at 50% 0%, #12245A 0%, #070F26 58%, #050A1A 100%);
+}
+
+.diwali-section::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: -10%;
+  width: min(1100px, 160vw);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  background: radial-gradient(circle, rgba(255, 196, 92, 0.30) 0%, rgba(245, 166, 35, 0.10) 35%, transparent 65%);
+  pointer-events: none;
+}
+
+.diwali-aurora {
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(38% 32% at 25% 30%, rgba(245, 166, 35, 0.20), transparent 70%),
+    radial-gradient(34% 30% at 78% 62%, rgba(232, 131, 58, 0.16), transparent 70%),
+    radial-gradient(30% 28% at 50% 100%, rgba(190, 60, 110, 0.16), transparent 70%);
+  animation: diwali-aurora 20s ease-in-out infinite alternate;
+}
+
+.diwali-rangoli { animation: diwali-spin 90s linear infinite; }
+.diwali-rangoli-rev { animation-direction: reverse; }
+
+/* Rising embers */
+.diwali-spark {
+  position: absolute;
+  bottom: -8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #FFD27A;
+  box-shadow: 0 0 8px 2px rgba(245, 166, 35, 0.7);
+  opacity: 0;
+  animation: diwali-ember 6.5s ease-in infinite;
+}
+
+/* Twinkling four-point stars around the heading */
+.diwali-twinkle {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 122, 0.9));
+  opacity: 0;
+  animation: diwali-twinkle 3.6s ease-in-out infinite;
+}
+
+/* Sparkler burst from the main diya as it lights */
+.diwali-burst {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.diwali-burst span {
+  position: absolute;
+  width: 3px;
+  height: 14px;
+  margin: -7px 0 0 -1.5px;
+  border-radius: 3px;
+  background: linear-gradient(#FFF6DD, #F5A623);
+  box-shadow: 0 0 6px rgba(255, 210, 122, 0.9);
+  rotate: var(--a);
+  opacity: 0;
+}
+.diwali-section.is-shown .diwali-burst span {
+  animation: diwali-burst 1.1s cubic-bezier(0.15, 0.8, 0.3, 1) 0.45s both;
+}
+
+/* Diya flame and glow */
+.diwali-flame { transform-box: fill-box; transform-origin: 50% 100%; }
+.diwali-flicker {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: diwali-flicker 1.6s ease-in-out infinite;
+}
+.diwali-halo { animation: diwali-halo 2.4s ease-in-out infinite; }
+.diwali-hero-diya { filter: drop-shadow(0 10px 30px rgba(245, 166, 35, 0.45)); }
+
+/* Heading letters with a travelling gold sheen */
+.diwali-letter {
+  display: inline-block;
+  background: linear-gradient(100deg, #F5A623 0%, #FFE7B0 40%, #FFF6DD 50%, #F5A623 62%, #E8833A 100%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: diwali-sheen 6s linear infinite;
+}
+
+/* Glass tip cards: rise in, lean towards the pointer, soft spotlight */
+.diwali-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(245, 166, 35, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+.diwali-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(60% 50% at var(--mx, 50%) 0%, rgba(255, 210, 122, 0.18), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.diwali-card:hover {
+  border-color: rgba(245, 166, 35, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 24px 60px -20px rgba(245, 166, 35, 0.35);
+}
+.diwali-card:hover::before { opacity: 1; }
+
+.diwali-num {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(245, 166, 35, 0.85);
+  transition: color 0.35s ease;
+}
+.diwali-card:hover .diwali-num { color: rgba(245, 166, 35, 0.9); }
+
+/* Starting states, only once the script has armed the section */
+.diwali-section.is-armed::before { opacity: 0; scale: 0.3; }
+.diwali-section.is-armed .diwali-letter,
+.diwali-section.is-armed .diwali-rise,
+.diwali-section.is-armed .diwali-card { opacity: 0; }
+.diwali-section.is-armed .diwali-flame,
+.diwali-section.is-armed .diwali-halo { opacity: 0; }
+
+.diwali-section.is-armed.is-shown::before { animation: diwali-bloom 1.6s ease-out 0.3s both; }
+.diwali-section.is-armed.is-shown .diwali-hero-diya .diwali-flame { animation: diwali-ignite 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both; }
+.diwali-section.is-armed.is-shown .diwali-hero-diya .diwali-halo { animation: diwali-fade 0.6s ease 0.4s both, diwali-halo 2.4s ease-in-out 1s infinite; }
+.diwali-section.is-armed.is-shown .diwali-letter {
+  animation: diwali-focus 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both, diwali-sheen 6s linear 2s infinite;
+}
+.diwali-section.is-armed.is-shown .diwali-rise { animation: diwali-focus 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both; }
+.diwali-section.is-armed.is-shown .diwali-card { animation: diwali-card-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both; }
+.diwali-section.is-armed.is-shown .diwali-card .diwali-flame { animation: diwali-ignite 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) calc(var(--d) + 0.45s) both; }
+.diwali-section.is-armed.is-shown .diwali-card .diwali-halo { animation: diwali-fade 0.5s ease calc(var(--d) + 0.6s) both, diwali-halo 2.4s ease-in-out calc(var(--d) + 1.1s) infinite; }
+
+@keyframes diwali-aurora {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}
+@keyframes diwali-spin { to { transform: rotate(360deg); } }
+@keyframes diwali-ember {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(14px, -460px) scale(0.4); }
+}
+@keyframes diwali-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+@keyframes diwali-burst {
+  0% { opacity: 1; transform: translateY(0) scaleY(0.4); }
+  100% { opacity: 0; transform: translateY(-64px) scaleY(1); }
+}
+@keyframes diwali-flicker {
+  0%, 100% { transform: scale(1, 1) rotate(-2deg); }
+  30% { transform: scale(0.96, 1.08) rotate(1.5deg); }
+  60% { transform: scale(1.03, 0.95) rotate(-1deg); }
+}
+@keyframes diwali-halo {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+@keyframes diwali-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes diwali-ignite {
+  from { opacity: 0; scale: 0; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes diwali-bloom {
+  from { opacity: 0; scale: 0.3; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes diwali-sheen {
+  from { background-position: 100% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes diwali-focus {
+  from { opacity: 0; filter: blur(12px); translate: 0 0.4em; }
+  to { opacity: 1; filter: none; translate: 0 0; }
+}
+@keyframes diwali-card-in {
+  from { opacity: 0; filter: blur(8px); translate: 0 48px; }
+  to { opacity: 1; filter: none; translate: 0 0; }
+}
+
+/* Soft firework bursts: light only, looping quietly behind the content */
+.diwali-firework { position: absolute; width: 0; height: 0; }
+.diwali-firework span {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 6px 1px var(--c);
+  rotate: var(--a);
+  opacity: 0;
+  animation: diwali-pop 5.2s cubic-bezier(0.1, 0.7, 0.3, 1) var(--t) infinite;
+}
+@keyframes diwali-pop {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  4% { opacity: 1; }
+  32% { opacity: 0.9; transform: translateY(-62px) scale(0.9); }
+  48%, 100% { opacity: 0; transform: translateY(-74px) scale(0.3); }
+}
+
+.diwali-track { scrollbar-width: none; }
+.diwali-track::-webkit-scrollbar { display: none; }
+
+/* Rocket show: a trail climbs to the burst point, a flash, then a ring of sparks
+   that drift outward and droop. Timed from --t, matching the sound in the component. */
+.diwali-rocket { position: absolute; width: 0; height: 0; }
+.diwali-rocket-trail {
+  position: absolute;
+  width: 2px;
+  height: 46px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: linear-gradient(to top, transparent, #FFE7B0);
+  box-shadow: 0 0 6px rgba(255, 210, 122, 0.8);
+  opacity: 0;
+  animation: diwali-launch 0.9s cubic-bezier(0.25, 0.6, 0.35, 1) var(--t) both;
+}
+.diwali-rocket-flash {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  margin: -80px 0 0 -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c) 55%, transparent), transparent 65%);
+  opacity: 0;
+  animation: diwali-flash 0.8s ease-out calc(var(--t) + 0.88s) both;
+}
+.diwali-rocket span {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 8px 2px var(--c);
+  rotate: var(--a);
+  opacity: 0;
+  animation: diwali-bigpop 1.9s cubic-bezier(0.1, 0.75, 0.25, 1) calc(var(--t) + 0.9s) both;
+}
+.diwali-rocket span:nth-child(odd) { animation-duration: 1.6s; width: 3px; height: 3px; }
+
+@keyframes diwali-launch {
+  0% { opacity: 1; transform: translateY(420px); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+@keyframes diwali-flash {
+  0% { opacity: 0; scale: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0; scale: 1.2; }
+}
+@keyframes diwali-bigpop {
+  0% { opacity: 1; transform: translateY(0) scale(1.6); }
+  55% { opacity: 1; transform: translateY(-110px) scale(1); }
+  100% { opacity: 0; transform: translateY(-122px) translateX(6px) scale(0.3); }
+}
+
+/* Gentle pulse on the sound button so it reads as something to tap */
+.diwali-sound { box-shadow: 0 0 0 0 rgba(245, 166, 35, 0.45); }
+.diwali-sound { animation: diwali-ring 2.4s ease-out 1s infinite; }
+@keyframes diwali-ring {
+  0% { box-shadow: 0 0 0 0 rgba(245, 166, 35, 0.45); }
+  70%, 100% { box-shadow: 0 0 0 12px rgba(245, 166, 35, 0); }
+}
