@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Review } from '@/app/models/Review';
 import { getSettings } from '@/app/models/Settings';
+import { PUBLIC_REVIEW_FIELDS } from '@/app/models/Review';
+import { getSiteConfig } from '@/app/lib/siteConfig';
 
 export const revalidate = 60;
 
 export async function GET(req: NextRequest) {
   try {
+    // Reviews stay off the public site until "Before / After and Patient
+    // Reviews" is switched on (Settings → Public Display, NMC guidelines).
+    if (!(await getSiteConfig()).showBeforeAfterOnPublic) {
+      return NextResponse.json({ success: true, reviews: [] });
+    }
     await connectDB();
     const { searchParams } = req.nextUrl;
     const settings = await getSettings();
@@ -34,6 +41,7 @@ export async function GET(req: NextRequest) {
     const reviews = await Review.find(filter as any)
       .sort({ isFeatured: -1, displayOrder: 1, createdAt: -1 })
       .limit(count)
+      .select(PUBLIC_REVIEW_FIELDS)
       .lean();
 
     return NextResponse.json({ success: true, reviews });

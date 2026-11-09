@@ -10,6 +10,8 @@ import {
   googleStatusMessage,
   cooldownRemainingMs,
 } from '@/app/lib/reviews/googleReviewSync';
+import { getBusinessCredentialSummary } from '@/app/lib/google/businessProfileOAuth';
+import { runBusinessProfileSync, GbpError } from '@/app/lib/reviews/businessProfileSync';
 
 // Minimum time between two real sync attempts (i.e. two actual calls to
 // Google's API) — a plain spam/accidental-double-trigger guard, not a
@@ -27,7 +29,7 @@ async function recordSyncState(
 ) {
   await (GoogleReviewSyncState as any).findOneAndUpdate(
     {},
-    { $set: { lastSyncAt: new Date(), lastSyncStatus: status, lastSyncCounts: counts, lastSyncError: error } },
+    { $set: { lastSyncAt: new Date(), lastSyncStatus: status, lastSyncCounts: counts, lastSyncError: error, lastSyncSource: 'places' } },
     { upsert: true }
   );
 }
@@ -35,6 +37,35 @@ async function recordSyncState(
 export async function POST() {
   const denied = await requirePermission('reviews', 'full');
   if (denied) return denied;
+
+  // Once Google Business Profile is connected (Admin → Reviews), sync every
+  // review for every matched branch from it; otherwise fall back to the
+  // older single-listing Places API below.
+  const business = await getBusinessCredentialSummary().catch(() => null);
+  if (business?.connected) {
+    await connectDB();
+    const state = await (GoogleReviewSyncState as any).findOne({}).lean();
+    const remainingMs = cooldownRemainingMs(state?.lastSyncAt ?? null, COOLDOWN_MS);
+    if (remainingMs > 0) {
+      const waitSeconds = Math.ceil(remainingMs / 1000);
+      return NextResponse.json(
+        { success: false, message: `Please wait ${waitSeconds}s before syncing again.`, cooldown: true, waitSeconds },
+        { status: 429 }
+      );
+    }
+    try {
+      const result = await runBusinessProfileSync();
+      const nothing = result.imported + result.updated + result.unchanged === 0;
+      if (nothing && result.errors.length > 0) {
+        return NextResponse.json({ success: false, message: result.errors[0] }, { status: 502 });
+      }
+      return NextResponse.json({ success: true, ...result, errors: result.errors.length ? result.errors : undefined });
+    } catch (err) {
+      const message = err instanceof GbpError ? err.message : 'Google review sync failed.';
+      if (!(err instanceof GbpError)) console.error('[sync-google] business profile sync failed:', err instanceof Error ? err.message : err);
+      return NextResponse.json({ success: false, message }, { status: 400 });
+    }
+  }
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   const placeId = process.env.GOOGLE_PLACE_ID;

@@ -7,7 +7,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import '@/app/models/Doctor';
 import { Result } from '@/app/models/Result';
-import { Review } from '@/app/models/Review';
+import { Review, PUBLIC_REVIEW_FIELDS } from '@/app/models/Review';
 import { Faq } from '@/app/models/Faq';
 import { Offer } from '@/app/models/Offer';
 import { getBookingSuccessConfig } from '@/app/models/BookingSuccessConfig';
@@ -246,11 +246,12 @@ export default async function BookingSuccessPage(
           .lean()
           .catch(() => [])
       : Promise.resolve([]),
-    enabledSections.has('successStories')
+    enabledSections.has('successStories') && siteConfig.showBeforeAfterOnPublic
       ? (Review as any)
           .find({ isVisible: true, showOnHomepage: true, ...(branchKey ? { location: branchKey } : {}) })
           .sort({ isFeatured: -1, displayOrder: 1 })
           .limit(3)
+          .select(PUBLIC_REVIEW_FIELDS)
           .lean()
           .catch(() => [])
       : Promise.resolve([]),
@@ -271,11 +272,12 @@ export default async function BookingSuccessPage(
     resolvedBeforeAfter = await (Result as any).find({ active: true }).sort({ order: 1, createdAt: -1 }).limit(4).lean().catch(() => []);
   }
   let resolvedStories = successStories;
-  if (enabledSections.has('successStories') && resolvedStories.length === 0) {
+  if (enabledSections.has('successStories') && siteConfig.showBeforeAfterOnPublic && resolvedStories.length === 0) {
     resolvedStories = await (Review as any)
       .find({ isVisible: true, showOnHomepage: true })
       .sort({ isFeatured: -1, displayOrder: 1 })
       .limit(3)
+      .select(PUBLIC_REVIEW_FIELDS)
       .lean()
       .catch(() => []);
   }

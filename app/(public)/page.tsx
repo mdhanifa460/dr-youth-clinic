@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
-import { Review } from '@/app/models/Review';
+import { Review, PUBLIC_REVIEW_FIELDS } from '@/app/models/Review';
 import { Doctor } from '@/app/models/Doctor';
 import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
@@ -200,6 +200,7 @@ const getCachedReviews = unstable_cache(
       const docs = await Review.find(filter as any)
         .sort({ isFeatured: -1, displayOrder: 1, createdAt: -1 })
         .limit(Math.min(count, 50))
+        .select(PUBLIC_REVIEW_FIELDS)
         .lean();
       return JSON.parse(JSON.stringify(docs));
     } catch {

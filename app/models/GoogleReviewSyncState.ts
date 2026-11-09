@@ -12,6 +12,20 @@ export interface IGoogleReviewSyncState extends Document {
   lastSyncStatus: 'success' | 'error' | null;
   lastSyncCounts: { imported: number; updated: number; unchanged: number; failed: number };
   lastSyncError: string;
+  // 'business_profile' (all reviews, every branch) or 'places' (older
+  // single-listing Places API, at most 5 reviews).
+  lastSyncSource: 'business_profile' | 'places' | null;
+  // Google Business Profile listings and the branch an admin matched each
+  // one to (branch '' = not imported). See app/lib/reviews/businessProfileReviews.ts.
+  businessLocations: Array<{
+    account: string;
+    location: string;
+    title: string;
+    address: string;
+    branch: string;
+    averageRating: number | null;
+    totalReviewCount: number | null;
+  }>;
   updatedAt: Date;
 }
 
@@ -26,6 +40,20 @@ const GoogleReviewSyncStateSchema = new Schema<IGoogleReviewSyncState>(
       failed: { type: Number, default: 0 },
     },
     lastSyncError: { type: String, default: '' },
+    lastSyncSource: { type: String, enum: ['business_profile', 'places', null], default: null },
+    businessLocations: {
+      type: [{
+        _id: false,
+        account: { type: String, required: true },
+        location: { type: String, required: true },
+        title: { type: String, default: '' },
+        address: { type: String, default: '' },
+        branch: { type: String, enum: ['chennai', 'bangalore', 'coimbatore', 'kochi', ''], default: '' },
+        averageRating: { type: Number, default: null },
+        totalReviewCount: { type: Number, default: null },
+      }],
+      default: [],
+    },
   },
   { timestamps: { createdAt: false, updatedAt: true } }
 );

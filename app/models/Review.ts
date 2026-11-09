@@ -216,6 +216,12 @@ ReviewSchema.index({
 ReviewSchema.index({ source: 1 });
 ReviewSchema.index({ location: 1 });
 
+// The only Review fields a public page or public API may receive. Admin-only
+// data (AI analysis, report status, reply drafts, internal meta) never leaves
+// the admin side.
+export const PUBLIC_REVIEW_FIELDS =
+  'source authorName authorAvatar rating reviewText videoUrl videoThumbnail services location isFeatured reviewDate';
+
 export const Review =
   mongoose.models.Review ||
   mongoose.model<IReview>('Review', ReviewSchema);

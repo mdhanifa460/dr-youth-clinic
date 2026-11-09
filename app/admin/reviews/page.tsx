@@ -9,6 +9,7 @@ import {
   Edit2, CheckCircle, AlertTriangle, Sparkles, MessageSquare, Flag, ChevronDown, ChevronUp, ExternalLink,
 } from 'lucide-react';
 import NMCComplianceHint from '@/app/admin/components/NMCComplianceHint';
+import GoogleBusinessPanel from './GoogleBusinessPanel';
 
 // ── Review Management (local-only — see the investigation report this
 // followed: Google's API has no delete/report/status-check endpoint for a
@@ -635,6 +636,7 @@ export default function ReviewsAdminPage() {
   const [homepageOnly, setHomepageOnly] = useState(false);
   const [needsAttentionOnly, setNeedsAttentionOnly] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [gbpConnected, setGbpConnected] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const [syncIsError, setSyncIsError] = useState(false);
   const [lastSync, setLastSync] = useState<{ lastSyncAt: string | null; lastSyncStatus: string | null } | null>(null);
@@ -833,13 +835,17 @@ export default function ReviewsAdminPage() {
         </div>
       </div>
 
-      {/* Google's own limitation — always visible, not just after a sync,
-          so nobody assumes a full historical import ever happened. */}
+      <GoogleBusinessPanel onConnectedChange={setGbpConnected} />
+
+      {/* The older Places API sync's limitation — shown while that is the
+          sync in use, so nobody assumes a full historical import happened. */}
+      {!gbpConnected && (
       <p className="text-[11px] text-gray-400 mb-4 flex items-start gap-1.5">
         <FaGoogle size={10} className="shrink-0 mt-0.5" />
         Google currently returns up to 5 most relevant reviews per Place Details request. Sync does not represent a
-        complete historical Google review import.
+        complete historical Google review import. Connect Google Business Profile below to import every review for every branch.
       </p>
+      )}
 
       {/* Sync status message */}
       {syncMsg && (

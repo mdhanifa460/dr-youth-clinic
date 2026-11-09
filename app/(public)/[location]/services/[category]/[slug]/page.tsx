@@ -13,7 +13,7 @@ import {
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
-import { Review } from '@/app/models/Review';
+import { Review, PUBLIC_REVIEW_FIELDS } from '@/app/models/Review';
 import { Result } from '@/app/models/Result';
 import SliderCard from '@/app/components/SliderCard';
 import SwipeTray from '@/app/components/SwipeTray';
@@ -176,7 +176,7 @@ async function getServiceReviews(location: string, serviceName: string) {
       ],
     } as any)
       .sort({ isFeatured: -1, rating: -1 })
-      .limit(3).lean() as Promise<any[]>;
+      .limit(3).select(PUBLIC_REVIEW_FIELDS).lean() as Promise<any[]>;
   } catch { return []; }
 }
 

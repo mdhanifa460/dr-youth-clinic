@@ -250,7 +250,8 @@ export async function middleware(req: NextRequest) {
     // signed OAuth `state` + double-submit cookie instead, which DOES
     // survive this redirect (SameSite=Lax) and is what actually proves
     // this is a continuation of a genuinely-authenticated /authorize call.
-    if (pathname === "/api/admin/google-site-verification/callback") {
+    // Same reason for the Google Business Profile (reviews) callback.
+    if (pathname === "/api/admin/google-site-verification/callback" || pathname === "/api/admin/google-business/callback") {
       return withPathname(req);
     }
 
