@@ -19,6 +19,13 @@ const CITY_KEY: Record<string, string> = {
 };
 const toCityKey = (city: string) => CITY_KEY[city] ?? city.toLowerCase();
 
+// Remembers the clinic a visitor picks, so the navbar, footer, contact details and
+// WhatsApp button use that branch on every page from now on (same cookie the
+// middleware sets when they open a city page).
+function rememberClinic(key: string) {
+  document.cookie = `preferred_location=${encodeURIComponent(key)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+}
+
 // Approximate city-centre coordinates for each clinic key
 const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   chennai:    { lat: 13.0827, lng: 80.2707 },
@@ -133,7 +140,9 @@ export default function HomepageLocations({ data }: { data: any }) {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        setActiveKey(nearestCityKey(coords.latitude, coords.longitude, availableKeys));
+        const nearest = nearestCityKey(coords.latitude, coords.longitude, availableKeys);
+        setActiveKey(nearest);
+        rememberClinic(nearest);
         setAutoDetected(true);
         setLocating(false);
       },
@@ -212,7 +221,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                 return (
                   <button
                     key={i}
-                    onClick={() => setActiveKey(key)}
+                    onClick={() => { setActiveKey(key); rememberClinic(key); }}
                     className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all group ${
                       active ? 'bg-sand border-l-[3px] border-primary' : 'hover:bg-gray-50 border-l-[3px] border-transparent'
                     }`}

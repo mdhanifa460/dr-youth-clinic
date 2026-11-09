@@ -13,6 +13,10 @@ import { toTelHref } from '@/app/lib/phone';
 import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
 import { Result } from '@/app/models/Result';
+import { Doctor } from '@/app/models/Doctor';
+import { Service } from '@/app/models/Service';
+import { getCachedCategories } from '@/app/lib/getCachedCategories';
+import { getEffectiveSlug } from '@/app/lib/serviceSeo';
 import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
 import SliderCard from '@/app/components/SliderCard';
 import { cloudHero } from '@/app/lib/cloudinary-url';
@@ -64,6 +68,44 @@ async function getBranchResults(city: string) {
       .limit(3)
       .lean();
     return JSON.parse(JSON.stringify(docs));
+  } catch { return []; }
+}
+
+// Doctors an admin has assigned to this branch (or to every branch), as on the
+// treatment pages. Only real Admin → Doctors records; nothing is filled in.
+async function getBranchDoctors(city: string) {
+  try {
+    await connectDB();
+    const docs = await (Doctor as any)
+      .find({ locations: { $in: [city, 'all'] }, active: true })
+      .select('name title qualifications photo')
+      .sort({ order: 1 })
+      .limit(8)
+      .lean();
+    return JSON.parse(JSON.stringify(docs)) as { _id: string; name: string; title: string; qualifications?: string; photo?: { url?: string } }[];
+  } catch { return []; }
+}
+
+// Every active treatment offered at this branch, grouped by category, each linking
+// to its own city treatment page. Same availability rule as the homepage menu.
+async function getBranchTreatments(city: string) {
+  try {
+    await connectDB();
+    const [svcs, categories] = await Promise.all([
+      (Service as any).find({
+        status: 'active',
+        $or: [{ targetLocations: city }, { targetLocations: { $exists: false }, location: { $in: [city, 'all'] } }],
+      }).select('name category urlSlug locationSeo targetLocations location').sort({ name: 1 }).limit(200).lean(),
+      getCachedCategories(),
+    ]);
+    const groups = (categories as any[]).map((c) => ({ slug: c.slug as string, label: (c.label || c.name || c.slug) as string, dbKey: c.dbKey as string, items: [] as { name: string; href: string }[] }));
+    for (const sv of svcs as any[]) {
+      const group = groups.find((g) => g.dbKey === sv.category);
+      const slug = getEffectiveSlug(sv, city);
+      if (!group || !slug || !sv.name) continue;
+      group.items.push({ name: sv.name, href: `/${city}/services/${group.slug}/${slug}` });
+    }
+    return groups.filter((g) => g.items.length > 0).map(({ slug, label, items }) => ({ slug, label, items }));
   } catch { return []; }
 }
 
@@ -122,13 +164,15 @@ export default async function LocationPage(props: { params: Promise<{ location: 
   const loc = locations[cityKey];
   if (!loc) notFound();
 
-  const [content, locationBanners, branchResults, siteConfig, settings, spotlight] = await Promise.all([
+  const [content, locationBanners, branchResults, siteConfig, settings, spotlight, branchDoctors, branchTreatments] = await Promise.all([
     getLocationContent(cityKey),
     resolveBanner({ page: 'location', location: cityKey }),
     getBranchResults(cityKey),
     getSiteConfig(),
     getSettings(),
     resolveSpotlight({ page: 'location', location: cityKey }),
+    getBranchDoctors(cityKey),
+    getBranchTreatments(cityKey),
   ]);
   // Flash Offer Popup — see app/(public)/page.tsx's own comment for the
   // exact same splashBanner/carouselBanners split (this page previously
@@ -215,7 +259,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <Link href="/book" className="inline-flex items-center justify-center bg-primary text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition">
+                <Link href={`/book?location=${cityKey}`} className="inline-flex items-center justify-center bg-primary text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition">
                     Book Consultation
                   </Link>
                 {telHref && (
@@ -327,6 +371,35 @@ export default async function LocationPage(props: { params: Promise<{ location: 
               </p>
             </div>
 
+            {branchTreatments.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {branchTreatments.map((group) => (
+                  <div key={group.slug} className="min-w-0 bg-background rounded-2xl p-5">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <h3 className="font-headline font-extrabold text-primary capitalize">{group.label}</h3>
+                      <Link href={`/${cityKey}/services/${group.slug}`} className="text-xs font-semibold text-secondary hover:underline shrink-0">
+                        View all
+                      </Link>
+                    </div>
+                    <ul className="space-y-1">
+                      {group.items.slice(0, 8).map((item) => (
+                        <li key={item.href}>
+                          <Link href={item.href} className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 -mx-2 text-sm font-medium text-gray-700 hover:bg-white hover:text-primary transition">
+                            <span className="min-w-0 [overflow-wrap:anywhere]">{item.name}</span>
+                            <ChevronRight size={14} className="text-gray-400 shrink-0" aria-hidden />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    {group.items.length > 8 && (
+                      <Link href={`/${cityKey}/services/${group.slug}`} className="inline-block mt-2 text-xs font-semibold text-secondary hover:underline">
+                        +{group.items.length - 8} more {group.label.toLowerCase()} treatments
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {specialties.map((sp, i) => (
                 <div
@@ -342,10 +415,11 @@ export default async function LocationPage(props: { params: Promise<{ location: 
                 </div>
               ))}
             </div>
+            )}
 
             <div className="mt-10 text-center">
               <Link
-                href="/book"
+                href={`/book?location=${cityKey}`}
                 className="inline-flex items-center gap-2 bg-primary text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition"
               >
                 Book at {loc.name} <ChevronRight size={16} />
@@ -353,6 +427,39 @@ export default async function LocationPage(props: { params: Promise<{ location: 
             </div>
           </div>
         </section>
+
+        {/* ── DOCTORS AT THIS BRANCH (Admin → Doctors, assigned to this city) ── */}
+        {branchDoctors.length > 0 && (
+          <section className="py-16 px-6 md:px-10 bg-canvas">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-8">
+                <p className="text-secondary font-bold text-xs tracking-[0.2em] uppercase mb-3">Your Care Team</p>
+                <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-primary">Doctors at {loc.name}</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {branchDoctors.map((doc) => (
+                  <Link
+                    key={doc._id}
+                    href={`/doctors/${doc._id}`}
+                    className="min-w-0 flex items-center gap-4 bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-[0_8px_28px_rgba(0,32,69,0.1)] transition"
+                  >
+                    {doc.photo?.url ? (
+                      <img src={doc.photo.url} alt={doc.name} width={64} height={64} loading="lazy" decoding="async" className="w-16 h-16 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <span className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0" aria-hidden>
+                        <Stethoscope size={22} />
+                      </span>
+                    )}
+                    <span className="min-w-0">
+                      <span className="block font-bold text-primary leading-snug [overflow-wrap:anywhere]">{doc.name}</span>
+                      <span className="block text-xs text-gray-500 mt-0.5 line-clamp-2">{doc.qualifications?.trim() || doc.title}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ── BEFORE / AFTER RESULTS (location-specific) ───────────────────── */}
         {hasPairs && (
@@ -524,7 +631,7 @@ export default async function LocationPage(props: { params: Promise<{ location: 
                 Book a consultation with our doctors.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-                <Link href="/book" className="inline-flex items-center justify-center bg-white text-primary px-10 py-4 rounded-xl font-bold text-lg shadow-xl hover:-translate-y-0.5 hover:shadow-2xl transition">
+                <Link href={`/book?location=${cityKey}`} className="inline-flex items-center justify-center bg-white text-primary px-10 py-4 rounded-xl font-bold text-lg shadow-xl hover:-translate-y-0.5 hover:shadow-2xl transition">
                     Book Consultation
                   </Link>
                 <a

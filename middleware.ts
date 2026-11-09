@@ -375,6 +375,19 @@ export async function middleware(req: NextRequest) {
   // never set outside /admin before now.
   const response = withPathname(req);
 
+  // Opening a city page (/kochi, /kochi/services/...) is the clearest sign of which
+  // branch the visitor wants, so it becomes their remembered clinic. The navbar,
+  // footer, contact details, WhatsApp button and homepage clinic tabs all follow it.
+  const citySegment = pathname.split("/")[1]?.toLowerCase();
+  if (citySegment && VALID_LOCATIONS.includes(citySegment) && req.cookies.get(LOCATION_COOKIE)?.value !== citySegment) {
+    response.cookies.set(LOCATION_COOKIE, citySegment, {
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+      secure: true,
+      sameSite: "lax",
+    });
+  }
+
   // Location detection — only run when no cookie is set yet to avoid redundant Set-Cookie on every request
   if (pathname === "/" && !req.cookies.get(LOCATION_COOKIE)?.value) {
     const country = req.headers.get("x-vercel-ip-country-region") ?? req.headers.get("x-geo-country");
