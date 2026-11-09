@@ -1,6 +1,7 @@
 import { connectDB } from "@/app/lib/mongodb";
 import { Banner } from "@/app/models/Banner";
 import type { BannerDoc } from "@/app/lib/banners/types";
+import { isSpotlightLive, spotlightPublishError } from "@/app/lib/banners/spotlight";
 // Registers Doctor with Mongoose for the .populate() call below — see the
 // note in app/(public)/academy/[slug]/page.tsx for why this is required.
 import "@/app/models/Doctor";
@@ -141,7 +142,9 @@ export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc[]> {
   try {
     await connectDB();
 
-    const query: Record<string, any> = { status: "active" };
+    // Campaign Spotlights are Banner documents too, but render as their own
+    // section above the slider (resolveSpotlight below), never as a slide.
+    const query: Record<string, any> = { status: "active", templateType: { $ne: "spotlight" } };
 
     if (slot.page === "homepage") {
       query.showOnHomepage = true;
@@ -191,5 +194,39 @@ export async function resolveBanner(slot: BannerSlot): Promise<BannerDoc[]> {
     // — fall back to the existing hardcoded hero exactly as if no banner
     // were configured.
     return [];
+  }
+}
+
+export type SpotlightSlot = { page: "homepage" } | { page: "location"; location: string };
+
+// The one Campaign Spotlight (templateType "spotlight") live for a page, or null.
+// Same order/priority as the slider, but only the first eligible one shows.
+//
+// City targeting applies to city pages only: the homepage is the same page for
+// every visitor, so a spotlight ticked for the homepage shows there for everyone,
+// and a city-only offer should be shown on city pages instead.
+//
+// Runs between two exact moments (isSpotlightLive), and anything with cards must
+// have been confirmed as doctor-checked, even if the flag was bypassed on save.
+export async function resolveSpotlight(slot: SpotlightSlot): Promise<BannerDoc | null> {
+  try {
+    await connectDB();
+    const query: Record<string, any> = { status: "active", templateType: "spotlight" };
+    if (slot.page === "homepage") {
+      query.showOnHomepage = true;
+    } else {
+      query.showOnLocationPage = true;
+      query.$or = [{ targetLocations: { $size: 0 } }, { targetLocations: slot.location }];
+    }
+    const candidates = await (Banner as any).find(query).sort({ order: 1, priority: -1 }).lean();
+    const now = new Date();
+    const live = candidates.find((b: any) =>
+      isSpotlightLive(b, now) &&
+      matchesSmartRules(b.smartRules, now) &&
+      !spotlightPublishError(b)
+    );
+    return live ? (JSON.parse(JSON.stringify(live)) as BannerDoc) : null;
+  } catch {
+    return null;
   }
 }

@@ -17,7 +17,8 @@ import BeforeAfterSection from '@/app/components/homepage/BeforeAfterSection';
 import SliderCard from '@/app/components/SliderCard';
 import { cloudHero } from '@/app/lib/cloudinary-url';
 import FocalImage from '@/app/components/media/FocalImage';
-import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import { resolveBanner, resolveSpotlight } from '@/app/lib/banners/resolveBanner';
+import CampaignSpotlight from '@/app/components/homepage/CampaignSpotlight';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
@@ -121,12 +122,13 @@ export default async function LocationPage(props: { params: Promise<{ location: 
   const loc = locations[cityKey];
   if (!loc) notFound();
 
-  const [content, locationBanners, branchResults, siteConfig, settings] = await Promise.all([
+  const [content, locationBanners, branchResults, siteConfig, settings, spotlight] = await Promise.all([
     getLocationContent(cityKey),
     resolveBanner({ page: 'location', location: cityKey }),
     getBranchResults(cityKey),
     getSiteConfig(),
     getSettings(),
+    resolveSpotlight({ page: 'location', location: cityKey }),
   ]);
   // Flash Offer Popup — see app/(public)/page.tsx's own comment for the
   // exact same splashBanner/carouselBanners split (this page previously
@@ -178,6 +180,8 @@ export default async function LocationPage(props: { params: Promise<{ location: 
         schemaType={siteConfig.schemaType}
       />
       <HomepageOfferSplash banner={splashBanner} page="location" />
+      {/* Festival or branch offer for this city (Admin → Banners → Campaign Spotlight) */}
+      {spotlight && <CampaignSpotlight banner={spotlight} />}
       <div>
 
         {/* ── HERO ─────────────────────────────────────────────────────────── */}

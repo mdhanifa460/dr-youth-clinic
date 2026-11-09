@@ -1,9 +1,33 @@
 "use client";
 
+import { istInputToIso, isoToIstInput } from "@/app/lib/banners/spotlight";
+
 export default function BannerScheduleFields({ banner, set }: { banner: any; set: (patch: Record<string, any>) => void }) {
+  // A spotlight switches on and off at exact India times (e.g. 12:00 AM on the
+  // festival day), so it gets date-and-time inputs instead of whole dates.
+  const spotlight = banner.templateType === "spotlight";
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
       <p className="text-sm font-bold text-gray-700">Schedule &amp; Priority</p>
+      {spotlight ? (
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Starts (India time)</label>
+            <input type="datetime-local" value={isoToIstInput(banner.startDate)} onChange={(e) => set({ startDate: istInputToIso(e.target.value) })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Ends (India time)</label>
+            <input type="datetime-local" value={isoToIstInput(banner.endDate)} onChange={(e) => set({ endDate: istInputToIso(e.target.value) })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full" />
+          </div>
+        </div>
+        <p className="text-xs text-gray-400">
+          It appears at the start time and disappears at the end time by itself (within about 5 minutes), as long as Status is Active.
+          For a one-day festival, start at 12:00 AM on the day and end at 12:00 AM the next day. Leave a field empty for no limit.
+          If two spotlights are live on the same page, the one higher in the banner list (then higher priority) shows.
+        </p>
+      </div>
+      ) : (
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-semibold text-gray-500 mb-1 block">Start Date (optional)</label>
@@ -14,6 +38,7 @@ export default function BannerScheduleFields({ banner, set }: { banner: any; set
           <input type="date" value={banner.endDate ? banner.endDate.slice(0, 10) : ""} onChange={(e) => set({ endDate: e.target.value || null })} className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full" />
         </div>
       </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-semibold text-gray-500 mb-1 block">Priority (higher wins ties)</label>

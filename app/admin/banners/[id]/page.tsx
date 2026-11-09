@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader, ArrowLeft, Save, Eye } from "lucide-react";
 import { BANNER_TEMPLATES, type BannerTemplateType } from "@/app/lib/banners/types";
 import BannerContentFields from "./fields/BannerContentFields";
+import BannerSpotlightFields from "./fields/BannerSpotlightFields";
 import BannerCTASection from "./fields/BannerCTASection";
 import BannerMediaFields from "./fields/BannerMediaFields";
 import BannerTemplateFields from "./fields/BannerTemplateFields";
@@ -127,6 +128,9 @@ export default function BannerEditPage() {
 
   const templateType: BannerTemplateType = banner.templateType;
   const templateDef = BANNER_TEMPLATES.find((t) => t.type === templateType);
+  const isSpotlight = templateType === "spotlight";
+  // The popup and animation-preset settings do not apply to a spotlight.
+  const tabs = TABS.filter((t) => !(isSpotlight && t === "Presentation & Animation"));
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-20">
@@ -192,7 +196,7 @@ export default function BannerEditPage() {
 
       {/* Tab bar */}
       <div className="flex gap-1 overflow-x-auto border-b border-gray-200 -mb-px">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -209,7 +213,7 @@ export default function BannerEditPage() {
       </div>
 
       {activeTab === "Content" && (
-        <BannerContentFields banner={banner} set={set} />
+        isSpotlight ? <BannerSpotlightFields banner={banner} set={set} /> : <BannerContentFields banner={banner} set={set} />
       )}
 
       {activeTab === "Call to Action" && (
@@ -219,8 +223,8 @@ export default function BannerEditPage() {
       {activeTab === "Media" && (
         <>
           <BannerMediaFields banner={banner} set={set} templateType={templateType} />
-          <BannerOverlayFields banner={banner} set={set} />
-          <BannerTemplateFields
+          {!isSpotlight && <BannerOverlayFields banner={banner} set={set} />}
+          {!isSpotlight && <BannerTemplateFields
             banner={banner}
             set={set}
             templateType={templateType}
@@ -228,7 +232,7 @@ export default function BannerEditPage() {
             experienceAdvanced={experienceAdvanced}
             setExperienceAdvanced={setExperienceAdvanced}
             openAssetPicker={openAssetPicker}
-          />
+          />}
         </>
       )}
 

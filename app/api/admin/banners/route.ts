@@ -4,6 +4,7 @@ import { Banner } from "@/app/models/Banner";
 import { requirePermission } from "@/app/lib/adminAuth";
 import { deriveTargetPages } from "@/app/lib/banners/resolveBanner";
 import { revalidateBannerPaths } from "@/app/lib/banners/revalidate";
+import { spotlightPublishError } from "@/app/lib/banners/spotlight";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
+    const publishError = spotlightPublishError(body);
+    if (publishError) return NextResponse.json({ success: false, message: publishError }, { status: 400 });
     body.targetPages = deriveTargetPages(body);
     const banner = await Banner.create(body);
     revalidateBannerPaths(banner);

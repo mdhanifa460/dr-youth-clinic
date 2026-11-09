@@ -32,7 +32,11 @@ export type BannerTemplateType =
   // description/desktopImage/primaryCTA fields every template already
   // has — desktopImage IS the certificate/credential photo here — no new
   // schema fields, so it's fully covered by the existing admin form.
-  | "credential";
+  | "credential"
+  // Campaign Spotlight — a full-width festival or offer section shown above
+  // the banner slider (never inside it) on the homepage and city pages. See
+  // app/lib/banners/spotlight.ts.
+  | "spotlight";
 
 export interface CTAData {
   label: string;
@@ -66,6 +70,37 @@ export interface BannerTemplateDef {
 }
 
 export const BANNER_TEMPLATES: BannerTemplateDef[] = [
+  {
+    type: "spotlight",
+    label: "Festival / Campaign Spotlight",
+    icon: "🪔",
+    description: "A full-width festival or offer section above the banner slider on the homepage and city pages: themed greeting, up to 6 tip or offer cards, optional fireworks with sound, optional background video. Switches itself on and off at the exact India times you set. Starts with last Diwali's content so you can reuse it.",
+    defaultData: {
+      headline: "Happy Diwali",
+      subtitle: "Festival of lights",
+      description: "Warm wishes from all of us at DR Youth Clinic. Here are five simple ways to look after your skin through the celebrations.",
+      primaryCTA: { label: "Ask our dermatologists", href: "/book" },
+      secondaryCTA: { label: "", href: "" },
+      showOnHomepage: true,
+      spotlight: {
+        theme: "diwali",
+        cards: [
+          { label: "Test first", icon: "flower", title: "Patch-test new makeup and mehendi", body: "Try anything new on a small patch of skin a day or two before the festivities. Stop if it itches, reddens or burns." },
+          { label: "Night care", icon: "moon", title: "Wash off the smoke at night", body: "Smoke, dust and festive makeup sit on your skin all evening. Cleanse gently before bed, then moisturise." },
+          { label: "Hydrate", icon: "glass-water", title: "Keep sipping water", body: "Late nights, travel and sweets add up. Keep a water bottle close and rest between celebrations." },
+          { label: "Sun care", icon: "sun", title: "Sunscreen for daytime errands", body: "Shopping, visits and decorating mean hours outdoors. Use a broad-spectrum sunscreen and reapply if you stay out long." },
+          { label: "Quick first aid", icon: "shield-plus", title: "If a spark burns your skin", body: "Hold it under cool running water for 20 minutes. Skip ice, toothpaste and butter. See a doctor for large burns or any on the face, hands or eyes." },
+        ],
+        closingLine: "Wishing you a safe and bright Diwali.",
+        disclaimer: "These are general tips. For advice about your own skin, talk to a dermatologist.",
+        effects: { fireworks: true, sparkles: true, sound: true },
+        soundLabel: "Tap for Diwali fireworks",
+        // Must be ticked by whoever publishes it — never pre-approved.
+        doctorReviewed: false,
+        reviewedBy: "",
+      },
+    },
+  },
   {
     type: "poster",
     label: "Poster (Image Only)",
@@ -317,6 +352,7 @@ export interface BannerDoc {
   targetServices: string[];
   targetCategories: string[];
   targetLandingPages: string[];
+  spotlight?: import("@/app/lib/banners/spotlight").SpotlightData;
   smartRules?: {
     daysOfWeek: number[];
     timeWindowStart: string | null;

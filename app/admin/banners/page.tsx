@@ -96,12 +96,27 @@ export default function BannersAdminPage() {
 
   const toggleStatus = async (b: BannerRow) => {
     const nextStatus = b.data.status === "active" ? "disabled" : "active";
-    setBanners((prev) => prev.map((x) => (x.id === b.id ? { ...x, visible: nextStatus === "active", data: { ...x.data, status: nextStatus } } : x)));
-    await fetch(`/api/admin/banners/${b.id}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: nextStatus }),
-    }).catch(() => {});
+    const apply = (status: string) =>
+      setBanners((prev) => prev.map((x) => (x.id === b.id ? { ...x, visible: status === "active", data: { ...x.data, status } } : x)));
+    apply(nextStatus);
+    setError("");
+    // Put the toggle back if the server refuses (e.g. a spotlight whose cards are
+    // not yet marked as checked by a doctor), and say why.
+    try {
+      const res = await fetch(`/api/admin/banners/${b.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        apply(b.data.status);
+        setError(data.message || "Could not change the banner status");
+      }
+    } catch {
+      apply(b.data.status);
+      setError("Could not change the banner status");
+    }
   };
 
   const deleteBanner = async (b: BannerRow) => {

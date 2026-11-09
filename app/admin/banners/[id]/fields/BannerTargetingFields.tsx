@@ -9,11 +9,19 @@ import { Input, Toggle } from "./shared";
 // Presentation & Animation tab (BannerPresentationFields.tsx) — a
 // presentation concern, not a targeting one.
 export default function BannerTargetingFields({ banner, set }: { banner: any; set: (patch: Record<string, any>) => void }) {
+  // A spotlight only appears on the homepage and city (branch) pages.
+  const spotlight = banner.templateType === "spotlight";
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
       <p className="text-sm font-bold text-gray-700">Where to Show</p>
-      <Toggle checked={!!banner.showOnHomepage} onChange={(v) => set({ showOnHomepage: v })} label="Homepage" />
-      <Toggle checked={!!banner.showOnLocationPage} onChange={(v) => set({ showOnLocationPage: v })} label="Location Pages" />
+      {spotlight && (
+        <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+          A spotlight shows above the banners on the homepage and/or the city pages. The homepage is the same for every visitor,
+          so for a single-branch offer, leave Homepage off and tick only that city below.
+        </p>
+      )}
+      <Toggle checked={!!banner.showOnHomepage} onChange={(v) => set({ showOnHomepage: v })} label={spotlight ? "Homepage (everyone)" : "Homepage"} />
+      <Toggle checked={!!banner.showOnLocationPage} onChange={(v) => set({ showOnLocationPage: v })} label={spotlight ? "City / branch pages (e.g. /kochi)" : "Location Pages"} />
       {banner.showOnLocationPage && (
         <div className="pl-4 space-y-1.5">
           <p className="text-xs text-gray-400">Leave all unchecked to show on every location.</p>
@@ -34,6 +42,7 @@ export default function BannerTargetingFields({ banner, set }: { banner: any; se
           </div>
         </div>
       )}
+      {!spotlight && (<>
       <Toggle checked={!!banner.showOnServicePage} onChange={(v) => set({ showOnServicePage: v })} label="Service Pages" />
       {banner.showOnServicePage && (
         <div className="pl-4">
@@ -77,6 +86,7 @@ export default function BannerTargetingFields({ banner, set }: { banner: any; se
           />
         </div>
       )}
+      </>)}
     </div>
   );
 }

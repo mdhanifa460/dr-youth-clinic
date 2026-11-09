@@ -11,6 +11,7 @@ import {
   type SplashSoundEffect,
   type SplashFrequency,
 } from "@/app/lib/banners/popupOptions";
+import { SPOTLIGHT_THEMES, SPOTLIGHT_ICONS, type SpotlightData } from "@/app/lib/banners/spotlight";
 
 export interface IBanner extends Document {
   title: string;
@@ -157,6 +158,9 @@ export interface IBanner extends Document {
   // Values match CATEGORY_MAP keys (app/lib/serviceCategories.ts):
   // skin|hair|laser|other. Empty = eligible on every category page.
   targetCategories: string[];
+  // Only meaningful for templateType "spotlight" (Campaign Spotlight) — see
+  // app/lib/banners/spotlight.ts.
+  spotlight?: SpotlightData;
   smartRules?: {
     daysOfWeek: number[];
     timeWindowStart: string | null;
@@ -219,7 +223,7 @@ const BannerSchema = new Schema<IBanner>(
     templateType: {
       type: String,
       required: true,
-      enum: ["premium-hero", "offer", "before-after", "service", "doctor", "clinic-experience", "glass-hero", "full-image", "poster", "credential"],
+      enum: ["premium-hero", "offer", "before-after", "service", "doctor", "clinic-experience", "glass-hero", "full-image", "poster", "credential", "spotlight"],
     },
     headline: { type: String, default: "" },
     subtitle: { type: String, default: "" },
@@ -351,6 +355,36 @@ const BannerSchema = new Schema<IBanner>(
     targetCategories: { type: [String], default: [] },
     // Values are LandingPage.slug — empty = eligible on every landing page.
     targetLandingPages: { type: [String], default: [] },
+
+    // Campaign Spotlight content (templateType "spotlight" only). headline,
+    // subtitle, description, desktopImage/mobileImage, video, primaryCTA,
+    // startDate/endDate and the targeting fields above are reused as-is.
+    spotlight: {
+      type: {
+        theme: { type: String, enum: [...SPOTLIGHT_THEMES], default: "diwali" },
+        cards: {
+          type: [{
+            label: { type: String, default: "", trim: true },
+            icon: { type: String, enum: [...SPOTLIGHT_ICONS], default: "sparkles" },
+            title: { type: String, default: "", trim: true },
+            body: { type: String, default: "", trim: true },
+          }],
+          default: [],
+        },
+        closingLine: { type: String, default: "" },
+        disclaimer: { type: String, default: "" },
+        effects: {
+          fireworks: { type: Boolean, default: false },
+          sparkles: { type: Boolean, default: true },
+          sound: { type: Boolean, default: false },
+        },
+        soundLabel: { type: String, default: "Tap for fireworks" },
+        doctorReviewed: { type: Boolean, default: false },
+        reviewedBy: { type: String, default: "" },
+      },
+      required: false,
+      _id: false,
+    },
 
     // Whole subdocument optional (no default object) — its presence/absence
     // is itself the "has rules attached" signal resolveBanner() checks.

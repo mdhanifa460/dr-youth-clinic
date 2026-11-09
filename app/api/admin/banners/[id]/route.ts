@@ -5,6 +5,7 @@ import { requirePermission } from "@/app/lib/adminAuth";
 import { deleteImage } from "@/app/lib/cloudinary";
 import { deriveTargetPages } from "@/app/lib/banners/resolveBanner";
 import { revalidateBannerPaths } from "@/app/lib/banners/revalidate";
+import { spotlightPublishError } from "@/app/lib/banners/spotlight";
 
 export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -29,6 +30,8 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
   try {
     await connectDB();
     const body = await req.json();
+    const publishError = spotlightPublishError(body);
+    if (publishError) return NextResponse.json({ success: false, message: publishError }, { status: 400 });
     body.targetPages = deriveTargetPages(body);
     const banner = await (Banner as any).findByIdAndUpdate(params.id, body, { returnDocument: 'after', runValidators: true });
     if (!banner) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });

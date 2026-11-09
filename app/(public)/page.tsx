@@ -26,7 +26,7 @@ import Booking from '@/app/models/Booking';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import { scrubClaims } from '@/app/lib/patientClaims';
 import { normalizeLegacyImageUrls } from '@/app/lib/legacyImageUrls';
-import { resolveBanner } from '@/app/lib/banners/resolveBanner';
+import { resolveBanner, resolveSpotlight } from '@/app/lib/banners/resolveBanner';
 import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
@@ -42,8 +42,7 @@ import FounderSection from '@/app/components/homepage/FounderSection';
 import TrustTimeline from '@/app/components/homepage/TrustTimeline';
 import HomepageLocations from '@/app/components/homepage/HomepageLocations';
 import CTAStrip from '@/app/components/homepage/CTAStrip';
-import DiwaliSpotlight from '@/app/components/homepage/DiwaliSpotlight';
-import { isDiwaliSeason } from '@/app/lib/festive';
+import CampaignSpotlight from '@/app/components/homepage/CampaignSpotlight';
 import TestimonialsSlider from '@/app/components/homepage/TestimonialsSlider';
 import FAQAccordion from '@/app/components/homepage/FAQAccordion';
 import { FAQSchema } from '@/app/components/SchemaMarkup';
@@ -525,7 +524,7 @@ export default async function Home() {
     ? preferredLocation.toLowerCase()
     : 'chennai';
 
-  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveAchievements, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories, quickServices] = await Promise.all([
+  const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveAchievements, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories, quickServices, spotlight] = await Promise.all([
     testimonialsConfig
       ? getCachedReviews(td.displayCount ?? 6, td.filterSource || '', td.filterLocation || '', td.filterService || '')
       : Promise.resolve([]),
@@ -544,6 +543,7 @@ export default async function Home() {
     getSettings(),
     getCachedCategories(),
     getCachedQuickServices(resolvedLocation),
+    resolveSpotlight({ page: 'homepage' }),
   ]);
 
   // Content Layout Engine — additive zone, opt-in site-wide via
@@ -614,10 +614,6 @@ export default async function Home() {
     },
   };
 
-  // Re-checked on every revalidation (revalidate = 300), so the Diwali section
-  // switches on and off by date within about five minutes, with no deploy.
-  const diwali = isDiwaliSeason();
-
   const faqItems: { question: string; answer: string }[] = enriched['faq']?.faqs ?? [];
   // Reuses the same homepage banner fetch above (heroBanners) rather than a
   // second query — an admin opts a banner into the Flash Offer Popup
@@ -638,7 +634,10 @@ export default async function Home() {
     <div>
       <FAQSchema faqs={faqItems} />
       <HomepageOfferSplash banner={splashBanner} />
-      {diwali && <DiwaliSpotlight />}
+      {/* Festival / offer section from Admin → Banners (Campaign Spotlight). Re-checked on
+          every revalidation (revalidate = 300), so it switches on and off at its set times
+          within about five minutes, with no deploy. */}
+      {spotlight && <CampaignSpotlight banner={spotlight} />}
       {publicSectionOrder
         // trust_timeline shows live monthly patient counts; before_after and testimonials are patient endorsements.
         .filter((s) => s.visible && s.key !== 'trust_timeline' && (showBeforeAfterOnPublic || (s.key !== 'before_after' && s.key !== 'testimonials')))

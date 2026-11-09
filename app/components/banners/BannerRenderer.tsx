@@ -10,6 +10,7 @@ import FullImageBanner from "@/app/components/banners/templates/FullImageBanner"
 import PosterBanner from "@/app/components/banners/templates/PosterBanner";
 import CredentialBanner from "@/app/components/banners/templates/CredentialBanner";
 import AnimatedBannerWrapper from "@/app/components/banners/AnimatedBannerWrapper";
+import CampaignSpotlight from "@/app/components/homepage/CampaignSpotlight";
 
 // Dispatcher — switches on templateType, wraps whichever template in one
 // shared entrance-animation wrapper so animation behavior is centralized
@@ -17,6 +18,9 @@ import AnimatedBannerWrapper from "@/app/components/banners/AnimatedBannerWrappe
 // the caller (a page component) decides what fallback to render instead.
 export default function BannerRenderer({ banner }: { banner: BannerDoc | null }) {
   if (!banner) return null;
+  // Never reached from the public slider (resolveBanner leaves spotlights out);
+  // only the admin preview renders a spotlight through here.
+  if (banner.templateType === "spotlight") return <CampaignSpotlight banner={banner} />;
 
   const Template = {
     "premium-hero": PremiumHeroBanner,

@@ -634,17 +634,20 @@ p {
   }
 }
 
-/* ── Diwali spotlight (homepage, date-limited) ─────────────────────────────
-   Dark luxe backdrop, a warm bloom when the lamp lights, letters that come
+/* ── Campaign spotlight (festival / offer section, admin-managed) ──────────
+   Dark luxe backdrop, a warm bloom when the emblem lights, letters that come
    into focus, glass cards that rise and light in turn, sparkles and embers.
+   Colours come from the theme (app/lib/banners/spotlight.ts), set inline on
+   the section as --sp-bg1..3 and --sp-a1..a4.
    The hidden starting states apply only under .is-armed (set by script), so
    without JavaScript or with reduced motion everything is simply shown. */
-.diwali-section {
+.spot-section {
   isolation: isolate;
-  background: radial-gradient(120% 80% at 50% 0%, #12245A 0%, #070F26 58%, #050A1A 100%);
+  --sp-mid: color-mix(in srgb, var(--sp-a1) 50%, var(--sp-a2));
+  background: radial-gradient(120% 80% at 50% 0%, var(--sp-bg1) 0%, var(--sp-bg2) 58%, var(--sp-bg3) 100%);
 }
 
-.diwali-section::before {
+.spot-section::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -653,48 +656,48 @@ p {
   width: min(1100px, 160vw);
   aspect-ratio: 1;
   translate: -50% 0;
-  background: radial-gradient(circle, rgba(255, 196, 92, 0.30) 0%, rgba(245, 166, 35, 0.10) 35%, transparent 65%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--sp-mid) 30%, transparent) 0%, color-mix(in srgb, var(--sp-a2) 10%, transparent) 35%, transparent 65%);
   pointer-events: none;
 }
 
-.diwali-aurora {
+.spot-aurora {
   position: absolute;
   inset: -20%;
   z-index: -1;
   background:
-    radial-gradient(38% 32% at 25% 30%, rgba(245, 166, 35, 0.20), transparent 70%),
-    radial-gradient(34% 30% at 78% 62%, rgba(232, 131, 58, 0.16), transparent 70%),
-    radial-gradient(30% 28% at 50% 100%, rgba(190, 60, 110, 0.16), transparent 70%);
-  animation: diwali-aurora 20s ease-in-out infinite alternate;
+    radial-gradient(38% 32% at 25% 30%, color-mix(in srgb, var(--sp-a2) 20%, transparent), transparent 70%),
+    radial-gradient(34% 30% at 78% 62%, color-mix(in srgb, var(--sp-a3) 16%, transparent), transparent 70%),
+    radial-gradient(30% 28% at 50% 100%, var(--sp-a4), transparent 70%);
+  animation: spot-aurora 20s ease-in-out infinite alternate;
 }
 
-.diwali-rangoli { animation: diwali-spin 90s linear infinite; }
-.diwali-rangoli-rev { animation-direction: reverse; }
+.spot-rangoli { animation: spot-spin 90s linear infinite; }
+.spot-rangoli-rev { animation-direction: reverse; }
 
 /* Rising embers */
-.diwali-spark {
+.spot-spark {
   position: absolute;
   bottom: -8px;
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #FFD27A;
-  box-shadow: 0 0 8px 2px rgba(245, 166, 35, 0.7);
+  background: var(--sp-mid);
+  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--sp-a2) 70%, transparent);
   opacity: 0;
-  animation: diwali-ember 6.5s ease-in infinite;
+  animation: spot-ember 6.5s ease-in infinite;
 }
 
 /* Twinkling four-point stars around the heading */
-.diwali-twinkle {
+.spot-twinkle {
   position: absolute;
   pointer-events: none;
-  filter: drop-shadow(0 0 6px rgba(255, 210, 122, 0.9));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sp-mid) 90%, transparent));
   opacity: 0;
-  animation: diwali-twinkle 3.6s ease-in-out infinite;
+  animation: spot-twinkle 3.6s ease-in-out infinite;
 }
 
 /* Sparkler burst from the main diya as it lights */
-.diwali-burst {
+.spot-burst {
   position: absolute;
   left: 50%;
   top: 30%;
@@ -702,50 +705,67 @@ p {
   height: 0;
   pointer-events: none;
 }
-.diwali-burst span {
+.spot-burst span {
   position: absolute;
   width: 3px;
   height: 14px;
   margin: -7px 0 0 -1.5px;
   border-radius: 3px;
-  background: linear-gradient(#FFF6DD, #F5A623);
-  box-shadow: 0 0 6px rgba(255, 210, 122, 0.9);
+  background: linear-gradient(var(--sp-a1), var(--sp-a2));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sp-mid) 90%, transparent);
   rotate: var(--a);
   opacity: 0;
 }
-.diwali-section.is-shown .diwali-burst span {
-  animation: diwali-burst 1.1s cubic-bezier(0.15, 0.8, 0.3, 1) 0.45s both;
+.spot-section.is-shown .spot-burst span {
+  animation: spot-burst 1.1s cubic-bezier(0.15, 0.8, 0.3, 1) 0.45s both;
 }
 
 /* Diya flame and glow */
-.diwali-flame { transform-box: fill-box; transform-origin: 50% 100%; }
-.diwali-flicker {
+.spot-flame { transform-box: fill-box; transform-origin: 50% 100%; }
+.spot-flicker {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: diwali-flicker 1.6s ease-in-out infinite;
+  animation: spot-flicker 1.6s ease-in-out infinite;
 }
-.diwali-halo { animation: diwali-halo 2.4s ease-in-out infinite; }
-.diwali-hero-diya { filter: drop-shadow(0 10px 30px rgba(245, 166, 35, 0.45)); }
+.spot-halo { animation: spot-halo 2.4s ease-in-out infinite; }
+.spot-hero-diya { filter: drop-shadow(0 10px 30px color-mix(in srgb, var(--sp-a2) 45%, transparent)); }
+/* Non-Diwali themes show an icon medallion instead of the diya */
+.spot-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 9999px;
+  color: var(--sp-a1);
+  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--sp-a1) 28%, transparent), color-mix(in srgb, var(--sp-a2) 10%, transparent) 70%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--sp-a1) 45%, transparent),
+    0 10px 40px -8px color-mix(in srgb, var(--sp-a2) 60%, transparent);
+}
 
 /* Heading letters with a travelling gold sheen */
-.diwali-letter {
+.spot-letter {
   display: inline-block;
-  background: linear-gradient(100deg, #F5A623 0%, #FFE7B0 40%, #FFF6DD 50%, #F5A623 62%, #E8833A 100%);
+  /* Room for descenders (g, p, y): the gradient text only paints inside the box */
+  padding-bottom: 0.18em;
+  margin-bottom: -0.18em;
+  background: linear-gradient(100deg, var(--sp-a2) 0%, var(--sp-a1) 40%, color-mix(in srgb, var(--sp-a1) 55%, #fff) 50%, var(--sp-a2) 62%, var(--sp-a3) 100%);
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: diwali-sheen 6s linear infinite;
+  animation: spot-sheen 6s linear infinite;
 }
 
 /* Tip cards: five gold-foil cards, each tinted by its own tone (--g1 light gold,
    --g2 deep gold, --tint corner wash, set inline per card). They rise in, lean
    towards the pointer and catch a soft spotlight. */
-.diwali-card {
+.spot-card {
   background:
     radial-gradient(120% 80% at 100% 0%, var(--tint), transparent 60%),
     radial-gradient(90% 70% at 0% 100%, color-mix(in srgb, var(--g2) 14%, transparent), transparent 65%),
-    linear-gradient(165deg, rgba(22, 34, 72, 0.92), rgba(8, 14, 34, 0.94));
+    linear-gradient(165deg, color-mix(in srgb, var(--sp-bg1) 92%, transparent), color-mix(in srgb, var(--sp-bg3) 94%, transparent));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
@@ -754,9 +774,9 @@ p {
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transition: transform 0.35s ease, box-shadow 0.35s ease;
 }
-.diwali-card > * { position: relative; z-index: 1; }
+.spot-card > * { position: relative; z-index: 1; }
 /* Gold-foil hairline border (mask "exclude" leaves only the 1px ring) */
-.diwali-card::after {
+.spot-card::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -771,7 +791,7 @@ p {
   pointer-events: none;
 }
 /* Spotlight that follows the pointer */
-.diwali-card::before {
+.spot-card::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -781,16 +801,16 @@ p {
   transition: opacity 0.35s ease;
   pointer-events: none;
 }
-.diwali-card:hover {
+.spot-card:hover {
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--g1) 28%, transparent),
     0 24px 60px -20px color-mix(in srgb, var(--g2) 55%, transparent),
     0 0 0 1px color-mix(in srgb, var(--g2) 25%, transparent);
 }
-.diwali-card:hover::before,
-.diwali-card:hover::after { opacity: 1; }
+.spot-card:hover::before,
+.spot-card:hover::after { opacity: 1; }
 
-.diwali-card-foil {
+.spot-card-foil {
   position: absolute;
   top: 0;
   left: 1.25rem;
@@ -800,7 +820,7 @@ p {
   background: linear-gradient(90deg, transparent, var(--g1) 30%, var(--g2) 70%, transparent);
   box-shadow: 0 0 12px color-mix(in srgb, var(--g1) 60%, transparent);
 }
-.diwali-card-num {
+.spot-card-num {
   position: absolute;
   top: 0.9rem;
   right: 1.1rem;
@@ -811,8 +831,8 @@ p {
   -webkit-text-stroke: 1px color-mix(in srgb, var(--g1) 55%, transparent);
   transition: color 0.35s ease;
 }
-.diwali-card:hover .diwali-card-num { color: color-mix(in srgb, var(--g1) 16%, transparent); }
-.diwali-card-icon {
+.spot-card:hover .spot-card-num { color: color-mix(in srgb, var(--g1) 16%, transparent); }
+.spot-card-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -826,22 +846,22 @@ p {
     0 6px 18px -6px color-mix(in srgb, var(--g2) 60%, transparent);
   transition: transform 0.35s ease;
 }
-.diwali-card:hover .diwali-card-icon { transform: scale(1.06); }
-.diwali-card-label {
+.spot-card:hover .spot-card-icon { transform: scale(1.06); }
+.spot-card-label {
   width: fit-content;
   background: linear-gradient(90deg, var(--g1), color-mix(in srgb, var(--g2) 55%, var(--g1)));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-.diwali-card-rule {
+.spot-card-rule {
   display: block;
   width: 2.75rem;
   height: 1px;
   margin: 0.75rem 0;
   background: linear-gradient(90deg, var(--g1), transparent);
 }
-.diwali-card-rule::before {
+.spot-card-rule::before {
   content: "";
   position: absolute;
   left: -1px;
@@ -854,74 +874,74 @@ p {
 }
 
 /* Starting states, only once the script has armed the section */
-.diwali-section.is-armed::before { opacity: 0; scale: 0.3; }
-.diwali-section.is-armed .diwali-letter,
-.diwali-section.is-armed .diwali-rise,
-.diwali-section.is-armed .diwali-card { opacity: 0; }
-.diwali-section.is-armed .diwali-hero-diya .diwali-flame,
-.diwali-section.is-armed .diwali-hero-diya .diwali-halo { opacity: 0; }
+.spot-section.is-armed::before { opacity: 0; scale: 0.3; }
+.spot-section.is-armed .spot-letter,
+.spot-section.is-armed .spot-rise,
+.spot-section.is-armed .spot-card { opacity: 0; }
+.spot-section.is-armed .spot-hero-diya .spot-flame,
+.spot-section.is-armed .spot-hero-diya .spot-halo { opacity: 0; }
 
-.diwali-section.is-armed.is-shown::before { animation: diwali-bloom 1.6s ease-out 0.3s both; }
-.diwali-section.is-armed.is-shown .diwali-hero-diya .diwali-flame { animation: diwali-ignite 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both; }
-.diwali-section.is-armed.is-shown .diwali-hero-diya .diwali-halo { animation: diwali-fade 0.6s ease 0.4s both, diwali-halo 2.4s ease-in-out 1s infinite; }
-.diwali-section.is-armed.is-shown .diwali-letter {
-  animation: diwali-focus 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both, diwali-sheen 6s linear 2s infinite;
+.spot-section.is-armed.is-shown::before { animation: spot-bloom 1.6s ease-out 0.3s both; }
+.spot-section.is-armed.is-shown .spot-hero-diya .spot-flame { animation: spot-ignite 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both; }
+.spot-section.is-armed.is-shown .spot-hero-diya .spot-halo { animation: spot-fade 0.6s ease 0.4s both, spot-halo 2.4s ease-in-out 1s infinite; }
+.spot-section.is-armed.is-shown .spot-letter {
+  animation: spot-focus 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both, spot-sheen 6s linear 2s infinite;
 }
-.diwali-section.is-armed.is-shown .diwali-rise { animation: diwali-focus 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both; }
-.diwali-section.is-armed.is-shown .diwali-card { animation: diwali-card-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both; }
+.spot-section.is-armed.is-shown .spot-rise { animation: spot-focus 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both; }
+.spot-section.is-armed.is-shown .spot-card { animation: spot-card-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) both; }
 
-@keyframes diwali-aurora {
+@keyframes spot-aurora {
   from { transform: translate3d(-3%, -2%, 0) scale(1); }
   to { transform: translate3d(3%, 2%, 0) scale(1.08); }
 }
-@keyframes diwali-spin { to { transform: rotate(360deg); } }
-@keyframes diwali-ember {
+@keyframes spot-spin { to { transform: rotate(360deg); } }
+@keyframes spot-ember {
   0% { opacity: 0; transform: translate(0, 0) scale(1); }
   15% { opacity: 1; }
   100% { opacity: 0; transform: translate(14px, -460px) scale(0.4); }
 }
-@keyframes diwali-twinkle {
+@keyframes spot-twinkle {
   0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
   50% { opacity: 1; transform: scale(1) rotate(45deg); }
 }
-@keyframes diwali-burst {
+@keyframes spot-burst {
   0% { opacity: 1; transform: translateY(0) scaleY(0.4); }
   100% { opacity: 0; transform: translateY(-64px) scaleY(1); }
 }
-@keyframes diwali-flicker {
+@keyframes spot-flicker {
   0%, 100% { transform: scale(1, 1) rotate(-2deg); }
   30% { transform: scale(0.96, 1.08) rotate(1.5deg); }
   60% { transform: scale(1.03, 0.95) rotate(-1deg); }
 }
-@keyframes diwali-halo {
+@keyframes spot-halo {
   0%, 100% { opacity: 0.75; }
   50% { opacity: 1; }
 }
-@keyframes diwali-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes diwali-ignite {
+@keyframes spot-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes spot-ignite {
   from { opacity: 0; scale: 0; }
   to { opacity: 1; scale: 1; }
 }
-@keyframes diwali-bloom {
+@keyframes spot-bloom {
   from { opacity: 0; scale: 0.3; }
   to { opacity: 1; scale: 1; }
 }
-@keyframes diwali-sheen {
+@keyframes spot-sheen {
   from { background-position: 100% 0; }
   to { background-position: -200% 0; }
 }
-@keyframes diwali-focus {
+@keyframes spot-focus {
   from { opacity: 0; filter: blur(12px); translate: 0 0.4em; }
   to { opacity: 1; filter: none; translate: 0 0; }
 }
-@keyframes diwali-card-in {
+@keyframes spot-card-in {
   from { opacity: 0; filter: blur(8px); translate: 0 48px; }
   to { opacity: 1; filter: none; translate: 0 0; }
 }
 
 /* Soft firework bursts: light only, looping quietly behind the content */
-.diwali-firework { position: absolute; width: 0; height: 0; }
-.diwali-firework span {
+.spot-firework { position: absolute; width: 0; height: 0; }
+.spot-firework span {
   position: absolute;
   width: 4px;
   height: 4px;
@@ -931,33 +951,33 @@ p {
   box-shadow: 0 0 6px 1px var(--c);
   rotate: var(--a);
   opacity: 0;
-  animation: diwali-pop 5.2s cubic-bezier(0.1, 0.7, 0.3, 1) var(--t) infinite;
+  animation: spot-pop 5.2s cubic-bezier(0.1, 0.7, 0.3, 1) var(--t) infinite;
 }
-@keyframes diwali-pop {
+@keyframes spot-pop {
   0% { opacity: 0; transform: translateY(0) scale(1); }
   4% { opacity: 1; }
   32% { opacity: 0.9; transform: translateY(-62px) scale(0.9); }
   48%, 100% { opacity: 0; transform: translateY(-74px) scale(0.3); }
 }
 
-.diwali-track { scrollbar-width: none; }
-.diwali-track::-webkit-scrollbar { display: none; }
+.spot-track { scrollbar-width: none; }
+.spot-track::-webkit-scrollbar { display: none; }
 
 /* Rocket show: a trail climbs to the burst point, a flash, then a ring of sparks
    that drift outward and droop. Timed from --t, matching the sound in the component. */
-.diwali-rocket { position: absolute; width: 0; height: 0; }
-.diwali-rocket-trail {
+.spot-rocket { position: absolute; width: 0; height: 0; }
+.spot-rocket-trail {
   position: absolute;
   width: 2px;
   height: 46px;
   margin-left: -1px;
   border-radius: 2px;
-  background: linear-gradient(to top, transparent, #FFE7B0);
-  box-shadow: 0 0 6px rgba(255, 210, 122, 0.8);
+  background: linear-gradient(to top, transparent, var(--sp-a1));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sp-mid) 80%, transparent);
   opacity: 0;
-  animation: diwali-launch 0.9s cubic-bezier(0.25, 0.6, 0.35, 1) var(--t) both;
+  animation: spot-launch 0.9s cubic-bezier(0.25, 0.6, 0.35, 1) var(--t) both;
 }
-.diwali-rocket-flash {
+.spot-rocket-flash {
   position: absolute;
   width: 160px;
   height: 160px;
@@ -965,9 +985,9 @@ p {
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--c) 55%, transparent), transparent 65%);
   opacity: 0;
-  animation: diwali-flash 0.8s ease-out calc(var(--t) + 0.88s) both;
+  animation: spot-flash 0.8s ease-out calc(var(--t) + 0.88s) both;
 }
-.diwali-rocket span {
+.spot-rocket span {
   position: absolute;
   width: 4px;
   height: 4px;
@@ -977,30 +997,45 @@ p {
   box-shadow: 0 0 8px 2px var(--c);
   rotate: var(--a);
   opacity: 0;
-  animation: diwali-bigpop 1.9s cubic-bezier(0.1, 0.75, 0.25, 1) calc(var(--t) + 0.9s) both;
+  animation: spot-bigpop 1.9s cubic-bezier(0.1, 0.75, 0.25, 1) calc(var(--t) + 0.9s) both;
 }
-.diwali-rocket span:nth-child(odd) { animation-duration: 1.6s; width: 3px; height: 3px; }
+.spot-rocket span:nth-child(odd) { animation-duration: 1.6s; width: 3px; height: 3px; }
 
-@keyframes diwali-launch {
+@keyframes spot-launch {
   0% { opacity: 1; transform: translateY(420px); }
   90% { opacity: 1; }
   100% { opacity: 0; transform: translateY(0); }
 }
-@keyframes diwali-flash {
+@keyframes spot-flash {
   0% { opacity: 0; scale: 0.2; }
   20% { opacity: 1; }
   100% { opacity: 0; scale: 1.2; }
 }
-@keyframes diwali-bigpop {
+@keyframes spot-bigpop {
   0% { opacity: 1; transform: translateY(0) scale(1.6); }
   55% { opacity: 1; transform: translateY(-110px) scale(1); }
   100% { opacity: 0; transform: translateY(-122px) translateX(6px) scale(0.3); }
 }
 
 /* Gentle pulse on the sound button so it reads as something to tap */
-.diwali-sound { box-shadow: 0 0 0 0 rgba(245, 166, 35, 0.45); }
-.diwali-sound { animation: diwali-ring 2.4s ease-out 1s infinite; }
-@keyframes diwali-ring {
-  0% { box-shadow: 0 0 0 0 rgba(245, 166, 35, 0.45); }
-  70%, 100% { box-shadow: 0 0 0 12px rgba(245, 166, 35, 0); }
+.spot-sound {
+  color: var(--sp-a1);
+  border-color: color-mix(in srgb, var(--sp-a1) 60%, transparent);
+  background: color-mix(in srgb, var(--sp-bg1) 88%, #fff);
+  animation: spot-ring 2.4s ease-out 1s infinite;
+}
+.spot-sound:hover { background: color-mix(in srgb, var(--sp-bg1) 80%, #fff); }
+@keyframes spot-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sp-a2) 45%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 12px transparent; }
+}
+
+/* Optional background image or video, under a veil in the theme colour so the
+   text stays readable over any footage */
+.spot-media { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+.spot-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sp-bg2) 72%, transparent), color-mix(in srgb, var(--sp-bg3) 88%, transparent));
 }
