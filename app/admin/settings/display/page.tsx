@@ -10,6 +10,7 @@ type DisplaySettings = {
   showBeforeAfterOnPublic: boolean;
   relatedServicesCount: number;
   carouselIntervalMs: number;
+  homepageBranch: string;
 };
 
 const DEFAULTS: DisplaySettings = {
@@ -18,7 +19,15 @@ const DEFAULTS: DisplaySettings = {
   showBeforeAfterOnPublic: true,
   relatedServicesCount: 3,
   carouselIntervalMs: 5000,
+  homepageBranch: "chennai",
 };
+
+const BRANCHES = [
+  { value: "chennai", label: "Chennai" },
+  { value: "bangalore", label: "Bangalore" },
+  { value: "coimbatore", label: "Coimbatore" },
+  { value: "kochi", label: "Kochi" },
+];
 
 const TOGGLES: { key: keyof DisplaySettings; label: string; desc: string }[] = [
   {
@@ -147,6 +156,25 @@ export default function DisplaySettingsPage() {
                 <Toggle on={form[key] as boolean} onChange={() => set(key, !form[key] as any)} />
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Homepage branch */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-50">
+            <h2 className="font-bold text-[#0B2560] text-sm">Homepage Branch</h2>
+            <p className="text-gray-400 text-xs mt-0.5">The homepage's treatment cards and quick links open this branch's treatment pages, and it is the starting branch for the navbar and footer links until a visitor picks or opens a branch themselves. Changes show on the homepage within about 5 minutes.</p>
+          </div>
+          <div className="px-6 py-5">
+            <label htmlFor="homepage-branch" className="sr-only">Homepage branch</label>
+            <select
+              id="homepage-branch"
+              value={form.homepageBranch}
+              onChange={(e) => set("homepageBranch", e.target.value)}
+              className="w-full sm:w-64 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-[#0B2560] bg-white focus:outline-none focus:ring-2 focus:ring-[#0B2560]/20"
+            >
+              {BRANCHES.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+            </select>
           </div>
         </div>
 

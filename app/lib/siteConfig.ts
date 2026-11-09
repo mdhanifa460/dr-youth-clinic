@@ -72,6 +72,7 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       schemaType: settings.content?.schemaType || 'MedicalClinic',
       defaultAuthorName: settings.content?.defaultAuthorName || 'DR Youth Clinic',
       carouselIntervalMs: settings.display?.carouselIntervalMs ?? 5000,
+      homepageBranch: settings.display?.homepageBranch || 'chennai',
       servicesHubHeadline: settings.content?.servicesHubHeadline || 'Clinical',
       servicesHubHeadlineAccent: settings.content?.servicesHubHeadlineAccent || 'Excellence.',
       servicesHubDescription: settings.content?.servicesHubDescription || '{count} across skin, hair restoration and laser, all in {city}.',

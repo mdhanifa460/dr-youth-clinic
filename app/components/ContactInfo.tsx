@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { MdLocationOn, MdPhone, MdEmail } from 'react-icons/md';
 import { resolveFooterLocation, LOCATION_COOKIE } from '@/app/lib/footerLinks';
+import { useSiteConfig } from '@/app/components/SiteConfigContext';
 
 // The Footer's "Contact Us" address/phone used to be one fixed value for
 // every visitor (whatever an admin typed into Homepage → Footer — Chennai
@@ -26,15 +27,16 @@ export default function ContactInfo({
   defaultEmail?: string;
 }) {
   const pathname = usePathname();
-  const [location, setLocation] = useState(() => resolveFooterLocation(pathname, ''));
+  const { homepageBranch } = useSiteConfig();
+  const [location, setLocation] = useState(() => resolveFooterLocation(pathname, '', homepageBranch));
   const [address, setAddress] = useState(defaultAddress || '');
   const [phone, setPhone] = useState(defaultPhone || '');
 
   useEffect(() => {
     const match = document.cookie.match(new RegExp(`(?:^|; )${LOCATION_COOKIE}=([^;]+)`));
     const cookieValue = match ? decodeURIComponent(match[1]) : '';
-    setLocation(resolveFooterLocation(pathname, cookieValue));
-  }, [pathname]);
+    setLocation(resolveFooterLocation(pathname, cookieValue, homepageBranch));
+  }, [pathname, homepageBranch]);
 
   useEffect(() => {
     let cancelled = false;

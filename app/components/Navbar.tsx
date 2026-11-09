@@ -102,7 +102,10 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
   // client-side so the Services link on the plain domain sends visitors to their
   // own city instead of always defaulting to Chennai — same cookie the homepage's
   // Services section already trusts server-side (app/(public)/page.tsx).
-  const [detectedLocation, setDetectedLocation] = useState("chennai");
+  // Before any saved choice, the admin's default branch (Settings → Public Display).
+  const [detectedLocation, setDetectedLocation] = useState(
+    CITY_SLUGS.includes(siteConfig.homepageBranch) ? siteConfig.homepageBranch : "chennai",
+  );
   useEffect(() => {
     const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
     const value = match ? decodeURIComponent(match[1]) : "";

@@ -35,13 +35,14 @@ export function resolveFooterHref(href: string, label: string, location: string)
 }
 
 // Same current/preferred-city resolution Navbar.tsx does client-side (URL
-// segment first, else the visitor's saved city, else "chennai") — used
+// segment first, else the visitor's saved city, else the admin's default
+// branch from Settings → Public Display, else "chennai") — used
 // server-side in Footer.tsx via the x-pathname header middleware.ts already
 // sets on every request, plus the preferred_location cookie it already
 // writes.
-export function resolveFooterLocation(pathname: string, cookieLocation: string): string {
+export function resolveFooterLocation(pathname: string, cookieLocation: string, fallback = "chennai"): string {
   const firstSegment = pathname.split("/")[1] || "";
   if (CITY_SLUGS.includes(firstSegment)) return firstSegment;
   if (CITY_SLUGS.includes(cookieLocation)) return cookieLocation;
-  return "chennai";
+  return CITY_SLUGS.includes(fallback) ? fallback : "chennai";
 }

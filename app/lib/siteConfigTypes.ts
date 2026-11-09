@@ -50,6 +50,9 @@ export interface SiteConfig {
   /** Milliseconds each slide shows before auto-advancing — shared by every multi-slide
    *  carousel site-wide (homepage hero, admin-managed promo banners) (Settings → Display) */
   carouselIntervalMs: number;
+  /** Branch used for links when the visitor hasn't picked one: homepage treatment
+   *  cards, navbar Services and footer links (Settings → Public Display) */
+  homepageBranch: string;
   /** Services Hub page (/[location]/services) hero headline, e.g. "Clinical" (Settings → Content) */
   servicesHubHeadline: string;
   /** Accent-colored second line of the headline, e.g. "Excellence." (Settings → Content) */
@@ -85,6 +88,7 @@ export const SITE_CONFIG_DEFAULTS: SiteConfig = {
   schemaType: 'MedicalClinic',
   defaultAuthorName: 'DR Youth Clinic',
   carouselIntervalMs: 5000,
+  homepageBranch: 'chennai',
   servicesHubHeadline: 'Clinical',
   servicesHubHeadlineAccent: 'Excellence.',
   servicesHubDescription: '{count} across skin, hair restoration and laser, all in {city}.',

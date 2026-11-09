@@ -62,6 +62,12 @@ export async function PUT(req: NextRequest) {
       Object.assign(body.analytics, trimmed);
     }
 
+    // The homepage's treatment links use this branch; only real branch pages.
+    if (body?.display && 'homepageBranch' in body.display
+      && !['chennai', 'bangalore', 'coimbatore', 'kochi'].includes(body.display.homepageBranch)) {
+      return NextResponse.json({ success: false, message: 'Homepage branch must be Chennai, Bangalore, Coimbatore or Kochi.' }, { status: 400 });
+    }
+
     const existing = await Settings.findOne({} as any).lean();
 
     let updated;

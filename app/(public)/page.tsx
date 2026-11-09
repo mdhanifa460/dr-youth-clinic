@@ -512,17 +512,16 @@ export default async function Home() {
   // the time either is called, Next.js has already committed to static
   // output). Both already have a safe "no signal" fallback below.
   const { showBeforeAfterOnPublic } = await getSiteConfig();
-  const preferredLocation = '';
   const rawCity = '';
   const detectedCity = rawCity ? decodeURIComponent(rawCity) : '';
 
-  // Same 4 city slugs used sitewide (Navbar.tsx, [location] routes) — used
-  // here so the homepage's category cards link to the visitor's own city's
-  // services instead of always defaulting to Chennai.
+  // The branch the homepage's treatment cards link to is chosen in
+  // Admin → Settings → Public Display ("Homepage branch"). Same 4 city
+  // slugs used sitewide (Navbar.tsx, [location] routes).
   const CITY_SLUGS = ['chennai', 'bangalore', 'coimbatore', 'kochi'];
-  const resolvedLocation = CITY_SLUGS.includes(preferredLocation.toLowerCase())
-    ? preferredLocation.toLowerCase()
-    : 'chennai';
+  const settingsDoc = await getSettings();
+  const adminBranch = String((settingsDoc as any)?.display?.homepageBranch || '').toLowerCase();
+  const resolvedLocation = CITY_SLUGS.includes(adminBranch) ? adminBranch : 'chennai';
 
   const [initialReviews, locationEmbeds, liveDoctors, liveBlogPosts, liveVideos, trustStats, heroBanners, serviceCategoryCounts, liveResultPairs, liveAchievements, liveStories, liveFaqs, testimonialsRotateMs, settings, serviceCategories, quickServices, spotlight] = await Promise.all([
     testimonialsConfig
@@ -540,7 +539,7 @@ export default async function Home() {
     getCachedStories(),
     getCachedHomepageFaqs(),
     getCachedTestimonialsRotateMs(),
-    getSettings(),
+    Promise.resolve(settingsDoc),
     getCachedCategories(),
     getCachedQuickServices(resolvedLocation),
     resolveSpotlight({ page: 'homepage' }),

@@ -50,6 +50,12 @@ describe('resolveFooterLocation', () => {
     expect(resolveFooterLocation('/about', 'not-a-city')).toBe('chennai');
   });
 
+  it("uses the admin's default branch when the visitor has no city yet", () => {
+    expect(resolveFooterLocation('/', '', 'kochi')).toBe('kochi');
+    expect(resolveFooterLocation('/', 'bangalore', 'kochi')).toBe('bangalore');
+    expect(resolveFooterLocation('/', '', 'mumbai')).toBe('chennai');
+  });
+
   it('ignores an invalid city segment in the URL and uses the cookie instead', () => {
     expect(resolveFooterLocation('/blog', 'bangalore')).toBe('bangalore');
   });

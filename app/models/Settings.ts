@@ -64,6 +64,9 @@ export interface ISettings extends Document {
     // hardcoded constants (5000/6000ms, one component with none at all)
     // before this existed, each only changeable by editing code.
     carouselIntervalMs: number;
+    // Branch the homepage's treatment cards link to (the homepage is the
+    // same cached page for every visitor, so it cannot follow a cookie).
+    homepageBranch: string;
   };
   brand: {
     tagline: string;
@@ -473,6 +476,7 @@ const SettingsSchema = new Schema<ISettings>(
       showBeforeAfterOnPublic: { type: Boolean, default: false },
       relatedServicesCount:    { type: Number,  default: 3 },
       carouselIntervalMs:      { type: Number,  default: 5000 },
+      homepageBranch:          { type: String,  enum: ['chennai', 'bangalore', 'coimbatore', 'kochi'], default: 'chennai' },
     },
     brand: {
       tagline:        { type: String, default: "Your Skin's Best Friend" },

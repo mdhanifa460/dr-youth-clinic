@@ -29,15 +29,15 @@ export default function FooterLinks({
   heading: string;
   links: { href: string; label: string }[];
 }) {
-  const { showBeforeAfterOnPublic } = useSiteConfig();
+  const { showBeforeAfterOnPublic, homepageBranch } = useSiteConfig();
   const pathname = usePathname();
-  const [location, setLocation] = useState(() => resolveFooterLocation(pathname, ''));
+  const [location, setLocation] = useState(() => resolveFooterLocation(pathname, '', homepageBranch));
 
   useEffect(() => {
     const match = document.cookie.match(new RegExp(`(?:^|; )${LOCATION_COOKIE}=([^;]+)`));
     const cookieValue = match ? decodeURIComponent(match[1]) : '';
-    setLocation(resolveFooterLocation(pathname, cookieValue));
-  }, [pathname]);
+    setLocation(resolveFooterLocation(pathname, cookieValue, homepageBranch));
+  }, [pathname, homepageBranch]);
 
   return (
     <div>
