@@ -34,7 +34,9 @@ export const maxDuration = 60;
 // time limit part-way.
 
 const BATCH = 10;
-const CONCURRENCY = 5;
+// 3 at a time: Google limits embedding requests per minute, and 5 at a
+// time hit that limit on a full reindex.
+const CONCURRENCY = 3;
 
 type Step = {
   key: string;

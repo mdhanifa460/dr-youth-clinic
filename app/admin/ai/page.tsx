@@ -558,7 +558,7 @@ function KnowledgeBaseTab() {
   // Index status per content type, and live progress while reindexing.
   type IndexStep = { key: string; label: string; total: number; indexed: number; missing: number; outdated: number };
   const [indexStatus, setIndexStatus] = useState<IndexStep[]>([]);
-  const [progress, setProgress] = useState<{ label: string; stepDone: number; stepTotal: number; done: number; total: number; etaSec: number | null } | null>(null);
+  const [progress, setProgress] = useState<{ label: string; stepDone: number; stepTotal: number; done: number; total: number; etaSec: number | null; note?: string } | null>(null);
   const stopRef = useRef(false);
 
   const [documents, setDocuments] = useState<any[]>([]);
@@ -596,7 +596,14 @@ function KnowledgeBaseTab() {
   const reindex = async () => {
     setReindexing(true); setReindexResult(''); stopRef.current = false;
     let upserted = 0, failed = 0, removed = 0, done = 0;
+    const reasons = new Map<string, number>();
     const started = Date.now();
+    const wait = async (sec: number, label: string, base: any) => {
+      for (let s = sec; s > 0 && !stopRef.current; s--) {
+        setProgress({ ...base, label, note: `Google asked us to slow down; retrying in ${s}s` });
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    };
     try {
       const plan = await (await fetch('/api/admin/knowledge-base/reindex')).json();
       if (!plan.success) { setReindexResult(plan.message || 'Could not start the reindex.'); return; }
@@ -611,8 +618,26 @@ function KnowledgeBaseTab() {
           const res = await fetch('/api/admin/knowledge-base/reindex', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step: st.key, offset }),
           });
-          const data = await res.json().catch(() => ({ success: false, message: `Server error (${res.status})` }));
+          let data = await res.json().catch(() => ({ success: false, message: `Server error (${res.status})` }));
           if (!data.success) { setReindexResult(`${st.label}: ${data.message || 'failed'}. ${done} of ${total} items were done; press Reindex All to try again.`); return; }
+          // Google's per-minute limit: pause and redo this batch (safe to
+          // repeat) up to 3 times before counting its items as failed.
+          for (let attempt = 1; data.failed.length > 0 && attempt <= 3 && !stopRef.current; attempt++) {
+            await wait(30, st.label, { label: st.label, stepDone: offset, stepTotal: data.total, done, total, etaSec: null });
+            if (stopRef.current) break;
+            const again = await fetch('/api/admin/knowledge-base/reindex', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step: st.key, offset }),
+            });
+            const retry = await again.json().catch(() => null);
+            if (retry?.success) data = retry;
+          }
+          for (const f of data.failed) {
+            const r = /busy|429/i.test(f.error) ? "Google's per-minute limit for AI requests"
+              : /quota/i.test(f.error) ? 'Google AI quota used up for now'
+              : /authentication|api key/i.test(f.error) ? 'Google AI key problem'
+              : f.error || 'unknown error';
+            reasons.set(r, (reasons.get(r) || 0) + 1);
+          }
           upserted += data.upserted; failed += data.failed.length; removed += data.removed;
           done += data.processed - offset;
           const elapsed = (Date.now() - started) / 1000;
@@ -624,7 +649,8 @@ function KnowledgeBaseTab() {
           offset = data.processed;
         }
       }
-      setReindexResult(`Done: ${upserted} items indexed${failed ? `, ${failed} failed (press Reindex All again to retry them)` : ''}${removed ? `, ${removed} outdated entries removed` : ''}.`);
+      const why = [...reasons].map(([r, n]) => `${n} × ${r}`).join('; ');
+      setReindexResult(`Done: ${upserted} items indexed${failed ? `, ${failed} could not be refreshed (${why}). Those keep their previous entry; press Reindex All again later to refresh them` : ''}${removed ? `, ${removed} outdated entries removed` : ''}.`);
     } catch {
       setReindexResult(`Connection lost after ${done} items. Press Reindex All to run it again.`);
     } finally {
@@ -666,7 +692,7 @@ function KnowledgeBaseTab() {
           <div className="mb-3" role="status" aria-live="polite">
             <div className="flex justify-between gap-3 text-xs text-gray-600 mb-1.5">
               <span className="min-w-0 truncate"><b>{progress.label}</b> {progress.stepDone}/{progress.stepTotal} · overall {progress.done}/{progress.total}</span>
-              <span className="shrink-0 text-gray-400">{fmtEta(progress.etaSec)}</span>
+              <span className="shrink-0 text-gray-400">{progress.note || fmtEta(progress.etaSec)}</span>
             </div>
             <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
               <div className="h-full bg-[#0B2560] transition-all" style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} />
