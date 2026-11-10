@@ -12,7 +12,7 @@ import { cleanCredentialWording, scrubClaims } from '@/app/lib/patientClaims';
 import { toTelHref } from '@/app/lib/phone';
 import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { Doctor } from '@/app/models/Doctor';
 import { Service } from '@/app/models/Service';
 import { getCachedCategories } from '@/app/lib/getCachedCategories';
@@ -63,7 +63,7 @@ async function getBranchResults(city: string) {
   try {
     await connectDB();
     const docs = await (Result as any)
-      .find({ branch: { $in: [city, 'all'] }, status: 'published' })
+      .find({ branch: { $in: [city, 'all'] }, ...PUBLISHED_RESULT })
       .sort({ order: 1, createdAt: -1 })
       .limit(3)
       .lean();
@@ -222,6 +222,8 @@ export default async function LocationPage(props: { params: Promise<{ location: 
         phone={phone}
         hours={hours}
         schemaType={siteConfig.schemaType}
+        imageUrl={content?.heroImage?.url}
+        mapEmbedUrl={mapEmbedUrl}
       />
       <HomepageOfferSplash banner={splashBanner} page="location" />
       {/* Festival or branch offer for this city (Admin → Banners → Campaign Spotlight) */}

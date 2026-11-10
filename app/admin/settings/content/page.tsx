@@ -215,7 +215,7 @@ export default function ContentSettingsPage() {
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-50">
             <h2 className="font-bold text-[#0B2560] text-sm">Schema Markup</h2>
-            <p className="text-gray-400 text-xs mt-0.5">How Google categorizes your business in search results.</p>
+            <p className="text-gray-400 text-xs mt-0.5">How Google categorizes each branch (the Chennai, Bangalore, Coimbatore and Kochi pages). The brand as a whole is always described as a medical organization, since only a branch has a street address.</p>
           </div>
           <div className="px-6 py-5 space-y-3">
 

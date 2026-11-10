@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import ResultsClient from './ResultsClient';
 import { notFound } from 'next/navigation';
@@ -37,7 +37,7 @@ const getPairs = unstable_cache(
     try {
       await connectDB();
       const results = await (Result as any)
-        .find({ active: true })
+        .find(PUBLISHED_RESULT)
         .sort({ order: 1, createdAt: -1 })
         .lean();
       return JSON.parse(JSON.stringify(results));

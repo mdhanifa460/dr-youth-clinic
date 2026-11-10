@@ -3,7 +3,32 @@ import { CLOUDINARY_LOGO_URL } from "@/app/lib/legacyImageUrls";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
-export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUrl, schemaType }: {
+// The brand as a whole (every page) vs each physical branch (city pages).
+// Google treats MedicalClinic/LocalBusiness as a physical place that must
+// have an address, so the brand-wide block is a MedicalOrganization and
+// only the branch blocks are clinics, each linked back to the brand.
+export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+
+// "!2d<lng>!3d<lat>" (Google Maps embed links) or "q=<lat>,<lng>". Returns
+// null when the link has no coordinates; never guesses.
+export function parseMapCoordinates(url: string | undefined | null): { latitude: number; longitude: number } | null {
+  if (!url) return null;
+  const pb = url.match(/!2d(-?\d+(?:\.\d+)?)!3d(-?\d+(?:\.\d+)?)/);
+  const q = url.match(/[?&](?:q|ll)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+  const lat = pb ? Number(pb[2]) : q ? Number(q[1]) : NaN;
+  const lng = pb ? Number(pb[1]) : q ? Number(q[2]) : NaN;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return { latitude: lat, longitude: lng };
+}
+
+// Indian PIN code (6 digits, sometimes written "600 040") from an address.
+export function extractPostalCode(address: string | undefined | null): string {
+  const all = [...String(address || '').matchAll(/\b(\d{3})\s?(\d{3})\b/g)];
+  const last = all[all.length - 1];
+  return last ? last[1] + last[2] : '';
+}
+
+export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUrl }: {
   phone?: string;
   instagramUrl?: string;
   facebookUrl?: string;
@@ -18,7 +43,8 @@ export function OrganizationSchema({ phone, instagramUrl, facebookUrl, youtubeUr
 
   const schema = {
     "@context": "https://schema.org",
-    "@type": schemaType || "MedicalClinic",
+    "@type": "MedicalOrganization",
+    "@id": ORGANIZATION_ID,
     name: "DR Youth Clinic",
     url: SITE_URL,
     logo: CLOUDINARY_LOGO_URL,
@@ -86,9 +112,12 @@ interface LocalBusinessProps {
   phone?: string;
   hours?: { day: string; hours: string }[];
   schemaType?: string;
+  // Branch photo (Admin → Locations) and map link, when set.
+  imageUrl?: string;
+  mapEmbedUrl?: string;
 }
 
-export function LocalBusinessSchema({ location, city, address, phone, hours, schemaType }: LocalBusinessProps) {
+export function LocalBusinessSchema({ location, city, address, phone, hours, schemaType, imageUrl, mapEmbedUrl }: LocalBusinessProps) {
   const locationData = locations[location];
   if (!locationData) return null;
 
@@ -96,21 +125,28 @@ export function LocalBusinessSchema({ location, city, address, phone, hours, sch
   const effectivePhone    = phone        || locationData.phone;
 
   const openingHours = toOpeningHoursSpec(hours?.length ? hours : locationData.hours);
+  const postalCode = extractPostalCode(effectiveAddress);
+  const geo = parseMapCoordinates(mapEmbedUrl);
 
   const schema: Record<string, any> = {
     "@context": "https://schema.org",
     "@type": schemaType || "MedicalClinic",
+    "@id": `${SITE_URL}/${location}#clinic`,
     name: `DR Youth Clinic - ${city}`,
     url: `${SITE_URL}/${location}`,
+    parentOrganization: { "@id": ORGANIZATION_ID },
     address: {
       "@type": "PostalAddress",
       streetAddress: effectiveAddress,
       addressLocality: city,
       addressRegion: REGION_BY_LOCATION[location] || city,
+      ...(postalCode ? { postalCode } : {}),
       addressCountry: "IN",
     },
+    ...(geo ? { geo: { "@type": "GeoCoordinates", ...geo } } : {}),
     ...(effectivePhone ? { telephone: effectivePhone } : {}),
-    image: CLOUDINARY_LOGO_URL,
+    image: imageUrl && /^https?:\/\//.test(imageUrl) ? imageUrl : CLOUDINARY_LOGO_URL,
+    logo: CLOUDINARY_LOGO_URL,
     description: `Skin, hair and laser treatments at DR Youth Clinic in ${city}`,
     ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
   };

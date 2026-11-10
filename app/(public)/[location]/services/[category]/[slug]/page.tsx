@@ -14,7 +14,7 @@ import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Review, PUBLIC_REVIEW_FIELDS } from '@/app/models/Review';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import SliderCard from '@/app/components/SliderCard';
 import SwipeTray from '@/app/components/SwipeTray';
 import { withCityInTitle } from '@/app/lib/blogSeo';
@@ -154,7 +154,7 @@ async function getServiceResults(serviceId: string) {
   try {
     await connectDB();
     const docs = await (Result as any)
-      .find({ service: serviceId, status: 'published' })
+      .find({ service: serviceId, ...PUBLISHED_RESULT })
       .sort({ order: 1, createdAt: -1 })
       .limit(3)
       .lean();

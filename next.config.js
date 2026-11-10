@@ -217,6 +217,12 @@ const nextConfig = {
         { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' },
       ],
     },
+    // No API response is a page: keep them out of search results even where
+    // robots.txt lets Google fetch one to render a page (see app/robots.ts).
+    {
+      source: '/api/:path*',
+      headers: [{ key: 'X-Robots-Tag', value: 'noindex' }],
+    },
     // Public API responses — CDN-cacheable for 60s, serve stale for up to 5min
     {
       source: '/api/reviews',

@@ -92,6 +92,13 @@ ResultSchema.pre('save', async function () {
   this.active = this.status === 'published';
 });
 
+// One rule for "visible on the public site", used by every public list AND
+// the detail page, so a card can never link to a page that 404s. Results saved
+// before the draft/publish `status` field existed have only `active`.
+export const PUBLISHED_RESULT = {
+  $or: [{ status: 'published' }, { status: { $exists: false }, active: true }],
+};
+
 // The admin edit route updates via findByIdAndUpdate, which bypasses the
 // 'save' hook above — keep `active` in sync with `status` there too, or
 // draft/publish has no effect on the listing/homepage queries that filter

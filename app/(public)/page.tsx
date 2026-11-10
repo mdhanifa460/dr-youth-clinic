@@ -8,7 +8,7 @@ import { Doctor } from '@/app/models/Doctor';
 import { Video } from '@/app/models/Video';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { Achievement } from '@/app/models/Achievement';
 import { Story } from '@/app/models/Story';
 // Registers StoryType with Mongoose for the .populate('storyType') call
@@ -257,7 +257,7 @@ const getCachedResultPairs = unstable_cache(
     try {
       await connectDB();
       const docs = await (Result as any)
-        .find({ active: true })
+        .find(PUBLISHED_RESULT)
         .sort({ order: 1, createdAt: -1 })
         .limit(6)
         .lean();

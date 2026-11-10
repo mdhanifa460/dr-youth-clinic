@@ -6,7 +6,7 @@ import { BOOKING_SUCCESS_ID_COOKIE } from '@/app/lib/bookingSuccessRedirect';
 import { connectDB } from '@/app/lib/mongodb';
 import Booking from '@/app/models/Booking';
 import '@/app/models/Doctor';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { Review, PUBLIC_REVIEW_FIELDS } from '@/app/models/Review';
 import { Faq } from '@/app/models/Faq';
 import { Offer } from '@/app/models/Offer';
@@ -240,7 +240,7 @@ export default async function BookingSuccessPage(
   const [beforeAfter, successStories, faqs, offers] = await Promise.all([
     enabledSections.has('beforeAfter')
       ? (Result as any)
-          .find({ active: true, ...(branchKey ? { branch: { $in: [branchKey, 'all'] } } : {}) })
+          .find({ ...PUBLISHED_RESULT, ...(branchKey ? { branch: { $in: [branchKey, 'all'] } } : {}) })
           .sort({ order: 1, createdAt: -1 })
           .limit(4)
           .lean()
@@ -269,7 +269,7 @@ export default async function BookingSuccessPage(
   // clinic doesn't have real results," which isn't true.
   let resolvedBeforeAfter = beforeAfter;
   if (enabledSections.has('beforeAfter') && resolvedBeforeAfter.length === 0) {
-    resolvedBeforeAfter = await (Result as any).find({ active: true }).sort({ order: 1, createdAt: -1 }).limit(4).lean().catch(() => []);
+    resolvedBeforeAfter = await (Result as any).find(PUBLISHED_RESULT).sort({ order: 1, createdAt: -1 }).limit(4).lean().catch(() => []);
   }
   let resolvedStories = successStories;
   if (enabledSections.has('successStories') && siteConfig.showBeforeAfterOnPublic && resolvedStories.length === 0) {

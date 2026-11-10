@@ -19,17 +19,26 @@ const AI_CRAWLERS = [
   'Google-Extended', // Gemini / AI Overviews training opt-in
 ];
 
+// Read-only addresses public pages call as they load (footer branch contact,
+// WhatsApp button, testimonials). Google must be able to fetch these to
+// render a page fully; otherwise the Rich Results Test / URL Inspection
+// reports the page as "partially loaded, blocked by robots.txt". The more
+// specific Allow wins over "Disallow: /api" for Google. Everything else
+// under /api (forms, bookings, admin) stays blocked, and every /api response
+// carries X-Robots-Tag: noindex (next.config.js) so none is ever indexed.
+export const RENDER_API_ALLOW = ['/api/branch-contact', '/api/branch-whatsapp', '/api/reviews'];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/lp/'],
+        allow: ['/', '/lp/', ...RENDER_API_ALLOW],
         disallow: ['/admin', '/api'],
       },
       ...AI_CRAWLERS.map((userAgent) => ({
         userAgent,
-        allow: ['/', '/lp/'],
+        allow: ['/', '/lp/', ...RENDER_API_ALLOW],
         disallow: ['/admin', '/api'],
       })),
     ],

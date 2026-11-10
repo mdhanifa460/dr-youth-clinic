@@ -6,7 +6,7 @@ import { Story } from '@/app/models/Story';
 import { Doctor } from '@/app/models/Doctor';
 import { Service } from '@/app/models/Service';
 import { Offer } from '@/app/models/Offer';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 // Registers StoryType with Mongoose for the .populate('storyType') calls
 // below — see the note in app/api/admin/results/route.ts for why this
 // import can't be dropped.
@@ -63,7 +63,8 @@ async function getRelatedEntities(story: any) {
       ids.doctor.size ? (Doctor as any).find({ _id: { $in: Array.from(ids.doctor) } }).lean() : [],
       ids.service.size ? (Service as any).find({ _id: { $in: Array.from(ids.service) } }).lean() : [],
       ids.offer.size ? (Offer as any).find({ _id: { $in: Array.from(ids.offer) } }).lean() : [],
-      ids.result.size ? (Result as any).find({ _id: { $in: Array.from(ids.result) } }).lean() : [],
+      // Results pages exist only while Before / After is switched on.
+      ids.result.size && (await getSiteConfig()).showBeforeAfterOnPublic ? (Result as any).find({ _id: { $in: Array.from(ids.result) }, ...PUBLISHED_RESULT }).lean() : [],
     ]);
 
     const hasAny = doctors.length || services.length || offers.length || results.length;

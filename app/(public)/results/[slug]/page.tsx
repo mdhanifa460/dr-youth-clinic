@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft, Clock, Repeat, User, MapPin, Calendar } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { Service } from '@/app/models/Service';
 // Registers Doctor with Mongoose for the .populate('doctor') call below —
 // see the note in app/api/admin/results/route.ts for why this is required.
@@ -24,7 +24,7 @@ const getResult = cache(async (slug: string) => {
   try {
     await connectDB();
     const result = await (Result as any)
-      .findOne({ slug, status: 'published' })
+      .findOne({ slug, ...PUBLISHED_RESULT })
       .populate('service', 'name category urlSlug location targetLocations locationSeo')
       .populate('doctor', 'name title photo qualifications experience')
       .lean();
@@ -36,12 +36,12 @@ const getResult = cache(async (slug: string) => {
 async function getRelatedResults(excludeId: string, category: string) {
   try {
     await connectDB();
-    const query: any = { _id: { $ne: excludeId }, status: 'published' };
+    const query: any = { _id: { $ne: excludeId }, ...PUBLISHED_RESULT };
     if (category) query.category = category;
     let results = await (Result as any).find(query).sort({ order: 1, createdAt: -1 }).limit(3).lean();
     if (results.length < 3) {
       const more = await (Result as any)
-        .find({ _id: { $ne: excludeId, $nin: results.map((r: any) => r._id) }, status: 'published' })
+        .find({ _id: { $ne: excludeId, $nin: results.map((r: any) => r._id) }, ...PUBLISHED_RESULT })
         .sort({ createdAt: -1 }).limit(3 - results.length).lean();
       results = [...results, ...more];
     }
@@ -63,7 +63,7 @@ async function getRelatedServices(serviceId: string | undefined, category: strin
 export async function generateStaticParams() {
   try {
     await connectDB();
-    const results = await (Result as any).find({ status: 'published' }).select('slug').lean();
+    const results = await (Result as any).find(PUBLISHED_RESULT).select('slug').lean();
     return results.filter((r: any) => r.slug).map((r: any) => ({ slug: r.slug }));
   } catch { return []; }
 }

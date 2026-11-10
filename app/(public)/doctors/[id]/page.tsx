@@ -8,7 +8,7 @@ import { Calendar, MapPin, Award, ArrowLeft, GraduationCap, Languages, Stethosco
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
 import { HomepageSection } from '@/app/models/HomepageSection';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import SliderCard from '@/app/components/SliderCard';
 import { PhysicianSchema } from '@/app/components/SchemaMarkup';
@@ -39,7 +39,7 @@ const getDoctorResults = unstable_cache(async (doctorId: string) => {
   try {
     await connectDB();
     const docs = await (Result as any)
-      .find({ doctor: doctorId, status: 'published' })
+      .find({ doctor: doctorId, ...PUBLISHED_RESULT })
       .sort({ order: 1, createdAt: -1 })
       .limit(3)
       .lean();

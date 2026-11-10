@@ -4,7 +4,7 @@ import { Doctor } from '@/app/models/Doctor';
 import { Blog } from '@/app/models/Blog';
 import { LandingPage } from '@/app/models/LandingPage';
 import { Story } from '@/app/models/Story';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { Video } from '@/app/models/Video';
 import { Course } from '@/app/models/Course';
 import { getServiceCities, getEffectiveSlug, isCityPageIndexable } from '@/app/lib/serviceSeo';
@@ -33,7 +33,8 @@ export interface SiteUrlEntry {
 }
 
 const LOCATIONS = ['chennai', 'bangalore', 'kochi', 'coimbatore'] as const;
-const SERVICE_CATEGORIES = ['skin', 'hair', 'laser'] as const;
+// 'other' (Specialist Care) is a real, linked category page too.
+const SERVICE_CATEGORIES = ['skin', 'hair', 'laser', 'other'] as const;
 
 // Exported (not just used internally) so app/sitemap.ts's error fallback
 // can render every static route even if the DB-querying part of
@@ -51,6 +52,8 @@ export function staticRoutes(): SiteUrlEntry[] {
     { path: '/doctors', changeFrequency: 'weekly', priority: 0.8 },
     { path: '/offers', changeFrequency: 'weekly', priority: 0.8 },
     { path: '/web-stories', changeFrequency: 'daily', priority: 0.8 },
+    { path: '/plan-my-journey', changeFrequency: 'monthly', priority: 0.6 },
+    { path: '/skin-quiz', changeFrequency: 'monthly', priority: 0.6 },
     { path: '/privacy-policy', changeFrequency: 'yearly', priority: 0.3 },
     { path: '/terms', changeFrequency: 'yearly', priority: 0.3 },
     ...LOCATIONS.map((city): SiteUrlEntry => ({
@@ -90,7 +93,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     (Story as any).find({ status: 'published' })
       .select('slug updatedAt')
       .lean() as Promise<any[]>,
-    (Result as any).find({ status: 'published' })
+    (Result as any).find(PUBLISHED_RESULT)
       .select('slug title updatedAt')
       .lean() as Promise<any[]>,
     (Video as any).find({ status: 'published' })
