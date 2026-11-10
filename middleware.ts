@@ -9,6 +9,7 @@ import { normalizeOldUrl } from "@/app/lib/domainMigration/parseSitemap";
 import { getCachedRedirect } from "@/app/lib/domainMigration/redirectCache";
 import { parseAdminAllowlist, isIpAllowed, getRequestIp } from "@/app/lib/adminIpAllowlist";
 import { BOOKING_SUCCESS_ID_COOKIE } from "@/app/lib/bookingSuccessRedirect";
+import { oldSiteHostname, OLD_SITE_RESOLVER_PATH, OLD_SITE_PATH_HEADER } from "@/app/lib/domainMigration/oldSiteRedirect";
 
 // Canonical www -> non-www redirect. Confirmed LIVE before adding this
 // (not assumed): both hostnames already resolve to this exact Vercel
@@ -207,6 +208,23 @@ export async function middleware(req: NextRequest) {
   // header, which would have made this check silently never fire in any
   // environment where that same quirk applies. The Host header itself is
   // what both curl and a real browser/Vercel actually send.
+  // Old domain (dryouthclinic.co.in): every request, including old .aspx
+  // pages, images and anything under /api, goes to the resolver route, which
+  // answers with one permanent redirect to the right page on the new domain
+  // (approved Domain Migration mapping first). See oldSiteRedirect.ts.
+  const oldHost = oldSiteHostname(req.headers.get("host"));
+  if (oldHost) {
+    // Clone nextUrl (not new URL(.., req.url)) so the rewrite stays an
+    // in-app rewrite; a different origin makes Next proxy it over the network.
+    // The old path travels in a request header: the rewrite keeps the
+    // original query string, so query params set here would not arrive.
+    const resolver = req.nextUrl.clone();
+    resolver.pathname = OLD_SITE_RESOLVER_PATH;
+    const headers = new Headers(req.headers);
+    headers.set(OLD_SITE_PATH_HEADER, req.nextUrl.pathname + req.nextUrl.search);
+    return NextResponse.rewrite(resolver, { request: { headers } });
+  }
+
   if (req.headers.get("host") === WWW_HOSTNAME) {
     return NextResponse.redirect(new URL(req.nextUrl.pathname + req.nextUrl.search, CANONICAL_SITE_URL), 308);
   }
@@ -419,5 +437,9 @@ export const config = {
     // enters through "/"). Excludes /api (its own routes read the cookie
     // directly, no need to re-run this), static assets, and Next internals.
     "/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
+    // Every path on the OLD domain, so old images and /api links redirect
+    // too. Literal host list: keep in sync with OLD_SITE_HOSTNAMES in
+    // app/lib/domainMigration/oldSiteRedirect.ts.
+    { source: "/:path*", has: [{ type: "host", value: "(?:www\\.)?dryouthclinic\\.co\\.in" }] },
   ],
 };
