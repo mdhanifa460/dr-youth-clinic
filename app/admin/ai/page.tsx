@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   Bot, Database, MessageSquare, BarChart3, RefreshCw, Plus, Trash2,
@@ -555,6 +555,11 @@ function KnowledgeBaseTab() {
   const [loading, setLoading] = useState(true);
   const [reindexing, setReindexing] = useState(false);
   const [reindexResult, setReindexResult] = useState('');
+  // Index status per content type, and live progress while reindexing.
+  type IndexStep = { key: string; label: string; total: number; indexed: number; missing: number; outdated: number };
+  const [indexStatus, setIndexStatus] = useState<IndexStep[]>([]);
+  const [progress, setProgress] = useState<{ label: string; stepDone: number; stepTotal: number; done: number; total: number; etaSec: number | null } | null>(null);
+  const stopRef = useRef(false);
 
   const [documents, setDocuments] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
@@ -575,19 +580,59 @@ function KnowledgeBaseTab() {
     if (data.success) setDocuments(data.data);
   }, []);
 
+  const loadIndexStatus = useCallback(async () => {
+    try {
+      const data = await (await fetch('/api/admin/knowledge-base/reindex')).json();
+      if (data.success) setIndexStatus(data.steps);
+    } catch { /* table stays hidden */ }
+  }, []);
+
   useEffect(() => { loadChunks(); }, [loadChunks]);
+  useEffect(() => { loadIndexStatus(); }, [loadIndexStatus]);
   useEffect(() => { loadDocuments(); }, [loadDocuments]);
 
+  // Runs the reindex batch by batch (10 items per request) so it shows real
+  // progress and can't be cut off by the server's time limit.
   const reindex = async () => {
-    setReindexing(true); setReindexResult('');
+    setReindexing(true); setReindexResult(''); stopRef.current = false;
+    let upserted = 0, failed = 0, removed = 0, done = 0;
+    const started = Date.now();
     try {
-      const res = await fetch('/api/admin/knowledge-base/reindex', { method: 'POST' });
-      const data = await res.json();
-      setReindexResult(data.success ? `Reindexed ${data.upserted}/${data.total} documents${data.failed?.length ? ` (${data.failed.length} failed)` : ''}.` : data.message);
-      loadChunks();
-    } catch { setReindexResult('Reindex failed.'); }
-    finally { setReindexing(false); }
+      const plan = await (await fetch('/api/admin/knowledge-base/reindex')).json();
+      if (!plan.success) { setReindexResult(plan.message || 'Could not start the reindex.'); return; }
+      if (plan.ready === false) { setReindexResult('Add a valid GEMINI_API_KEY to enable knowledge-base reindexing.'); return; }
+      const steps: IndexStep[] = plan.steps;
+      const total = steps.reduce((a, st) => a + st.total, 0);
+      for (const st of steps) {
+        let offset = 0;
+        // A step with nothing live still runs once, to clear out old entries.
+        for (;;) {
+          if (stopRef.current) { setReindexResult(`Stopped after ${done} of ${total} items. Press Reindex All to run it again.`); return; }
+          const res = await fetch('/api/admin/knowledge-base/reindex', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step: st.key, offset }),
+          });
+          const data = await res.json().catch(() => ({ success: false, message: `Server error (${res.status})` }));
+          if (!data.success) { setReindexResult(`${st.label}: ${data.message || 'failed'}. ${done} of ${total} items were done; press Reindex All to try again.`); return; }
+          upserted += data.upserted; failed += data.failed.length; removed += data.removed;
+          done += data.processed - offset;
+          const elapsed = (Date.now() - started) / 1000;
+          setProgress({
+            label: st.label, stepDone: data.processed, stepTotal: data.total, done, total,
+            etaSec: done > 0 && total > done ? Math.round((elapsed / done) * (total - done)) : null,
+          });
+          if (data.done) break;
+          offset = data.processed;
+        }
+      }
+      setReindexResult(`Done: ${upserted} items indexed${failed ? `, ${failed} failed (press Reindex All again to retry them)` : ''}${removed ? `, ${removed} outdated entries removed` : ''}.`);
+    } catch {
+      setReindexResult(`Connection lost after ${done} items. Press Reindex All to run it again.`);
+    } finally {
+      setReindexing(false); setProgress(null);
+      loadChunks(); loadIndexStatus();
+    }
   };
+  const fmtEta = (sec: number | null) => sec == null ? 'estimating…' : sec < 60 ? `about ${sec}s left` : `about ${Math.ceil(sec / 60)} min left`;
 
   const openNew = () => { setSelected(null); setIsNew(true); };
   const openEdit = (d: any) => { setSelected(d); setIsNew(false); };
@@ -604,12 +649,56 @@ function KnowledgeBaseTab() {
             <h2 className="text-sm font-bold text-[#0B2560]">Vector Search Index</h2>
             <p className="text-xs text-gray-400 mt-0.5">{chunks.length > 0 ? `${Object.values(counts).reduce((a, b) => a + b, 0)} chunks embedded` : 'Loading…'}</p>
           </div>
-          <button onClick={reindex} disabled={reindexing}
-            className="flex items-center gap-2 bg-[#0B2560] text-white px-4 py-2 rounded-xl text-xs font-bold hover:-translate-y-0.5 transition disabled:opacity-50">
-            {reindexing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} Reindex All
-          </button>
+          <div className="flex items-center gap-2">
+            {reindexing && (
+              <button onClick={() => { stopRef.current = true; }}
+                className="text-xs font-bold text-gray-500 border border-gray-200 px-3 py-2 rounded-xl hover:text-red-600 hover:border-red-200">
+                Stop
+              </button>
+            )}
+            <button onClick={reindex} disabled={reindexing}
+              className="flex items-center gap-2 bg-[#0B2560] text-white px-4 py-2 rounded-xl text-xs font-bold hover:-translate-y-0.5 transition disabled:opacity-50">
+              {reindexing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} Reindex All
+            </button>
+          </div>
         </div>
+        {progress && (
+          <div className="mb-3" role="status" aria-live="polite">
+            <div className="flex justify-between gap-3 text-xs text-gray-600 mb-1.5">
+              <span className="min-w-0 truncate"><b>{progress.label}</b> {progress.stepDone}/{progress.stepTotal} · overall {progress.done}/{progress.total}</span>
+              <span className="shrink-0 text-gray-400">{fmtEta(progress.etaSec)}</span>
+            </div>
+            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full bg-[#0B2560] transition-all" style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} />
+            </div>
+          </div>
+        )}
         {reindexResult && <p className="text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2">{reindexResult}</p>}
+        {indexStatus.length > 0 && (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-gray-400">
+                  <th className="font-semibold py-1.5 pr-3">Content</th>
+                  <th className="font-semibold py-1.5 pr-3">Indexed</th>
+                  <th className="font-semibold py-1.5 pr-3">Not yet indexed</th>
+                  <th className="font-semibold py-1.5">Outdated entries</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {indexStatus.map((st) => (
+                  <tr key={st.key}>
+                    <td className="py-1.5 pr-3 font-semibold text-gray-700">{st.label}</td>
+                    <td className="py-1.5 pr-3 text-gray-600">{st.indexed} / {st.total}</td>
+                    <td className={`py-1.5 pr-3 ${st.missing ? 'text-amber-600 font-semibold' : 'text-gray-400'}`}>{st.missing}</td>
+                    <td className={`py-1.5 ${st.outdated ? 'text-amber-600 font-semibold' : 'text-gray-400'}`}>{st.outdated}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-[11px] text-gray-400 mt-2">Outdated entries belong to items that were deleted, unpublished or hidden; Reindex All removes them.</p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2 mt-3">
           {SOURCE_TYPES.map(t => (
             <button key={t} onClick={() => setFilter(filter === t ? '' : t)}

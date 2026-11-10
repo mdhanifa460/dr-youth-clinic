@@ -199,8 +199,42 @@ export function buildFaqChunk(faq: { question: string; answer: string; category?
 // Stable id for an FAQ chunk — FAQs have no natural _id (STATIC_FAQS is a TS
 // array, CMS FAQs live inside a Mixed blob), so the question text itself is
 // the identity. sha1 keeps sourceId a short, deterministic string.
-function faqSourceId(question: string): string {
+export function faqSourceId(question: string): string {
   return createHash('sha1').update(question).digest('hex');
+}
+
+// Site FAQs (built-in + homepage) are keyed by a 40-char sha1 of the question;
+// FAQ-library entries (the Faq model) by their 24-char database id. Both use
+// sourceType 'faq', so clean-up must only ever touch its own kind.
+export const SITE_FAQ_ID = /^[a-f0-9]{40}$/;
+export const LIBRARY_FAQ_ID = /^[a-f0-9]{24}$/;
+
+// Built-in + homepage FAQs, deduped by question (homepage wins), with ids.
+export function currentSiteFaqs(
+  staticFaqs: { question: string; answer: string; category?: string }[],
+  cmsFaqs: { question: string; answer: string; category?: string }[]
+): Array<{ id: string; question: string; answer: string; category?: string }> {
+  const seen = new Set<string>();
+  const out: Array<{ id: string; question: string; answer: string; category?: string }> = [];
+  for (const faq of [...cmsFaqs, ...staticFaqs]) {
+    if (!faq?.question || seen.has(faq.question)) continue;
+    seen.add(faq.question);
+    out.push({ id: faqSourceId(faq.question), ...faq });
+  }
+  return out;
+}
+
+// Removes site-FAQ entries whose question no longer exists. Never touches
+// FAQ-library entries (those leave via the Faq model's own hooks).
+export async function removeStaleSiteFaqChunks(currentIds: Set<string>): Promise<number> {
+  await connectDB();
+  const existing = await (KnowledgeChunk as any).find({ sourceType: 'faq' }).select('sourceId').lean();
+  const staleIds = existing
+    .map((c: any) => String(c.sourceId))
+    .filter((id: string) => SITE_FAQ_ID.test(id) && !currentIds.has(id));
+  if (staleIds.length === 0) return 0;
+  const res = await (KnowledgeChunk as any).deleteMany({ sourceType: 'faq', sourceId: { $in: staleIds } });
+  return res.deletedCount || 0;
 }
 
 // Builders are looked up by sourceType so syncKnowledgeChunk stays a single
@@ -268,38 +302,21 @@ export async function syncFaqChunks(
 ): Promise<{ upserted: number; removed: number; failed: { question: string; error: string }[] }> {
   await connectDB();
 
-  const seen = new Set<string>();
-  const deduped: { question: string; answer: string; category?: string }[] = [];
-  for (const faq of [...cmsFaqs, ...staticFaqs]) {
-    if (seen.has(faq.question)) continue;
-    seen.add(faq.question);
-    deduped.push(faq);
-  }
-
   let upserted = 0;
   const currentIds = new Set<string>();
   const failed: { question: string; error: string }[] = [];
-  for (const faq of deduped) {
-    const id = faqSourceId(faq.question);
-    currentIds.add(id);
+  for (const faq of currentSiteFaqs(staticFaqs, cmsFaqs)) {
+    currentIds.add(faq.id);
     try {
-      await upsertChunk('faq', id, buildFaqChunk(faq));
+      await upsertChunk('faq', faq.id, buildFaqChunk(faq));
       upserted++;
     } catch (e: any) {
       failed.push({ question: faq.question, error: e.message || String(e) });
     }
   }
 
-  const existing = await (KnowledgeChunk as any).find({ sourceType: 'faq' }).select('sourceId').lean();
-  const staleIds = existing
-    .map((c: any) => c.sourceId)
-    .filter((id: string) => !currentIds.has(id));
-
-  let removed = 0;
-  if (staleIds.length > 0) {
-    const res = await (KnowledgeChunk as any).deleteMany({ sourceType: 'faq', sourceId: { $in: staleIds } });
-    removed = res.deletedCount || 0;
-  }
-
+  // Previously removed every 'faq' entry not in this list, which also wiped
+  // the FAQ library's entries on every reindex and homepage FAQ save.
+  const removed = await removeStaleSiteFaqChunks(currentIds);
   return { upserted, removed, failed };
 }
