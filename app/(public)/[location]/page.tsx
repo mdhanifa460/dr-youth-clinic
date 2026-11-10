@@ -30,6 +30,7 @@ import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getSettings } from '@/app/models/Settings';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import { pseudoPageId } from '@/app/lib/layoutEngine/pseudoPageId';
+import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -45,8 +46,8 @@ export async function generateMetadata(props: { params: Promise<{ location: stri
   if (!loc) return {};
   const { name } = loc;
   return {
-    title: `Skin, Hair & Aesthetic Clinic in ${name}`,
-    description: `Skin, hair and laser treatments at DR Youth Clinic in ${name}. Book your consultation today. ${loc.specialties.join(', ')}.`,
+    title: pageTitle(`Skin, Hair & Aesthetic Clinic in ${name}`),
+    description: metaDescription(`Skin, hair and laser treatments at DR Youth Clinic in ${name}: ${loc.specialties.slice(0, 4).join(', ')}. Book your consultation today.`),
     alternates: { canonical: `${SITE_URL}/${params.location}` },
     openGraph: {
       title: `Skin Clinic in ${name} | DR Youth Clinic`,

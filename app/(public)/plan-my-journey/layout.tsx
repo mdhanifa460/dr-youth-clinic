@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getSiteConfig } from "@/app/lib/siteConfig";
+import { pageTitle, metaDescription } from "@/app/lib/seoText";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 
@@ -7,9 +8,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const { consultationFree } = await getSiteConfig();
 
   return {
-    title: "Plan My Journey – AI-Personalised Treatment Timeline",
-    description:
-      `Pick your goal — Hair, Skin, Laser, or Weight Loss — and get an AI-personalised month-by-month treatment journey, matched doctors, and a cost plan, all in one place. ${consultationFree ? 'Free consultation included.' : ''}`,
+    title: pageTitle("Plan My Journey – AI-Personalised Treatment Timeline"),
+    description: metaDescription(
+      `Pick your goal — Hair, Skin, Laser, or Weight Loss — and get an AI-personalised month-by-month treatment journey, matched doctors, and a cost plan, all in one place. ${consultationFree ? 'Free consultation included.' : ''}`),
     alternates: {
       canonical: `${SITE_URL}/plan-my-journey`,
     },

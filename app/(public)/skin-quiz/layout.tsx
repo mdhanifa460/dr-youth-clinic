@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getSiteConfig } from "@/app/lib/siteConfig";
+import { pageTitle, metaDescription } from "@/app/lib/seoText";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 
@@ -7,9 +8,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const { skinQuizFree, consultationFree } = await getSiteConfig();
 
   return {
-    title: "Clinical Intake – Prepare for Your Consultation",
-    description:
-      `Answer a few quick questions so DR Youth's doctors can prepare for your consultation — ${skinQuizFree ? 'free, ' : ''}in about a minute. Your doctor reviews everything and confirms what's right for you at your visit.`,
+    title: pageTitle("Clinical Intake – Prepare for Your Consultation"),
+    description: metaDescription(
+      `Answer a few quick questions so DR Youth's doctors can prepare for your consultation — ${skinQuizFree ? 'free, ' : ''}in about a minute. Your doctor reviews everything and confirms what's right for you at your visit.`),
     alternates: {
       canonical: `${SITE_URL}/skin-quiz`,
     },

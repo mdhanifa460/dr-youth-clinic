@@ -11,8 +11,20 @@ import '@/app/models/Doctor';
 import '@/app/models/Service';
 import VideoPlayer from './VideoPlayer';
 import { VideoObjectSchema } from '@/app/components/SchemaMarkup';
+import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
 export const revalidate = 300;
+
+// Listing the published videos lets Next.js cache each page (refreshed every
+// 5 minutes) instead of rendering it from scratch on every visit. Videos
+// published later are still served on first request, then cached.
+export async function generateStaticParams() {
+  try {
+    await connectDB();
+    const docs = await (Video as any).find({ status: 'published' }).select('slug').lean();
+    return docs.filter((d: any) => d.slug).map((d: any) => ({ slug: d.slug }));
+  } catch { return []; }
+}
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -75,8 +87,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const description = video.metaDescription || fallbackDescription;
 
   return {
-    title,
-    description,
+    title: pageTitle(title),
+    description: metaDescription(description, video.aiSummary, video.description),
     keywords: video.keywords?.length ? video.keywords : undefined,
     alternates: { canonical: video.canonicalUrl || `${SITE_URL}/academy/${video.slug}` },
     openGraph: {

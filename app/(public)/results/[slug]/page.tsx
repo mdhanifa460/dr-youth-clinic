@@ -17,6 +17,7 @@ import SliderCard from '@/app/components/SliderCard';
 import BranchWhatsAppLink from '@/app/components/BranchWhatsAppLink';
 import { BreadcrumbSchema } from '@/app/components/SchemaMarkup';
 import ArticleCtaBand from '@/app/(public)/blog/[slug]/ArticleCtaBand';
+import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -76,8 +77,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const description = result.seoDescription || result.description || `See real before and after results for ${result.title} at DR Youth Clinic.`;
   const ogImage = result.after?.url || result.before?.url || result.gallery?.[0]?.url;
   return {
-    title,
-    description,
+    title: pageTitle(title),
+    description: metaDescription(description),
     alternates: { canonical: `${SITE_URL}/results/${params.slug}` },
     openGraph: {
       title,

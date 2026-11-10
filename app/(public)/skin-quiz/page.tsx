@@ -522,7 +522,13 @@ export default function SkinQuizPage() {
           regardless of how tall this page's own content is. */}
       <div className={`max-w-2xl mx-auto px-4 py-8 pb-28 lg:pb-12 md:py-12 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
         {screen === "intro" && !configReady && (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+            {/* Same heading as the intro, so the page has its h1 before the
+                assessment settings finish loading (and for search engines). */}
+            <h1 className="text-3xl md:text-5xl font-extrabold text-primary leading-tight mb-4 max-w-xl tracking-tight">
+              Let&apos;s Prepare For<br />
+              <span className="text-bronze">Your Consultation</span>
+            </h1>
             <div className="w-10 h-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
             <p className="text-sm text-gray-500">Loading your personalised assessment…</p>
           </div>

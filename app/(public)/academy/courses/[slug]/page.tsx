@@ -11,6 +11,16 @@ import CourseEnquiryForm from './CourseEnquiryForm';
 
 export const revalidate = 300;
 
+// Listing the published courses lets Next.js cache each page (refreshed every
+// 5 minutes) instead of rendering it from scratch on every visit.
+export async function generateStaticParams() {
+  try {
+    await connectDB();
+    const docs = await (Course as any).find({ status: 'published' }).select('slug').lean();
+    return docs.filter((d: any) => d.slug).map((d: any) => ({ slug: d.slug }));
+  } catch { return []; }
+}
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 interface PageProps {

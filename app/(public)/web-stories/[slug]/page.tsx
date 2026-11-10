@@ -15,6 +15,7 @@ import { getSiteConfig } from '@/app/lib/siteConfig';
 import { recommend } from '@/app/lib/rag/RecommendationService';
 import { BreadcrumbSchema } from '@/app/components/SchemaMarkup';
 import StoryViewer from './StoryViewer';
+import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -98,10 +99,19 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const story = await getStory(params.slug);
   if (!story) return { title: 'Story Not Found' };
   const title = story.seoTitle || story.title;
-  const description = story.seoDescription || story.description || `${story.title} — a web story from DR Youth Clinic.`;
+  // Fall back to the story's own slide text before the generic line.
+  const slideText = (story.slides || [])
+    .flatMap((sl: any) => (sl.elements || []).filter((el: any) => ['subtitle', 'description', 'quote'].includes(el.type)))
+    .map((el: any) => el.data?.text || el.data?.content || '')
+    .filter(Boolean).join(' ');
+  const description = metaDescription(
+    story.seoDescription, story.description,
+    slideText ? `${story.title}: ${slideText}` : '',
+    `${story.title} — a web story from DR Youth Clinic.`,
+  );
   const image = story.coverImage?.url;
   return {
-    title,
+    title: pageTitle(title),
     description,
     keywords: story.seoKeywords?.length ? story.seoKeywords : undefined,
     alternates: { canonical: `${SITE_URL}/web-stories/${params.slug}` },

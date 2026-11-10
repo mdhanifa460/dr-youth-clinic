@@ -51,6 +51,7 @@ import { getServiceCities, getEffectiveSeo, getEffectiveSlug, getLocalContent, i
 import { getCachedCategories } from '@/app/lib/getCachedCategories';
 import { LocationContent } from '@/app/models/LocationContent';
 import CityClinicSection from '@/app/components/CityClinicSection';
+import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
 export const revalidate = 300;
 
@@ -241,8 +242,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   return {
     // Admins often reuse one metaTitle for every city; without the city in it,
     // each city's page shows as a duplicate title in search results.
-    title: seo.metaTitle ? withCityInTitle(seo.metaTitle, city) : `${svc.name} in ${city}`,
-    description: seo.metaDescription || `Book ${svc.name} at DR Youth Clinic ${city}. Expert dermatologists, proven results.`,
+    title: pageTitle(seo.metaTitle ? withCityInTitle(seo.metaTitle, city) : `${svc.name} in ${city}`),
+    description: metaDescription(seo.metaDescription, `${svc.name} at DR Youth Clinic in ${city}. Read how the treatment works and book a consultation with our doctors.`),
     keywords: svc.keywords?.join(', '),
     alternates: { canonical: `${SITE_URL}/${params.location}/services/${catSlug}/${params.slug}` },
     // Near-copy of the main city's page until this city has its own local

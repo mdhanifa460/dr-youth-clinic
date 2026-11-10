@@ -4,14 +4,14 @@ import { Service } from '@/app/models/Service';
 import { Doctor } from '@/app/models/Doctor';
 import { Blog } from '@/app/models/Blog';
 import { LocationContent } from '@/app/models/LocationContent';
-import { Result } from '@/app/models/Result';
+import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { Offer } from '@/app/models/Offer';
 import { KnowledgeDocument } from '@/app/models/KnowledgeDocument';
 import { Story } from '@/app/models/Story';
 import { Faq } from '@/app/models/Faq';
 import { Video } from '@/app/models/Video';
 import { HomepageSection } from '@/app/models/HomepageSection';
-import { IKnowledgeChunk } from '@/app/models/KnowledgeChunk';
+import { KnowledgeChunk, IKnowledgeChunk } from '@/app/models/KnowledgeChunk';
 import { requirePermission } from '@/app/lib/adminAuth';
 import { syncKnowledgeChunk, syncFaqChunks } from '@/app/lib/rag/KnowledgeBase';
 import { flattenStaticFaqs } from '@/app/lib/rag/staticFaqs';
@@ -36,6 +36,7 @@ export async function POST() {
     total: 0,
     upserted: 0,
     failed: [] as { sourceType: string; sourceId: string; error: string }[],
+    removed: 0,
   };
 
   // Each document is synced independently — one embedding failure must never
@@ -73,8 +74,10 @@ export async function POST() {
     (Doctor as any).find({}).lean(),
     (Blog as any).find({}).lean(),
     (LocationContent as any).find({}).lean(),
-    (Result as any).find({}).lean(),
-    (Offer as any).find({}).lean(),
+    // Only what visitors can actually open: a draft or inactive item in the
+    // index gets recommended and leads to a 404.
+    (Result as any).find(PUBLISHED_RESULT).lean(),
+    (Offer as any).find({ active: { $ne: false } }).lean(),
     (KnowledgeDocument as any).find({ active: true }).lean(),
     (Story as any).find({ status: 'published' }).lean(),
     (Faq as any).find({ active: true }).lean(),
@@ -92,6 +95,19 @@ export async function POST() {
   await reindexAll('story', stories);
   await reindexAll('faq', faqDocs);
   await reindexAll('video', videos);
+
+  // Remove index entries for items that were deleted, unpublished or
+  // deactivated since they were indexed (the per-save hooks only cover
+  // changes made after they existed). FAQs are reconciled by syncFaqChunks.
+  const current: Array<[IKnowledgeChunk['sourceType'], any[]]> = [
+    ['service', services], ['doctor', doctors], ['blog', blogs], ['location', locations],
+    ['result', resultDocs], ['offer', offers], ['document', documents], ['story', stories], ['video', videos],
+  ];
+  for (const [sourceType, docs] of current) {
+    const keep = docs.map((d: any) => String(d._id));
+    const res = await (KnowledgeChunk as any).deleteMany({ sourceType, sourceId: { $nin: keep } });
+    results.removed += res?.deletedCount || 0;
+  }
 
   const cmsFaqs = (faqSection as any)?.data?.faqs ?? [];
   const faqResult = await syncFaqChunks(flattenStaticFaqs(), cmsFaqs);

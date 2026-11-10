@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { syncKnowledgeChunk } from '@/app/lib/rag/KnowledgeBase';
+import { syncKnowledgeChunk, removeChunk } from '@/app/lib/rag/KnowledgeBase';
 import { FocalPointSchema } from '@/app/models/shared/imageSchema';
 import type { FocalPoint } from '@/app/lib/media/focalPoint';
 
@@ -112,11 +112,18 @@ ResultSchema.pre('findOneAndUpdate', function () {
   }
 });
 
-ResultSchema.post('save', function (doc) {
-  syncKnowledgeChunk('result', doc).catch((e) => console.error('[KB] result sync failed', e));
-});
-ResultSchema.post('findOneAndUpdate', function (doc) {
-  if (doc) syncKnowledgeChunk('result', doc).catch((e) => console.error('[KB] result sync failed', e));
+// Only published results belong in the AI/recommendation index; a draft or
+// deleted one would be suggested to visitors and lead to a 404.
+function syncResultChunk(doc: any) {
+  if (!doc) return;
+  const live = doc.status ? doc.status === 'published' : doc.active !== false;
+  (live ? syncKnowledgeChunk('result', doc) : removeChunk('result', String(doc._id)))
+    .catch((e) => console.error('[KB] result sync failed', e));
+}
+ResultSchema.post('save', function (doc) { syncResultChunk(doc); });
+ResultSchema.post('findOneAndUpdate', function (doc) { syncResultChunk(doc); });
+ResultSchema.post('findOneAndDelete', function (doc: any) {
+  if (doc) removeChunk('result', String(doc._id)).catch((e) => console.error('[KB] result remove failed', e));
 });
 
 export const Result = mongoose.models.Result || mongoose.model<IResult>('Result', ResultSchema);

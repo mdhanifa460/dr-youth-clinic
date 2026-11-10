@@ -35,6 +35,7 @@ import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSect
 import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
 import { isBlogAtCity, getBlogCities, getEffectiveBlogSeo, isBlogCityPageCanonicalSelf, withCityInTitle } from '@/app/lib/blogSeo';
+import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
 function InlineConsultCta({ text }: { text?: string }) {
   return (
@@ -134,9 +135,17 @@ export async function generateBlogDetailMetadata(slug: string, location?: string
   const canonicalPath = selfCanonical
     ? (location ? `/${location}/blog/${slug}` : `/blog/${slug}`)
     : `/blog/${slug}`;
+  const cityName = location ? location.charAt(0).toUpperCase() + location.slice(1) : '';
+  // A city copy must not repeat the generic post's description word for word.
+  const description = metaDescription(
+    cityName && !new RegExp(cityName, 'i').test(seo.metaDescription || '')
+      ? `${cityName}: ${seo.metaDescription}`
+      : seo.metaDescription,
+    post.excerpt,
+  );
   return {
-    title: seo.metaTitle,
-    description: seo.metaDescription,
+    title: pageTitle(seo.metaTitle),
+    description,
     keywords: post.keywords?.length ? post.keywords : undefined,
     alternates: { canonical: (!location && post.canonicalUrl) || `${SITE_URL}${canonicalPath}` },
     openGraph: {

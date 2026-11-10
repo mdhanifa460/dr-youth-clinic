@@ -16,6 +16,7 @@ import { cleanCredentialWording } from '@/app/lib/patientClaims';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
+import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
 export const revalidate = 300;
 
@@ -73,13 +74,14 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   const doctor = await getDoctor(params.id);
   if (!doctor) return { title: 'Doctor Not Found' };
   return {
-    title: `${doctor.name} – ${doctor.title}`,
+    title: pageTitle(`${doctor.name} – ${doctor.title}`),
     // Without this, the page inherits the root layout's canonical (the
     // homepage), so Google treats every doctor page as a duplicate of "/".
     alternates: { canonical: `${(process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')}/doctors/${params.id}` },
-    description: doctor.bio
-      ? cleanCredentialWording(doctor.bio).slice(0, 155) + (doctor.bio.length > 155 ? '…' : '')
-      : `Meet ${doctor.name}, ${doctor.title} at DR Youth Clinic.`,
+    description: metaDescription(
+      doctor.bio ? cleanCredentialWording(doctor.bio) : '',
+      [`Meet ${doctor.name}, ${doctor.title} at DR Youth Clinic.`, doctor.qualifications ? cleanCredentialWording(String(doctor.qualifications)) : ''].filter(Boolean).join(' '),
+    ),
   };
 }
 

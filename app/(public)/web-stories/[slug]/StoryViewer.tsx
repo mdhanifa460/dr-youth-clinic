@@ -40,7 +40,8 @@ function ElementView({ el, entities, siteConfig }: any) {
 
   switch (el.type) {
     case 'title':
-      return <h1 className="text-2xl md:text-3xl font-headline font-extrabold text-white leading-tight drop-shadow-lg">{d.text}</h1>;
+      // h2: the page's one h1 is the story title under the viewer.
+      return <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-white leading-tight drop-shadow-lg">{d.text}</h2>;
     case 'subtitle':
       return <p className="text-base md:text-lg font-bold text-bronze drop-shadow">{d.text}</p>;
     case 'description':
@@ -259,6 +260,13 @@ export default function StoryViewer({ story, related, entities, siteConfig }: an
           </button>
         </div>
       </div>
+
+      {/* The page's main heading (server-rendered, so search engines and
+          screen readers get it before any slide plays). */}
+      <header className="max-w-4xl mx-auto px-6 pt-2 pb-4 text-center">
+        <h1 className="text-xl md:text-2xl font-headline font-extrabold text-white">{story.title}</h1>
+        {story.description && <p className="mt-2 text-sm text-white/70 max-w-xl mx-auto">{story.description}</p>}
+      </header>
 
       {/* Recommendations */}
       {(entities.recommendations?.length > 0) && (
