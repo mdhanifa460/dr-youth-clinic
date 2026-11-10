@@ -8,7 +8,7 @@ import { vectorSearchKnowledgeBase } from '@/app/lib/rag/VectorSearchService';
 import { findBestPredefinedMatch } from '@/app/lib/rag/predefinedFaqMatch';
 import { CLINICAL_AI_GUARDRAILS } from '@/app/lib/ai/clinicalGuardrails';
 import { generateChatStream, isConfiguredProviderReady } from '@/app/lib/ai';
-import { scoreHitsToCards, type RecommendationType } from '@/app/lib/rag/RecommendationService';
+import { scoreHitsToCards, dropUnavailableResults, type RecommendationType } from '@/app/lib/rag/RecommendationService';
 import { checkRateLimit, getClientIp, tooManyRequestsResponse } from '@/app/lib/rateLimit';
 import { canonicalizeLocation } from '@/app/lib/locationNormalize';
 import { getBranchAvailability } from '@/app/lib/availability';
@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
       const matchedRecRule = matchRule(aiConfig.recommendationRules, message);
       const types = (matchedRecRule?.preferredTypes?.length ? matchedRecRule.preferredTypes : CARD_TYPES) as RecommendationType[];
       const minScore = matchedRecRule?.minScore;
-      cards = scoreHitsToCards(hits, { types, minScore })
+      cards = (await dropUnavailableResults(scoreHitsToCards(hits, { types, minScore })))
         .slice(0, 3)
         .map((c) => ({ type: c.type, id: c.sourceId, title: c.title, subtitle: c.subtitle, href: c.href }));
     }

@@ -45,6 +45,30 @@ export function scoreHitsToCards(
     }));
 }
 
+// The search index can still hold Results that were since deleted or
+// unpublished (they 404). Keep only Result cards that are live now, under
+// the same rule the Results pages use, and none at all while Before / After
+// is switched off (those pages don't exist then). Other card types pass.
+export async function dropUnavailableResults<T extends { type: string; sourceId: string }>(cards: T[]): Promise<T[]> {
+  const resultIds = cards.filter((c) => c.type === 'result').map((c) => c.sourceId);
+  if (resultIds.length === 0) return cards;
+  try {
+    const [{ connectDB }, { Result, PUBLISHED_RESULT }, { getSiteConfig }] = await Promise.all([
+      import('@/app/lib/mongodb'),
+      import('@/app/models/Result'),
+      import('@/app/lib/siteConfig'),
+    ]);
+    if (!(await getSiteConfig()).showBeforeAfterOnPublic) return cards.filter((c) => c.type !== 'result');
+    await connectDB();
+    const valid = resultIds.filter((id) => /^[a-f0-9]{24}$/i.test(id));
+    const live = await (Result as any).find({ _id: { $in: valid }, ...PUBLISHED_RESULT }).select('_id').lean();
+    const liveIds = new Set(live.map((r: any) => String(r._id)));
+    return cards.filter((c) => c.type !== 'result' || liveIds.has(String(c.sourceId)));
+  } catch {
+    return cards.filter((c) => c.type !== 'result');
+  }
+}
+
 // Recommendation engine — deliberately thin. Reuses the exact same
 // $vectorSearch index (kb_vector_idx) the FAQ RAG pipeline already queries;
 // the only difference is which sourceTypes are allowed through and that the
@@ -64,7 +88,7 @@ export async function recommend(
     location: opts.location,
   });
 
-  return scoreHitsToCards(hits, { types: opts.types });
+  return dropUnavailableResults(scoreHitsToCards(hits, { types: opts.types }));
 }
 
 export async function recommendDoctors(query: string, location?: string) {
