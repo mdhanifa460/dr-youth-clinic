@@ -132,8 +132,22 @@ export interface IClinicInfo {
   whyUs: IWhyUsItem[];
 }
 
+// Admin-written SEO for the city page (/chennai etc.). Every field is
+// optional: an empty one falls back to the page's built-in template, so a
+// city nobody has touched renders exactly as before (app/lib/locationSeo.ts).
+export interface ILocationSeo {
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+  ogImage?: { publicId: string; url: string };
+  noindex?: boolean;
+}
+
 export interface ILocationContent extends Document {
   location: string;                      // city key: 'chennai' | 'bangalore' | etc.
+  seo?: ILocationSeo;
+  // Title card at the top of the city page — see app/lib/locationHero.ts.
+  hero?: import('@/app/lib/locationHero').CleanLocationHero;
   heroImage: { publicId: string; url: string };
   googleMapsUrl?: string;
   mapEmbedUrl?: string;
@@ -261,7 +275,41 @@ const ClinicInfoSchema = new Schema<IClinicInfo>(
 const LocationContentSchema = new Schema<ILocationContent>(
   {
     location:       { type: String, required: true, unique: true, lowercase: true, trim: true },
-    heroImage:      { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
+    seo: {
+      type: new Schema<ILocationSeo>(
+        {
+          metaTitle:       { type: String, default: '', maxlength: 70 },
+          metaDescription: { type: String, default: '', maxlength: 170 },
+          keywords:        { type: [String], default: [] },
+          ogImage:         { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
+          noindex:         { type: Boolean, default: false },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
+    hero: {
+      type: new Schema(
+        {
+          style:           { type: String, enum: ['classic', 'image'], default: 'classic' },
+          badge:           { type: String, default: '' },
+          title:           { type: String, default: '' },
+          highlight:       { type: String, default: '' },
+          primaryCtaLabel: { type: String, default: '' },
+          primaryCtaHref:  { type: String, default: '' },
+          showCallButton:  { type: Boolean, default: true },
+          trustLine:       { type: String, default: '' },
+          offerText:       { type: String, default: '' },
+          offerHref:       { type: String, default: '' },
+          bgImage:         { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
+          overlay:         { type: String, enum: ['light', 'medium', 'strong'], default: 'medium' },
+          bannerPlacement: { type: String, enum: ['replace', 'above'], default: 'replace' },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
+    heroImage:    { publicId: { type: String, default: '' }, url: { type: String, default: '' } },
     googleMapsUrl:  { type: String, default: '' },
     mapEmbedUrl:    { type: String, default: '' },
     clinicInfo:     { type: ClinicInfoSchema, default: () => ({}) },

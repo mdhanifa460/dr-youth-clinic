@@ -8,6 +8,11 @@ interface Props {
   category: string;
   location: string;
   onApply: (title: string, description: string) => void;
+  // City home page mode (Admin → Locations → SEO): ideas for /{location}
+  // itself, written from the branch's treatments and description.
+  pageType?: "service" | "location";
+  specialties?: string[];
+  about?: string;
 }
 
 type MetaOption = { title: string; description: string };
@@ -17,7 +22,9 @@ function sessionKey(name: string, cat: string, loc: string) {
   return `dr_meta_${name.toLowerCase().replace(/\s+/g, "_")}_${cat}_${loc}`;
 }
 
-export default function MetaSuggestions({ serviceName, category, location, onApply }: Props) {
+export default function MetaSuggestions({ serviceName, category, location, onApply, pageType = "service", specialties, about }: Props) {
+  const isCityPage = pageType === "location";
+  const ready = isCityPage ? !!location : !!(serviceName?.trim() && category && location);
   const [options, setOptions] = useState<MetaOption[] | null>(null);
   const [status, setStatus]   = useState<Status>("idle");
   const [fromCache, setFromCache] = useState(false);
@@ -25,12 +32,13 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
 
   useEffect(() => {
     setAppliedIdx(null);
-    if (!serviceName || !category || !location) {
+    if (!ready) {
       setOptions(null);
       setStatus("idle");
       return;
     }
-    const raw = sessionStorage.getItem(sessionKey(serviceName, category, location));
+    let raw: string | null = null;
+    try { raw = sessionStorage.getItem(sessionKey(serviceName, category, location)); } catch {}
     if (raw) {
       try {
         setOptions(JSON.parse(raw));
@@ -44,16 +52,20 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
       setStatus("idle");
       setFromCache(false);
     }
-  }, [serviceName, category, location]);
+  }, [serviceName, category, location, ready]);
 
-  async function generate() {
-    if (!serviceName?.trim() || !category || !location) return;
+  async function generate(refresh = false) {
+    if (!ready) return;
     setStatus("loading");
     try {
       const res = await fetch("/api/admin/meta-suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceName, category, location }),
+        body: JSON.stringify(
+          isCityPage
+            ? { pageType: "location", location, specialties: specialties ?? [], about: about ?? "", refresh }
+            : { serviceName, category, location }
+        ),
       });
       const data = await res.json();
 
@@ -65,7 +77,7 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
       setFromCache(data.fromCache ?? false);
       setAppliedIdx(null);
 
-      sessionStorage.setItem(sessionKey(serviceName, category, location), JSON.stringify(data.options));
+      try { sessionStorage.setItem(sessionKey(serviceName, category, location), JSON.stringify(data.options)); } catch {}
     } catch {
       setStatus("error");
     }
@@ -76,7 +88,7 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
     setAppliedIdx(idx);
   }
 
-  if (!serviceName?.trim()) return null;
+  if (!isCityPage && !serviceName?.trim()) return null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-[#fafbff] overflow-hidden text-sm">
@@ -86,7 +98,7 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
             <Sparkles size={14} className="text-violet-500" />
             <span className="font-bold text-gray-700">AI Title &amp; Description Ideas</span>
             <span className="text-[10px] text-gray-400 font-medium">
-              Gemini · competitor-informed{location?.toLowerCase() === "all" ? " · city-agnostic (shared across all 4 city pages)" : ""}
+              Gemini · {isCityPage ? "from this branch's treatments and description" : "competitor-informed"}{location?.toLowerCase() === "all" ? " · city-agnostic (shared across all 4 city pages)" : ""}
             </span>
           </div>
           {fromCache && status === "done" && (
@@ -100,8 +112,8 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
         {status === "idle" && (
           <button
             type="button"
-            onClick={generate}
-            disabled={!serviceName?.trim() || !category || !location}
+            onClick={() => generate()}
+            disabled={!ready}
             className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold text-xs shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
           >
             <Sparkles size={13} />
@@ -122,7 +134,7 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
               <AlertCircle size={14} />
               Gemini returned an error. Try again.
             </div>
-            <button type="button" onClick={generate}
+            <button type="button" onClick={() => generate()}
               className="flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-800 transition">
               <RefreshCw size={12} /> Retry
             </button>
@@ -165,7 +177,7 @@ export default function MetaSuggestions({ serviceName, category, location, onApp
                 </div>
               </div>
             ))}
-            <button type="button" onClick={generate}
+            <button type="button" onClick={() => generate(isCityPage)}
               className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-violet-600 transition mt-1">
               <RefreshCw size={11} /> Regenerate
             </button>

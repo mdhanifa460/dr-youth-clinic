@@ -30,7 +30,9 @@ import { getSiteConfig } from '@/app/lib/siteConfig';
 import { getSettings } from '@/app/models/Settings';
 import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSections';
 import { pseudoPageId } from '@/app/lib/layoutEngine/pseudoPageId';
-import { pageTitle, metaDescription } from '@/app/lib/seoText';
+import { buildLocationMetadata } from '@/app/lib/locationSeo';
+import { resolveLocationHero, HERO_OVERLAY_CLASS } from '@/app/lib/locationHero';
+import { cache } from 'react';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -40,24 +42,22 @@ export function generateStaticParams() {
   return Object.keys(locations).map((location) => ({ location }));
 }
 
+// Admin → Locations → SEO for this city, falling back to the built-in
+// template for anything left empty (app/lib/locationSeo.ts).
 export async function generateMetadata(props: { params: Promise<{ location: string }> }): Promise<Metadata> {
   const params = await props.params;
   const loc = locations[params.location];
   if (!loc) return {};
-  const { name } = loc;
-  return {
-    title: pageTitle(`Skin, Hair & Aesthetic Clinic in ${name}`),
-    description: metaDescription(`Skin, hair and laser treatments at DR Youth Clinic in ${name}: ${loc.specialties.slice(0, 4).join(', ')}. Book your consultation today.`),
-    alternates: { canonical: `${SITE_URL}/${params.location}` },
-    openGraph: {
-      title: `Skin Clinic in ${name} | DR Youth Clinic`,
-      description: `Skin and hair care — ${loc.specialties.slice(0, 3).join(', ')} — at our ${name} clinic.`,
-      url: `${SITE_URL}/${params.location}`,
-      siteName: 'DR Youth Clinic',
-      type: 'website',
-      locale: 'en_IN',
-    },
-  };
+  const content = await getLocationContent(params.location);
+  const specialties = content?.clinicInfo?.specialties?.length ? content.clinicInfo.specialties : loc.specialties;
+  return buildLocationMetadata({
+    cityKey: params.location,
+    cityName: loc.name,
+    specialties,
+    siteUrl: SITE_URL,
+    heroImageUrl: content?.heroImage?.url || undefined,
+    seo: content?.seo,
+  });
 }
 
 async function getBranchResults(city: string) {
@@ -110,12 +110,15 @@ async function getBranchTreatments(city: string) {
   } catch { return []; }
 }
 
-async function getLocationContent(city: string) {
+// cache(): generateMetadata and the page both read this in the same request.
+const getLocationContent = cache(async (city: string) => {
   try {
     await connectDB();
     const doc = await LocationContent.findOne({ location: city }).lean() as any;
     if (!doc) return null;
     return {
+      seo:              doc.seo || null,
+      hero:             doc.hero || null,
       heroImage:        doc.heroImage,
       googleMapsUrl:    doc.googleMapsUrl || '',
       mapEmbedUrl:      doc.mapEmbedUrl   || '',
@@ -129,7 +132,7 @@ async function getLocationContent(city: string) {
   } catch {
     return null;
   }
-}
+});
 
 const WHY_US = [
   {
@@ -183,6 +186,8 @@ export default async function LocationPage(props: { params: Promise<{ location: 
     ? locationBanners.filter((b: any) => String(b._id) !== String(splashBanner._id))
     : locationBanners;
 
+  const hero = resolveLocationHero(content?.hero, cityKey, loc.name);
+  const heroOnImage = hero.style === 'image';
   const otherCities = Object.entries(locations).filter(([k]) => k !== cityKey);
   const hasHero    = !!(content?.heroImage?.url);
   const hasPairs   = (content?.beforeAfterPairs?.length ?? 0) > 0;
@@ -238,47 +243,74 @@ export default async function LocationPage(props: { params: Promise<{ location: 
             its mobile-spacing fix (py-8 md:py-24 etc. trims enough vertical
             rhythm that the CTA row clears the fixed mobile WhatsApp/Call/
             Book bar). */}
-        {carouselBanners.length > 0 ? (
+        {carouselBanners.length > 0 && (
           <BannerCarousel slides={carouselBanners.map((b: any) => <BannerRenderer key={String(b._id)} banner={b} />)} intervalMs={settings.display?.carouselIntervalMs ?? 6000} />
-        ) : (
-        <section id="home" className="py-8 md:py-24 px-6 md:px-10 bg-background">
-          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-start">
+        )}
+        {/* City title card — wording and look from Admin → Locations → Top of
+            page (app/lib/locationHero.ts). Hidden behind active banners only
+            when that city is set to "banners replace the title card". */}
+        {(carouselBanners.length === 0 || hero.bannerPlacement === 'above') && (
+        <section id="home" className={`relative overflow-hidden py-8 md:py-24 px-6 md:px-10 ${heroOnImage ? 'bg-primary' : 'bg-background'}`}>
+          {heroOnImage && (
+            <>
+              <Image
+                src={cloudHero(hero.bgImage.publicId) || hero.bgImage.url}
+                alt=""
+                fill
+                priority={carouselBanners.length === 0}
+                sizes="100vw"
+                className="object-cover"
+              />
+              <div className={`absolute inset-0 ${HERO_OVERLAY_CLASS[hero.overlay]}`} />
+            </>
+          )}
+          <div className="relative max-w-7xl mx-auto grid md:grid-cols-2 gap-14 items-start">
 
             {/* LEFT — headline + CTAs */}
             <div className="space-y-4 md:space-y-7 pt-4">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-tertiary text-primary text-sm font-semibold">
+              {hero.offerText && (
+                hero.offerHref ? (
+                  <Link href={hero.offerHref} className="flex w-fit items-center gap-2 rounded-xl bg-bronze px-4 py-2 text-sm font-bold text-white shadow-md hover:opacity-90 transition">
+                    {hero.offerText} <ChevronRight size={15} />
+                  </Link>
+                ) : (
+                  <p className="w-fit rounded-xl bg-bronze px-4 py-2 text-sm font-bold text-white shadow-md">{hero.offerText}</p>
+                )
+              )}
+
+              <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold ${heroOnImage ? 'bg-white/15 text-white backdrop-blur-sm' : 'bg-tertiary text-primary'}`}>
                 <BadgeCheck size={15} />
-                DR Youth Clinic — {loc.name}
+                {hero.badge}
               </span>
 
-              <h1 className="heading-display">
-                Advanced Skin &amp; Aesthetic Care{' '}
+              <h1 className={`heading-display ${heroOnImage ? '!text-white' : ''}`}>
+                {hero.title}{' '}
                 <br />
-                <span className="text-bronze">in {loc.name}</span>
+                <span className={heroOnImage ? 'text-[#f3d6b0]' : 'text-bronze'}>{hero.highlight}</span>
               </h1>
 
-              <p className="text-text-secondary text-base md:text-lg leading-relaxed max-w-lg">
+              <p className={`text-base md:text-lg leading-relaxed max-w-lg ${heroOnImage ? 'text-white/90' : 'text-text-secondary'}`}>
                 {description}
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <Link href={`/book?location=${cityKey}`} className="inline-flex items-center justify-center bg-primary text-white px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition">
-                    Book Consultation
+                <Link href={hero.primaryCtaHref} className={`inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-semibold shadow-[0_8px_24px_rgba(0,32,69,0.2)] hover:-translate-y-0.5 transition ${heroOnImage ? 'bg-white text-primary' : 'bg-primary text-white'}`}>
+                    {hero.primaryCtaLabel}
                   </Link>
-                {telHref && (
-                  <a href={telHref} className="inline-flex items-center gap-2 border border-primary text-primary px-8 py-3.5 rounded-xl font-semibold hover:bg-primary/5 transition">
+                {telHref && hero.showCallButton && (
+                  <a href={telHref} className={`inline-flex items-center gap-2 border px-8 py-3.5 rounded-xl font-semibold transition ${heroOnImage ? 'border-white text-white hover:bg-white/10' : 'border-primary text-primary hover:bg-primary/5'}`}>
                     <Phone size={15} /> Call Clinic
                   </a>
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-6 pt-2 text-sm text-gray-600">
+              <div className={`flex flex-wrap gap-6 pt-2 text-sm ${heroOnImage ? 'text-white/85' : 'text-gray-600'}`}>
                 <span className="flex items-center gap-1.5">
-                  <BadgeCheck size={14} className="text-secondary" /> 9+ Years Experience
+                  <BadgeCheck size={14} className={heroOnImage ? 'text-white' : 'text-secondary'} /> {hero.trustLine}
                 </span>
                 {content?.googleMapsUrl && (
                   <a href={content.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:underline">
-                    <BadgeCheck size={14} className="text-secondary" /> Read our reviews on Google
+                    <BadgeCheck size={14} className={heroOnImage ? 'text-white' : 'text-secondary'} /> Read our reviews on Google
                   </a>
                 )}
               </div>

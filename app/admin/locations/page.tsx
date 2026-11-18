@@ -11,6 +11,9 @@ import { locations } from '@/app/data/locations';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
 import FocalPointPicker from '@/app/admin/components/FocalPointPicker';
+import LocationBannersPanel from '@/app/admin/components/LocationBannersPanel';
+import LocationPageSeoPanel, { EMPTY_LOCATION_SEO } from '@/app/admin/components/LocationPageSeoPanel';
+import LocationHeroPanel, { EMPTY_LOCATION_HERO } from '@/app/admin/components/LocationHeroPanel';
 
 const CITIES = [
   { key: 'chennai',    label: 'Chennai' },
@@ -283,7 +286,14 @@ export default function LocationsAdminPage() {
     galleryImages: [],
     localDoctors: [],
     layoutEngineEnabled: false,
+    seo: EMPTY_LOCATION_SEO,
+    hero: EMPTY_LOCATION_HERO,
   });
+  // ?city=bangalore (e.g. coming back from the banner editor) opens that tab.
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get('city');
+    if (c && CITIES.some((x) => x.key === c)) setCity(c);
+  }, []);
   const WHY_US_ICONS = [
     { key: 'flask', label: 'Flask — Research' },
     { key: 'shield', label: 'Shield — Safety' },
@@ -295,11 +305,18 @@ export default function LocationsAdminPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Switching tabs quickly (or ?city= switching away from the default) can
+  // leave an older city's request in flight; its late response must never
+  // fill this city's form, or "Save" would write it into the wrong city.
+  const currentCity = useRef(city);
+  currentCity.current = city;
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res  = await fetch(`/api/admin/locations/${city}`);
       const json = await res.json();
+      if (currentCity.current !== city) return;
       const loc  = locations[city];                       // static fallback
       const db   = json.success ? json.data : null;
       const dci  = db?.clinicInfo;
@@ -333,6 +350,14 @@ export default function LocationsAdminPage() {
         galleryImages:    db?.galleryImages    || [],
         localDoctors:     db?.localDoctors     || [],
         layoutEngineEnabled: !!db?.layoutEngineEnabled,
+        seo: {
+          metaTitle:       db?.seo?.metaTitle       || '',
+          metaDescription: db?.seo?.metaDescription || '',
+          keywords:        db?.seo?.keywords        || [],
+          ogImage:         db?.seo?.ogImage?.url ? db.seo.ogImage : { publicId: '', url: '' },
+          noindex:         !!db?.seo?.noindex,
+        },
+        hero: { ...EMPTY_LOCATION_HERO, ...(db?.hero || {}) },
       });
     } catch {}
     setLoading(false);
@@ -446,7 +471,7 @@ export default function LocationsAdminPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#0B2560]">Location Content</h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            Manage city-specific before/after results, gallery, and clinic photos.
+            Manage each city page: top banners, SEO, clinic info, results, gallery and photos.
           </p>
         </div>
         <button
@@ -480,6 +505,47 @@ export default function LocationsAdminPage() {
         </div>
       ) : (
         <div className="space-y-10">
+
+          {/* ── TITLE CARD (top of the city page) ──────────────── */}
+          <LocationHeroPanel
+            key={`hero-${city}`}
+            city={city}
+            cityLabel={cityLabel}
+            value={data.hero}
+            onChange={(hero) => setData((d: any) => ({ ...d, hero }))}
+            imageField={
+              <ImgUpload
+                label="Background image"
+                value={data.hero.bgImage}
+                onChange={(v) => setData((d: any) => ({ ...d, hero: { ...d.hero, bgImage: v } }))}
+                folder={CLOUD_FOLDERS.locationPhotos(city)}
+                aspect="16/7"
+              />
+            }
+          />
+
+          {/* ── TOP BANNERS (own save — banner documents, not this form) ── */}
+          <LocationBannersPanel key={`banners-${city}`} city={city} cityLabel={cityLabel} />
+
+          {/* ── SEO ────────────────────────────────────────────── */}
+          <LocationPageSeoPanel
+            key={`seo-${city}`}
+            city={city}
+            cityLabel={cityLabel}
+            specialties={(data.clinicInfo.specialties || []).filter(Boolean)}
+            about={data.clinicInfo.description || ''}
+            value={data.seo}
+            onChange={(seo) => setData((d: any) => ({ ...d, seo }))}
+            imageField={
+              <ImgUpload
+                label="Social share image"
+                value={data.seo.ogImage}
+                onChange={(v) => setData((d: any) => ({ ...d, seo: { ...d.seo, ogImage: v } }))}
+                folder={CLOUD_FOLDERS.locationPhotos(city)}
+                aspect="1200/630"
+              />
+            }
+          />
 
           {/* ── CLINIC INFO ────────────────────────────────────── */}
           <section>

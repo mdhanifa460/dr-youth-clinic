@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { LocationContent } from '@/app/models/LocationContent';
 import { requirePermission } from '@/app/lib/adminAuth';
+import { revalidatePath } from 'next/cache';
+import { sanitizeLocationSeo } from '@/app/lib/locationSeo';
+import { sanitizeLocationHero } from '@/app/lib/locationHero';
 
 const VALID_CITIES = new Set(['chennai', 'bangalore', 'coimbatore', 'kochi']);
 
@@ -50,12 +53,21 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ city: str
     if (body.beforeAfterPairs !== undefined) update.beforeAfterPairs = body.beforeAfterPairs;
     if (body.galleryImages !== undefined)    update.galleryImages = body.galleryImages;
     if (body.localDoctors !== undefined)     update.localDoctors = body.localDoctors;
+    // The admin toggle has always been sent but was never stored, so turning
+    // the layout engine on for a city silently did nothing.
+    if (body.layoutEngineEnabled !== undefined) update.layoutEngineEnabled = body.layoutEngineEnabled === true;
+    if (body.seo !== undefined)              update.seo = sanitizeLocationSeo(body.seo);
+    if (body.hero !== undefined)             update.hero = sanitizeLocationHero(body.hero);
 
     const doc = await (LocationContent as any).findOneAndUpdate(
       { location: city },
       { $set: update },
       { upsert: true, returnDocument: 'after' }
     ).lean();
+
+    // Show the change on the live city page now, not after the 5-minute ISR
+    // window. (The sitemap is force-dynamic and picks up noindex by itself.)
+    revalidatePath(`/${city}`);
 
     return NextResponse.json({ success: true, data: doc });
   } catch (err: any) {

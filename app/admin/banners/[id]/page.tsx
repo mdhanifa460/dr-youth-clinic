@@ -46,6 +46,15 @@ export default function BannerEditPage() {
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [doctors, setDoctors] = useState<{ _id: string; name: string; title: string }[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("Content");
+  // Opened from Admin → Locations (?from=locations&city=chennai): the back
+  // arrow returns to that city instead of the full banner list. Read in an
+  // effect rather than useSearchParams to avoid a Suspense boundary.
+  const [backHref, setBackHref] = useState("/admin/banners");
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const city = q.get("city");
+    if (q.get("from") === "locations" && city && /^[a-z]+$/.test(city)) setBackHref(`/admin/locations?city=${city}`);
+  }, []);
 
   useEffect(() => {
     // Only the Glass Hero's doctorHighlight picker needs this, but it's
@@ -136,7 +145,7 @@ export default function BannerEditPage() {
     <div className="max-w-3xl mx-auto space-y-6 pb-20">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <Link href="/admin/banners" className="text-gray-400 hover:text-[#0B2560]"><ArrowLeft size={18} /></Link>
+          <Link href={backHref} className="text-gray-400 hover:text-[#0B2560]"><ArrowLeft size={18} /></Link>
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{templateDef?.icon} {templateDef?.label}</p>
             <h1 className="text-xl font-bold text-gray-900">{banner.title}</h1>

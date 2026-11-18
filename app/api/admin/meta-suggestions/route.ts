@@ -64,12 +64,85 @@ Return ONLY valid JSON, no explanation, no markdown:
   }
 }
 
+// ── City home page (/chennai etc.) — Admin → Locations → SEO ─────────────────
+const CITY_PAGE_CITIES = ['chennai', 'bangalore', 'coimbatore', 'kochi'];
+
+function cleanList(v: unknown, max: number, len: number): string[] {
+  return Array.isArray(v)
+    ? v.map((s) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, len)).filter(Boolean).slice(0, max)
+    : [];
+}
+
+async function callGeminiCityPage(city: string, specialties: string[], about: string) {
+  const prompt = `You are a senior local-SEO copywriter for DR Youth Clinic, a dermatology and aesthetic clinic chain in India competing with Oliva Clinic, Kaya Clinic and Dermacos.
+
+Page: the ${city} branch home page — the page that should rank for searches like "skin clinic in ${city}", "dermatologist in ${city}", "hair treatment ${city}".
+Treatments this branch offers: ${specialties.length ? specialties.join(', ') : 'skin, hair and laser treatments'}.
+${about ? `About this branch (from the clinic's own text): ${about}` : ''}
+
+Generate 3 distinct (title, description) pairs for this page's <title> and meta description. Vary the angle: one led by the treatments offered, one by doctor-led expertise, one by local convenience (area, booking).
+
+Rules:
+- Title: 35-55 characters. Must contain "${city}". Do NOT include "DR Youth Clinic" — the site appends " | DR Youth Clinic" itself. Lead with what people search for (e.g. "Skin & Hair Clinic in ${city}").
+- Description: 140-160 characters. Name 2-3 real treatments from the list above, one concrete trust hook taken only from the text above (never invent credentials, years, ratings or prices), and end with an implicit call to action.
+- No clickbait, no exclamation marks, no ALL CAPS, no unverifiable superlatives ("best", "#1", "top-rated").
+
+Return ONLY valid JSON, no explanation, no markdown:
+{"options":[{"title":"...","description":"..."},{"title":"...","description":"..."},{"title":"...","description":"..."}]}`;
+
+  try {
+    const raw = await callGeminiText(prompt, { temperature: 0.5, maxTokens: 600, jsonMode: true });
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.options)) return null;
+    const options = parsed.options
+      .filter((o: any) => o?.title && o?.description)
+      .slice(0, 3)
+      .map((o: any) => ({ title: String(o.title).slice(0, 60), description: String(o.description).slice(0, 160) }));
+    return options.length > 0 ? options : null;
+  } catch {
+    return null;
+  }
+}
+
+async function cityPageSuggestions(body: any) {
+  const location = String(body.location || '').toLowerCase();
+  if (!CITY_PAGE_CITIES.includes(location)) {
+    return NextResponse.json({ success: false, message: 'Unknown city' }, { status: 400 });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json(
+      { success: false, needsSetup: true, message: 'GEMINI_API_KEY not set in .env.local' },
+      { status: 503 }
+    );
+  }
+  await connectDB();
+  const cacheKey = `citypage_${location}`;
+  // "Regenerate" asks for fresh ideas; the first click reuses the last set.
+  if (!body.refresh) {
+    const cached = await MetaSuggestionCache.findOne({ cacheKey } as any).lean() as any;
+    if (cached) return NextResponse.json({ success: true, fromCache: true, options: cached.options });
+  }
+  const city = location.charAt(0).toUpperCase() + location.slice(1);
+  const about = String(body.about ?? '').replace(/\s+/g, ' ').trim().slice(0, 400);
+  const options = await callGeminiCityPage(city, cleanList(body.specialties, 10, 40), about);
+  if (!options) {
+    return NextResponse.json({ success: false, message: 'Gemini did not return valid suggestions. Try again.' }, { status: 502 });
+  }
+  await (MetaSuggestionCache as any).findOneAndUpdate(
+    { cacheKey },
+    { $set: { cacheKey, serviceName: `${city} city page`, category: 'location-page', location, options, createdAt: new Date() } },
+    { upsert: true }
+  );
+  return NextResponse.json({ success: true, fromCache: false, options });
+}
+
 // ── POST /api/admin/meta-suggestions ─────────────────────────────────────
 export async function POST(req: Request) {
   const denied = await requirePermission('seo', 'view');
   if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
+  if (body.pageType === 'location') return cityPageSuggestions(body);
   const { serviceName, category, location } = body;
 
   if (!serviceName?.trim() || !category || !location) {
