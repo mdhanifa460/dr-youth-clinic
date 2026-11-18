@@ -16,6 +16,7 @@ import { recommend } from '@/app/lib/rag/RecommendationService';
 import { BreadcrumbSchema } from '@/app/components/SchemaMarkup';
 import StoryViewer from './StoryViewer';
 import { pageTitle, metaDescription } from '@/app/lib/seoText';
+import { isPlaceholderStory } from '@/app/lib/storySeo';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
@@ -111,6 +112,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   );
   const image = story.coverImage?.url;
   return {
+    ...(isPlaceholderStory({ title: story.title, slug: params.slug }) ? { robots: { index: false, follow: true } } : {}),
     title: pageTitle(title),
     description,
     keywords: story.seoKeywords?.length ? story.seoKeywords : undefined,

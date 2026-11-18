@@ -15,6 +15,7 @@ import BannerCarousel from '@/app/components/banners/BannerCarousel';
 import BannerRenderer from '@/app/components/banners/BannerRenderer';
 import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 import { LocationContent } from '@/app/models/LocationContent';
 
 export const revalidate = 300;
@@ -40,7 +41,10 @@ interface PageProps {
   params: Promise<{ location: string; category: string }>;
 }
 
-async function getServicesForCategory(location: string, category: string) {
+// null = the lookup failed (never treat as "no treatments": a database blip
+// must not noindex the page); [] = this city really has none in the category.
+// cache(): generateMetadata and the page share one query per request.
+const getServicesForCategory = cache(async (location: string, category: string): Promise<any[] | null> => {
   try {
     await connectDB();
     const loc = location.toLowerCase();
@@ -59,9 +63,9 @@ async function getServicesForCategory(location: string, category: string) {
     // unchanged instead of every render site needing to know about overrides.
     return services.map((s) => ({ ...s, urlSlug: getEffectiveSlug(s, loc) }));
   } catch {
-    return [];
+    return null;
   }
-}
+});
 
 // Used to detect old-style service slugs that ended up at this route
 async function findServiceBySlug(location: string, slug: string) {
@@ -96,7 +100,13 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const meta = categories.find((c: any) => c.slug === catSlug);
   if (!meta) return {};
   const city = loc.name;
+  // A city with no treatments in this category shows only an empty state —
+  // a thin page Google reports as a soft 404. Kept out of the index (and out
+  // of the sitemap, see siteUrlInventory.ts) until a treatment is added.
+  const services = await getServicesForCategory(params.location, meta.dbKey);
+  const isEmpty = Array.isArray(services) && services.length === 0;
   return {
+    ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
     title: `${meta.label} in ${city}`,
     description: `Explore ${meta.label.toLowerCase()} treatments at DR Youth Clinic ${city}. ${meta.description.slice(0, 100)}...`,
     alternates: { canonical: `${SITE_URL}/${params.location}/services/${catSlug}` },
@@ -127,12 +137,13 @@ export default async function CategoryPage(props: PageProps) {
   }
 
   const accent = meta.accentColor || '#3b82f6';
-  const [services, siteConfig, categoryBanners, dbBranchPhone] = await Promise.all([
+  const [servicesOrNull, siteConfig, categoryBanners, dbBranchPhone] = await Promise.all([
     getServicesForCategory(params.location, meta.dbKey),
     getSiteConfig(),
     resolveBanner({ page: 'category', location: params.location, category: catSlug }),
     getCachedBranchPhone(params.location.toLowerCase()),
   ]);
+  const services = servicesOrNull ?? [];
   const branchPhone = dbBranchPhone || siteConfig.publicPhone || loc.phone;
   const city = loc.name;
   // Flash Offer Popup — see app/(public)/page.tsx's splashBanner/

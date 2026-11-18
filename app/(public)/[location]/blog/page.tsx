@@ -30,7 +30,13 @@ export async function generateMetadata(props: { params: Promise<{ location: stri
   const params = await props.params;
   const loc = locations[params.location];
   if (!loc) return {};
+  // Listed in the sitemap only when the city has posts (siteUrlInventory.ts);
+  // an empty city list is kept out of the index. A failed lookup is not
+  // "empty" — it must never noindex the page.
+  let isEmpty = false;
+  try { isEmpty = (await getCachedLocationPosts(params.location)).length === 0; } catch {}
   return {
+    ...(isEmpty ? { robots: { index: false, follow: true } } : {}),
     title: `Medical Knowledge Center — ${loc.name}`,
     description: `Skin & hair education from DR Youth Clinic's ${loc.name} clinic — evidence-based articles, treatment guides and expert insights.`,
     alternates: { canonical: `${SITE_URL}/${params.location}/blog` },

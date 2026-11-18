@@ -7,6 +7,8 @@ import { Story } from '@/app/models/Story';
 import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
 import { Video } from '@/app/models/Video';
 import { Course } from '@/app/models/Course';
+import { LocationContent } from '@/app/models/LocationContent';
+import { isPlaceholderStory } from '@/app/lib/storySeo';
 import { getServiceCities, getEffectiveSlug, isCityPageIndexable } from '@/app/lib/serviceSeo';
 import { getBlogCities, isBlogCityPageCanonicalSelf } from '@/app/lib/blogSeo';
 
@@ -77,7 +79,7 @@ export function staticRoutes(): SiteUrlEntry[] {
 export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
   await connectDB();
 
-  const [services, doctors, blogPosts, landingPages, stories, results, videos, courses] = await Promise.all([
+  const [services, doctors, blogPosts, landingPages, stories, results, videos, courses, noindexCities] = await Promise.all([
     Service.find({ status: 'active' } as any)
       .select('name urlSlug location targetLocations category updatedAt locationSeo')
       .lean() as Promise<any[]>,
@@ -91,7 +93,7 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
       .select('slug updatedAt')
       .lean() as Promise<any[]>,
     (Story as any).find({ status: 'published' })
-      .select('slug updatedAt')
+      .select('slug title updatedAt')
       .lean() as Promise<any[]>,
     (Result as any).find(PUBLISHED_RESULT)
       .select('slug title updatedAt')
@@ -102,7 +104,34 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     (Course as any).find({ status: 'published' })
       .select('slug title updatedAt')
       .lean() as Promise<any[]>,
+    // City pages an admin set to noindex (Admin → Locations → SEO).
+    (LocationContent as any).find({ 'seo.noindex': true }).distinct('location') as Promise<string[]>,
   ]);
+  // Pages that are noindex, so they must not be submitted (the pages set the
+  // matching robots tag themselves):
+  // - a city page an admin hid in Admin → Locations → SEO;
+  // - a city category page with no treatments (only an empty state — a soft
+  //   404 to Google). Mirrors the category page's own query exactly:
+  //   targetLocations when the field exists, else the legacy location field.
+  const hiddenPaths = new Set(noindexCities.map((c) => `/${c}`));
+  const filledCategoryPaths = new Set<string>();
+  for (const s of services) {
+    if (!s.category) continue;
+    const cities: string[] = Array.isArray(s.targetLocations)
+      ? s.targetLocations
+      : s.location === 'all' ? [...LOCATIONS] : s.location ? [s.location] : [];
+    for (const city of cities) filledCategoryPaths.add(`/${city}/services/${String(s.category).toLowerCase()}`);
+  }
+  const statics = staticRoutes().map((e) => {
+    const emptyCategory = e.category !== undefined && /^\/[a-z]+\/services\/[a-z]+$/.test(e.path) && !filledCategoryPaths.has(e.path);
+    return hiddenPaths.has(e.path) || emptyCategory ? { ...e, excludeFromSitemap: true } : e;
+  });
+
+  // City blog lists (/kochi/blog) — listed when that city has at least one
+  // post; an empty one is noindex (app/(public)/[location]/blog/page.tsx).
+  const cityBlogUrls: SiteUrlEntry[] = LOCATIONS
+    .filter((city) => blogPosts.some((p) => Array.isArray(p.targetLocations) && p.targetLocations.includes(city)))
+    .map((city) => ({ path: `/${city}/blog`, changeFrequency: 'weekly', priority: 0.6, label: `${city} blog` }));
 
   const serviceUrls: SiteUrlEntry[] = services
     .filter((s) => s.location && s.category && s.urlSlug)
@@ -171,6 +200,8 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     .filter((s) => s.slug)
     .map((s) => ({
       path: `/web-stories/${s.slug}`,
+      // Still named "Untitled…" — noindex on the page itself (app/lib/storySeo.ts).
+      excludeFromSitemap: isPlaceholderStory(s),
       lastModified: s.updatedAt ? new Date(s.updatedAt) : undefined,
       changeFrequency: 'weekly',
       priority: 0.7,
@@ -207,7 +238,8 @@ export async function getSiteUrlInventory(): Promise<SiteUrlEntry[]> {
     }));
 
   return [
-    ...staticRoutes(),
+    ...statics,
+    ...cityBlogUrls,
     ...serviceUrls,
     ...doctorUrls,
     ...blogUrls,

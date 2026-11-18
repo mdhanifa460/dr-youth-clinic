@@ -37,11 +37,12 @@ export const metadata: Metadata = {
     description: "Skin, hair and laser treatments, planned with our doctors after a consultation.",
     images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630, alt: "DR Youth Clinic" }],
   },
+  // Card type only. Next.js fills twitter:title/description/image from each
+  // page's own openGraph — but only when they are NOT set here; a fixed
+  // title here made every page share as plain "DR Youth Clinic" on X.
+  // Pages without their own openGraph get the site openGraph above instead.
   twitter: {
     card: "summary_large_image",
-    title: "DR Youth Clinic",
-    description: "Skin, hair and aesthetic treatments in South India.",
-    images: [`${SITE_URL}/twitter-image.jpg`],
   },
 };
 
