@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Upload, Trash2, Plus, Loader, CheckCircle, Eye, EyeOff,
   GripVertical, ImageIcon, MapPin, ExternalLink, Images,
@@ -304,6 +304,20 @@ export default function LocationsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  // The form as last loaded or saved; anything different is unsaved work.
+  const [savedJson, setSavedJson] = useState('');
+  const dirty = useMemo(
+    () => !loading && savedJson !== '' && JSON.stringify(data) !== savedJson,
+    [data, savedJson, loading],
+  );
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
 
   // Switching tabs quickly (or ?city= switching away from the default) can
   // leave an older city's request in flight; its late response must never
@@ -321,8 +335,8 @@ export default function LocationsAdminPage() {
       const db   = json.success ? json.data : null;
       const dci  = db?.clinicInfo;
 
-      setData({
-        heroImage:        db?.heroImage        || { publicId: '', url: '' },
+      const next = {
+        heroImage:        db?.heroImage       || { publicId: '', url: '' },
         googleMapsUrl:    db?.googleMapsUrl    || loc?.map  || '',
         mapEmbedUrl:      db?.mapEmbedUrl      || loc?.map  || '',
         clinicInfo: {
@@ -358,7 +372,9 @@ export default function LocationsAdminPage() {
           noindex:         !!db?.seo?.noindex,
         },
         hero: { ...EMPTY_LOCATION_HERO, ...(db?.hero || {}) },
-      });
+      };
+      setData(next);
+      setSavedJson(JSON.stringify(next));
     } catch {}
     setLoading(false);
   }, [city]);
@@ -368,16 +384,34 @@ export default function LocationsAdminPage() {
   const save = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError('');
+    const sentJson = JSON.stringify(data);
     try {
-      await fetch(`/api/admin/locations/${city}`, {
+      const res = await fetch(`/api/admin/locations/${city}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: sentJson,
       });
+      const json = await res.json().catch(() => ({} as any));
+      // Only a confirmed save counts; before, a failed save still said "Saved!".
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.message || `Save failed (error ${res.status})`);
+      }
+      setSavedJson(sentJson);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {}
+    } catch (e: any) {
+      setSaveError(e?.message && !/fetch/i.test(e.message) ? e.message : 'Save failed. Check your connection and try again.');
+    }
     setSaving(false);
+  };
+
+  const switchCity = (next: string) => {
+    if (next === city) return;
+    if (dirty && !window.confirm(`You have unsaved changes for ${CITIES.find((c) => c.key === city)?.label ?? city}. Leave without saving?`)) return;
+    setSaveError('');
+    setSaved(false);
+    setCity(next);
   };
 
   const addPair = () =>
@@ -466,22 +500,33 @@ export default function LocationsAdminPage() {
 
   return (
     <div className="p-8 max-w-4xl">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      {/* HEADER — sticky, so Save is always in reach on this long form */}
+      <div className="sticky top-0 z-30 -mx-8 px-8 py-3 mb-6 bg-gray-100/95 backdrop-blur border-b border-gray-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[#0B2560]">Location Content</h1>
           <p className="text-gray-500 text-sm mt-0.5">
             Manage each city page: top banners, SEO, clinic info, results, gallery and photos.
           </p>
         </div>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#0d2d73] transition disabled:opacity-60 shrink-0"
-        >
-          {saving ? <Loader size={15} className="animate-spin" /> : saved ? <CheckCircle size={15} /> : null}
-          {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Changes'}
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          {saveError ? (
+            <span role="alert" className="text-xs font-semibold text-red-600 max-w-[240px]">{saveError}</span>
+          ) : saved ? (
+            <span className="text-xs font-semibold text-green-600">Saved ✓ live within a few minutes</span>
+          ) : dirty ? (
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+              <span className="w-2 h-2 rounded-full bg-amber-500" /> Unsaved changes
+            </span>
+          ) : null}
+          <button
+            onClick={save}
+            disabled={saving || loading}
+            className="flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#0d2d73] transition disabled:opacity-60"
+          >
+            {saving ? <Loader size={15} className="animate-spin" /> : saved ? <CheckCircle size={15} /> : null}
+            {saving ? 'Saving…' : saved ? 'Saved!' : `Save ${cityLabel}`}
+          </button>
+        </div>
       </div>
 
       {/* CITY TABS */}
@@ -489,7 +534,7 @@ export default function LocationsAdminPage() {
         {CITIES.map((c) => (
           <button
             key={c.key}
-            onClick={() => setCity(c.key)}
+            onClick={() => switchCity(c.key)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
               city === c.key ? 'bg-white text-[#0B2560] shadow-sm' : 'text-gray-500 hover:text-[#0B2560]'
             }`}
@@ -1251,7 +1296,8 @@ export default function LocationsAdminPage() {
           </section>
 
           {/* ── SAVE (bottom) ──────────────────────────────────── */}
-          <div className="pt-4 border-t border-gray-100 flex justify-end">
+          <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+            {saveError && <span role="alert" className="text-xs font-semibold text-red-600">{saveError}</span>}
             <button
               onClick={save}
               disabled={saving}
