@@ -11,6 +11,7 @@ import ContentBlockEditor from './contentblocks/ContentBlockEditor';
 import BlogAiAssistantPanel from './BlogAiAssistantPanel';
 import ArticleIntelligenceCard from './ArticleIntelligenceCard';
 import LayoutEngineSectionBuilder from './builder/LayoutEngineSectionBuilder';
+import SaveBar, { useUnsavedChanges } from './SaveBar';
 import { markdownToBlocks, blocksToPlainText } from '@/app/lib/contentBlocks/types';
 import { BLOG_CATEGORIES } from '@/app/lib/blogCategories';
 import { ALL_BLOG_CITIES } from '@/app/lib/blogSeo';
@@ -99,6 +100,8 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
   );
 
   const updateForm = (patch: Partial<FormData>) => setForm((f) => ({ ...f, ...patch }));
+  const isEdit = !!initialData?._id;
+  const { dirty, markSaved } = useUnsavedChanges(form);
 
   useEffect(() => {
     fetch('/api/admin/doctors')
@@ -129,8 +132,12 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
   };
 
   const handleSubmit = async () => {
+    // The sticky Save works from any step, so re-check the required basics
+    // and jump back to them if they're missing.
+    if (!validateStep(1)) { setStep(1); return; }
     setLoading(true);
     setError('');
+    const sent = form;
     try {
       const url = initialData?._id ? `/api/admin/blog/${initialData._id}` : '/api/admin/blog';
       const method = initialData?._id ? 'PUT' : 'POST';
@@ -154,8 +161,9 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
           locationSeo: form.locationSeo.filter((l) => l.metaTitle.trim() || l.metaDescription.trim()),
         }),
       });
-      const data = await res.json();
-      if (!data.success) { setError(data.message || 'Failed to save post'); return; }
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok || !data.success) { setError(data.message || `Failed to save post (error ${res.status})`); return; }
+      markSaved(sent);
       setSuccess(true);
       setTimeout(() => router.push('/admin/blog'), 1600);
     } catch (err: any) {
@@ -180,6 +188,22 @@ export default function BlogForm({ initialData }: { initialData?: any }) {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Sticky Save — an existing post can be saved from any step; a new one
+          once every step has been seen. */}
+      <SaveBar
+        compact
+        title={form.title.trim() || (isEdit ? 'Untitled post' : 'New post')}
+        subtitle={`Step ${step} of ${TOTAL_STEPS} · ${STEP_LABELS[step - 1]}`}
+        dirty={dirty}
+        saving={loading}
+        saved={false}
+        error={error}
+        onSave={handleSubmit}
+        label="Save Post"
+        disabled={!isEdit && step < TOTAL_STEPS}
+        disabledHint="Finish all steps to save a new post"
+      />
+
       {/* PROGRESS BAR */}
       <div className="mb-8">
         <div className="flex justify-between mb-3">

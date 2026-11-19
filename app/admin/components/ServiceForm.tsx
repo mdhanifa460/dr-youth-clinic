@@ -12,6 +12,7 @@ import LocationSeoPanel from "./LocationSeoPanel";
 import { getServiceCities, ALL_SERVICE_CITIES } from "@/app/lib/serviceSeo";
 import ContentBlockEditor from "./contentblocks/ContentBlockEditor";
 import LayoutEngineSectionBuilder from "./builder/LayoutEngineSectionBuilder";
+import SaveBar, { useUnsavedChanges } from "./SaveBar";
 import { plainTextToBlocks, blocksToPlainText } from "@/app/lib/contentBlocks/types";
 
 interface LocationSeoOverride {
@@ -189,6 +190,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
   const updateForm = (data: Partial<FormData>) => {
     setForm((prev) => ({ ...prev, ...data }));
   };
+  const { dirty, markSaved } = useUnsavedChanges(form);
 
   // Guarantees a baseline geo-modified keyword ("{service} {city}") is
   // present even if the admin never touches the AI keyword generator on Step
@@ -290,8 +292,14 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
   };
 
   const handleSubmit = async () => {
+    // The sticky Save works from any step, so check every step's required
+    // fields first and jump to the first step that still needs something.
+    for (const s of [1, 2, 3, 5]) {
+      if (!validateStep(s)) { setStep(s); return; }
+    }
     setLoading(true);
     setError("");
+    const sent = form;
     try {
       const url = initialData
         ? `/api/admin/services/${initialData._id}`
@@ -306,8 +314,9 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
           concerns: form.concerns.split(",").map((k) => k.trim()).filter(Boolean),
         }),
       });
-      const data = await response.json();
-      if (!data.success) { setError(data.message || "Failed to save service"); return; }
+      const data = await response.json().catch(() => ({} as any));
+      if (!response.ok || !data.success) { setError(data.message || `Failed to save service (error ${response.status})`); return; }
+      markSaved(sent);
       setSuccess(true);
       setTimeout(() => router.push("/admin/services"), 3200);
     } catch (err: any) {
@@ -431,6 +440,23 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Sticky Save — an existing service can be saved from any step; a new
+          one once every step has been seen. */}
+      <SaveBar
+        compact
+        title={form.name.trim() || (initialData ? "Untitled service" : "New service")}
+        subtitle={`Step ${step} of ${TOTAL_STEPS} · ${STEP_LABELS[step - 1]}`}
+        dirty={dirty}
+        saving={loading}
+        saved={false}
+        error={error}
+        onSave={handleSubmit}
+        label={initialData ? "Save Service" : "Publish Service"}
+        savingLabel={initialData ? "Saving…" : "Publishing…"}
+        disabled={!initialData && step < TOTAL_STEPS}
+        disabledHint="Finish all steps to publish a new service"
+      />
+
       {/* PROGRESS BAR */}
       <div className="mb-8">
         <div className="flex justify-between mb-3">

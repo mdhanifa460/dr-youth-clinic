@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft, Plus, Trash2, Loader, CheckCircle, X, ExternalLink, LayoutTemplate,
+  ArrowLeft, Plus, Trash2, Loader, X, ExternalLink, LayoutTemplate,
 } from 'lucide-react';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
 import SectionList from '@/app/admin/components/builder/SectionList';
 import SectionCard from '@/app/admin/components/builder/SectionCard';
 import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
 import TemplatePicker from '@/app/admin/components/builder/TemplatePicker';
+import SaveBar, { useUnsavedChanges } from '@/app/admin/components/SaveBar';
 import {
   type AboutSection, SECTION_LABELS, SECTION_DEFAULTS, makeDefaultAboutSections,
 } from '@/app/lib/aboutPageDefaults';
@@ -466,6 +467,8 @@ export default function AboutPageBuilder() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState('');
+  const { dirty, markSaved } = useUnsavedChanges(sections, !loading);
 
   const [galleryOpen, setGalleryOpen] = useState(false);
   const galleryCallbackRef = useRef<((url: string) => void) | null>(null);
@@ -540,17 +543,22 @@ export default function AboutPageBuilder() {
   async function save() {
     setSaving(true);
     setSaveStatus('idle');
+    setSaveError('');
+    const sent = sections;
     try {
       const res = await fetch('/api/admin/about', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sections }),
       });
-      const json = await res.json();
-      setSaveStatus(json.success ? 'saved' : 'error');
-      setTimeout(() => setSaveStatus('idle'), 2500);
-    } catch {
+      const json = await res.json().catch(() => ({} as any));
+      if (!res.ok || !json.success) throw new Error(json.message || `Save failed (error ${res.status})`);
+      markSaved(sent);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (e: any) {
       setSaveStatus('error');
+      setSaveError(e?.message && !/fetch/i.test(e.message) ? e.message : 'Save failed. Check your connection and try again.');
     } finally {
       setSaving(false);
     }
@@ -571,34 +579,24 @@ export default function AboutPageBuilder() {
           <ArrowLeft size={14} /> Admin
         </Link>
 
-        <div className="flex items-center justify-between mb-2 gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-[#0B2560]">About Page Builder</h1>
-            <p className="text-gray-400 text-sm mt-0.5">Add, reorder, hide or edit any section — nothing on this page is hardcoded.</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+        {/* Sticky, so Save is always in reach on a long page */}
+        <SaveBar
+          title="About Page Builder"
+          subtitle="Add, reorder, hide or edit any section — nothing on this page is hardcoded."
+          dirty={dirty}
+          saving={saving}
+          saved={saveStatus === 'saved'}
+          error={saveStatus === 'error' ? saveError : ''}
+          onSave={save}
+          label="Save About Page"
+          bgClass="bg-[#f6faff]/95"
+          actions={
             <a href="/about" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0B2560] hover:underline">
               <ExternalLink size={14} /> View Live
             </a>
-            <button onClick={save} disabled={saving}
-              className="inline-flex items-center gap-2 bg-[#0B2560] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#0d2d72] transition disabled:opacity-50 shadow-sm">
-              {saving ? <Loader size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-              Save
-            </button>
-          </div>
-        </div>
-
-        {saveStatus === 'saved' && (
-          <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl mb-6">
-            <CheckCircle size={14} /> Saved — live in a few minutes
-          </div>
-        )}
-        {saveStatus === 'error' && (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl mb-6">
-            Save failed — please try again
-          </div>
-        )}
+          }
+        />
 
         <div className="space-y-3 mt-6">
           <SectionList

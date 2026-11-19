@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronUp, Plus, Trash2, Upload, CheckCircle, Loader, Images, Info } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, Upload, Loader, Images, Info } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { HOMEPAGE_DEFAULTS } from '@/app/lib/homepageDefaults';
 import MediaGalleryModal from '@/app/admin/components/MediaGalleryModal';
@@ -11,6 +11,7 @@ import SectionCard from '@/app/admin/components/builder/SectionCard';
 import SaveTemplateModal from '@/app/admin/components/builder/SaveTemplateModal';
 import LayoutEngineSectionBuilder from '@/app/admin/components/builder/LayoutEngineSectionBuilder';
 import NMCComplianceHint from '@/app/admin/components/NMCComplianceHint';
+import SaveBar, { useUnsavedChanges } from '@/app/admin/components/SaveBar';
 
 // md5('home').slice(0, 24) — Home is a singleton with no Mongo document, so
 // Section docs for it use this fixed, deterministic pseudo-ObjectId rather
@@ -1521,6 +1522,7 @@ export default function HomepageBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const { dirty, markSaved } = useUnsavedChanges(sections, !loading);
 
   // Section templates ("Save as Template" only — homepage sections are fixed
   // one-per-type slots, so there's no generic "Insert Template" here the way
@@ -1604,6 +1606,8 @@ export default function HomepageBuilderPage() {
   const handleSave = async () => {
     setSaving(true);
     setError('');
+    setSaved(false);
+    const sent = sections;
     try {
       const payload = sections.map((s, idx) => ({ ...s, order: idx + 1 }));
       const res = await fetch('/api/admin/homepage', {
@@ -1611,8 +1615,9 @@ export default function HomepageBuilderPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sections: payload }),
       });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
+      const json = await res.json().catch(() => ({} as any));
+      if (!res.ok || !json.success) throw new Error(json.message || `Save failed (error ${res.status})`);
+      markSaved(sent);
 
       // Trigger ISR revalidation
       await fetch('/api/admin/homepage/revalidate', { method: 'POST' });
@@ -1636,34 +1641,19 @@ export default function HomepageBuilderPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-headline font-extrabold text-[#0B2560]">Homepage Builder</h1>
-          <p className="text-gray-500 text-sm mt-1">Drag sections to reorder • Toggle visibility • Edit content • Save & Publish</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {saved && (
-            <div className="flex items-center gap-2 text-green-600 font-semibold text-sm">
-              <CheckCircle size={16} /> Published!
-            </div>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 bg-[#0B2560] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#0d2d73] transition disabled:opacity-60"
-          >
-            {saving ? <Loader size={16} className="animate-spin" /> : null}
-            {saving ? 'Publishing…' : '💾 Save & Publish'}
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-          {error}
-        </div>
-      )}
+      {/* HEADER — sticky, so Save & Publish is always in reach */}
+      <SaveBar
+        title="Homepage Builder"
+        subtitle="Drag sections to reorder • Toggle visibility • Edit content • Save & Publish"
+        dirty={dirty}
+        saving={saving}
+        saved={saved}
+        error={error}
+        onSave={handleSave}
+        label="💾 Save & Publish"
+        savingLabel="Publishing…"
+        savedText="Published ✓ live within a few minutes"
+      />
 
       {/* SECTION CARDS */}
       <SectionList
@@ -1724,7 +1714,8 @@ export default function HomepageBuilderPage() {
       </div>
 
       {/* BOTTOM SAVE */}
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex items-center justify-end gap-3">
+        {error && <span role="alert" className="text-xs font-semibold text-red-600">{error}</span>}
         <button
           onClick={handleSave}
           disabled={saving}
