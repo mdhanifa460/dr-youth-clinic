@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidateTag } from 'next/cache';
+import { SECTIONS_TAG, sectionsTagFor } from '@/app/lib/layoutEngine/sectionsCache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Section } from '@/app/models/Section';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -32,7 +33,7 @@ export async function PATCH(req: NextRequest) {
       )
     );
 
-    revalidatePath('/', 'layout');
+    revalidateTag(sectionsTagFor(pageType));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error reordering sections:', error);

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import Link from 'next/link';
 import { Calendar, Users, MapPin, Award } from 'lucide-react';
 import { connectDB } from '@/app/lib/mongodb';
@@ -27,7 +28,7 @@ const getCachedPageContent = unstable_cache(
     } catch { return {}; }
   },
   ['doctors-page-content'],
-  { revalidate: 300, tags: ['doctors-page'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['doctors-page'] }
 );
 
 async function getAllDoctors() {

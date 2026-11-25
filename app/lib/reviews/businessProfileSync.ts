@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Review } from '@/app/models/Review';
 import { GoogleReviewSyncState } from '@/app/models/GoogleReviewSyncState';
@@ -221,6 +222,8 @@ export async function runBusinessProfileSync(): Promise<SyncCounts & { errors: s
       lastSyncSource: 'business_profile',
     },
   }, { upsert: true });
+
+  if (counts.imported + counts.updated > 0) revalidateTag('reviews');
 
   return { ...counts, errors, listings: links.length };
 }

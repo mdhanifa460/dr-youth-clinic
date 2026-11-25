@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 
 // CMS-driven replacement for the goal metadata that used to live as source
 // constants in app/lib/journeyGoals.ts (JOURNEY_GOAL_META/GOAL_CONCERN_TAGS)
@@ -129,7 +130,7 @@ const getCachedJourneyConfigDoc = unstable_cache(
     return doc as IJourneyConfig | null;
   },
   ['journey-config-singleton'],
-  { revalidate: 60, tags: ['journey-config'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['journey-config'] }
 );
 
 // Singleton helper — same shape as Settings.ts's getSettings(): always

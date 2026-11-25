@@ -9,6 +9,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
@@ -20,7 +21,7 @@ import BlogPageClient from '../../blog/BlogPageClient';
 import { getSettings } from '@/app/models/Settings';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
-export const revalidate = 300;
+export const revalidate = 3600; // every data read here is tag-revalidated on admin save — see app/lib/cacheConfig.ts
 
 export function generateStaticParams() {
   return Object.keys(locations).map((location) => ({ location }));
@@ -54,7 +55,7 @@ const getCachedLocationPosts = unstable_cache(
     return JSON.parse(JSON.stringify(posts));
   },
   ['blog-posts-by-location'],
-  { revalidate: 300, tags: ['blog'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['blog'] }
 );
 async function getPosts(location: string) {
   try { return await getCachedLocationPosts(location); } catch { return []; }
@@ -83,7 +84,7 @@ const getCachedTrendingServices = unstable_cache(
       });
   },
   ['blog-trending-services-by-location'],
-  { revalidate: 300, tags: ['services'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['services'] }
 );
 async function getTrendingServices(location: string) {
   try { return await getCachedTrendingServices(location); } catch { return []; }
@@ -100,7 +101,7 @@ const getCachedBlogVideos = unstable_cache(
     return JSON.parse(JSON.stringify(videos));
   },
   ['blog-videos'],
-  { revalidate: 300, tags: ['videos'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['videos'] }
 );
 async function getVideos() {
   try { return await getCachedBlogVideos(); } catch { return []; }

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { Blog } from '@/app/models/Blog';
 import { Service } from '@/app/models/Service';
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
 // visitor. Tags reuse 'services'/'videos' where the admin write routes
 // already (or now also) call revalidateTag, so an edit shows up immediately
 // rather than waiting out the window.
-export const revalidate = 300;
+export const revalidate = 3600; // every data read here is tag-revalidated on admin save — see app/lib/cacheConfig.ts
 
 const getCachedPosts = unstable_cache(
   async () => {
@@ -41,7 +42,7 @@ const getCachedPosts = unstable_cache(
     return JSON.parse(JSON.stringify(posts));
   },
   ['blog-posts'],
-  { revalidate: 300, tags: ['blog'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['blog'] }
 );
 async function getPosts() {
   try { return await getCachedPosts(); } catch { return []; }
@@ -68,7 +69,7 @@ const getCachedTrendingServices = unstable_cache(
     });
   },
   ['blog-trending-services'],
-  { revalidate: 300, tags: ['services'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['services'] }
 );
 async function getTrendingServices() {
   try { return await getCachedTrendingServices(); } catch { return []; }
@@ -85,7 +86,7 @@ const getCachedBlogVideos = unstable_cache(
     return JSON.parse(JSON.stringify(videos));
   },
   ['blog-videos'],
-  { revalidate: 300, tags: ['videos'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['videos'] }
 );
 async function getVideos() {
   try { return await getCachedBlogVideos(); } catch { return []; }

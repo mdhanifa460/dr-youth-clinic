@@ -1,4 +1,7 @@
+import { unstable_cache } from 'next/cache';
 import { connectDB } from '@/app/lib/mongodb';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
+import { sectionsCacheTags } from '@/app/lib/layoutEngine/sectionsCache';
 import { Section, type ISection, type SectionPageType, type SectionZone } from '@/app/models/Section';
 import { findRegistryEntry } from '@/app/lib/layoutEngine/registry';
 import { getLayoutTemplateForPageType } from '@/app/lib/layoutEngine/templates';
@@ -21,14 +24,24 @@ export async function renderZoneSections({
   context: Record<string, any>;
   zone: SectionZone;
 }) {
-  await connectDB();
   const template = getLayoutTemplateForPageType(pageType);
   const zoneDef = template.zones.find((z) => z.name === zone);
   const stickyEligible = zoneDef?.stickyEligible ?? false;
 
-  const sections = await Section.find({ pageType, pageId, zone, enabled: true } as any)
-    .sort({ displayOrder: 1 })
-    .lean<ISection[]>();
+  // Tagged so an admin section edit refreshes only pages of that pageType
+  // (revalidateTag in app/api/admin/sections/*), instead of the old
+  // revalidatePath('/', 'layout') that re-rendered every page on the site.
+  const sections = await unstable_cache(
+    async () => {
+      await connectDB();
+      const docs = await Section.find({ pageType, pageId, zone, enabled: true } as any)
+        .sort({ displayOrder: 1 })
+        .lean<ISection[]>();
+      return JSON.parse(JSON.stringify(docs)) as ISection[];
+    },
+    ['layout-sections', pageType, pageId, zone],
+    { revalidate: CACHE_SAFETY_NET_SECONDS, tags: sectionsCacheTags(pageType) }
+  )();
 
   return sections
     .filter((s) => evaluateCondition(s.condition, context))

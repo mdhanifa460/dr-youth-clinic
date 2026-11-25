@@ -5,7 +5,7 @@
 import type { Metadata } from 'next';
 import { generateBlogDetailMetadata, renderBlogDetailPage, getBlogStaticParams } from '../blogDetailShared';
 
-export const revalidate = 300;
+export const revalidate = 3600; // post content is tag-revalidated on admin save (see app/lib/cacheConfig.ts); related-card lookups can lag up to 1h
 
 export async function generateStaticParams() {
   return (await getBlogStaticParams()).map(({ slug }) => ({ slug }));

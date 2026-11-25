@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from './mongodb';
 import { getSettings } from '@/app/models/Settings';
 import { HomepageSection } from '@/app/models/HomepageSection';
@@ -29,7 +30,7 @@ const getCachedStats = unstable_cache(
     return statsSection?.data?.stats ?? HOMEPAGE_DEFAULTS.stats?.data?.stats ?? [];
   },
   ['site-config-stats'],
-  { revalidate: 300, tags: ['homepage-layout'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['homepage-layout'] }
 );
 
 export const getSiteConfig = cache(async (): Promise<SiteConfig> => {

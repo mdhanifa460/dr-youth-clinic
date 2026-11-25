@@ -5,6 +5,7 @@
 // in journeyGoals.ts). Kept out of a "use client" file's import graph —
 // pulls in mongoose via connectDB, which breaks the browser bundle.
 import { unstable_cache } from "next/cache";
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from "@/app/lib/mongodb";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
 import { migrateLegacyQuizConfig, backfillClinicalFields } from "@/app/lib/quizMigration";
@@ -24,5 +25,5 @@ export const getCachedQuizConfig = unstable_cache(
   // cache entry must not be served after this deploy. (v2 was the prior
   // bump: rigid concerns/skinTypes/... fields → generic questions[].)
   ["quiz-config-v3"],
-  { revalidate: 300, tags: ["quiz-config"] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ["quiz-config"] }
 );

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { getSiteConfig } from '@/app/lib/siteConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { Doctor } from '@/app/models/Doctor';
@@ -47,7 +48,7 @@ const getCachedAboutSections = unstable_cache(
     }
   },
   ['about-page-sections'],
-  { revalidate: 300, tags: ['about-page'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['about-page'] }
 );
 
 async function getFeaturedDoctors() {
@@ -86,7 +87,7 @@ const getCachedReviews = unstable_cache(
     }
   },
   ['about-page-reviews'],
-  { revalidate: 60, tags: ['reviews'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['reviews'] }
 );
 
 async function getTestimonialsData() {

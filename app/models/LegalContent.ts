@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 
 // Privacy Policy and Terms of Service — previously hardcoded JSX in
 // app/(public)/privacy-policy/page.tsx and app/(public)/terms/page.tsx,
@@ -210,7 +211,7 @@ const getCachedLegalContentDoc = unstable_cache(
     return doc as ILegalContent | null;
   },
   ['legal-content-singleton'],
-  { revalidate: 300, tags: ['legal-content'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['legal-content'] }
 );
 
 export async function getLegalContent(): Promise<ILegalContent> {

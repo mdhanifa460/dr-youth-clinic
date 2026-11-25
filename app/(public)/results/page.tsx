@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Result, PUBLISHED_RESULT } from '@/app/models/Result';
@@ -44,7 +45,7 @@ const getPairs = unstable_cache(
     } catch { return []; }
   },
   ['public-results'],
-  { revalidate: 60, tags: ['results'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['results'] }
 );
 
 export default async function ResultsPage() {

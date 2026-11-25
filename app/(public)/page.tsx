@@ -1,6 +1,7 @@
 import { getEffectiveSlug } from '@/app/lib/serviceSeo';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { Review, PUBLIC_REVIEW_FIELDS } from '@/app/models/Review';
@@ -184,7 +185,7 @@ const getCachedSections = unstable_cache(
     }
   },
   ['homepage-sections-v3'],
-  { revalidate: 300, tags: ['homepage-layout'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['homepage-layout'] }
 );
 
 const getCachedReviews = unstable_cache(
@@ -208,7 +209,7 @@ const getCachedReviews = unstable_cache(
     }
   },
   ['homepage-reviews-v2'],
-  { revalidate: 60, tags: ['reviews'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['reviews'] }
 );
 
 const getCachedDoctors = unstable_cache(
@@ -228,7 +229,7 @@ const getCachedDoctors = unstable_cache(
     }
   },
   ['homepage-doctors-v2'],
-  { revalidate: 300, tags: ['doctors'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['doctors'] }
 );
 
 const getCachedBlogPosts = unstable_cache(
@@ -245,7 +246,7 @@ const getCachedBlogPosts = unstable_cache(
     }
   },
   ['homepage-blog-v1'],
-  { revalidate: 300, tags: ['blog'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['blog'] }
 );
 
 // Feeds the homepage's before_after carousel — Result docs replaced the old
@@ -267,7 +268,7 @@ const getCachedResultPairs = unstable_cache(
     }
   },
   ['homepage-result-pairs'],
-  { revalidate: 60, tags: ['results'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['results'] }
 );
 
 // Feeds the achievements section — same "live collection, not embedded
@@ -286,7 +287,7 @@ const getCachedAchievements = unstable_cache(
     }
   },
   ['homepage-achievements'],
-  { revalidate: 60, tags: ['achievements'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['achievements'] }
 );
 
 const getCachedFeaturedVideos = unstable_cache(
@@ -306,7 +307,7 @@ const getCachedFeaturedVideos = unstable_cache(
     }
   },
   ['homepage-video-academy'],
-  { revalidate: 300, tags: ['videos'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['videos'] }
 );
 
 // Maps a Video document (app/models/Video.ts) to VideoReelsSection's
@@ -389,7 +390,7 @@ const getCachedQuickServices = unstable_cache(
     }
   },
   ['homepage-quick-services'],
-  { revalidate: 300, tags: ['services'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['services'] }
 );
 
 const getCachedServiceCategoryCounts = unstable_cache(
@@ -414,7 +415,7 @@ const getCachedServiceCategoryCounts = unstable_cache(
     }
   },
   ['homepage-service-category-counts'],
-  { revalidate: 300, tags: ['services'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['services'] }
 );
 
 const getCachedStories = unstable_cache(
@@ -434,7 +435,7 @@ const getCachedStories = unstable_cache(
     }
   },
   ['homepage-web-stories'],
-  { revalidate: 60, tags: ['stories'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['stories'] }
 );
 
 // Feeds the homepage FAQ accordion from the reusable Faq model (Admin →
@@ -471,7 +472,7 @@ const getCachedTestimonialsRotateMs = unstable_cache(
     }
   },
   ['testimonials-rotate-ms'],
-  { revalidate: 60, tags: ['settings'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['settings'] }
 );
 
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ data: any }>> = {

@@ -1,11 +1,12 @@
 import { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { Story } from '@/app/models/Story';
 import { StoryType } from '@/app/models/StoryType';
 import WebStoriesClient from './WebStoriesClient';
 
-export const revalidate = 60;
+export const revalidate = 3600; // every data read here is tag-revalidated on admin save — see app/lib/cacheConfig.ts
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ const getStories = unstable_cache(
     }
   },
   ['public-web-stories'],
-  { revalidate: 60, tags: ['stories'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['stories'] }
 );
 
 export default async function WebStoriesPage() {

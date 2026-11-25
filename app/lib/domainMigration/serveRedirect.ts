@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { RedirectMapping } from '@/app/models/RedirectMapping';
 
@@ -26,7 +27,7 @@ const getApprovedMappingCached = unstable_cache(
     return mapping?.newUrl || null;
   },
   ['approved-redirect-mapping'],
-  { revalidate: 300, tags: ['redirect-mappings'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['redirect-mappings'] }
 );
 
 // Never throws — a lookup failure must never turn an ordinary 404 into a

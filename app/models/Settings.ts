@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 
 export interface ISettings extends Document {
   serviceForm: {
@@ -812,7 +813,7 @@ const getCachedSettingsDoc = unstable_cache(
     return doc as ISettings | null;
   },
   ['settings-singleton'],
-  { revalidate: 60, tags: ['settings'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['settings'] }
 );
 
 // Singleton helper — always returns the one settings doc, creates it if missing

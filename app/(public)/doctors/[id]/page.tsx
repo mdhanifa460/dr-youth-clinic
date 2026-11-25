@@ -2,6 +2,7 @@ import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { Calendar, MapPin, Award, ArrowLeft, GraduationCap, Languages, Stethoscope } from 'lucide-react';
@@ -18,7 +19,7 @@ import InterestTracker from '@/app/components/InterestTracker';
 import { resolveInterestCategory } from '@/app/lib/personalization';
 import { pageTitle, metaDescription } from '@/app/lib/seoText';
 
-export const revalidate = 300;
+export const revalidate = 3600; // every data read here is tag-revalidated on admin save — see app/lib/cacheConfig.ts
 
 const LOCATION_LABELS: Record<string, string> = {
   chennai: 'Chennai', bangalore: 'Bangalore', coimbatore: 'Coimbatore', kochi: 'Kochi', all: 'All Clinics',
@@ -33,7 +34,7 @@ const getCachedPageContent = unstable_cache(
     } catch { return {}; }
   },
   ['doctors-page-content'],
-  { revalidate: 300, tags: ['doctors-page'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['doctors-page'] }
 );
 
 const getDoctorResults = unstable_cache(async (doctorId: string) => {
@@ -46,7 +47,7 @@ const getDoctorResults = unstable_cache(async (doctorId: string) => {
       .lean();
     return JSON.parse(JSON.stringify(docs));
   } catch { return []; }
-}, ['doctor-results'], { revalidate: 300, tags: ['doctors', 'results'] });
+}, ['doctor-results'], { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['doctors', 'results'] });
 
 const getDoctor = cache(unstable_cache(async (id: string) => {
   try {
@@ -57,7 +58,7 @@ const getDoctor = cache(unstable_cache(async (id: string) => {
   } catch {
     return null;
   }
-}, ['doctor-by-id'], { revalidate: 300, tags: ['doctors'] }));
+}, ['doctor-by-id'], { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['doctors'] }));
 
 // See getBlogStaticParams (blog/blogDetailShared.tsx): without this the page
 // is rendered fresh on every request instead of being ISR-cached.

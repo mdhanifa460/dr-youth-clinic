@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { Service } from '@/app/models/Service';
 import { getCachedCategories } from '@/app/lib/getCachedCategories';
@@ -61,7 +62,7 @@ const getNavServices = unstable_cache(
     return { categories: cats, concerns };
   },
   ['nav-services-by-city-v2'],
-  { revalidate: 300, tags: ['services', 'categories'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['services', 'categories'] }
 );
 
 export async function GET(req: NextRequest) {

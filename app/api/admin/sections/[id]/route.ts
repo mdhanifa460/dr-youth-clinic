@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidateTag } from 'next/cache';
+import { sectionsTagFor } from '@/app/lib/layoutEngine/sectionsCache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Section } from '@/app/models/Section';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -33,7 +34,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       runValidators: true,
     });
 
-    revalidatePath('/', 'layout');
+    revalidateTag(sectionsTagFor(existing.pageType));
+    if (section?.pageType && section.pageType !== existing.pageType) revalidateTag(sectionsTagFor(section.pageType));
     return NextResponse.json({ success: true, data: section });
   } catch (error: any) {
     console.error('Error updating section:', error);
@@ -58,7 +60,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     if (denied) return denied;
 
     await (Section as any).findByIdAndDelete(params.id);
-    revalidatePath('/', 'layout');
+    revalidateTag(sectionsTagFor(existing.pageType));
     return NextResponse.json({ success: true, message: 'Section deleted' });
   } catch (error) {
     console.error('Error deleting section:', error);

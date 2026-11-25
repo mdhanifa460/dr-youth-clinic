@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidateTag } from 'next/cache';
+import { SECTIONS_TAG, sectionsTagFor } from '@/app/lib/layoutEngine/sectionsCache';
 import { connectDB } from '@/app/lib/mongodb';
 import { Section, type SectionPageType } from '@/app/models/Section';
 import { requirePermission } from '@/app/lib/adminAuth';
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       displayOrder: body.displayOrder ?? count,
     });
 
-    revalidatePath('/', 'layout');
+    revalidateTag(sectionsTagFor(body.pageType));
     return NextResponse.json({ success: true, data: section }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating section:', error);

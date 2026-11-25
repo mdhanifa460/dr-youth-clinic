@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { cleanCredentialWording, scrubTreatmentClaims } from '@/app/lib/patientClaims';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import FocalImage from '@/app/components/media/FocalImage';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -93,7 +94,7 @@ const getCachedServiceCandidates = unstable_cache(
     } as any).lean();
   },
   ['service-candidates-by-location'],
-  { revalidate: 300, tags: ['services'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['services'] }
 );
 
 const getServiceCandidates = cache(async (location: string) => {

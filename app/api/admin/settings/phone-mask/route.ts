@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Settings } from '@/app/models/Settings';
@@ -28,6 +29,7 @@ export async function PUT(req: NextRequest) {
       { $set: { 'contactPrivacy.phoneMaskEnabled': enabled } },
       { returnDocument: 'after', upsert: true, runValidators: true, setDefaultsOnInsert: true }
     );
+    revalidateTag('settings');
 
     return NextResponse.json({ success: true, data: updated.contactPrivacy });
   } catch (error: any) {

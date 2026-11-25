@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { unstable_cache } from "next/cache";
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 
 // Homepage Personalization Engine — Phase 2. Singleton config (same
 // pattern as Settings/QuizConfig/AssessmentConfig): one document, every
@@ -195,7 +196,7 @@ const getCachedPersonalizationConfigDoc = unstable_cache(
     return doc as (IPersonalizationConfig & { _id: any }) | null;
   },
   ["personalization-config-singleton"],
-  { revalidate: 60, tags: ["personalization-config"] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ["personalization-config"] }
 );
 
 export async function getPersonalizationConfig(): Promise<IPersonalizationConfig> {

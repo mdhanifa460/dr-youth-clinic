@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/privacy-policy` },
 };
 
-export const revalidate = 300;
+export const revalidate = 3600; // every data read here is tag-revalidated on admin save — see app/lib/cacheConfig.ts
 
 // Section text and ids come from Admin -> Legal, which remains the only source of
 // policy wording. Everything defined here is navigation, and must not add commitments.

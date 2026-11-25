@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { HomepageSection } from '@/app/models/HomepageSection';
 import { FAQSchema } from '@/app/components/SchemaMarkup';
@@ -35,7 +36,7 @@ const getCmsFaqs = unstable_cache(
     }
   },
   ['cms-faqs'],
-  { revalidate: 300, tags: ['homepage-layout'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['homepage-layout'] }
 );
 
 // Admin-editable "Stats Bar" section (HomepageSection sectionKey: 'stats') — reused here
@@ -51,7 +52,7 @@ const getStatsData = unstable_cache(
     }
   },
   ['cms-stats-for-faqs'],
-  { revalidate: 300, tags: ['homepage-layout'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['homepage-layout'] }
 );
 
 export default async function FAQPage() {

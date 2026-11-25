@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from '@/app/lib/mongodb';
 import { Category, DEFAULT_CATEGORIES } from '@/app/models/Category';
 
@@ -22,5 +23,5 @@ export const getCachedCategories = unstable_cache(
     }
   },
   ['public-service-categories'],
-  { revalidate: 300, tags: ['categories'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['categories'] }
 );

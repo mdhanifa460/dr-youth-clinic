@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import { connectDB } from "@/app/lib/mongodb";
 import { CustomAnalyticsEvent } from "@/app/models/CustomAnalyticsEvent";
 
@@ -18,7 +19,7 @@ const getCachedActiveEvents = unstable_cache(
       .lean();
   },
   ["custom-analytics-events-active"],
-  { revalidate: 60, tags: ["custom-analytics-events"] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ["custom-analytics-events"] }
 );
 
 export async function GET() {

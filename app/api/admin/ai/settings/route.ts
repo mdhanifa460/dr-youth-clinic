@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/app/lib/mongodb';
 import { Settings, getSettings } from '@/app/models/Settings';
@@ -40,6 +41,7 @@ export async function PUT(req: NextRequest) {
     const updated = existing
       ? await (Settings as any).findByIdAndUpdate(existing._id, { $set: patch }, { returnDocument: 'after', runValidators: true })
       : await Settings.create(patch);
+    revalidateTag('settings');
 
     return NextResponse.json({ success: true, data: { ai: updated.ai, clinicProfile: updated.clinicProfile } });
   } catch (error: any) {

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/terms` },
 };
 
-export const revalidate = 300;
+export const revalidate = 3600; // every data read here is tag-revalidated on admin save — see app/lib/cacheConfig.ts
 
 export default async function TermsPage() {
   const legal = await getLegalContent();

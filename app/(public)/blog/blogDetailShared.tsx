@@ -10,6 +10,7 @@
 // architecturally correct place for logic two routes both need.
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -72,7 +73,7 @@ const getPost = cache(unstable_cache(async (slug: string) => {
     if (!post) return null;
     return JSON.parse(JSON.stringify(post));
   } catch { return null; }
-}, ['blog-post-by-slug'], { revalidate: 300, tags: ['blog'] }));
+}, ['blog-post-by-slug'], { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['blog'] }));
 
 // `location`, when given, restricts related posts to ones that actually
 // target that city too — otherwise a related-post card on a location page
@@ -91,7 +92,7 @@ const getRelatedPosts = unstable_cache(async (slug: string, category: string, lo
     }
     return JSON.parse(JSON.stringify(posts));
   } catch { return []; }
-}, ['blog-related-posts'], { revalidate: 300, tags: ['blog'] });
+}, ['blog-related-posts'], { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['blog'] });
 
 const getReviewingDoctor = unstable_cache(async (doctorId?: string) => {
   if (!doctorId) return null;
@@ -101,7 +102,7 @@ const getReviewingDoctor = unstable_cache(async (doctorId?: string) => {
     if (!doctor) return null;
     return JSON.parse(JSON.stringify(doctor));
   } catch { return null; }
-}, ['blog-reviewing-doctor'], { revalidate: 300, tags: ['blog', 'doctors'] });
+}, ['blog-reviewing-doctor'], { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['blog', 'doctors'] });
 
 // Shared by both /blog/[slug] (location omitted) and /[location]/blog/[slug]
 // (the new location-targeted route) — same reasoning as Service's single

@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { Doctor } from "@/app/models/Doctor";
 import { LocationContent } from "@/app/models/LocationContent";
 import ConnectorSyncRun from "@/app/models/ConnectorSyncRun";
@@ -61,6 +62,9 @@ async function syncDoctors(connector: CRMConnector): Promise<SyncSummary> {
   const summary: SyncSummary = { itemsTotal: 0, itemsSynced: 0, itemsUnmatched: 0, itemsFailed: 0 };
   const crmDoctors = await connector.getDoctors();
   summary.itemsTotal = crmDoctors.length;
+  // This sync runs every 15 minutes; revalidating 'doctors' unconditionally
+  // would re-render every doctor-reading page each run.
+  let doctorsChanged = false;
 
   for (const crmDoctor of crmDoctors) {
     try {
@@ -68,8 +72,10 @@ async function syncDoctors(connector: CRMConnector): Promise<SyncSummary> {
       if (existing) {
         // Operational fields only — name/photo/bio/qualifications stay
         // admin-authored even for a synced doctor.
+        const before = JSON.stringify([existing.active, existing.locations]);
         existing.active = crmDoctor.active;
         if (crmDoctor.locations.length) existing.locations = crmDoctor.locations;
+        if (JSON.stringify([existing.active, existing.locations]) !== before) doctorsChanged = true;
         existing.crmSyncedAt = new Date();
         await existing.save();
       } else {
@@ -95,6 +101,7 @@ async function syncDoctors(connector: CRMConnector): Promise<SyncSummary> {
       summary.itemsFailed++;
     }
   }
+  if (doctorsChanged) revalidateTag('doctors');
   return summary;
 }
 

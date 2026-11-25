@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 import Script from "next/script";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -26,7 +27,7 @@ import { getAnalyticsConfig } from "@/app/lib/analyticsConfig";
 const getCachedAnalyticsConfig = unstable_cache(
   getAnalyticsConfig,
   ["public-analytics-config"],
-  { revalidate: 300, tags: ["settings"] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ["settings"] }
 );
 
 const getCachedAiConfig = unstable_cache(
@@ -40,7 +41,7 @@ const getCachedAiConfig = unstable_cache(
     }
   },
   ["public-ai-config"],
-  { revalidate: 60, tags: ["settings"] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ["settings"] }
 );
 
 const getCachedNavItems = unstable_cache(
@@ -54,7 +55,7 @@ const getCachedNavItems = unstable_cache(
     }
   },
   ["public-nav-items-v2"],
-  { revalidate: 60, tags: ["settings"] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ["settings"] }
 );
 
 // Single query for both topbar + footer — avoids two round-trips per page
@@ -82,7 +83,7 @@ const getLayoutSections = unstable_cache(
     }
   },
   ["layout-sections-v2"],
-  { revalidate: 300, tags: ["homepage-layout"] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ["homepage-layout"] }
 );
 
 export default async function PublicLayout({

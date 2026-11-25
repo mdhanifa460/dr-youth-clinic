@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { connectDB } from '@/app/lib/mongodb';
 import { unstable_cache } from 'next/cache';
+import { CACHE_SAFETY_NET_SECONDS } from '@/app/lib/cacheConfig';
 
 // Booking Success page — admin-configurable content for
 // /book/success/[bookingId], replacing the old inline "thank you" div in
@@ -124,7 +125,7 @@ const getCachedBookingSuccessConfigDoc = unstable_cache(
     return doc as IBookingSuccessConfig | null;
   },
   ['booking-success-config-singleton'],
-  { revalidate: 60, tags: ['booking-success-config'] }
+  { revalidate: CACHE_SAFETY_NET_SECONDS, tags: ['booking-success-config'] }
 );
 
 // Singleton helper — same shape as getJourneyConfig()/getSettings(): always
