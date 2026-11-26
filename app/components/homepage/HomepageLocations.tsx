@@ -40,6 +40,10 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   kochi:      { lat:  9.9312, lng: 76.2673 },
 };
 
+// Limits for the silent on-load GPS check (see locateNearestClinic).
+const AUTO_MAX_ACCURACY_M = 5_000;
+const AUTO_MAX_DISTANCE_KM = 100;
+
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -141,12 +145,23 @@ export default function HomepageLocations({ data }: { data: any }) {
   // Only on request. Asking on page load showed a permission prompt to every new
   // visitor before they had done anything.
   const [locating, setLocating] = useState(false);
-  const locateNearestClinic = () => {
+  // `auto` = the silent check on page load. It only acts on a precise position
+  // near one of the clinics. On a desktop without GPS, the browser guesses the
+  // position from the network, which can be hundreds of km off (an office in
+  // Bangalore reported as Kerala), and saving that guess would move the whole
+  // site to the wrong branch for good. A tap on "Use my location" always applies.
+  const locateNearestClinic = (auto = false) => {
     if (!navigator?.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const nearest = nearestCityKey(coords.latitude, coords.longitude, availableKeys);
+        const c = CITY_COORDS[nearest];
+        const km = c ? haversineKm(coords.latitude, coords.longitude, c.lat, c.lng) : Infinity;
+        if (auto && (coords.accuracy > AUTO_MAX_ACCURACY_M || km > AUTO_MAX_DISTANCE_KM)) {
+          setLocating(false);
+          return;
+        }
         setActiveKey(nearest);
         rememberClinic(nearest);
         setAutoDetected(true);
@@ -166,7 +181,7 @@ export default function HomepageLocations({ data }: { data: any }) {
     if (!navigator?.permissions?.query || !navigator?.geolocation) return;
     navigator.permissions
       .query({ name: 'geolocation' as PermissionName })
-      .then((status) => { if (status.state === 'granted') locateNearestClinic(); })
+      .then((status) => { if (status.state === 'granted') locateNearestClinic(true); })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -217,7 +232,7 @@ export default function HomepageLocations({ data }: { data: any }) {
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between gap-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select a location</p>
               {/* Always offered: an IP guess can be wrong, and GPS is how a visitor fixes it. */}
-              <button type="button" onClick={locateNearestClinic} disabled={locating} className="min-h-11 flex items-center gap-1 text-xs font-semibold text-primary underline underline-offset-2 disabled:opacity-60">
+              <button type="button" onClick={() => locateNearestClinic()} disabled={locating} className="min-h-11 flex items-center gap-1 text-xs font-semibold text-primary underline underline-offset-2 disabled:opacity-60">
                 <LocateFixed size={12} /> {locating ? 'Locating…' : autoDetected ? 'Not right? Use my location' : 'Near me'}
               </button>
             </div>
