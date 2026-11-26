@@ -2,6 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MdCheck } from 'react-icons/md';
 import { toTelHref } from '@/app/lib/phone';
+import BranchPhoneLink from '@/app/components/BranchPhoneLink';
+
+// A phone number written inside button text, e.g. "Call Now: 99944 49535".
+const PHONE_IN_TEXT = /\+?\d[\d\s-]{7,}\d/;
 
 export default function CTAStrip({ data }: { data: any }) {
   const {
@@ -51,7 +55,26 @@ export default function CTAStrip({ data }: { data: any }) {
                 {booking.ctaPrimary.text}
               </Link>
             )}
-            {booking.ctaSecondary && (
+            {booking.ctaSecondary && /^tel:/i.test(booking.ctaSecondary.href || '') ? (
+              // A phone button dials the visitor's own branch (same number as the
+              // top bar and footer), not the one number typed into the editor,
+              // which stays as the fallback until the branch is known. A number
+              // written in the button text is swapped for the branch number too.
+              (() => {
+                const text: string = booking.ctaSecondary.text || '';
+                const numberInText = text.match(PHONE_IN_TEXT)?.[0];
+                const label = numberInText ? text.replace(numberInText, '').trim() : text;
+                return (
+                  <BranchPhoneLink
+                    fallback={numberInText || String(booking.ctaSecondary.href).replace(/^tel:/i, '')}
+                    showNumber={!!numberInText}
+                    className="min-h-12 w-full border border-primary text-primary font-semibold py-3 px-4 rounded-xl hover:bg-line transition-colors text-sm flex items-center justify-center gap-1.5"
+                  >
+                    {label}
+                  </BranchPhoneLink>
+                );
+              })()
+            ) : booking.ctaSecondary && (
               <a
                 href={/^tel:/i.test(booking.ctaSecondary.href || '') ? toTelHref(booking.ctaSecondary.href) : booking.ctaSecondary.href || '/book'}
                 className="min-h-12 w-full border border-primary text-primary font-semibold py-3 px-4 rounded-xl hover:bg-line transition-colors text-sm flex items-center justify-center"

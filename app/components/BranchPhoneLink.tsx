@@ -8,16 +8,19 @@ export default function BranchPhoneLink({
   fallback,
   className,
   children,
+  showNumber = true,
 }: {
   fallback: string;
   className?: string;
   children?: React.ReactNode;
+  // false: the link dials the branch number but only shows `children`.
+  showNumber?: boolean;
 }) {
   const phone = useBranchPhone(fallback);
   return (
     <a href={`tel:${phone.replace(/\s/g, '')}`} className={className}>
       {children}
-      <span>{phone}</span>
+      {showNumber && <span>{phone}</span>}
     </a>
   );
 }
