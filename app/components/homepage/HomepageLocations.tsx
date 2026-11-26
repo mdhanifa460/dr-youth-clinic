@@ -141,7 +141,7 @@ export default function HomepageLocations({ data }: { data: any }) {
   // Only on request. Asking on page load showed a permission prompt to every new
   // visitor before they had done anything.
   const [locating, setLocating] = useState(false);
-  const useMyLocation = () => {
+  const locateNearestClinic = () => {
     if (!navigator?.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
@@ -166,7 +166,7 @@ export default function HomepageLocations({ data }: { data: any }) {
     if (!navigator?.permissions?.query || !navigator?.geolocation) return;
     navigator.permissions
       .query({ name: 'geolocation' as PermissionName })
-      .then((status) => { if (status.state === 'granted') useMyLocation(); })
+      .then((status) => { if (status.state === 'granted') locateNearestClinic(); })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -217,7 +217,7 @@ export default function HomepageLocations({ data }: { data: any }) {
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between gap-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select a location</p>
               {/* Always offered: an IP guess can be wrong, and GPS is how a visitor fixes it. */}
-              <button type="button" onClick={useMyLocation} disabled={locating} className="min-h-11 flex items-center gap-1 text-xs font-semibold text-primary underline underline-offset-2 disabled:opacity-60">
+              <button type="button" onClick={locateNearestClinic} disabled={locating} className="min-h-11 flex items-center gap-1 text-xs font-semibold text-primary underline underline-offset-2 disabled:opacity-60">
                 <LocateFixed size={12} /> {locating ? 'Locating…' : autoDetected ? 'Not right? Use my location' : 'Near me'}
               </button>
             </div>

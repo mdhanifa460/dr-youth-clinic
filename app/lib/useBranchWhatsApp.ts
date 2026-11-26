@@ -14,6 +14,7 @@ import { locations } from '@/app/data/locations';
 import { parseUtmCookie, UTM_LAST_COOKIE, UTM_FIRST_COOKIE } from '@/app/lib/utmAttribution';
 import { encodeAttributionToken, type WaAttributionPayload } from '@/app/lib/whatsappAttribution';
 import { useLocationChangeVersion } from '@/app/lib/locationChange';
+import { fetchBranchJson } from '@/app/lib/branchFetch';
 
 const CITY_SLUGS = Object.keys(locations);
 
@@ -114,8 +115,7 @@ export function useBranchPhone(fallback: string): string {
     if (!location) return;
 
     let cancelled = false;
-    fetch(`/api/branch-contact?location=${location}`)
-      .then((res) => res.json())
+    fetchBranchJson(`/api/branch-contact?location=${location}`)
       .then((data) => {
         if (!cancelled && data.success && data.data.phone) setNumber(data.data.phone);
       })
@@ -136,8 +136,7 @@ export function useBranchWhatsApp(fallback: string, explicitLocation?: string): 
     if (!location) return;
 
     let cancelled = false;
-    fetch(`/api/branch-whatsapp?location=${location}`)
-      .then((res) => res.json())
+    fetchBranchJson(`/api/branch-whatsapp?location=${location}`)
       .then((data) => {
         if (!cancelled && data.success && data.data.whatsapp) setNumber(data.data.whatsapp);
       })

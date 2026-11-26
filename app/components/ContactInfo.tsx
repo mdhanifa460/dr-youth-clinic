@@ -6,6 +6,7 @@ import { MdLocationOn, MdPhone, MdEmail } from 'react-icons/md';
 import { resolveFooterLocation, LOCATION_COOKIE } from '@/app/lib/footerLinks';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
 import { useLocationChangeVersion } from '@/app/lib/locationChange';
+import { fetchBranchJson } from '@/app/lib/branchFetch';
 
 // The Footer's "Contact Us" address/phone used to be one fixed value for
 // every visitor (whatever an admin typed into Homepage → Footer — Chennai
@@ -29,21 +30,18 @@ export default function ContactInfo({
 }) {
   const pathname = usePathname();
   const { homepageBranch } = useSiteConfig();
-  const [location, setLocation] = useState(() => resolveFooterLocation(pathname, '', homepageBranch));
   const [address, setAddress] = useState(defaultAddress || '');
   const [phone, setPhone] = useState(defaultPhone || '');
   const locationVersion = useLocationChangeVersion();
 
+  // Branch is worked out from the cookie in the same effect that fetches it, so
+  // there's no first request for the default branch before the cookie is read.
   useEffect(() => {
     const match = document.cookie.match(new RegExp(`(?:^|; )${LOCATION_COOKIE}=([^;]+)`));
     const cookieValue = match ? decodeURIComponent(match[1]) : '';
-    setLocation(resolveFooterLocation(pathname, cookieValue, homepageBranch));
-  }, [pathname, homepageBranch, locationVersion]);
-
-  useEffect(() => {
+    const location = resolveFooterLocation(pathname, cookieValue, homepageBranch);
     let cancelled = false;
-    fetch(`/api/branch-contact?location=${location}`)
-      .then((r) => r.json())
+    fetchBranchJson(`/api/branch-contact?location=${location}`)
       .then((d) => {
         if (cancelled || !d.success) return;
         setAddress(d.data.address || defaultAddress || '');
@@ -52,7 +50,7 @@ export default function ContactInfo({
       .catch(() => {});
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location]);
+  }, [pathname, homepageBranch, locationVersion]);
 
   return (
     <ul className="space-y-4">
