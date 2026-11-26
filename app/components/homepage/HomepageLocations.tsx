@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { toTelHref } from '@/app/lib/phone';
+import { announceLocationChange } from '@/app/lib/locationChange';
 
 const CITY_KEY: Record<string, string> = {
   Chennai: 'chennai',
@@ -22,8 +23,13 @@ const toCityKey = (city: string) => CITY_KEY[city] ?? city.toLowerCase();
 // Remembers the clinic a visitor picks, so the navbar, footer, contact details and
 // WhatsApp button use that branch on every page from now on (same cookie the
 // middleware sets when they open a city page).
-function rememberClinic(key: string) {
-  document.cookie = `preferred_location=${encodeURIComponent(key)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+// `manual` marks a clinic the visitor tapped themselves, so a later automatic GPS
+// check never overrides it.
+function rememberClinic(key: string, manual = false) {
+  const attrs = `path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+  document.cookie = `preferred_location=${encodeURIComponent(key)}; ${attrs}`;
+  if (manual) document.cookie = `preferred_location_manual=1; ${attrs}`;
+  announceLocationChange();
 }
 
 // Approximate city-centre coordinates for each clinic key
@@ -151,6 +157,20 @@ export default function HomepageLocations({ data }: { data: any }) {
     );
   };
 
+  // GPS is more accurate than the IP guess (office networks and VPNs often appear
+  // to be in another city). If the visitor has ALREADY allowed location for this
+  // site, use it straight away; this never shows a permission prompt. Skipped when
+  // they picked a clinic themselves.
+  useEffect(() => {
+    if (/(?:^|; )preferred_location_manual=1/.test(document.cookie)) return;
+    if (!navigator?.permissions?.query || !navigator?.geolocation) return;
+    navigator.permissions
+      .query({ name: 'geolocation' as PermissionName })
+      .then((status) => { if (status.state === 'granted') useMyLocation(); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loc          = locations[activeKey];
   const embed        = _embeds[activeKey] ?? {};
   const ci           = embed.clinicInfo;
@@ -196,16 +216,10 @@ export default function HomepageLocations({ data }: { data: any }) {
           <div className="bg-white rounded-3xl shadow-sm ring-1 ring-line overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between gap-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select a location</p>
-              {!autoDetected && (
-                <button type="button" onClick={useMyLocation} disabled={locating} className="min-h-11 flex items-center gap-1 text-xs font-semibold text-primary underline underline-offset-2 disabled:opacity-60">
-                  <LocateFixed size={12} /> {locating ? 'Locating…' : 'Near me'}
-                </button>
-              )}
-              {autoDetected && (
-                <span className="flex items-center gap-1 text-xs font-bold text-primary bg-[#e8f0fe] px-2 py-0.5 rounded-full shrink-0">
-                  <LocateFixed size={9} /> Near you
-                </span>
-              )}
+              {/* Always offered: an IP guess can be wrong, and GPS is how a visitor fixes it. */}
+              <button type="button" onClick={useMyLocation} disabled={locating} className="min-h-11 flex items-center gap-1 text-xs font-semibold text-primary underline underline-offset-2 disabled:opacity-60">
+                <LocateFixed size={12} /> {locating ? 'Locating…' : autoDetected ? 'Not right? Use my location' : 'Near me'}
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
               {cities.map((city: string, i: number) => {
@@ -221,7 +235,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                 return (
                   <button
                     key={i}
-                    onClick={() => { setActiveKey(key); rememberClinic(key); }}
+                    onClick={() => { setActiveKey(key); rememberClinic(key, true); }}
                     className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all group ${
                       active ? 'bg-sand border-l-[3px] border-primary' : 'hover:bg-gray-50 border-l-[3px] border-transparent'
                     }`}

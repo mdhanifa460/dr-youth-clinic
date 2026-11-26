@@ -172,16 +172,32 @@ async function hasValidSignedSession(value?: string) {
   return signature === await signSessionId(sessionId);
 }
 
-function getLocationFromCountry(country?: string): string | null {
-  if (!country) return null;
+// Vercel sends x-vercel-ip-country-region as the region part of the ISO 3166-2
+// code only ("KA", "TN", "KL"), not "IN-KA". The old map keyed on "IN-KA", so it
+// never matched and every visitor fell back to Chennai. Accept both forms, and
+// only trust the region when the country is India (KA/TN are also codes elsewhere).
+// City is checked first so Coimbatore (same state as Chennai) gets its own branch.
+function getLocationFromIp(req: NextRequest): string | null {
+  const country = (req.headers.get("x-vercel-ip-country") || "").toUpperCase();
+  if (country && country !== "IN") return null;
 
-  const countryLocationMap: Record<string, string> = {
-    "IN-TN": "chennai",
-    "IN-KA": "bangalore",
-    "IN-KL": "kochi",
+  let city = "";
+  try {
+    city = decodeURIComponent(req.headers.get("x-vercel-ip-city") || "").toLowerCase();
+  } catch {}
+  if (/coimbatore|tiruppur|tirupur|erode|pollachi/.test(city)) return "coimbatore";
+  if (/bengaluru|bangalore/.test(city)) return "bangalore";
+  if (/chennai/.test(city)) return "chennai";
+  if (/kochi|cochin|ernakulam/.test(city)) return "kochi";
+
+  const rawRegion = (req.headers.get("x-vercel-ip-country-region") ?? req.headers.get("x-geo-country") ?? "").toUpperCase();
+  const region = rawRegion.startsWith("IN-") ? rawRegion.slice(3) : rawRegion;
+  const regionLocationMap: Record<string, string> = {
+    TN: "chennai",
+    KA: "bangalore",
+    KL: "kochi",
   };
-
-  return countryLocationMap[country] || null;
+  return regionLocationMap[region] || null;
 }
 
 function withPathname(req: NextRequest) {
@@ -407,10 +423,11 @@ export async function middleware(req: NextRequest) {
     });
   }
 
-  // Location detection — only run when no cookie is set yet to avoid redundant Set-Cookie on every request
-  if (pathname === "/" && !req.cookies.get(LOCATION_COOKIE)?.value) {
-    const country = req.headers.get("x-vercel-ip-country-region") ?? req.headers.get("x-geo-country");
-    const detectedLocation = getLocationFromCountry(country ?? undefined);
+  // IP location detection — only when no cookie is set yet, so it never overrides a
+  // branch the visitor picked. Runs on any public page, not just "/": most visitors
+  // arrive from search or ads on a service or blog page and never saw "/" first.
+  if (!(citySegment && VALID_LOCATIONS.includes(citySegment)) && !req.cookies.get(LOCATION_COOKIE)?.value) {
+    const detectedLocation = getLocationFromIp(req);
 
     if (detectedLocation && VALID_LOCATIONS.includes(detectedLocation)) {
       response.cookies.set(LOCATION_COOKIE, detectedLocation, {

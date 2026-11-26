@@ -13,6 +13,7 @@ import { usePathname } from 'next/navigation';
 import { locations } from '@/app/data/locations';
 import { parseUtmCookie, UTM_LAST_COOKIE, UTM_FIRST_COOKIE } from '@/app/lib/utmAttribution';
 import { encodeAttributionToken, type WaAttributionPayload } from '@/app/lib/whatsappAttribution';
+import { useLocationChangeVersion } from '@/app/lib/locationChange';
 
 const CITY_SLUGS = Object.keys(locations);
 
@@ -106,6 +107,7 @@ function detectBranch(pathname: string, explicitLocation?: string): string {
 export function useBranchPhone(fallback: string): string {
   const pathname = usePathname();
   const [number, setNumber] = useState(fallback);
+  const locationVersion = useLocationChangeVersion();
 
   useEffect(() => {
     const location = detectBranch(pathname);
@@ -119,7 +121,7 @@ export function useBranchPhone(fallback: string): string {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [pathname]);
+  }, [pathname, locationVersion]);
 
   return number;
 }
@@ -127,6 +129,7 @@ export function useBranchPhone(fallback: string): string {
 export function useBranchWhatsApp(fallback: string, explicitLocation?: string): string {
   const pathname = usePathname();
   const [number, setNumber] = useState(fallback);
+  const locationVersion = useLocationChangeVersion();
 
   useEffect(() => {
     const location = detectBranch(pathname, explicitLocation);
@@ -140,7 +143,7 @@ export function useBranchWhatsApp(fallback: string, explicitLocation?: string): 
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [pathname, explicitLocation]);
+  }, [pathname, explicitLocation, locationVersion]);
 
   return number;
 }

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
 import { resolveFooterHref, resolveFooterLocation, LOCATION_COOKIE } from '@/app/lib/footerLinks';
+import { useLocationChangeVersion } from '@/app/lib/locationChange';
 
 // Client-side location resolution for the Footer's Quick Links / Our
 // Procedures columns — the ONLY part of Footer.tsx that actually needs to
@@ -32,12 +33,13 @@ export default function FooterLinks({
   const { showBeforeAfterOnPublic, homepageBranch } = useSiteConfig();
   const pathname = usePathname();
   const [location, setLocation] = useState(() => resolveFooterLocation(pathname, '', homepageBranch));
+  const locationVersion = useLocationChangeVersion();
 
   useEffect(() => {
     const match = document.cookie.match(new RegExp(`(?:^|; )${LOCATION_COOKIE}=([^;]+)`));
     const cookieValue = match ? decodeURIComponent(match[1]) : '';
     setLocation(resolveFooterLocation(pathname, cookieValue, homepageBranch));
-  }, [pathname, homepageBranch]);
+  }, [pathname, homepageBranch, locationVersion]);
 
   return (
     <div>

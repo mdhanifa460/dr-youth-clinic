@@ -8,6 +8,7 @@ import { ChevronDown } from "lucide-react";
 import { useSiteConfig } from "@/app/components/SiteConfigContext";
 import { toHeaderLogo } from "@/app/lib/headerLogo";
 import { useBranchPhone } from "@/app/lib/useBranchWhatsApp";
+import { useLocationChangeVersion } from "@/app/lib/locationChange";
 
 export interface NavChild {
   id: string;
@@ -106,13 +107,14 @@ export default function Navbar({ navItems: navItemsProp, megaMenu }: { navItems?
   const [detectedLocation, setDetectedLocation] = useState(
     CITY_SLUGS.includes(siteConfig.homepageBranch) ? siteConfig.homepageBranch : "chennai",
   );
+  const locationVersion = useLocationChangeVersion();
   useEffect(() => {
     const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
     const value = match ? decodeURIComponent(match[1]) : "";
     if (CITY_SLUGS.includes(value)) {
       setDetectedLocation(value);
     }
-  }, []);
+  }, [locationVersion]);
 
   // Services mega menu — data is fetched lazily the first time the menu is
   // opened (desktop hover/click or mobile menu), never on page load.
