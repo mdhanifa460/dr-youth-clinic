@@ -10,7 +10,7 @@ import {
 import { FaWhatsapp } from 'react-icons/fa';
 import { markdownToHtml } from '@/app/lib/blogMarkdown';
 import { trackBookingConversion, pushDataLayerEvent } from '@/app/lib/trackConversion';
-import { useBranchWhatsApp, toWaLink, useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
+import { useBranchWhatsApp, useBranchPhone, toWaLink, useAttributedWaText } from '@/app/lib/useBranchWhatsApp';
 import { locations } from '@/app/data/locations';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
@@ -55,6 +55,16 @@ function getUrlBranch(): string {
   if (typeof window === 'undefined') return '';
   const params = new URLSearchParams(window.location.search);
   return (params.get('location') || params.get('clinic') || '').toLowerCase();
+}
+
+// Default clinic for the chat's booking and callback forms: the link's branch,
+// else the visitor's saved branch (same cookie the top bar and footer use).
+// The visitor can still change it. Lead records keep using getUrlBranch only.
+function getDefaultBranch(): string {
+  const fromUrl = getUrlBranch();
+  if (fromUrl || typeof document === 'undefined') return fromUrl;
+  const saved = decodeURIComponent(document.cookie.match(/(?:^|; )preferred_location=([^;]+)/)?.[1] || '').toLowerCase();
+  return saved in locations ? saved : '';
 }
 
 function getUrlCampaign(): string {
@@ -286,7 +296,7 @@ function BookingPanel({ onBack, accent }: { onBack: () => void; accent: string }
   // patient. Pre-filled from the same ?location=/?clinic= URL convention
   // getUrlBranch() already reads elsewhere in this file, so a branch-scoped
   // visitor doesn't have to pick it again.
-  const [form, setForm] = useState({ name: '', phone: '', service: '', location: getUrlBranch(), date: '', time: '', doctorId: '' });
+  const [form, setForm] = useState({ name: '', phone: '', service: '', location: getDefaultBranch(), date: '', time: '', doctorId: '' });
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [bookingId, setBookingId] = useState('');
@@ -663,10 +673,12 @@ function SupportPanel({ onBack, accent, whatsapp, phone, sessionId }: { onBack: 
   const waHref = waBase
     ? `${waBase}${waBase.includes('?') ? '&' : '?'}text=${encodeURIComponent(waMessage)}`
     : null;
-  const callHref = phone ? `tel:${phone.replace(/\s/g, '')}` : null;
+  // Branch number, like the WhatsApp option above; the sitewide one until known.
+  const branchPhone = useBranchPhone(phone || '');
+  const callHref = branchPhone ? `tel:${branchPhone.replace(/\s/g, '')}` : null;
 
   const [showCallbackForm, setShowCallbackForm] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', location: getUrlBranch() });
+  const [form, setForm] = useState({ name: '', phone: '', location: getDefaultBranch() });
   const getIdempotencyKey = useIdempotencyKey();
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
