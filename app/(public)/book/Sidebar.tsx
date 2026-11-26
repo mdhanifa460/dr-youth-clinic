@@ -3,6 +3,7 @@ import { CheckCircle, MapPin, Phone } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { toTelHref } from '@/app/lib/phone';
 import { useSiteConfig } from '@/app/components/SiteConfigContext';
+import { useBranchPhone } from '@/app/lib/useBranchWhatsApp';
 
 const STEPS = [
   { n: 1, label: 'Treatment & Clinic', desc: 'What you need, and where' },
@@ -12,7 +13,10 @@ const STEPS = [
 
 
 export default function Sidebar({ step }: { step: number }) {
-  const { publicPhone, yearsExperience } = useSiteConfig();
+  const { publicPhone: sitewidePhone, yearsExperience } = useSiteConfig();
+  // The visitor's own branch number, like the top bar and footer; the sitewide
+  // number until the branch is known.
+  const publicPhone = useBranchPhone(sitewidePhone || '');
   return (
     <div className="space-y-5">
 

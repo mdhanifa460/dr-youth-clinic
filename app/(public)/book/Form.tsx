@@ -77,7 +77,10 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
     const assessmentTypeParam = params.get('assessmentType') || '';
     const overallConcern = params.get('overallConcern') || '';
     const severity = params.get('severity') || '';
-    const locationKey = (params.get('location') || '').toLowerCase();
+    // A clinic named in the link wins; otherwise the visitor's saved branch (same
+    // cookie the top bar and footer use) is pre-selected. They can still change it.
+    const savedBranch = decodeURIComponent(document.cookie.match(/(?:^|; )preferred_location=([^;]+)/)?.[1] || '');
+    const locationKey = (params.get('location') || savedBranch).toLowerCase();
     const name = params.get('name') || '';
     const phone = params.get('phone') || '';
     journeySessionId.current = params.get('sessionId') || '';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
@@ -26,6 +26,19 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   const [error, setError] = useState('');
   const [website, setWebsite] = useState('');
   const getIdempotencyKey = useIdempotencyKey();
+
+  // Pre-select the visitor's saved branch (same cookie the top bar and footer
+  // use), after mount because this page is cached and shared. They can change it.
+  useEffect(() => {
+    const saved = decodeURIComponent(document.cookie.match(/(?:^|; )preferred_location=([^;]+)/)?.[1] || '').toLowerCase();
+    if (!saved) return;
+    const match = (cities as string[]).find((c) => {
+      const key = c.toLowerCase();
+      return key === saved || (saved === 'bangalore' && key === 'bengaluru');
+    });
+    if (match) setCity((current) => current || match);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
