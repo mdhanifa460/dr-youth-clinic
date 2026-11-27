@@ -52,6 +52,7 @@ export async function POST(_req: Request, props: { params: Promise<{ id: string 
       },
       analytics: { visitors: 0, leads: 0 },
       layoutEngineEnabled: source.layoutEngineEnabled ?? false,
+      followVisitorBranch: source.followVisitorBranch ?? false,
     });
 
     await copy.save();

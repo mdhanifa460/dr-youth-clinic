@@ -70,6 +70,10 @@ export interface ILandingPage extends Document {
   // extra registry-driven sections render after the existing `sections[]`
   // (still rendered by LpRenderer, untouched) and before the footer.
   layoutEngineEnabled?: boolean;
+  // When on, the page's Call/WhatsApp numbers are replaced with the visitor's
+  // branch numbers (same branch the main site uses). For generic pages with no
+  // campaign tracking number; leave off for city campaign pages.
+  followVisitorBranch?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -161,6 +165,7 @@ const LandingPageSchema = new Schema<ILandingPage>(
       leads: { type: Number, default: 0 },
     },
     layoutEngineEnabled: { type: Boolean, default: false },
+    followVisitorBranch: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

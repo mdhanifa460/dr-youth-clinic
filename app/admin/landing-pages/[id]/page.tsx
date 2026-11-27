@@ -53,6 +53,7 @@ interface LandingPage {
   leadsLive?: number;
   leadsAllTime?: number;
   layoutEngineEnabled?: boolean;
+  followVisitorBranch?: boolean;
 }
 
 // ─── Section defaults ─────────────────────────────────────────────────────────
@@ -1692,6 +1693,24 @@ export default function LandingPageBuilder() {
                   </label>
                   <p className="text-[10px] text-gray-400 mt-1">
                     Adds extra registry sections after the sections below, before the footer.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      onClick={() => updateLp((p) => ({ ...p, followVisitorBranch: !p.followVisitorBranch }))}
+                      className="rounded-full transition-colors shrink-0"
+                      style={{ width: '36px', height: '20px', background: lp.followVisitorBranch ? '#0B2560' : '#d1d5db' }}
+                    >
+                      <div
+                        className="bg-white rounded-full shadow transition-transform"
+                        style={{ width: '16px', height: '16px', margin: '2px', transform: lp.followVisitorBranch ? 'translateX(16px)' : 'translateX(0)' }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-[#0B2560]">Use visitor&apos;s branch numbers</span>
+                  </label>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Replaces this page&apos;s Call/WhatsApp numbers with the visitor&apos;s nearest branch numbers (from their location or saved branch). Leave off for city campaign pages with their own tracking numbers.
                   </p>
                 </div>
               </div>

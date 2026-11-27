@@ -14,6 +14,7 @@ import { renderZoneSections } from '@/app/components/layoutEngine/renderZoneSect
 import { resolveBanner } from '@/app/lib/banners/resolveBanner';
 import HomepageOfferSplash from '@/app/components/banners/HomepageOfferSplash';
 import GtmScript from '@/app/components/analytics/GtmScript';
+import { getVisitorBranch, getBranchNumbers } from '@/app/lib/visitorBranchServer';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '');
 
@@ -98,8 +99,41 @@ export default async function LandingPagePublic(props: Props) {
   const heroData = heroSection?.data ?? {};
   const locationSection = lp.sections?.find((s: any) => s.type === 'location');
   const locationData = locationSection?.data ?? {};
-  const phone = heroData.phone || siteConfig.publicPhone;
-  const whatsapp = heroData.whatsapp || siteConfig.publicWhatsApp;
+  const pagePhone = heroData.phone || siteConfig.publicPhone;
+  const pageWhatsapp = heroData.whatsapp || siteConfig.publicWhatsApp;
+  let phone = pagePhone;
+  let whatsapp = pageWhatsapp;
+  let sections: any[] = lp.sections ?? [];
+
+  // "Use visitor's branch numbers" (admin toggle): generic pages with no
+  // campaign tracking number show the visitor's branch Call/WhatsApp instead,
+  // matching the main site. Rendered on the server (this page is dynamic), so
+  // the right number is in the first paint. Any section number equal to the
+  // page's own number is swapped too (hero, CTA); a different number in a
+  // section, such as a toll-free line, is left alone.
+  if (lp.followVisitorBranch) {
+    const branch = await getVisitorBranch();
+    const branchNumbers = branch ? await getBranchNumbers(branch) : null;
+    if (branchNumbers) {
+      const digits = (s: unknown) => String(s ?? '').replace(/\D/g, '').slice(-10);
+      const swap = (value: unknown, own: string, replacement: string) =>
+        replacement && typeof value === 'string' && value.trim() && digits(value) === digits(own) ? replacement : value;
+      phone = branchNumbers.phone || pagePhone;
+      whatsapp = branchNumbers.whatsapp || branchNumbers.phone || pageWhatsapp;
+      sections = sections.map((s: any) =>
+        s?.data && ('phone' in s.data || 'whatsapp' in s.data)
+          ? {
+              ...s,
+              data: {
+                ...s.data,
+                ...('phone' in s.data ? { phone: swap(s.data.phone, pagePhone, phone) } : {}),
+                ...('whatsapp' in s.data ? { whatsapp: swap(s.data.whatsapp, pageWhatsapp, whatsapp) } : {}),
+              },
+            }
+          : s,
+      );
+    }
+  }
 
   // Content Layout Engine — additive main-zone sections, opt-in via
   // `layoutEngineEnabled`. `lp.sections` keeps rendering through LpRenderer
@@ -192,7 +226,7 @@ export default async function LandingPagePublic(props: Props) {
         />
 
         <LpRenderer
-          sections={scrubClaims(lp.sections ?? [])}
+          sections={scrubClaims(sections)}
           form={lp.form ?? {
             fields: [],
             submitText: siteConfig.consultationCta,
