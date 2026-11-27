@@ -378,6 +378,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/book", req.url), 307);
   }
 
+  // There is no separate contact page: /contact (and /contact-us) go to the
+  // contact card on the visitor's city page (saved branch, else IP guess), or
+  // the homepage clinic section when neither is known. Temporary (307) because the target depends on
+  // the visitor's branch. Query strings (UTM tags from ads) are kept.
+  if (/^\/contact(?:-us)?\/?$/i.test(pathname)) {
+    const branch = (req.cookies.get(LOCATION_COOKIE)?.value || getLocationFromIp(req) || "").toLowerCase();
+    const target = req.nextUrl.clone();
+    target.pathname = VALID_LOCATIONS.includes(branch) ? `/${branch}` : "/";
+    target.hash = "contact";
+    return NextResponse.redirect(target, 307);
+  }
+
   // Also carries x-pathname on every public request now (previously only
   // set for /admin routes) — required so app/not-found.tsx (Server
   // Component, no direct access to the failed URL otherwise) can read the
