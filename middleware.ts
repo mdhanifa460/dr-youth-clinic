@@ -426,8 +426,18 @@ export async function middleware(req: NextRequest) {
   const savedSource = req.cookies.get(LOCATION_SOURCE_COOKIE)?.value || "";
   const citySegment = pathname.split("/")[1]?.toLowerCase();
   const onCityPage = !!citySegment && VALID_LOCATIONS.includes(citySegment);
+  // Next.js prefetches pages that are merely LINKED from the current page (footer,
+  // navbar, location cards). Treating a prefetch of /kochi as a visit switched the
+  // visitor's branch a few seconds after load without any click. Only a real
+  // navigation (or full page load) counts.
+  const isPrefetch = !!(
+    req.headers.get("next-router-prefetch") ||
+    req.headers.get("next-router-segment-prefetch") ||
+    req.headers.get("x-middleware-prefetch") ||
+    /prefetch/i.test(req.headers.get("purpose") || req.headers.get("sec-purpose") || "")
+  );
 
-  if (onCityPage && savedLocation !== citySegment) {
+  if (onCityPage && !isPrefetch && savedLocation !== citySegment) {
     response.cookies.set(LOCATION_COOKIE, citySegment, { ...cookieOpts, maxAge: 60 * 60 * 24 * 365 });
     // Opening a city page is as deliberate as tapping a clinic, so it replaces
     // even a manual pick; after 30 days without one, IP detection may re-check.
