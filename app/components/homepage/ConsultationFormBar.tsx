@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocationChangeVersion } from '@/app/lib/locationChange';
 import { useRouter } from 'next/navigation';
 import { trackBookingConversion } from '@/app/lib/trackConversion';
 import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
@@ -28,17 +29,22 @@ export default function ConsultationFormBar({ data }: { data: any }) {
   const getIdempotencyKey = useIdempotencyKey();
 
   // Pre-select the visitor's saved branch (same cookie the top bar and footer
-  // use), after mount because this page is cached and shared. They can change it.
+  // use), after mount because this page is cached and shared. Re-read when the
+  // branch changes on this page (the location check can replace an IP guess a
+  // moment after load), until the visitor picks a city themselves.
+  const cityPicked = useRef(false);
+  const locationVersion = useLocationChangeVersion();
   useEffect(() => {
+    if (cityPicked.current) return;
     const saved = decodeURIComponent(document.cookie.match(/(?:^|; )preferred_location=([^;]+)/)?.[1] || '').toLowerCase();
     if (!saved) return;
     const match = (cities as string[]).find((c) => {
       const key = c.toLowerCase();
       return key === saved || (saved === 'bangalore' && key === 'bengaluru');
     });
-    if (match) setCity((current) => current || match);
+    if (match) setCity(match);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [locationVersion]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,7 +166,7 @@ export default function ConsultationFormBar({ data }: { data: any }) {
                 <select
                   aria-label="Select City"
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) => { cityPicked.current = true; setCity(e.target.value); }}
                   className="min-h-12 min-w-0 border border-line-strong rounded-xl px-4 py-3 text-sm text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition"
                   required
                 >

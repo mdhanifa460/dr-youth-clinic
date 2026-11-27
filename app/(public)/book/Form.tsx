@@ -11,6 +11,7 @@ import { isValidIndianMobile, INVALID_MOBILE_MESSAGE } from '@/app/lib/phone';
 import { useIdempotencyKey } from '@/app/lib/useIdempotencyKey';
 import { goToBookingSuccess } from '@/app/lib/bookingSuccessRedirect';
 import { slotsForDate } from '@/app/lib/bookingSlots';
+import { useLocationChangeVersion } from '@/app/lib/locationChange';
 
 const SERVICES = [
   { id: 'Skin', icon: Sparkles, label: 'Skin & Aesthetics', desc: 'Acne, pigmentation, anti-ageing' },
@@ -70,6 +71,8 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
   // these details, so they're prefilled. sessionId stays out of the booking shape.
   const journeySessionId = useRef('');
   const bookingEventFired = useRef(false);
+  const clinicFromLink = useRef(false); // the link named a clinic (?location=)
+  const clinicTapped = useRef(false);   // the visitor picked a clinic themselves
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const service = params.get('service') || '';
@@ -116,7 +119,20 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
       bookingEventFired.current = true;
       postInterestEvent('booking_started', bookingCategory);
     }
+    clinicFromLink.current = !!locations[(params.get('location') || '').toLowerCase()];
   }, []);
+
+  // The saved branch can change a moment after the page opens: the site-wide
+  // location check (LocationAutoDetect) replaces an IP guess with the visitor's
+  // precise position. Follow it, unless the link named a clinic or the visitor
+  // has already tapped one themselves.
+  const locationVersion = useLocationChangeVersion();
+  useEffect(() => {
+    if (locationVersion === 0 || clinicFromLink.current || clinicTapped.current) return;
+    const saved = decodeURIComponent(document.cookie.match(/(?:^|; )preferred_location=([^;]+)/)?.[1] || '').toLowerCase();
+    const match = LOCATIONS.find((l) => l.key === saved);
+    if (match) setForm((f) => (f.location === match.id ? f : { ...f, location: match.id, time: '' }));
+  }, [locationVersion]);
 
   const set = (key: string, val: string) => { setForm(f => ({ ...f, [key]: val })); setError(''); };
 
@@ -270,7 +286,7 @@ export default function ConsultationForm({ step, setStep }: { step: number; setS
               <legend className={labelCls}>Clinic</legend>
               <div className="grid grid-cols-2 gap-3">
                 {LOCATIONS.map((l) => (
-                  <button key={l.id} type="button" aria-pressed={form.location === l.id} onClick={() => { setError(''); setForm((f) => ({ ...f, location: l.id, time: '' })); }} className={optionCls(form.location === l.id)}>
+                  <button key={l.id} type="button" aria-pressed={form.location === l.id} onClick={() => { clinicTapped.current = true; setError(''); setForm((f) => ({ ...f, location: l.id, time: '' })); }} className={optionCls(form.location === l.id)}>
                     <MapPin size={18} className="mt-0.5 shrink-0 text-bronze" aria-hidden="true" />
                     <span className="text-sm font-semibold text-primary">{l.label}</span>
                   </button>
