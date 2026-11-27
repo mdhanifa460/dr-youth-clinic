@@ -7,25 +7,22 @@
 // preferred_location_src  how we know it, which decides what may replace it:
 //   manual  the visitor tapped a clinic: nothing automatic replaces it (1 year)
 //   gps     precise browser location: IP never replaces it (7 days, then re-checked)
-//   city    they opened a city page (set by the middleware, 30 days)
+//   city    they opened a city page (set by LocationAutoDetect, 30 days)
 //   (none)  guessed from the IP address: the middleware re-checks it on every
 //           visit, so a wrong guess (VPN, office proxy, moved city) corrects itself
 import { announceLocationChange } from '@/app/lib/locationChange';
 
-export type BranchSource = 'manual' | 'gps';
+export type BranchSource = 'manual' | 'gps' | 'city';
 
 const SOURCE_MAX_AGE: Record<BranchSource, number> = {
   manual: 60 * 60 * 24 * 365,
   gps: 60 * 60 * 24 * 7,
+  city: 60 * 60 * 24 * 30,
 };
 
 export function readCookie(name: string): string {
   const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
   return m ? decodeURIComponent(m[1]) : '';
-}
-
-export function isManualBranch(): boolean {
-  return readCookie('preferred_location_src') === 'manual';
 }
 
 export function saveBranch(key: string, source: BranchSource) {

@@ -411,11 +411,9 @@ export async function middleware(req: NextRequest) {
   // never set outside /admin before now.
   const response = withPathname(req);
 
-  // Opening a city page (/kochi, /kochi/services/...) is the clearest sign of which
-  // branch the visitor wants, so it becomes their remembered clinic. The navbar,
-  // footer, contact details, WhatsApp button and homepage clinic tabs all follow it.
-  //
-  // LOCATION_SOURCE_COOKIE records how the branch was chosen (see
+  // The visitor's branch (LOCATION_COOKIE) drives the navbar, footer, contact
+  // details, WhatsApp button and homepage clinic tabs.
+  // LOCATION_SOURCE_COOKIE records how it was chosen (see
   // app/lib/branchPreference.ts): "manual" (tapped a clinic), "gps" (precise
   // browser location), "city" (opened a city page) or absent (IP guess). Only an
   // IP guess is re-checked on later visits.
@@ -426,23 +424,13 @@ export async function middleware(req: NextRequest) {
   const savedSource = req.cookies.get(LOCATION_SOURCE_COOKIE)?.value || "";
   const citySegment = pathname.split("/")[1]?.toLowerCase();
   const onCityPage = !!citySegment && VALID_LOCATIONS.includes(citySegment);
-  // Next.js prefetches pages that are merely LINKED from the current page (footer,
-  // navbar, location cards). Treating a prefetch of /kochi as a visit switched the
-  // visitor's branch a few seconds after load without any click. Only a real
-  // navigation (or full page load) counts.
-  const isPrefetch = !!(
-    req.headers.get("next-router-prefetch") ||
-    req.headers.get("next-router-segment-prefetch") ||
-    req.headers.get("x-middleware-prefetch") ||
-    /prefetch/i.test(req.headers.get("purpose") || req.headers.get("sec-purpose") || "")
-  );
-
-  if (onCityPage && !isPrefetch && savedLocation !== citySegment) {
-    response.cookies.set(LOCATION_COOKIE, citySegment, { ...cookieOpts, maxAge: 60 * 60 * 24 * 365 });
-    // Opening a city page is as deliberate as tapping a clinic, so it replaces
-    // even a manual pick; after 30 days without one, IP detection may re-check.
-    response.cookies.set(LOCATION_SOURCE_COOKIE, "city", { ...cookieOpts, maxAge: 60 * 60 * 24 * 30 });
-  }
+  // Opening a city page (/kochi, /kochi/services/...) saves that branch, but NOT
+  // here: Next.js prefetches every
+  // city page merely linked from the current page (footer, navbar, location
+  // cards), and it strips the prefetch headers before middleware runs, so a
+  // prefetch looks exactly like a visit. Saving here switched visitors' branch a
+  // few seconds after load with no click. LocationAutoDetect saves it in the
+  // browser instead, only when a city page actually renders.
 
   // IP detection on any public page (most visitors arrive from search or ads on a
   // service or blog page, not "/"). It runs when there is no branch yet, AND on every
