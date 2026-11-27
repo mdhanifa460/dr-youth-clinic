@@ -29,6 +29,7 @@ const ADMIN_COOKIE = "admin_session";
 // ?next= query param. See its own set-site for why.
 const ADMIN_LOGIN_NEXT_COOKIE = "admin_login_next";
 const LOCATION_COOKIE = "preferred_location";
+const LOCATION_SOURCE_COOKIE = "preferred_location_src";
 // Must mirror the exact fallback chain in app/lib/adminAuth.ts — that file
 // signs session cookies with this same chain, so if the two ever diverge,
 // middleware verifies against a different secret than the one sessions were
@@ -413,29 +414,36 @@ export async function middleware(req: NextRequest) {
   // Opening a city page (/kochi, /kochi/services/...) is the clearest sign of which
   // branch the visitor wants, so it becomes their remembered clinic. The navbar,
   // footer, contact details, WhatsApp button and homepage clinic tabs all follow it.
+  //
+  // LOCATION_SOURCE_COOKIE records how the branch was chosen (see
+  // app/lib/branchPreference.ts): "manual" (tapped a clinic), "gps" (precise
+  // browser location), "city" (opened a city page) or absent (IP guess). Only an
+  // IP guess is re-checked on later visits.
+  const cookieOpts = { path: "/", secure: true, sameSite: "lax" as const };
+  const savedLocation = req.cookies.get(LOCATION_COOKIE)?.value;
+  // The older preferred_location_manual flag (live for about a day) is ignored on
+  // purpose: it was mostly set while testing, and kept browsers stuck on one branch.
+  const savedSource = req.cookies.get(LOCATION_SOURCE_COOKIE)?.value || "";
   const citySegment = pathname.split("/")[1]?.toLowerCase();
-  if (citySegment && VALID_LOCATIONS.includes(citySegment) && req.cookies.get(LOCATION_COOKIE)?.value !== citySegment) {
-    response.cookies.set(LOCATION_COOKIE, citySegment, {
-      maxAge: 60 * 60 * 24 * 365,
-      path: "/",
-      secure: true,
-      sameSite: "lax",
-    });
+  const onCityPage = !!citySegment && VALID_LOCATIONS.includes(citySegment);
+
+  if (onCityPage && savedLocation !== citySegment) {
+    response.cookies.set(LOCATION_COOKIE, citySegment, { ...cookieOpts, maxAge: 60 * 60 * 24 * 365 });
+    // Opening a city page is as deliberate as tapping a clinic, so it replaces
+    // even a manual pick; after 30 days without one, IP detection may re-check.
+    response.cookies.set(LOCATION_SOURCE_COOKIE, "city", { ...cookieOpts, maxAge: 60 * 60 * 24 * 30 });
   }
 
-  // IP location detection — only when no cookie is set yet, so it never overrides a
-  // branch the visitor picked. Runs on any public page, not just "/": most visitors
-  // arrive from search or ads on a service or blog page and never saw "/" first.
-  if (!(citySegment && VALID_LOCATIONS.includes(citySegment)) && !req.cookies.get(LOCATION_COOKIE)?.value) {
+  // IP detection on any public page (most visitors arrive from search or ads on a
+  // service or blog page, not "/"). It runs when there is no branch yet, AND on every
+  // visit while the branch is itself an IP guess. A guess used to be kept for a
+  // year, so someone first seen through an office proxy, VPN or Zscaler (which can
+  // appear to be in another city), or who later moved city, stayed on the wrong
+  // branch for good. Never overrides a manual, GPS or city-page choice.
+  if (!onCityPage && !savedSource) {
     const detectedLocation = getLocationFromIp(req);
-
-    if (detectedLocation && VALID_LOCATIONS.includes(detectedLocation)) {
-      response.cookies.set(LOCATION_COOKIE, detectedLocation, {
-        maxAge: 60 * 60 * 24 * 365,
-        path: "/",
-        secure: true,
-        sameSite: "lax",
-      });
+    if (detectedLocation && VALID_LOCATIONS.includes(detectedLocation) && detectedLocation !== savedLocation) {
+      response.cookies.set(LOCATION_COOKIE, detectedLocation, { ...cookieOpts, maxAge: 60 * 60 * 24 * 365 });
     }
   }
 

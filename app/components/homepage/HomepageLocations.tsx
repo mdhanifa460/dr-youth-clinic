@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { locations } from '@/app/data/locations';
 import { toTelHref } from '@/app/lib/phone';
-import { announceLocationChange } from '@/app/lib/locationChange';
+import { useLocationChangeVersion } from '@/app/lib/locationChange';
+import { saveBranch, nearestClinic, readCookie } from '@/app/lib/branchPreference';
 
 const CITY_KEY: Record<string, string> = {
   Chennai: 'chennai',
@@ -19,52 +20,6 @@ const CITY_KEY: Record<string, string> = {
   Kochi: 'kochi',
 };
 const toCityKey = (city: string) => CITY_KEY[city] ?? city.toLowerCase();
-
-// Remembers the clinic a visitor picks, so the navbar, footer, contact details and
-// WhatsApp button use that branch on every page from now on (same cookie the
-// middleware sets when they open a city page).
-// `manual` marks a clinic the visitor tapped themselves, so a later automatic GPS
-// check never overrides it.
-function rememberClinic(key: string, manual = false) {
-  const attrs = `path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
-  document.cookie = `preferred_location=${encodeURIComponent(key)}; ${attrs}`;
-  if (manual) document.cookie = `preferred_location_manual=1; ${attrs}`;
-  announceLocationChange();
-}
-
-// Approximate city-centre coordinates for each clinic key
-const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  chennai:    { lat: 13.0827, lng: 80.2707 },
-  bangalore:  { lat: 12.9716, lng: 77.5946 },
-  coimbatore: { lat: 11.0168, lng: 76.9558 },
-  kochi:      { lat:  9.9312, lng: 76.2673 },
-};
-
-// Limits for the silent on-load GPS check (see locateNearestClinic).
-const AUTO_MAX_ACCURACY_M = 5_000;
-const AUTO_MAX_DISTANCE_KM = 100;
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function nearestCityKey(lat: number, lng: number, available: string[]): string {
-  let best = available[0];
-  let bestDist = Infinity;
-  for (const key of available) {
-    const c = CITY_COORDS[key];
-    if (!c) continue;
-    const d = haversineKm(lat, lng, c.lat, c.lng);
-    if (d < bestDist) { bestDist = d; best = key; }
-  }
-  return best;
-}
 
 // ── Open/closed calculator (IST) ─────────────────────────────────────────────
 function getOpenStatus(hours: { day: string; hours: string }[]): { isOpen: boolean; text: string } {
@@ -125,45 +80,36 @@ export default function HomepageLocations({ data }: { data: any }) {
   const [autoDetected, setAutoDetected] = useState(availableKeys.includes(detectedKey));
 
   // This page is cached and shared, so the server can't pick the visitor's city.
-  // Their chosen location is read here instead, and geolocation below can still
-  // override it if granted.
+  // Their saved branch is read here instead, and again whenever it changes on this
+  // page (the site-wide GPS check in LocationAutoDetect, or a tap below).
+  const locationVersion = useLocationChangeVersion();
   useEffect(() => {
-    const match = document.cookie.match(/(?:^|; )preferred_location=([^;]+)/);
-    const chosen = match ? toCityKey(decodeURIComponent(match[1])) : '';
+    const chosen = toCityKey(readCookie('preferred_location'));
     if (availableKeys.includes(chosen)) {
       setActiveKey(chosen);
       setAutoDetected(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [locationVersion]);
 
   // Open/closed depends on the visitor's current time, and this page is cached,
   // so it's only worked out in the browser.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Only on request. Asking on page load showed a permission prompt to every new
-  // visitor before they had done anything.
+  // Only on request: asking on page load showed a permission prompt to every new
+  // visitor. The silent check for visitors who already allowed location runs on
+  // every page in LocationAutoDetect. A tap here always applies, even over a
+  // clinic picked earlier, because the visitor asked for it.
   const [locating, setLocating] = useState(false);
-  // `auto` = the silent check on page load. It only acts on a precise position
-  // near one of the clinics. On a desktop without GPS, the browser guesses the
-  // position from the network, which can be hundreds of km off (an office in
-  // Bangalore reported as Kerala), and saving that guess would move the whole
-  // site to the wrong branch for good. A tap on "Use my location" always applies.
-  const locateNearestClinic = (auto = false) => {
+  const locateNearestClinic = () => {
     if (!navigator?.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const nearest = nearestCityKey(coords.latitude, coords.longitude, availableKeys);
-        const c = CITY_COORDS[nearest];
-        const km = c ? haversineKm(coords.latitude, coords.longitude, c.lat, c.lng) : Infinity;
-        if (auto && (coords.accuracy > AUTO_MAX_ACCURACY_M || km > AUTO_MAX_DISTANCE_KM)) {
-          setLocating(false);
-          return;
-        }
-        setActiveKey(nearest);
-        rememberClinic(nearest);
+        const { key } = nearestClinic(coords.latitude, coords.longitude, availableKeys);
+        setActiveKey(key);
+        saveBranch(key, 'gps');
         setAutoDetected(true);
         setLocating(false);
       },
@@ -171,20 +117,6 @@ export default function HomepageLocations({ data }: { data: any }) {
       { timeout: 6000, maximumAge: 300_000 },
     );
   };
-
-  // GPS is more accurate than the IP guess (office networks and VPNs often appear
-  // to be in another city). If the visitor has ALREADY allowed location for this
-  // site, use it straight away; this never shows a permission prompt. Skipped when
-  // they picked a clinic themselves.
-  useEffect(() => {
-    if (/(?:^|; )preferred_location_manual=1/.test(document.cookie)) return;
-    if (!navigator?.permissions?.query || !navigator?.geolocation) return;
-    navigator.permissions
-      .query({ name: 'geolocation' as PermissionName })
-      .then((status) => { if (status.state === 'granted') locateNearestClinic(true); })
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const loc          = locations[activeKey];
   const embed        = _embeds[activeKey] ?? {};
@@ -250,7 +182,7 @@ export default function HomepageLocations({ data }: { data: any }) {
                 return (
                   <button
                     key={i}
-                    onClick={() => { setActiveKey(key); rememberClinic(key, true); }}
+                    onClick={() => { setActiveKey(key); saveBranch(key, 'manual'); }}
                     className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all group ${
                       active ? 'bg-sand border-l-[3px] border-primary' : 'hover:bg-gray-50 border-l-[3px] border-transparent'
                     }`}

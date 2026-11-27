@@ -7,6 +7,7 @@ import TopBar from "@/app/components/homepage/TopBar";
 import MobileStickyBar from "@/app/components/MobileStickyBar";
 import AiChatWidget from "@/app/components/ai/AiChatWidget";
 import MigrationSessionTracker from "@/app/components/MigrationSessionTracker";
+import LocationAutoDetect from "@/app/components/LocationAutoDetect";
 import CustomEventListener from "@/app/components/analytics/CustomEventListener";
 import GtmScript from "@/app/components/analytics/GtmScript";
 import { OrganizationSchema } from "@/app/components/SchemaMarkup";
@@ -188,6 +189,7 @@ export default async function PublicLayout({
       <MobileStickyBar phone={topbar.data?.phone} whatsappUrl={whatsappLink} />
       <AiChatWidget config={aiConfig as any} whatsapp={siteConfig.publicWhatsApp} phone={siteConfig.publicPhone} />
       <MigrationSessionTracker />
+      <LocationAutoDetect />
       {/* Admin-configured Custom Events — fetches enabled events once and
           wires up click/visibility/page-view triggers, firing through the
           same pushDataLayerEvent() every predefined event already uses.
