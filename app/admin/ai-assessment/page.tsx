@@ -364,6 +364,9 @@ function QuestionCard({
 // gender/age/uploaded photo/full answers before this.
 function LeadsTab({ canFullReview }: { canFullReview: boolean }) {
   const [leads, setLeads] = useState<any[]>([]);
+  // Patient records need the "Assessment Records" permission, separate from
+  // editing the quiz itself; the server refuses with 403 otherwise.
+  const [accessDenied, setAccessDenied] = useState(false);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [doctorNoteTemplates, setDoctorNoteTemplates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -374,7 +377,10 @@ function LeadsTab({ canFullReview }: { canFullReview: boolean }) {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch(`/api/admin/quiz/leads?page=${page}&limit=20`).then((r) => r.json()),
+      fetch(`/api/admin/quiz/leads?page=${page}&limit=20`).then((r) => {
+        setAccessDenied(r.status === 403);
+        return r.json();
+      }),
       fetch("/api/admin/quiz").then((r) => r.json()),
     ]).then(([leadsRes, configRes]) => {
       if (leadsRes.success) { setLeads(leadsRes.data); setTotalPages(leadsRes.totalPages || 1); }
@@ -402,6 +408,7 @@ function LeadsTab({ canFullReview }: { canFullReview: boolean }) {
   };
 
   if (loading) return <div className="text-center py-16 text-gray-400">Loading leads…</div>;
+  if (accessDenied) return <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-500">Patient assessment records are only visible to clinical staff. Ask a clinic owner if you need access.</div>;
   if (leads.length === 0) return <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">No assessment leads yet.</div>;
 
   return (
@@ -1168,7 +1175,7 @@ export default function AiAssessmentAdminPage() {
   // server-side at "full" — this mirrors that here so a "view"-only user
   // sees those actions disabled instead of clicking them and getting a
   // confusing permissions error.
-  const canFullReview = myRole ? canAccess(myRole, "ai-assessment", "full") : false;
+  const canFullReview = myRole ? canAccess(myRole, "assessment-records", "full") : false;
 
   const updateConfig = (patch: Partial<AssessmentConfigData>) => {
     setConfig((prev) => {

@@ -17,7 +17,7 @@ function toResizedUrl(url: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const denied = await requirePermission("ai-assessment", "view");
+  const denied = await requirePermission("assessment-records", "view"); // patient photos/notes — see app/lib/permissions.ts
   if (denied) return denied;
 
   if (!isConfiguredProviderReady()) {

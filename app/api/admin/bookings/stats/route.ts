@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
 import Booking from "@/app/models/Booking";
+import { branchCondition } from "@/app/lib/branchAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,8 @@ export async function GET(_req: NextRequest) {
   if (!user) return NextResponse.json({ success: false }, { status: 401 });
 
   const locationFilter: Record<string, any> = {};
-  if (!user.assignedClinics.includes("all")) {
-    locationFilter.location = { $in: user.assignedClinics };
-  }
+  const scope = branchCondition(user);
+  if (scope) locationFilter.location = scope;
 
   const today = new Date().toISOString().slice(0, 10);
   const todayStart = new Date(today);

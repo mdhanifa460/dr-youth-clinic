@@ -15,8 +15,6 @@ const MODULE_MAP: [string, AdminModule][] = [
   ["/admin/appointments",        "bookings"],
   ["/admin/doctor-availability", "bookings"],
   ["/admin/bookings",            "bookings"],
-  ["/admin/update-booking",      "bookings"],
-  ["/admin/update-status",       "bookings"],
   ["/admin/leads",               "leads"],
   ["/admin/services",      "services"],
   ["/admin/doctors",       "doctors"],

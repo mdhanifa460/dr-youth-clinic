@@ -26,6 +26,7 @@ const MODULE_LABELS: Record<AdminModule, string> = {
   legal: "Legal", ai: "AI", stories: "Stories", faqs: "FAQs", banners: "Banners",
   courses: "Courses", "animation-library": "Animation Library",
   "booking-success": "Booking Success", integrations: "Integrations", analytics: "Analytics",
+  "assessment-records": "Assessment Records (patient data)",
 };
 
 const LEVEL_LABELS: Record<AccessLevel, string> = { full: "Full", view: "View only", none: "No access" };

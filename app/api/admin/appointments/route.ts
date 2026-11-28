@@ -8,6 +8,7 @@ import { addMinutes } from "@/app/lib/appointmentFlow";
 import { queueNotification } from "@/app/lib/appointmentQueue";
 import { getSettings } from "@/app/models/Settings";
 import { maskPhone } from "@/app/lib/phoneMask";
+import { branchCondition, scopedBranchFilter, BRANCH_FORBIDDEN_MESSAGE } from "@/app/lib/branchAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +43,18 @@ export async function GET(req: NextRequest) {
     if (!linkedId) return NextResponse.json({ success: false, message: "Doctor profile not linked. Contact your admin." }, { status: 403 });
     query.doctorId = linkedId;
   } else if (!user.assignedClinics.includes("all")) {
-    query.branch = { $in: user.assignedClinics };
+    query.branch = branchCondition(user);
   }
 
-  if (branch && user.role !== "doctor") query.branch = branch;
+  // A ?branch= filter narrows the user's branch restriction; it must never
+  // replace it (previously a restricted user could pass any branch here).
+  if (branch && user.role !== "doctor") {
+    const branchFilter = scopedBranchFilter(user, branch);
+    if (branchFilter === "forbidden") {
+      return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
+    }
+    if (branchFilter) query.branch = branchFilter;
+  }
   if (doctorId && user.role !== "doctor") query.doctorId = doctorId;
   if (status)  query.status  = status;
   if (type)    query.appointmentType = type;

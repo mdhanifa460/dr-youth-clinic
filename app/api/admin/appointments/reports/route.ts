@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
-import { requirePermission } from "@/app/lib/adminAuth";
+import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
+import { branchCondition } from "@/app/lib/branchAccess";
 import Appointment from "@/app/models/Appointment";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ export async function GET(req: NextRequest) {
   if (denied) return denied;
 
   await connectDB();
+  const user = await getAdminUser();
+  if (!user) return NextResponse.json({ success: false }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const dateFrom = searchParams.get("dateFrom") || "";
@@ -28,6 +31,9 @@ export async function GET(req: NextRequest) {
     if (dateFrom) match.date.$gte = dateFrom;
     if (dateTo)   match.date.$lte = dateTo;
   }
+  // Report only on the user's own branches.
+  const scope = branchCondition(user);
+  if (scope) match.branch = scope;
 
   async function groupBy(field: string, lookup?: { from: string; as: string }) {
     const pipeline: any[] = [{ $match: match }];

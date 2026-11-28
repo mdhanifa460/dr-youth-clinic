@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
-import { requirePermission } from "@/app/lib/adminAuth";
+import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
+import { canAccessBranch, assessmentLeadBranch, BRANCH_FORBIDDEN_MESSAGE } from "@/app/lib/branchAccess";
 import { Lead } from "@/app/models/Lead";
 import QuizConfig, { DEFAULT_QUIZ_CONFIG } from "@/app/models/QuizConfig";
 import AssessmentConfig, { DEFAULT_ASSESSMENT_TYPES } from "@/app/models/AssessmentConfig";
@@ -23,8 +24,10 @@ export async function POST(req: NextRequest) {
   // /api/admin/quiz/leads (PATCH) does — that action requires "full", so
   // this route must too, or a view-only user could achieve the same
   // effective un-approval the permission model was built to restrict.
-  const denied = await requirePermission("ai-assessment", "full");
+  const denied = await requirePermission("assessment-records", "full");
   if (denied) return denied;
+  const user = await getAdminUser();
+  if (!user) return NextResponse.json({ success: false }, { status: 401 });
 
   if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
@@ -41,6 +44,9 @@ export async function POST(req: NextRequest) {
     const lead = await (Lead as any).findById(leadId).lean();
     if (!lead) {
       return NextResponse.json({ success: false, message: "Lead not found" }, { status: 404 });
+    }
+    if (!canAccessBranch(user, assessmentLeadBranch(lead))) {
+      return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
     }
 
     // Pre-Consultation Assessment leads (Hair/Skin/Body redesign) use an

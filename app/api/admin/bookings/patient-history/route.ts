@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
-import { requirePermission } from "@/app/lib/adminAuth";
+import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
+import { branchCondition } from "@/app/lib/branchAccess";
 import Booking from "@/app/models/Booking";
 import Appointment from "@/app/models/Appointment";
 import AppointmentAuditLog from "@/app/models/AppointmentAuditLog";
@@ -22,9 +23,22 @@ export async function GET(req: NextRequest) {
   const last10 = digits.slice(-10);
   const phoneRegex = new RegExp(last10 + "$");
 
+  const user = await getAdminUser();
+  if (!user) return NextResponse.json({ success: false }, { status: 401 });
+
+  // Only this user's branches — a phone lookup must not reveal a patient's
+  // history at branches the user has no access to.
+  const scope = branchCondition(user);
+  const bookingQuery: Record<string, any> = { phone: phoneRegex };
+  const appointmentQuery: Record<string, any> = { patientPhone: phoneRegex };
+  if (scope) {
+    bookingQuery.location = scope;
+    appointmentQuery.branch = scope;
+  }
+
   const [bookings, appointments] = await Promise.all([
-    (Booking as any).find({ phone: phoneRegex }).sort({ createdAt: -1 }).limit(20).lean(),
-    (Appointment as any).find({ patientPhone: phoneRegex }).sort({ date: -1 }).limit(20).lean(),
+    (Booking as any).find(bookingQuery).sort({ createdAt: -1 }).limit(20).lean(),
+    (Appointment as any).find(appointmentQuery).sort({ date: -1 }).limit(20).lean(),
   ]);
 
   // Patient Timeline v1 — merges every existing real data source this

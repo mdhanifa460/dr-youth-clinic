@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
-import { requirePermission } from "@/app/lib/adminAuth";
+import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
+import { canAccessBranch, assessmentLeadBranch, BRANCH_FORBIDDEN_MESSAGE } from "@/app/lib/branchAccess";
 import { Lead } from "@/app/models/Lead";
 import { generateText, isConfiguredProviderReady } from "@/app/lib/ai";
 import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
@@ -13,8 +14,10 @@ import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 // AI draftText. This is what makes the plan "based on the doctor's review,
 // not AI alone," enforced here rather than just in the UI.
 export async function POST(req: NextRequest) {
-  const denied = await requirePermission("ai-assessment", "full");
+  const denied = await requirePermission("assessment-records", "full");
   if (denied) return denied;
+  const user = await getAdminUser();
+  if (!user) return NextResponse.json({ success: false }, { status: 401 });
 
   if (!isConfiguredProviderReady()) {
     return NextResponse.json({ success: false, message: "AI not configured" }, { status: 503 });
@@ -30,6 +33,9 @@ export async function POST(req: NextRequest) {
     const lead = await (Lead as any).findById(leadId);
     if (!lead) {
       return NextResponse.json({ success: false, message: "Lead not found" }, { status: 404 });
+    }
+    if (!canAccessBranch(user, assessmentLeadBranch(lead))) {
+      return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
     }
     if (lead.aiSummary?.status !== "approved") {
       return NextResponse.json({ success: false, message: "The doctor summary must be reviewed and approved before a care plan can be generated" }, { status: 400 });

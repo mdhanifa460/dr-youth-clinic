@@ -8,7 +8,7 @@ import { CLINICAL_AI_GUARDRAILS } from "@/app/lib/ai/clinicalGuardrails";
 // called automatically during the public assessment flow, so it adds no
 // latency or cost to the conversion-critical lead-capture step.
 export async function POST(req: NextRequest) {
-  const denied = await requirePermission("ai-assessment", "view");
+  const denied = await requirePermission("assessment-records", "view"); // patient photos/notes — see app/lib/permissions.ts
   if (denied) return denied;
 
   if (!isConfiguredProviderReady()) {

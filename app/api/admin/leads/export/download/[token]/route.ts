@@ -4,6 +4,7 @@ import { connectDB } from "@/app/lib/mongodb";
 import { getAdminUser } from "@/app/lib/adminAuth";
 import Booking from "@/app/models/Booking";
 import ExportToken from "@/app/models/ExportToken";
+import { branchCondition } from "@/app/lib/branchAccess";
 import { EXPORT_FIELDS_BY_ROLE, type AdminRole } from "@/app/lib/permissions";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +57,7 @@ function buildQuery(
 
   const branchRestricted = !assignedClinics.includes("all");
   if (branchRestricted) {
-    q.location = { $in: assignedClinics };
+    q.location = branchCondition({ assignedClinics });
   } else if (filters.location) {
     q.location = filters.location;
   }

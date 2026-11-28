@@ -5,6 +5,7 @@ import Booking from "@/app/models/Booking";
 import { getSettings } from "@/app/models/Settings";
 import { maskPhone } from "@/app/lib/phoneMask";
 import { qualifyAndPersist } from "@/app/lib/leadQualification/persist";
+import { canAccessBranch, BRANCH_FORBIDDEN_MESSAGE } from "@/app/lib/branchAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,9 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
 
   const booking = await (Booking as any).findById(params.id).lean() as any;
   if (!booking) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  if (!canAccessBranch(user, booking.location)) {
+    return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
+  }
 
   const settings = await getSettings();
   const allowedPhoneRoles: string[] = settings.contactPrivacy?.showPatientPhoneRoles
@@ -46,6 +50,14 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   await connectDB();
   const user = await getAdminUser();
   if (!user) return NextResponse.json({ success: false }, { status: 401 });
+
+  // Branch check on the lead as it is now. Moving a lead to another branch
+  // (a hand-off) is still allowed below; the user just loses access after.
+  const current = await (Booking as any).findById(params.id).select("location").lean() as any;
+  if (!current) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  if (!canAccessBranch(user, current.location)) {
+    return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
+  }
 
   const body = await req.json();
   const {
@@ -125,6 +137,15 @@ export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: s
   if (denied) return denied;
 
   await connectDB();
+  const user = await getAdminUser();
+  if (!user) return NextResponse.json({ success: false }, { status: 401 });
+
+  const existing = await (Booking as any).findById(params.id).select("location").lean() as any;
+  if (!existing) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  if (!canAccessBranch(user, existing.location)) {
+    return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
+  }
+
   const deleted = await (Booking as any).findByIdAndDelete(params.id).lean();
   if (!deleted) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
   return NextResponse.json({ success: true });

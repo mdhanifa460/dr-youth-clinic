@@ -3,6 +3,7 @@ import { connectDB } from "@/app/lib/mongodb";
 import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
 import Appointment from "@/app/models/Appointment";
 import AppointmentAuditLog from "@/app/models/AppointmentAuditLog";
+import { canAccessBranch } from "@/app/lib/branchAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,17 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
   const appt = await (Appointment as any).findById(params.id).lean() as any;
   if (!appt) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+
+  // Same branch / doctor scoping as GET above — editing was previously open
+  // to any branch.
+  if (user.role === "doctor") {
+    const linkedId = (user as any).linkedDoctorId;
+    if (String(appt.doctorId) !== String(linkedId)) {
+      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+    }
+  } else if (!canAccessBranch(user, appt.branch)) {
+    return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+  }
 
   const body   = await req.json();
   const allowed = [

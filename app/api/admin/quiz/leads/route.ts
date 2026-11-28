@@ -4,12 +4,15 @@ import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
 import { Lead } from "@/app/models/Lead";
 import { getSettings } from "@/app/models/Settings";
 import { maskPhone } from "@/app/lib/phoneMask";
+import { canAccessBranch, assessmentLeadBranch, assessmentLeadBranchQuery, BRANCH_FORBIDDEN_MESSAGE } from "@/app/lib/branchAccess";
 
 // Individual AI Assessment leads for doctor/staff review — previously only
 // aggregate numbers existed (Analytics tab); a doctor had no way to open a
 // specific visitor's answers, gender/age, or uploaded photo before this.
 export async function GET(req: NextRequest) {
-  const denied = await requirePermission("ai-assessment", "view");
+  // Patient records — "assessment-records", not "ai-assessment" (which only
+  // covers editing the quiz itself). See app/lib/permissions.ts.
+  const denied = await requirePermission("assessment-records", "view");
   if (denied) return denied;
 
   await connectDB();
@@ -21,9 +24,11 @@ export async function GET(req: NextRequest) {
   const page  = Math.max(1, Number(searchParams.get("page") || 1));
   const limit = Math.min(50, Number(searchParams.get("limit") || 20));
 
+  const query = assessmentLeadBranchQuery(user) ?? {};
+
   const [rawData, total, settings] = await Promise.all([
-    (Lead as any).find({}).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
-    (Lead as any).countDocuments({}),
+    (Lead as any).find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    (Lead as any).countDocuments(query),
     getSettings(),
   ]);
 
@@ -50,7 +55,7 @@ export async function GET(req: NextRequest) {
 // (not just "view") since approving is the actual clinical sign-off action that
 // gates care-plan generation (see /api/admin/quiz/care-plan).
 export async function PATCH(req: NextRequest) {
-  const denied = await requirePermission("ai-assessment", "full");
+  const denied = await requirePermission("assessment-records", "full");
   if (denied) return denied;
 
   await connectDB();
@@ -66,6 +71,9 @@ export async function PATCH(req: NextRequest) {
     const lead = await (Lead as any).findById(leadId);
     if (!lead) {
       return NextResponse.json({ success: false, message: "Lead not found" }, { status: 404 });
+    }
+    if (!canAccessBranch(user, assessmentLeadBranch(lead))) {
+      return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
     }
 
     if (typeof doctorNotes === "string") lead.doctorNotes = doctorNotes;

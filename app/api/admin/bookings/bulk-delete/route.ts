@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
-import { requirePermission } from "@/app/lib/adminAuth";
+import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
+import { branchCondition } from "@/app/lib/branchAccess";
 import Booking from "@/app/models/Booking";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "ids[] is required" }, { status: 400 });
   }
 
-  const result = await (Booking as any).deleteMany({ _id: { $in: ids } });
+  const user = await getAdminUser();
+  if (!user) return NextResponse.json({ success: false }, { status: 401 });
+
+  // Only leads in this user's branches are deleted; any other ids are skipped
+  // (deletedCount tells the caller how many actually went).
+  const query: Record<string, any> = { _id: { $in: ids } };
+  const scope = branchCondition(user);
+  if (scope) query.location = scope;
+
+  const result = await (Booking as any).deleteMany(query);
   return NextResponse.json({ success: true, deletedCount: result.deletedCount });
 }

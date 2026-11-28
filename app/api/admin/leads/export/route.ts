@@ -8,6 +8,7 @@ import ExportToken from "@/app/models/ExportToken";
 import LeadExportAuditLog from "@/app/models/LeadExportAuditLog";
 import { EXPORT_ALLOWED_ROLES } from "@/app/lib/permissions";
 import { recordAdminActivity } from "@/app/lib/adminActivity";
+import { branchCondition } from "@/app/lib/branchAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ function buildQuery(
 
   const branchRestricted = !assignedClinics.includes("all");
   if (branchRestricted) {
-    q.location = { $in: assignedClinics };
+    q.location = branchCondition({ assignedClinics });
   } else if (filters.location) {
     q.location = filters.location;
   }

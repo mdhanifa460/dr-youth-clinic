@@ -7,6 +7,7 @@ import AppointmentAuditLog from "@/app/models/AppointmentAuditLog";
 import DoctorSlotBlock from "@/app/models/DoctorSlotBlock";
 import { addMinutes } from "@/app/lib/appointmentFlow";
 import { queueNotification } from "@/app/lib/appointmentQueue";
+import { canAccessBranch, BRANCH_FORBIDDEN_MESSAGE } from "@/app/lib/branchAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const duration  = Number(durationMinutes) || 30;
   const endTime   = addMinutes(startTime, duration);
   const useBranch = branch || booking.location || "";
+
+  // Both the lead's own branch and the branch the appointment is being
+  // booked into must be ones this user can access (same rule as creating an
+  // appointment directly in app/api/admin/appointments/route.ts).
+  if (!canAccessBranch(user, booking.location) || !canAccessBranch(user, useBranch)) {
+    return NextResponse.json({ success: false, message: BRANCH_FORBIDDEN_MESSAGE }, { status: 403 });
+  }
 
   // Double-booking check
   const apptConflict = await (Appointment as any).findOne({

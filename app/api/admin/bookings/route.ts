@@ -4,6 +4,7 @@ import { requirePermission, getAdminUser } from "@/app/lib/adminAuth";
 import Booking from "@/app/models/Booking";
 import { getSettings } from "@/app/models/Settings";
 import { maskPhone } from "@/app/lib/phoneMask";
+import { branchCondition } from "@/app/lib/branchAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
   // Branch restriction — users without "all" access see only their locations
   const branchRestricted = !user.assignedClinics.includes("all");
   if (branchRestricted) {
-    query.location = { $in: user.assignedClinics };
+    query.location = branchCondition(user);
   } else if (location) {
     query.location = { $regex: location, $options: "i" };
   }

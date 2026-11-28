@@ -38,7 +38,12 @@ export type AdminModule =
   | 'animation-library'
   | 'booking-success'
   | 'integrations'
-  | 'analytics';
+  | 'analytics'
+  // Individual patients' assessment submissions (answers, photos, scores,
+  // AI summaries, doctor notes, care plans). Split out of 'ai-assessment',
+  // which now only covers the quiz's own content/config, so roles that edit
+  // quiz questions (marketing, content) no longer see patient records.
+  | 'assessment-records';
 
 export type AccessLevel = 'full' | 'view' | 'none';
 
@@ -51,7 +56,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'full', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'full', analytics: 'full',
+    integrations: 'full', analytics: 'full', 'assessment-records': 'full',
   },
   clinic_owner: {
     dashboard: 'full', intelligence: 'full', bookings: 'full', leads: 'full',
@@ -61,7 +66,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'view', team: 'full', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'full', analytics: 'full',
+    integrations: 'full', analytics: 'full', 'assessment-records': 'full',
   },
   marketing_manager: {
     dashboard: 'view', intelligence: 'full', bookings: 'view', leads: 'full',
@@ -71,7 +76,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'none', analytics: 'full',
+    integrations: 'none', analytics: 'full', 'assessment-records': 'none',
   },
   doctor: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -81,7 +86,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'view', 'ai-assessment': 'full', journey: 'full', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'view', 'animation-library': 'none', 'booking-success': 'view',
-    integrations: 'none', analytics: 'none',
+    integrations: 'none', analytics: 'none', 'assessment-records': 'full',
   },
   receptionist: {
     dashboard: 'view', intelligence: 'none', bookings: 'full', leads: 'none',
@@ -94,7 +99,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none', 'booking-success': 'view',
-    integrations: 'none', analytics: 'none',
+    integrations: 'none', analytics: 'none', 'assessment-records': 'view',
   },
   content_editor: {
     dashboard: 'view', intelligence: 'none', bookings: 'none', leads: 'none',
@@ -106,7 +111,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'full', 'ai-assessment': 'full', journey: 'full', legal: 'full', banners: 'full',
     ai: 'full',
     stories: 'full', faqs: 'full', courses: 'full', 'animation-library': 'full', 'booking-success': 'full',
-    integrations: 'none', analytics: 'view',
+    integrations: 'none', analytics: 'view', 'assessment-records': 'none',
   },
   finance_manager: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -116,7 +121,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'none', journey: 'none', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'none', courses: 'none', 'animation-library': 'none', 'booking-success': 'none',
-    integrations: 'none', analytics: 'none',
+    integrations: 'none', analytics: 'none', 'assessment-records': 'none',
   },
   customer_support: {
     dashboard: 'view', intelligence: 'none', bookings: 'view', leads: 'none',
@@ -127,7 +132,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminModule, AccessLevel
     settings: 'none', team: 'none', videos: 'none', 'ai-assessment': 'view', journey: 'view', legal: 'none', banners: 'none',
     ai: 'none',
     stories: 'none', faqs: 'view', courses: 'none', 'animation-library': 'none', 'booking-success': 'view',
-    integrations: 'none', analytics: 'none',
+    integrations: 'none', analytics: 'none', 'assessment-records': 'view',
   },
 };
 
@@ -157,6 +162,7 @@ export const ALL_MODULES: AdminModule[] = [
   'landing-pages', 'settings', 'team', 'videos', 'ai-assessment', 'journey',
   'legal', 'ai', 'stories', 'faqs', 'banners', 'courses',
   'animation-library', 'booking-success', 'integrations', 'analytics',
+  'assessment-records',
 ];
 
 export const ROLE_LABELS: Record<AdminRole, string> = {
